@@ -1,0 +1,41 @@
+package test.interfaces;
+
+
+message UserData {
+    string id;
+    string name;
+    List<PhotoData> photos;
+}
+
+message PhotoData {
+    string id;
+    string description;
+    string url;
+
+    UserData user;
+}
+
+interface App {
+    Photos photos();
+}
+
+interface Users {
+    User get(id string);
+    User register(
+        email string,
+        password string);
+}
+
+interface User {
+    UserData data();
+}
+
+interface Photos {
+    Photo get(id string);
+    Photo create(description string, url string);
+}
+
+interface Photo {
+    PhotoData data();
+    List<string> comments();
+}

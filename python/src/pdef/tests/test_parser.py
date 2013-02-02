@@ -6,18 +6,21 @@ from pdef.parser import Parser
 
 class TestParser(unittest.TestCase):
 
-    def _open(self, filename):
+    def _read(self, filename):
         filepath = os.path.join(os.path.dirname(__file__), filename)
-        return open(filepath, 'r')
-
-    def _read_simple(self):
-        with self._open('simple.pdef') as f:
+        with open(filepath, 'r') as f:
             return f.read()
 
-    def test_parse_no_errors(self):
+    def test_parse_messages(self):
         '''Should parse a test file without errors.'''
-        s = self._read_simple()
+        s = self._read('simple.pdef')
         parser = Parser()
         result = parser.parse(s)
         assert result
 
+    def test_parse_interfaces(self):
+        '''Should parse a test file with interfaces without errors.'''
+        s = self._read('interfaces.pdef')
+        parser = Parser()
+        result = parser.parse(s)
+        assert result

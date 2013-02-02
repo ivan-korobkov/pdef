@@ -1,0 +1,76 @@
+package com.ivankorobkov.pdef.fixtures;
+
+enum ObjectType {
+    OBJECT,
+    USER;
+}
+
+message Id {
+    options [type_field: "type", format: "line"];
+
+    ObjectType type [value: "ObjectType.OBJECT"];
+}
+
+message UserId extends Id {
+    options [format: "line"];
+
+    ObjectType type [value: "ObjectType.USER"];
+    int64 value;
+}
+
+message User {
+    UserId id;
+    string name;
+    int32 age;
+    Sex sex;
+    Profile profile;
+    Map<string, float> floats;
+}
+
+message Profile {
+    string firstName;
+    string lastName;
+    Birthday birthday;
+    int64 avatar;
+    int64 wallpaper;
+
+    Language preferedLanguage;
+
+	string telephone;
+	string info;
+
+    bool complete;
+}
+
+enum Sex {
+    MALE,
+    FEMALE;
+}
+
+enum Language {
+    EN, RU, FR, DE;
+}
+
+message Birthday {
+    options [format: "line"];
+
+    int32 year;
+    int32 month;
+    int32 day;
+}
+
+message Weighted<E, W> {
+    E element;
+    W weight;
+}
+
+message WeightedSet<E, W> {
+    Set<Weighted<E, W>> elements;
+}
+
+message TimeSet<E> extends WeightedSet<E, int64> {
+}
+
+message Chat {
+    TimeSet<Birthday> messages;
+}

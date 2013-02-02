@@ -1,0 +1,54 @@
+package builtin;
+// Built-in types.
+
+
+native bool {
+    java_type: "Boolean",
+    java_primitive: "boolean"
+}
+
+native int16 {
+    java_type: "Short",
+    java_primitive: "short"
+}
+
+native int32 {
+    java_type: "Integer",
+    java_primitive: "int"
+}
+
+native int64 {
+    java_type: "Long",
+    java_primitive: "long"
+}
+
+native float {
+    java_type: "Float",
+    java_primitive: "float"
+}
+
+native double {
+    java_type: "Double",
+    java_primitive: "double"
+}
+
+native void {
+    java_type: "Void",
+    java_primitive: "void"
+}
+
+native string {
+    java_type: "String"
+}
+
+native List<E> {
+    java_type: "List"
+}
+
+native Set<E> {
+    java_type: "Set"
+}
+
+native Map<K, V> {
+    java_type: "Map"
+}

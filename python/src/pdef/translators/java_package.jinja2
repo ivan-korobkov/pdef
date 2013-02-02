@@ -1,0 +1,71 @@
+package {{ package.name }};
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.ivankorobkov.pdef.DescriptorPool;
+import com.ivankorobkov.pdef.Pdef;
+import com.ivankorobkov.pdef.PackageDescriptor;
+import com.ivankorobkov.pdef.data.DataType;
+import com.ivankorobkov.pdef.data.DataTypeDescriptor;
+
+import java.util.Map;
+import java.util.Set;
+
+public final class {{ package.type.local }} implements PackageDescriptor {
+    static {
+        Pdef.getPool().add(new {{ package.type.local }}());
+    }
+
+    public static {{ package.type.local }} getInstance() {
+        return Pdef.getPool().getPackage({{ package.type.local }}.class);
+    }
+
+{% for definition in package.definitions %}
+    private final {{ definition.descriptor.type.full_wo_args }} {{ definition.name }};
+{% endfor %}
+
+    private final ImmutableMap<Class<?>, DataTypeDescriptor> definitions;
+
+    private {{ package.type.local }}() {
+        ImmutableMap.Builder<Class<?>, DataTypeDescriptor> builder = ImmutableMap.builder();
+{% for definition in package.definitions %}
+        this.{{ definition.name }} = new {{ definition.descriptor.type.full_wo_args }}();
+        builder.put({{ definition.type.full_wo_args }}.class, this.{{ definition.name }});
+
+{% endfor %}
+        definitions = builder.build();
+    }
+
+    @Override
+    public String getName() {
+        return "{{ package.name }}";
+    }
+
+    @Override
+    public Set<Class<? extends PackageDescriptor>> getDependencies() {
+{% if package.imports %}
+        return ImmutableSet.<Class<? extends PackageDescriptor>>of(
+            {% for import_type in package.imports -%}
+                {% if not loop.first %}, {% endif %}{{ import_type }}.class
+            {%- endfor %});
+{% else %}
+        return ImmutableSet.of();
+{% endif %}
+    }
+
+    @Override
+    public Map<Class<?>, DataTypeDescriptor> getDefinitions() {
+        return definitions;
+    }
+
+{% for definition in package.definitions %}
+    public {{ definition.descriptor.type.full_wo_args }} get{{ definition.name }}() {
+        return this.{{ definition.name }};
+    }
+{% endfor %}
+
+    @Override
+    public void link(final DescriptorPool pool) {
+        // Do nothing.
+    }
+}

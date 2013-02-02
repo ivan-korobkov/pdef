@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+#encoding: utf-8
+import argparse
+import logging
+from pdef.compiler import Compiler
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+    parser.add_argument("--debug", help="enable debug output", action="store_true", default=False)
+    parser.add_argument("--java_out", help="output directory for java files", required=True)
+    parser.add_argument("dir", help="directories to scan for pdef files", nargs="+")
+    args = parser.parse_args()
+
+    level = logging.DEBUG if args.verbose or args.debug else logging.INFO
+    logging.basicConfig(format='%(message)s', level=level)
+
+    compiler = Compiler(dirs=args.dir, outdir=args.java_out, debug=args.debug)
+    compiler.compile()
+
+
+if __name__ == '__main__':
+    main()

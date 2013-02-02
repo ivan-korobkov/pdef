@@ -1,0 +1,13 @@
+Pdef
+====
+Stands for protocol definition, provides a language-agnostic syntax 
+to define interfaces and data structures, and a python-based compiler.
+
+Installation
+============
+cd python
+python setup.py install
+
+cd java
+mvn install
+

@@ -1,0 +1,65 @@
+package com.zumla.test;
+import http.responses as http;
+
+
+enum Type {
+    OBJECT,
+    USER,
+    PHOTO,
+    COMMENT,
+    EVENT,
+    LIKE;
+}
+
+message MyResponse extends http.HttpResponse {
+
+}
+
+message Id {
+    options [type_field: "type"];
+
+    Type type [value: "Type.OBJECT"];
+}
+
+message Entity {
+    Type type;
+}
+
+message CommentId extends Id {
+    Type type [value: "Type.COMMENT"];
+    int64 value;
+}
+
+message UserId extends Id {
+    Type type [value: "Type.USER"];
+    int64 value;
+}
+
+message User extends Entity {
+    string name;
+    int64 age;
+    Profile profile;
+}
+
+message Profile {
+    string firstName;
+    string lastName;
+    List<string> aliases;
+}
+
+enum Sex {
+    MALE,
+    FEMALE;
+}
+
+enum EventType {
+    GENERIC;
+}
+
+message EventId extends Id {
+    Type type [value: "Type.EVENT"];
+}
+
+message Event extends Entity as EventType.Generic {
+    EventType event_type [value: "EventType.GENERIC"];
+}

@@ -1,0 +1,282 @@
+package {{ package.name }};
+
+import com.google.common.base.Defaults;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
+import com.ivankorobkov.pdef.Pdef;
+import com.ivankorobkov.pdef.data.AbstractMessage;
+import com.ivankorobkov.pdef.data.AbstractMessageDescriptor;
+import com.ivankorobkov.pdef.data.Message;
+import com.ivankorobkov.pdef.data.MessageField;
+import com.ivankorobkov.pdef.data.MessageFieldAccessor;
+
+
+import java.lang.reflect.TypeVariable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class {{ message.type.local }} {% if message.base %}extends {{ message.base }}{% else -%}
+        extends AbstractMessage{%- endif %} {
+
+{% for field in message.declared_fields %}
+{% if field.is_subtype_field %}
+{% elif field.read_only %}
+    protected {{ field.type }} {{ field.name }};
+{% else %}
+    private {{ field.type }} {{ field.name }};
+{% endif %}
+{% endfor %}
+
+    public {{ message.type.name }}() {
+{% for field in message.declared_fields %}
+{% if field.read_only %}
+        this.{{ field.set }}({{ field.value }});
+{% endif %}
+{% endfor %}
+    }
+
+    public {{ message.type.name }}(final {{ message.type.local }} prototype) {
+        this();
+        mergeFrom(prototype);
+    }
+
+    // Declared fields
+{% for field in message.declared_fields %}
+{% if not field.is_subtype_field %}
+    // {{ field.name }}
+    public {{ field.type }} {{ field.get }}() {
+        return {{ field.name }};
+    }
+
+    public boolean {{ field.has }}() {
+        return this._fields_bitset.get({{ field.index }});
+    }
+    public {{ message.type.local }} {{ field.set }}(final {{ field.type }} value) {
+        this.{{ field.name }} = value;
+        this._fields_bitset.set({{ field.index }});
+        return this;
+    }
+
+    public {{ message.type.local }} {{ field.clear }}() {
+{% if field.type.primitive %}
+        this.{{ field.name }} = Defaults.defaultValue({{ field.type }}.class);
+{% else %}
+        this.{{ field.name }} = null;
+{% endif %}
+        this._fields_bitset.clear({{ field.index }});
+        return this;
+    }
+{% endif %}
+{% endfor %}
+
+    // Inherited fields
+{% for field in message.inherited_fields %}
+{% if not field.is_type_field %}
+
+    // {{ field.name }}
+    public {{ message.type.local }} {{ field.set }}(final {{ field.type }} value) {
+        super.{{ field.set }}(value);
+        return this;
+    }
+
+    public {{ message.type.local }} {{ field.clear }}() {
+        super.{{ field.clear }}();
+        return this;
+    }
+{% endif %}
+{% endfor %}
+
+    @Override
+    public Descriptor getDescriptor() {
+        return Descriptor.getInstance();
+    }
+
+    @Override
+    public {{ message.type.local }} deepCopy() {
+        return ({{ message.type.local }}) super.deepCopy();
+    }
+
+    @Override
+    public {{ message.type.local }} mergeFrom(Message other) {
+        super.mergeFrom(other);
+        return this;
+    }
+
+{# Descriptor implementation #}
+    public static class Descriptor{{ message.type.vars }} extends {% if message.base -%}
+            {{ message.base.full_wo_args }}.Descriptor{{ message.base.args }}{% else %}AbstractMessageDescriptor{% endif %} {
+        public static Descriptor getInstance() {
+            return {{ package.type }}.getInstance().get{{ message.name }}();
+        }
+
+{% for fd in descriptor.field_descriptors %}
+{% if not fd.field.is_subtype_field %}
+        private final MessageField {{ fd.name }};
+{% endif %}
+{% endfor %}
+        private final List<MessageField> fields;
+        private final List<MessageField> declaredMessageFields;
+
+        private final boolean typeBase;
+        private final MessageField typeBaseMessageField;
+        private final Map<Enum<?>, TypeToken<?>> subtypeTokenMap;
+
+        Descriptor() {
+            this(new TypeToken<{{ message.type.local }}>() {}, Pdef.classVariablesAsMap(Descriptor.class));
+        }
+
+        protected Descriptor(final TypeToken<?> type, final Map<TypeVariable<?>, TypeToken<?>> argMap) {
+            super(type, argMap);
+
+{% for fd in descriptor.field_descriptors %}
+{% if fd.field.type.generic %}
+            this.{{ fd.name }} = new MessageField("{{ fd.field.name }}",
+                    {% if fd.field.read_only %}true{% else %}false{% endif %},
+                    {% if fd.field.line_format %}true{% else %}false{% endif %},
+                    Pdef.parameterizeType(new TypeToken<{{ fd.field.type }}>(getClass()) {}, argMap),
+{% else %}
+            this.{{ fd.name }} = new MessageField("{{ fd.field.name }}",
+                    {% if fd.field.read_only %}true{% else %}false{% endif %},
+                    {% if fd.field.line_format %}true{% else %}false{% endif %},
+                    TypeToken.of({{ fd.field.type }}.class),
+{% endif %}
+{% set field=fd.field %}
+                    new MessageFieldAccessor() {
+                        @Override
+                        public Object get(final Message message) {
+{% if message.type.generic %}
+                            @SuppressWarnings("unchecked")
+{% endif %}
+                            {{ message.type.local }} object = (({{ message.type.local }})message);
+                            return object.{{ field.get }}();
+                        }
+
+                        @Override
+                        public boolean isSetIn(final Message message) {
+{% if message.type.generic %}
+                            @SuppressWarnings("unchecked")
+{% endif %}
+                            {{ message.type.local }} object = (({{ message.type.local }})message);
+                            return object.{{ field.has }}();
+                        }
+
+                        @Override
+                        public void set(final Message message, final Object value) {
+{% if field.read_only %}
+                                throw new UnsupportedOperationException(this + " is a read-only field");
+{% else %}
+{% if message.type.generic %}
+                            @SuppressWarnings("unchecked")
+{% endif %}
+                            {{ message.type.local }} object = (({{ message.type.local }})message);
+                            if (value == null) {
+                                object.{{ field.clear }}();
+                                return;
+                            }
+{# Cast to full specially for the primitives #}
+                            {{ field.type }} cast = ({{ field.type.full }}) value;
+                            object.{{ field.set }}(cast);
+{% endif %}
+                        }
+
+                        @Override
+                        public void clear(final Message message) {
+{% if field.read_only %}
+                                throw new UnsupportedOperationException(this + " is a read-only type field");
+{% else %}
+{% if message.type.generic %}
+                            @SuppressWarnings("unchecked")
+{% endif %}
+                            {{ message.type.local }} object = (({{ message.type.local }})message);
+                            object.{{ field.clear }}();
+{% endif %}
+                        }
+                    });
+{% endfor %}
+
+{% if descriptor.field_descriptors %}
+            this.declaredMessageFields = ImmutableList.<MessageField>of({% for fd in descriptor.field_descriptors -%}
+                    {% if not loop.first %}, {% endif %}{{ fd.name }}
+                {%- endfor %});
+{% else %}
+            this.declaredMessageFields = ImmutableList.of();
+{% endif %}
+            this.fields = ImmutableList.<MessageField>builder()
+                    .addAll(super.getFields())
+                    .addAll(declaredMessageFields)
+                    .build();
+
+{% if message.is_type_base %}
+            this.typeBase = true;
+            this.typeBaseMessageField = this.{{ descriptor.type_base_field_descriptor.name }};
+            this.subtypeTokenMap = ImmutableMap.<Enum<?>, TypeToken<?>>builder()
+{% for enum_value, subtype in message.subtype_map.items() %}
+                    .put({{ enum_value }}, TypeToken.of({{ subtype }}.class))
+{% endfor %}
+                    .build();
+{% else %}
+            this.typeBase = false;
+            this.typeBaseMessageField = null;
+            this.subtypeTokenMap = ImmutableMap.of();
+{% endif %}
+        }
+
+        @Override
+        public String getName() {
+            return "{{ message.name }}";
+        }
+
+        @Override
+        public {{ message.type.local }} createInstance() {
+            return new {{ message.type.local }}();
+        }
+
+        @Override
+        public boolean isLineFormat() {
+            return {% if message.line_format %}true{% else %}false{% endif %};
+        }
+
+        @Override
+        public List<MessageField> getFields() {
+            return fields;
+        }
+
+        @Override
+        public List<MessageField> getDeclaredFields() {
+            return declaredMessageFields;
+        }
+
+        @Override
+        public boolean isTypeBase() {
+            return typeBase;
+        }
+
+        @Override
+        public MessageField getTypeBaseField() {
+            return typeBaseMessageField;
+        }
+
+        @Override
+        public Map<Enum<?>, TypeToken<?>> getSubtypeTokenMap() {
+            return subtypeTokenMap;
+        }
+
+        @Override
+        protected Descriptor parameterize(final TypeToken<?> ptype,
+                final Map<TypeVariable<?>, TypeToken<?>> args) {
+{% if message.variables %}
+            return new {{ descriptor.type.local }}(ptype, args);
+{% else %}
+            return this;
+{% endif %}
+        }
+
+{% for fd in descriptor.field_descriptors %}
+        public MessageField {{ fd.get }}() {
+            return this.{{ fd.name }};
+        }
+{% endfor %}
+    }
+}

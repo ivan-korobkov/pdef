@@ -1,0 +1,26 @@
+package {{ package.name }};
+
+import com.ivankorobkov.pdef.data.EnumType;
+import com.ivankorobkov.pdef.data.EnumDescriptor;
+
+public enum {{ enum.type.local }} implements EnumType<{{ enum.type.local }}> {
+{% for value in enum.values %}
+    {{ value }}{% if not loop.last and loop.length > 1 %},{% else %};{% endif %}
+
+{% endfor %}
+
+    @Override
+    public Descriptor getDescriptor() {
+        return Descriptor.getInstance();
+    }
+
+    public static final class Descriptor extends EnumDescriptor<{{ enum.type.local }}> {
+        public static Descriptor getInstance() {
+            return {{ package.type }}.getInstance().get{{ enum.name }}();
+        }
+
+        public Descriptor() {
+            super({{ enum.type.local }}.class);
+        }
+    }
+}

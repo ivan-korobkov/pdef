@@ -232,9 +232,9 @@ class GrammarRules(object):
     # Single message field
     def p_field(self, t):
         '''
-        field : type IDENTIFIER field_options SEMI
+        field : IDENTIFIER type field_options SEMI
         '''
-        t[0] = ast.Field(t[2], type=t[1], options_kv_tuple=t[3])
+        t[0] = ast.Field(t[1], type=t[2], options_kv_tuple=t[3])
 
     # Optional field options: {}
     def p_field_options(self, t):

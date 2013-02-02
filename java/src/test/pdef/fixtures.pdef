@@ -8,38 +8,38 @@ enum ObjectType {
 message Id {
     options [type_field: "type", format: "line"];
 
-    ObjectType type [value: "ObjectType.OBJECT"];
+    type ObjectType [value: "ObjectType.OBJECT"];
 }
 
 message UserId extends Id {
     options [format: "line"];
 
-    ObjectType type [value: "ObjectType.USER"];
-    int64 value;
+    type        ObjectType [value: "ObjectType.USER"];
+    value       int64;
 }
 
 message User {
-    UserId id;
-    string name;
-    int32 age;
-    Sex sex;
-    Profile profile;
-    Map<string, float> floats;
+    id          UserId;
+    name        string;
+    age         int32;
+    sex         Sex;
+    profile     Profile;
+    floats      Map<string, float>;
 }
 
 message Profile {
-    string firstName;
-    string lastName;
-    Birthday birthday;
-    int64 avatar;
-    int64 wallpaper;
+    firstName   string;
+    lastName    string;
+    birthday    Birthday;
+    avatar      int64;
+    wallpaper   int64;
 
-    Language preferedLanguage;
+    preferedLanguage Language;
 
-	string telephone;
-	string info;
+	telephone   string;
+	info        string;
 
-    bool complete;
+    complete    bool;
 }
 
 enum Sex {
@@ -54,23 +54,23 @@ enum Language {
 message Birthday {
     options [format: "line"];
 
-    int32 year;
-    int32 month;
-    int32 day;
+    year    int32;
+    month   int32;
+    day     int32;
 }
 
 message Weighted<E, W> {
-    E element;
-    W weight;
+    element E;
+    weight  W;
 }
 
 message WeightedSet<E, W> {
-    Set<Weighted<E, W>> elements;
+    elements Set<Weighted<E, W>>;
 }
 
 message TimeSet<E> extends WeightedSet<E, int64> {
 }
 
 message Chat {
-    TimeSet<Birthday> messages;
+    messages TimeSet<Birthday>;
 }

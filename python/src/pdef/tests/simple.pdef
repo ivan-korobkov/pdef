@@ -17,34 +17,33 @@ message MyResponse extends http.HttpResponse {
 
 message Id {
     options [type_field: "type"];
-
-    Type type [value: "Type.OBJECT"];
+    type Type [value: "Type.OBJECT"];
 }
 
 message Entity {
-    Type type;
+    type Type;
 }
 
 message CommentId extends Id {
-    Type type [value: "Type.COMMENT"];
-    int64 value;
+    type    Type [value: "Type.COMMENT"];
+    value   int64;
 }
 
 message UserId extends Id {
-    Type type [value: "Type.USER"];
-    int64 value;
+    type    Type [value: "Type.USER"];
+    value   int64;
 }
 
 message User extends Entity {
-    string name;
-    int64 age;
-    Profile profile;
+    name    string;
+    age     int64;
+    profile Profile;
 }
 
 message Profile {
-    string firstName;
-    string lastName;
-    List<string> aliases;
+    firstName   string;
+    lastName    string;
+    aliases     List<string>;
 }
 
 enum Sex {
@@ -57,9 +56,5 @@ enum EventType {
 }
 
 message EventId extends Id {
-    Type type [value: "Type.EVENT"];
-}
-
-message Event extends Entity as EventType.Generic {
-    EventType event_type [value: "EventType.GENERIC"];
+    type Type [value: "Type.EVENT"];
 }

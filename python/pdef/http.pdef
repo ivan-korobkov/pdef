@@ -1,6 +1,0 @@
-package http.responses;
-
-
-message HttpResponse {
-
-}

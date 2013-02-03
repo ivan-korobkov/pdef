@@ -1,8 +1,30 @@
 # encoding: utf-8
 import logging
 
-from pdef import ast
 from pdef.preconditions import *
+
+
+class ListMap(list):
+
+    def __init__(self, items=None, attr='name', duplicates=None):
+        items = items if items else []
+        super(ListMap, self).__init__(items)
+
+        self.map = {}
+        for item in items:
+            val = getattr(item, attr)
+            if val not in self.map:
+                self.map[val] = item
+                continue
+
+            if duplicates:
+                duplicates.append(val)
+            else:
+                raise ValueError('Duplicate item "%s"' % val)
+
+
+class Format(object):
+    LINE = "line"
 
 
 class Pool(object):
@@ -77,25 +99,17 @@ class Options(object):
 
 
 class Node(object):
-    def __init__(self, name, parent):
+    def __init__(self, name):
         self.name = name
-        self.parent = parent
+        self.parent = None
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.simple_repr)
+        return '<%s %s>' % (self.__class__.__name__, self.fullname)
 
     @property
-    def pool(self):
-        return self.parent.pool
-
-    @property
-    def fullpath(self):
-        if not self.parent:
-            return self.simple_repr
-        return '%s.%s' % (self.parent.fullpath, self.name)
-
-    @property
-    def simple_repr(self):
+    def fullname(self):
+        if self.parent:
+            return '%s.%s' % (self.parent.fullname, self.name)
         return self.name
 
     def symbol(self, name):
@@ -110,49 +124,25 @@ class Node(object):
 
 
 class Package(Node):
-    @classmethod
-    def from_node(cls, node, pool):
-        check_isinstance(node, ast.Package)
-        package = Package(node.name, pool)
+    def __init__(self, name, imports=None, definitions=None):
+        super(Package, self).__init__(name)
 
-        import_aliases = set()
-        for inode in node.imports:
-            ref = ImportRef.from_node(inode, package)
-            if ref.alias in import_aliases:
-                ref.error('Duplicate import')
-                continue
+        self.imports = ListMap(imports) if imports else []
+        self.definitions = ListMap(definitions) if definitions else []
+        self.pool = None
 
-            package.importrefs.append(ref)
-            import_aliases.add(ref.alias)
+    def link(self):
+        linked = []
+        for ref in self.imports:
+            linked.append(ref.link())
+        self.imports = ListMap(linked)
 
-        for dnode in node.definitions:
-            definition = TypeDefinition.from_node(dnode, package)
-            if definition.name in package.definition_map:
-                definition.error('Duplicate definition')
-                continue
+        linked = []
+        for definition in self.definitions:
+            linked.append(definition.link())
+        self.definitions = ListMap(linked)
 
-            package.definitions.append(definition)
-            package.definition_map[definition.name] = definition
-
-        return package
-
-    def __init__(self, name, pool):
-        super(Package, self).__init__(name, None)
-        self._pool = pool
-        self.importrefs = []
-        self.definitions = []
-
-        # Set when linked
-        self.imports = []
-        self.import_map = {}
-        self.definition_map = {}
-
-    def __repr__(self):
-        return "<Package %s>" % self.name
-
-    @property
-    def pool(self):
-        return self._pool
+        return self
 
     def symbol(self, name):
         if '.' in name:
@@ -163,96 +153,39 @@ class Package(Node):
             # a.b.c.D = > a.b.c is the package, D is the type.
             package_name, type_name = name.rsplit(".", 1)
 
-            if package_name not in self.import_map:
+            if package_name not in self.imports.map:
                 self.error('%s: type not found %s', self, name)
                 return
 
-            imported = self.import_map[package_name]
+            imported = self.imports.map[package_name]
             if type_name not in imported.definition_map:
                 self.error('%s: type not found %s', self, name)
                 return
 
             return imported.definition_map[type_name]
 
-        if name in self.definition_map:
-            return self.definition_map[name]
+        if name in self.definitions.map:
+            return self.definitions.map[name]
 
         # It can be a builtin type.
         for builtin in self.pool.builtins:
             if name in builtin.definition_map:
                 return builtin.definition_map[name]
 
-    def link(self):
-        for ref in self.importrefs:
-            alias = ref.alias if ref.alias else ref.name
-            if alias in self.import_map:
-                self.error('%s: duplicate import %s', self, alias)
-                continue
-
-            imported = self.pool.package_map.get(ref.name)
-            if imported:
-                self.imports.append(imported)
-                self.import_map[alias] = imported
-
-            else:
-                self.error('%s: import not found %s', self, ref.name)
-
-        for definition in self.definitions:
-            definition.link()
-
-        return self
-
 
 class ImportRef(Node):
-    @classmethod
-    def from_node(cls, node, package):
-        alias = node.alias if node.alias else node.name
-        return ImportRef(node.name, alias, package)
-
-    def __init__(self, name, alias, package):
-        super(ImportRef, self).__init__(name, package)
+    def __init__(self, name, alias):
+        super(ImportRef, self).__init__(name)
         self.alias = check_not_none(alias)
 
 
-class TypeDefinition(Node):
-    @classmethod
-    def from_node(cls, node, package):
-        from pdef.lang.datatypes import Native, Enum, Message
+class Definition(Node):
+    def __init__(self, name, variables=None):
+        super(Definition, self).__init__(name)
 
-        if isinstance(node, ast.Native):
-            return Native.from_node(node, package)
-        elif isinstance(node, ast.Enum):
-            return Enum.from_node(node, package)
-        elif isinstance(node, ast.Message):
-            return Message.from_node(node, package)
-        else:
-            package.error('Unsupported definition node %s', node)
-
-    def __init__(self, name, package):
-        super(TypeDefinition, self).__init__(name, package)
-        self.package = package
-
-        self.arguments = []
-        self.variables = []
-        self.variable_map = {} # {var_name, var}, present only in a definition.
-        self.options = Options()
-
+        self.variables = ListMap(variables) if variables else []
         self.rawtype = self
         self.specials = {}
-
-    @property
-    def simple_repr(self):
-        if self.rawtype != self:
-            # It's a specialization
-            return "@%s<%s>" % (self.name, ', '.join(var.simple_repr for var in self.arguments))
-        elif self.variables:
-            # It's a declartion
-            return "%s<%s>" % (self.name, ', '.join(var.simple_repr for var in self.arguments))
-        return self.name
-
-    @property
-    def line_format(self):
-        return self.options.format == Format.LINE
 
     def link(self):
         return self
@@ -260,20 +193,20 @@ class TypeDefinition(Node):
     def special(self, arg_map, pool):
         # Mind that some args can be partially specialized.
 
-        if not self.arguments:
+        if not self.variables:
             # The type is a generic class, but it has not arguments.
             return self
 
         # Recursively specialize all arguments.
-        sargs = []
-        for arg in self.arguments:
-            sarg = arg.special(arg_map, pool)
-            sargs.append(sarg)
-        sargs = tuple(sargs)
+        svars = []
+        for var in self.variables:
+            sarg = var.special(arg_map, pool)
+            svars.append(sarg)
+        svars = tuple(svars)
 
         # Construct a tuple specialization key.
         # It is possible, there is already a specialization of the rawtype with such arguments.
-        key = (self.rawtype, sargs)
+        key = (self.rawtype, svars)
         if key in self.specials:
             return self.specials[key]
 
@@ -281,7 +214,7 @@ class TypeDefinition(Node):
         rawtype = self.rawtype
         special = self.__class__(self.name, self.parent)
         special.rawtype = rawtype
-        special.arguments = sargs
+        special.arguments = svars
 
         self.specials[key] = special
         pool.enqueue_special(special)
@@ -292,26 +225,10 @@ class TypeDefinition(Node):
         raise NotImplementedError
 
 
-
 class TypeRef(Node):
-    @classmethod
-    def from_node(cls, node, parent):
-        ref = TypeRef(node.name, parent)
-        ref.argrefs = [TypeRef.from_node(anode, ref) for anode in node.args]
-        return ref
-
-    def __init__(self, name, parent):
-        super(TypeRef, self).__init__(name, parent)
-        self.argrefs = []
-
-        self.type = None
-
-    @property
-    def simple_repr(self):
-        if not self.argrefs:
-            return self.name
-
-        return '%s<%s>' % (self.name, ', '.join(arg.simple_repr for arg in self.argrefs))
+    def __init__(self, name, args=None):
+        super(TypeRef, self).__init__(name)
+        self.args = list(args) if args else []
 
     def link(self):
         # Find the rawtype by its name, for example: MyType, package.AnotherType, T (variable).
@@ -326,12 +243,12 @@ class TypeRef(Node):
             return self.type
 
         # Link the argument references and create a specialization of the rawtype.
-        if len(self.argrefs) != len(rawtype.variables):
+        if len(self.args) != len(rawtype.variables):
             self.error('%s: wrong number of generic arguments', self)
             return
 
         arg_map = {}
-        for (var, argref) in zip(rawtype.variables, self.argrefs):
+        for (var, argref) in zip(rawtype.variables, self.args):
             arg = argref.link()
             if not arg:
                 # An error occurred.
@@ -340,27 +257,10 @@ class TypeRef(Node):
             arg = argref.type
             arg_map[var] = arg
 
-        self.type = rawtype.special(arg_map, self.pool)
-        return self.type
+        return rawtype.special(arg_map, self.pool)
 
 
-class Variable(TypeDefinition):
-    def __eq__(self, other):
-        if not isinstance(other, Variable):
-            return False
-
-        return self.name == other.name and self.parent == other.parent
-
-    def __hash__( self ):
-        r = 1
-        r = r * 31 + hash(self.name)
-        r = r * 31 + hash(self.parent)
-        return int(r)
-
+class Variable(Node):
     def special(self, arg_map, pool):
         # The variable must be in the map itself.
         return arg_map.get(self)
-
-
-class Format(object):
-    LINE = "line"

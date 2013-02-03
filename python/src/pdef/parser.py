@@ -3,7 +3,7 @@ import logging
 import ply.lex as lex
 import ply.yacc as yacc
 
-from pdef import ast
+from pdef import lang
 
 
 class Tokens(object):
@@ -76,7 +76,10 @@ class GrammarRules(object):
         '''
         package : package_name imports definitions
         '''
-        t[0] = ast.Package(t[1], imports=t[2], definitions=t[3])
+        name = t[1]
+        imports = t[2]
+        definitions = t[3]
+        t[0] = lang.Package(name, imports=imports, definitions=definitions)
 
     # Empty token to support optional values.
     def p_empty(self, t):
@@ -107,10 +110,9 @@ class GrammarRules(object):
         import : IMPORT IDENTIFIER AS IDENTIFIER SEMI
                | IMPORT IDENTIFIER SEMI
         '''
-        if len(t) == 4:
-            t[0] = ast.Import(t[2])
-        else:
-            t[0] = ast.Import(t[2], alias=t[4])
+        name = t[2]
+        alias = name if len(t) == 4 else t[4]
+        t[0] = lang.ImportRef(name, alias)
 
     # Data dict fields: k: v, k1: v2
     def p_data_fields(self, t):
@@ -134,8 +136,9 @@ class GrammarRules(object):
         type : IDENTIFIER LESS types GREATER
              | IDENTIFIER
         '''
+        name = t[1]
         args = [] if len(t) == 2 else t[3]
-        t[0] = ast.Type(t[1], args=args)
+        t[0] = lang.TypeRef(name, args=args)
 
     # List of generic arguments.
     def p_types(self, t):
@@ -167,14 +170,17 @@ class GrammarRules(object):
         '''
         native : NATIVE IDENTIFIER variables LBRACE data_fields RBRACE
         '''
-        t[0] = ast.Native(t[2], variables=t[3], options_kv_tuple=t[5])
+        name = t[2]
+        variables = t[3]
+        options = t[5]
+        t[0] = lang.Native(name, variables=variables, options=options)
 
     # Enum definition.
     def p_enum(self, t):
         '''
         enum : ENUM IDENTIFIER LBRACE enum_values SEMI RBRACE
         '''
-        t[0] = ast.Enum(t[2], values=t[4])
+        t[0] = lang.Enum(t[2], values=t[4])
 
     # List of enum values.
     def p_enum_values(self, t):
@@ -196,7 +202,13 @@ class GrammarRules(object):
         '''
         message : MESSAGE IDENTIFIER variables base LBRACE message_options fields RBRACE
         '''
-        t[0] = ast.Message(t[2], variables=t[3], base=t[4], fields=t[7], options_kv_tuple=t[6])
+        name = t[2]
+        variables = t[3]
+        base = t[4]
+        fields = t[7]
+        # TODO: Message options
+        options = t[6]
+        t[0] = lang.Message(name, variables=variables, base=base, declared_fields=fields)
 
     # Message options: options [];
     def p_message_options(self, t):
@@ -234,7 +246,8 @@ class GrammarRules(object):
         '''
         field : IDENTIFIER type field_options SEMI
         '''
-        t[0] = ast.Field(t[1], type=t[2], options_kv_tuple=t[3])
+        # TODO: Field options
+        t[0] = lang.Field(t[1], type=t[2])
 
     # Optional field options: {}
     def p_field_options(self, t):
@@ -268,7 +281,7 @@ class GrammarRules(object):
         '''
         variable : IDENTIFIER
         '''
-        t[0] = t[1]
+        t[0] = lang.Variable(t[1])
 
     # Base message
     def p_base(self, t):
@@ -277,7 +290,7 @@ class GrammarRules(object):
              | empty
         '''
         if len(t) == 2:
-            t[0] = []
+            t[0] = None
         else:
             t[0] = t[2]
 

@@ -7,34 +7,34 @@ class Test(unittest.TestCase):
     def test(self):
         int32 = Native('int32')
         string = Native('string')
-        List = Native('List', [Variable('E')])
-        builtin_types = Module('pdef.types', definitions=[
-            int32, string, List
-        ])
+        List = Native('List')
+        List.add_variables(Variable('E'))
+
+        builtin_types = Module('pdef.types')
+        builtin_types.add_definitions(int32, string, List)
 
         builtin = Package('pdef', None)
-        builtin.add_module(builtin_types)
+        builtin.add_modules(builtin_types)
 
-        msg = Message('Message1', declared_fields=[
-            Field('int', Reference('int32')),
-            Field('str', Reference('string')),
-            Field('list', Reference('List', [Reference('string')])),
-            Field('msg2', Reference('module2.Message2'))
-        ])
-        module1 = Module('test.module1',
-            imports=[Import('test.module2', 'module2')],
-            definitions=[msg])
+        msg = Message('Message1')
+        msg.add_fields(Field('int', Reference('int32')))
+        msg.add_fields(Field('str', Reference('string')))
+        msg.add_fields(Field('list', Reference('List', Reference('string'))))
+        msg.add_fields(Field('msg2', Reference('module2.Message2')))
+
+        module1 = Module('test.module1')
+        module1.add_imports(ModuleReference('test.module2', 'module2'))
+        module1.add_definitions(msg)
 
         msg2 = Message('Message2', declared_fields=[
             Field('circular', Reference('test.module1.Message1'))
         ])
         module2 = Module('test.module2',
-            imports=[Import('test.module1')],
+            imports=[ModuleReference('test.module1')],
             definitions=[msg2])
 
-        pkg = Package('test', builtin=builtin)
-        pkg.add_module(module1)
-        pkg.add_module(module2)
+        pkg = Package('test', builtin)
+        pkg.add_modules(module1, module2)
         pkg.link()
 
         msg_fields = msg.declared_fields
@@ -42,55 +42,177 @@ class Test(unittest.TestCase):
         assert msg_fields['str'].type == string
         assert msg_fields['msg2'].type == msg2
         assert msg_fields['list'].type.declaration == List
-        assert msg_fields['list'].type.variables.values() == [string]
+        assert list(msg_fields['list'].type.variables) == [string]
 
         msg2_fields = msg2.declared_fields
         assert msg2_fields['circular'].type == msg
 
 
-class TestImport(unittest.TestCase):
+class TestPackage(unittest.TestCase):
+    def test_symbol(self):
+        '''Should look up a symbol in a builtin package.'''
+        int32 = Native('int32')
+        builtin = Package('builtin')
+        builtin.add_modules(Module('builtin.types', definitions=[int32]))
+
+        pkg = Package('test', builtin)
+        symbol = pkg.symbol('int32')
+        assert symbol is int32
+
+
+class TestModule(unittest.TestCase):
+    def test_symbol_from_definitions(self):
+        '''Should look up a symbol in the module's definitions.'''
+        int32 = Native('int32')
+        module = Module('test')
+        module.add_definitions(int32)
+
+        symbol = module.symbol('int32')
+        assert symbol is int32
+
+    def test_symbol_from_imports(self):
+        '''Should look up a symbol in the module's imports definitions.'''
+        int32 = Native('int32')
+        imported = Module('imported')
+        imported.add_definitions(int32)
+
+        module = Module('with_import')
+        module.add_imports(imported)
+
+        symbol = module.symbol('imported.int32')
+        assert symbol is int32
+
+    def test_link_imports(self):
+        '''Should replace the import references, and link the modules.'''
+        module1 = Module('module1')
+        module2 = Module('module2')
+
+        module3 = Module('module3')
+        module3.add_imports(module1, ModuleReference('module2'))
+
+        pkg = Package('test')
+        pkg.add_modules(module1, module2, module3)
+
+        module3.link()
+        assert list(module3.imports) == [module1, module2]
+
+
+class TestModuleReference(unittest.TestCase):
     def test_link(self):
+        '''Should look up and return a module.'''
         module = Module('package.module')
         package = Package('package')
-        package.add_module(module)
+        package.add_modules(module)
 
-        imp = Import('package.module', 'module')
+        imp = ModuleReference('package.module', 'module')
         imp.parent = module
 
         linked = imp.link()
         assert linked == module
 
 
-class TestField(unittest.TestCase):
-    def test_link(self):
-        '''Should replace the field's type with a linked one.'''
-        class SimpleType(Type):
-            def link(self):
-                return 'linked'
+class TestReference(unittest.TestCase):
+    def test_link_rawtype(self):
+        '''Should look up a raw type when linking.'''
+        int32 = Native('int32')
+        module = Module('test')
+        module.add_definitions(int32)
 
-        field = Field('myfield', SimpleType('simple'))
-        linked_field = field.link()
-        assert field is linked_field
-        assert field.type == 'linked'
+        ref = Reference('int32')
+        ref.parent = module
+        symbol = ref.link()
+        assert symbol is int32
+
+    def test_link_not_found(self):
+        '''Should add a type not found error.'''
+        module = Module('test')
+        ref = Reference('not_found')
+        ref.parent = module
+
+        symbol = ref.link()
+        assert symbol is None
+        assert len(module.errors) == 1
+
+    def test_link_wrong_number_of_args(self):
+        '''Should add a wrong number of arguments error.'''
+        List = Native('List')
+        List.add_variables(Variable('T'))
+
+        module = Module('test')
+        module.add_definitions(List)
+
+        ref = Reference('List')
+        ref.parent = module
+        ref.add_args(Reference('K'), Reference('V'))
+
+        symbol = ref.link()
+        assert symbol is None
+        assert len(module.errors) == 1
+        assert module.errors[0].endswith('wrong number of generic arguments')
+
+    def test_link_recursive(self):
+        '''Should recursively link the arguments.'''
+        int32 = Native('int32')
+        string = Native('string')
+
+        # List<T>
+        List = Native('List')
+        List.add_variables(Variable('T'))
+
+        # Map<K, V>
+        Map = Native('Map')
+        Map.add_variables(Variable('K'), Variable('V'))
+
+        module = Module('test')
+        module.add_definitions(int32, string, List, Map)
+
+        ref = Reference('Map')
+        ref.parent = module
+        ref.add_args(Reference('int32'))
+        ref.add_args(Reference('List', Reference('string')))
+
+        # Reference Map<int32, List<string>>
+        symbol = ref.link()
+        assert symbol.declaration is Map
+
+        vars = list(symbol.variables)
+        assert len(vars) == 2
+        assert vars[0] is int32
+
+        special_list = vars[1]
+        assert special_list.declaration is List
+        assert len(special_list.variables) == 1
+        assert list(special_list.variables)[0] is string
+
+
+class TestMessage(unittest.TestCase):
+    def test_link(self):
+        '''Should link the declared message fields.'''
+        msg = Message('Message')
+        msg.add_fields(Field('field', Reference('Message2')))
+
+        msg2 = Message('Message2')
+        msg2.add_fields(Field('field', Reference('Message')))
+
+        module = Module('test')
+        module.add_definitions(msg, msg2)
+        module.link()
+
+        assert msg.declared_fields['field'].type == msg2;
+        assert msg2.declared_fields['field'].type == msg;
+
+    def test_link_variables(self):
+        '''Should link the fields to message variables.'''
+        # Message<T>
+        t = Variable('T')
+        field = Field('field', Reference('T'))
+        msg = Message('Message')
+        msg.add_variables(t)
+        msg.add_fields(field)
+        msg.link()
+
+        assert field.type is t
+
 
     def test_create_special(self):
-        '''Should return a new field with a specialized type.'''
-        special = Type('special')
-        class GenericType(Type):
-            def special(self, arg_map):
-                return special
-
-        field = Field('field', GenericType('generic'))
-        sfield = field.create_special(None)
-        assert sfield is not field
-        assert sfield.type == special
-
-    def test_create_special_non_generic(self):
-        '''Should return the same field when the type is not generic.'''
-        class NonGenericType(Type):
-            def special(self, arg_map):
-                return self
-
-        field = Field('field', NonGenericType('nongeneric'))
-        sfield = field.create_special(None)
-        assert field is sfield
+        pass

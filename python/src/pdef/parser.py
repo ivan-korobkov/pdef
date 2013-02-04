@@ -112,7 +112,7 @@ class GrammarRules(object):
         '''
         name = t[2]
         alias = name if len(t) == 4 else t[4]
-        t[0] = lang.Import(name, alias)
+        t[0] = lang.ModuleReference(name, alias)
 
     # Data dict fields: k: v, k1: v2
     def p_data_fields(self, t):

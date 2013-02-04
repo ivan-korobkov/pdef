@@ -13,7 +13,7 @@ class TestParser(unittest.TestCase):
 
     def test_parse_messages(self):
         '''Should parse a test file without errors.'''
-        s = self._read('simple.pdef')
+        s = self._read('messages.pdef')
         parser = Parser()
         result = parser.parse(s)
         assert result

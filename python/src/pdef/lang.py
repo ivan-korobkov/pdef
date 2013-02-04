@@ -1,22 +1,52 @@
 # encoding: utf-8
-from collections import OrderedDict
 import logging
+from pdef.preconditions import *
 
 
-def list_to_map(items, attr='name', on_duplicate=None):
-    d = OrderedDict()
-    for item in items:
-        val = getattr(item, attr)
-        if val not in d:
-            d[val] = item
-            continue
+class SymbolTable(object):
+    @classmethod
+    def from_list(cls, items=None):
+        table = SymbolTable()
+        if not items:
+            return table
+        for item in items:
+            table.add(item)
+        return table
 
-        if on_duplicate:
-            on_duplicate(val)
-        else:
-            raise ValueError('Duplicate item "%s"' % val)
+    @classmethod
+    def from_tuples(cls, kv_tuples=None):
+        table = SymbolTable()
+        if not kv_tuples:
+            return table
+        for k, v in kv_tuples:
+            table.add_with_name(k, v)
+        return table
 
-    return d
+    def __init__(self):
+        self.items = []
+        self.map = {}
+
+    def __iter__(self):
+        return iter(self.items)
+
+    def __len__(self):
+        return len(self.items)
+
+    def __contains__(self, key):
+        return key in self.map
+
+    def __getitem__(self, key):
+        return self.map[key]
+
+    def add(self, item):
+        self.add_with_name(item.name, item)
+
+    def add_with_name(self, name, item):
+        if name in self.map:
+            raise ValueError('Duplicate "%s"' % name)
+
+        self.map[name] = item
+        self.items.append(item)
 
 
 class Node(object):
@@ -38,11 +68,16 @@ class Node(object):
         if self.parent:
             return self.parent.symbol(name)
 
+    def link(self):
+        return self
+
     def error(self, msg, *args):
         msg = '%s: %s' % (self.fullname, msg % args)
         logging.error(msg)
 
         if self.parent:
+            self.parent.errors.append(msg)
+        else:
             self.errors.append(msg)
 
 
@@ -50,55 +85,57 @@ class Package(Node):
     def __init__(self, name, builtin=None):
         super(Package, self).__init__(name)
 
-        self.dependencies = []
-        self.modules = {}
-
-        self.errors = []
+        self.modules = SymbolTable()
         self.builtin = builtin
 
-    def error(self, msg, *args):
-        self.errors.append(msg % args)
-        logging.error(msg, *args)
-
-    def add_module(self, module):
-        if module.name in self.modules:
-            module.error("Duplicate module")
-            return
-
-        self.modules[module.name] = module
-        module.package = self
+    def add_modules(self, *modules):
+        for module in modules:
+            self.modules.add(module)
+            module.parent = self
 
     def link(self):
-        for module in self.modules.values():
+        for module in self.modules:
             module.link()
 
     def symbol(self, name):
         if not self.builtin:
             return
 
-        for module in self.builtin.modules.values():
+        if '.' in name:
+            return
+
+        for module in self.builtin.modules:
             if name in module.definitions:
                 return module.definitions[name]
 
 
 class Module(Node):
-    def __init__(self, name, imports=None, definitions=None, package=None):
+    def __init__(self, name, imports=None, definitions=None):
         super(Module, self).__init__(name)
 
-        self.imports = list_to_map(imports) if imports else {}
-        self.definitions = list_to_map(definitions) if definitions else {}
-        self.package = package
+        self.imports = SymbolTable()
+        self.definitions = SymbolTable()
 
-        for imp in self.imports.values():
-            imp.parent = self
+        if imports:
+            map(self.add_imports, imports)
 
-        for definition in self.definitions.values():
-            definition.parent = self
+        if definitions:
+            map(self.add_definitions, definitions)
+
+    def add_imports(self, *imports):
+        for imp in imports:
+            self.imports.add(imp)
+            if isinstance(imp, ModuleReference):
+                imp.parent = self
+
+    def add_definitions(self, *definitions):
+        for d in definitions:
+            self.definitions.add(d)
+            d.parent = self
 
     def link(self):
-        self.imports = dict((imp.name, imp.link()) for imp in self.imports.values())
-        self.definitions = list_to_map([definition.link()
-                                        for definition in self.definitions.values()])
+        self.imports = SymbolTable.from_tuples((imp.name, imp.link()) for imp in self.imports)
+        map(lambda x: x.link(), self.definitions)
         return self
 
     def symbol(self, name):
@@ -108,47 +145,51 @@ class Module(Node):
 
         elif '.' in name:
             # It's an imported type.
-            # The first part of the name is the package name, the latter is the type name.
+            # The first part of the name is the module name, the latter is the type name.
             # a.b.c.D = > a.b.c is the package, D is the type.
-            package_name, type_name = name.rsplit(".", 1)
+            module_name, type_name = name.rsplit(".", 1)
 
-            if package_name not in self.imports:
+            if module_name not in self.imports:
                 return
 
-            imported = self.imports[package_name]
-            if type_name not in imported.definitions:
+            module = self.imports[module_name]
+            if type_name not in module.definitions:
                 return
 
-            return imported.definitions[type_name]
+            return module.definitions[type_name]
 
         # It can be a builtin type.
-        if not self.package:
+        if not self.parent:
             return
-        gi
-        return self.package.symbol(name)
+
+        return self.parent.symbol(name)
 
 
-class Import(Node):
-    def __init__(self, package_name, name=None):
-        super(Import, self).__init__(name if name else package_name)
-        self.package_name = package_name
+class ModuleReference(Node):
+    def __init__(self, module_name, name=None):
+        super(ModuleReference, self).__init__(name if name else module_name)
+        self.module_name = module_name
 
     def link(self):
         module = self.parent
-        package = module.package
+        package = module.parent
 
-        if self.package_name in package.modules:
-            return package.modules[self.package_name]
+        if self.module_name in package.modules:
+            return package.modules[self.module_name]
 
-        self.error('import not found "%s"', self.package_name)
+        self.error('import not found "%s"', self.module_name)
 
 
 class Reference(Node):
-    def __init__(self, name, args=None):
+    def __init__(self, name, *generic_args):
         super(Reference, self).__init__(name)
-        self.args = list(args) if args else []
+        self.args = []
 
-        for arg in self.args:
+        self.add_args(*generic_args)
+
+    def add_args(self, *args):
+        for arg in args:
+            self.args.append(arg)
             arg.parent = self
 
     def link(self):
@@ -161,7 +202,7 @@ class Reference(Node):
         # Return if the rawtype is not generic.
         if not rawtype.variables:
             self.type = rawtype
-            return self.type
+            return rawtype
 
         # Link the argument references and create a specialization of the rawtype.
         if len(self.args) != len(rawtype.variables):
@@ -169,7 +210,7 @@ class Reference(Node):
             return
 
         arg_map = {}
-        for (var, argref) in zip(rawtype.variables.values(), self.args):
+        for (var, argref) in zip(rawtype.variables, self.args):
             arg = argref.link()
             if not arg:
                 # An error occurred.
@@ -179,33 +220,21 @@ class Reference(Node):
 
         return rawtype.special(arg_map)
 
-    def special(self, arg_map):
-        if not self.args:
-            return self
-
-        sargs = [arg.special(arg_map) for arg in self.args]
-        return Reference(self.name, args=sargs)
-
-
-class Variable(Node):
-    def special(self, arg_map):
-        # The variable must be in the map itself.
-        svar = arg_map.get(self)
-        if svar:
-            return svar
-
-        self.error('variable is not found in the args map')
-
 
 class Type(Node):
     def __init__(self, name, variables=None):
         super(Type, self).__init__(name)
 
         self.declaration = self
-        self.variables = list_to_map(variables) if variables else {}
+        self.variables = SymbolTable()
         self.specials = {}
 
-        for var in self.variables.values():
+        if variables:
+            self.add_variables(*variables)
+
+    def add_variables(self, *vars):
+        for var in vars:
+            self.variables.add(var)
             var.parent = self
 
     def symbol(self, name):
@@ -215,7 +244,7 @@ class Type(Node):
         return super(Type, self).symbol(name)
 
     def link(self):
-        self.variables = list_to_map(var.link() for var in self.variables)
+        self.variables = SymbolTable.from_tuples((var, var.link()) for var in self.variables)
         return self
 
     def special(self, arg_map):
@@ -225,7 +254,7 @@ class Type(Node):
 
         # Mind that some args can be partially specialized.
         # Recursively specialize all arguments.
-        svars = tuple(var.special(arg_map) for var in self.variables.values())
+        svars = tuple(var.special(arg_map) for var in self.variables)
 
         # Construct a tuple specialization key.
         # It is possible, there is already a specialization with such arguments.
@@ -236,10 +265,28 @@ class Type(Node):
         special = self.create_special(arg_map)
         special.declaration = self
         self.specials[key] = special
+
+        special.link()
         return special
 
     def create_special(self, arg_map):
         raise NotImplementedError
+
+
+class Variable(Type):
+    def __init__(self, name):
+        super(Variable, self).__init__(name)
+
+    def link(self):
+        return self
+
+    def special(self, arg_map):
+        # The variable must be in the map itself.
+        svar = arg_map.get(self)
+        if svar:
+            return svar
+
+        self.error('variable is not found in the args map')
 
 
 class Native(Type):
@@ -250,7 +297,7 @@ class Native(Type):
         self.options = options
 
     def create_special(self, arg_map):
-        svars = tuple(var.special(arg_map) for var in self.variables.values())
+        svars = tuple(var.special(arg_map) for var in self.variables)
         return Native(self.name, variables=svars, options=self.options)
 
 
@@ -268,20 +315,30 @@ class Message(Type):
     def __init__(self, name, variables=None, base=None, declared_fields=None):
         super(Message, self).__init__(name, variables)
 
-        self.base = base
-        self.declared_fields = list_to_map(declared_fields) if declared_fields else {}
-        self.fields = {}
+        self.base = None
+        self.declared_fields = SymbolTable()
+        self.fields = SymbolTable()
 
-        if self.base:
+        if base:
+            self.set_base(base)
+
+        if declared_fields:
+            map(self.add_fields, declared_fields)
+
+    def set_base(self, base):
+        self.base = base
+        if isinstance(base, Reference):
             self.base.parent = self
 
-        for field in self.declared_fields.values():
+    def add_fields(self, *fields):
+        for field in fields:
+            self.declared_fields.add(field)
             field.parent = self
 
     def link(self):
         self.base = self.base.link() if self.base else None
-        self.declared_fields = list_to_map([field.link()
-                                            for field in self.declared_fields.values()])
+        self.declared_fields = SymbolTable.from_list(
+                field.link() for field in self.declared_fields)
         return self
 
     def create_special(self, arg_map):

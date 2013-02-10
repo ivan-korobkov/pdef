@@ -92,8 +92,8 @@ class TestModule(unittest.TestCase):
 
         pkg = Package('test')
         pkg.add_modules(module1, module2, module3)
+        pkg.link()
 
-        module3.link()
         assert list(module3.imports) == [module1, module2]
 
 
@@ -101,14 +101,14 @@ class TestModuleReference(unittest.TestCase):
     def test_link(self):
         '''Should look up and return a module.'''
         module = Module('package.module')
+        module2 = Module('package.module2')
         package = Package('package')
-        package.add_modules(module)
+        package.add_modules(module, module2)
+        package.link()
 
         imp = ModuleReference('package.module', 'module')
-        imp.parent = module
-
-        linked = imp.link()
-        assert linked == module
+        imp.link(module2)
+        assert imp == module
 
 
 class TestReference(unittest.TestCase):
@@ -119,34 +119,31 @@ class TestReference(unittest.TestCase):
         module.add_definitions(int32)
 
         ref = Reference('int32')
-        ref.parent = module
-        symbol = ref.link()
-        assert symbol is int32
+        ref.link(module)
+        assert ref == int32
 
     def test_link_not_found(self):
         '''Should add a type not found error.'''
         module = Module('test')
         ref = Reference('not_found')
-        ref.parent = module
+        ref.link(module)
 
-        symbol = ref.link()
-        assert symbol is None
+        assert ref.delegate is None
         assert len(module.errors) == 1
 
     def test_link_wrong_number_of_args(self):
         '''Should add a wrong number of arguments error.'''
+        int32 = Native('int32')
         List = Native('List')
         List.add_variables(Variable('T'))
 
         module = Module('test')
-        module.add_definitions(List)
+        module.add_definitions(int32, List)
 
         ref = Reference('List')
-        ref.parent = module
-        ref.add_args(Reference('K'), Reference('V'))
-
-        symbol = ref.link()
-        assert symbol is None
+        ref.add_args(Reference('int32'), Reference('int32'))
+        ref.link(module)
+        assert ref.delegate is None
         assert len(module.errors) == 1
         assert module.errors[0].endswith('wrong number of generic arguments')
 
@@ -165,26 +162,39 @@ class TestReference(unittest.TestCase):
 
         module = Module('test')
         module.add_definitions(int32, string, List, Map)
+        module.link(None)
 
         ref = Reference('Map')
-        ref.parent = module
         ref.add_args(Reference('int32'))
         ref.add_args(Reference('List', Reference('string')))
 
         # Reference Map<int32, List<string>>
-        special = ref.link()
-        assert isinstance(special, Specialization)
+        ref.link(module)
+        special = ref.delegate
+        assert special is not None
         assert special.rawtype is Map
 
-        args = list(special.args)
+        args = list(special.variables)
         assert len(args) == 2
-        assert args[0] is int32
+        assert args[0] == int32
 
         special_list = args[1]
-        assert isinstance(special_list, Specialization)
         assert special_list.rawtype is List
-        assert len(special_list.args) == 1
-        assert list(special_list.args)[0] is string
+        assert len(special_list.variables) == 1
+        assert list(special_list.variables)[0] == string
+
+
+class TestNative(unittest.TestCase):
+    def test_specialize(self):
+        t = Variable('T')
+        List = Native('List')
+        List.add_variables(t)
+        List.link(None)
+
+        string = Native('string')
+        special = List.specialize({t: string})
+        assert special.rawtype is List
+        assert list(special.variables) == [string]
 
 
 class TestMessage(unittest.TestCase):
@@ -198,7 +208,7 @@ class TestMessage(unittest.TestCase):
 
         module = Module('test')
         module.add_definitions(msg, msg2)
-        module.link()
+        module.link(None)
 
         assert msg.declared_fields['field'].type == msg2;
         assert msg2.declared_fields['field'].type == msg;
@@ -211,9 +221,9 @@ class TestMessage(unittest.TestCase):
         msg = Message('Message')
         msg.add_variables(t)
         msg.add_fields(field)
-        msg.link()
+        msg.link(None)
 
-        assert field.type is t
+        assert field.type == t
 
     def test_link_circular(self):
         '''Should link the fields and bases with cirular references.'''
@@ -230,4 +240,4 @@ class TestMessage(unittest.TestCase):
 
         module = Module('test')
         module.add_definitions(node, root)
-        module.link()
+        module.link(None)

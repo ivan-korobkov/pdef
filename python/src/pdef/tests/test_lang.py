@@ -150,8 +150,8 @@ class TestReference(unittest.TestCase):
         assert len(module.errors) == 1
         assert module.errors[0].endswith('wrong number of generic arguments')
 
-    def test_link_recursive(self):
-        '''Should recursively link the arguments.'''
+    def test_link_specialize(self):
+        '''Should create a specialization with the linked rawtype and arguments.'''
         int32 = Native('int32')
         string = Native('string')
 
@@ -172,17 +172,19 @@ class TestReference(unittest.TestCase):
         ref.add_args(Reference('List', Reference('string')))
 
         # Reference Map<int32, List<string>>
-        symbol = ref.link()
-        assert symbol.declaration is Map
+        special = ref.link()
+        assert isinstance(special, Specialization)
+        assert special.rawtype is Map
 
-        vars = list(symbol.variables)
-        assert len(vars) == 2
-        assert vars[0] is int32
+        args = list(special.args)
+        assert len(args) == 2
+        assert args[0] is int32
 
-        special_list = vars[1]
-        assert special_list.declaration is List
-        assert len(special_list.variables) == 1
-        assert list(special_list.variables)[0] is string
+        special_list = args[1]
+        assert isinstance(special_list, Specialization)
+        assert special_list.rawtype is List
+        assert len(special_list.args) == 1
+        assert list(special_list.args)[0] is string
 
 
 class TestMessage(unittest.TestCase):
@@ -213,6 +215,19 @@ class TestMessage(unittest.TestCase):
 
         assert field.type is t
 
+    def test_link_circular(self):
+        '''Should link the fields and bases with cirular references.'''
+        # Node<V>:
+        #   RootNode<V> root
+        # RootNode<T> extends Node<T>
+        node = Message('Node')
+        node.add_variables(Variable('V'))
+        node.add_fields(Field('root', Reference('RootNode', Reference('V'))))
 
-    def test_create_special(self):
-        pass
+        root = Message('RootNode')
+        root.add_variables(Variable('T'))
+        root.set_base(Reference('Node', Reference('Node', Reference('T'))))
+
+        module = Module('test')
+        module.add_definitions(node, root)
+        module.link()

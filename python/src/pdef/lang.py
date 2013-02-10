@@ -190,7 +190,8 @@ class Reference(Node):
     def add_args(self, *args):
         for arg in args:
             self.args.append(arg)
-            arg.parent = self
+            if isinstance(arg, Reference):
+                arg.parent = self
 
     def link(self):
         # Find the rawtype by its name, for example: MyType, package.AnotherType, T (variable).
@@ -209,16 +210,33 @@ class Reference(Node):
             self.error('wrong number of generic arguments')
             return
 
-        arg_map = {}
-        for (var, argref) in zip(rawtype.variables, self.args):
-            arg = argref.link()
-            if not arg:
+        linked_args = []
+        for (var, args) in zip(rawtype.variables, self.args):
+            linked_arg = args.link()
+            if not linked_arg:
                 # An error occurred.
                 return
 
-            arg_map[var] = arg
+            linked_args.append(linked_arg)
 
-        return rawtype.special(arg_map)
+        return Specialization(rawtype, *linked_args)
+
+
+class Specialization(Node):
+    '''Intermediate representation of a specialized type
+    with both the raw type and the arguments linked.
+
+    Should be compiled into a specialized type via specialize().
+    '''
+    def __init__(self, rawtype, *linked_args):
+        super(Specialization, self).__init__(rawtype.name)
+
+        self.rawtype = check_not_none(rawtype)
+        self.args = list(linked_args)
+
+        check_argument(len(rawtype.variables) != 0, 'Not a generic type %s', rawtype)
+        for arg in self.args:
+            check_argument(not isinstance(arg, Reference), 'Arguments must be linked, %s', arg)
 
 
 class Type(Node):
@@ -343,7 +361,7 @@ class Message(Type):
 
     def create_special(self, arg_map):
         svars = tuple(var.special(arg_map) for var in self.variables)
-        sbase = self.base.special(arg_map)
+        sbase = self.base.special(arg_map) if self.base else None
         sfields = [field.special(arg_map) for field in self.declared_fields]
         return Message(self.name, variables=svars, base=sbase, declared_fields=sfields)
 

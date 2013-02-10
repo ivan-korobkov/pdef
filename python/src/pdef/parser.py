@@ -9,7 +9,7 @@ from pdef import lang
 class Tokens(object):
 
     # Simple reserved words.
-    reserved = ('AS', 'EXTENDS', 'ENUM', 'IMPORT', 'MESSAGE', 'OPTIONS', 'PACKAGE', 'NATIVE')
+    reserved = ('AS', 'EXTENDS', 'ENUM', 'IMPORT', 'MESSAGE', 'OPTIONS', 'MODULE', 'NATIVE')
 
     # All tokens.
     tokens = reserved + (
@@ -72,14 +72,14 @@ class Tokens(object):
 class GrammarRules(object):
 
     # Starting point.
-    def p_package(self, t):
+    def p_module(self, t):
         '''
-        package : package_name imports definitions
+        module : module_name imports definitions
         '''
         name = t[1]
         imports = t[2]
         definitions = t[3]
-        t[0] = lang.Package(name, imports=imports, definitions=definitions)
+        t[0] = lang.Module(name, imports=imports, definitions=definitions)
 
     # Empty token to support optional values.
     def p_empty(self, t):
@@ -89,13 +89,13 @@ class GrammarRules(object):
         pass
 
     # The first line is a file.
-    def p_package_name(self, t):
+    def p_module_name(self, t):
         '''
-        package_name : PACKAGE IDENTIFIER SEMI
+        module_name : MODULE IDENTIFIER SEMI
         '''
         t[0] = t[2]
 
-    # Optional package imports.
+    # Optional module imports.
     def p_imports(self, t):
         '''
         imports : imports import
@@ -137,8 +137,8 @@ class GrammarRules(object):
              | IDENTIFIER
         '''
         name = t[1]
-        args = [] if len(t) == 2 else t[3]
-        t[0] = lang.Reference(name, args=args)
+        generic_args = [] if len(t) == 2 else t[3]
+        t[0] = lang.Reference(name, *generic_args)
 
     # List of generic arguments.
     def p_types(self, t):

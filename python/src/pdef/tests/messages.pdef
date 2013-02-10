@@ -1,4 +1,4 @@
-package test.messages;
+module test.messages;
 
 native int32 {}
 native string {}

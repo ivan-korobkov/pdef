@@ -36,12 +36,13 @@ class Test(unittest.TestCase):
         pkg = Package('test', builtin)
         pkg.add_modules(module1, module2)
         pkg.link()
-
+        pkg.specialize()
+        
         msg_fields = msg.declared_fields
         assert msg_fields['int'].type == int32
         assert msg_fields['str'].type == string
         assert msg_fields['msg2'].type == msg2
-        assert msg_fields['list'].type.declaration == List
+        assert msg_fields['list'].type.rawtype == List
         assert list(msg_fields['list'].type.variables) == [string]
 
         msg2_fields = msg2.declared_fields
@@ -160,21 +161,24 @@ class TestReference(unittest.TestCase):
         Map = Native('Map')
         Map.add_variables(Variable('K'), Variable('V'))
 
-        module = Module('test')
+        module = Module('test.module')
         module.add_definitions(int32, string, List, Map)
-        module.link(None)
 
+        pkg = Package('test')
+        pkg.add_modules(module)
+        pkg.link()
+
+        # Reference Map<int32, List<string>>
         ref = Reference('Map')
         ref.add_args(Reference('int32'))
         ref.add_args(Reference('List', Reference('string')))
-
-        # Reference Map<int32, List<string>>
         ref.link(module)
-        special = ref.delegate
-        assert special is not None
-        assert special.rawtype is Map
+        pkg.specialize()
 
-        args = list(special.variables)
+        assert ref.delegate is not None
+        assert ref.rawtype is Map
+
+        args = list(ref.variables)
         assert len(args) == 2
         assert args[0] == int32
 
@@ -236,8 +240,14 @@ class TestMessage(unittest.TestCase):
 
         root = Message('RootNode')
         root.add_variables(Variable('T'))
-        root.set_base(Reference('Node', Reference('Node', Reference('T'))))
+        root.set_base(Reference('Node', Reference('T')))
 
         module = Module('test')
         module.add_definitions(node, root)
-        module.link(None)
+
+        module = Module('test.module')
+        module.add_definitions(node, root)
+        pkg = Package('test')
+        pkg.add_modules(module)
+        pkg.link()
+        pkg.specialize()

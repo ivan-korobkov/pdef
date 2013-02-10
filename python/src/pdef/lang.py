@@ -18,10 +18,17 @@ class Node(object):
             return '%s.%s' % (self.parent.fullname, self.name)
         return self.name
 
+    @property
+    def package(self):
+        if self.parent is None:
+            raise ValueError('Node is not linked %s' % self)
+        return self.parent.package
+
     def error(self, msg, *args):
         msg = '%s: %s' % (self.fullname, msg % args)
         logging.error(msg)
 
+        # The parent can be absent if the node is not linked.
         if self.parent:
             self.parent.errors.append(msg)
         else:
@@ -39,6 +46,11 @@ class Proxy(Node):
     def __init__(self, name):
         super(Proxy, self).__init__(name)
         self.delegate = None
+
+    def __repr__(self):
+        if self.delegate:
+            return '@' + repr(self.delegate)
+        return super(Proxy, self).__repr__()
 
     def __getattr__(self, item):
         self._check_delegate()
@@ -110,18 +122,27 @@ class Package(Node):
         self.builtin = builtin
         self.specializations = {}
 
+    @property
+    def package(self):
+        return self
+
     def add_modules(self, *modules):
         for module in modules:
             self.modules.add(module)
 
-    def link(self):
+    def link(self, unused_parent=None):
         for module in self.modules:
             module.link_imports(self)
 
         for module in self.modules:
             module.link(self)
 
+    def specialize(self):
+        for sp in self.specializations.values():
+            sp.build()
+
     def symbol(self, name):
+        '''Find a globally accessible builtin.'''
         if not self.builtin:
             return
 
@@ -131,6 +152,26 @@ class Package(Node):
         for module in self.builtin.modules:
             if name in module.definitions:
                 return module.definitions[name]
+
+        return None
+
+    def specialization(self, rawtype, args):
+        if len(rawtype.variables) != len(args):
+            self.error('wrong number of generic arguments for %s, got %s', rawtype, args)
+            return
+
+        arg_map = dict((var, arg) for var, arg in zip(rawtype.variables, args))
+        key = (rawtype, tuple(arg_map.values()))
+
+        if key in self.specializations:
+            # The specialization with such arguments is already present
+            return self.specializations[key]
+
+        # Create a proxy to allow specialized circular references, i.e.:
+        # Node<V>:
+        #   Node<V> next
+        self.specializations[key] = Specialization(rawtype, arg_map)
+        return self.specializations[key]
 
 
 class Module(Node):
@@ -231,22 +272,15 @@ class Reference(Proxy):
             self.parent.error('type not found "%s"', self.name)
             return
 
-        # Return if the rawtype is not generic,
-        # Else create a specialization.
         if not rawtype.variables:
+            # Rawtype is not generic.
             return rawtype
 
-        # Error if the number of args does not match the number of variables
-        if len(self.args) != len(rawtype.variables):
+        if len(rawtype.variables) != len(self.args):
             self.error('wrong number of generic arguments')
             return
 
-        # Map the rawtype variables to the arguments.
-        arg_map = {}
-        for var, arg in zip(rawtype.variables, self.args):
-            arg_map[var] = arg
-
-        return rawtype.specialize(arg_map)
+        return self.package.specialization(rawtype, self.args)
 
 
 class Specialization(Proxy):
@@ -261,10 +295,8 @@ class Specialization(Proxy):
     def __hash__(self):
         return super(object, self).__hash__()
 
-    def link(self, parent):
-        super(Specialization, self).link(parent)
-
-        self.delegate = self.rawtype._create_special(self.arg_map)
+    def build(self):
+        self.delegate = self.rawtype.specialize(self.arg_map)
         self.delegate.rawtype = self.rawtype
 
 
@@ -295,30 +327,6 @@ class Type(Node):
             var.link(self)
 
     def specialize(self, arg_map):
-        '''Returns a specialization proxy which is added to the package specializations.
-        The specializations must be linked after all normal types are linked in all packages.
-        '''
-        if not self.variables:
-            # This type is not generic.
-            return self
-
-        # Construct a tuple specialization key.
-        # It is possible, there is already a specialization with such arguments.
-        svars = tuple(var.specialize(arg_map) for var in self.variables)
-        key = (self, svars)
-        if key in self.specials:
-            return self.specials[key]
-
-        # This type can circularly reference itself during linking, i.e.:
-        # Node<V>:
-        #   Node<V> next
-
-        # Create a proxy to allow circular specialization.
-        proxy = Specialization(self, arg_map)
-        self.specials[key] = proxy
-        return proxy
-
-    def _create_special(self, arg_map):
         '''Create a new specialization using a provided variable to argument map.'''
         raise NotImplementedError
 
@@ -343,9 +351,11 @@ class Native(Type):
         #self.java_type = options.java_type
         self.options = options
 
-    def _create_special(self, arg_map):
+    def specialize(self, arg_map):
         svars = tuple(var.specialize(arg_map) for var in self.variables)
-        return Native(self.name, variables=svars, options=self.options)
+        special = Native(self.name, variables=svars, options=self.options)
+        special.rawtype = self
+        return special
 
 
 class Enum(Type):
@@ -384,11 +394,14 @@ class Message(Type):
         for field in self.declared_fields:
             field.link(self)
 
-    def _create_special(self, arg_map):
+    def specialize(self, arg_map):
         svars = tuple(var.specialize(arg_map) for var in self.variables)
         sbase = self.base.special(arg_map) if self.base else None
         sfields = [field.specialize(arg_map) for field in self.declared_fields]
-        return Message(self.name, variables=svars, base=sbase, declared_fields=sfields)
+
+        special = Message(self.name, variables=svars, base=sbase, declared_fields=sfields)
+        special.rawtype = self
+        return special
 
 
 class Field(Node):

@@ -1,4 +1,5 @@
 # encoding: utf-8
+from collections import deque
 import logging
 from pdef.preconditions import *
 
@@ -21,7 +22,7 @@ class Node(object):
     @property
     def package(self):
         if self.parent is None:
-            raise ValueError('Node is not linked %s' % self)
+            raise ValueError('Can\'t access the package, %s has no parent' % self)
         return self.parent.package
 
     def error(self, msg, *args):
@@ -38,8 +39,73 @@ class Node(object):
         if self.parent:
             return self.parent.symbol(name)
 
-    def link(self, parent):
-        self.parent = parent
+    def link(self):
+        pass
+
+
+class Package(Node):
+    def __init__(self, name, builtin=None):
+        super(Package, self).__init__(name)
+
+        self.modules = SymbolTable()
+        self.builtin = builtin
+        self.parameterized = {}
+        self.pqueue = deque()
+
+    @property
+    def package(self):
+        return self
+
+    def add_modules(self, *modules):
+        for module in modules:
+            self.modules.add(module)
+            module.parent = self
+
+    def link(self):
+        for module in self.modules:
+            module.link_imports()
+
+        for module in self.modules:
+            module.link()
+
+    def link_specials(self):
+        while 1:
+            if not len(self.pqueue):
+                break
+
+            sp = self.pqueue.pop()
+            sp.build()
+
+    def symbol(self, name):
+        '''Find a globally accessible builtin.'''
+        if not self.builtin:
+            return
+
+        if '.' in name:
+            return
+
+        for module in self.builtin.modules:
+            if name in module.definitions:
+                return module.definitions[name]
+
+        return None
+
+    def parameterized_symbol(self, rawtype, args):
+        check_argument(len(rawtype.variables) == len(args), "wrong number of args %s", args)
+
+        args = tuple(args)
+        key = (rawtype, args)
+        if key in self.parameterized:
+            return self.parameterized[key]
+
+        # Create a proxy to allow parameterized circular references, i.e.:
+        # Node<V>:
+        #   Node<V> next
+        ptype = ParameterizedType(rawtype, args, parent=self)
+        self.parameterized[key] = ptype
+        self.pqueue.append(ptype)
+
+        return ptype
 
 
 class Proxy(Node):
@@ -65,7 +131,7 @@ class Proxy(Node):
         return self.delegate == other
 
     def _check_delegate(self):
-        check_state(self.delegate is not None, 'The proxy delegate is not set in %s', self)
+        check_state(self.delegate is not None, 'Delegate is not set in %s', self)
 
 
 class SymbolTable(object):
@@ -114,66 +180,6 @@ class SymbolTable(object):
         self.items.append(item)
 
 
-class Package(Node):
-    def __init__(self, name, builtin=None):
-        super(Package, self).__init__(name)
-
-        self.modules = SymbolTable()
-        self.builtin = builtin
-        self.specializations = {}
-
-    @property
-    def package(self):
-        return self
-
-    def add_modules(self, *modules):
-        for module in modules:
-            self.modules.add(module)
-
-    def link(self, unused_parent=None):
-        for module in self.modules:
-            module.link_imports(self)
-
-        for module in self.modules:
-            module.link(self)
-
-    def specialize(self):
-        for sp in self.specializations.values():
-            sp.build()
-
-    def symbol(self, name):
-        '''Find a globally accessible builtin.'''
-        if not self.builtin:
-            return
-
-        if '.' in name:
-            return
-
-        for module in self.builtin.modules:
-            if name in module.definitions:
-                return module.definitions[name]
-
-        return None
-
-    def specialization(self, rawtype, args):
-        if len(rawtype.variables) != len(args):
-            self.error('wrong number of generic arguments for %s, got %s', rawtype, args)
-            return
-
-        arg_map = dict((var, arg) for var, arg in zip(rawtype.variables, args))
-        key = (rawtype, tuple(arg_map.values()))
-
-        if key in self.specializations:
-            # The specialization with such arguments is already present
-            return self.specializations[key]
-
-        # Create a proxy to allow specialized circular references, i.e.:
-        # Node<V>:
-        #   Node<V> next
-        self.specializations[key] = Specialization(rawtype, arg_map)
-        return self.specializations[key]
-
-
 class Module(Node):
     def __init__(self, name, imports=None, definitions=None):
         super(Module, self).__init__(name)
@@ -190,20 +196,20 @@ class Module(Node):
     def add_imports(self, *imports):
         for imp in imports:
             self.imports.add(imp)
+            imp.parent = self
 
     def add_definitions(self, *definitions):
         for d in definitions:
             self.definitions.add(d)
+            d.parent = self
 
-    def link_imports(self, package):
-        super(Module, self).link(package)
-
+    def link_imports(self):
         for imp in self.imports:
-            imp.link(self)
+            imp.link()
 
-    def link(self, parent):
+    def link(self):
         for definition in self.definitions:
-            definition.link(self)
+            definition.link()
 
     def symbol(self, name):
         if name in self.definitions:
@@ -237,10 +243,8 @@ class ModuleReference(Proxy):
         super(ModuleReference, self).__init__(name if name else module_name)
         self.module_name = module_name
 
-    def link(self, module):
-        super(ModuleReference, self).link(module)
-
-        package = module.parent
+    def link(self):
+        package = self.package
         if not self.module_name in package.modules:
             self.error('import not found "%s"', self.module_name)
             return
@@ -257,11 +261,11 @@ class Reference(Proxy):
     def add_args(self, *args):
         for arg in args:
             self.args.append(arg)
+            arg.parent = self
 
-    def link(self, parent):
-        super(Reference, self).link(parent)
+    def link(self):
         for arg in self.args:
-            arg.link(self)
+            arg.link()
 
         self.delegate = self._lookup()
 
@@ -269,35 +273,43 @@ class Reference(Proxy):
         # Find the rawtype by its name, for example: MyType, package.AnotherType, T (variable).
         rawtype = self.symbol(self.name)
         if not rawtype:
-            self.parent.error('type not found "%s"', self.name)
+            self.error('type not found "%s"', self.name)
             return
 
         if not rawtype.variables:
             # Rawtype is not generic.
             return rawtype
 
-        if len(rawtype.variables) != len(self.args):
-            self.error('wrong number of generic arguments')
-            return
-
-        return self.package.specialization(rawtype, self.args)
+        return self.package.parameterized_symbol(rawtype, self.args)
 
 
-class Specialization(Proxy):
-    def __init__(self, rawtype, arg_map):
-        super(Specialization, self).__init__(rawtype.name)
+class ParameterizedType(Proxy):
+    def __init__(self, rawtype, args, parent):
+        super(ParameterizedType, self).__init__(rawtype.name)
         self.rawtype = rawtype
-        self.arg_map = arg_map
+        self.args = args
+        self.arg_map = dict((var, arg) for var, arg in zip(rawtype.variables, args))
+        self.parent = parent
 
     def __eq__(self, other):
-        return super(object, self).__eq__(other)
+        return self is other
 
     def __hash__(self):
-        return super(object, self).__hash__()
+        return object.__hash__(self)
 
     def build(self):
-        self.delegate = self.rawtype.specialize(self.arg_map)
-        self.delegate.rawtype = self.rawtype
+        self.delegate = self.rawtype.parameterize(self.args)
+
+    def parameterize(self, args):
+        raise ValueError('Only rawtype can be parameterized')
+
+    def bind(self, arg_map):
+        bargs = []
+        for arg in self.args:
+            barg = arg.bind(arg_map)
+            bargs.append(barg)
+
+        return self.package.parameterized_symbol(self.rawtype, bargs)
 
 
 class Type(Node):
@@ -314,6 +326,7 @@ class Type(Node):
     def add_variables(self, *vars):
         for var in vars:
             self.variables.add(var)
+            var.parent = self
 
     def symbol(self, name):
         if name in self.variables:
@@ -321,21 +334,24 @@ class Type(Node):
 
         return super(Type, self).symbol(name)
 
-    def link(self, parent):
-        super(Type, self).link(parent)
+    def link(self):
         for var in self.variables:
-            var.link(self)
+            var.link()
 
-    def specialize(self, arg_map):
-        '''Create a new specialization using a provided variable to argument map.'''
-        raise NotImplementedError
+    def parameterize(self, args):
+        '''Create a parameterized type.'''
+        raise NotImplementedError('Implement in a subclass')
+
+    def bind(self, arg_map):
+        '''Only parameterized types and variables can be bound.'''
+        return self
 
 
 class Variable(Type):
     def __init__(self, name):
         super(Variable, self).__init__(name)
 
-    def specialize(self, arg_map):
+    def bind(self, arg_map):
         # The variable must be in the map itself.
         svar = arg_map.get(self)
         if svar:
@@ -351,9 +367,10 @@ class Native(Type):
         #self.java_type = options.java_type
         self.options = options
 
-    def specialize(self, arg_map):
-        svars = tuple(var.specialize(arg_map) for var in self.variables)
-        special = Native(self.name, variables=svars, options=self.options)
+    def parameterize(self, args):
+        check_argument(len(self.variables) == len(args), 'wrong number of args')
+
+        special = Native(self.name, variables=args, options=self.options)
         special.rawtype = self
         return special
 
@@ -380,26 +397,29 @@ class Message(Type):
 
     def set_base(self, base):
         self.base = base
+        if isinstance(base, Reference):
+            base.parent = self
 
     def add_fields(self, *fields):
         for field in fields:
             self.declared_fields.add(field)
+            field.parent = self
 
-    def link(self, parent):
-        super(Message, self).link(parent)
-
+    def link(self):
         if self.base:
-            self.base.link(self)
+            self.base.link()
 
         for field in self.declared_fields:
-            field.link(self)
+            field.link()
 
-    def specialize(self, arg_map):
-        svars = tuple(var.specialize(arg_map) for var in self.variables)
-        sbase = self.base.special(arg_map) if self.base else None
-        sfields = [field.specialize(arg_map) for field in self.declared_fields]
+    def parameterize(self, args):
+        check_argument(len(self.variables) == len(args), 'wrong number of args')
+        arg_map = dict((var, arg) for var, arg in zip(self.variables, args))
 
-        special = Message(self.name, variables=svars, base=sbase, declared_fields=sfields)
+        bbase = self.base.bind(arg_map) if self.base else None
+        bfields = [field.bind(arg_map) for field in self.declared_fields]
+
+        special = Message(self.name, variables=args, base=bbase, declared_fields=bfields)
         special.rawtype = self
         return special
 
@@ -408,17 +428,18 @@ class Field(Node):
     def __init__(self, name, type):
         super(Field, self).__init__(name)
         self.type = type
+        if isinstance(type, Reference):
+            type.parent = self
 
-    def link(self, message):
-        super(Field, self).link(message)
-        self.type.link(self)
+    def link(self):
+        self.type.link()
 
-    def specialize(self, arg_map):
-        stype = self.type.specialize(arg_map)
-        if stype == self.type:
+    def bind(self, arg_map):
+        btype = self.type.bind(arg_map)
+        if btype == self.type:
             return self
 
-        return Field(self.name, stype)
+        return Field(self.name, btype)
 
 
 class EnumValue(Node):
@@ -427,9 +448,8 @@ class EnumValue(Node):
         self.type = type
         self.value = value
 
-    def link(self, parent):
-        super(EnumValue, self).link(parent)
-        self.type.link(self)
+    def link(self):
+        self.type.link()
 
         if not isinstance(self.type, Enum):
             self.error('wrong type %s, must be an enum', self.type)

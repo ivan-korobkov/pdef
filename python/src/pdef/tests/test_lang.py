@@ -36,7 +36,7 @@ class Test(unittest.TestCase):
         pkg = Package('test', builtin)
         pkg.add_modules(module1, module2)
         pkg.link()
-        pkg.specialize()
+        pkg.link_specials()
         
         msg_fields = msg.declared_fields
         assert msg_fields['int'].type == int32
@@ -108,7 +108,8 @@ class TestModuleReference(unittest.TestCase):
         package.link()
 
         imp = ModuleReference('package.module', 'module')
-        imp.link(module2)
+        imp.parent = module2
+        imp.link()
         assert imp == module
 
 
@@ -120,17 +121,17 @@ class TestReference(unittest.TestCase):
         module.add_definitions(int32)
 
         ref = Reference('int32')
-        ref.link(module)
+        ref.link()
         assert ref == int32
 
     def test_link_not_found(self):
         '''Should add a type not found error.'''
         module = Module('test')
         ref = Reference('not_found')
-        ref.link(module)
+        ref.link()
 
         assert ref.delegate is None
-        assert len(module.errors) == 1
+        assert len(ref.errors) == 1
 
     def test_link_wrong_number_of_args(self):
         '''Should add a wrong number of arguments error.'''
@@ -143,7 +144,7 @@ class TestReference(unittest.TestCase):
 
         ref = Reference('List')
         ref.add_args(Reference('int32'), Reference('int32'))
-        ref.link(module)
+        ref.link()
         assert ref.delegate is None
         assert len(module.errors) == 1
         assert module.errors[0].endswith('wrong number of generic arguments')
@@ -172,8 +173,8 @@ class TestReference(unittest.TestCase):
         ref = Reference('Map')
         ref.add_args(Reference('int32'))
         ref.add_args(Reference('List', Reference('string')))
-        ref.link(module)
-        pkg.specialize()
+        ref.link()
+        pkg.link_specials()
 
         assert ref.delegate is not None
         assert ref.rawtype is Map
@@ -189,14 +190,14 @@ class TestReference(unittest.TestCase):
 
 
 class TestNative(unittest.TestCase):
-    def test_specialize(self):
+    def test_parameterize(self):
         t = Variable('T')
         List = Native('List')
         List.add_variables(t)
-        List.link(None)
+        List.link()
 
         string = Native('string')
-        special = List.specialize({t: string})
+        special = List.parameterize([string])
         assert special.rawtype is List
         assert list(special.variables) == [string]
 
@@ -212,7 +213,7 @@ class TestMessage(unittest.TestCase):
 
         module = Module('test')
         module.add_definitions(msg, msg2)
-        module.link(None)
+        module.link()
 
         assert msg.declared_fields['field'].type == msg2;
         assert msg2.declared_fields['field'].type == msg;
@@ -225,7 +226,7 @@ class TestMessage(unittest.TestCase):
         msg = Message('Message')
         msg.add_variables(t)
         msg.add_fields(field)
-        msg.link(None)
+        msg.link()
 
         assert field.type == t
 
@@ -250,4 +251,8 @@ class TestMessage(unittest.TestCase):
         pkg = Package('test')
         pkg.add_modules(module)
         pkg.link()
-        pkg.specialize()
+        pkg.link_specials()
+
+
+# TODO:
+# - Better way to set parents (may be via set_package, set_message, set_module, etc.)

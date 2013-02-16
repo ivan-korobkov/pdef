@@ -11,12 +11,13 @@ class Node(object):
         self.errors = []
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.fullname)
+        return '<%s %s %s>' % (self.__class__.__name__, self.fullname, hex(id(self)))
 
     @property
     def fullname(self):
         if self.parent:
             return '%s.%s' % (self.parent.fullname, self.name)
+
         return self.name
 
     @property
@@ -61,6 +62,10 @@ class Package(Node):
             self.modules.add(module)
             module.parent = self
 
+    def build(self):
+        self.link()
+        self.build_parameterized()
+
     def link(self):
         for module in self.modules:
             module.link_imports()
@@ -68,7 +73,7 @@ class Package(Node):
         for module in self.modules:
             module.link()
 
-    def link_specials(self):
+    def build_parameterized(self):
         while 1:
             if not len(self.pqueue):
                 break
@@ -90,18 +95,22 @@ class Package(Node):
 
         return None
 
-    def parameterized_symbol(self, rawtype, args):
-        check_argument(len(rawtype.variables) == len(args), "wrong number of args %s", args)
-
-        args = tuple(args)
-        key = (rawtype, args)
+    def parameterized_symbol(self, rawtype, *variables):
+        variables = tuple(variables)
+        key = (rawtype, variables)
         if key in self.parameterized:
             return self.parameterized[key]
+
+        if tuple(rawtype.variables) == variables:
+            self.parameterized[key] = rawtype
+            return rawtype
 
         # Create a proxy to allow parameterized circular references, i.e.:
         # Node<V>:
         #   Node<V> next
-        ptype = ParameterizedType(rawtype, args, parent=self)
+        ptype = ParameterizedType(rawtype, *variables)
+        ptype.parent = self
+
         self.parameterized[key] = ptype
         self.pqueue.append(ptype)
 
@@ -113,10 +122,11 @@ class Proxy(Node):
         super(Proxy, self).__init__(name)
         self.delegate = None
 
-    def __repr__(self):
+    @property
+    def fullname(self):
         if self.delegate:
-            return '@' + repr(self.delegate)
-        return super(Proxy, self).__repr__()
+            return self.delegate.fullname
+        return super(Proxy, self).fullname
 
     def __getattr__(self, item):
         self._check_delegate()
@@ -135,27 +145,14 @@ class Proxy(Node):
 
 
 class SymbolTable(object):
-    @classmethod
-    def from_list(cls, items=None):
-        table = SymbolTable()
-        if not items:
-            return table
-        for item in items:
-            table.add(item)
-        return table
-
-    @classmethod
-    def from_tuples(cls, kv_tuples=None):
-        table = SymbolTable()
-        if not kv_tuples:
-            return table
-        for k, v in kv_tuples:
-            table.add_with_name(k, v)
-        return table
-
     def __init__(self):
         self.items = []
         self.map = {}
+
+    def __eq__(self, other):
+        if not isinstance(other, SymbolTable):
+            return False
+        return self.items == other.items
 
     def __iter__(self):
         return iter(self.items)
@@ -178,6 +175,9 @@ class SymbolTable(object):
 
         self.map[name] = item
         self.items.append(item)
+
+    def as_map(self):
+        return dict(self.map)
 
 
 class Module(Node):
@@ -253,18 +253,18 @@ class ModuleReference(Proxy):
 
 
 class Reference(Proxy):
-    def __init__(self, name, *generic_args):
+    def __init__(self, name, *generic_variables):
         super(Reference, self).__init__(name)
-        self.args = []
-        self.add_args(*generic_args)
+        self.variables = []
+        self.add_variables(*generic_variables)
 
-    def add_args(self, *args):
-        for arg in args:
-            self.args.append(arg)
+    def add_variables(self, *variables):
+        for arg in variables:
+            self.variables.append(arg)
             arg.parent = self
 
     def link(self):
-        for arg in self.args:
+        for arg in self.variables:
             arg.link()
 
         self.delegate = self._lookup()
@@ -280,16 +280,19 @@ class Reference(Proxy):
             # Rawtype is not generic.
             return rawtype
 
-        return self.package.parameterized_symbol(rawtype, self.args)
+        return self.package.parameterized_symbol(rawtype, *self.variables)
 
 
 class ParameterizedType(Proxy):
-    def __init__(self, rawtype, args, parent):
+    def __init__(self, rawtype, *variables):
         super(ParameterizedType, self).__init__(rawtype.name)
+        check_argument(len(rawtype.variables) == len(variables),
+                       "wrong number of variables %s", variables)
+
         self.rawtype = rawtype
-        self.args = args
-        self.arg_map = dict((var, arg) for var, arg in zip(rawtype.variables, args))
-        self.parent = parent
+        self.variables = SymbolTable()
+        for var, arg in zip(self.rawtype.variables, variables):
+            self.variables.add_with_name(var, arg)
 
     def __eq__(self, other):
         return self is other
@@ -298,30 +301,36 @@ class ParameterizedType(Proxy):
         return object.__hash__(self)
 
     def build(self):
-        self.delegate = self.rawtype.parameterize(self.args)
+        self.delegate = self.rawtype.parameterize(*self.variables)
 
-    def parameterize(self, args):
+    def parameterize(self, *variables):
         raise ValueError('Only rawtype can be parameterized')
 
     def bind(self, arg_map):
-        bargs = []
-        for arg in self.args:
+        bvariables = []
+        for arg in self.variables:
             barg = arg.bind(arg_map)
-            bargs.append(barg)
+            bvariables.append(barg)
 
-        return self.package.parameterized_symbol(self.rawtype, bargs)
+        return self.package.parameterized_symbol(self.rawtype, *bvariables)
 
 
 class Type(Node):
     def __init__(self, name, variables=None):
         super(Type, self).__init__(name)
 
+        self.rawtype = self
         self.variables = SymbolTable()
-        self.specials = {}
-        self.rawtype = None
 
         if variables:
             self.add_variables(*variables)
+
+    @property
+    def fullname(self):
+        s = super(Type, self).fullname
+        if self.variables:
+            s += '<' + ', '.join(var.name for var in self.variables) + '>'
+        return s
 
     def add_variables(self, *vars):
         for var in vars:
@@ -338,7 +347,7 @@ class Type(Node):
         for var in self.variables:
             var.link()
 
-    def parameterize(self, args):
+    def parameterize(self, *variables):
         '''Create a parameterized type.'''
         raise NotImplementedError('Implement in a subclass')
 
@@ -357,7 +366,7 @@ class Variable(Type):
         if svar:
             return svar
 
-        self.error('variable is not found in the args map')
+        self.error('variable is not found in the variables map')
 
 
 class Native(Type):
@@ -367,10 +376,12 @@ class Native(Type):
         #self.java_type = options.java_type
         self.options = options
 
-    def parameterize(self, args):
-        check_argument(len(self.variables) == len(args), 'wrong number of args')
+    def parameterize(self, *variables):
+        if len(self.variables) != len(variables):
+            self.error('wrong number of arguments %s', variables)
+            return
 
-        special = Native(self.name, variables=args, options=self.options)
+        special = Native(self.name, variables=variables, options=self.options)
         special.rawtype = self
         return special
 
@@ -412,14 +423,16 @@ class Message(Type):
         for field in self.declared_fields:
             field.link()
 
-    def parameterize(self, args):
-        check_argument(len(self.variables) == len(args), 'wrong number of args')
-        arg_map = dict((var, arg) for var, arg in zip(self.variables, args))
+    def parameterize(self, *variables):
+        if len(self.variables) != len(variables):
+            self.error('wrong number of variables %s', variables)
+            return
 
+        arg_map = dict((var, arg) for var, arg in zip(self.variables, variables))
         bbase = self.base.bind(arg_map) if self.base else None
         bfields = [field.bind(arg_map) for field in self.declared_fields]
 
-        special = Message(self.name, variables=args, base=bbase, declared_fields=bfields)
+        special = Message(self.name, variables=variables, base=bbase, declared_fields=bfields)
         special.rawtype = self
         return special
 

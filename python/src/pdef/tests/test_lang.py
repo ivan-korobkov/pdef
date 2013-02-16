@@ -1,5 +1,6 @@
 # encoding: utf-8
 import unittest
+from mock import Mock
 from pdef.lang import *
 
 
@@ -36,7 +37,7 @@ class Test(unittest.TestCase):
         pkg = Package('test', builtin)
         pkg.add_modules(module1, module2)
         pkg.link()
-        pkg.link_specials()
+        pkg.build_parameterized()
         
         msg_fields = msg.declared_fields
         assert msg_fields['int'].type == int32
@@ -60,8 +61,43 @@ class TestPackage(unittest.TestCase):
         symbol = pkg.symbol('int32')
         assert symbol is int32
 
+    def test_parameterized_symbol(self):
+        List = Native('List', variables=[Variable('T')])
+        int32 = Native('int32')
+
+        pkg = Package('test')
+        ptype = pkg.parameterized_symbol(List, int32)
+
+        assert ptype.rawtype is List
+        assert list(ptype.variables) == [int32]
+        assert ptype in pkg.pqueue
+        assert (List, (int32, )) in pkg.parameterized
+
+    def test_parameterized_symbol_present(self):
+        List = Native('List', variables=[Variable('T')])
+        int32 = Native('int32')
+
+        pkg = Package('test')
+        ptype = pkg.parameterized_symbol(List, int32)
+        ptype2 = pkg.parameterized_symbol(List, int32)
+        assert ptype2 is ptype
+
 
 class TestModule(unittest.TestCase):
+    def test_link_imports(self):
+        '''Should replace the import references, and link the modules.'''
+        module1 = Module('module1')
+        module2 = Module('module2')
+
+        module3 = Module('module3')
+        module3.add_imports(module1, ModuleReference('module2'))
+
+        pkg = Package('test')
+        pkg.add_modules(module1, module2, module3)
+        pkg.link()
+
+        assert list(module3.imports) == [module1, module2]
+
     def test_symbol_from_definitions(self):
         '''Should look up a symbol in the module's definitions.'''
         int32 = Native('int32')
@@ -83,20 +119,6 @@ class TestModule(unittest.TestCase):
         symbol = module.symbol('imported.int32')
         assert symbol is int32
 
-    def test_link_imports(self):
-        '''Should replace the import references, and link the modules.'''
-        module1 = Module('module1')
-        module2 = Module('module2')
-
-        module3 = Module('module3')
-        module3.add_imports(module1, ModuleReference('module2'))
-
-        pkg = Package('test')
-        pkg.add_modules(module1, module2, module3)
-        pkg.link()
-
-        assert list(module3.imports) == [module1, module2]
-
 
 class TestModuleReference(unittest.TestCase):
     def test_link(self):
@@ -114,13 +136,14 @@ class TestModuleReference(unittest.TestCase):
 
 
 class TestReference(unittest.TestCase):
-    def test_link_rawtype(self):
+    def test_link(self):
         '''Should look up a raw type when linking.'''
         int32 = Native('int32')
         module = Module('test')
         module.add_definitions(int32)
 
         ref = Reference('int32')
+        ref.parent = module
         ref.link()
         assert ref == int32
 
@@ -133,7 +156,7 @@ class TestReference(unittest.TestCase):
         assert ref.delegate is None
         assert len(ref.errors) == 1
 
-    def test_link_wrong_number_of_args(self):
+    def test_link_parameterized_symbol(self):
         '''Should add a wrong number of arguments error.'''
         int32 = Native('int32')
         List = Native('List')
@@ -142,51 +165,57 @@ class TestReference(unittest.TestCase):
         module = Module('test')
         module.add_definitions(int32, List)
 
-        ref = Reference('List')
-        ref.add_args(Reference('int32'), Reference('int32'))
-        ref.link()
-        assert ref.delegate is None
-        assert len(module.errors) == 1
-        assert module.errors[0].endswith('wrong number of generic arguments')
+        mock = Mock()
+        module.parent = mock
 
-    def test_link_specialize(self):
-        '''Should create a specialization with the linked rawtype and arguments.'''
+        ref = Reference('List')
+        ref.parent = module
+        ref.add_variables(Reference('int32'))
+        ref.link()
+
+        mock.package.parameterized_symbol(List, [int32])
+
+class TestParameterizedType(unittest.TestCase):
+    def test_build(self):
+        T = Variable('T')
+        List = Native('List')
+        List.add_variables(T)
+
+        E = Variable('E')
+        ptype = ParameterizedType(List, E)
+        ptype.build()
+
+        delegate = ptype.delegate
+        assert delegate.rawtype is List
+        assert list(delegate.variables) == [E]
+
+    def test_bind(self):
+        # Parameterized Map<int32, V>
         int32 = Native('int32')
         string = Native('string')
 
-        # List<T>
-        List = Native('List')
-        List.add_variables(Variable('T'))
-
-        # Map<K, V>
+        K = Variable('K')
+        V = Variable('V')
         Map = Native('Map')
-        Map.add_variables(Variable('K'), Variable('V'))
+        Map.add_variables(K, V)
+        parent = Mock()
 
-        module = Module('test.module')
-        module.add_definitions(int32, string, List, Map)
+        ptype = ParameterizedType(Map, int32, V)
+        ptype.parent = parent
 
-        pkg = Package('test')
-        pkg.add_modules(module)
-        pkg.link()
+        # Bind V to string
+        ptype.bind({V: string})
 
-        # Reference Map<int32, List<string>>
-        ref = Reference('Map')
-        ref.add_args(Reference('int32'))
-        ref.add_args(Reference('List', Reference('string')))
-        ref.link()
-        pkg.link_specials()
+        # Should get Map<int32, string>
+        parent.package.parameterized_symbol.assert_called_with(Map, int32, string)
 
-        assert ref.delegate is not None
-        assert ref.rawtype is Map
 
-        args = list(ref.variables)
-        assert len(args) == 2
-        assert args[0] == int32
-
-        special_list = args[1]
-        assert special_list.rawtype is List
-        assert len(special_list.variables) == 1
-        assert list(special_list.variables)[0] == string
+class TestVariable(unittest.TestCase):
+    def test_bind(self):
+        int32 = Native('int32')
+        var = Variable('T')
+        bound = var.bind({var: int32})
+        assert bound == int32
 
 
 class TestNative(unittest.TestCase):
@@ -197,7 +226,7 @@ class TestNative(unittest.TestCase):
         List.link()
 
         string = Native('string')
-        special = List.parameterize([string])
+        special = List.parameterize(string)
         assert special.rawtype is List
         assert list(special.variables) == [string]
 
@@ -219,7 +248,7 @@ class TestMessage(unittest.TestCase):
         assert msg2.declared_fields['field'].type == msg;
 
     def test_link_variables(self):
-        '''Should link the fields to message variables.'''
+        '''Should link symbols to the message variables.'''
         # Message<T>
         t = Variable('T')
         field = Field('field', Reference('T'))
@@ -230,29 +259,104 @@ class TestMessage(unittest.TestCase):
 
         assert field.type == t
 
-    def test_link_circular(self):
-        '''Should link the fields and bases with cirular references.'''
-        # Node<V>:
-        #   RootNode<V> root
-        # RootNode<T> extends Node<T>
-        node = Message('Node')
-        node.add_variables(Variable('V'))
-        node.add_fields(Field('root', Reference('RootNode', Reference('V'))))
+    def test_parameterize_fields(self):
+        '''Should bind fields in a parameterized message.'''
+        t = Variable('T')
+        field = Field('field', Reference('T'))
+        msg = Message('Message')
+        msg.add_variables(t)
+        msg.add_fields(field)
+        msg.link()
+        assert field.type == t
 
-        root = Message('RootNode')
-        root.add_variables(Variable('T'))
-        root.set_base(Reference('Node', Reference('T')))
+        int32 = Native('int32')
+        pmsg = msg.parameterize(int32)
+        assert pmsg.rawtype == msg
+        assert pmsg.declared_fields['field'].type == int32
 
-        module = Module('test')
-        module.add_definitions(node, root)
+
+class TestParameterization(unittest.TestCase):
+    def test_recursive(self):
+        '''Should support recursive parameterization.'''
+        # MyMessage:
+        #   MyList<int32> list
+        #
+        # MyList<E>:
+        #   List<Set<E>> items
+        int32 = Native('int32')
+        Set = Native('Set', variables=[Variable('T')])
+        List = Native('List', variables=[Variable('T')])
+
+        MyList = Message('MyList', variables=[Variable('E')])
+        MyList.add_fields(Field('items', Reference('List', Reference('Set', Reference('E')))))
+
+        MyMessage = Message('MyMessage')
+        MyMessage.add_fields(Field('list', Reference('MyList', Reference('int32'))))
 
         module = Module('test.module')
-        module.add_definitions(node, root)
+        module.add_definitions(int32, Set, List, MyList, MyMessage)
+
         pkg = Package('test')
         pkg.add_modules(module)
-        pkg.link()
-        pkg.link_specials()
+        pkg.build()
 
+        # MyList<int32>:
+        #   List<Set<int32>> items
+        pmylist = MyMessage.declared_fields['list'].type
 
-# TODO:
-# - Better way to set parents (may be via set_package, set_message, set_module, etc.)
+        items = pmylist.declared_fields['items']
+        plist = items.type
+        assert plist.rawtype == List
+
+        pset = list(plist.variables)[0]
+        assert pset.rawtype == Set
+
+        pelement = list(pset.variables)[0]
+        assert pelement == int32
+
+    def test_circular(self):
+        '''Should support circular parameterization.'''
+        # Node<N>:
+        #   RootNode<N> root
+        # RootNode<R> extends Node<R>
+        # Graph:
+        #   Node<int32> node
+        int32 = Native('int32')
+
+        N = Variable('N')
+        Node = Message('Node')
+        Node.add_variables(N)
+        Node.add_fields(Field('root', Reference('RootNode', Reference('N'))))
+
+        R = Variable('R')
+        Root = Message('RootNode')
+        Root.add_variables(R)
+        Root.set_base(Reference('Node', Reference('R')))
+
+        Graph = Message('Graph')
+        Graph.add_fields(Field('node', Reference('Node', Reference('int32'))))
+
+        module = Module('test')
+        module.add_definitions(int32, Node, Root, Graph)
+
+        pkg = Package('test')
+        pkg.add_modules(module)
+        pkg.build()
+
+        # First, check that node-root circle.
+        nroot = Node.declared_fields['root'].type
+        assert nroot.rawtype is Root
+        assert list(nroot.variables) == [N]
+        assert nroot.base is Node
+
+        # Second, check the bindings in Graph.
+        gnode = Graph.declared_fields['node'].type
+        assert gnode.rawtype == Node
+        assert list(gnode.variables) == [int32]
+
+        groot = gnode.declared_fields['root'].type
+        assert groot.rawtype == Root
+        assert list(gnode.variables) == [int32]
+
+        gbase = groot.base
+        assert gnode == gbase

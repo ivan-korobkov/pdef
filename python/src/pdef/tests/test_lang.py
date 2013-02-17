@@ -244,6 +244,24 @@ class TestMessage(unittest.TestCase):
         assert pmsg.rawtype == msg
         assert pmsg.declared_fields['field'].type == int32
 
+    def test_check_circular_inheritance(self):
+        msg = Message('Message')
+        msg2 = Message('Message2', base=msg)
+        msg3 = Message('Message3', base=msg2)
+        msg.set_base(msg3)
+
+        msg2.check_circular_inheritance()
+        assert len(msg2.errors) == 1
+        assert 'circular inheritance' in msg2.errors[0]
+
+    def test_all_bases(self):
+        msg = Message('Message')
+        msg2 = Message('Message2', base=msg)
+        msg3 = Message('Message3', base=msg2)
+
+        assert list(msg3.all_bases) == [msg2, msg]
+        assert list(msg2.all_bases) == [msg]
+
 
 class TestParameterization(unittest.TestCase):
     def test_recursive(self):

@@ -16,26 +16,24 @@ message PhotoData {
 }
 
 interface App {
-    Photos photos();
+    photos() Photos;
 }
 
 interface Users {
-    User get(id string);
-    User register(
-        email string,
-        password string);
+    get(id string) User;
+    register(email string, password string) User;
 }
 
 interface User {
-    UserData data();
+    data() UserData;
 }
 
 interface Photos {
-    Photo get(id string);
-    Photo create(description string, url string);
+    get(id string) Photo;
+    create(description string, url string) Photo;
 }
 
 interface Photo {
-    PhotoData data();
-    List<string> comments();
+    data() PhotoData;
+    comments() List<string>;
 }

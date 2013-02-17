@@ -17,17 +17,6 @@ class FieldCompiler(object):
         logging.error(msg, *args)
 
     def compile(self):
-        self.compiled_bases = set()
-        for package in self.pool.packages:
-            for definition in package.definitions:
-                if isinstance(definition, lang.Message):
-                    self._compile_base(definition, package)
-        for special in self.pool.specials:
-            if isinstance(special, lang.Message):
-                self._compile_base(special, special.package)
-        if self.errors:
-            return
-
         for package in self.pool.packages:
             for definition in package.definitions:
                 if isinstance(definition, lang.Message):
@@ -55,34 +44,6 @@ class FieldCompiler(object):
         for special in self.pool.specials:
             if isinstance(special, lang.Message):
                 self._compile_all_fields(special, special.package)
-
-    def _compile_base(self, message, package):
-        # Can be called multiple times for the same message.
-        if message in self.compiled_bases:
-            return
-
-        self.compiled_bases.add(message)
-        if not message.base:
-            message.all_bases = []
-            return
-
-        message.all_bases = []
-        base = message.base
-        if base:
-            if base == message:
-                self._error('%s: circular inheritance %s', message, package)
-                return
-
-            self._compile_base(base, package) # TODO: (base, base.package)
-            for subbase in base.all_bases:
-                if subbase == message:
-                    self._error('%s: circular inheritance %s', message, package)
-                    return
-
-                if subbase in message.all_bases:
-                    continue
-                message.all_bases.append(subbase)
-            message.all_bases.append(base)
 
     def _compile_type_base(self, message, package):
         type_field_name = message.options.type_field

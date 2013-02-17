@@ -1,5 +1,5 @@
 # encoding: utf-8
-from collections import deque
+from collections import deque, OrderedDict
 import logging
 from pdef.preconditions import *
 from pdef.walker import Walker
@@ -52,6 +52,7 @@ class Builder(object):
         self.link_module_refs()
         self.link_refs()
         self.build_ptypes()
+        self.check_circular_inheritance()
 
     def link_module_refs(self):
         for module_ref in self.walker.module_refs():
@@ -60,6 +61,10 @@ class Builder(object):
     def link_refs(self):
         for ref in self.walker.refs():
             ref.link()
+
+    def check_circular_inheritance(self):
+        for message in self.walker.messages():
+            message.check_circular_inheritance()
 
     def build_ptypes(self):
         # Parameterized types are created only in the package their are defined in.
@@ -414,6 +419,14 @@ class Message(Type):
         if declared_fields:
             self.add_fields(*declared_fields)
 
+    @property
+    def all_bases(self):
+        current = self
+        while current.base:
+            base = current.base
+            yield base
+            current = base
+
     def set_base(self, base):
         self.base = base
         self.children.append(base)
@@ -439,6 +452,18 @@ class Message(Type):
         special = Message(self.name, variables=variables, base=bbase, declared_fields=bfields)
         special.rawtype = self
         return special
+
+    def check_circular_inheritance(self):
+        seen = OrderedDict()
+        current = self
+
+        while current.base:
+            current = current.base
+            if current in seen:
+                self.error('circular inheritance %s', seen.keys())
+                return
+
+            seen[current] = True
 
 
 class Field(Node):

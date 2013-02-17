@@ -2,12 +2,14 @@
 from collections import deque
 import logging
 from pdef.preconditions import *
+from pdef.walker import Walker
 
 
 class Node(object):
     def __init__(self, name):
         self.name = name
         self.parent = None
+        self.children = []
         self.errors = []
 
     def __repr__(self):
@@ -40,8 +42,30 @@ class Node(object):
         if self.parent:
             return self.parent.symbol(name)
 
-    def link(self):
-        pass
+
+class Builder(object):
+    def __init__(self, root):
+        self.root = root
+        self.walker = Walker(root)
+
+    def build(self):
+        self.link_module_refs()
+        self.link_refs()
+        self.build_ptypes()
+
+    def link_module_refs(self):
+        for module_ref in self.walker.module_refs():
+            module_ref.link()
+
+    def link_refs(self):
+        for ref in self.walker.refs():
+            ref.link()
+
+    def build_ptypes(self):
+        # Parameterized types are created only in the package their are defined in.
+        # So, after building all ptypes from the package, no other ptypes will be created in it.
+        for pkg in self.walker.packages():
+            pkg.build_parameterized()
 
 
 class Package(Node):
@@ -60,26 +84,17 @@ class Package(Node):
     def add_modules(self, *modules):
         for module in modules:
             self.modules.add(module)
+            self.children.append(module)
             module.parent = self
 
     def build(self):
-        self.link()
-        self.build_parameterized()
-
-    def link(self):
-        for module in self.modules:
-            module.link_imports()
-
-        for module in self.modules:
-            module.link()
+        builder = Builder(self)
+        builder.build()
 
     def build_parameterized(self):
-        while 1:
-            if not len(self.pqueue):
-                break
-
-            sp = self.pqueue.pop()
-            sp.build()
+        while len(self.pqueue) > 0:
+            ptype = self.pqueue.pop()
+            ptype.build()
 
     def symbol(self, name):
         '''Find a globally accessible builtin.'''
@@ -113,6 +128,7 @@ class Package(Node):
 
         self.parameterized[key] = ptype
         self.pqueue.append(ptype)
+        self.children.append(ptype)
 
         return ptype
 
@@ -196,20 +212,14 @@ class Module(Node):
     def add_imports(self, *imports):
         for imp in imports:
             self.imports.add(imp)
+            self.children.append(imp)
             imp.parent = self
 
     def add_definitions(self, *definitions):
         for d in definitions:
             self.definitions.add(d)
+            self.children.append(d)
             d.parent = self
-
-    def link_imports(self):
-        for imp in self.imports:
-            imp.link()
-
-    def link(self):
-        for definition in self.definitions:
-            definition.link()
 
     def symbol(self, name):
         if name in self.definitions:
@@ -250,6 +260,7 @@ class ModuleReference(Proxy):
             return
 
         self.delegate = package.modules[self.module_name]
+        self.children.append(self.delegate)
 
 
 class Reference(Proxy):
@@ -261,6 +272,7 @@ class Reference(Proxy):
     def add_variables(self, *variables):
         for arg in variables:
             self.variables.append(arg)
+            self.children.append(arg)
             arg.parent = self
 
     def link(self):
@@ -268,6 +280,7 @@ class Reference(Proxy):
             arg.link()
 
         self.delegate = self._lookup()
+        self.children.append(self.delegate)
 
     def _lookup(self):
         # Find the rawtype by its name, for example: MyType, package.AnotherType, T (variable).
@@ -302,9 +315,7 @@ class ParameterizedType(Proxy):
 
     def build(self):
         self.delegate = self.rawtype.parameterize(*self.variables)
-
-    def parameterize(self, *variables):
-        raise ValueError('Only rawtype can be parameterized')
+        self.children.append(self.delegate)
 
     def bind(self, arg_map):
         bvariables = []
@@ -335,6 +346,7 @@ class Type(Node):
     def add_variables(self, *vars):
         for var in vars:
             self.variables.add(var)
+            self.children.append(var)
             var.parent = self
 
     def symbol(self, name):
@@ -342,10 +354,6 @@ class Type(Node):
             return self.variables[name]
 
         return super(Type, self).symbol(name)
-
-    def link(self):
-        for var in self.variables:
-            var.link()
 
     def parameterize(self, *variables):
         '''Create a parameterized type.'''
@@ -408,20 +416,16 @@ class Message(Type):
 
     def set_base(self, base):
         self.base = base
+        self.children.append(base)
+
         if isinstance(base, Reference):
             base.parent = self
 
     def add_fields(self, *fields):
         for field in fields:
             self.declared_fields.add(field)
+            self.children.append(field)
             field.parent = self
-
-    def link(self):
-        if self.base:
-            self.base.link()
-
-        for field in self.declared_fields:
-            field.link()
 
     def parameterize(self, *variables):
         if len(self.variables) != len(variables):
@@ -441,11 +445,10 @@ class Field(Node):
     def __init__(self, name, type):
         super(Field, self).__init__(name)
         self.type = type
+        self.children.append(type)
+
         if isinstance(type, Reference):
             type.parent = self
-
-    def link(self):
-        self.type.link()
 
     def bind(self, arg_map):
         btype = self.type.bind(arg_map)

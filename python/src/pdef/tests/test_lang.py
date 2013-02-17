@@ -23,22 +23,21 @@ class Test(unittest.TestCase):
         msg.add_fields(Field('list', Reference('List', Reference('string'))))
         msg.add_fields(Field('msg2', Reference('module2.Message2')))
 
-        module1 = Module('test.module1')
-        module1.add_imports(ModuleReference('test.module2', 'module2'))
+        module1 = Module('module1')
+        module1.add_imports(ModuleReference('module2', 'module2'))
         module1.add_definitions(msg)
 
         msg2 = Message('Message2', declared_fields=[
-            Field('circular', Reference('test.module1.Message1'))
+            Field('circular', Reference('module1.Message1'))
         ])
-        module2 = Module('test.module2',
-            imports=[ModuleReference('test.module1')],
+        module2 = Module('module2',
+            imports=[ModuleReference('module1')],
             definitions=[msg2])
 
         pkg = Package('test', builtin)
         pkg.add_modules(module1, module2)
-        pkg.link()
-        pkg.build_parameterized()
-        
+        pkg.build()
+
         msg_fields = msg.declared_fields
         assert msg_fields['int'].type == int32
         assert msg_fields['str'].type == string
@@ -84,20 +83,6 @@ class TestPackage(unittest.TestCase):
 
 
 class TestModule(unittest.TestCase):
-    def test_link_imports(self):
-        '''Should replace the import references, and link the modules.'''
-        module1 = Module('module1')
-        module2 = Module('module2')
-
-        module3 = Module('module3')
-        module3.add_imports(module1, ModuleReference('module2'))
-
-        pkg = Package('test')
-        pkg.add_modules(module1, module2, module3)
-        pkg.link()
-
-        assert list(module3.imports) == [module1, module2]
-
     def test_symbol_from_definitions(self):
         '''Should look up a symbol in the module's definitions.'''
         int32 = Native('int32')
@@ -127,7 +112,6 @@ class TestModuleReference(unittest.TestCase):
         module2 = Module('package.module2')
         package = Package('package')
         package.add_modules(module, module2)
-        package.link()
 
         imp = ModuleReference('package.module', 'module')
         imp.parent = module2
@@ -218,12 +202,23 @@ class TestVariable(unittest.TestCase):
         assert bound == int32
 
 
+class TestType(unittest.TestCase):
+    def test_symbol_variables(self):
+        '''Should return variables as symbols.'''
+        # Message<T>
+        t = Variable('T')
+        msg = Type('Message')
+        msg.add_variables(t)
+
+        symbol = msg.symbol('T')
+        assert symbol is t
+
+
 class TestNative(unittest.TestCase):
     def test_parameterize(self):
         t = Variable('T')
         List = Native('List')
         List.add_variables(t)
-        List.link()
 
         string = Native('string')
         special = List.parameterize(string)
@@ -232,42 +227,17 @@ class TestNative(unittest.TestCase):
 
 
 class TestMessage(unittest.TestCase):
-    def test_link(self):
-        '''Should link the declared message fields.'''
-        msg = Message('Message')
-        msg.add_fields(Field('field', Reference('Message2')))
-
-        msg2 = Message('Message2')
-        msg2.add_fields(Field('field', Reference('Message')))
-
-        module = Module('test')
-        module.add_definitions(msg, msg2)
-        module.link()
-
-        assert msg.declared_fields['field'].type == msg2;
-        assert msg2.declared_fields['field'].type == msg;
-
-    def test_link_variables(self):
-        '''Should link symbols to the message variables.'''
-        # Message<T>
-        t = Variable('T')
-        field = Field('field', Reference('T'))
-        msg = Message('Message')
-        msg.add_variables(t)
-        msg.add_fields(field)
-        msg.link()
-
-        assert field.type == t
+    def test_parameterize_base(self):
+        '''TODO: test parameterize base'''
+        pass
 
     def test_parameterize_fields(self):
         '''Should bind fields in a parameterized message.'''
         t = Variable('T')
-        field = Field('field', Reference('T'))
+        field = Field('field', t)
         msg = Message('Message')
         msg.add_variables(t)
-        msg.add_fields(field)
-        msg.link()
-        assert field.type == t
+        msg.add_fields(Field('field', t))
 
         int32 = Native('int32')
         pmsg = msg.parameterize(int32)

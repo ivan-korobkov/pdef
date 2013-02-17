@@ -254,13 +254,42 @@ class TestMessage(unittest.TestCase):
         assert len(msg2.errors) == 1
         assert 'circular inheritance' in msg2.errors[0]
 
-    def test_all_bases(self):
+    def test_bases(self):
         msg = Message('Message')
         msg2 = Message('Message2', base=msg)
         msg3 = Message('Message3', base=msg2)
 
-        assert list(msg3.all_bases) == [msg2, msg]
-        assert list(msg2.all_bases) == [msg]
+        assert list(msg3.bases) == [msg2, msg]
+        assert list(msg2.bases) == [msg]
+
+    def test_compfile_fields(self):
+        int32 = Native('int32')
+        f1 = Field('z', int32)
+        msg = Message('A')
+        msg.add_fields(f1)
+
+        f2 = Field('y', int32)
+        msg2 = Message('B', base=msg)
+        msg2.add_fields(f2)
+
+        f3 = Field('x', int32)
+        msg3 = Message('C', base=msg2)
+        msg3.add_fields(f3)
+
+        msg3.compile_fields()
+        assert list(msg3.fields) == [f1, f2, f3]
+
+    def test_compile_fields_class(self):
+        int32 = Native('int32')
+        f1 = Field('field', int32)
+        msg = Message('A')
+        msg.add_fields(f1)
+
+        f2 = Field('field', int32)
+        msg2 = Message('B', base=msg)
+        msg2.add_fields(f2)
+
+        self.assertRaises(ValueError, msg2.compile_fields)
 
 
 class TestParameterization(unittest.TestCase):

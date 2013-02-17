@@ -53,6 +53,7 @@ class Builder(object):
         self.link_refs()
         self.build_ptypes()
         self.check_circular_inheritance()
+        self.compfile_fields()
 
     def link_module_refs(self):
         for module_ref in self.walker.module_refs():
@@ -71,6 +72,10 @@ class Builder(object):
         # So, after building all ptypes from the package, no other ptypes will be created in it.
         for pkg in self.walker.packages():
             pkg.build_parameterized()
+
+    def compfile_fields(self):
+        for message in self.walker.messages():
+            message.compile_fields()
 
 
 class Package(Node):
@@ -311,6 +316,7 @@ class ParameterizedType(Proxy):
         self.variables = SymbolTable()
         for var, arg in zip(self.rawtype.variables, variables):
             self.variables.add_with_name(var, arg)
+            self.children.append(arg)
 
     def __eq__(self, other):
         return self is other
@@ -374,7 +380,7 @@ class Variable(Type):
         super(Variable, self).__init__(name)
 
     def bind(self, arg_map):
-        # The variable must be in the map itself.
+        '''Find this variable in the arg map and return the value.'''
         svar = arg_map.get(self)
         if svar:
             return svar
@@ -390,6 +396,7 @@ class Native(Type):
         self.options = options
 
     def parameterize(self, *variables):
+        '''Parameterize this native with the given variables and return a new one.'''
         if len(self.variables) != len(variables):
             self.error('wrong number of arguments %s', variables)
             return
@@ -419,20 +426,27 @@ class Message(Type):
         if declared_fields:
             self.add_fields(*declared_fields)
 
-    @property
-    def all_bases(self):
-        current = self
-        while current.base:
-            base = current.base
-            yield base
-            current = base
-
     def set_base(self, base):
+        '''Set this message base.'''
+        check_state(not self.base, 'base is already set in %s', self)
+
         self.base = base
         self.children.append(base)
 
         if isinstance(base, Reference):
             base.parent = self
+
+    @property
+    def bases(self):
+        '''Return an iterator over the base tree of this message.
+
+        The bases are ordered from this message direct base to the root one.
+        '''
+        current = self
+        while current.base:
+            base = current.base
+            yield base
+            current = base
 
     def add_fields(self, *fields):
         for field in fields:
@@ -441,6 +455,7 @@ class Message(Type):
             field.parent = self
 
     def parameterize(self, *variables):
+        '''Parameterize this message with the given arguments, return another message.'''
         if len(self.variables) != len(variables):
             self.error('wrong number of variables %s', variables)
             return
@@ -454,6 +469,7 @@ class Message(Type):
         return special
 
     def check_circular_inheritance(self):
+        '''Check circular inheritance, logs an error if it exists.'''
         seen = OrderedDict()
         current = self
 
@@ -464,6 +480,19 @@ class Message(Type):
                 return
 
             seen[current] = True
+
+    def compile_fields(self):
+        '''Compile this message and its bases fields.
+
+        The fields are stored in reverse order, from the root base to this message.
+        '''
+        reversed_bases = reversed(list(self.bases))
+        for base in reversed_bases:
+            for field in base.declared_fields:
+                self.fields.add(field)
+
+        for field in self.declared_fields:
+            self.fields.add(field)
 
 
 class Field(Node):
@@ -476,6 +505,7 @@ class Field(Node):
             type.parent = self
 
     def bind(self, arg_map):
+        '''Bind this field type and return a new field.'''
         btype = self.type.bind(arg_map)
         if btype == self.type:
             return self

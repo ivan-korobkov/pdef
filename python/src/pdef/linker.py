@@ -37,14 +37,6 @@ class FieldCompiler(object):
         if self.errors:
             return
 
-        for package in self.pool.packages:
-            for definition in package.definitions:
-                if isinstance(definition, lang.Message):
-                    self._compile_all_fields(definition, package)
-        for special in self.pool.specials:
-            if isinstance(special, lang.Message):
-                self._compile_all_fields(special, special.package)
-
     def _compile_type_base(self, message, package):
         type_field_name = message.options.type_field
         if not type_field_name:
@@ -66,7 +58,7 @@ class FieldCompiler(object):
         field_name = type_field.name
 
         # Check, that all its bases do not have such a field.
-        for base in message.all_bases:
+        for base in message.bases:
             present = base.declared_field_map.get(field_name)
             if not present:
                 continue
@@ -127,26 +119,3 @@ class FieldCompiler(object):
         type_field.is_type_field = True
         base.subtypes.append(message)
         base.subtype_map[value] = message
-
-    def _compile_all_fields(self, message, package):
-        message.fields = []
-
-        for base in message.all_bases:
-            for field in base.declared_fields:
-                self._add_field(field, message, package)
-
-        for field in message.declared_fields:
-            self._add_field(field, message, package, declared=True)
-
-    def _add_field(self, field, message, package, declared=False):
-        if field.is_type_field and not declared:
-            # Skip all type fields except for the declared ones, because they override the base ones.
-            return
-
-        present_field = message.field_map.get(field.name)
-        if present_field:
-            self._error('%s.%s: %s clashes with %s', package, message, field, present_field)
-            return
-
-        message.fields.append(field)
-        message.field_map[field.name] = field

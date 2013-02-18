@@ -9,7 +9,8 @@ from pdef import lang
 class Tokens(object):
 
     # Simple reserved words.
-    reserved = ('AS', 'ENUM', 'IMPORT', 'INHERITS', 'MESSAGE', 'OPTIONS', 'MODULE', 'NATIVE')
+    reserved = ('AS', 'ENUM', 'IMPORT', 'INHERITS', 'MESSAGE', 'ON', 'POLYMORPHIC', 'OPTIONS',
+                'MODULE', 'NATIVE')
 
     # All tokens.
     tokens = reserved + (
@@ -200,16 +201,26 @@ class GrammarRules(object):
     # Message definition
     def p_message(self, t):
         '''
-        message : MESSAGE IDENTIFIER variables inheritance LBRACE message_options fields RBRACE
+        message : MESSAGE IDENTIFIER message_header message_body
         '''
         name = t[2]
-        variables = t[3]
-        inheritance = t[4]
-        fields = t[7]
-        # TODO: Message options
-        options = t[6]
+        variables, inheritance, polymorphism = t[3]
+        options, fields = t[4]
+
         t[0] = lang.Message(name, variables=variables, inheritance=inheritance,
                             declared_fields=fields)
+
+    def p_message_header(self, t):
+        '''
+        message_header : variables inheritance polymorphism
+        '''
+        t[0] = (t[1], t[2], t[3])
+
+    def p_message_body(self, t):
+        '''
+        message_body : LBRACE message_options fields RBRACE
+        '''
+        t[0] = (t[2], t[3])
 
     # Message options: options [];
     def p_message_options(self, t):
@@ -285,7 +296,7 @@ class GrammarRules(object):
         t[0] = lang.Variable(t[1])
 
     # Message inheritance
-    def p_inheritance(self, t):
+    def p_message_inheritance(self, t):
         '''
         inheritance : INHERITS type AS IDENTIFIER
                     | empty
@@ -294,6 +305,16 @@ class GrammarRules(object):
             t[0] = None
         else:
             t[0] = lang.MessageInheritance(t[2], t[4])
+
+    def p_message_polymorphism(self, t):
+        '''
+        polymorphism : POLYMORPHIC ON STRING AS IDENTIFIER
+                     | empty
+        '''
+        if len(t) == 2:
+            t[0] = None
+        else:
+            t[0] = lang.MessagePolymorphism(t[2], t[4])
 
     def p_error(self, t):
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)

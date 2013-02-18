@@ -22,7 +22,7 @@ class TestParser(unittest.TestCase):
         assert module.name == 'test.messages'
 
         dd = list(module.definitions)
-        assert len(dd) == 11
+        assert len(dd) == 15
         assert dd[0].name == 'int32'
         assert dd[1].name == 'string'
         assert dd[10].name == 'Note'

@@ -523,6 +523,14 @@ class MessageInheritance(Node):
         self.type_id = type_id
 
 
+class MessagePolymorphism(Node):
+    def __init__(self, field, type_id):
+        super(MessagePolymorphism, self).__init__('polymorphism')
+
+        self.field = field
+        self.type_id = type_id
+
+
 class Field(Node):
     def __init__(self, name, type):
         super(Field, self).__init__(name)

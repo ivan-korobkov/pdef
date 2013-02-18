@@ -23,11 +23,31 @@ enum Type {
     USER,
     POST,
     PHOTO,
-    NOTE;
+    NOTE,
+    EVENT;
 }
 
-message GenericObject {}
+message GenericObject
+    polymorphic on "type" as Type.OBJECT {
+
+    type    Type;
+}
 message User inherits GenericObject as Type.USER {}
 message Post inherits GenericObject as Type.POST {}
 message Photo inherits Post as Type.PHOTO {}
 message Note inherits Post as Type.NOTE {}
+
+enum EventType {
+    GENERIC,
+    SYSTEM,
+    USER;
+}
+
+message Event
+    inherits GenericObject as Type.EVENT
+    polymorphic on "event_type" as EventType.GENERIC {
+
+    event_type  EventType;
+}
+message SystemEvent inherits Event as EventType.SYSTEM {}
+message UserEvent inherits Event as EventType.USER {}

@@ -2,8 +2,8 @@
 import os
 import os.path
 import logging
+from pdef.lang import Package
 
-from pdef.lang import Pool
 from pdef.linker import FieldCompiler
 from pdef.parser import Parser
 from pdef.preconditions import *
@@ -38,42 +38,37 @@ class Compiler(object):
 
         # Parse and translate the builtin package.
         if self.with_builtin:
-            builtin_node = self._parse_file(self.builtin)
+            builtin_module = self._parse_file(self.builtin)
             if self.errors:
                 return
 
-            builtin_pool = Pool()
-            builtin_pool.add_packages([builtin_node])
+            builtin = Package('builtin')
+            builtin.add_modules(builtin_module)
 
-            field_compiler = FieldCompiler(builtin_pool)
-            field_compiler.compile()
-            if self.errors:
-                return
-
-            pool = Pool()
-            pool.builtins = builtin_pool.packages
+            package = Package('default', builtin=builtin)
         else:
-            pool = Pool()
+            package = Package('default')
 
-        # Parse the files into AST package nodes.
-        package_nodes = self._parse_files(filepaths)
+        modules = self._parse_files(filepaths)
         if self.errors:
             return
 
-        pool.add_packages(package_nodes)
+        package.add_modules(*modules)
         if self.errors:
             return
 
-        # Compile message bases and fields.
-        field_compiler = FieldCompiler(pool)
-        field_compiler.compile()
-        if field_compiler.errors:
+        package.build()
+        if self.errors:
             return
 
-        logging.info("Generating java code...")
-        java = JavaTranslator(self.outdir, pool)
-        java.translate()
-        return pool
+        print(package)
+        for module in package.modules:
+            print(module)
+
+        #logging.info("Generating java code...")
+        #java = JavaTranslator(self.outdir, pool)
+        #java.translate()
+        return package
 
     def _scan_dirs(self):
         filepaths = []

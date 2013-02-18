@@ -1,4 +1,4 @@
-package builtin;
+module builtin;
 // Built-in types.
 
 

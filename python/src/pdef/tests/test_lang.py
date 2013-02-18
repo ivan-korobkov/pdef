@@ -23,15 +23,15 @@ class Test(unittest.TestCase):
         msg.add_fields(Field('list', Reference('List', Reference('string'))))
         msg.add_fields(Field('msg2', Reference('module2.Message2')))
 
-        module1 = Module('module1')
-        module1.add_imports(ModuleReference('module2', 'module2'))
+        module1 = Module('test.module1')
+        module1.add_imports(ModuleReference('test.module2', 'module2'))
         module1.add_definitions(msg)
 
         msg2 = Message('Message2', declared_fields=[
-            Field('circular', Reference('module1.Message1'))
+            Field('circular', Reference('test.module1.Message1'))
         ])
-        module2 = Module('module2',
-            imports=[ModuleReference('module1')],
+        module2 = Module('test.module2',
+            imports=[ModuleReference('test.module1')],
             definitions=[msg2])
 
         pkg = Package('test', builtin)

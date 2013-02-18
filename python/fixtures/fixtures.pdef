@@ -1,0 +1,18 @@
+module default.fixtures;
+
+native int32 {}
+native string {}
+native List<T> {}
+
+
+message Message {
+    int     int32;
+    str     string;
+    list    List<string>;
+    msg2    Message2;
+}
+
+
+message Message2 {
+    msg1    Message;
+}

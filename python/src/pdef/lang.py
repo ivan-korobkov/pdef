@@ -93,6 +93,10 @@ class Package(Node):
 
     def add_modules(self, *modules):
         for module in modules:
+            if not module.name.startswith(self.name):
+                module.error('module name must start with the package name "%s"', self.name)
+                continue
+
             self.modules.add(module)
             self.children.append(module)
             module.parent = self
@@ -218,6 +222,10 @@ class Module(Node):
 
         if definitions:
             self.add_definitions(*definitions)
+
+    @property
+    def fullname(self):
+        return self.name
 
     def add_imports(self, *imports):
         for imp in imports:

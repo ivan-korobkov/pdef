@@ -9,7 +9,7 @@ from pdef import lang
 class Tokens(object):
 
     # Simple reserved words.
-    reserved = ('AS', 'EXTENDS', 'ENUM', 'IMPORT', 'MESSAGE', 'OPTIONS', 'MODULE', 'NATIVE')
+    reserved = ('AS', 'ENUM', 'IMPORT', 'INHERITS', 'MESSAGE', 'OPTIONS', 'MODULE', 'NATIVE')
 
     # All tokens.
     tokens = reserved + (
@@ -200,15 +200,16 @@ class GrammarRules(object):
     # Message definition
     def p_message(self, t):
         '''
-        message : MESSAGE IDENTIFIER variables base LBRACE message_options fields RBRACE
+        message : MESSAGE IDENTIFIER variables inheritance LBRACE message_options fields RBRACE
         '''
         name = t[2]
         variables = t[3]
-        base = t[4]
+        inheritance = t[4]
         fields = t[7]
         # TODO: Message options
         options = t[6]
-        t[0] = lang.Message(name, variables=variables, base=base, declared_fields=fields)
+        t[0] = lang.Message(name, variables=variables, inheritance=inheritance,
+                            declared_fields=fields)
 
     # Message options: options [];
     def p_message_options(self, t):
@@ -283,16 +284,16 @@ class GrammarRules(object):
         '''
         t[0] = lang.Variable(t[1])
 
-    # Base message
-    def p_base(self, t):
+    # Message inheritance
+    def p_inheritance(self, t):
         '''
-        base : EXTENDS type
-             | empty
+        inheritance : INHERITS type AS IDENTIFIER
+                    | empty
         '''
         if len(t) == 2:
             t[0] = None
         else:
-            t[0] = t[2]
+            t[0] = lang.MessageInheritance(t[2], t[4])
 
     def p_error(self, t):
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)

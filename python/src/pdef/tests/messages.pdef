@@ -16,3 +16,18 @@ message Message {
 message Message2 {
     msg1    Message;
 }
+
+
+enum Type {
+    OBJECT,
+    USER,
+    POST,
+    PHOTO,
+    NOTE;
+}
+
+message GenericObject {}
+message User inherits GenericObject as Type.USER {}
+message Post inherits GenericObject as Type.POST {}
+message Photo inherits Post as Type.PHOTO {}
+message Note inherits Post as Type.NOTE {}

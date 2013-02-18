@@ -421,18 +421,30 @@ class Enum(Type):
 
 
 class Message(Type):
-    def __init__(self, name, variables=None, base=None, declared_fields=None):
+    def __init__(self, name, variables=None, base=None, inheritance=None, declared_fields=None):
         super(Message, self).__init__(name, variables)
 
         self.base = None
+        self.inheritance = None
         self.declared_fields = SymbolTable()
         self.fields = SymbolTable()
 
         if base:
             self.set_base(base)
 
+        if inheritance:
+            self.set_inheritance(inheritance)
+
         if declared_fields:
             self.add_fields(*declared_fields)
+
+    def set_inheritance(self, inheritance):
+        '''Set this message inheritance.'''
+        check_state(not self.inheritance, 'inheritance is already set in %s', self)
+
+        self.inheritance = check_not_none(inheritance)
+        self.children.append(inheritance)
+        inheritance.parent = self
 
     def set_base(self, base):
         '''Set this message base.'''
@@ -501,6 +513,14 @@ class Message(Type):
 
         for field in self.declared_fields:
             self.fields.add(field)
+
+
+class MessageInheritance(Node):
+    def __init__(self, base, type_id):
+        super(MessageInheritance, self).__init__('inheritance')
+
+        self.base = base
+        self.type_id = type_id
 
 
 class Field(Node):

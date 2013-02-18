@@ -5,9 +5,9 @@ _tabversion = '3.2'
 
 _lr_method = 'LALR'
 
-_lr_signature = '\xae\x03KlGH\x88C\xad\xc2\xa3o\xaf\n\xb0\xc3'
+_lr_signature = '\xe9\x94\xf4\xdd\xca\xc0\x0b\xd8\xd5\xbb\x8d\xed\xf1F\x92\x1f'
     
-_lr_action_items = {'LBRACKET':([52,60,79,80,],[-14,67,67,-13,]),'LBRACE':([20,21,23,27,28,30,39,41,44,52,53,80,],[-2,29,-2,35,-39,-2,51,-44,-38,-14,-43,-13,]),'GREATER':([32,33,34,52,54,73,74,80,86,],[-41,-42,44,-14,-40,-16,80,-13,-15,]),'SEMI':([4,19,31,36,37,38,52,59,60,66,68,79,80,82,83,84,85,],[9,25,42,-25,-26,49,-14,-24,-2,75,-31,-2,-13,-30,87,-36,-31,]),'LESS':([20,23,52,],[26,26,63,]),'RBRACE':([35,45,47,48,49,51,61,62,64,65,69,70,72,75,78,87,],[-2,-10,-11,56,58,-2,-2,-29,-12,-9,77,-33,-34,-28,-32,-35,]),'ENUM':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,56,58,77,],[-2,13,-5,-6,-3,-21,-20,-4,-18,-19,13,-17,-8,-7,-22,-23,-27,]),'MODULE':([0,],[1,]),'OPTIONS':([51,],[60,]),'NATIVE':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,56,58,77,],[-2,11,-5,-6,-3,-21,-20,-4,-18,-19,11,-17,-8,-7,-22,-23,-27,]),'AS':([19,],[24,]),'COLON':([46,],[55,]),'EXTENDS':([23,28,30,44,],[-2,-39,40,-38,]),'STRING':([55,],[64,]),'IMPORT':([3,5,7,8,9,14,25,42,],[6,6,-5,-6,-3,-4,-8,-7,]),'MESSAGE':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,56,58,77,],[-2,18,-5,-6,-3,-21,-20,-4,-18,-19,18,-17,-8,-7,-22,-23,-27,]),'IDENTIFIER':([1,6,11,13,18,24,26,29,35,40,43,50,51,57,61,62,63,67,69,70,71,72,75,78,81,87,],[4,19,20,21,23,31,33,37,46,52,33,37,-2,46,71,-29,52,46,71,-33,52,-34,-28,-32,52,-35,]),'RBRACKET':([45,47,64,65,67,76,],[-10,-11,-12,-9,-2,82,]),'COMMA':([32,33,34,35,36,37,38,45,47,48,52,54,59,64,65,67,73,74,76,80,86,],[-41,-42,43,-2,-25,-26,50,-10,-11,57,-14,-40,-24,-12,-9,-2,-16,81,57,-13,-15,]),'$end':([2,10,12,15,16,17,22,56,58,77,],[0,-21,-20,-18,-19,-1,-17,-22,-23,-27,]),}
+_lr_action_items = {'INHERITS':([23,28,30,44,],[-2,-39,39,-38,]),'LBRACKET':([51,62,77,83,],[-14,71,-13,71,]),'LBRACE':([20,21,23,27,28,30,40,41,44,69,],[-2,29,-2,35,-39,-2,53,-44,-38,-43,]),'GREATER':([32,33,34,51,54,67,68,77,84,],[-41,-42,44,-14,-40,-16,77,-13,-15,]),'SEMI':([4,19,31,36,37,38,51,59,62,70,72,77,83,85,86,87,88,],[9,25,42,-25,-26,49,-14,-24,-2,79,-31,-13,-2,-30,89,-36,-31,]),'LESS':([20,23,51,],[26,26,60,]),'RBRACE':([35,45,47,48,49,53,63,64,65,66,73,74,76,79,82,89,],[-2,-10,-11,56,58,-2,-2,-29,-12,-9,81,-33,-34,-28,-32,-35,]),'ENUM':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,56,58,81,],[-2,13,-5,-6,-3,-21,-20,-4,-18,-19,13,-17,-8,-7,-22,-23,-27,]),'MODULE':([0,],[1,]),'OPTIONS':([53,],[62,]),'NATIVE':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,56,58,81,],[-2,11,-5,-6,-3,-21,-20,-4,-18,-19,11,-17,-8,-7,-22,-23,-27,]),'AS':([19,51,52,77,],[24,-14,61,-13,]),'COLON':([46,],[55,]),'COMMA':([32,33,34,35,36,37,38,45,47,48,51,54,59,65,66,67,68,71,77,80,84,],[-41,-42,43,-2,-25,-26,50,-10,-11,57,-14,-40,-24,-12,-9,-16,78,-2,-13,57,-15,]),'STRING':([55,],[65,]),'IMPORT':([3,5,7,8,9,14,25,42,],[6,6,-5,-6,-3,-4,-8,-7,]),'MESSAGE':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,56,58,81,],[-2,18,-5,-6,-3,-21,-20,-4,-18,-19,18,-17,-8,-7,-22,-23,-27,]),'IDENTIFIER':([1,6,11,13,18,24,26,29,35,39,43,50,53,57,60,61,63,64,71,73,74,75,76,78,79,82,89,],[4,19,20,21,23,31,33,37,46,51,33,37,-2,46,51,69,75,-29,46,75,-33,51,-34,51,-28,-32,-35,]),'RBRACKET':([45,47,65,66,71,80,],[-10,-11,-12,-9,-2,85,]),'$end':([2,10,12,15,16,17,22,56,58,81,],[0,-21,-20,-18,-19,-1,-17,-22,-23,-27,]),}
 
 _lr_action = { }
 for _k, _v in _lr_action_items.items():
@@ -16,7 +16,7 @@ for _k, _v in _lr_action_items.items():
       _lr_action[_x][_k] = _y
 del _lr_action_items
 
-_lr_goto_items = {'imports':([3,],[5,]),'variables':([20,23,],[27,30,]),'module':([0,],[2,]),'message':([5,17,],[10,10,]),'native':([5,17,],[16,16,]),'field':([61,69,],[70,78,]),'field_options':([79,],[83,]),'import':([3,5,],[7,14,]),'type':([40,63,71,81,],[53,73,79,86,]),'variable_list':([26,],[34,]),'enum_value':([29,50,],[36,59,]),'enum':([5,17,],[12,12,]),'base':([30,],[39,]),'module_name':([0,],[3,]),'variable':([26,43,],[32,54,]),'message_options':([51,],[61,]),'types':([63,],[74,]),'enum_values':([29,],[38,]),'definition':([5,17,],[15,22,]),'data_field':([35,57,67,],[45,65,45,]),'fields':([61,],[69,]),'empty':([3,20,23,30,35,51,60,61,67,79,],[8,28,28,41,47,62,68,72,47,85,]),'definitions':([5,],[17,]),'options':([60,79,],[66,84,]),'data_fields':([35,67,],[48,76,]),}
+_lr_goto_items = {'imports':([3,],[5,]),'variables':([20,23,],[27,30,]),'module':([0,],[2,]),'message':([5,17,],[10,10,]),'native':([5,17,],[16,16,]),'inheritance':([30,],[40,]),'field':([63,73,],[74,82,]),'field_options':([83,],[86,]),'import':([3,5,],[7,14,]),'type':([39,60,75,78,],[52,67,83,84,]),'variable_list':([26,],[34,]),'enum_value':([29,50,],[36,59,]),'enum':([5,17,],[12,12,]),'module_name':([0,],[3,]),'variable':([26,43,],[32,54,]),'message_options':([53,],[63,]),'types':([60,],[68,]),'enum_values':([29,],[38,]),'definition':([5,17,],[15,22,]),'data_field':([35,57,71,],[45,66,45,]),'fields':([63,],[73,]),'empty':([3,20,23,30,35,53,62,63,71,83,],[8,28,28,41,47,64,72,76,47,88,]),'definitions':([5,],[17,]),'options':([62,83,],[70,87,]),'data_fields':([35,71,],[48,80,]),}
 
 _lr_goto = { }
 for _k, _v in _lr_goto_items.items():
@@ -52,22 +52,22 @@ _lr_productions = [
   ('enum_values -> enum_values COMMA enum_value','enum_values',3,'p_enum_values','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',188),
   ('enum_values -> enum_value','enum_values',1,'p_enum_values','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',189),
   ('enum_value -> IDENTIFIER','enum_value',1,'p_enum_value','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',196),
-  ('message -> MESSAGE IDENTIFIER variables base LBRACE message_options fields RBRACE','message',8,'p_message','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',203),
-  ('message_options -> OPTIONS options SEMI','message_options',3,'p_message_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',216),
-  ('message_options -> empty','message_options',1,'p_message_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',217),
-  ('options -> LBRACKET data_fields RBRACKET','options',3,'p_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',227),
-  ('options -> empty','options',1,'p_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',228),
-  ('fields -> fields field','fields',2,'p_fields','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',238),
-  ('fields -> field','fields',1,'p_fields','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',239),
-  ('fields -> empty','fields',1,'p_fields','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',240),
-  ('field -> IDENTIFIER type field_options SEMI','field',4,'p_field','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',247),
-  ('field_options -> options','field_options',1,'p_field_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',255),
-  ('field_options -> empty','field_options',1,'p_field_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',256),
-  ('variables -> LESS variable_list GREATER','variables',3,'p_variables','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',263),
-  ('variables -> empty','variables',1,'p_variables','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',264),
-  ('variable_list -> variable_list COMMA variable','variable_list',3,'p_variable_list','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',274),
-  ('variable_list -> variable','variable_list',1,'p_variable_list','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',275),
-  ('variable -> IDENTIFIER','variable',1,'p_variable','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',282),
-  ('base -> EXTENDS type','base',2,'p_base','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',289),
-  ('base -> empty','base',1,'p_base','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',290),
+  ('message -> MESSAGE IDENTIFIER variables inheritance LBRACE message_options fields RBRACE','message',8,'p_message','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',203),
+  ('message_options -> OPTIONS options SEMI','message_options',3,'p_message_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',217),
+  ('message_options -> empty','message_options',1,'p_message_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',218),
+  ('options -> LBRACKET data_fields RBRACKET','options',3,'p_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',228),
+  ('options -> empty','options',1,'p_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',229),
+  ('fields -> fields field','fields',2,'p_fields','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',239),
+  ('fields -> field','fields',1,'p_fields','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',240),
+  ('fields -> empty','fields',1,'p_fields','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',241),
+  ('field -> IDENTIFIER type field_options SEMI','field',4,'p_field','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',248),
+  ('field_options -> options','field_options',1,'p_field_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',256),
+  ('field_options -> empty','field_options',1,'p_field_options','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',257),
+  ('variables -> LESS variable_list GREATER','variables',3,'p_variables','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',264),
+  ('variables -> empty','variables',1,'p_variables','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',265),
+  ('variable_list -> variable_list COMMA variable','variable_list',3,'p_variable_list','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',275),
+  ('variable_list -> variable','variable_list',1,'p_variable_list','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',276),
+  ('variable -> IDENTIFIER','variable',1,'p_variable','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',283),
+  ('inheritance -> INHERITS type AS IDENTIFIER','inheritance',4,'p_inheritance','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',290),
+  ('inheritance -> empty','inheritance',1,'p_inheritance','/Users/ivan/Workspace/pdef/python/src/pdef/parser.py',291),
 ]

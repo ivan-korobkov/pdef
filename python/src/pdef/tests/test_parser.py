@@ -16,16 +16,13 @@ class TestParser(unittest.TestCase):
         '''Should parse a test file with messages.'''
         s = self._read('messages.pdef')
         parser = Parser()
-        result = parser.parse(s)
-        assert result
-        assert isinstance(result, lang.Module)
-        assert result.name == 'test.messages'
-        assert len(result.definitions) == 5
+        module = parser.parse(s)
+        assert module
+        assert isinstance(module, lang.Module)
+        assert module.name == 'test.messages'
 
-    def test_parse_interfaces(self):
-        '''Should parse a test file with interfaces without errors.'''
-        return
-        s = self._read('interfaces.pdef')
-        parser = Parser()
-        result = parser.parse(s)
-        assert result
+        dd = list(module.definitions)
+        assert len(dd) == 11
+        assert dd[0].name == 'int32'
+        assert dd[1].name == 'string'
+        assert dd[10].name == 'Note'

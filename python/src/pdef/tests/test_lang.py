@@ -244,16 +244,6 @@ class TestMessage(unittest.TestCase):
         assert pmsg.rawtype == msg
         assert pmsg.declared_fields['field'].type == int32
 
-    def test_check_circular_inheritance(self):
-        msg = Message('Message')
-        msg2 = Message('Message2', base=msg)
-        msg3 = Message('Message3', base=msg2)
-        msg.set_base(msg3)
-
-        msg2.check_circular_inheritance()
-        assert len(msg2.errors) == 1
-        assert 'circular inheritance' in msg2.errors[0]
-
     def test_bases(self):
         msg = Message('Message')
         msg2 = Message('Message2', base=msg)
@@ -262,7 +252,7 @@ class TestMessage(unittest.TestCase):
         assert list(msg3.bases) == [msg2, msg]
         assert list(msg2.bases) == [msg]
 
-    def test_compfile_fields(self):
+    def test_compile_fields(self):
         int32 = Native('int32')
         f1 = Field('z', int32)
         msg = Message('A')
@@ -279,7 +269,7 @@ class TestMessage(unittest.TestCase):
         msg3.compile_fields()
         assert list(msg3.fields) == [f1, f2, f3]
 
-    def test_compile_fields_class(self):
+    def test_compile_fields_clash(self):
         int32 = Native('int32')
         f1 = Field('field', int32)
         msg = Message('A')
@@ -290,6 +280,16 @@ class TestMessage(unittest.TestCase):
         msg2.add_fields(f2)
 
         self.assertRaises(ValueError, msg2.compile_fields)
+
+    def test_check_circular_inheritance(self):
+        msg = Message('Message')
+        msg2 = Message('Message2', base=msg)
+        msg3 = Message('Message3', base=msg2)
+        msg.set_base(msg3, 'type')
+
+        msg2.check_circular_inheritance()
+        assert len(msg2.errors) == 1
+        assert 'circular inheritance' in msg2.errors[0]
 
 
 class TestParameterization(unittest.TestCase):
@@ -348,7 +348,7 @@ class TestParameterization(unittest.TestCase):
         R = Variable('R')
         Root = Message('RootNode')
         Root.add_variables(R)
-        Root.set_base(Reference('Node', Reference('R')))
+        Root.set_base(Reference('Node', Reference('R')), 'root')
 
         Graph = Message('Graph')
         Graph.add_fields(Field('node', Reference('Node', Reference('int32'))))

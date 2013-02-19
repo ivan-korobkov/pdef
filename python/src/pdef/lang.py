@@ -67,6 +67,9 @@ class Builder(object):
         for message in self.walker.messages():
             message.check_circular_inheritance()
 
+        for inheritance in self.walker.message_inheritances():
+            inheritance.check_circular()
+
     def build_ptypes(self):
         # Parameterized types are created only in the package their are defined in.
         # So, after building all ptypes from the package, no other ptypes will be created in it.
@@ -421,40 +424,39 @@ class Enum(Type):
 
 
 class Message(Type):
-    def __init__(self, name, variables=None, base=None, inheritance=None, declared_fields=None):
+    def __init__(self, name, variables=None, base=None, base_type=None, declared_fields=None):
         super(Message, self).__init__(name, variables)
 
         self.base = None
-        self.inheritance = None
+        self.base_type = None
+        self.polymorphism = None
+
         self.declared_fields = SymbolTable()
         self.fields = SymbolTable()
 
         if base:
-            self.set_base(base)
-
-        if inheritance:
-            self.set_inheritance(inheritance)
+            self.set_base(base, base_type)
 
         if declared_fields:
             self.add_fields(*declared_fields)
 
-    def set_inheritance(self, inheritance):
+    def set_base(self, base, base_type):
         '''Set this message inheritance.'''
-        check_state(not self.inheritance, 'inheritance is already set in %s', self)
-
-        self.inheritance = check_not_none(inheritance)
-        self.children.append(inheritance)
-        inheritance.parent = self
-
-    def set_base(self, base):
-        '''Set this message base.'''
         check_state(not self.base, 'base is already set in %s', self)
 
-        self.base = base
+        self.base = check_not_none(base)
+        self.base_type = check_not_none(base_type)
         self.children.append(base)
+
+        # TODO: Enum value?
+        if isinstance(base_type, Node):
+            self.children.append(base_type)
 
         if isinstance(base, Reference):
             base.parent = self
+
+        if isinstance(base_type, Reference):
+            base_type.parent = self
 
     @property
     def bases(self):
@@ -462,11 +464,10 @@ class Message(Type):
 
         The bases are ordered from this message direct base to the root one.
         '''
-        current = self
-        while current.base:
-            base = current.base
+        base = self.base
+        while base:
             yield base
-            current = base
+            base = base.base
 
     def add_fields(self, *fields):
         for field in fields:
@@ -484,22 +485,24 @@ class Message(Type):
         bbase = self.base.bind(arg_map) if self.base else None
         bfields = [field.bind(arg_map) for field in self.declared_fields]
 
-        special = Message(self.name, variables=variables, base=bbase, declared_fields=bfields)
+        special = Message(self.name, variables=variables, base=bbase, base_type=self.base_type,
+                          declared_fields=bfields)
         special.rawtype = self
         return special
 
     def check_circular_inheritance(self):
         '''Check circular inheritance, logs an error if it exists.'''
         seen = OrderedDict()
-        current = self
+        seen[self] = True
 
-        while current.base:
-            current = current.base
-            if current in seen:
+        base = self.base
+        while base:
+            if base in seen:
                 self.error('circular inheritance %s', seen.keys())
                 return
 
-            seen[current] = True
+            seen[base] = True
+            base = base.base
 
     def compile_fields(self):
         '''Compile this message and its bases fields.
@@ -513,14 +516,6 @@ class Message(Type):
 
         for field in self.declared_fields:
             self.fields.add(field)
-
-
-class MessageInheritance(Node):
-    def __init__(self, base, type_id):
-        super(MessageInheritance, self).__init__('inheritance')
-
-        self.base = base
-        self.type_id = type_id
 
 
 class MessagePolymorphism(Node):

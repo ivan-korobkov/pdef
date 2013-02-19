@@ -204,17 +204,18 @@ class GrammarRules(object):
         message : MESSAGE IDENTIFIER message_header message_body
         '''
         name = t[2]
-        variables, inheritance, polymorphism = t[3]
+        variables, base, base_type, polymorphism = t[3]
         options, fields = t[4]
 
-        t[0] = lang.Message(name, variables=variables, inheritance=inheritance,
+        t[0] = lang.Message(name, variables=variables, base=base, base_type=base_type,
                             declared_fields=fields)
 
     def p_message_header(self, t):
         '''
         message_header : variables inheritance polymorphism
         '''
-        t[0] = (t[1], t[2], t[3])
+        base, base_type = t[2]
+        t[0] = t[1], base, base_type, t[3]
 
     def p_message_body(self, t):
         '''
@@ -302,9 +303,9 @@ class GrammarRules(object):
                     | empty
         '''
         if len(t) == 2:
-            t[0] = None
+            t[0] = None, None
         else:
-            t[0] = lang.MessageInheritance(t[2], t[4])
+            t[0] = t[2], t[4]
 
     def p_message_polymorphism(self, t):
         '''

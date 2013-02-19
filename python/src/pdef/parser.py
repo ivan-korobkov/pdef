@@ -208,7 +208,7 @@ class GrammarRules(object):
         options, fields = t[4]
 
         t[0] = lang.Message(name, variables=variables, base=base, base_type=base_type,
-                            declared_fields=fields)
+                            polymorphism=polymorphism, declared_fields=fields)
 
     def p_message_header(self, t):
         '''
@@ -315,7 +315,7 @@ class GrammarRules(object):
         if len(t) == 2:
             t[0] = None
         else:
-            t[0] = lang.MessagePolymorphism(t[2], t[4])
+            t[0] = lang.MessagePolymorphism(t[3], t[5])
 
     def p_error(self, t):
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)

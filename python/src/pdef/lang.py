@@ -425,18 +425,22 @@ class Enum(Type):
 
 
 class Message(Type):
-    def __init__(self, name, variables=None, base=None, base_type=None, declared_fields=None):
+    def __init__(self, name, variables=None, base=None, base_type=None,
+                 polymorphism=None, declared_fields=None):
         super(Message, self).__init__(name, variables)
 
         self.base = None
         self.base_type = None
-        self.polymorphism = None
+        self._polymorphism = None
 
         self.declared_fields = SymbolTable()
         self.fields = SymbolTable()
 
         if base:
             self.set_base(base, base_type)
+
+        if polymorphism:
+            self.set_polymorphism(polymorphism)
 
         if declared_fields:
             self.add_fields(*declared_fields)
@@ -459,6 +463,14 @@ class Message(Type):
         if isinstance(base_type, Reference):
             base_type.parent = self
 
+    def set_polymorphism(self, polymorphism):
+        '''Set this message polymorphism.'''
+        check_state(not self.polymorphism, 'polymorphism is already set in %s', self)
+
+        self._polymorphism = check_not_none(polymorphism)
+        self.children.append(polymorphism)
+        polymorphism.set_message(self)
+
     @property
     def bases(self):
         '''Return an iterator over the base tree of this message.
@@ -469,6 +481,12 @@ class Message(Type):
         while base:
             yield base
             base = base.base
+
+    @property
+    def polymorphism(self):
+        if self._polymorphism:
+            return self._polymorphism
+        return self.base.polymorphism if self.base else None
 
     def add_fields(self, *fields):
         for field in fields:
@@ -510,13 +528,15 @@ class Message(Type):
         for field in self.declared_fields:
             self.fields.add(field)
 
+    def compile_base_type(self):
+        if not self.base:
+            return
 
-class MessagePolymorphism(Node):
-    def __init__(self, field, type_id):
-        super(MessagePolymorphism, self).__init__('polymorphism')
+        if not self.base.polymorphism:
+            self.error('base message %s must be polymorphic', self.base)
+            return
 
-        self.field = field
-        self.type_id = type_id
+        self.base.polymorphism.add_subtype(self)
 
 
 class ParameterizedMessage(ParameterizedType):
@@ -536,6 +556,18 @@ class ParameterizedMessage(ParameterizedType):
         return self.rawtype.base_type
 
     @property
+    def bases(self):
+        # TODO: copy-paste
+        base = self.base
+        while base:
+            yield base
+            base = base.base
+
+    @property
+    def polymorphism(self):
+        return self.rawtype.polymorphism
+
+    @property
     def declared_fields(self):
         self.check_built()
         return self._declared_fields
@@ -550,6 +582,38 @@ class ParameterizedMessage(ParameterizedType):
             self._declared_fields.add(field.bind(var_map))
 
         self.built = True
+
+
+class MessagePolymorphism(Node):
+    def __init__(self, field, default_type):
+        super(MessagePolymorphism, self).__init__('polymorphism')
+        self.field = check_not_none(field)
+        self.default_type = check_not_none(default_type)
+        self.children.append(field)
+
+        self.message = None
+        self.map = {}
+
+    def set_message(self, message):
+        check_state(not self.message, 'message is already set in %s', self)
+
+        self.parent = check_not_none(message)
+        self.message = message
+        self.map[self.default_type] = message
+
+    def add_subtype(self, subtype):
+        check_not_none(subtype)
+
+        base_type = subtype.base_type
+        if base_type in self.map:
+            self.error('duplicate subtype %s', base_type)
+            return
+
+        if self.message not in subtype.bases:
+            self.error('%s must inherit %s', subtype, self.message)
+            return
+
+        self.map[base_type] = subtype
 
 
 class Field(Node):

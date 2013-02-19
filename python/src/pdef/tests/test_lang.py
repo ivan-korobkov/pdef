@@ -274,6 +274,13 @@ class TestMessage(unittest.TestCase):
         assert len(msg2.errors) == 1
         assert 'circular inheritance' in msg2.errors[0]
 
+    def test_compile_base_type(self):
+        msg = Message('A', polymorphism=MessagePolymorphism(Reference('field'), 'A'))
+        msg2 = Message('B', base=msg, base_type='B')
+        msg2.compile_base_type()
+
+        assert msg.polymorphism.map == {'A': msg, 'B': msg2}
+
 
 class TestParameterizedMessage(unittest.TestCase):
     def test_build(self):

@@ -159,40 +159,6 @@ class TestReference(unittest.TestCase):
 
         mock.package.parameterized_symbol(List, [int32])
 
-class TestParameterizedType(unittest.TestCase):
-    def test_build(self):
-        T = Variable('T')
-        List = Native('List')
-        List.add_variables(T)
-
-        E = Variable('E')
-        ptype = ParameterizedType(List, E)
-        ptype.build()
-
-        delegate = ptype.delegate
-        assert delegate.rawtype is List
-        assert list(delegate.variables) == [E]
-
-    def test_bind(self):
-        # Parameterized Map<int32, V>
-        int32 = Native('int32')
-        string = Native('string')
-
-        K = Variable('K')
-        V = Variable('V')
-        Map = Native('Map')
-        Map.add_variables(K, V)
-        parent = Mock()
-
-        ptype = ParameterizedType(Map, int32, V)
-        ptype.parent = parent
-
-        # Bind V to string
-        ptype.bind({V: string})
-
-        # Should get Map<int32, string>
-        parent.package.parameterized_symbol.assert_called_with(Map, int32, string)
-
 
 class TestVariable(unittest.TestCase):
     def test_bind(self):
@@ -214,6 +180,28 @@ class TestType(unittest.TestCase):
         assert symbol is t
 
 
+class TestParameterizedType(unittest.TestCase):
+    def test_bind(self):
+        # Parameterized Map<int32, V>
+        int32 = Native('int32')
+        string = Native('string')
+
+        K = Variable('K')
+        V = Variable('V')
+        Map = Native('Map')
+        Map.add_variables(K, V)
+        parent = Mock()
+
+        ptype = ParameterizedType(Map, int32, V)
+        ptype.parent = parent
+
+        # Bind V to string
+        ptype.bind({V: string})
+
+        # Should get Map<int32, string>
+        parent.package.parameterized_symbol.assert_called_with(Map, int32, string)
+
+
 class TestNative(unittest.TestCase):
     def test_parameterize(self):
         t = Variable('T')
@@ -227,14 +215,17 @@ class TestNative(unittest.TestCase):
 
 
 class TestMessage(unittest.TestCase):
-    def test_parameterize_base(self):
-        '''TODO: test parameterize base'''
-        pass
+    def test_bases(self):
+        msg = Message('Message')
+        msg2 = Message('Message2', base=msg, base_type='msg2')
+        msg3 = Message('Message3', base=msg2, base_type='msg3')
 
-    def test_parameterize_fields(self):
-        '''Should bind fields in a parameterized message.'''
+        assert list(msg3.bases) == [msg2, msg]
+        assert list(msg2.bases) == [msg]
+
+    def test_parameterize(self):
+        '''Should create a parameterized message.'''
         t = Variable('T')
-        field = Field('field', t)
         msg = Message('Message')
         msg.add_variables(t)
         msg.add_fields(Field('field', t))
@@ -242,15 +233,7 @@ class TestMessage(unittest.TestCase):
         int32 = Native('int32')
         pmsg = msg.parameterize(int32)
         assert pmsg.rawtype == msg
-        assert pmsg.declared_fields['field'].type == int32
-
-    def test_bases(self):
-        msg = Message('Message')
-        msg2 = Message('Message2', base=msg)
-        msg3 = Message('Message3', base=msg2)
-
-        assert list(msg3.bases) == [msg2, msg]
-        assert list(msg2.bases) == [msg]
+        assert list(pmsg.variables) == [int32]
 
     def test_compile_fields(self):
         int32 = Native('int32')
@@ -259,11 +242,11 @@ class TestMessage(unittest.TestCase):
         msg.add_fields(f1)
 
         f2 = Field('y', int32)
-        msg2 = Message('B', base=msg)
+        msg2 = Message('B', base=msg, base_type='b')
         msg2.add_fields(f2)
 
         f3 = Field('x', int32)
-        msg3 = Message('C', base=msg2)
+        msg3 = Message('C', base=msg2, base_type='c')
         msg3.add_fields(f3)
 
         msg3.compile_fields()
@@ -276,20 +259,35 @@ class TestMessage(unittest.TestCase):
         msg.add_fields(f1)
 
         f2 = Field('field', int32)
-        msg2 = Message('B', base=msg)
+        msg2 = Message('B', base=msg, base_type='b')
         msg2.add_fields(f2)
 
         self.assertRaises(ValueError, msg2.compile_fields)
 
     def test_check_circular_inheritance(self):
         msg = Message('Message')
-        msg2 = Message('Message2', base=msg)
-        msg3 = Message('Message3', base=msg2)
+        msg2 = Message('Message2', base=msg, base_type='msg2')
+        msg3 = Message('Message3', base=msg2, base_type='msg3')
         msg.set_base(msg3, 'type')
 
         msg2.check_circular_inheritance()
         assert len(msg2.errors) == 1
         assert 'circular inheritance' in msg2.errors[0]
+
+
+class TestParameterizedMessage(unittest.TestCase):
+    def test_build(self):
+        t = Variable('T')
+        msg = Message('Message')
+        msg.add_variables(t)
+        msg.add_fields(Field('field', t))
+
+        int32 = Native('int32')
+        pmsg = msg.parameterize(int32)
+        pmsg.build()
+
+        assert pmsg.rawtype == msg
+        assert pmsg.declared_fields['field'].type == int32
 
 
 class TestParameterization(unittest.TestCase):

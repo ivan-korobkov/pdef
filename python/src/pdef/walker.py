@@ -60,10 +60,6 @@ class Walker(object):
         from pdef import lang
         return self._filter(lang.Message)
 
-    def message_inheritances(self):
-        from pdef import lang
-        return self._filter(lang.MessageInheritance)
-
     def message_polymorphisms(self):
         from pdef import lang
         return self._filter(lang.MessagePolymorphism)

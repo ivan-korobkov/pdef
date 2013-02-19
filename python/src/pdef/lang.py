@@ -67,9 +67,6 @@ class Builder(object):
         for message in self.walker.messages():
             message.check_circular_inheritance()
 
-        for inheritance in self.walker.message_inheritances():
-            inheritance.check_circular()
-
     def build_ptypes(self):
         # Parameterized types are created only in the package their are defined in.
         # So, after building all ptypes from the package, no other ptypes will be created in it.
@@ -109,7 +106,7 @@ class Package(Node):
         builder.build()
 
     def build_parameterized(self):
-        while len(self.pqueue) > 0:
+        while self.pqueue:
             ptype = self.pqueue.pop()
             ptype.build()
 
@@ -140,7 +137,7 @@ class Package(Node):
         # Create a proxy to allow parameterized circular references, i.e.:
         # Node<V>:
         #   Node<V> next
-        ptype = ParameterizedType(rawtype, *variables)
+        ptype = rawtype.parameterize(*variables)
         ptype.parent = self
 
         self.parameterized[key] = ptype
@@ -317,37 +314,6 @@ class Reference(Proxy):
         return self.package.parameterized_symbol(rawtype, *self.variables)
 
 
-class ParameterizedType(Proxy):
-    def __init__(self, rawtype, *variables):
-        super(ParameterizedType, self).__init__(rawtype.name)
-        check_argument(len(rawtype.variables) == len(variables),
-                       "wrong number of variables %s", variables)
-
-        self.rawtype = rawtype
-        self.variables = SymbolTable()
-        for var, arg in zip(self.rawtype.variables, variables):
-            self.variables.add_with_name(var, arg)
-            self.children.append(arg)
-
-    def __eq__(self, other):
-        return self is other
-
-    def __hash__(self):
-        return object.__hash__(self)
-
-    def build(self):
-        self.delegate = self.rawtype.parameterize(*self.variables)
-        self.children.append(self.delegate)
-
-    def bind(self, arg_map):
-        bvariables = []
-        for arg in self.variables:
-            barg = arg.bind(arg_map)
-            bvariables.append(barg)
-
-        return self.package.parameterized_symbol(self.rawtype, *bvariables)
-
-
 class Type(Node):
     def __init__(self, name, variables=None):
         super(Type, self).__init__(name)
@@ -386,6 +352,35 @@ class Type(Node):
         return self
 
 
+class ParameterizedType(Type):
+    def __init__(self, rawtype, *variables):
+        super(ParameterizedType, self).__init__(rawtype.name)
+        check_argument(len(rawtype.variables) == len(variables),
+                       "wrong number of variables %s", variables)
+
+        self.rawtype = rawtype
+        self.variables = SymbolTable()
+        for var, arg in zip(self.rawtype.variables, variables):
+            self.variables.add_with_name(var, arg)
+            self.children.append(arg)
+
+        self.built = False
+
+    def check_built(self):
+        check_state(self.built, '%s is not built', self)
+
+    def build(self):
+        raise NotImplementedError
+
+    def bind(self, arg_map):
+        bvariables = []
+        for arg in self.variables:
+            barg = arg.bind(arg_map)
+            bvariables.append(barg)
+
+        return self.package.parameterized_symbol(self.rawtype, *bvariables)
+
+
 class Variable(Type):
     def __init__(self, name):
         super(Variable, self).__init__(name)
@@ -411,10 +406,16 @@ class Native(Type):
         if len(self.variables) != len(variables):
             self.error('wrong number of arguments %s', variables)
             return
+        return ParameterizedNative(self, *variables)
 
-        special = Native(self.name, variables=variables, options=self.options)
-        special.rawtype = self
-        return special
+
+class ParameterizedNative(ParameterizedType):
+    @property
+    def options(self):
+        return self.rawtype.options
+
+    def build(self):
+        pass
 
 
 class Enum(Type):
@@ -480,15 +481,7 @@ class Message(Type):
         if len(self.variables) != len(variables):
             self.error('wrong number of variables %s', variables)
             return
-
-        arg_map = dict((var, arg) for var, arg in zip(self.variables, variables))
-        bbase = self.base.bind(arg_map) if self.base else None
-        bfields = [field.bind(arg_map) for field in self.declared_fields]
-
-        special = Message(self.name, variables=variables, base=bbase, base_type=self.base_type,
-                          declared_fields=bfields)
-        special.rawtype = self
-        return special
+        return ParameterizedMessage(self, *variables)
 
     def check_circular_inheritance(self):
         '''Check circular inheritance, logs an error if it exists.'''
@@ -524,6 +517,39 @@ class MessagePolymorphism(Node):
 
         self.field = field
         self.type_id = type_id
+
+
+class ParameterizedMessage(ParameterizedType):
+    def __init__(self, rawtype, *variables):
+        super(ParameterizedMessage, self).__init__(rawtype, *variables)
+
+        self._base = None
+        self._declared_fields = None
+
+    @property
+    def base(self):
+        self.check_built()
+        return self._base
+
+    @property
+    def base_type(self):
+        return self.rawtype.base_type
+
+    @property
+    def declared_fields(self):
+        self.check_built()
+        return self._declared_fields
+
+    def build(self):
+        var_map = self.variables.as_map()
+        rawtype = self.rawtype
+
+        self._base = rawtype.base.bind(var_map) if rawtype.base else None
+        self._declared_fields = SymbolTable()
+        for field in rawtype.declared_fields:
+            self._declared_fields.add(field.bind(var_map))
+
+        self.built = True
 
 
 class Field(Node):

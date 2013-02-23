@@ -22,7 +22,7 @@ class Walker(object):
 
     def proxies(self):
         from pdef import lang
-        return self._filter(lang.Proxy)
+        return self._filter(lang.AbstractRef)
 
     def modules(self):
         from pdef import lang
@@ -30,11 +30,11 @@ class Walker(object):
 
     def module_refs(self):
         from pdef import lang
-        return self._filter(lang.ModuleReference)
+        return self._filter(lang.ImportRef)
 
     def refs(self):
         from pdef import lang
-        return self._filter(lang.Reference)
+        return self._filter(lang.Ref)
 
     def ptypes(self):
         from pdef import lang

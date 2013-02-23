@@ -20,7 +20,7 @@ class Node(object):
             return
 
         self.children.append(child)
-        if always_parent or isinstance(child, Reference):
+        if always_parent or isinstance(child, Ref):
             child.parent = self
 
     def _add_symbol(self, symbol):
@@ -225,33 +225,6 @@ class Package(Symbol):
         return ptype
 
 
-class Proxy(Symbol):
-    def __init__(self, name):
-        super(Proxy, self).__init__(name)
-        self.delegate = None
-
-    @property
-    def fullname(self):
-        if self.delegate:
-            return self.delegate.fullname
-        return super(Proxy, self).fullname
-
-    def __getattr__(self, item):
-        self._check_delegate()
-        return getattr(self.delegate, item)
-
-    def __hash__(self):
-        self._check_delegate()
-        return hash(self.delegate)
-
-    def __eq__(self, other):
-        self._check_delegate()
-        return self.delegate == other
-
-    def _check_delegate(self):
-        check_state(self.delegate is not None, 'Delegate is not set in %s', self)
-
-
 class Module(Symbol):
     def __init__(self, name, imports=None, definitions=None):
         super(Module, self).__init__(name)
@@ -280,18 +253,45 @@ class Module(Symbol):
             self._add_symbol(d)
 
 
-class ModuleReference(Proxy):
-    def __init__(self, module_name, name=None):
-        super(ModuleReference, self).__init__(name if name else module_name)
-        self.module_name = module_name
+class AbstractRef(Symbol):
+    def __init__(self, name):
+        super(AbstractRef, self).__init__(name)
+        self.delegate = None
+
+    @property
+    def fullname(self):
+        if self.delegate:
+            return self.delegate.fullname
+        return super(AbstractRef, self).fullname
+
+    def __getattr__(self, item):
+        self._check_delegate()
+        return getattr(self.delegate, item)
+
+    def __hash__(self):
+        self._check_delegate()
+        return hash(self.delegate)
+
+    def __eq__(self, other):
+        self._check_delegate()
+        return self.delegate == other
+
+    def _check_delegate(self):
+        check_state(self.delegate is not None, 'Delegate is not set in %s', self)
+
+
+class ImportRef(AbstractRef):
+    def __init__(self, import_name, alias=None):
+        super(ImportRef, self).__init__(alias if alias else import_name)
+        self.import_name = import_name
 
     def link(self):
         package = self.package
-        if not self.module_name in package.modules:
-            self.error('import not found "%s"', self.module_name)
+        if not self.import_name in package.modules:
+            self.error('import not found "%s"', self.import_name)
             return
 
-        self.delegate = package.modules[self.module_name]
+        self.delegate = package._lookup_child(self.import_name)
         self._add_child(self.delegate, always_parent=False)
 
     def lookup(self, name):
@@ -303,9 +303,9 @@ class ModuleReference(Proxy):
         return self.delegate._lookup_child(name)
 
 
-class Reference(Proxy):
+class Ref(AbstractRef):
     def __init__(self, name, *generic_variables):
-        super(Reference, self).__init__(name)
+        super(Ref, self).__init__(name)
         self.variables = []
         self.add_variables(*generic_variables)
 
@@ -629,7 +629,7 @@ class Field(Symbol):
         self.type = type
         self.children.append(type)
 
-        if isinstance(type, Reference):
+        if isinstance(type, Ref):
             type.parent = self
 
     def bind(self, arg_map):

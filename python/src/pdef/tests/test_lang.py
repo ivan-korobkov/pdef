@@ -18,20 +18,20 @@ class Test(unittest.TestCase):
         builtin.add_modules(builtin_types)
 
         msg = Message('Message1')
-        msg.add_fields(Field('int', Reference('int32')))
-        msg.add_fields(Field('str', Reference('string')))
-        msg.add_fields(Field('list', Reference('List', Reference('string'))))
-        msg.add_fields(Field('msg2', Reference('module2.Message2')))
+        msg.add_fields(Field('int', Ref('int32')))
+        msg.add_fields(Field('str', Ref('string')))
+        msg.add_fields(Field('list', Ref('List', Ref('string'))))
+        msg.add_fields(Field('msg2', Ref('module2.Message2')))
 
         module1 = Module('test.module1')
-        module1.add_imports(ModuleReference('test.module2', 'module2'))
+        module1.add_imports(ImportRef('test.module2', 'module2'))
         module1.add_definitions(msg)
 
         msg2 = Message('Message2', declared_fields=[
-            Field('circular', Reference('test.module1.Message1'))
+            Field('circular', Ref('test.module1.Message1'))
         ])
         module2 = Module('test.module2',
-            imports=[ModuleReference('test.module1')],
+            imports=[ImportRef('test.module1')],
             definitions=[msg2])
 
         pkg = Package('test', builtin)
@@ -113,7 +113,7 @@ class TestModuleReference(unittest.TestCase):
         package = Package('package')
         package.add_modules(module, module2)
 
-        imp = ModuleReference('package.module', 'module')
+        imp = ImportRef('package.module', 'module')
         imp.parent = module2
         imp.link()
         assert imp == module
@@ -126,7 +126,7 @@ class TestReference(unittest.TestCase):
         module = Module('test')
         module.add_definitions(int32)
 
-        ref = Reference('int32')
+        ref = Ref('int32')
         ref.parent = module
         ref.link()
         assert ref == int32
@@ -134,7 +134,7 @@ class TestReference(unittest.TestCase):
     def test_link_not_found(self):
         '''Should add a type not found error.'''
         module = Module('test')
-        ref = Reference('not_found')
+        ref = Ref('not_found')
         ref.link()
 
         assert ref.delegate is None
@@ -152,9 +152,9 @@ class TestReference(unittest.TestCase):
         mock = Mock()
         module.parent = mock
 
-        ref = Reference('List')
+        ref = Ref('List')
         ref.parent = module
-        ref.add_variables(Reference('int32'))
+        ref.add_variables(Ref('int32'))
         ref.link()
 
         mock.package.parameterized_symbol(List, [int32])
@@ -275,7 +275,7 @@ class TestMessage(unittest.TestCase):
         assert 'circular inheritance' in msg2.errors[0]
 
     def test_compile_base_type(self):
-        msg = Message('A', polymorphism=MessagePolymorphism(Reference('field'), 'A'))
+        msg = Message('A', polymorphism=MessagePolymorphism(Ref('field'), 'A'))
         msg2 = Message('B', base=msg, base_type='B')
         msg2.compile_base_type()
 
@@ -310,10 +310,10 @@ class TestParameterization(unittest.TestCase):
         List = Native('List', variables=[Variable('T')])
 
         MyList = Message('MyList', variables=[Variable('E')])
-        MyList.add_fields(Field('items', Reference('List', Reference('Set', Reference('E')))))
+        MyList.add_fields(Field('items', Ref('List', Ref('Set', Ref('E')))))
 
         MyMessage = Message('MyMessage')
-        MyMessage.add_fields(Field('list', Reference('MyList', Reference('int32'))))
+        MyMessage.add_fields(Field('list', Ref('MyList', Ref('int32'))))
 
         module = Module('test.module')
         module.add_definitions(int32, Set, List, MyList, MyMessage)
@@ -348,15 +348,15 @@ class TestParameterization(unittest.TestCase):
         N = Variable('N')
         Node = Message('Node')
         Node.add_variables(N)
-        Node.add_fields(Field('root', Reference('RootNode', Reference('N'))))
+        Node.add_fields(Field('root', Ref('RootNode', Ref('N'))))
 
         R = Variable('R')
         Root = Message('RootNode')
         Root.add_variables(R)
-        Root.set_base(Reference('Node', Reference('R')), 'root')
+        Root.set_base(Ref('Node', Ref('R')), 'root')
 
         Graph = Message('Graph')
-        Graph.add_fields(Field('node', Reference('Node', Reference('int32'))))
+        Graph.add_fields(Field('node', Ref('Node', Ref('int32'))))
 
         module = Module('test')
         module.add_definitions(int32, Node, Root, Graph)

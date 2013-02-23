@@ -45,7 +45,7 @@ class Compiler(object):
             builtin = Package('builtin')
             builtin.add_modules(builtin_module)
 
-            package = Package('default', builtin=builtin)
+            package = Package('default', builtin_package=builtin)
         else:
             package = Package('default')
 

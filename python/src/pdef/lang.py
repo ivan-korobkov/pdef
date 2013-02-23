@@ -164,13 +164,18 @@ class Builder(object):
 
 
 class Package(Symbol):
-    def __init__(self, name, builtin=None):
+    def __init__(self, name, builtin_package=None):
         super(Package, self).__init__(name)
 
         self.modules = SymbolTable()
-        self.builtin = builtin
+        self.builtin = builtin_package
         self.parameterized = {}
         self.pqueue = deque()
+
+        if builtin_package:
+            for module in builtin_package.modules:
+                for d in module.definitions:
+                    self._add_symbol(d)
 
     @property
     def package(self):
@@ -194,16 +199,6 @@ class Package(Symbol):
             ptype = self.pqueue.pop()
             if isinstance(ptype, ParameterizedMessage):
                 ptype.build()
-
-    def lookup(self, name):
-        '''Find a globally accessible builtin.'''
-        if not self.builtin or '.' in name:
-            return
-
-        for module in self.builtin.modules:
-            symbol = module.lookup(name)
-            if symbol:
-                return symbol
 
     def parameterized_symbol(self, rawtype, *variables):
         variables = tuple(variables)

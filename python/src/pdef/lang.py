@@ -6,21 +6,33 @@ from pdef.walker import Walker
 
 
 class Node(object):
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
         self.parent = None
         self.children = []
+        self.symbols = SymbolTable()
         self.errors = []
 
     def __repr__(self):
         return '<%s %s %s>' % (self.__class__.__name__, self.fullname, hex(id(self)))
 
+    def _add_child(self, child, always_parent=True):
+        if child is None:
+            return
+
+        self.children.append(child)
+        if always_parent or isinstance(child, Reference):
+            child.parent = self
+
+    def _add_symbol(self, symbol):
+        check_isinstance(symbol, Symbol, '%s is not a Symbol', symbol)
+        self._add_child(symbol)
+        self.symbols.add(symbol)
+
     @property
     def fullname(self):
         if self.parent:
-            return '%s.%s' % (self.parent.fullname, self.name)
-
-        return self.name
+            return '%s %s' % (self.parent.fullname, self.__class__.__name__)
+        return self.__class__.__name__
 
     @property
     def package(self):
@@ -38,140 +50,46 @@ class Node(object):
         else:
             self.errors.append(msg)
 
-    def symbol(self, name):
+    def lookup(self, name):
+        symbol = self._lookup_child(name)
+        if symbol is not None:
+            return symbol
+
         if self.parent:
-            return self.parent.symbol(name)
+            return self.parent.lookup(name)
 
+    def _lookup_child(self, name):
+        if name in self.symbols:
+            return self.symbols[name]
 
-class Builder(object):
-    def __init__(self, root):
-        self.root = root
-        self.walker = Walker(root)
+        if '.' not in name:
+            return
 
-    def build(self):
-        self.link_module_refs()
-        self.link_refs()
-        self.build_ptypes()
-        self.check_circular_inheritance()
-        self.compfile_fields()
+        child_parts = deque(name.split('.'))
+        parent_parts = [child_parts.popleft()]
 
-    def link_module_refs(self):
-        for module_ref in self.walker.module_refs():
-            module_ref.link()
-
-    def link_refs(self):
-        for ref in self.walker.refs():
-            ref.link()
-
-    def check_circular_inheritance(self):
-        for message in self.walker.messages():
-            message.check_circular_inheritance()
-
-    def build_ptypes(self):
-        # Parameterized types are created only in the package their are defined in.
-        # So, after building all ptypes from the package, no other ptypes will be created in it.
-        for pkg in self.walker.packages():
-            pkg.build_parameterized()
-
-    def compfile_fields(self):
-        for message in self.walker.messages():
-            message.compile_fields()
-
-
-class Package(Node):
-    def __init__(self, name, builtin=None):
-        super(Package, self).__init__(name)
-
-        self.modules = SymbolTable()
-        self.builtin = builtin
-        self.parameterized = {}
-        self.pqueue = deque()
-
-    @property
-    def package(self):
-        return self
-
-    def add_modules(self, *modules):
-        for module in modules:
-            if not module.name.startswith(self.name):
-                module.error('module name must start with the package name "%s"', self.name)
+        while child_parts:
+            parent_name = '.'.join(parent_parts)
+            if parent_name not in self.symbols:
+                parent_parts.append(child_parts.popleft())
                 continue
 
-            self.modules.add(module)
-            self.children.append(module)
-            module.parent = self
-
-    def build(self):
-        builder = Builder(self)
-        builder.build()
-
-    def build_parameterized(self):
-        while self.pqueue:
-            ptype = self.pqueue.pop()
-            ptype.build()
-
-    def symbol(self, name):
-        '''Find a globally accessible builtin.'''
-        if not self.builtin:
-            return
-
-        if '.' in name:
-            return
-
-        for module in self.builtin.modules:
-            if name in module.definitions:
-                return module.definitions[name]
-
-        return None
-
-    def parameterized_symbol(self, rawtype, *variables):
-        variables = tuple(variables)
-        key = (rawtype, variables)
-        if key in self.parameterized:
-            return self.parameterized[key]
-
-        if tuple(rawtype.variables) == variables:
-            self.parameterized[key] = rawtype
-            return rawtype
-
-        # Create a proxy to allow parameterized circular references, i.e.:
-        # Node<V>:
-        #   Node<V> next
-        ptype = rawtype.parameterize(*variables)
-        ptype.parent = self
-
-        self.parameterized[key] = ptype
-        self.pqueue.append(ptype)
-        self.children.append(ptype)
-
-        return ptype
+            child_name = '.'.join(child_parts)
+            parent = self.symbols[parent_name]
+            return parent._lookup_child(child_name)
 
 
-class Proxy(Node):
+class Symbol(Node):
     def __init__(self, name):
-        super(Proxy, self).__init__(name)
-        self.delegate = None
+        super(Symbol, self).__init__()
+        self.name = name
 
     @property
     def fullname(self):
-        if self.delegate:
-            return self.delegate.fullname
-        return super(Proxy, self).fullname
+        if self.parent:
+            return '%s.%s' % (self.parent.fullname, self.name)
 
-    def __getattr__(self, item):
-        self._check_delegate()
-        return getattr(self.delegate, item)
-
-    def __hash__(self):
-        self._check_delegate()
-        return hash(self.delegate)
-
-    def __eq__(self, other):
-        self._check_delegate()
-        return self.delegate == other
-
-    def _check_delegate(self):
-        check_state(self.delegate is not None, 'Delegate is not set in %s', self)
+        return self.name
 
 
 class SymbolTable(object):
@@ -210,7 +128,131 @@ class SymbolTable(object):
         return dict(self.map)
 
 
-class Module(Node):
+class Builder(object):
+    def __init__(self, root):
+        self.root = root
+        self.walker = Walker(root)
+
+    def build(self):
+        self.link_module_refs()
+        self.link_refs()
+        self.built_pmessages()
+        self.check_circular_inheritance()
+        self.compfile_fields()
+
+    def link_module_refs(self):
+        for module_ref in self.walker.module_refs():
+            module_ref.link()
+
+    def link_refs(self):
+        for ref in self.walker.refs():
+            ref.link()
+
+    def check_circular_inheritance(self):
+        for message in self.walker.messages():
+            message.check_circular_inheritance()
+
+    def built_pmessages(self):
+        # Parameterized types are created only in the package their are defined in.
+        # So, after building all ptypes from the package, no other ptypes will be created in it.
+        for pkg in self.walker.packages():
+            pkg.build_parameterized()
+
+    def compfile_fields(self):
+        for message in self.walker.messages():
+            message.compile_fields()
+
+
+class Package(Symbol):
+    def __init__(self, name, builtin=None):
+        super(Package, self).__init__(name)
+
+        self.modules = SymbolTable()
+        self.builtin = builtin
+        self.parameterized = {}
+        self.pqueue = deque()
+
+    @property
+    def package(self):
+        return self
+
+    def add_modules(self, *modules):
+        for module in modules:
+            if not module.name.startswith(self.name):
+                module.error('module name must start with the package name "%s"', self.name)
+                continue
+
+            self.modules.add(module)
+            self._add_symbol(module)
+
+    def build(self):
+        builder = Builder(self)
+        builder.build()
+
+    def build_parameterized(self):
+        while self.pqueue:
+            ptype = self.pqueue.pop()
+            if isinstance(ptype, ParameterizedMessage):
+                ptype.build()
+
+    def lookup(self, name):
+        '''Find a globally accessible builtin.'''
+        if not self.builtin or '.' in name:
+            return
+
+        for module in self.builtin.modules:
+            symbol = module.lookup(name)
+            if symbol:
+                return symbol
+
+    def parameterized_symbol(self, rawtype, *variables):
+        variables = tuple(variables)
+        key = (rawtype, variables)
+        if key in self.parameterized:
+            return self.parameterized[key]
+
+        if tuple(rawtype.variables) == variables:
+            self.parameterized[key] = rawtype
+            return rawtype
+
+        # Create a proxy to allow parameterized circular references, i.e.:
+        # Node<V>:
+        #   Node<V> next
+        ptype = rawtype.parameterize(*variables)
+
+        self.parameterized[key] = ptype
+        self.pqueue.append(ptype)
+        return ptype
+
+
+class Proxy(Symbol):
+    def __init__(self, name):
+        super(Proxy, self).__init__(name)
+        self.delegate = None
+
+    @property
+    def fullname(self):
+        if self.delegate:
+            return self.delegate.fullname
+        return super(Proxy, self).fullname
+
+    def __getattr__(self, item):
+        self._check_delegate()
+        return getattr(self.delegate, item)
+
+    def __hash__(self):
+        self._check_delegate()
+        return hash(self.delegate)
+
+    def __eq__(self, other):
+        self._check_delegate()
+        return self.delegate == other
+
+    def _check_delegate(self):
+        check_state(self.delegate is not None, 'Delegate is not set in %s', self)
+
+
+class Module(Symbol):
     def __init__(self, name, imports=None, definitions=None):
         super(Module, self).__init__(name)
 
@@ -230,40 +272,12 @@ class Module(Node):
     def add_imports(self, *imports):
         for imp in imports:
             self.imports.add(imp)
-            self.children.append(imp)
-            imp.parent = self
+            self._add_symbol(imp)
 
     def add_definitions(self, *definitions):
         for d in definitions:
             self.definitions.add(d)
-            self.children.append(d)
-            d.parent = self
-
-    def symbol(self, name):
-        if name in self.definitions:
-            # It's a package local type.
-            return self.definitions[name]
-
-        elif '.' in name:
-            # It's an imported type.
-            # The first part of the name is the module name, the latter is the type name.
-            # a.b.c.D = > a.b.c is the package, D is the type.
-            module_name, type_name = name.rsplit(".", 1)
-
-            if module_name not in self.imports:
-                return
-
-            module = self.imports[module_name]
-            if type_name not in module.definitions:
-                return
-
-            return module.definitions[type_name]
-
-        # It can be a builtin type.
-        if not self.parent:
-            return
-
-        return self.parent.symbol(name)
+            self._add_symbol(d)
 
 
 class ModuleReference(Proxy):
@@ -278,7 +292,15 @@ class ModuleReference(Proxy):
             return
 
         self.delegate = package.modules[self.module_name]
-        self.children.append(self.delegate)
+        self._add_child(self.delegate, always_parent=False)
+
+    def lookup(self, name):
+        self._check_delegate()
+        return self.delegate.lookup(name)
+
+    def _lookup_child(self, name):
+        self._check_delegate()
+        return self.delegate._lookup_child(name)
 
 
 class Reference(Proxy):
@@ -287,22 +309,26 @@ class Reference(Proxy):
         self.variables = []
         self.add_variables(*generic_variables)
 
+    @property
+    def fullname(self):
+        if self.parent:
+            return '%s in %s' % (self.name, self.parent.fullname)
+        return self.name
+
     def add_variables(self, *variables):
         for arg in variables:
             self.variables.append(arg)
-            self.children.append(arg)
-            arg.parent = self
+            self._add_child(arg)
 
     def link(self):
         for arg in self.variables:
             arg.link()
 
-        self.delegate = self._lookup()
-        self.children.append(self.delegate)
+        self.delegate = self._lookup_delegate()
+        self._add_child(self.delegate, always_parent=False)
 
-    def _lookup(self):
-        # Find the rawtype by its name, for example: MyType, package.AnotherType, T (variable).
-        rawtype = self.symbol(self.name)
+    def _lookup_delegate(self):
+        rawtype = self.lookup(self.name)
         if not rawtype:
             self.error('type not found "%s"', self.name)
             return
@@ -311,16 +337,17 @@ class Reference(Proxy):
             # Rawtype is not generic.
             return rawtype
 
-        return self.package.parameterized_symbol(rawtype, *self.variables)
+        ptype = self.package.parameterized_symbol(rawtype, *self.variables)
+        ptype.parent = self.parent
+        return ptype
 
 
-class Type(Node):
+class Type(Symbol):
     def __init__(self, name, variables=None):
         super(Type, self).__init__(name)
 
         self.rawtype = self
         self.variables = SymbolTable()
-
         if variables:
             self.add_variables(*variables)
 
@@ -334,21 +361,14 @@ class Type(Node):
     def add_variables(self, *vars):
         for var in vars:
             self.variables.add(var)
-            self.children.append(var)
-            var.parent = self
-
-    def symbol(self, name):
-        if name in self.variables:
-            return self.variables[name]
-
-        return super(Type, self).symbol(name)
+            self._add_symbol(var)
 
     def parameterize(self, *variables):
         '''Create a parameterized type.'''
         raise NotImplementedError('Implement in a subclass')
 
     def bind(self, arg_map):
-        '''Only parameterized types and variables can be bound.'''
+        '''Parameterized types and variables should redefine this method.'''
         return self
 
 
@@ -362,15 +382,7 @@ class ParameterizedType(Type):
         self.variables = SymbolTable()
         for var, arg in zip(self.rawtype.variables, variables):
             self.variables.add_with_name(var, arg)
-            self.children.append(arg)
-
-        self.built = False
-
-    def check_built(self):
-        check_state(self.built, '%s is not built', self)
-
-    def build(self):
-        raise NotImplementedError
+            self._add_child(arg)
 
     def bind(self, arg_map):
         bvariables = []
@@ -414,9 +426,6 @@ class ParameterizedNative(ParameterizedType):
     def options(self):
         return self.rawtype.options
 
-    def build(self):
-        pass
-
 
 class Enum(Type):
     def __init__(self, name, values):
@@ -451,24 +460,16 @@ class Message(Type):
 
         self.base = check_not_none(base)
         self.base_type = check_not_none(base_type)
-        self.children.append(base)
 
-        # TODO: Enum value?
-        if isinstance(base_type, Node):
-            self.children.append(base_type)
-
-        if isinstance(base, Reference):
-            base.parent = self
-
-        if isinstance(base_type, Reference):
-            base_type.parent = self
+        self._add_child(base, always_parent=False)
+        self._add_child(base_type, always_parent=False)
 
     def set_polymorphism(self, polymorphism):
         '''Set this message polymorphism.'''
         check_state(not self.polymorphism, 'polymorphism is already set in %s', self)
 
         self._polymorphism = check_not_none(polymorphism)
-        self.children.append(polymorphism)
+        self._add_child(polymorphism)
         polymorphism.set_message(self)
 
     @property
@@ -491,8 +492,7 @@ class Message(Type):
     def add_fields(self, *fields):
         for field in fields:
             self.declared_fields.add(field)
-            self.children.append(field)
-            field.parent = self
+            self._add_symbol(field)
 
     def parameterize(self, *variables):
         '''Parameterize this message with the given arguments, return another message.'''
@@ -545,10 +545,14 @@ class ParameterizedMessage(ParameterizedType):
 
         self._base = None
         self._declared_fields = None
+        self._built = False
+
+    def _check_built(self):
+        check_state(self._built, "%s is not built", self)
 
     @property
     def base(self):
-        self.check_built()
+        self._check_built()
         return self._base
 
     @property
@@ -569,7 +573,7 @@ class ParameterizedMessage(ParameterizedType):
 
     @property
     def declared_fields(self):
-        self.check_built()
+        self._check_built()
         return self._declared_fields
 
     def build(self):
@@ -578,21 +582,24 @@ class ParameterizedMessage(ParameterizedType):
 
         self._base = rawtype.base.bind(var_map) if rawtype.base else None
         self._declared_fields = SymbolTable()
-        for field in rawtype.declared_fields:
-            self._declared_fields.add(field.bind(var_map))
 
-        self.built = True
+        for field in rawtype.declared_fields:
+            bfield = field.bind(var_map)
+            self._declared_fields.add(bfield)
+            self._add_symbol(bfield)
+
+        self._built = True
 
 
 class MessagePolymorphism(Node):
     def __init__(self, field, default_type):
-        super(MessagePolymorphism, self).__init__('polymorphism')
+        super(MessagePolymorphism, self).__init__()
         self.field = check_not_none(field)
         self.default_type = check_not_none(default_type)
-        self.children.append(field)
+        self._add_child(field, always_parent=False)
 
-        self.message = None
         self.map = {}
+        self.message = None
 
     def set_message(self, message):
         check_state(not self.message, 'message is already set in %s', self)
@@ -616,7 +623,7 @@ class MessagePolymorphism(Node):
         self.map[base_type] = subtype
 
 
-class Field(Node):
+class Field(Symbol):
     def __init__(self, name, type):
         super(Field, self).__init__(name)
         self.type = type
@@ -632,21 +639,3 @@ class Field(Node):
             return self
 
         return Field(self.name, btype)
-
-
-class EnumValue(Node):
-    def __init__(self, type, value):
-        super(EnumValue, self).__init__(value)
-        self.type = type
-        self.value = value
-
-    def link(self):
-        self.type.link()
-
-        if not isinstance(self.type, Enum):
-            self.error('wrong type %s, must be an enum', self.type)
-            return
-
-        if self.value not in self.type.value_set:
-            self.error('enum value "%s" is not found', self.value)
-            return

@@ -57,7 +57,7 @@ class TestPackage(unittest.TestCase):
         builtin.add_modules(Module('builtin.types', definitions=[int32]))
 
         pkg = Package('test', builtin)
-        symbol = pkg.symbol('int32')
+        symbol = pkg.lookup('int32')
         assert symbol is int32
 
     def test_parameterized_symbol(self):
@@ -89,7 +89,7 @@ class TestModule(unittest.TestCase):
         module = Module('test')
         module.add_definitions(int32)
 
-        symbol = module.symbol('int32')
+        symbol = module.lookup('int32')
         assert symbol is int32
 
     def test_symbol_from_imports(self):
@@ -101,7 +101,7 @@ class TestModule(unittest.TestCase):
         module = Module('with_import')
         module.add_imports(imported)
 
-        symbol = module.symbol('imported.int32')
+        symbol = module.lookup('imported.int32')
         assert symbol is int32
 
 
@@ -176,7 +176,7 @@ class TestType(unittest.TestCase):
         msg = Type('Message')
         msg.add_variables(t)
 
-        symbol = msg.symbol('T')
+        symbol = msg.lookup('T')
         assert symbol is t
 
 

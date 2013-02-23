@@ -68,6 +68,10 @@ class Walker(object):
         from pdef import lang
         return self._filter(lang.Field)
 
+    def pmessages(self):
+        from pdef import lang
+        return self._filter(lang.ParameterizedMessage)
+
     def _filter(self, cls):
         return filter(lambda x: isinstance(x, cls), self)
 

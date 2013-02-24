@@ -14,7 +14,9 @@ class Builder(object):
         self.link_refs()
         self.built_pmessages()
         self.check_circular_inheritance()
-        self.compfile_fields()
+        self.compile_polymorphism()
+        self.compile_base_type()
+        self.compile_fields()
 
     def link_module_refs(self):
         for module_ref in self.walker.module_refs():
@@ -34,7 +36,15 @@ class Builder(object):
         for pkg in self.walker.packages():
             pkg.build_parameterized()
 
-    def compfile_fields(self):
+    def compile_polymorphism(self):
+        for message in self.walker.messages():
+            message.compile_polymorphism()
+
+    def compile_base_type(self):
+        for message in self.walker.messages():
+            message.compile_base_type()
+
+    def compile_fields(self):
         for message in self.walker.messages():
             message.compile_fields()
 

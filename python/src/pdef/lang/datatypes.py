@@ -81,7 +81,6 @@ class Message(Type):
 
         self._polymorphism = check_not_none(polymorphism)
         self._add_child(polymorphism)
-        polymorphism.set_message(self)
 
     def add_fields(self, *fields):
         for field in fields:
@@ -121,6 +120,10 @@ class Message(Type):
 
         for field in self.declared_fields:
             self.fields.add(field)
+
+    def compile_polymorphism(self):
+        if self._polymorphism:
+            self._polymorphism.set_message(self)
 
     def compile_base_type(self):
         if not self.base:
@@ -200,23 +203,25 @@ class MessagePolymorphism(Node):
 
         self.parent = check_not_none(message)
         self.message = message
-
-    def build(self):
-        self.map[self.default_type] = self.message
+        self._add(message, self.default_type)
 
     def add_subtype(self, subtype):
         check_not_none(subtype)
+        check_state(self.message, 'message must be set in %s', self)
 
         base_type = subtype.base_type
-        if base_type in self.map:
-            self.error('duplicate subtype %s', base_type)
-            return
-
         if self.message not in subtype.bases:
             self.error('%s must inherit %s', subtype, self.message)
             return
 
-        self.map[base_type] = subtype
+        self._add(subtype, base_type)
+
+    def _add(self, message, message_type):
+        if message_type in self.map:
+            self.error('duplicate subtype %s', message_type)
+            return
+
+        self.map[message_type] = message
 
 
 class Field(Symbol):

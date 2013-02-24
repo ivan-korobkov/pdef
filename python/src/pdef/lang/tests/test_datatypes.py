@@ -75,9 +75,20 @@ class TestMessage(unittest.TestCase):
         assert len(msg2.errors) == 1
         assert 'circular inheritance' in msg2.errors[0]
 
+    def test_compile_polymorphism(self):
+        mp = MessagePolymorphism('field', 'A')
+        msg = Message('A', polymorphism=mp)
+        msg.compile_polymorphism()
+
+        assert mp.message == msg
+        assert mp.map == {'A': msg}
+
     def test_compile_base_type(self):
         msg = Message('A', polymorphism=MessagePolymorphism(Ref('field'), 'A'))
+        msg.compile_polymorphism()
+
         msg2 = Message('B', base=msg, base_type='B')
+        msg2.compile_polymorphism()
         msg2.compile_base_type()
 
         assert msg.polymorphism.map == {'A': msg, 'B': msg2}
@@ -96,6 +107,36 @@ class TestParameterizedMessage(unittest.TestCase):
 
         assert pmsg.rawtype == msg
         assert pmsg.declared_fields['field'].type == int32
+
+
+class TestMessagePolymorphism(unittest.TestCase):
+    def test_set_message(self):
+        obj = Message('Object')
+        mp = MessagePolymorphism('field', 'object')
+        mp.set_message(obj)
+
+        assert mp.map == {'object': obj}
+
+    def test_add_subtype(self):
+        obj = Message('Object')
+        mp = MessagePolymorphism('field', 'object')
+        mp.set_message(obj)
+
+        photo = Message('Photo', base=obj, base_type='photo')
+        mp.add_subtype(photo)
+        assert mp.map == {'photo': photo, 'object': obj}
+
+    def test_add_subtype_duplicate(self):
+        obj = Message('Object')
+        mp = MessagePolymorphism('field', 'object')
+        mp.set_message(obj)
+
+        photo = Message('Photo', base=obj, base_type='photo')
+        photo2 = Message('Photo', base=obj, base_type='photo')
+        mp.add_subtype(photo)
+        mp.add_subtype(photo2)
+        assert len(obj.errors) == 1
+        assert 'duplicate subtype' in obj.errors[0]
 
 
 class TestParameterization(unittest.TestCase):

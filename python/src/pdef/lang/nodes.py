@@ -1,6 +1,6 @@
 # encoding: utf-8
 from collections import deque
-import logging
+from pdef.lang import errors
 from pdef.preconditions import *
 
 
@@ -8,8 +8,7 @@ class Node(object):
     def __init__(self):
         self.parent = None
         self.children = []
-        self.symbols = SymbolTable()
-        self.errors = []
+        self.symbols = SymbolTable(self)
 
     def __repr__(self):
         return '<%s %s %s>' % (self.__class__.__name__, self.fullname, hex(id(self)))
@@ -39,16 +38,6 @@ class Node(object):
         if self.parent is None:
             raise ValueError('Can\'t access the package, %s has no parent' % self)
         return self.parent.package
-
-    def error(self, msg, *args):
-        msg = '%s: %s' % (self.fullname, msg % args)
-        logging.error(msg)
-
-        # The parent can be absent if the node is not linked.
-        if self.parent:
-            self.parent.errors.append(msg)
-        else:
-            self.errors.append(msg)
 
     def lookup(self, name):
         symbol = self._lookup_child(name)
@@ -97,7 +86,8 @@ class Symbol(Node):
 
 
 class SymbolTable(object):
-    def __init__(self):
+    def __init__(self, parent):
+        self.parent = parent
         self.items = []
         self.map = {}
 
@@ -123,7 +113,8 @@ class SymbolTable(object):
 
     def add_with_name(self, name, item):
         if name in self.map:
-            raise ValueError('Duplicate "%s"' % name)
+            errors.add(self.parent, 'duplicate symbol "%s"', name)
+            return
 
         self.map[name] = item
         self.items.append(item)

@@ -1,10 +1,10 @@
 # encoding: utf-8
-import unittest
 from mock import Mock
 from pdef.lang import *
+from pdef.lang.tests.test import PdefTest
 
 
-class TestVariable(unittest.TestCase):
+class TestVariable(PdefTest):
     def test_bind(self):
         int32 = Native('int32')
         var = Variable('T')
@@ -12,7 +12,7 @@ class TestVariable(unittest.TestCase):
         assert bound == int32
 
 
-class TestType(unittest.TestCase):
+class TestType(PdefTest):
     def test_symbol_variables(self):
         '''Should return variables as symbols.'''
         # Message<T>
@@ -24,7 +24,7 @@ class TestType(unittest.TestCase):
         assert symbol is t
 
 
-class TestParameterizedType(unittest.TestCase):
+class TestParameterizedType(PdefTest):
     def test_bind(self):
         # Parameterized Map<int32, V>
         int32 = Native('int32')

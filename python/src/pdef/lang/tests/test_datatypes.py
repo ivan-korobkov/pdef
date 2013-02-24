@@ -1,9 +1,9 @@
 # encoding: utf-8
-import unittest
 from pdef.lang import *
+from pdef.lang.tests.test import PdefTest
 
 
-class TestNative(unittest.TestCase):
+class TestNative(PdefTest):
     def test_parameterize(self):
         t = Variable('T')
         List = Native('List')
@@ -15,7 +15,7 @@ class TestNative(unittest.TestCase):
         assert list(special.variables) == [string]
 
 
-class TestMessage(unittest.TestCase):
+class TestMessage(PdefTest):
     def test_bases(self):
         msg = Message('Message')
         msg2 = Message('Message2', base=msg, base_type='msg2')
@@ -62,8 +62,10 @@ class TestMessage(unittest.TestCase):
         f2 = Field('field', int32)
         msg2 = Message('B', base=msg, base_type='b')
         msg2.add_fields(f2)
+        msg2.compile_fields()
 
-        self.assertRaises(ValueError, msg2.compile_fields)
+        assert len(errors.aslist()) == 1
+        assert 'duplicate' in errors.aslist()[0]
 
     def test_check_circular_inheritance(self):
         msg = Message('Message')
@@ -72,8 +74,8 @@ class TestMessage(unittest.TestCase):
         msg.set_base(msg3, 'type')
 
         msg2.check_circular_inheritance()
-        assert len(msg2.errors) == 1
-        assert 'circular inheritance' in msg2.errors[0]
+        assert len(errors.aslist()) == 1
+        assert 'circular inheritance' in errors.aslist()[0]
 
     def test_compile_polymorphism(self):
         mp = MessagePolymorphism('field', 'A')
@@ -94,7 +96,7 @@ class TestMessage(unittest.TestCase):
         assert msg.polymorphism.map == {'A': msg, 'B': msg2}
 
 
-class TestParameterizedMessage(unittest.TestCase):
+class TestParameterizedMessage(PdefTest):
     def test_build(self):
         t = Variable('T')
         msg = Message('Message')
@@ -109,7 +111,7 @@ class TestParameterizedMessage(unittest.TestCase):
         assert pmsg.declared_fields['field'].type == int32
 
 
-class TestMessagePolymorphism(unittest.TestCase):
+class TestMessagePolymorphism(PdefTest):
     def test_set_message(self):
         obj = Message('Object')
         mp = MessagePolymorphism('field', 'object')
@@ -135,11 +137,11 @@ class TestMessagePolymorphism(unittest.TestCase):
         photo2 = Message('Photo', base=obj, base_type='photo')
         mp.add_subtype(photo)
         mp.add_subtype(photo2)
-        assert len(obj.errors) == 1
-        assert 'duplicate subtype' in obj.errors[0]
+        assert len(errors.aslist()) == 1
+        assert 'duplicate subtype' in errors.aslist()[0]
 
 
-class TestParameterization(unittest.TestCase):
+class TestParameterization(PdefTest):
     def test_recursive(self):
         '''Should support recursive parameterization.'''
         # MyMessage:

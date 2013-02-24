@@ -1,6 +1,7 @@
 # encoding: utf-8
 from collections import OrderedDict
 from pdef.preconditions import *
+from pdef.lang import errors
 from pdef.lang.nodes import Node, Symbol, SymbolTable
 from pdef.lang.types import Type, ParameterizedType
 from pdef.lang.refs import Ref
@@ -16,7 +17,7 @@ class Native(Type):
     def parameterize(self, *variables):
         '''Parameterize this native with the given variables and return a new one.'''
         if len(self.variables) != len(variables):
-            self.error('wrong number of arguments %s', variables)
+            errors.add(self, 'wrong number of arguments %s', variables)
             return
         return ParameterizedNative(self, *variables)
 
@@ -36,8 +37,8 @@ class Message(Type):
         self.base_type = None
         self._polymorphism = None
 
-        self.declared_fields = SymbolTable()
-        self.fields = SymbolTable()
+        self.declared_fields = SymbolTable(self)
+        self.fields = SymbolTable(self)
 
         if base:
             self.set_base(base, base_type)
@@ -90,7 +91,7 @@ class Message(Type):
     def parameterize(self, *variables):
         '''Parameterize this message with the given arguments, return another message.'''
         if len(self.variables) != len(variables):
-            self.error('wrong number of variables %s', variables)
+            errors.add(self, 'wrong number of variables %s', variables)
             return
         return ParameterizedMessage(self, *variables)
 
@@ -102,7 +103,7 @@ class Message(Type):
         base = self.base
         while base:
             if base in seen:
-                self.error('circular inheritance %s', seen.keys())
+                errors.add(self, 'circular inheritance %s', seen.keys())
                 return
 
             seen[base] = True
@@ -130,7 +131,7 @@ class Message(Type):
             return
 
         if not self.base.polymorphism:
-            self.error('base message %s must be polymorphic', self.base)
+            errors.add(self, 'base message %s must be polymorphic', self.base)
             return
 
         self.base.polymorphism.add_subtype(self)
@@ -145,7 +146,7 @@ class ParameterizedMessage(ParameterizedType):
         self._built = False
 
     def _check_built(self):
-        check_state(self._built, "%s is not built", self)
+        check_state(self._built, '%s is not built', self)
 
     @property
     def base(self):
@@ -178,7 +179,7 @@ class ParameterizedMessage(ParameterizedType):
         rawtype = self.rawtype
 
         self._base = rawtype.base.bind(var_map) if rawtype.base else None
-        self._declared_fields = SymbolTable()
+        self._declared_fields = SymbolTable(self)
 
         for field in rawtype.declared_fields:
             bfield = field.bind(var_map)
@@ -211,14 +212,15 @@ class MessagePolymorphism(Node):
 
         base_type = subtype.base_type
         if self.message not in subtype.bases:
-            self.error('%s must inherit %s', subtype, self.message)
+            errors.add(self.message, '%s must inherit %s', subtype, self.message)
             return
 
         self._add(subtype, base_type)
 
     def _add(self, message, message_type):
         if message_type in self.map:
-            self.error('duplicate subtype %s', message_type)
+            src = self.message if self.message else self
+            errors.add(src, 'duplicate subtype %s', message_type)
             return
 
         self.map[message_type] = message
@@ -245,7 +247,7 @@ class Field(Symbol):
 class Enum(Type):
     def __init__(self, name, values=None):
         super(Enum, self).__init__(name)
-        self.values = SymbolTable()
+        self.values = SymbolTable(self)
         if values:
             self.add_values(*values)
 

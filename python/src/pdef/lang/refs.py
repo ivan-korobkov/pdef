@@ -1,5 +1,6 @@
 # encoding: utf-8
 from pdef.preconditions import *
+from pdef.lang import errors
 from pdef.lang.nodes import Symbol
 
 
@@ -38,7 +39,7 @@ class ImportRef(AbstractRef):
     def link(self):
         package = self.package
         if not self.import_name in package.modules:
-            self.error('import not found "%s"', self.import_name)
+            errors.add(self, 'import not found "%s"', self.import_name)
             return
 
         self.delegate = package._lookup_child(self.import_name)
@@ -80,11 +81,10 @@ class Ref(AbstractRef):
     def _lookup_delegate(self):
         rawtype = self.lookup(self.name)
         if not rawtype:
-            self.error('type not found "%s"', self.name)
+            errors.add(self, 'type not found "%s"', self.name)
             return
 
         if not rawtype.generic:
-            # Rawtype is not generic.
             return rawtype
 
         ptype = self.package.parameterized_symbol(rawtype, *self.variables)

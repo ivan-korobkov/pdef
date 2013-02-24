@@ -3,7 +3,12 @@ import unittest
 from pdef.lang import *
 
 
-class Test(unittest.TestCase):
+class PdefTest(unittest.TestCase):
+    def setUp(self):
+        errors.init()
+
+
+class Test(PdefTest):
     def test(self):
         int32 = Native('int32')
         string = Native('string')

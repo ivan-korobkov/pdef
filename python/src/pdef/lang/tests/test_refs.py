@@ -1,10 +1,10 @@
 # encoding: utf-8
-import unittest
 from mock import Mock
 from pdef.lang import *
+from pdef.lang.tests.test import PdefTest
 
 
-class TestModuleReference(unittest.TestCase):
+class TestModuleReference(PdefTest):
     def test_link(self):
         '''Should look up and return a module.'''
         module = Module('package.module')
@@ -18,7 +18,7 @@ class TestModuleReference(unittest.TestCase):
         assert imp == module
 
 
-class TestReference(unittest.TestCase):
+class TestReference(PdefTest):
     def test_link(self):
         '''Should look up a raw type when linking.'''
         int32 = Native('int32')
@@ -34,10 +34,11 @@ class TestReference(unittest.TestCase):
         '''Should add a type not found error.'''
         module = Module('test')
         ref = Ref('not_found')
+        ref.parent = module
         ref.link()
 
         assert ref.delegate is None
-        assert len(ref.errors) == 1
+        assert len(errors.aslist()) == 1
 
     def test_link_parameterized_symbol(self):
         '''Should add a wrong number of arguments error.'''

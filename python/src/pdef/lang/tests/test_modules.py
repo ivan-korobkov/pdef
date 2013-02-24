@@ -1,9 +1,9 @@
 # encoding: utf-8
-import unittest
 from pdef.lang import *
+from pdef.lang.tests.test import PdefTest
 
 
-class TestPackage(unittest.TestCase):
+class TestPackage(PdefTest):
     def test_symbol(self):
         '''Should look up a symbol in a builtin package.'''
         int32 = Native('int32')
@@ -36,7 +36,7 @@ class TestPackage(unittest.TestCase):
         assert ptype2 is ptype
 
 
-class TestModule(unittest.TestCase):
+class TestModule(PdefTest):
     def test_symbol_from_definitions(self):
         '''Should look up a symbol in the module's definitions.'''
         int32 = Native('int32')

@@ -1,5 +1,6 @@
 # encoding: utf-8
 from collections import deque
+from pdef.lang import errors
 from pdef.lang.nodes import Symbol, SymbolTable
 from pdef.lang.walker import Walker
 
@@ -11,12 +12,32 @@ class Builder(object):
 
     def build(self):
         self.link_module_refs()
+        if errors.present():
+            return
+
         self.link_refs()
+        if errors.present():
+            return
+
         self.built_pmessages()
+        if errors.present():
+            return
+
         self.check_circular_inheritance()
+        if errors.present():
+            return
+
         self.compile_polymorphism()
+        if errors.present():
+            return
+
         self.compile_base_type()
+        if errors.present():
+            return
+
         self.compile_fields()
+        if errors.present():
+            return
 
     def link_module_refs(self):
         for module_ref in self.walker.module_refs():
@@ -53,7 +74,7 @@ class Package(Symbol):
     def __init__(self, name, builtin_package=None):
         super(Package, self).__init__(name)
 
-        self.modules = SymbolTable()
+        self.modules = SymbolTable(self)
         self.builtin = builtin_package
         self.parameterized = {}
         self.pqueue = deque()
@@ -70,7 +91,7 @@ class Package(Symbol):
     def add_modules(self, *modules):
         for module in modules:
             if not module.name.startswith(self.name):
-                module.error('module name must start with the package name "%s"', self.name)
+                errors.add(module, 'module name must start with the package name "%s"', self.name)
                 continue
 
             self.modules.add(module)
@@ -112,8 +133,8 @@ class Module(Symbol):
     def __init__(self, name, imports=None, definitions=None):
         super(Module, self).__init__(name)
 
-        self.imports = SymbolTable()
-        self.definitions = SymbolTable()
+        self.imports = SymbolTable(self)
+        self.definitions = SymbolTable(self)
 
         if imports:
             self.add_imports(*imports)

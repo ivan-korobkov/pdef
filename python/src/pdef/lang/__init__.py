@@ -1,4 +1,5 @@
 # encoding: utf-8
+from pdef.lang import errors
 from pdef.lang.datatypes import *
 from pdef.lang.modules import *
 from pdef.lang.nodes import *

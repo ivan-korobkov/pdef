@@ -1,5 +1,6 @@
 # encoding: utf-8
 from pdef.preconditions import *
+from pdef.lang import errors
 from pdef.lang.nodes import Symbol, SymbolTable
 
 
@@ -8,7 +9,7 @@ class Type(Symbol):
         super(Type, self).__init__(name)
 
         self.rawtype = self
-        self.variables = SymbolTable()
+        self.variables = SymbolTable(self)
         if variables:
             self.add_variables(*variables)
 
@@ -44,7 +45,7 @@ class ParameterizedType(Type):
                        "wrong number of variables %s", variables)
 
         self.rawtype = rawtype
-        self.variables = SymbolTable()
+        self.variables = SymbolTable(self)
         for var, arg in zip(self.rawtype.variables, variables):
             self.variables.add_with_name(var, arg)
             self._add_child(arg)
@@ -68,5 +69,5 @@ class Variable(Type):
         if svar:
             return svar
 
-        self.error('variable is not found in the variables map')
+        errors.add(self, 'variable is not found in the variables map')
 

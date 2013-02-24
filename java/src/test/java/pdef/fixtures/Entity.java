@@ -8,15 +8,15 @@ import pdef.descriptors.AbstractMessageDescriptor;
 import pdef.descriptors.FieldDescriptor;
 import pdef.descriptors.MessageDescriptor;
 
-public class User extends Entity {
-	private Image image;
+public class Entity implements Message {
+	private Id id;
 
-	public Image getImage() {
-		return image;
+	public Id getId() {
+		return id;
 	}
 
-	public User setImage(final Image image) {
-		this.image = image;
+	public Entity setId(final Id id) {
+		this.id = id;
 		return this;
 	}
 
@@ -32,17 +32,11 @@ public class User extends Entity {
 			return INSTANCE;
 		}
 
-		private MessageDescriptor base;
-		private SymbolTable<FieldDescriptor> declaredFields;
-		private SymbolTable<FieldDescriptor> fields;
+		private ImmutableSymbolTable<FieldDescriptor> declaredFields;
+		private ImmutableSymbolTable<FieldDescriptor> fields;
 
 		private Descriptor() {
-			super(User.class);
-		}
-
-		@Override
-		public MessageDescriptor getBase() {
-			return base;
+			super(Entity.class);
 		}
 
 		@Override
@@ -57,21 +51,20 @@ public class User extends Entity {
 
 		@Override
 		protected void doLink() {
-			base = Entity.Descriptor.getInstance();
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new AbstractFieldDescriptor("avatar", Image.Descriptor.getInstance()) {
+					new AbstractFieldDescriptor("id", Id.Descriptor.getInstance()) {
 						@Override
 						public Object get(final Message message) {
-							return ((User) message).getImage();
+							return ((Entity) message).getId();
 						}
 
 						@Override
 						public void set(final Message message, final Object value) {
-							((User) message).setImage((Image) value);
+							((Entity) message).setId((Id) value);
 						}
 					}
 			);
-			fields = base.getFields().merge(declaredFields);
+			fields = declaredFields;
 		}
 	}
 }

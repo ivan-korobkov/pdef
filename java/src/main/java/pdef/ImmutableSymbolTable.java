@@ -1,8 +1,10 @@
 package pdef;
 
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 
 import java.util.*;
 
@@ -48,5 +50,16 @@ public class ImmutableSymbolTable<T extends Symbol> implements SymbolTable<T> {
 	@Override
 	public Iterator<T> iterator() {
 		return list.iterator();
+	}
+
+	@Override
+	public SymbolTable<T> merge(final SymbolTable<T> another) {
+		checkNotNull(another);
+		List<T> list = Lists.newArrayList(list());
+		for (T element : another) {
+			list.add(element);
+		}
+
+		return copyOf(list);
 	}
 }

@@ -1,8 +1,11 @@
 package pdef.fixtures;
 
+import pdef.ImmutableSymbolTable;
 import pdef.Message;
+import pdef.SymbolTable;
 import pdef.descriptors.AbstractFieldDescriptor;
 import pdef.descriptors.AbstractMessageDescriptor;
+import pdef.descriptors.FieldDescriptor;
 import pdef.descriptors.MessageDescriptor;
 
 public class Id implements Message {
@@ -30,11 +33,26 @@ public class Id implements Message {
 			return INSTANCE;
 		}
 
-		private Descriptor() {}
+		private ImmutableSymbolTable<FieldDescriptor> declaredFields;
+		private ImmutableSymbolTable<FieldDescriptor> fields;
+
+		private Descriptor() {
+			super(Id.class);
+		}
+
+		@Override
+		public SymbolTable<FieldDescriptor> getDeclaredFields() {
+			return declaredFields;
+		}
+
+		@Override
+		public SymbolTable<FieldDescriptor> getFields() {
+			return fields;
+		}
 
 		@Override
 		protected void doLink() {
-			setDeclaredFields(
+			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
 					new AbstractFieldDescriptor("value", IntDescriptor.getInstance()) {
 						@Override
 						public Object get(final Message message) {
@@ -47,6 +65,7 @@ public class Id implements Message {
 						}
 					}
 			);
+			fields = declaredFields;
 		}
 	}
 }

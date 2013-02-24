@@ -11,7 +11,9 @@ public class IntDescriptor extends AbstractTypeDescriptor implements ValueDescri
 		return INSTANCE;
 	}
 
-	private IntDescriptor() {}
+	private IntDescriptor() {
+		super(Integer.class);
+	}
 
 	@Override
 	protected void doLink() {}

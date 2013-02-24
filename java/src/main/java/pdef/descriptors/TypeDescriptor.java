@@ -5,4 +5,5 @@ public interface TypeDescriptor {
 	Class<?> getType();
 
 	void link();
+
 }

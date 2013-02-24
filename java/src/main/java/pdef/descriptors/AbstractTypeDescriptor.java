@@ -22,10 +22,6 @@ public abstract class AbstractTypeDescriptor implements TypeDescriptor {
 		return type;
 	}
 
-	public boolean isLinked() {
-		return linked;
-	}
-
 	@Override
 	public void link() {
 		if (linked) {
@@ -43,4 +39,5 @@ public abstract class AbstractTypeDescriptor implements TypeDescriptor {
 	}
 
 	protected abstract void doLink();
+
 }

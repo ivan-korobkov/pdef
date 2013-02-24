@@ -9,9 +9,22 @@ import com.google.common.collect.Lists;
 import java.util.*;
 
 public class ImmutableSymbolTable<T extends Symbol> implements SymbolTable<T> {
+
 	private final ImmutableList<T> list;
 	private final ImmutableSet<T> set;
 	private final ImmutableMap<String, T> map;
+
+	private static final ImmutableSymbolTable<?> EMPTY;
+	static {
+		@SuppressWarnings("unchecked")
+		ImmutableSymbolTable table = new ImmutableSymbolTable(Collections.emptyList());
+		EMPTY = table;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T extends Symbol> ImmutableSymbolTable<T> of() {
+		return (ImmutableSymbolTable<T>) EMPTY;
+	}
 
 	public static <T extends Symbol> ImmutableSymbolTable<T> of(final T... elements) {
 		return new ImmutableSymbolTable<T>(Arrays.asList(elements));

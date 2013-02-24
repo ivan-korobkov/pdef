@@ -91,6 +91,10 @@ class Symbol(Node):
 
         return self.name
 
+    @property
+    def generic(self):
+        return False
+
 
 class SymbolTable(object):
     def __init__(self):

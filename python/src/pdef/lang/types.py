@@ -19,6 +19,10 @@ class Type(Symbol):
             s += '<' + ', '.join(var.name for var in self.variables) + '>'
         return s
 
+    @property
+    def generic(self):
+        return bool(self.variables)
+
     def add_variables(self, *vars):
         for var in vars:
             self.variables.add(var)

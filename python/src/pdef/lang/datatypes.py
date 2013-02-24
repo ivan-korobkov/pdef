@@ -27,12 +27,6 @@ class ParameterizedNative(ParameterizedType):
         return self.rawtype.options
 
 
-class Enum(Type):
-    def __init__(self, name, values):
-        super(Enum, self).__init__(name)
-        self.values = set(values) if values else set()
-
-
 class Message(Type):
     def __init__(self, name, variables=None, base=None, base_type=None,
                  polymorphism=None, declared_fields=None):
@@ -54,24 +48,6 @@ class Message(Type):
         if declared_fields:
             self.add_fields(*declared_fields)
 
-    def set_base(self, base, base_type):
-        '''Set this message inheritance.'''
-        check_state(not self.base, 'base is already set in %s', self)
-
-        self.base = check_not_none(base)
-        self.base_type = check_not_none(base_type)
-
-        self._add_child(base, always_parent=False)
-        self._add_child(base_type, always_parent=False)
-
-    def set_polymorphism(self, polymorphism):
-        '''Set this message polymorphism.'''
-        check_state(not self.polymorphism, 'polymorphism is already set in %s', self)
-
-        self._polymorphism = check_not_none(polymorphism)
-        self._add_child(polymorphism)
-        polymorphism.set_message(self)
-
     @property
     def bases(self):
         '''Return an iterator over the base tree of this message.
@@ -88,6 +64,24 @@ class Message(Type):
         if self._polymorphism:
             return self._polymorphism
         return self.base.polymorphism if self.base else None
+
+    def set_base(self, base, base_type):
+        '''Set this message inheritance.'''
+        check_state(not self.base, 'base is already set in %s', self)
+
+        self.base = check_not_none(base)
+        self.base_type = check_not_none(base_type)
+
+        self._add_child(base, always_parent=False)
+        self._add_child(base_type, always_parent=False)
+
+    def set_polymorphism(self, polymorphism):
+        '''Set this message polymorphism.'''
+        check_state(not self._polymorphism, 'polymorphism is already set in %s', self)
+
+        self._polymorphism = check_not_none(polymorphism)
+        self._add_child(polymorphism)
+        polymorphism.set_message(self)
 
     def add_fields(self, *fields):
         for field in fields:
@@ -206,7 +200,9 @@ class MessagePolymorphism(Node):
 
         self.parent = check_not_none(message)
         self.message = message
-        self.map[self.default_type] = message
+
+    def build(self):
+        self.map[self.default_type] = self.message
 
     def add_subtype(self, subtype):
         check_not_none(subtype)
@@ -240,3 +236,24 @@ class Field(Symbol):
 
         return Field(self.name, btype)
 
+
+class Enum(Type):
+    def __init__(self, name, values=None):
+        super(Enum, self).__init__(name)
+        self.values = SymbolTable()
+        if values:
+            self.add_values(*values)
+
+    def add_values(self, *values):
+        for value in values:
+            self.values.add(value)
+            self._add_symbol(value)
+
+
+class EnumValue(Symbol):
+    def __init__(self, name):
+        super(EnumValue, self).__init__(name)
+
+    @property
+    def enum(self):
+        return self.parent

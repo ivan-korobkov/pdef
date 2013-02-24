@@ -46,5 +46,3 @@ class Test(unittest.TestCase):
 
         msg2_fields = msg2.declared_fields
         assert msg2_fields['circular'].type == msg
-
-

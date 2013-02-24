@@ -83,7 +83,7 @@ class Ref(AbstractRef):
             self.error('type not found "%s"', self.name)
             return
 
-        if not rawtype.variables:
+        if not rawtype.generic:
             # Rawtype is not generic.
             return rawtype
 

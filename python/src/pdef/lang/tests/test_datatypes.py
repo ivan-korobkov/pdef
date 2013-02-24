@@ -145,6 +145,7 @@ class TestParameterization(unittest.TestCase):
         # Graph:
         #   Node<int32> node
         int32 = Native('int32')
+        node_type = Enum('NodeType', values=[EnumValue('NODE'), EnumValue('ROOT')])
 
         N = Variable('N')
         Node = Message('Node')
@@ -154,13 +155,13 @@ class TestParameterization(unittest.TestCase):
         R = Variable('R')
         Root = Message('RootNode')
         Root.add_variables(R)
-        Root.set_base(Ref('Node', Ref('R')), 'root')
+        Root.set_base(Ref('Node', Ref('R')), Ref('NodeType.ROOT'))
 
         Graph = Message('Graph')
         Graph.add_fields(Field('node', Ref('Node', Ref('int32'))))
 
         module = Module('test')
-        module.add_definitions(int32, Node, Root, Graph)
+        module.add_definitions(int32, node_type, Node, Root, Graph)
 
         pkg = Package('test')
         pkg.add_modules(module)

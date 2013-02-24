@@ -196,7 +196,7 @@ class GrammarRules(object):
         '''
         enum_value : IDENTIFIER
         '''
-        t[0] = t[1]
+        t[0] = lang.EnumValue(t[1])
 
     # Message definition
     def p_message(self, t):
@@ -212,7 +212,7 @@ class GrammarRules(object):
 
     def p_message_header(self, t):
         '''
-        message_header : variables inheritance polymorphism
+        message_header : variables base polymorphism
         '''
         base, base_type = t[2]
         t[0] = t[1], base, base_type, t[3]
@@ -297,15 +297,15 @@ class GrammarRules(object):
         t[0] = lang.Variable(t[1])
 
     # Message inheritance
-    def p_message_inheritance(self, t):
+    def p_message_base(self, t):
         '''
-        inheritance : INHERITS type AS IDENTIFIER
-                    | empty
+        base : INHERITS type AS IDENTIFIER
+             | empty
         '''
         if len(t) == 2:
             t[0] = None, None
         else:
-            t[0] = t[2], t[4]
+            t[0] = t[2], lang.Ref(t[4])
 
     def p_message_polymorphism(self, t):
         '''
@@ -315,7 +315,9 @@ class GrammarRules(object):
         if len(t) == 2:
             t[0] = None
         else:
-            t[0] = lang.MessagePolymorphism(t[3], t[5])
+            field = lang.Ref(t[3])
+            default_type = lang.Ref(t[5])
+            t[0] = lang.MessagePolymorphism(field, default_type)
 
     def p_error(self, t):
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)

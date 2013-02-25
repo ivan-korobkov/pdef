@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import pdef.ImmutableSymbolTable;
 import pdef.PdefMessage;
 import pdef.SymbolTable;
-import pdef.descriptors.BaseFieldDescriptor;
-import pdef.descriptors.BaseMessageDescriptor;
+import pdef.generated.GeneratedFieldDescriptor;
+import pdef.generated.GeneratedMessageDescriptor;
 import pdef.descriptors.FieldDescriptor;
 import pdef.descriptors.MessageDescriptor;
 
@@ -28,7 +28,7 @@ public class Entity implements PdefMessage {
 		return Descriptor.getInstance();
 	}
 
-	public static class Descriptor extends BaseMessageDescriptor {
+	public static class Descriptor extends GeneratedMessageDescriptor {
 		private static final Descriptor INSTANCE = new Descriptor();
 		public static Descriptor getInstance() {
 			INSTANCE.link();
@@ -66,7 +66,7 @@ public class Entity implements PdefMessage {
 			);
 
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new BaseFieldDescriptor("id", Id.Descriptor.getInstance()) {
+					new GeneratedFieldDescriptor("id", Id.Descriptor.getInstance()) {
 						@Override
 						public Object get(final PdefMessage message) {
 							return ((Entity) message).getId();

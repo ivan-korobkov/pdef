@@ -1,15 +1,18 @@
-package pdef.descriptors;
+package pdef.generated;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
+import pdef.descriptors.FieldDescriptor;
+import pdef.descriptors.TypeDescriptor;
+import pdef.descriptors.VariableDescriptor;
 
 import java.util.Map;
 
-public abstract class BaseFieldDescriptor implements FieldDescriptor {
+public abstract class GeneratedFieldDescriptor implements FieldDescriptor {
 	private final String name;
 	private TypeDescriptor type;
 
-	public BaseFieldDescriptor(final String name, final TypeDescriptor type) {
+	public GeneratedFieldDescriptor(final String name, final TypeDescriptor type) {
 		this.name = checkNotNull(name);
 		this.type = checkNotNull(type);
 	}

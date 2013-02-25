@@ -1,9 +1,9 @@
 package pdef;
 
-import pdef.descriptors.BaseEnumDescriptor;
+import pdef.generated.GeneratedEnumDescriptor;
 
 public interface PdefEnum extends PdefType {
 
 	@Override
-	BaseEnumDescriptor getPdefDescriptor();
+	GeneratedEnumDescriptor getPdefDescriptor();
 }

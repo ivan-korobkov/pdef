@@ -1,4 +1,4 @@
-package pdef.descriptors;
+package pdef.generated;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -9,12 +9,17 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import pdef.ImmutableSymbolTable;
 import pdef.SymbolTable;
+import pdef.descriptors.FieldDescriptor;
+import pdef.descriptors.MessageDescriptor;
+import pdef.descriptors.TypeDescriptor;
+import pdef.descriptors.VariableDescriptor;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
-class ParameterizedMessageDescriptor extends BaseMessageDescriptor implements MessageDescriptor {
+final class ParameterizedMessageDescriptor extends GeneratedMessageDescriptor
+		implements MessageDescriptor {
 
 	private final MessageDescriptor rawtype;
 	private final List<TypeDescriptor> args;

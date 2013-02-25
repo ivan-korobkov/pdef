@@ -1,32 +1,39 @@
-package pdef.descriptors;
+package pdef.generated;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableMap;
+import pdef.ImmutableSymbolTable;
+import pdef.SymbolTable;
+import pdef.descriptors.EnumDescriptor;
+import pdef.descriptors.TypeDescriptor;
+import pdef.descriptors.VariableDescriptor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-public class BaseEnumDescriptor implements EnumDescriptor {
-	private final Class<?> javaClass;
+public class GeneratedEnumDescriptor implements EnumDescriptor, GeneratedDescriptor {
 	private final Map<String, Enum<?>> values;
 
-	public BaseEnumDescriptor(final Class<Enum<?>> javaClass) {
-		this.javaClass = checkNotNull(javaClass);
+	public GeneratedEnumDescriptor(final Class<Enum<?>> javaClass) {
 		values = getValueMap(javaClass);
 	}
-
-	@Override
-	public Class<?> getJavaClass() { return javaClass; }
 
 	@Override
 	public Map<String, Enum<?>> getValues() { return values; }
 
 	@Override
-	public void link() {}
+	public SymbolTable<VariableDescriptor> getVariables() { return ImmutableSymbolTable.of(); }
+
+	@Override
+	public TypeDescriptor parameterize(final TypeDescriptor... args) {
+		throw new UnsupportedOperationException();
+	}
 
 	@Override
 	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
+
+	@Override
+	public void link() {}
 
 	static Map<String, Enum<?>> getValueMap(final Class<Enum<?>> type) {
 		Enum<?>[] array = getValues(type);

@@ -1,12 +1,15 @@
-package pdef.descriptors;
+package pdef.generated;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import pdef.PdefMessage;
+import pdef.descriptors.FieldDescriptor;
+import pdef.descriptors.TypeDescriptor;
+import pdef.descriptors.VariableDescriptor;
 
 import java.util.Map;
 
-class ParameterizedFieldDescriptor implements FieldDescriptor {
+final class ParameterizedFieldDescriptor implements FieldDescriptor {
 	private final FieldDescriptor rawField;
 	private final TypeDescriptor type;
 

@@ -1,13 +1,14 @@
-package pdef.descriptors;
+package pdef.generated;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
+import pdef.descriptors.TypeDescriptor;
 
-public abstract class AbstractTypeDescriptor implements TypeDescriptor {
+abstract class GeneratedTypeDescriptor implements TypeDescriptor, GeneratedDescriptor {
 	private final Class<?> type;
 	private volatile State state = State.NEW;
 
-	protected AbstractTypeDescriptor(final Class<?> type) {
+	protected GeneratedTypeDescriptor(final Class<?> type) {
 		this.type = checkNotNull(type);
 	}
 

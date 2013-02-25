@@ -6,8 +6,6 @@ import java.util.Map;
 
 public interface MessageDescriptor extends TypeDescriptor {
 
-	SymbolTable<VariableDescriptor> getVariables();
-
 	MessageDescriptor getBase();
 
 	Enum<?> getType();
@@ -18,6 +16,7 @@ public interface MessageDescriptor extends TypeDescriptor {
 
 	SymbolTable<FieldDescriptor> getFields();
 
+	@Override
 	MessageDescriptor parameterize(TypeDescriptor... args);
 
 	@Override

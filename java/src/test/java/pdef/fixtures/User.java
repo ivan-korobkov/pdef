@@ -3,8 +3,8 @@ package pdef.fixtures;
 import pdef.ImmutableSymbolTable;
 import pdef.PdefMessage;
 import pdef.SymbolTable;
-import pdef.descriptors.BaseFieldDescriptor;
-import pdef.descriptors.BaseMessageDescriptor;
+import pdef.generated.GeneratedFieldDescriptor;
+import pdef.generated.GeneratedMessageDescriptor;
 import pdef.descriptors.FieldDescriptor;
 import pdef.descriptors.MessageDescriptor;
 
@@ -43,7 +43,7 @@ public class User extends Entity {
 		return Descriptor.getInstance();
 	}
 
-	public static class Descriptor extends BaseMessageDescriptor {
+	public static class Descriptor extends GeneratedMessageDescriptor {
 		private static final Descriptor INSTANCE = new Descriptor();
 
 		public static Descriptor getInstance() {
@@ -72,7 +72,7 @@ public class User extends Entity {
 		protected void init() {
 			base = Entity.Descriptor.getInstance();
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new BaseFieldDescriptor("avatar", Image.Descriptor.getInstance()) {
+					new GeneratedFieldDescriptor("avatar", Image.Descriptor.getInstance()) {
 						@Override
 						public Object get(final PdefMessage message) {
 							return ((User) message).getImage();
@@ -84,7 +84,7 @@ public class User extends Entity {
 						}
 					},
 
-					new BaseFieldDescriptor("aura", Weighted.Descriptor.getInstance()
+					new GeneratedFieldDescriptor("aura", Weighted.Descriptor.getInstance()
 							.parameterize(Image.Descriptor.getInstance())) {
 						@Override
 						public Object get(final PdefMessage message) {
@@ -98,7 +98,7 @@ public class User extends Entity {
 						}
 					},
 
-					new BaseFieldDescriptor("root", RootNode.Descriptor.getInstance()
+					new GeneratedFieldDescriptor("root", RootNode.Descriptor.getInstance()
 							.parameterize(IntDescriptor.getInstance())) {
 						@Override
 						public Object get(final PdefMessage message) {

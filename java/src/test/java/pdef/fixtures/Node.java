@@ -4,6 +4,9 @@ import pdef.ImmutableSymbolTable;
 import pdef.PdefMessage;
 import pdef.SymbolTable;
 import pdef.descriptors.*;
+import pdef.provided.NativeVariableDescriptor;
+import pdef.generated.GeneratedFieldDescriptor;
+import pdef.generated.GeneratedMessageDescriptor;
 
 public class Node<T> implements PdefMessage {
 	private RootNode<T> root;
@@ -30,7 +33,7 @@ public class Node<T> implements PdefMessage {
 		return Descriptor.getInstance();
 	}
 
-	public static class Descriptor extends BaseMessageDescriptor {
+	public static class Descriptor extends GeneratedMessageDescriptor {
 		private static final Descriptor INSTANCE = new Descriptor();
 
 		public static Descriptor getInstance() {
@@ -45,7 +48,7 @@ public class Node<T> implements PdefMessage {
 		Descriptor() {
 			super(Node.class);
 
-			var0 = new BaseVariableDescriptor("T");
+			var0 = new NativeVariableDescriptor("T");
 			variables = ImmutableSymbolTable.of(var0);
 		}
 
@@ -62,7 +65,7 @@ public class Node<T> implements PdefMessage {
 		@Override
 		protected void init() {
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new BaseFieldDescriptor("root",
+					new GeneratedFieldDescriptor("root",
 							RootNode.Descriptor.getInstance().parameterize(var0)) {
 						@Override
 						public Object get(final PdefMessage message) {
@@ -76,7 +79,7 @@ public class Node<T> implements PdefMessage {
 						}
 					},
 
-					new BaseFieldDescriptor("element", var0) {
+					new GeneratedFieldDescriptor("element", var0) {
 
 						@Override
 						public Object get(final PdefMessage message) {

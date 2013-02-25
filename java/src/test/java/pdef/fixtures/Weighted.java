@@ -4,6 +4,9 @@ import pdef.ImmutableSymbolTable;
 import pdef.PdefMessage;
 import pdef.SymbolTable;
 import pdef.descriptors.*;
+import pdef.provided.NativeVariableDescriptor;
+import pdef.generated.GeneratedFieldDescriptor;
+import pdef.generated.GeneratedMessageDescriptor;
 
 public class Weighted<T> implements PdefMessage {
 
@@ -33,7 +36,7 @@ public class Weighted<T> implements PdefMessage {
 		return Descriptor.getInstance();
 	}
 
-	public static class Descriptor extends BaseMessageDescriptor {
+	public static class Descriptor extends GeneratedMessageDescriptor {
 		private static final Descriptor INSTANCE = new Descriptor();
 
 		public static Descriptor getInstance() {
@@ -48,7 +51,7 @@ public class Weighted<T> implements PdefMessage {
 		Descriptor() {
 			super(Weighted.class);
 
-			var0 = new BaseVariableDescriptor("T");
+			var0 = new NativeVariableDescriptor("T");
 			variables = ImmutableSymbolTable.of(var0);
 		}
 
@@ -65,7 +68,7 @@ public class Weighted<T> implements PdefMessage {
 		@Override
 		protected void init() {
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new BaseFieldDescriptor("element", var0) {
+					new GeneratedFieldDescriptor("element", var0) {
 						@Override
 						public Object get(final PdefMessage message) {
 							return ((Weighted<?>) message).getElement();
@@ -78,7 +81,7 @@ public class Weighted<T> implements PdefMessage {
 						}
 					},
 
-					new BaseFieldDescriptor("weight", IntDescriptor.getInstance()) {
+					new GeneratedFieldDescriptor("weight", IntDescriptor.getInstance()) {
 						@Override
 						public Object get(final PdefMessage message) {
 							return ((Weighted<?>) message).getWeight();

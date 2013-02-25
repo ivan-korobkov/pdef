@@ -3,6 +3,8 @@ package pdef.fixtures;
 import pdef.ImmutableSymbolTable;
 import pdef.SymbolTable;
 import pdef.descriptors.*;
+import pdef.provided.NativeVariableDescriptor;
+import pdef.generated.GeneratedMessageDescriptor;
 
 public class RootNode<R> extends Node<R> {
 
@@ -11,7 +13,7 @@ public class RootNode<R> extends Node<R> {
 		return super.getPdefDescriptor();
 	}
 
-	public static class Descriptor extends BaseMessageDescriptor {
+	public static class Descriptor extends GeneratedMessageDescriptor {
 		private static final Descriptor INSTANCE = new Descriptor();
 
 		public static Descriptor getInstance() {
@@ -27,7 +29,7 @@ public class RootNode<R> extends Node<R> {
 		Descriptor() {
 			super(RootNode.class);
 
-			var0 = new BaseVariableDescriptor("R");
+			var0 = new NativeVariableDescriptor("R");
 			variables = ImmutableSymbolTable.of(var0);
 		}
 

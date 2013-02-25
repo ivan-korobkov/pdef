@@ -1,4 +1,4 @@
-package pdef.descriptors;
+package pdef.generated;
 
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
@@ -7,19 +7,23 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import pdef.ImmutableSymbolTable;
 import pdef.SymbolTable;
+import pdef.descriptors.FieldDescriptor;
+import pdef.descriptors.MessageDescriptor;
+import pdef.descriptors.TypeDescriptor;
+import pdef.descriptors.VariableDescriptor;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-public abstract class BaseMessageDescriptor extends AbstractTypeDescriptor
-		implements MessageDescriptor {
+public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
+		implements MessageDescriptor, GeneratedDescriptor {
 
 	private final Map<List<TypeDescriptor>, ParameterizedMessageDescriptor> pmap;
 	private final Queue<ParameterizedMessageDescriptor> pqueue;
 	private SymbolTable<FieldDescriptor> fields;
 
-	protected BaseMessageDescriptor(final Class<?> type) {
+	protected GeneratedMessageDescriptor(final Class<?> type) {
 		super(type);
 		pmap = Maps.newHashMap();
 		pqueue = Lists.newLinkedList();

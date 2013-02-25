@@ -1,13 +1,13 @@
 package pdef.fixtures;
 
-import pdef.descriptors.AbstractTypeDescriptor;
-import pdef.descriptors.NativeDescriptor;
+import pdef.descriptors.ValueDescriptor;
+import pdef.generated.GeneratedTypeDescriptor;
 import pdef.descriptors.TypeDescriptor;
 import pdef.descriptors.VariableDescriptor;
 
 import java.util.Map;
 
-public class IntDescriptor extends AbstractTypeDescriptor implements NativeDescriptor {
+public class IntDescriptor extends GeneratedTypeDescriptor implements ValueDescriptor {
 	private static final IntDescriptor INSTANCE = new IntDescriptor();
 
 	public static IntDescriptor getInstance() {

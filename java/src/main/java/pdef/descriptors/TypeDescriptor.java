@@ -1,13 +1,14 @@
 package pdef.descriptors;
 
+import pdef.SymbolTable;
+
 import java.util.Map;
 
 public interface TypeDescriptor {
 
-	Class<?> getJavaClass();
+	SymbolTable<VariableDescriptor> getVariables();
 
-	void link();
+	TypeDescriptor parameterize(TypeDescriptor... args);
 
 	TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap);
-
 }

@@ -3,8 +3,8 @@ package pdef.fixtures;
 import pdef.ImmutableSymbolTable;
 import pdef.Message;
 import pdef.SymbolTable;
-import pdef.descriptors.AbstractFieldDescriptor;
-import pdef.descriptors.AbstractMessageDescriptor;
+import pdef.descriptors.BaseFieldDescriptor;
+import pdef.descriptors.BaseMessageDescriptor;
 import pdef.descriptors.FieldDescriptor;
 import pdef.descriptors.MessageDescriptor;
 
@@ -25,7 +25,7 @@ public class Id implements Message {
 		return Descriptor.getInstance();
 	}
 
-	public static class Descriptor extends AbstractMessageDescriptor {
+	public static class Descriptor extends BaseMessageDescriptor {
 		private static final Descriptor INSTANCE = new Descriptor();
 
 		public static Descriptor getInstance() {
@@ -47,7 +47,7 @@ public class Id implements Message {
 		@Override
 		protected void init() {
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new AbstractFieldDescriptor("value", IntDescriptor.getInstance()) {
+					new BaseFieldDescriptor("value", IntDescriptor.getInstance()) {
 						@Override
 						public Object get(final Message message) {
 							return ((Id) message).getValue();

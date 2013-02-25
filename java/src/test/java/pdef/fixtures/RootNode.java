@@ -11,7 +11,7 @@ public class RootNode<R> extends Node<R> {
 		return super.getDescriptor();
 	}
 
-	public static class Descriptor extends AbstractMessageDescriptor {
+	public static class Descriptor extends BaseMessageDescriptor {
 		private static final Descriptor INSTANCE = new Descriptor();
 
 		public static Descriptor getInstance() {

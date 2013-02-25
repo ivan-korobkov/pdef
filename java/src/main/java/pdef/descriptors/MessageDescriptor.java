@@ -10,6 +10,10 @@ public interface MessageDescriptor extends TypeDescriptor {
 
 	MessageDescriptor getBase();
 
+	Enum<?> getType();
+
+	Map<Enum<?>, MessageDescriptor> getTypeMap();
+
 	SymbolTable<FieldDescriptor> getDeclaredFields();
 
 	SymbolTable<FieldDescriptor> getFields();

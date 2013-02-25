@@ -18,7 +18,7 @@ public abstract class AbstractTypeDescriptor implements TypeDescriptor {
 				.toString();
 	}
 
-	public Class<?> getType() {
+	public Class<?> getJavaClass() {
 		return type;
 	}
 
@@ -46,7 +46,6 @@ public abstract class AbstractTypeDescriptor implements TypeDescriptor {
 	protected abstract void doLink();
 
 	enum State {
-		NEW, LINKING, LINKED;
+		NEW, LINKING, LINKED
 	}
-
 }

@@ -14,8 +14,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
-class ParameterizedMessageDescriptor extends AbstractMessageDescriptor
-		implements MessageDescriptor {
+class ParameterizedMessageDescriptor extends BaseMessageDescriptor implements MessageDescriptor {
 
 	private final MessageDescriptor rawtype;
 	private final List<TypeDescriptor> args;
@@ -26,7 +25,7 @@ class ParameterizedMessageDescriptor extends AbstractMessageDescriptor
 
 	ParameterizedMessageDescriptor(final MessageDescriptor rawtype,
 			final List<TypeDescriptor> args) {
-		super(rawtype.getType());
+		super(rawtype.getJavaClass());
 		this.rawtype = checkNotNull(rawtype);
 		this.args = ImmutableList.copyOf(args);
 		checkArgument(args.size() == rawtype.getVariables().size());
@@ -35,7 +34,7 @@ class ParameterizedMessageDescriptor extends AbstractMessageDescriptor
 	@Override
 	public String toString() {
 		return Objects.toStringHelper(this)
-				.addValue(getType())
+				.addValue(getJavaClass())
 				.addValue(args)
 				.toString();
 	}

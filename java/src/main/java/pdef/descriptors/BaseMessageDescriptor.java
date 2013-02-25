@@ -2,6 +2,7 @@ package pdef.descriptors;
 
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import pdef.ImmutableSymbolTable;
@@ -11,14 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-public abstract class AbstractMessageDescriptor
-		extends AbstractTypeDescriptor implements MessageDescriptor {
+public abstract class BaseMessageDescriptor extends AbstractTypeDescriptor
+		implements MessageDescriptor {
 
 	private final Map<List<TypeDescriptor>, ParameterizedMessageDescriptor> pmap;
 	private final Queue<ParameterizedMessageDescriptor> pqueue;
 	private SymbolTable<FieldDescriptor> fields;
 
-	protected AbstractMessageDescriptor(final Class<?> type) {
+	protected BaseMessageDescriptor(final Class<?> type) {
 		super(type);
 		pmap = Maps.newHashMap();
 		pqueue = Lists.newLinkedList();
@@ -27,6 +28,17 @@ public abstract class AbstractMessageDescriptor
 	@Override
 	public MessageDescriptor getBase() {
 		return null;
+	}
+
+	@Override
+	public Enum<?> getType() {
+		return null;
+	}
+
+	@Override
+	public Map<Enum<?>, MessageDescriptor> getTypeMap() {
+		MessageDescriptor base = getBase();
+		return base != null ? base.getTypeMap() : ImmutableMap.<Enum<?>, MessageDescriptor>of();
 	}
 
 	@Override
@@ -59,13 +71,13 @@ public abstract class AbstractMessageDescriptor
 				"Wrong number of args for %s: %s", this, args);
 		List<TypeDescriptor> argList = ImmutableList.copyOf(args);
 
-		ParameterizedMessageDescriptor pmessage;
 		synchronized (TypeDescriptor.class) {
 			if (pmap.containsKey(argList)) {
 				return pmap.get(argList);
 			}
 
-			pmessage = new ParameterizedMessageDescriptor(this, argList);
+			ParameterizedMessageDescriptor pmessage =
+					new ParameterizedMessageDescriptor(this, argList);
 			pmap.put(argList, pmessage);
 
 			if (isLinked()) {
@@ -73,9 +85,9 @@ public abstract class AbstractMessageDescriptor
 			} else {
 				pqueue.add(pmessage);
 			}
-		}
 
-		return pmessage;
+			return pmessage;
+		}
 	}
 
 	@Override
@@ -92,7 +104,7 @@ public abstract class AbstractMessageDescriptor
 	protected abstract void init();
 
 	private void linkParameterized() {
-		for (ParameterizedMessageDescriptor pmessage; (pmessage = pqueue.poll()) != null;) {
+		for (ParameterizedMessageDescriptor pmessage; (pmessage = pqueue.poll()) != null; ) {
 			pmessage.link();
 		}
 	}

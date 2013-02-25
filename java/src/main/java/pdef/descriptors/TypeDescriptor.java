@@ -4,7 +4,7 @@ import java.util.Map;
 
 public interface TypeDescriptor {
 
-	Class<?> getType();
+	Class<?> getJavaClass();
 
 	void link();
 

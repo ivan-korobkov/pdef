@@ -30,7 +30,7 @@ public class Node<T> implements Message {
 		return Descriptor.getInstance();
 	}
 
-	public static class Descriptor extends AbstractMessageDescriptor {
+	public static class Descriptor extends BaseMessageDescriptor {
 		private static final Descriptor INSTANCE = new Descriptor();
 
 		public static Descriptor getInstance() {
@@ -62,7 +62,7 @@ public class Node<T> implements Message {
 		@Override
 		protected void init() {
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new AbstractFieldDescriptor("root",
+					new BaseFieldDescriptor("root",
 							RootNode.Descriptor.getInstance().parameterize(var0)) {
 						@Override
 						public Object get(final Message message) {
@@ -76,7 +76,7 @@ public class Node<T> implements Message {
 						}
 					},
 
-					new AbstractFieldDescriptor("element", var0) {
+					new BaseFieldDescriptor("element", var0) {
 
 						@Override
 						public Object get(final Message message) {

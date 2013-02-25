@@ -33,7 +33,7 @@ public class Weighted<T> implements Message {
 		return Descriptor.getInstance();
 	}
 
-	public static class Descriptor extends AbstractMessageDescriptor {
+	public static class Descriptor extends BaseMessageDescriptor {
 		private static final Descriptor INSTANCE = new Descriptor();
 
 		public static Descriptor getInstance() {
@@ -65,7 +65,7 @@ public class Weighted<T> implements Message {
 		@Override
 		protected void init() {
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new AbstractFieldDescriptor("element", var0) {
+					new BaseFieldDescriptor("element", var0) {
 						@Override
 						public Object get(final Message message) {
 							return ((Weighted<?>) message).getElement();
@@ -78,7 +78,7 @@ public class Weighted<T> implements Message {
 						}
 					},
 
-					new AbstractFieldDescriptor("weight", IntDescriptor.getInstance()) {
+					new BaseFieldDescriptor("weight", IntDescriptor.getInstance()) {
 						@Override
 						public Object get(final Message message) {
 							return ((Weighted<?>) message).getWeight();

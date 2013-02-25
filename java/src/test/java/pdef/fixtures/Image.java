@@ -34,9 +34,8 @@ public class Image extends Entity {
 
 		private MessageDescriptor base;
 		private SymbolTable<FieldDescriptor> declaredFields;
-		private SymbolTable<FieldDescriptor> fields;
 
-		private Descriptor() {
+		Descriptor() {
 			super(Image.class);
 		}
 
@@ -51,12 +50,7 @@ public class Image extends Entity {
 		}
 
 		@Override
-		public SymbolTable<FieldDescriptor> getFields() {
-			return fields;
-		}
-
-		@Override
-		protected void doLink() {
+		protected void init() {
 			base = Entity.Descriptor.getInstance();
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
 					new AbstractFieldDescriptor("user", User.Descriptor.getInstance()) {
@@ -71,7 +65,6 @@ public class Image extends Entity {
 						}
 					}
 			);
-			fields = base.getFields().merge(declaredFields);
 		}
 	}
 }

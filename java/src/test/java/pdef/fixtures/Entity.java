@@ -32,8 +32,7 @@ public class Entity implements Message {
 			return INSTANCE;
 		}
 
-		private ImmutableSymbolTable<FieldDescriptor> declaredFields;
-		private ImmutableSymbolTable<FieldDescriptor> fields;
+		private SymbolTable<FieldDescriptor> declaredFields;
 
 		private Descriptor() {
 			super(Entity.class);
@@ -45,12 +44,7 @@ public class Entity implements Message {
 		}
 
 		@Override
-		public SymbolTable<FieldDescriptor> getFields() {
-			return fields;
-		}
-
-		@Override
-		protected void doLink() {
+		protected void init() {
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
 					new AbstractFieldDescriptor("id", Id.Descriptor.getInstance()) {
 						@Override
@@ -64,7 +58,6 @@ public class Entity implements Message {
 						}
 					}
 			);
-			fields = declaredFields;
 		}
 	}
 }

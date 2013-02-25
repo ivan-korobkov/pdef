@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.*;
 
 public abstract class AbstractTypeDescriptor implements TypeDescriptor {
 	private final Class<?> type;
-	private volatile boolean linked;
+	private volatile State state = State.NEW;
 
 	protected AbstractTypeDescriptor(final Class<?> type) {
 		this.type = checkNotNull(type);
@@ -22,22 +22,31 @@ public abstract class AbstractTypeDescriptor implements TypeDescriptor {
 		return type;
 	}
 
+	public boolean isLinked() {
+		return state == State.LINKED;
+	}
+
 	@Override
 	public void link() {
-		if (linked) {
+		if (state != State.NEW) {
 			return;
 		}
 
 		synchronized (TypeDescriptor.class) {
-			if (linked) {
+			if (state != State.NEW) {
 				return;
 			}
 
-			linked = true;
+			state = State.LINKING;
 			doLink();
+			state = State.LINKED;
 		}
 	}
 
 	protected abstract void doLink();
+
+	enum State {
+		NEW, LINKING, LINKED;
+	}
 
 }

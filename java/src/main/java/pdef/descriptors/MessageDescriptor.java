@@ -2,6 +2,8 @@ package pdef.descriptors;
 
 import pdef.SymbolTable;
 
+import java.util.Map;
+
 public interface MessageDescriptor extends TypeDescriptor {
 
 	SymbolTable<VariableDescriptor> getVariables();
@@ -11,4 +13,9 @@ public interface MessageDescriptor extends TypeDescriptor {
 	SymbolTable<FieldDescriptor> getDeclaredFields();
 
 	SymbolTable<FieldDescriptor> getFields();
+
+	MessageDescriptor parameterize(TypeDescriptor... args);
+
+	@Override
+	MessageDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap);
 }

@@ -10,6 +10,8 @@ import pdef.descriptors.MessageDescriptor;
 
 public class User extends Entity {
 	private Image image;
+	private Weighted<Image> aura;
+	private RootNode<Integer> root;
 
 	public Image getImage() {
 		return image;
@@ -20,6 +22,22 @@ public class User extends Entity {
 		return this;
 	}
 
+	public Weighted<Image> getAura() {
+		return aura;
+	}
+
+	public void setAura(final Weighted<Image> aura) {
+		this.aura = aura;
+	}
+
+	public RootNode<Integer> getRoot() {
+		return root;
+	}
+
+	public void setRoot(final RootNode<Integer> root) {
+		this.root = root;
+	}
+
 	@Override
 	public MessageDescriptor getDescriptor() {
 		return Descriptor.getInstance();
@@ -27,6 +45,7 @@ public class User extends Entity {
 
 	public static class Descriptor extends AbstractMessageDescriptor {
 		private static final Descriptor INSTANCE = new Descriptor();
+
 		public static Descriptor getInstance() {
 			INSTANCE.link();
 			return INSTANCE;
@@ -34,9 +53,8 @@ public class User extends Entity {
 
 		private MessageDescriptor base;
 		private SymbolTable<FieldDescriptor> declaredFields;
-		private SymbolTable<FieldDescriptor> fields;
 
-		private Descriptor() {
+		Descriptor() {
 			super(User.class);
 		}
 
@@ -51,12 +69,7 @@ public class User extends Entity {
 		}
 
 		@Override
-		public SymbolTable<FieldDescriptor> getFields() {
-			return fields;
-		}
-
-		@Override
-		protected void doLink() {
+		protected void init() {
 			base = Entity.Descriptor.getInstance();
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
 					new AbstractFieldDescriptor("avatar", Image.Descriptor.getInstance()) {
@@ -69,9 +82,36 @@ public class User extends Entity {
 						public void set(final Message message, final Object value) {
 							((User) message).setImage((Image) value);
 						}
+					},
+
+					new AbstractFieldDescriptor("aura", Weighted.Descriptor.getInstance()
+							.parameterize(Image.Descriptor.getInstance())) {
+						@Override
+						public Object get(final Message message) {
+							return ((User) message).getAura();
+						}
+
+						@Override
+						@SuppressWarnings("unchecked")
+						public void set(final Message message, final Object value) {
+							((User) message).setAura((Weighted<Image>) value);
+						}
+					},
+
+					new AbstractFieldDescriptor("root", RootNode.Descriptor.getInstance()
+							.parameterize(IntDescriptor.getInstance())) {
+						@Override
+						public Object get(final Message message) {
+							return ((User) message).getRoot();
+						}
+
+						@Override
+						@SuppressWarnings("unchecked")
+						public void set(final Message message, final Object value) {
+							((User) message).setRoot((RootNode<Integer>) value);
+						}
 					}
 			);
-			fields = base.getFields().merge(declaredFields);
 		}
 	}
 }

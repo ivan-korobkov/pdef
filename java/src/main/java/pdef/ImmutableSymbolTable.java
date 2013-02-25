@@ -75,4 +75,9 @@ public class ImmutableSymbolTable<T extends Symbol> implements SymbolTable<T> {
 
 		return copyOf(list);
 	}
+
+	@Override
+	public int size() {
+		return list.size();
+	}
 }

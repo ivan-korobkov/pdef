@@ -1,9 +1,13 @@
 package pdef.fixtures;
 
 import pdef.descriptors.AbstractTypeDescriptor;
-import pdef.descriptors.ValueDescriptor;
+import pdef.descriptors.NativeDescriptor;
+import pdef.descriptors.TypeDescriptor;
+import pdef.descriptors.VariableDescriptor;
 
-public class IntDescriptor extends AbstractTypeDescriptor implements ValueDescriptor {
+import java.util.Map;
+
+public class IntDescriptor extends AbstractTypeDescriptor implements NativeDescriptor {
 	private static final IntDescriptor INSTANCE = new IntDescriptor();
 
 	public static IntDescriptor getInstance() {
@@ -11,8 +15,13 @@ public class IntDescriptor extends AbstractTypeDescriptor implements ValueDescri
 		return INSTANCE;
 	}
 
-	private IntDescriptor() {
+	IntDescriptor() {
 		super(Integer.class);
+	}
+
+	@Override
+	public TypeDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
+		return this;
 	}
 
 	@Override

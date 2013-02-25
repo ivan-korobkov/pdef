@@ -10,7 +10,13 @@ import pdef.descriptors.VariableDescriptor;
 import java.util.Arrays;
 import java.util.Map;
 
-final class NativeSetDescriptor implements SetDescriptor, NativeDescriptor {
+public final class NativeSetDescriptor implements SetDescriptor, NativeDescriptor {
+	private static final NativeSetDescriptor INSTANCE = new NativeSetDescriptor();
+
+	public static NativeSetDescriptor getInstance() {
+		return INSTANCE;
+	}
+
 	private final VariableDescriptor element;
 	private final SymbolTable<VariableDescriptor> variables;
 

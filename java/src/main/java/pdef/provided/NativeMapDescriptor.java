@@ -10,7 +10,13 @@ import pdef.descriptors.VariableDescriptor;
 import java.util.Arrays;
 import java.util.Map;
 
-final class NativeMapDescriptor implements MapDescriptor, NativeDescriptor {
+public final class NativeMapDescriptor implements MapDescriptor, NativeDescriptor {
+	private static final NativeMapDescriptor INSTANCE = new NativeMapDescriptor();
+
+	public static NativeMapDescriptor getInstance() {
+		return INSTANCE;
+	}
+
 	private final VariableDescriptor key;
 	private final VariableDescriptor value;
 	private final SymbolTable<VariableDescriptor> variables;

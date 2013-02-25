@@ -78,9 +78,7 @@ public class EnumDescriptor<T extends Enum<T>> implements DataTypeDescriptor {
 	}
 
 	@Override
-	public void link(final DescriptorPool pool) {
-		// Do nothing.
-	}
+	public void link(final DescriptorPool pool) {}
 
 	public Map<String, T> getValues() {
 		return values;

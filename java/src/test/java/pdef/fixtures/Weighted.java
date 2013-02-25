@@ -1,11 +1,11 @@
 package pdef.fixtures;
 
 import pdef.ImmutableSymbolTable;
-import pdef.Message;
+import pdef.PdefMessage;
 import pdef.SymbolTable;
 import pdef.descriptors.*;
 
-public class Weighted<T> implements Message {
+public class Weighted<T> implements PdefMessage {
 
 	private T element;
 	private int weight;
@@ -29,7 +29,7 @@ public class Weighted<T> implements Message {
 	}
 
 	@Override
-	public MessageDescriptor getDescriptor() {
+	public MessageDescriptor getPdefDescriptor() {
 		return Descriptor.getInstance();
 	}
 
@@ -67,25 +67,25 @@ public class Weighted<T> implements Message {
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
 					new BaseFieldDescriptor("element", var0) {
 						@Override
-						public Object get(final Message message) {
+						public Object get(final PdefMessage message) {
 							return ((Weighted<?>) message).getElement();
 						}
 
 						@Override
 						@SuppressWarnings("unchecked")
-						public void set(final Message message, final Object value) {
+						public void set(final PdefMessage message, final Object value) {
 							((Weighted<Object>) message).setElement(value);
 						}
 					},
 
 					new BaseFieldDescriptor("weight", IntDescriptor.getInstance()) {
 						@Override
-						public Object get(final Message message) {
+						public Object get(final PdefMessage message) {
 							return ((Weighted<?>) message).getWeight();
 						}
 
 						@Override
-						public void set(final Message message, final Object value) {
+						public void set(final PdefMessage message, final Object value) {
 							((Weighted) message).setWeight((Integer) value);
 						}
 					}

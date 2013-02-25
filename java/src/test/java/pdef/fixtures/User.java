@@ -1,7 +1,7 @@
 package pdef.fixtures;
 
 import pdef.ImmutableSymbolTable;
-import pdef.Message;
+import pdef.PdefMessage;
 import pdef.SymbolTable;
 import pdef.descriptors.BaseFieldDescriptor;
 import pdef.descriptors.BaseMessageDescriptor;
@@ -39,7 +39,7 @@ public class User extends Entity {
 	}
 
 	@Override
-	public MessageDescriptor getDescriptor() {
+	public MessageDescriptor getPdefDescriptor() {
 		return Descriptor.getInstance();
 	}
 
@@ -74,12 +74,12 @@ public class User extends Entity {
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
 					new BaseFieldDescriptor("avatar", Image.Descriptor.getInstance()) {
 						@Override
-						public Object get(final Message message) {
+						public Object get(final PdefMessage message) {
 							return ((User) message).getImage();
 						}
 
 						@Override
-						public void set(final Message message, final Object value) {
+						public void set(final PdefMessage message, final Object value) {
 							((User) message).setImage((Image) value);
 						}
 					},
@@ -87,13 +87,13 @@ public class User extends Entity {
 					new BaseFieldDescriptor("aura", Weighted.Descriptor.getInstance()
 							.parameterize(Image.Descriptor.getInstance())) {
 						@Override
-						public Object get(final Message message) {
+						public Object get(final PdefMessage message) {
 							return ((User) message).getAura();
 						}
 
 						@Override
 						@SuppressWarnings("unchecked")
-						public void set(final Message message, final Object value) {
+						public void set(final PdefMessage message, final Object value) {
 							((User) message).setAura((Weighted<Image>) value);
 						}
 					},
@@ -101,13 +101,13 @@ public class User extends Entity {
 					new BaseFieldDescriptor("root", RootNode.Descriptor.getInstance()
 							.parameterize(IntDescriptor.getInstance())) {
 						@Override
-						public Object get(final Message message) {
+						public Object get(final PdefMessage message) {
 							return ((User) message).getRoot();
 						}
 
 						@Override
 						@SuppressWarnings("unchecked")
-						public void set(final Message message, final Object value) {
+						public void set(final PdefMessage message, final Object value) {
 							((User) message).setRoot((RootNode<Integer>) value);
 						}
 					}

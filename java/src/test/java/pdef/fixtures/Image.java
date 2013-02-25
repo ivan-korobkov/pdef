@@ -1,7 +1,7 @@
 package pdef.fixtures;
 
 import pdef.ImmutableSymbolTable;
-import pdef.Message;
+import pdef.PdefMessage;
 import pdef.SymbolTable;
 import pdef.descriptors.BaseFieldDescriptor;
 import pdef.descriptors.BaseMessageDescriptor;
@@ -21,7 +21,7 @@ public class Image extends Entity {
 	}
 
 	@Override
-	public MessageDescriptor getDescriptor() {
+	public MessageDescriptor getPdefDescriptor() {
 		return Image.Descriptor.getInstance();
 	}
 
@@ -60,12 +60,12 @@ public class Image extends Entity {
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
 					new BaseFieldDescriptor("user", User.Descriptor.getInstance()) {
 						@Override
-						public Object get(final Message message) {
+						public Object get(final PdefMessage message) {
 							return ((Image) message).getUser();
 						}
 
 						@Override
-						public void set(final Message message, final Object value) {
+						public void set(final PdefMessage message, final Object value) {
 							((Image) message).setUser((User) value);
 						}
 					}

@@ -2,7 +2,7 @@ package pdef.fixtures;
 
 import com.google.common.collect.ImmutableMap;
 import pdef.ImmutableSymbolTable;
-import pdef.Message;
+import pdef.PdefMessage;
 import pdef.SymbolTable;
 import pdef.descriptors.BaseFieldDescriptor;
 import pdef.descriptors.BaseMessageDescriptor;
@@ -11,7 +11,7 @@ import pdef.descriptors.MessageDescriptor;
 
 import java.util.Map;
 
-public class Entity implements Message {
+public class Entity implements PdefMessage {
 	private Id id;
 
 	public Id getId() {
@@ -24,7 +24,7 @@ public class Entity implements Message {
 	}
 
 	@Override
-	public MessageDescriptor getDescriptor() {
+	public MessageDescriptor getPdefDescriptor() {
 		return Descriptor.getInstance();
 	}
 
@@ -68,12 +68,12 @@ public class Entity implements Message {
 			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
 					new BaseFieldDescriptor("id", Id.Descriptor.getInstance()) {
 						@Override
-						public Object get(final Message message) {
+						public Object get(final PdefMessage message) {
 							return ((Entity) message).getId();
 						}
 
 						@Override
-						public void set(final Message message, final Object value) {
+						public void set(final PdefMessage message, final Object value) {
 							((Entity) message).setId((Id) value);
 						}
 					}

@@ -1,11 +1,11 @@
 package pdef.fixtures;
 
 import pdef.ImmutableSymbolTable;
-import pdef.Message;
+import pdef.PdefMessage;
 import pdef.SymbolTable;
 import pdef.descriptors.*;
 
-public class Node<T> implements Message {
+public class Node<T> implements PdefMessage {
 	private RootNode<T> root;
 	private T element;
 
@@ -26,7 +26,7 @@ public class Node<T> implements Message {
 	}
 
 	@Override
-	public MessageDescriptor getDescriptor() {
+	public MessageDescriptor getPdefDescriptor() {
 		return Descriptor.getInstance();
 	}
 
@@ -65,13 +65,13 @@ public class Node<T> implements Message {
 					new BaseFieldDescriptor("root",
 							RootNode.Descriptor.getInstance().parameterize(var0)) {
 						@Override
-						public Object get(final Message message) {
+						public Object get(final PdefMessage message) {
 							return ((Node) message).getRoot();
 						}
 
 						@Override
 						@SuppressWarnings("unchecked")
-						public void set(final Message message, final Object value) {
+						public void set(final PdefMessage message, final Object value) {
 							((Node) message).setRoot((RootNode) value);
 						}
 					},
@@ -79,13 +79,13 @@ public class Node<T> implements Message {
 					new BaseFieldDescriptor("element", var0) {
 
 						@Override
-						public Object get(final Message message) {
+						public Object get(final PdefMessage message) {
 							return ((Node) message).getElement();
 						}
 
 						@Override
 						@SuppressWarnings("unchecked")
-						public void set(final Message message, final Object value) {
+						public void set(final PdefMessage message, final Object value) {
 							((Node) message).setElement(value);
 						}
 					}

@@ -7,8 +7,8 @@ import pdef.descriptors.*;
 public class RootNode<R> extends Node<R> {
 
 	@Override
-	public MessageDescriptor getDescriptor() {
-		return super.getDescriptor();
+	public MessageDescriptor getPdefDescriptor() {
+		return super.getPdefDescriptor();
 	}
 
 	public static class Descriptor extends BaseMessageDescriptor {

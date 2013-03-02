@@ -8,11 +8,24 @@ import pdef.provided.NativeValueDescriptors;
 import pdef.provided.NativeVariableDescriptor;
 
 public class Weighted<T> extends GeneratedMessage {
+	private static final Weighted<?> defaultInstance = new Weighted<Object>();
+	public static Weighted<?> getDefaultInstance() {
+		return defaultInstance;
+	}
+
 	private T element;
 	private int weight;
 
-	protected Weighted(final Builder builder) {
-		super(builder);
+	protected Weighted() {}
+
+	protected Weighted(final Builder<T> builder) {
+		init(builder);
+	}
+
+	protected void init(final Builder<T> builder) {
+		super.init(builder);
+		element = builder.getElement();
+		weight = builder.getWeight();
 	}
 
 	public T getElement() { return element; }
@@ -23,8 +36,8 @@ public class Weighted<T> extends GeneratedMessage {
 	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 
 	public static class Builder<T> extends GeneratedMessage.Builder {
-		private T element;
-		private int weight;
+		private T element = null;
+		private int weight = 0;
 
 		public T getElement() { return element; }
 
@@ -36,11 +49,14 @@ public class Weighted<T> extends GeneratedMessage {
 
 		@Override
 		public Weighted<T> build() { return new Weighted<T>(this); }
+
+		@Override
+		public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
 		private static final Descriptor instance = new Descriptor();
-		public static Descriptor getInstance() { instance.link(); return instance; }
+		public static Descriptor getInstance() { return instance; }
 
 		private final VariableDescriptor var0;
 		private final SymbolTable<VariableDescriptor> variables;
@@ -75,6 +91,7 @@ public class Weighted<T> extends GeneratedMessage {
 				}
 
 				@Override
+				@SuppressWarnings("unchecked")
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setElement(value);
 				}
@@ -98,7 +115,20 @@ public class Weighted<T> extends GeneratedMessage {
 				}
 			};
 
-			declaredFields = ImmutableSymbolTable.of();
+			declaredFields = ImmutableSymbolTable.of(elementField, weightField);
 		}
+
+		@Override
+		public Weighted<?> getDefaultInstance() {
+			return defaultInstance;
+		}
+
+		static {
+			instance.link();
+		}
+	}
+
+	static {
+		defaultInstance.init(new Builder<Object>());
 	}
 }

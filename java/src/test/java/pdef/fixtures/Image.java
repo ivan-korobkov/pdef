@@ -5,23 +5,33 @@ import pdef.generated.GeneratedFieldDescriptor;
 import pdef.generated.GeneratedMessageDescriptor;
 
 public class Image extends Entity {
-	private static Image defaultInstance = new Image(new Builder());
-	public static Image getDefaultInstance() { return defaultInstance; }
+	private static final Image defaultInstance = new Image();
+	public static Image getDefaultInstance() {
+		return defaultInstance;
+	}
 
 	private User user;
 
-	public User getUser() { return user; }
+	protected Image() {
+		super();
+	}
 
 	protected Image(final Builder builder) {
-		super(builder);
-		this.user = builder.getUser();
+		init(builder);
 	}
+
+	protected void init(final Builder builder) {
+		super.init(builder);
+		user = builder.getUser();
+	}
+
+	public User getUser() { return user; }
 
 	@Override
 	public MessageDescriptor getDescriptor() { return Image.Descriptor.getInstance(); }
 
 	public static class Builder extends Entity.Builder {
-		private User user;
+		private User user = User.getDefaultInstance();
 
 		public User getUser() { return user; }
 
@@ -32,11 +42,14 @@ public class Image extends Entity {
 
 		@Override
 		public Image build() { return new Image(this); }
+
+		@Override
+		public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
 		private static final Descriptor instance = new Descriptor();
-		public static Descriptor getInstance() { instance.link(); return instance; }
+		public static Descriptor getInstance() { return instance; }
 
 		private MessageDescriptor base;
 		private SymbolTable<FieldDescriptor> declaredFields;
@@ -75,5 +88,16 @@ public class Image extends Entity {
 
 			declaredFields = ImmutableSymbolTable.of(userField);
 		}
+
+		@Override
+		public Image getDefaultInstance() { return defaultInstance; }
+
+		static {
+			instance.link();
+		}
+	}
+
+	static {
+		defaultInstance.init(new Builder());
 	}
 }

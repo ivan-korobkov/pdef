@@ -1,12 +1,9 @@
 package pdef.provided;
 
+import com.google.common.base.Defaults;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.primitives.Primitives;
-import pdef.ImmutableSymbolTable;
-import pdef.SymbolTable;
-import pdef.TypeDescriptor;
-import pdef.ValueDescriptor;
-import pdef.VariableDescriptor;
+import pdef.*;
 
 import java.util.Map;
 
@@ -21,6 +18,9 @@ class NativeValueDescriptor implements ValueDescriptor {
 
 	@Override
 	public Class<?> getJavaClass() { return javaClass; }
+
+	@Override
+	public Object getDefaultInstance() { return Defaults.defaultValue(javaClass); }
 
 	@Override
 	public SymbolTable<VariableDescriptor> getVariables() { return ImmutableSymbolTable.of(); }

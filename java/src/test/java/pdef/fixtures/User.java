@@ -10,12 +10,24 @@ import pdef.MessageDescriptor;
 import pdef.provided.NativeValueDescriptors;
 
 public class User extends Entity {
+	private static final User defaultInstance = new User();
+	public static User getDefaultInstance() {
+		return defaultInstance;
+	}
+
 	private Image image;
 	private Weighted<Image> aura;
 	private RootNode<Integer> root;
 
+	protected User() {}
+
 	protected User(final Builder builder) {
-		super(builder);
+		init(builder);
+	}
+
+	protected void init(Builder builder) {
+		super.init(builder);
+
 		this.image = builder.getImage();
 		this.aura = builder.getAura();
 		this.root = builder.getRoot();
@@ -31,9 +43,9 @@ public class User extends Entity {
 	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 
 	public static class Builder extends Entity.Builder {
-		private Image image;
-		private Weighted<Image> aura;
-		private RootNode<Integer> root;
+		private Image image = Image.getDefaultInstance();
+		private Weighted<Image> aura = (Weighted<Image>) Weighted.getDefaultInstance();
+		private RootNode<Integer> root = (RootNode<Integer>) RootNode.getDefaultInstance();
 
 		public Image getImage() { return image; }
 
@@ -52,11 +64,14 @@ public class User extends Entity {
 
 		@Override
 		public User build() { return new User(this); }
+
+		@Override
+		public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
 		private static final Descriptor instance = new Descriptor();
-		public static Descriptor getInstance() { instance.link(); return instance; }
+		public static Descriptor getInstance() { return instance; }
 
 		private MessageDescriptor base;
 		private SymbolTable<FieldDescriptor> declaredFields;
@@ -102,12 +117,13 @@ public class User extends Entity {
 
 				@Override
 				public Object get(final Message.Builder builder) {
-					return ((Builder) builder).getImage();
+					return ((Builder) builder).getAura();
 				}
 
+				@SuppressWarnings("unchecked")
 				@Override
 				public void set(final Message.Builder builder, final Object value) {
-					((Builder) builder).setImage((Image) value);
+					((Builder) builder).setAura((Weighted<Image>) value);
 				}
 			};
 
@@ -132,5 +148,18 @@ public class User extends Entity {
 
 			declaredFields = ImmutableSymbolTable.of(imageField, auraField, rootField);
 		}
+
+		@Override
+		public User getDefaultInstance() {
+			return defaultInstance;
+		}
+
+		static {
+			instance.link();
+		}
+	}
+
+	static {
+		defaultInstance.init(new Builder());
 	}
 }

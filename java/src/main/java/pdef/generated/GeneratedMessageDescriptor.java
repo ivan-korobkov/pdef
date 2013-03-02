@@ -5,12 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import pdef.ImmutableSymbolTable;
-import pdef.SymbolTable;
-import pdef.FieldDescriptor;
-import pdef.MessageDescriptor;
-import pdef.TypeDescriptor;
-import pdef.VariableDescriptor;
+import pdef.*;
 
 import java.util.List;
 import java.util.Map;

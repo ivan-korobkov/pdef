@@ -6,6 +6,8 @@ public interface Message extends Type {
 	MessageDescriptor getDescriptor();
 
 	interface Builder {
+		MessageDescriptor getDescriptor();
+
 		Message build();
 	}
 }

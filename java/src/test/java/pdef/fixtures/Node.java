@@ -6,11 +6,24 @@ import pdef.generated.GeneratedMessageDescriptor;
 import pdef.provided.NativeVariableDescriptor;
 
 public class Node<T> extends Entity {
+	private static final Node<?> defaultInstance = new Node<Object>();
+	public static Node<?> getDefaultInstance() {
+		return defaultInstance;
+	}
+
 	private RootNode<T> root;
 	private T element;
 
+	protected Node() {
+		super();
+	}
+
 	protected Node(final Builder<T> builder) {
-		super(builder);
+		init(builder);
+	}
+
+	protected void init(final Builder<T> builder) {
+		super.init(builder);
 		this.root = builder.getRoot();
 		this.element = builder.getElement();
 	}
@@ -23,8 +36,8 @@ public class Node<T> extends Entity {
 	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 
 	public static class Builder<T> extends Entity.Builder {
-		private RootNode<T> root;
-		private T element;
+		private RootNode<T> root = (RootNode<T>) RootNode.getDefaultInstance();
+		private T element = null;
 
 		public RootNode<T> getRoot() { return root; }
 
@@ -36,11 +49,14 @@ public class Node<T> extends Entity {
 
 		@Override
 		public Node<T> build() { return new Node<T>(this); }
+
+		@Override
+		public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
 		private static final Descriptor instance = new Descriptor();
-		public static Descriptor getInstance() { instance.link(); return instance; }
+		public static Descriptor getInstance() { return instance; }
 
 		private final VariableDescriptor var0;
 		private final SymbolTable<VariableDescriptor> variables;
@@ -76,6 +92,7 @@ public class Node<T> extends Entity {
 				}
 
 				@Override
+				@SuppressWarnings("unchecked")
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setRoot((RootNode<?>) value);
 				}
@@ -93,6 +110,7 @@ public class Node<T> extends Entity {
 				}
 
 				@Override
+				@SuppressWarnings("unchecked")
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setElement(value);
 				}
@@ -100,5 +118,18 @@ public class Node<T> extends Entity {
 
 			declaredFields = ImmutableSymbolTable.of(rootField, elementField);
 		}
+
+		@Override
+		public Node<?> getDefaultInstance() {
+			return defaultInstance;
+		}
+
+		static {
+			instance.link();
+		}
+	}
+
+	static {
+		defaultInstance.init(new Builder<Object>());
 	}
 }

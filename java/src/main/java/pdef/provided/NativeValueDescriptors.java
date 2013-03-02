@@ -4,12 +4,12 @@ import pdef.ValueDescriptor;
 
 public class NativeValueDescriptors {
 
-	private static ValueDescriptor BOOL = new NativeValueDescriptor(Boolean.class);
-	private static ValueDescriptor INT16 = new NativeValueDescriptor(Short.class);
-	private static ValueDescriptor INT32 = new NativeValueDescriptor(Integer.class);
-	private static ValueDescriptor INT64 = new NativeValueDescriptor(Long.class);
-	private static ValueDescriptor FLOAT0 = new NativeValueDescriptor(Float.class);
-	private static ValueDescriptor DOUBLE0 = new NativeValueDescriptor(Double.class);
+	private static ValueDescriptor BOOL = new NativeValueDescriptor(boolean.class);
+	private static ValueDescriptor INT16 = new NativeValueDescriptor(short.class);
+	private static ValueDescriptor INT32 = new NativeValueDescriptor(int.class);
+	private static ValueDescriptor INT64 = new NativeValueDescriptor(long.class);
+	private static ValueDescriptor FLOAT0 = new NativeValueDescriptor(float.class);
+	private static ValueDescriptor DOUBLE0 = new NativeValueDescriptor(double.class);
 	private static ValueDescriptor STRING = new NativeValueDescriptor(String.class);
 
 	private NativeValueDescriptors() {}

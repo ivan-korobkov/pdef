@@ -13,13 +13,18 @@ import java.util.Map;
 
 public class GeneratedEnumDescriptor implements EnumDescriptor, GeneratedDescriptor {
 	private final Map<String, Enum<?>> values;
+	private final Enum<?> firstValue;
 
 	public GeneratedEnumDescriptor(final Class<Enum<?>> javaClass) {
 		values = getValueMap(javaClass);
+		firstValue = values.values().iterator().next();
 	}
 
 	@Override
 	public Map<String, Enum<?>> getValues() { return values; }
+
+	@Override
+	public Object getDefaultInstance() { return firstValue; }
 
 	@Override
 	public SymbolTable<VariableDescriptor> getVariables() { return ImmutableSymbolTable.of(); }

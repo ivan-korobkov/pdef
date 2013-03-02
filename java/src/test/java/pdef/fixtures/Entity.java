@@ -9,23 +9,33 @@ import pdef.generated.GeneratedMessageDescriptor;
 import java.util.Map;
 
 public class Entity extends GeneratedMessage {
+	private static final Entity defaultInstance = new Entity();
+	public static Entity getDefaultInstance() {
+		return defaultInstance;
+	}
+
 	private Id id;
 
+	protected Entity() {
+		super();
+	}
+
 	protected Entity(final Builder builder) {
-		super(builder);
+		init(builder);
+	}
+
+	protected void init(final Builder builder) {
+		super.init(builder);
 		this.id = builder.getId();
 	}
 
 	public Id getId() { return id; }
 
 	@Override
-	protected void doInitDefaultFields() { super.doInitDefaultFields(); }
-
-	@Override
 	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 
 	public static class Builder extends GeneratedMessage.Builder {
-		private Id id;
+		private Id id = Id.getDefaultInstance();
 
 		public Id getId() { return id; }
 
@@ -33,15 +43,14 @@ public class Entity extends GeneratedMessage {
 
 		@Override
 		public Entity build() { return new Entity(this); }
+
+		@Override
+		public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
 		private static final Descriptor instance = new Descriptor();
-
-		public static Descriptor getInstance() {
-			instance.link();
-			return instance;
-		}
+		public static Descriptor getInstance() { return instance; }
 
 		private Map<Enum<?>, MessageDescriptor> typeMap;
 		private SymbolTable<FieldDescriptor> declaredFields;
@@ -85,5 +94,18 @@ public class Entity extends GeneratedMessage {
 
 			declaredFields = ImmutableSymbolTable.of(idField);
 		}
+
+		@Override
+		public Entity getDefaultInstance() {
+			return defaultInstance;
+		}
+
+		static {
+			instance.link();
+		}
+	}
+
+	static {
+		defaultInstance.init(new Builder());
 	}
 }

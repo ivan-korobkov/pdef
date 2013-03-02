@@ -60,6 +60,9 @@ final class ParameterizedMessageDescriptor extends GeneratedMessageDescriptor
 	}
 
 	@Override
+	public Object getDefaultInstance() { return rawtype.getDefaultInstance(); }
+
+	@Override
 	public MessageDescriptor parameterize(final TypeDescriptor... args) {
 		throw new UnsupportedOperationException();
 	}

@@ -15,7 +15,7 @@ public class GeneratedEnumDescriptor implements EnumDescriptor, GeneratedDescrip
 	private final Map<String, Enum<?>> values;
 	private final Enum<?> firstValue;
 
-	public GeneratedEnumDescriptor(final Class<Enum<?>> javaClass) {
+	public GeneratedEnumDescriptor(final Class<?> javaClass) {
 		values = getValueMap(javaClass);
 		firstValue = values.values().iterator().next();
 	}
@@ -40,7 +40,7 @@ public class GeneratedEnumDescriptor implements EnumDescriptor, GeneratedDescrip
 	@Override
 	public void link() {}
 
-	static Map<String, Enum<?>> getValueMap(final Class<Enum<?>> type) {
+	static Map<String, Enum<?>> getValueMap(final Class<?> type) {
 		Enum<?>[] array = getValues(type);
 		ImmutableMap.Builder<String, Enum<?>> builder = ImmutableMap.builder();
 		for (Enum<?> value : array) {
@@ -49,7 +49,7 @@ public class GeneratedEnumDescriptor implements EnumDescriptor, GeneratedDescrip
 		return builder.build();
 	}
 
-	static Enum<?>[] getValues(final Class<Enum<?>> type) {
+	static Enum<?>[] getValues(final Class<?> type) {
 		try {
 			Method method = type.getMethod("values");
 			@SuppressWarnings("unchecked")

@@ -1,18 +1,18 @@
-package pdef.fixtures;
+package module;
 
 import pdef.EnumDescriptor;
 import pdef.EnumType;
 import pdef.generated.GeneratedEnumDescriptor;
 
-public enum Type implements EnumType {
-	ENTITY, IMAGE, USER;
+public enum ObjectType implements EnumType {
+    OBJECT,USER;
 
 	@Override
 	public EnumDescriptor getDescriptor() {
 		return descriptor;
 	}
 
-	private static final EnumDescriptor descriptor = new GeneratedEnumDescriptor(Type.class);
+	private static final EnumDescriptor descriptor = new GeneratedEnumDescriptor(ObjectType.class);
 	public static EnumDescriptor getDescriptorForType() {
 		return descriptor;
 	}

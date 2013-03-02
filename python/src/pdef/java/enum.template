@@ -1,0 +1,22 @@
+package {{ package }};
+
+import pdef.EnumDescriptor;
+import pdef.EnumType;
+import pdef.generated.GeneratedEnumDescriptor;
+
+public enum {{ name }} implements EnumType {
+    {% for value in values -%}
+        {{ value }}{% if not loop.last and loop.length > 1 %}, {% else %};{% endif %}
+    {%- endfor %}
+
+
+	@Override
+	public EnumDescriptor getDescriptor() {
+		return descriptor;
+	}
+
+	private static final EnumDescriptor descriptor = new GeneratedEnumDescriptor({{ name }}.class);
+	public static EnumDescriptor getDescriptorForType() {
+		return descriptor;
+	}
+}

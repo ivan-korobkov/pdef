@@ -3,9 +3,9 @@ package pdef.provided;
 import static com.google.common.base.Preconditions.*;
 import pdef.ImmutableSymbolTable;
 import pdef.SymbolTable;
-import pdef.descriptors.SetDescriptor;
-import pdef.descriptors.TypeDescriptor;
-import pdef.descriptors.VariableDescriptor;
+import pdef.SetDescriptor;
+import pdef.TypeDescriptor;
+import pdef.VariableDescriptor;
 
 import java.util.Arrays;
 import java.util.Map;

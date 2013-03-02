@@ -1,4 +1,4 @@
-package pdef.descriptors;
+package pdef;
 
 import java.util.Map;
 

@@ -1,6 +1,4 @@
-package pdef.descriptors;
-
-import pdef.SymbolTable;
+package pdef;
 
 import java.util.Map;
 

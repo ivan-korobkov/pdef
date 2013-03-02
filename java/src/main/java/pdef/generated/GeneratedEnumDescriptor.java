@@ -3,9 +3,9 @@ package pdef.generated;
 import com.google.common.collect.ImmutableMap;
 import pdef.ImmutableSymbolTable;
 import pdef.SymbolTable;
-import pdef.descriptors.EnumDescriptor;
-import pdef.descriptors.TypeDescriptor;
-import pdef.descriptors.VariableDescriptor;
+import pdef.EnumDescriptor;
+import pdef.TypeDescriptor;
+import pdef.VariableDescriptor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

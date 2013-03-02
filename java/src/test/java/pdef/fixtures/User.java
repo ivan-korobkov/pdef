@@ -1,117 +1,136 @@
 package pdef.fixtures;
 
 import pdef.ImmutableSymbolTable;
-import pdef.PdefMessage;
+import pdef.Message;
 import pdef.SymbolTable;
 import pdef.generated.GeneratedFieldDescriptor;
 import pdef.generated.GeneratedMessageDescriptor;
-import pdef.descriptors.FieldDescriptor;
-import pdef.descriptors.MessageDescriptor;
+import pdef.FieldDescriptor;
+import pdef.MessageDescriptor;
+import pdef.provided.NativeValueDescriptors;
 
 public class User extends Entity {
 	private Image image;
 	private Weighted<Image> aura;
 	private RootNode<Integer> root;
 
-	public Image getImage() {
-		return image;
+	protected User(final Builder builder) {
+		super(builder);
+		this.image = builder.getImage();
+		this.aura = builder.getAura();
+		this.root = builder.getRoot();
 	}
 
-	public User setImage(final Image image) {
-		this.image = image;
-		return this;
-	}
+	public Image getImage() { return image; }
 
-	public Weighted<Image> getAura() {
-		return aura;
-	}
+	public Weighted<Image> getAura() { return aura; }
 
-	public void setAura(final Weighted<Image> aura) {
-		this.aura = aura;
-	}
-
-	public RootNode<Integer> getRoot() {
-		return root;
-	}
-
-	public void setRoot(final RootNode<Integer> root) {
-		this.root = root;
-	}
+	public RootNode<Integer> getRoot() { return root; }
 
 	@Override
-	public MessageDescriptor getPdefDescriptor() {
-		return Descriptor.getInstance();
+	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
+
+	public static class Builder extends Entity.Builder {
+		private Image image;
+		private Weighted<Image> aura;
+		private RootNode<Integer> root;
+
+		public Image getImage() { return image; }
+
+		public Builder setImage(final Image image) { this.image = image; return this; }
+
+		public Weighted<Image> getAura() { return aura; }
+
+		public Builder setAura(final Weighted<Image> aura) { this.aura = aura; return this; }
+
+		public RootNode<Integer> getRoot() { return root; }
+
+		public Builder setRoot(final RootNode<Integer> root) { this.root = root; return this; }
+
+		@Override
+		public Builder setId(final Id id) { super.setId(id); return this; }
+
+		@Override
+		public User build() { return new User(this); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
-		private static final Descriptor INSTANCE = new Descriptor();
-
-		public static Descriptor getInstance() {
-			INSTANCE.link();
-			return INSTANCE;
-		}
+		private static final Descriptor instance = new Descriptor();
+		public static Descriptor getInstance() { instance.link(); return instance; }
 
 		private MessageDescriptor base;
 		private SymbolTable<FieldDescriptor> declaredFields;
+		private FieldDescriptor imageField;
+		private FieldDescriptor auraField;
+		private FieldDescriptor rootField;
 
 		Descriptor() {
 			super(User.class);
 		}
 
 		@Override
-		public MessageDescriptor getBase() {
-			return base;
-		}
+		public MessageDescriptor getBase() { return base; }
 
 		@Override
-		public SymbolTable<FieldDescriptor> getDeclaredFields() {
-			return declaredFields;
-		}
+		public SymbolTable<FieldDescriptor> getDeclaredFields() { return declaredFields; }
 
 		@Override
 		protected void init() {
 			base = Entity.Descriptor.getInstance();
-			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new GeneratedFieldDescriptor("avatar", Image.Descriptor.getInstance()) {
-						@Override
-						public Object get(final PdefMessage message) {
-							return ((User) message).getImage();
-						}
+			imageField = new GeneratedFieldDescriptor("image", Image.Descriptor.getInstance()) {
+				@Override
+				public Object get(final Message message) {
+					return ((User) message).getImage();
+				}
 
-						@Override
-						public void set(final PdefMessage message, final Object value) {
-							((User) message).setImage((Image) value);
-						}
-					},
+				@Override
+				public Object get(final Message.Builder builder) {
+					return ((Builder) builder).getImage();
+				}
 
-					new GeneratedFieldDescriptor("aura", Weighted.Descriptor.getInstance()
-							.parameterize(Image.Descriptor.getInstance())) {
-						@Override
-						public Object get(final PdefMessage message) {
-							return ((User) message).getAura();
-						}
+				@Override
+				public void set(final Message.Builder builder, final Object value) {
+					((Builder) builder).setImage((Image) value);
+				}
+			};
+			auraField = new GeneratedFieldDescriptor("aura",
+					Weighted.Descriptor.getInstance().parameterize(Image.Descriptor.getInstance())) {
+				@Override
+				public Object get(final Message message) {
+					return ((User) message).getAura();
+				}
 
-						@Override
-						@SuppressWarnings("unchecked")
-						public void set(final PdefMessage message, final Object value) {
-							((User) message).setAura((Weighted<Image>) value);
-						}
-					},
+				@Override
+				public Object get(final Message.Builder builder) {
+					return ((Builder) builder).getImage();
+				}
 
-					new GeneratedFieldDescriptor("root", RootNode.Descriptor.getInstance()
-							.parameterize(IntDescriptor.getInstance())) {
-						@Override
-						public Object get(final PdefMessage message) {
-							return ((User) message).getRoot();
-						}
+				@Override
+				public void set(final Message.Builder builder, final Object value) {
+					((Builder) builder).setImage((Image) value);
+				}
+			};
 
-						@Override
-						@SuppressWarnings("unchecked")
-						public void set(final PdefMessage message, final Object value) {
-							((User) message).setRoot((RootNode<Integer>) value);
-						}
-					}
-			);
+			rootField = new GeneratedFieldDescriptor("root",
+					RootNode.Descriptor.getInstance().parameterize(NativeValueDescriptors.getInt32())) {
+				@Override
+				public Object get(final Message message) {
+					return ((User) message).getRoot();
+				}
+
+				@Override
+				public Object get(final Message.Builder builder) {
+					return ((Builder) builder).getRoot();
+				}
+
+				@Override
+				@SuppressWarnings("unchecked")
+				public void set(final Message.Builder builder, final Object value) {
+					((Builder) builder).setRoot((RootNode<Integer>) value);
+				}
+			};
+
+			declaredFields = ImmutableSymbolTable.of(imageField, auraField, rootField);
 		}
 	}
 }

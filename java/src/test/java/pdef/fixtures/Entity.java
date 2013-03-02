@@ -1,83 +1,89 @@
 package pdef.fixtures;
 
 import com.google.common.collect.ImmutableMap;
-import pdef.ImmutableSymbolTable;
-import pdef.PdefMessage;
-import pdef.SymbolTable;
+import pdef.*;
 import pdef.generated.GeneratedFieldDescriptor;
+import pdef.generated.GeneratedMessage;
 import pdef.generated.GeneratedMessageDescriptor;
-import pdef.descriptors.FieldDescriptor;
-import pdef.descriptors.MessageDescriptor;
 
 import java.util.Map;
 
-public class Entity implements PdefMessage {
+public class Entity extends GeneratedMessage {
 	private Id id;
 
-	public Id getId() {
-		return id;
+	protected Entity(final Builder builder) {
+		super(builder);
+		this.id = builder.getId();
 	}
 
-	public Entity setId(final Id id) {
-		this.id = id;
-		return this;
-	}
+	public Id getId() { return id; }
 
 	@Override
-	public MessageDescriptor getPdefDescriptor() {
-		return Descriptor.getInstance();
+	protected void doInitDefaultFields() { super.doInitDefaultFields(); }
+
+	@Override
+	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
+
+	public static class Builder extends GeneratedMessage.Builder {
+		private Id id;
+
+		public Id getId() { return id; }
+
+		public Builder setId(final Id id) { this.id = id; return this; }
+
+		@Override
+		public Entity build() { return new Entity(this); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
-		private static final Descriptor INSTANCE = new Descriptor();
+		private static final Descriptor instance = new Descriptor();
+
 		public static Descriptor getInstance() {
-			INSTANCE.link();
-			return INSTANCE;
+			instance.link();
+			return instance;
 		}
 
 		private Map<Enum<?>, MessageDescriptor> typeMap;
 		private SymbolTable<FieldDescriptor> declaredFields;
+		private FieldDescriptor idField;
 
-		private Descriptor() {
-			super(Entity.class);
-		}
-
-		@Override
-		public Enum<?> getType() {
-			return Type.ENTITY;
-		}
+		private Descriptor() { super(Entity.class); }
 
 		@Override
-		public Map<Enum<?>, MessageDescriptor> getTypeMap() {
-			return typeMap;
-		}
+		public Enum<?> getBaseType() { return Type.ENTITY; }
 
 		@Override
-		public SymbolTable<FieldDescriptor> getDeclaredFields() {
-			return declaredFields;
-		}
+		public Map<Enum<?>, MessageDescriptor> getTypeMap() { return typeMap; }
+
+		@Override
+		public SymbolTable<FieldDescriptor> getDeclaredFields() { return declaredFields; }
 
 		@Override
 		protected void init() {
+			idField = new GeneratedFieldDescriptor("id", Id.Descriptor.getInstance()) {
+				@Override
+				public Object get(final Message message) {
+					return ((Entity) message).getId();
+				}
+
+				@Override
+				public Object get(final Message.Builder builder) {
+					return ((Builder) builder).getId();
+				}
+
+				@Override
+				public void set(final Message.Builder builder, final Object value) {
+					((Builder) builder).setId((Id) value);
+				}
+			};
+
 			typeMap = ImmutableMap.<Enum<?>, MessageDescriptor>of(
 					Type.ENTITY, this,
 					Type.IMAGE, Image.Descriptor.getInstance(),
 					Type.USER, User.Descriptor.getInstance()
 			);
 
-			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new GeneratedFieldDescriptor("id", Id.Descriptor.getInstance()) {
-						@Override
-						public Object get(final PdefMessage message) {
-							return ((Entity) message).getId();
-						}
-
-						@Override
-						public void set(final PdefMessage message, final Object value) {
-							((Entity) message).setId((Id) value);
-						}
-					}
-			);
+			declaredFields = ImmutableSymbolTable.of(idField);
 		}
 	}
 }

@@ -1,52 +1,52 @@
 package pdef.fixtures;
 
-import pdef.ImmutableSymbolTable;
-import pdef.PdefMessage;
-import pdef.SymbolTable;
-import pdef.descriptors.*;
-import pdef.provided.NativeVariableDescriptor;
+import pdef.*;
 import pdef.generated.GeneratedFieldDescriptor;
+import pdef.generated.GeneratedMessage;
 import pdef.generated.GeneratedMessageDescriptor;
+import pdef.provided.NativeValueDescriptors;
+import pdef.provided.NativeVariableDescriptor;
 
-public class Weighted<T> implements PdefMessage {
-
+public class Weighted<T> extends GeneratedMessage {
 	private T element;
 	private int weight;
 
-	public T getElement() {
-		return element;
+	protected Weighted(final Builder builder) {
+		super(builder);
 	}
 
-	public Weighted<T> setElement(final T element) {
-		this.element = element;
-		return this;
-	}
+	public T getElement() { return element; }
 
-	public int getWeight() {
-		return weight;
-	}
-
-	public Weighted<T> setWeight(final int weight) {
-		this.weight = weight;
-		return this;
-	}
+	public int getWeight() { return weight; }
 
 	@Override
-	public MessageDescriptor getPdefDescriptor() {
-		return Descriptor.getInstance();
+	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
+
+	public static class Builder<T> extends GeneratedMessage.Builder {
+		private T element;
+		private int weight;
+
+		public T getElement() { return element; }
+
+		public Builder<T> setElement(final T element) { this.element = element; return this; }
+
+		public int getWeight() { return weight; }
+
+		public Builder<T> setWeight(final int weight) { this.weight = weight; return this; }
+
+		@Override
+		public Weighted<T> build() { return new Weighted<T>(this); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
-		private static final Descriptor INSTANCE = new Descriptor();
-
-		public static Descriptor getInstance() {
-			INSTANCE.link();
-			return INSTANCE;
-		}
+		private static final Descriptor instance = new Descriptor();
+		public static Descriptor getInstance() { instance.link(); return instance; }
 
 		private final VariableDescriptor var0;
 		private final SymbolTable<VariableDescriptor> variables;
 		private SymbolTable<FieldDescriptor> declaredFields;
+		private FieldDescriptor elementField;
+		private FieldDescriptor weightField;
 
 		Descriptor() {
 			super(Weighted.class);
@@ -56,43 +56,49 @@ public class Weighted<T> implements PdefMessage {
 		}
 
 		@Override
-		public SymbolTable<VariableDescriptor> getVariables() {
-			return variables;
-		}
+		public SymbolTable<VariableDescriptor> getVariables() { return variables; }
 
 		@Override
-		public SymbolTable<FieldDescriptor> getDeclaredFields() {
-			return declaredFields;
-		}
+		public SymbolTable<FieldDescriptor> getDeclaredFields() { return declaredFields; }
 
 		@Override
 		protected void init() {
-			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new GeneratedFieldDescriptor("element", var0) {
-						@Override
-						public Object get(final PdefMessage message) {
-							return ((Weighted<?>) message).getElement();
-						}
+			elementField = new GeneratedFieldDescriptor("element", var0) {
+				@Override
+				public Object get(final Message message) {
+					return ((Weighted<?>) message).getElement();
+				}
 
-						@Override
-						@SuppressWarnings("unchecked")
-						public void set(final PdefMessage message, final Object value) {
-							((Weighted<Object>) message).setElement(value);
-						}
-					},
+				@Override
+				public Object get(final Message.Builder builder) {
+					return ((Builder) builder).getElement();
+				}
 
-					new GeneratedFieldDescriptor("weight", IntDescriptor.getInstance()) {
-						@Override
-						public Object get(final PdefMessage message) {
-							return ((Weighted<?>) message).getWeight();
-						}
+				@Override
+				public void set(final Message.Builder builder, final Object value) {
+					((Builder) builder).setElement(value);
+				}
+			};
 
-						@Override
-						public void set(final PdefMessage message, final Object value) {
-							((Weighted) message).setWeight((Integer) value);
-						}
-					}
-			);
+			weightField = new GeneratedFieldDescriptor("weight",
+					NativeValueDescriptors.getInt32()) {
+				@Override
+				public Object get(final Message message) {
+					return ((Weighted<?>) message).getWeight();
+				}
+
+				@Override
+				public Object get(final Message.Builder builder) {
+					return ((Builder<?>) builder).getWeight();
+				}
+
+				@Override
+				public void set(final Message.Builder builder, final Object value) {
+					((Builder) builder).setWeight((Integer) value);
+				}
+			};
+
+			declaredFields = ImmutableSymbolTable.of();
 		}
 	}
 }

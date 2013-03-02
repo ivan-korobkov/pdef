@@ -7,10 +7,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import pdef.ImmutableSymbolTable;
 import pdef.SymbolTable;
-import pdef.descriptors.FieldDescriptor;
-import pdef.descriptors.MessageDescriptor;
-import pdef.descriptors.TypeDescriptor;
-import pdef.descriptors.VariableDescriptor;
+import pdef.FieldDescriptor;
+import pdef.MessageDescriptor;
+import pdef.TypeDescriptor;
+import pdef.VariableDescriptor;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +35,7 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 	}
 
 	@Override
-	public Enum<?> getType() {
+	public Enum<?> getBaseType() {
 		return null;
 	}
 

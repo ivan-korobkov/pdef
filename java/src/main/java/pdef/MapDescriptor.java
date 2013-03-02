@@ -1,4 +1,4 @@
-package pdef.descriptors;
+package pdef;
 
 public interface MapDescriptor extends TypeDescriptor {
 

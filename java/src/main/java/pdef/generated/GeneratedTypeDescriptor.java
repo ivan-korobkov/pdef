@@ -2,7 +2,7 @@ package pdef.generated;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
-import pdef.descriptors.TypeDescriptor;
+import pdef.TypeDescriptor;
 
 abstract class GeneratedTypeDescriptor implements TypeDescriptor, GeneratedDescriptor {
 	private final Class<?> type;

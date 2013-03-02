@@ -1,49 +1,52 @@
 package pdef.fixtures;
 
-import pdef.ImmutableSymbolTable;
-import pdef.PdefMessage;
-import pdef.SymbolTable;
-import pdef.descriptors.*;
-import pdef.provided.NativeVariableDescriptor;
+import pdef.*;
 import pdef.generated.GeneratedFieldDescriptor;
 import pdef.generated.GeneratedMessageDescriptor;
+import pdef.provided.NativeVariableDescriptor;
 
-public class Node<T> implements PdefMessage {
+public class Node<T> extends Entity {
 	private RootNode<T> root;
 	private T element;
 
-	public RootNode<T> getRoot() {
-		return root;
+	protected Node(final Builder<T> builder) {
+		super(builder);
+		this.root = builder.getRoot();
+		this.element = builder.getElement();
 	}
 
-	public void setRoot(final RootNode<T> root) {
-		this.root = root;
-	}
+	public RootNode<T> getRoot() { return root; }
 
-	public T getElement() {
-		return element;
-	}
-
-	public void setElement(final T element) {
-		this.element = element;
-	}
+	public T getElement() { return element; }
 
 	@Override
-	public MessageDescriptor getPdefDescriptor() {
-		return Descriptor.getInstance();
+	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
+
+	public static class Builder<T> extends Entity.Builder {
+		private RootNode<T> root;
+		private T element;
+
+		public RootNode<T> getRoot() { return root; }
+
+		public Builder<T> setRoot(final RootNode<T> root) { this.root = root; return this; }
+
+		public T getElement() { return element; }
+
+		public Builder<T> setElement(final T element) { this.element = element; return this; }
+
+		@Override
+		public Node<T> build() { return new Node<T>(this); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
-		private static final Descriptor INSTANCE = new Descriptor();
-
-		public static Descriptor getInstance() {
-			INSTANCE.link();
-			return INSTANCE;
-		}
+		private static final Descriptor instance = new Descriptor();
+		public static Descriptor getInstance() { instance.link(); return instance; }
 
 		private final VariableDescriptor var0;
 		private final SymbolTable<VariableDescriptor> variables;
 		private SymbolTable<FieldDescriptor> declaredFields;
+		private FieldDescriptor rootField;
+		private FieldDescriptor elementField;
 
 		Descriptor() {
 			super(Node.class);
@@ -53,46 +56,49 @@ public class Node<T> implements PdefMessage {
 		}
 
 		@Override
-		public SymbolTable<VariableDescriptor> getVariables() {
-			return variables;
-		}
+		public SymbolTable<VariableDescriptor> getVariables() { return variables; }
 
 		@Override
-		public SymbolTable<FieldDescriptor> getDeclaredFields() {
-			return declaredFields;
-		}
+		public SymbolTable<FieldDescriptor> getDeclaredFields() { return declaredFields; }
 
 		@Override
 		protected void init() {
-			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new GeneratedFieldDescriptor("root",
-							RootNode.Descriptor.getInstance().parameterize(var0)) {
-						@Override
-						public Object get(final PdefMessage message) {
-							return ((Node) message).getRoot();
-						}
+			rootField = new GeneratedFieldDescriptor("root",
+					RootNode.Descriptor.getInstance().parameterize(var0)) {
+				@Override
+				public Object get(final Message message) {
+					return ((Node) message).getRoot();
+				}
 
-						@Override
-						@SuppressWarnings("unchecked")
-						public void set(final PdefMessage message, final Object value) {
-							((Node) message).setRoot((RootNode) value);
-						}
-					},
+				@Override
+				public Object get(final Message.Builder builder) {
+					return ((Builder) builder).getRoot();
+				}
 
-					new GeneratedFieldDescriptor("element", var0) {
+				@Override
+				public void set(final Message.Builder builder, final Object value) {
+					((Builder) builder).setRoot((RootNode<?>) value);
+				}
+			};
 
-						@Override
-						public Object get(final PdefMessage message) {
-							return ((Node) message).getElement();
-						}
+			elementField = new GeneratedFieldDescriptor("element", var0) {
+				@Override
+				public Object get(final Message message) {
+					return ((Node) message).getElement();
+				}
 
-						@Override
-						@SuppressWarnings("unchecked")
-						public void set(final PdefMessage message, final Object value) {
-							((Node) message).setElement(value);
-						}
-					}
-			);
+				@Override
+				public Object get(final Message.Builder builder) {
+					return ((Builder) builder).getElement();
+				}
+
+				@Override
+				public void set(final Message.Builder builder, final Object value) {
+					((Builder) builder).setElement(value);
+				}
+			};
+
+			declaredFields = ImmutableSymbolTable.of(rootField, elementField);
 		}
 	}
 }

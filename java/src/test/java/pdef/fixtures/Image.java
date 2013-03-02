@@ -1,75 +1,79 @@
 package pdef.fixtures;
 
-import pdef.ImmutableSymbolTable;
-import pdef.PdefMessage;
-import pdef.SymbolTable;
+import pdef.*;
 import pdef.generated.GeneratedFieldDescriptor;
 import pdef.generated.GeneratedMessageDescriptor;
-import pdef.descriptors.FieldDescriptor;
-import pdef.descriptors.MessageDescriptor;
 
 public class Image extends Entity {
+	private static Image defaultInstance = new Image(new Builder());
+	public static Image getDefaultInstance() { return defaultInstance; }
+
 	private User user;
 
-	public User getUser() {
-		return user;
-	}
+	public User getUser() { return user; }
 
-	public Image setUser(final User user) {
-		this.user = user;
-		return this;
+	protected Image(final Builder builder) {
+		super(builder);
+		this.user = builder.getUser();
 	}
 
 	@Override
-	public MessageDescriptor getPdefDescriptor() {
-		return Image.Descriptor.getInstance();
+	public MessageDescriptor getDescriptor() { return Image.Descriptor.getInstance(); }
+
+	public static class Builder extends Entity.Builder {
+		private User user;
+
+		public User getUser() { return user; }
+
+		public Builder setUser(final User user) { this.user = user; return this; }
+
+		@Override
+		public Builder setId(final Id id) { super.setId(id); return this; }
+
+		@Override
+		public Image build() { return new Image(this); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
-		private static final Descriptor INSTANCE = new Descriptor();
-		public static Descriptor getInstance() {
-			INSTANCE.link();
-			return INSTANCE;
-		}
+		private static final Descriptor instance = new Descriptor();
+		public static Descriptor getInstance() { instance.link(); return instance; }
 
 		private MessageDescriptor base;
 		private SymbolTable<FieldDescriptor> declaredFields;
+		private FieldDescriptor userField;
 
-		Descriptor() {
-			super(Image.class);
-		}
-
-		@Override
-		public MessageDescriptor getBase() {
-			return base;
-		}
+		Descriptor() { super(Image.class); }
 
 		@Override
-		public Enum<?> getType() {
-			return Type.IMAGE;
-		}
+		public MessageDescriptor getBase() { return base; }
 
 		@Override
-		public SymbolTable<FieldDescriptor> getDeclaredFields() {
-			return declaredFields;
-		}
+		public Enum<?> getBaseType() { return Type.IMAGE; }
+
+		@Override
+		public SymbolTable<FieldDescriptor> getDeclaredFields() { return declaredFields; }
 
 		@Override
 		protected void init() {
 			base = Entity.Descriptor.getInstance();
-			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new GeneratedFieldDescriptor("user", User.Descriptor.getInstance()) {
-						@Override
-						public Object get(final PdefMessage message) {
-							return ((Image) message).getUser();
-						}
+			userField = new GeneratedFieldDescriptor("user", User.Descriptor.getInstance()) {
+				@Override
+				public Object get(final Message message) {
+					return ((Image) message).getUser();
+				}
 
-						@Override
-						public void set(final PdefMessage message, final Object value) {
-							((Image) message).setUser((User) value);
-						}
-					}
-			);
+				@Override
+				public Object get(final Message.Builder builder) {
+					return ((Builder) builder).getUser();
+				}
+
+				@Override
+				public void set(final Message.Builder builder, final Object value) {
+					((Builder) builder).setUser((User) value);
+				}
+			};
+
+			declaredFields = ImmutableSymbolTable.of(userField);
 		}
 	}
 }

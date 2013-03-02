@@ -1,64 +1,73 @@
 package pdef.fixtures;
 
 import pdef.ImmutableSymbolTable;
-import pdef.PdefMessage;
+import pdef.Message;
 import pdef.SymbolTable;
 import pdef.generated.GeneratedFieldDescriptor;
+import pdef.generated.GeneratedMessage;
 import pdef.generated.GeneratedMessageDescriptor;
-import pdef.descriptors.FieldDescriptor;
-import pdef.descriptors.MessageDescriptor;
+import pdef.FieldDescriptor;
+import pdef.MessageDescriptor;
+import pdef.provided.NativeValueDescriptors;
 
-public class Id implements PdefMessage {
+public class Id extends GeneratedMessage {
 	private int value;
 
-	public int getValue() {
-		return value;
+	protected Id(final Builder builder) {
+		super(builder);
+		value = builder.getValue();
 	}
 
-	public Id setValue(final int value) {
-		this.value = value;
-		return this;
-	}
+	public int getValue() { return value; }
 
 	@Override
-	public MessageDescriptor getPdefDescriptor() {
-		return Descriptor.getInstance();
+	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
+
+	public static class Builder extends GeneratedMessage.Builder {
+		private int value;
+
+		public int getValue() { return value; }
+
+		public Builder setValue(final int value) { this.value = value; return this; }
+
+		@Override
+		public Id build() { return new Id(this); }
 	}
 
 	public static class Descriptor extends GeneratedMessageDescriptor {
-		private static final Descriptor INSTANCE = new Descriptor();
-
-		public static Descriptor getInstance() {
-			INSTANCE.link();
-			return INSTANCE;
-		}
+		private static final Descriptor instance = new Descriptor();
+		public static Descriptor getInstance() { instance.link(); return instance; }
 
 		private SymbolTable<FieldDescriptor> declaredFields;
+		private FieldDescriptor valueField;
 
-		Descriptor() {
-			super(Id.class);
-		}
+		protected Descriptor() { super(Id.class); }
 
 		@Override
-		public SymbolTable<FieldDescriptor> getDeclaredFields() {
-			return declaredFields;
-		}
+		public SymbolTable<FieldDescriptor> getDeclaredFields() { return declaredFields; }
 
 		@Override
 		protected void init() {
-			declaredFields = ImmutableSymbolTable.<FieldDescriptor>of(
-					new GeneratedFieldDescriptor("value", IntDescriptor.getInstance()) {
-						@Override
-						public Object get(final PdefMessage message) {
-							return ((Id) message).getValue();
-						}
+			valueField = new GeneratedFieldDescriptor("value",
+					NativeValueDescriptors.getInt32()) {
+				@Override
+				public Object get(final Message message) {
+					return ((Id) message).getValue();
+				}
 
-						@Override
-						public void set(final PdefMessage message, final Object value) {
-							((Id) message).setValue((Integer) value);
-						}
-					}
-			);
+				@Override
+				public Object get(final Message.Builder builder) {
+					return ((Builder) builder).getValue();
+				}
+
+				@Override
+				public void set(final Message.Builder builder, final Object value) {
+					((Builder) builder).setValue((Integer) value);
+				}
+			};
+
+
+			declaredFields = ImmutableSymbolTable.of(valueField);
 		}
 	}
 }

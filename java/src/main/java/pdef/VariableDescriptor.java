@@ -1,5 +1,3 @@
-package pdef.descriptors;
-
-import pdef.Symbol;
+package pdef;
 
 public interface VariableDescriptor extends TypeDescriptor, Symbol {}

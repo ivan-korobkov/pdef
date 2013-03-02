@@ -4,8 +4,8 @@ import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import pdef.ImmutableSymbolTable;
 import pdef.SymbolTable;
-import pdef.descriptors.TypeDescriptor;
-import pdef.descriptors.VariableDescriptor;
+import pdef.TypeDescriptor;
+import pdef.VariableDescriptor;
 
 import java.util.Map;
 

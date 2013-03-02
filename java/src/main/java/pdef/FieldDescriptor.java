@@ -1,7 +1,4 @@
-package pdef.descriptors;
-
-import pdef.PdefMessage;
-import pdef.Symbol;
+package pdef;
 
 import java.util.Map;
 
@@ -9,9 +6,11 @@ public interface FieldDescriptor extends Symbol {
 
 	TypeDescriptor getType();
 
-	Object get(PdefMessage message);
+	Object get(Message message);
 
-	void set(PdefMessage message, Object value);
+	Object get(Message.Builder builder);
+
+	void set(Message.Builder builder, Object value);
 
 	FieldDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap);
 }

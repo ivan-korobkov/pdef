@@ -2,10 +2,10 @@ package pdef.generated;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
-import pdef.PdefMessage;
-import pdef.descriptors.FieldDescriptor;
-import pdef.descriptors.TypeDescriptor;
-import pdef.descriptors.VariableDescriptor;
+import pdef.Message;
+import pdef.FieldDescriptor;
+import pdef.TypeDescriptor;
+import pdef.VariableDescriptor;
 
 import java.util.Map;
 
@@ -37,13 +37,18 @@ final class ParameterizedFieldDescriptor implements FieldDescriptor {
 	}
 
 	@Override
-	public Object get(final PdefMessage message) {
+	public Object get(final Message message) {
 		return rawField.get(message);
 	}
 
 	@Override
-	public void set(final PdefMessage message, final Object value) {
-		rawField.set(message, value);
+	public Object get(final Message.Builder builder) {
+		return rawField.get(builder);
+	}
+
+	@Override
+	public void set(final Message.Builder builder, final Object value) {
+		rawField.set(builder, value);
 	}
 
 	@Override

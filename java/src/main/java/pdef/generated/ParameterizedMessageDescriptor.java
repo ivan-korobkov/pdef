@@ -9,10 +9,10 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import pdef.ImmutableSymbolTable;
 import pdef.SymbolTable;
-import pdef.descriptors.FieldDescriptor;
-import pdef.descriptors.MessageDescriptor;
-import pdef.descriptors.TypeDescriptor;
-import pdef.descriptors.VariableDescriptor;
+import pdef.FieldDescriptor;
+import pdef.MessageDescriptor;
+import pdef.TypeDescriptor;
+import pdef.VariableDescriptor;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -28,7 +28,7 @@ final class ParameterizedMessageDescriptor extends GeneratedMessageDescriptor
 	private SymbolTable<FieldDescriptor> declaredFields;
 	private SymbolTable<FieldDescriptor> fields;
 
-	ParameterizedMessageDescriptor(final MessageDescriptor rawtype,
+	ParameterizedMessageDescriptor(final GeneratedMessageDescriptor rawtype,
 			final List<TypeDescriptor> args) {
 		super(rawtype.getJavaClass());
 		this.rawtype = checkNotNull(rawtype);

@@ -1,6 +1,4 @@
-package pdef.descriptors;
-
-import pdef.SymbolTable;
+package pdef;
 
 import java.util.Map;
 
@@ -8,7 +6,7 @@ public interface MessageDescriptor extends TypeDescriptor {
 
 	MessageDescriptor getBase();
 
-	Enum<?> getType();
+	Enum<?> getBaseType();
 
 	Map<Enum<?>, MessageDescriptor> getTypeMap();
 

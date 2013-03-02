@@ -4,17 +4,17 @@ import static com.google.common.base.Preconditions.*;
 import com.google.common.primitives.Primitives;
 import pdef.ImmutableSymbolTable;
 import pdef.SymbolTable;
-import pdef.descriptors.TypeDescriptor;
-import pdef.descriptors.ValueDescriptor;
-import pdef.descriptors.VariableDescriptor;
+import pdef.TypeDescriptor;
+import pdef.ValueDescriptor;
+import pdef.VariableDescriptor;
 
 import java.util.Map;
 
-class NativePrimitiveDescriptor implements ValueDescriptor {
+class NativeValueDescriptor implements ValueDescriptor {
 	private final Class<?> javaClass;
 	private final Class<?> primitiveClass;
 
-	NativePrimitiveDescriptor(final Class<?> javaClass) {
+	NativeValueDescriptor(final Class<?> javaClass) {
 		this.javaClass = checkNotNull(javaClass);
 		this.primitiveClass = Primitives.unwrap(javaClass);
 	}

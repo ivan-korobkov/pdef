@@ -90,6 +90,10 @@ public class Entity extends GeneratedMessage {
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setId((Id) value);
 				}
+
+				@Override
+				public void clear(final pdef.Message.Builder builder) {
+				}
 			};
 
 			typeMap = ImmutableMap.<Enum<?>, MessageDescriptor>of(

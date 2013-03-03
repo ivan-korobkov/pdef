@@ -120,6 +120,10 @@ public class User extends Entity {
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setImage((Image) value);
 				}
+
+				@Override
+				public void clear(final Message.Builder builder) {
+				}
 			};
 			auraField = new GeneratedFieldDescriptor("aura",
 					Weighted.Descriptor.getInstance().parameterize(Image.Descriptor.getInstance())) {
@@ -137,6 +141,10 @@ public class User extends Entity {
 				@Override
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setAura((Weighted<Image>) value);
+				}
+
+				@Override
+				public void clear(final Message.Builder builder) {
 				}
 			};
 
@@ -156,6 +164,10 @@ public class User extends Entity {
 				@SuppressWarnings("unchecked")
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setRoot((RootNode<Integer>) value);
+				}
+
+				@Override
+				public void clear(final Message.Builder builder) {
 				}
 			};
 

@@ -1,15 +1,11 @@
 package {{ package }};
 
-public class {{ type }} extends pdef.generated.GeneratedMessage {
+public class {{ type }} extends {{ base_class }} {
 	private static final {{ type.wildcard }} defaultInstance = new {{ type.raw }}();
 
 	public static {{ type.wildcard }} getDefaultInstance() {
 		return defaultInstance;
 	}
-
-	public static pdef.MessageDescriptor getClassDescriptor() {
-        return Descriptor.getInstance();
-    }
 
 {% for field in declared_fields %}
     private final {{ field.type }} {{ field.name }};
@@ -34,10 +30,14 @@ public class {{ type }} extends pdef.generated.GeneratedMessage {
 {% endfor %}
 	@Override
 	public pdef.MessageDescriptor getDescriptor() {
-	    return Descriptor.getInstance();
+	    return Descriptor.instance;
 	}
 
-	public static class {{ builder }} extends pdef.generated.GeneratedMessage.Builder {
+    public static pdef.MessageDescriptor getClassDescriptor() {
+        return Descriptor.instance;
+    }
+
+	public static class {{ builder }} extends {{ base_builder }} {
 {% for field in declared_fields %}
         private {{ field.type }} {{ field.name }};
 {% endfor %}
@@ -65,22 +65,19 @@ public class {{ type }} extends pdef.generated.GeneratedMessage {
 
 		@Override
 		public pdef.MessageDescriptor getDescriptor() {
-		    return Descriptor.getInstance();
+		    return Descriptor.instance;
 		}
 	}
 
 	public static class Descriptor extends pdef.generated.GeneratedMessageDescriptor {
 		private static final Descriptor instance = new Descriptor();
 
-		public static Descriptor getInstance() {
-		    return instance;
-		}
-
 {% for var in variables %}
         private final pdef.VariableDescriptor variable{{ var }};
 {% endfor %}
         private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
 
+        private pdef.MessageDescriptor base;
 {% for field in declared_fields %}
         private pdef.FieldDescriptor {{ field.name }}Field;
 {% endfor %}
@@ -99,6 +96,11 @@ public class {{ type }} extends pdef.generated.GeneratedMessage {
 		}
 
 		@Override
+        public pdef.MessageDescriptor getBase() {
+            return base;
+        }
+
+		@Override
         public SymbolTable<VariableDescriptor> getVariables() {
             return variables;
         }
@@ -110,6 +112,8 @@ public class {{ type }} extends pdef.generated.GeneratedMessage {
 
 		@Override
 		protected void init() {
+		    base = {% if base %}{{ base.descriptor }}{% else %}null{% endif %};
+
 {% for field in declared_fields %}
 			{{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
 			        {{ field.type.descriptor }}) {

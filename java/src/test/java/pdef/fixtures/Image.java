@@ -90,6 +90,10 @@ public class Image extends Entity {
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setUser((User) value);
 				}
+
+				@Override
+				public void clear(final Message.Builder builder) {
+				}
 			};
 
 			declaredFields = ImmutableSymbolTable.of(userField);

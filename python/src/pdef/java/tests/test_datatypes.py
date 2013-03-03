@@ -49,7 +49,7 @@ class TestJavaMessage(unittest.TestCase):
         assert jmsg.code
 
 
-class TestGenericJavaMessage(unittest.TestCase):
+class TestGenericInheritedJavaMessage(unittest.TestCase):
     def setUp(self):
         int32 = Native('int32', options=NativeOptions(
             java_type='int',
@@ -57,14 +57,25 @@ class TestGenericJavaMessage(unittest.TestCase):
             java_descriptor='pdef.provided.NativeValueDescriptors.getInt32()',
             java_default='0'
         ))
-        var = Variable('T')
 
-        self.msg = Message('Message', variables=[var], declared_fields=[
-            Field('field0', var),
-            Field('field1', int32)
-        ])
-        module = Module('module')
-        module.add_definitions(self.msg)
+        base_var = Variable('R')
+        base = Message('Base', variables=[base_var],
+            declared_fields=[Field('field0', base_var)])
+
+        var = Variable('T')
+        msg = Message('Example', variables=[var], base=base.parameterize(var),
+            base_type='type',
+            declared_fields=[Field('field1', var), Field('field2', int32)])
+
+        module = Module('pdef.fixtures')
+        module.add_definitions(base, msg)
+
+        self.base = base
+        self.msg = msg
+
+    def test_base(self):
+        jbase = JavaMessage(self.base)
+        print jbase.code
 
     def test_code(self):
         jmsg = JavaMessage(self.msg)

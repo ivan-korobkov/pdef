@@ -97,6 +97,10 @@ public class Node<T> extends Entity {
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setRoot((RootNode<?>) value);
 				}
+
+				@Override
+				public void clear(final Message.Builder builder) {
+				}
 			};
 
 			elementField = new GeneratedFieldDescriptor("element", var0) {
@@ -114,6 +118,10 @@ public class Node<T> extends Entity {
 				@SuppressWarnings("unchecked")
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setElement(value);
+				}
+
+				@Override
+				public void clear(final Message.Builder builder) {
 				}
 			};
 

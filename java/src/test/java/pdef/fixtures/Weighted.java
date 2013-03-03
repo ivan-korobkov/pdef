@@ -93,6 +93,10 @@ public class Weighted<T> extends GeneratedMessage {
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setElement(value);
 				}
+
+				@Override
+				public void clear(final Message.Builder builder) {
+				}
 			};
 
 			weightField = new GeneratedFieldDescriptor("weight",
@@ -110,6 +114,10 @@ public class Weighted<T> extends GeneratedMessage {
 				@Override
 				public void set(final Message.Builder builder, final Object value) {
 					((Builder) builder).setWeight((Integer) value);
+				}
+
+				@Override
+				public void clear(final Message.Builder builder) {
 				}
 			};
 

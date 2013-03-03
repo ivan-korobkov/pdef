@@ -52,6 +52,11 @@ final class ParameterizedFieldDescriptor implements FieldDescriptor {
 	}
 
 	@Override
+	public void clear(final Message.Builder builder) {
+		rawField.clear(builder);
+	}
+
+	@Override
 	public FieldDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
 		TypeDescriptor btype = type.bind(argMap);
 		if (type == btype) {

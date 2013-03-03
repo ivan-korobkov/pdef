@@ -19,10 +19,21 @@ class JavaMessage(object):
         self.name = msg.name
         self.type = JavaRef.from_lang(msg).local
         self.package = msg.parent.fullname
+        self.builder = SimpleJavaRef('Builder', variables=self.type.variables)
+
+        if msg.base:
+            base = msg.base
+            self.base = JavaRef.from_lang(base)
+            self.base_class = self.base
+            self.base_builder = SimpleJavaRef('Builder', str(self.base.raw),
+                    variables=tuple(JavaRef.from_lang(var) for var in base.variables))
+        else:
+            self.base = None
+            self.base_class = SimpleJavaRef('pdef.generated.GeneratedMessage')
+            self.base_builder = SimpleJavaRef('pdef.generated.GeneratedMessage.Builder')
 
         self.variables = tuple(JavaRef.from_lang(var) for var in msg.variables)
         self.declared_fields = tuple(JavaField(field) for field in msg.declared_fields)
-        self.builder = SimpleJavaRef('Builder', variables=self.type.variables)
 
     @property
     def code(self):

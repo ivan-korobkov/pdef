@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os.path
 from jinja2 import Environment
-from pdef.java.refs import JavaRef
+from pdef.java.refs import JavaRef, SimpleJavaRef
 
 
 ENUM_FILE = os.path.join(os.path.dirname(__file__), "enum.template")
@@ -17,8 +17,12 @@ with open(MESSAGE_FILE, "r") as f:
 class JavaMessage(object):
     def __init__(self, msg):
         self.name = msg.name
+        self.type = JavaRef.from_lang(msg).local
         self.package = msg.parent.fullname
-        self.declared_fields = [JavaField(field) for field in msg.declared_fields]
+
+        self.variables = tuple(JavaRef.from_lang(var) for var in msg.variables)
+        self.declared_fields = tuple(JavaField(field) for field in msg.declared_fields)
+        self.builder = SimpleJavaRef('Builder', variables=self.type.variables)
 
     @property
     def code(self):

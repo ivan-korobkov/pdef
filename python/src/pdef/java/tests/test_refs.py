@@ -44,7 +44,7 @@ class TestVariableJavaRef(unittest.TestCase):
         assert str(self.ref) == str(self.ref.raw)
 
     def test_boxed(self):
-        assert str(self.ref) == str(self.ref.boxed)
+        assert str(self.ref.boxed) == 'Object'
 
     def test_wildcard(self):
         assert str(self.ref.wildcard) == '?'

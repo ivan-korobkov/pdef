@@ -47,3 +47,26 @@ class TestJavaMessage(unittest.TestCase):
         jmsg = JavaMessage(self.msg)
         print jmsg.code
         assert jmsg.code
+
+
+class TestGenericJavaMessage(unittest.TestCase):
+    def setUp(self):
+        int32 = Native('int32', options=NativeOptions(
+            java_type='int',
+            java_boxed='Integer',
+            java_descriptor='pdef.provided.NativeValueDescriptors.getInt32()',
+            java_default='0'
+        ))
+        var = Variable('T')
+
+        self.msg = Message('Message', variables=[var], declared_fields=[
+            Field('field0', var),
+            Field('field1', int32)
+        ])
+        module = Module('module')
+        module.add_definitions(self.msg)
+
+    def test_code(self):
+        jmsg = JavaMessage(self.msg)
+        print jmsg.code
+        assert jmsg.code

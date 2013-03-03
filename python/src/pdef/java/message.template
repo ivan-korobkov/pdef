@@ -1,13 +1,13 @@
 package {{ package }};
 
-public class {{ name }} extends pdef.generated.GeneratedMessage {
-	private static final {{ name }} defaultInstance = new {{ name }}();
+public class {{ type }} extends pdef.generated.GeneratedMessage {
+	private static final {{ type.wildcard }} defaultInstance = new {{ type.raw }}();
 
-	public static {{ name }} getDefaultInstance() {
+	public static {{ type.wildcard }} getDefaultInstance() {
 		return defaultInstance;
 	}
 
-	public static MessageDescriptor getClassDescriptor() {
+	public static pdef.MessageDescriptor getClassDescriptor() {
         return Descriptor.getInstance();
     }
 
@@ -16,10 +16,10 @@ public class {{ name }} extends pdef.generated.GeneratedMessage {
 {% endfor %}
 
 	protected {{ name }}() {
-	    this(new Builder());
+	    this(new {{ builder }}());
 	}
 
-	protected {{ name }}(final Builder builder) {
+	protected {{ name }}(final {{ builder }} builder) {
 		super(builder);
 {% for field in declared_fields %}
         this.{{ field.name }} = builder.{{ field.getter }}();
@@ -37,7 +37,7 @@ public class {{ name }} extends pdef.generated.GeneratedMessage {
 	    return Descriptor.getInstance();
 	}
 
-	public static class Builder extends pdef.generated.GeneratedMessage.Builder {
+	public static class {{ builder }} extends pdef.generated.GeneratedMessage.Builder {
 {% for field in declared_fields %}
         private {{ field.type }} {{ field.name }};
 {% endfor %}
@@ -47,20 +47,20 @@ public class {{ name }} extends pdef.generated.GeneratedMessage {
             return {{ field.name }};
         }
 
-        public Builder {{ field.setter }}(final {{ field.type }} value) {
+        public {{ builder }} {{ field.setter }}(final {{ field.type }} value) {
             this.{{ field.name }} = value;
             return this;
         }
 
-        public Builder {{ field.clearer }}() {
+        public {{ builder }} {{ field.clearer }}() {
             this.{{ field.name }} = {{ field.type.default }};
             return this;
         }
 
 {% endfor %}
 		@Override
-		public {{ name }} build() {
-		    return new {{ name }}(this);
+		public {{ type }} build() {
+		    return new {{ type }}(this);
 		}
 
 		@Override
@@ -76,6 +76,11 @@ public class {{ name }} extends pdef.generated.GeneratedMessage {
 		    return instance;
 		}
 
+{% for var in variables %}
+        private final pdef.VariableDescriptor variable{{ var }};
+{% endfor %}
+        private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
+
 {% for field in declared_fields %}
         private pdef.FieldDescriptor {{ field.name }}Field;
 {% endfor %}
@@ -83,7 +88,20 @@ public class {{ name }} extends pdef.generated.GeneratedMessage {
 
 		protected Descriptor() {
 		    super({{ name }}.class);
+{% for var in variables %}
+            variable{{ var }} = new NativeVariableDescriptor("{{ var.name }}");
+{% endfor %}
+            variables = pdef.ImmutableSymbolTable.of(
+{% for var in variables %}
+                    variable{{ var.name }}{% if not loop.last and loop.length > 1 %}, {% endif %}
+
+{% endfor %});
 		}
+
+		@Override
+        public SymbolTable<VariableDescriptor> getVariables() {
+            return variables;
+        }
 
 		@Override
 		public pdef.SymbolTable<pdef.FieldDescriptor> getDeclaredFields() {
@@ -125,8 +143,7 @@ public class {{ name }} extends pdef.generated.GeneratedMessage {
 {% for field in declared_fields %}
                     {{ field.name }}Field{% if not loop.last and loop.length > 1 %}, {% endif %}
 
-{% endfor %}
-            );
+{% endfor %});
 		}
 
 		static {

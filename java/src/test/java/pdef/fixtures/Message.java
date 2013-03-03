@@ -1,33 +1,39 @@
 package module;
 
-import pdef.MessageDescriptor;
+import pdef.SymbolTable;
+import pdef.VariableDescriptor;
+import pdef.provided.NativeVariableDescriptor;
 
-public class Message extends pdef.generated.GeneratedMessage {
-	private static final Message defaultInstance = new Message();
+public class Message<T> extends pdef.generated.GeneratedMessage {
+	private static final Message<?> defaultInstance = new Message();
 
-	public static Message getDefaultInstance() {
+	public static Message<?> getDefaultInstance() {
 		return defaultInstance;
 	}
 
-	private final int field1;
-	private final String field2;
-
-	protected Message() {
-		this(new Builder());
+	public static pdef.MessageDescriptor getClassDescriptor() {
+		return Descriptor.getInstance();
 	}
 
-	protected Message(final Builder builder) {
+	private final T field0;
+	private final int field1;
+
+	protected Message() {
+		this(new Builder<T>());
+	}
+
+	protected Message(final Builder<T> builder) {
 		super(builder);
+		this.field0 = builder.getField0();
 		this.field1 = builder.getField1();
-		this.field2 = builder.getField2();
+	}
+
+	public T getField0() {
+		return field0;
 	}
 
 	public int getField1() {
 		return field1;
-	}
-
-	public String getField2() {
-		return field2;
 	}
 
 	@Override
@@ -35,41 +41,41 @@ public class Message extends pdef.generated.GeneratedMessage {
 		return Descriptor.getInstance();
 	}
 
-	public static class Builder extends pdef.generated.GeneratedMessage.Builder {
+	public static class Builder<T> extends pdef.generated.GeneratedMessage.Builder {
+		private T field0;
 		private int field1;
-		private String field2;
+
+		public T getField0() {
+			return field0;
+		}
+
+		public Builder<T> setField0(final T value) {
+			this.field0 = value;
+			return this;
+		}
+
+		public Builder<T> clearField0() {
+			this.field0 = null;
+			return this;
+		}
 
 		public int getField1() {
 			return field1;
 		}
 
-		public Builder setField1(final int value) {
+		public Builder<T> setField1(final int value) {
 			this.field1 = value;
 			return this;
 		}
 
-		public Builder clearField1() {
+		public Builder<T> clearField1() {
 			this.field1 = 0;
 			return this;
 		}
 
-		public String getField2() {
-			return field2;
-		}
-
-		public Builder setField2(final String value) {
-			this.field2 = value;
-			return this;
-		}
-
-		public Builder clearField2() {
-			this.field2 = null;
-			return this;
-		}
-
 		@Override
-		public Message build() {
-			return new Message(this);
+		public Message<T> build() {
+			return new Message<T>(this);
 		}
 
 		@Override
@@ -85,12 +91,24 @@ public class Message extends pdef.generated.GeneratedMessage {
 			return instance;
 		}
 
+		private final pdef.VariableDescriptor variableT;
+		private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
+
+		private pdef.FieldDescriptor field0Field;
 		private pdef.FieldDescriptor field1Field;
-		private pdef.FieldDescriptor field2Field;
 		private pdef.SymbolTable<pdef.FieldDescriptor> declaredFields;
 
 		protected Descriptor() {
 			super(Message.class);
+			variableT = new NativeVariableDescriptor("T");
+			variables = pdef.ImmutableSymbolTable.of(
+					variableT
+			);
+		}
+
+		@Override
+		public SymbolTable<VariableDescriptor> getVariables() {
+			return variables;
 		}
 
 		@Override
@@ -100,6 +118,33 @@ public class Message extends pdef.generated.GeneratedMessage {
 
 		@Override
 		protected void init() {
+			field0Field = new pdef.generated.GeneratedFieldDescriptor("field0",
+					variableT) {
+				@Override
+				public Object get(final pdef.Message message) {
+					return ((Message) message).getField0();
+				}
+
+				@Override
+				public Object get(final pdef.Message.Builder builder) {
+					return ((Builder) builder).getField0();
+				}
+
+				@Override
+				public void set(final pdef.Message.Builder builder, final Object value) {
+					if (value == null) {
+						clear(builder);
+					} else {
+						((Builder) builder).setField0((Object) value);
+					}
+				}
+
+				@Override
+				public void clear(final pdef.Message.Builder builder) {
+					((Builder) builder).clearField0();
+				}
+			};
+
 			field1Field = new pdef.generated.GeneratedFieldDescriptor("field1",
 					pdef.provided.NativeValueDescriptors.getInt32()) {
 				@Override
@@ -127,36 +172,9 @@ public class Message extends pdef.generated.GeneratedMessage {
 				}
 			};
 
-			field2Field = new pdef.generated.GeneratedFieldDescriptor("field2",
-					pdef.provided.NativeValueDescriptors.getString()) {
-				@Override
-				public Object get(final pdef.Message message) {
-					return ((Message) message).getField2();
-				}
-
-				@Override
-				public Object get(final pdef.Message.Builder builder) {
-					return ((Builder) builder).getField2();
-				}
-
-				@Override
-				public void set(final pdef.Message.Builder builder, final Object value) {
-					if (value == null) {
-						clear(builder);
-					} else {
-						((Builder) builder).setField2((String) value);
-					}
-				}
-
-				@Override
-				public void clear(final pdef.Message.Builder builder) {
-					((Builder) builder).clearField2();
-				}
-			};
-
 			declaredFields = pdef.ImmutableSymbolTable.of(
-					field1Field,
-					field2Field
+					field0Field,
+					field1Field
 			);
 		}
 

@@ -56,6 +56,7 @@ class JavaRef(object):
 class VariableJavaRef(JavaRef):
     def __init__(self, var):
         super(VariableJavaRef, self).__init__(var.name)
+        self.boxed = SimpleJavaRef('Object')
         self.descriptor = 'variable%s' % self.name
 
     @property

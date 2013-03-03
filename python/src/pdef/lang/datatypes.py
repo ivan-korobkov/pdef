@@ -8,11 +8,12 @@ from pdef.lang.refs import Ref
 
 
 class NativeOptions(object):
-    def __init__(self, java=None, java_boxed=None, java_descriptor=None, java_default='null'):
-        self.java = java
+    def __init__(self, java_type=None, java_boxed=None, java_descriptor=None, java_default='null'):
+        self.java_type = java_type
         self.java_boxed = java_boxed
         self.java_descriptor = java_descriptor
         self.java_default = java_default
+
 
 class Native(Type):
     def __init__(self, name, variables=None, options=None):

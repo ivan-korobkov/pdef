@@ -7,6 +7,10 @@ public class {{ name }} extends pdef.generated.GeneratedMessage {
 		return defaultInstance;
 	}
 
+	public static MessageDescriptor getClassDescriptor() {
+        return Descriptor.getInstance();
+    }
+
 {% for field in declared_fields %}
     private final {{ field.type }} {{ field.name }};
 {% endfor %}
@@ -32,10 +36,6 @@ public class {{ name }} extends pdef.generated.GeneratedMessage {
 	public pdef.MessageDescriptor getDescriptor() {
 	    return Descriptor.getInstance();
 	}
-
-	public static MessageDescriptor getClassDescriptor() {
-        return Descriptor.getInstance();
-    }
 
 	public static class Builder extends pdef.generated.GeneratedMessage.Builder {
 {% for field in declared_fields %}

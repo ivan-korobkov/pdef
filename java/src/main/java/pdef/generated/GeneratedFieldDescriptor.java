@@ -10,7 +10,7 @@ import java.util.Map;
 
 public abstract class GeneratedFieldDescriptor implements FieldDescriptor {
 	private final String name;
-	private TypeDescriptor type;
+	private final TypeDescriptor type;
 
 	public GeneratedFieldDescriptor(final String name, final TypeDescriptor type) {
 		this.name = checkNotNull(name);

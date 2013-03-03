@@ -3,7 +3,7 @@ package pdef.fixtures;
 public class Main {
 
 	public static void main(String[] args) {
-		int n = 100 * 1000 * 1000;
+		int n = 10 * 1000 * 1000;
 		Node node = Node.getDefaultInstance();
 		RootNode rootNode = RootNode.getDefaultInstance();
 		System.out.println(node);
@@ -33,11 +33,11 @@ public class Main {
 		System.out.println(r);
 	}
 
-	private static User getUser() {
+	private static User getUser2() {
 		return User.getDefaultInstance();
 	}
 
-	private static User getUser2() {
+	private static User getUser() {
 		// int value = (int) (System.currentTimeMillis() / 1000);
 		return new User.Builder()
 					.setId(new Id.Builder().setValue(10).build())

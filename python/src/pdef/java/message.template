@@ -1,0 +1,136 @@
+package {{ package }};
+
+public class {{ name }} extends pdef.generated.GeneratedMessage {
+	private static final {{ name }} defaultInstance = new {{ name }}();
+
+	public static {{ name }} getDefaultInstance() {
+		return defaultInstance;
+	}
+
+{% for field in declared_fields %}
+    private final {{ field.type }} {{ field.name }};
+{% endfor %}
+
+	protected {{ name }}() {
+	    this(new Builder());
+	}
+
+	protected {{ name }}(final Builder builder) {
+		super(builder);
+{% for field in declared_fields %}
+        this.{{ field.name }} = builder.{{ field.getter }}();
+{% endfor %}
+	}
+
+{% for field in declared_fields %}
+    public {{ field.type }} {{ field.getter }}() {
+        return {{ field.name }};
+    }
+
+{% endfor %}
+	@Override
+	public pdef.MessageDescriptor getDescriptor() {
+	    return Descriptor.getInstance();
+	}
+
+	public static MessageDescriptor getClassDescriptor() {
+        return Descriptor.getInstance();
+    }
+
+	public static class Builder extends pdef.generated.GeneratedMessage.Builder {
+{% for field in declared_fields %}
+        private {{ field.type }} {{ field.name }};
+{% endfor %}
+
+{% for field in declared_fields %}
+        public {{ field.type }} {{ field.getter }}() {
+            return {{ field.name }};
+        }
+
+        public Builder {{ field.setter }}(final {{ field.type }} value) {
+            this.{{ field.name }} = value;
+            return this;
+        }
+
+        public Builder {{ field.clearer }}() {
+            this.{{ field.name }} = {{ field.type.default }};
+            return this;
+        }
+
+{% endfor %}
+		@Override
+		public {{ name }} build() {
+		    return new {{ name }}(this);
+		}
+
+		@Override
+		public pdef.MessageDescriptor getDescriptor() {
+		    return Descriptor.getInstance();
+		}
+	}
+
+	public static class Descriptor extends pdef.generated.GeneratedMessageDescriptor {
+		private static final Descriptor instance = new Descriptor();
+
+		public static Descriptor getInstance() {
+		    return instance;
+		}
+
+{% for field in declared_fields %}
+        private pdef.FieldDescriptor {{ field.name }}Field;
+{% endfor %}
+		private pdef.SymbolTable<pdef.FieldDescriptor> declaredFields;
+
+		protected Descriptor() {
+		    super({{ name }}.class);
+		}
+
+		@Override
+		public pdef.SymbolTable<pdef.FieldDescriptor> getDeclaredFields() {
+		    return declaredFields;
+		}
+
+		@Override
+		protected void init() {
+{% for field in declared_fields %}
+			{{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
+			        {{ field.type.descriptor }}) {
+				@Override
+				public Object get(final pdef.Message message) {
+					return (({{ name }}) message).{{ field.getter }}();
+				}
+
+				@Override
+				public Object get(final pdef.Message.Builder builder) {
+					return ((Builder) builder).{{ field.getter }}();
+				}
+
+				@Override
+				public void set(final pdef.Message.Builder builder, final Object value) {
+				    if (value == null) {
+				        clear(builder);
+				    } else {
+					    ((Builder) builder).{{ field.setter }}(({{ field.type.boxed }}) value);
+					}
+				}
+
+				@Override
+				public void clear(final pdef.Message.Builder builder) {
+				    ((Builder) builder).{{ field.clearer }}();
+				}
+			};
+
+{% endfor %}
+			declaredFields = pdef.ImmutableSymbolTable.of(
+{% for field in declared_fields %}
+                    {{ field.name }}Field{% if not loop.last and loop.length > 1 %}, {% endif %}
+
+{% endfor %}
+            );
+		}
+
+		static {
+			instance.link();
+		}
+	}
+}

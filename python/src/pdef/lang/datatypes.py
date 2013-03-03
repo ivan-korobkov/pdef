@@ -7,11 +7,16 @@ from pdef.lang.types import Type, ParameterizedType
 from pdef.lang.refs import Ref
 
 
+class NativeOptions(object):
+    def __init__(self, java=None, java_boxed=None, java_descriptor=None, java_default='null'):
+        self.java = java
+        self.java_boxed = java_boxed
+        self.java_descriptor = java_descriptor
+        self.java_default = java_default
+
 class Native(Type):
     def __init__(self, name, variables=None, options=None):
         super(Native, self).__init__(name, variables)
-        # TODO: java_type
-        #self.java_type = options.java_type
         self.options = options
 
     def parameterize(self, *variables):

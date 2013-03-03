@@ -1,14 +1,14 @@
 # encoding: utf-8
 import unittest
-from pdef import lang
+from pdef.lang import *
 from pdef.java import *
 
 
 class TestJavaRef(unittest.TestCase):
     def setUp(self):
-        module = lang.Module('module')
-        self.msg = lang.Message('Message', variables=[lang.Variable('T')])
-        self.msg.parent = module
+        self.msg = Message('Message', variables=[lang.Variable('T')])
+        module = Module('module')
+        module.add_definitions(self.msg)
 
     def test(self):
         ref = JavaRef.from_lang(self.msg)
@@ -33,10 +33,9 @@ class TestJavaRef(unittest.TestCase):
 
 class TestJavaEnum(unittest.TestCase):
     def setUp(self):
-        module = lang.Module('module')
-        self.enum = lang.Enum('ObjectType',
-                              values=[lang.EnumValue('OBJECT'), lang.EnumValue('USER')])
-        self.enum.parent = module
+        self.enum = Enum('ObjectType',values=[lang.EnumValue('OBJECT'), lang.EnumValue('USER')])
+        module = Module('module')
+        module.add_definitions(self.enum)
 
     def test(self):
         enum = JavaEnum(self.enum)
@@ -46,3 +45,31 @@ class TestJavaEnum(unittest.TestCase):
     def test_code(self):
         enum = JavaEnum(self.enum)
         assert enum.code
+
+
+class TestJavaMessage(unittest.TestCase):
+    def setUp(self):
+        int32 = Native('int', options=NativeOptions(
+            java='int',
+            java_boxed='Integer',
+            java_descriptor='pdef.provided.NativeValueDescriptors.getInt32()',
+            java_default='0'
+        ))
+        string = Native('String', options=NativeOptions(
+            java='String',
+            java_boxed='String',
+            java_descriptor='pdef.provided.NativeValueDescriptors.getString()',
+            java_default='null'
+        ))
+
+        self.msg = Message('Message', declared_fields=[
+            Field('field1', int32),
+            Field('field2', string)
+        ])
+        module = Module('module')
+        module.add_definitions(self.msg)
+
+    def test_code(self):
+        jmsg = JavaMessage(self.msg)
+        print jmsg.code
+        assert jmsg.code

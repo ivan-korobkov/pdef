@@ -18,14 +18,12 @@ public class Id extends GeneratedMessage {
 
 	private int value;
 
-	protected Id() {}
-
-	protected Id(final Builder builder) {
-		init(builder);
+	private Id() {
+		this(new Builder());
 	}
 
-	protected void init(final Builder builder) {
-		super.init(builder);
+	protected Id(final Builder builder) {
+		super(builder);
 		value = builder.getValue();
 	}
 
@@ -37,7 +35,7 @@ public class Id extends GeneratedMessage {
 	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 
 	public static class Builder extends GeneratedMessage.Builder {
-		private int value = 0;
+		private int value;
 
 		public int getValue() { return value; }
 
@@ -86,15 +84,8 @@ public class Id extends GeneratedMessage {
 			declaredFields = ImmutableSymbolTable.of(valueField);
 		}
 
-		@Override
-		public Id getDefaultInstance() { return defaultInstance; }
-
 		static {
 			instance.link();
 		}
-	}
-
-	static {
-		defaultInstance.init(new Builder());
 	}
 }

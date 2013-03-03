@@ -25,9 +25,6 @@ public class NativeVariableDescriptor implements VariableDescriptor, NativeDescr
 	public String getName() { return name; }
 
 	@Override
-	public Object getDefaultInstance() { return null; }
-
-	@Override
 	public SymbolTable<VariableDescriptor> getVariables() { return ImmutableSymbolTable.of(); }
 
 	@Override

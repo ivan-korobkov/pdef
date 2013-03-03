@@ -16,28 +16,34 @@ public class Entity extends GeneratedMessage {
 
 	private Id id;
 
-	protected Entity() {
-		super();
+	private Entity() {
+		this(new Builder());
 	}
 
 	protected Entity(final Builder builder) {
-		init(builder);
-	}
-
-	protected void init(final Builder builder) {
-		super.init(builder);
+		super(builder);
 		this.id = builder.getId();
 	}
 
-	public Id getId() { return id; }
+	public Id getId() {
+		if (id == null) {
+			return Id.getDefaultInstance();
+		}
+		return id;
+	}
 
 	@Override
 	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 
 	public static class Builder extends GeneratedMessage.Builder {
-		private Id id = Id.getDefaultInstance();
+		private Id id;
 
-		public Id getId() { return id; }
+		public Id getId() {
+			if (id == null) {
+				return Id.getDefaultInstance();
+			}
+			return id;
+		}
 
 		public Builder setId(final Id id) { this.id = id; return this; }
 
@@ -95,17 +101,8 @@ public class Entity extends GeneratedMessage {
 			declaredFields = ImmutableSymbolTable.of(idField);
 		}
 
-		@Override
-		public Entity getDefaultInstance() {
-			return defaultInstance;
-		}
-
 		static {
 			instance.link();
 		}
-	}
-
-	static {
-		defaultInstance.init(new Builder());
 	}
 }

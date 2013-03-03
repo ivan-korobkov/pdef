@@ -10,16 +10,12 @@ public class RootNode<R> extends Node<R> {
 		return defaultInstance;
 	}
 
-	protected RootNode() {
-		super();
+	private RootNode() {
+		this(new Builder<R>());
 	}
 
 	protected RootNode(final Builder<R> builder) {
-		init(builder);
-	}
-
-	protected void init(final Builder<R> builder) {
-		super.init(builder);
+		super(builder);
 	}
 
 	@Override
@@ -76,17 +72,8 @@ public class RootNode<R> extends Node<R> {
 			declaredFields = ImmutableSymbolTable.of();
 		}
 
-		@Override
-		public RootNode<?> getDefaultInstance() {
-			return defaultInstance;
-		}
-
 		static {
 			instance.link();
 		}
-	}
-
-	static {
-		defaultInstance.init(new Builder<Object>());
 	}
 }

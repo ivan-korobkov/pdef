@@ -19,33 +19,46 @@ public class User extends Entity {
 	private Weighted<Image> aura;
 	private RootNode<Integer> root;
 
-	protected User() {}
-
-	protected User(final Builder builder) {
-		init(builder);
+	private User() {
+		this(new Builder());
 	}
 
-	protected void init(Builder builder) {
-		super.init(builder);
+	protected User(final Builder builder) {
+		super(builder);
 
 		this.image = builder.getImage();
 		this.aura = builder.getAura();
 		this.root = builder.getRoot();
 	}
 
-	public Image getImage() { return image; }
+	public Image getImage() {
+		if (image == null) {
+			return Image.getDefaultInstance();
+		}
+		return image;
+	}
 
-	public Weighted<Image> getAura() { return aura; }
+	public Weighted<Image> getAura() {
+		if (aura == null) {
+			return (Weighted<Image>) Weighted.getDefaultInstance();
+		}
+		return aura;
+	}
 
-	public RootNode<Integer> getRoot() { return root; }
+	public RootNode<Integer> getRoot() {
+		if (root == null) {
+			return (RootNode<Integer>) RootNode.getDefaultInstance();
+		}
+		return root;
+	}
 
 	@Override
 	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 
 	public static class Builder extends Entity.Builder {
-		private Image image = Image.getDefaultInstance();
-		private Weighted<Image> aura = (Weighted<Image>) Weighted.getDefaultInstance();
-		private RootNode<Integer> root = (RootNode<Integer>) RootNode.getDefaultInstance();
+		private Image image;
+		private Weighted<Image> aura;
+		private RootNode<Integer> root;
 
 		public Image getImage() { return image; }
 
@@ -149,17 +162,8 @@ public class User extends Entity {
 			declaredFields = ImmutableSymbolTable.of(imageField, auraField, rootField);
 		}
 
-		@Override
-		public User getDefaultInstance() {
-			return defaultInstance;
-		}
-
 		static {
 			instance.link();
 		}
-	}
-
-	static {
-		defaultInstance.init(new Builder());
 	}
 }

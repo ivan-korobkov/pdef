@@ -1,11 +1,9 @@
 package pdef.provided;
 
 import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.ImmutableList;
 import pdef.*;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 public final class NativeListDescriptor implements ListDescriptor, NativeDescriptor {
@@ -27,9 +25,6 @@ public final class NativeListDescriptor implements ListDescriptor, NativeDescrip
 	public TypeDescriptor getElement() { return element; }
 
 	@Override
-	public List<?> getDefaultInstance() { return ImmutableList.of(); }
-
-	@Override
 	public SymbolTable<VariableDescriptor> getVariables() { return variables; }
 
 	@Override
@@ -49,9 +44,6 @@ public final class NativeListDescriptor implements ListDescriptor, NativeDescrip
 
 		@Override
 		public TypeDescriptor getElement() { return element; }
-
-		@Override
-		public Object getDefaultInstance() { return NativeListDescriptor.this.getDefaultInstance(); }
 
 		@Override
 		public SymbolTable<VariableDescriptor> getVariables() { return ImmutableSymbolTable.of(); }

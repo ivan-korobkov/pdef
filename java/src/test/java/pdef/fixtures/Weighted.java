@@ -16,14 +16,12 @@ public class Weighted<T> extends GeneratedMessage {
 	private T element;
 	private int weight;
 
-	protected Weighted() {}
-
-	protected Weighted(final Builder<T> builder) {
-		init(builder);
+	private Weighted() {
+		this(new Builder<T>());
 	}
 
-	protected void init(final Builder<T> builder) {
-		super.init(builder);
+	protected Weighted(final Builder<T> builder) {
+		super(builder);
 		element = builder.getElement();
 		weight = builder.getWeight();
 	}
@@ -118,17 +116,8 @@ public class Weighted<T> extends GeneratedMessage {
 			declaredFields = ImmutableSymbolTable.of(elementField, weightField);
 		}
 
-		@Override
-		public Weighted<?> getDefaultInstance() {
-			return defaultInstance;
-		}
-
 		static {
 			instance.link();
 		}
-	}
-
-	static {
-		defaultInstance.init(new Builder<Object>());
 	}
 }

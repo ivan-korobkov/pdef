@@ -12,28 +12,34 @@ public class Image extends Entity {
 
 	private User user;
 
-	protected Image() {
-		super();
+	private Image() {
+		this(new Builder());
 	}
 
 	protected Image(final Builder builder) {
-		init(builder);
-	}
-
-	protected void init(final Builder builder) {
-		super.init(builder);
+		super(builder);
 		user = builder.getUser();
 	}
 
-	public User getUser() { return user; }
+	public User getUser() {
+		if (user == null) {
+			return User.getDefaultInstance();
+		}
+		return user;
+	}
 
 	@Override
 	public MessageDescriptor getDescriptor() { return Image.Descriptor.getInstance(); }
 
 	public static class Builder extends Entity.Builder {
-		private User user = User.getDefaultInstance();
+		private User user;
 
-		public User getUser() { return user; }
+		public User getUser() {
+			if (user == null) {
+				return User.getDefaultInstance();
+			}
+			return user;
+		}
 
 		public Builder setUser(final User user) { this.user = user; return this; }
 
@@ -89,15 +95,8 @@ public class Image extends Entity {
 			declaredFields = ImmutableSymbolTable.of(userField);
 		}
 
-		@Override
-		public Image getDefaultInstance() { return defaultInstance; }
-
 		static {
 			instance.link();
 		}
-	}
-
-	static {
-		defaultInstance.init(new Builder());
 	}
 }

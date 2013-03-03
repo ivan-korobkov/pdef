@@ -1,12 +1,7 @@
 package pdef.provided;
 
 import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.ImmutableMap;
-import pdef.ImmutableSymbolTable;
-import pdef.SymbolTable;
-import pdef.MapDescriptor;
-import pdef.TypeDescriptor;
-import pdef.VariableDescriptor;
+import pdef.*;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -27,9 +22,6 @@ public final class NativeMapDescriptor implements MapDescriptor, NativeDescripto
 		value = new NativeVariableDescriptor("V");
 		variables = ImmutableSymbolTable.of(key, value);
 	}
-
-	@Override
-	public Object getDefaultInstance() { return ImmutableMap.of(); }
 
 	@Override
 	public SymbolTable<VariableDescriptor> getVariables() { return variables; }
@@ -58,9 +50,6 @@ public final class NativeMapDescriptor implements MapDescriptor, NativeDescripto
 			this.key = checkNotNull(key);
 			this.value = checkNotNull(value);
 		}
-
-		@Override
-		public Object getDefaultInstance() { return NativeMapDescriptor.this.getDefaultInstance(); }
 
 		@Override
 		public SymbolTable<VariableDescriptor> getVariables() { return ImmutableSymbolTable.of(); }

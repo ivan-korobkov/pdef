@@ -14,21 +14,22 @@ public class Node<T> extends Entity {
 	private RootNode<T> root;
 	private T element;
 
-	protected Node() {
-		super();
+	private Node() {
+		this(new Builder<T>());
 	}
 
 	protected Node(final Builder<T> builder) {
-		init(builder);
-	}
-
-	protected void init(final Builder<T> builder) {
-		super.init(builder);
+		super(builder);
 		this.root = builder.getRoot();
 		this.element = builder.getElement();
 	}
 
-	public RootNode<T> getRoot() { return root; }
+	public RootNode<T> getRoot() {
+		if (root == null) {
+			return (RootNode<T>) RootNode.getDefaultInstance();
+		}
+		return root;
+	}
 
 	public T getElement() { return element; }
 
@@ -36,7 +37,7 @@ public class Node<T> extends Entity {
 	public MessageDescriptor getDescriptor() { return Descriptor.getInstance(); }
 
 	public static class Builder<T> extends Entity.Builder {
-		private RootNode<T> root = (RootNode<T>) RootNode.getDefaultInstance();
+		private RootNode<T> root;
 		private T element = null;
 
 		public RootNode<T> getRoot() { return root; }
@@ -119,17 +120,8 @@ public class Node<T> extends Entity {
 			declaredFields = ImmutableSymbolTable.of(rootField, elementField);
 		}
 
-		@Override
-		public Node<?> getDefaultInstance() {
-			return defaultInstance;
-		}
-
 		static {
 			instance.link();
 		}
-	}
-
-	static {
-		defaultInstance.init(new Builder<Object>());
 	}
 }

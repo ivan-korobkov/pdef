@@ -1,12 +1,7 @@
 package pdef.provided;
 
 import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.ImmutableSet;
-import pdef.ImmutableSymbolTable;
-import pdef.SymbolTable;
-import pdef.SetDescriptor;
-import pdef.TypeDescriptor;
-import pdef.VariableDescriptor;
+import pdef.*;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -30,9 +25,6 @@ public final class NativeSetDescriptor implements SetDescriptor, NativeDescripto
 	public TypeDescriptor getElement() { return element; }
 
 	@Override
-	public Object getDefaultInstance() { return ImmutableSet.of(); }
-
-	@Override
 	public SymbolTable<VariableDescriptor> getVariables() { return variables; }
 
 	@Override
@@ -52,9 +44,6 @@ public final class NativeSetDescriptor implements SetDescriptor, NativeDescripto
 
 		@Override
 		public TypeDescriptor getElement() { return element; }
-
-		@Override
-		public Object getDefaultInstance() { return NativeSetDescriptor.this.getDefaultInstance(); }
 
 		@Override
 		public SymbolTable<VariableDescriptor> getVariables() { return ImmutableSymbolTable.of(); }

@@ -112,11 +112,11 @@ public class {{ type }} extends {{ base_class }} {
 
 		@Override
 		protected void init() {
-		    base = {% if base %}{{ base.descriptor }}{% else %}null{% endif %};
+		    base = {% if base %}{{ base.descriptor|indent(16) }}{% else %}null{% endif %};
 
 {% for field in declared_fields %}
 			{{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
-			        {{ field.type.descriptor }}) {
+			        {{ field.type.descriptor|indent(24) }}) {
 				@Override
 				public Object get(final pdef.Message message) {
 					return (({{ name }}) message).{{ field.getter }}();

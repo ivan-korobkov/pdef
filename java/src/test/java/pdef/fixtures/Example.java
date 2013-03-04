@@ -4,7 +4,7 @@ import pdef.SymbolTable;
 import pdef.VariableDescriptor;
 import pdef.provided.NativeVariableDescriptor;
 
-public class Example<T> extends Base<T> {
+public class Example<T> extends pdef.fixtures.Base<T> {
 	private static final Example<?> defaultInstance = new Example();
 
 	public static Example<?> getDefaultInstance() {
@@ -41,7 +41,7 @@ public class Example<T> extends Base<T> {
 		return Descriptor.instance;
 	}
 
-	public static class Builder<T> extends Base.Builder<T> {
+	public static class Builder<T> extends pdef.fixtures.Base.Builder<T> {
 		private T field1;
 		private int field2;
 
@@ -120,7 +120,8 @@ public class Example<T> extends Base<T> {
 
 		@Override
 		protected void init() {
-			base = Base.getClassDescriptor();
+			base = pdef.fixtures.Base.getClassDescriptor().parameterize(
+					variableT);
 
 			field1Field = new pdef.generated.GeneratedFieldDescriptor("field1",
 					variableT) {

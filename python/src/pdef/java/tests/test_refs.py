@@ -123,3 +123,40 @@ class TestNativeJavaRef(unittest.TestCase):
 
     def test_default(self):
         assert str(self.ref.default) == self.default
+
+
+class TestParameterizedJavaRef(unittest.TestCase):
+    def setUp(self):
+        string = Message('string')
+        List = Message('List', variables=[Variable('T')])
+        Map = Message('Map', variables=[Variable('K'), Variable('V')])
+        module = Module('collect')
+        module.add_definitions(List, Map)
+
+        ptype = Map.parameterize(string, List.parameterize(string))
+        self.ref = JavaRef.from_lang(ptype)
+
+    def test(self):
+        assert str(self.ref) == 'collect.Map<string, collect.List<string>>'
+
+    def test_local(self):
+        assert str(self.ref.local) == 'Map<string, collect.List<string>>'
+
+    def test_raw(self):
+        assert str(self.ref.raw) == 'collect.Map'
+
+    def test_boxed(self):
+        assert str(self.ref) == str(self.ref.boxed)
+
+    def test_wildcard(self):
+        assert str(self.ref.wildcard) == 'collect.Map<string, collect.List<string>>'
+
+    def test_local_wildcard(self):
+        assert str(self.ref.local.wildcard) == 'Map<string, collect.List<string>>'
+
+    def test_descriptor(self):
+        assert self.ref.descriptor == \
+'''collect.Map.getClassDescriptor().parameterize(
+        string.getClassDescriptor(),
+        collect.List.getClassDescriptor().parameterize(
+                string.getClassDescriptor()))'''

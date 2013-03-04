@@ -9,6 +9,8 @@ class JavaRef(object):
             return NativeJavaRef(ref)
         elif isinstance(ref, lang.Variable):
             return VariableJavaRef(ref)
+        elif isinstance(ref, lang.ParameterizedType):
+            return ParameterizedJavaRef(ref)
         else:
             return TypeJavaRef(ref)
 
@@ -91,3 +93,23 @@ class SimpleJavaRef(JavaRef):
         super(SimpleJavaRef, self).__init__(name)
         self.package = package
         self.variables = variables
+
+
+class ParameterizedJavaRef(JavaRef):
+    def __init__(self, ptype):
+        super(ParameterizedJavaRef, self).__init__(ptype.rawtype)
+        self.rawtype = JavaRef.from_lang(ptype.rawtype)
+        self.name = self.rawtype.name
+        self.package = self.rawtype.package
+
+        self.variables = tuple(JavaRef.from_lang(var) for var in ptype.variables)
+        self.descriptor = self._create_descriptor()
+
+    def _create_descriptor(self):
+        descriptor = self.rawtype.descriptor
+        vars = ',\n'.join(indent(var.descriptor) for var in self.variables)
+        return '%s.parameterize(\n%s)' % (descriptor, vars)
+
+
+def indent(s, spaces=4):
+    return '\n'.join((spaces * ' ') + line for line in s.splitlines())

@@ -48,7 +48,7 @@ class ParameterizedType(Type):
         self.variables = SymbolTable(self)
         for var, arg in zip(self.rawtype.variables, variables):
             self.variables.add_with_name(var, arg)
-            self._add_child(arg)
+            self._add_child(arg, always_parent=False)
 
     def bind(self, arg_map):
         bvariables = []

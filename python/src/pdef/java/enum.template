@@ -11,9 +11,9 @@ public enum {{ name }} implements pdef.EnumType {
 		return descriptor;
 	}
 
-	private static final EnumDescriptor descriptor =
+	private static final pdef.EnumDescriptor descriptor =
 	        new pdef.generated.GeneratedEnumDescriptor({{ name }}.class);
-	public static EnumDescriptor getClassDescriptor() {
+	public static pdef.EnumDescriptor getClassDescriptor() {
 		return descriptor;
 	}
 }

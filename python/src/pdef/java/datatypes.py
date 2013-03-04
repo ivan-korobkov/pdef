@@ -24,15 +24,26 @@ class JavaMessage(object):
         if msg.base:
             base = msg.base
             self.base = JavaRef.from_lang(base)
+            self.base_type = JavaRef.from_lang(msg.base_type)
             self.base_class = self.base
             self.base_builder = SimpleJavaRef('Builder', str(self.base.raw),
                     variables=tuple(JavaRef.from_lang(var) for var in base.variables))
         else:
             self.base = None
+            self.base_type = None
             self.base_class = SimpleJavaRef('pdef.generated.GeneratedMessage')
             self.base_builder = SimpleJavaRef('pdef.generated.GeneratedMessage.Builder')
 
         self.variables = tuple(JavaRef.from_lang(var) for var in msg.variables)
+
+        self.is_polymorphic = msg.is_polymorphic
+        if self.is_polymorphic:
+            polymorphism = msg.polymorphism
+            self.subtypes = tuple((JavaRef.from_lang(k), JavaRef.from_lang(v))
+                for k, v in polymorphism.map.items())
+            self.type_field = JavaField(polymorphism.field)
+            self.default_type = JavaRef.from_lang(polymorphism.default_type)
+
         self.declared_fields = tuple(JavaField(field) for field in msg.declared_fields)
 
     @property

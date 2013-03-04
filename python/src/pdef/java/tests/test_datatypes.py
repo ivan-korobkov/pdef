@@ -81,3 +81,43 @@ class TestGenericInheritedJavaMessage(unittest.TestCase):
         jmsg = JavaMessage(self.msg)
         print jmsg.code
         assert jmsg.code
+
+
+class TestPolymorphicJavaMessage(unittest.TestCase):
+    def setUp(self):
+        base_type = EnumValue('BASE')
+        user_type = EnumValue('USER')
+        photo_type = EnumValue('PHOTO')
+        enum = Enum('Type')
+        enum.add_values(base_type, user_type, photo_type)
+
+        field = Field('discriminator', enum)
+        base = Message('Base', polymorphism=MessagePolymorphism(field, base_type))
+        base.add_fields(field)
+
+        user = Message('User', base=base, base_type=user_type)
+        photo = Message('Photo', base=base, base_type=photo_type)
+
+        base.compile_polymorphism()
+        user.compile_base_type()
+        photo.compile_base_type()
+
+        module = Module('pdef.fixtures')
+        module.add_definitions(enum, base, user, photo)
+        self.type = enum
+        self.base = base
+        self.user = user
+        self.photo = photo
+
+    def test(self):
+        jtype = JavaEnum(self.type)
+        print jtype.code
+
+        jbase = JavaMessage(self.base)
+        print jbase.code
+
+        juser = JavaMessage(self.user)
+        print juser.code
+
+        jphoto = JavaMessage(self.photo)
+        print jphoto.code

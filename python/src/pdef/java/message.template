@@ -77,7 +77,17 @@ public class {{ type }} extends {{ base_class }} {
 {% endfor %}
         private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
 
+{% if base %}
         private pdef.MessageDescriptor base;
+        private Enum<?> baseType;
+
+{% endif %}
+{% if is_polymorphic %}
+        private Enum<?> defaultType;
+        private pdef.FieldDescriptor typeField;
+        private java.util.Map<Enum<?>, pdef.MessageDescriptor> subtypes;
+{% endif %}
+
 {% for field in declared_fields %}
         private pdef.FieldDescriptor {{ field.name }}Field;
 {% endfor %}
@@ -94,14 +104,20 @@ public class {{ type }} extends {{ base_class }} {
 
 {% endfor %});
 		}
-
+{% if base %}
 		@Override
         public pdef.MessageDescriptor getBase() {
             return base;
         }
 
+        @Override
+        public Enum<?> getBaseType() {
+            return baseType;
+        }
+
+{% endif %}
 		@Override
-        public SymbolTable<VariableDescriptor> getVariables() {
+        public pdef.SymbolTable<pdef.VariableDescriptor> getVariables() {
             return variables;
         }
 
@@ -109,12 +125,30 @@ public class {{ type }} extends {{ base_class }} {
 		public pdef.SymbolTable<pdef.FieldDescriptor> getDeclaredFields() {
 		    return declaredFields;
 		}
+{% if is_polymorphic %}
+
+        @Override
+        public pdef.FieldDescriptor getTypeField() {
+            return typeField;
+        }
+
+        @Override
+        public Enum<?> getDefaultType() {
+            return defaultType;
+        }
+
+        @Override
+        public java.util.Map<Enum<?>, pdef.MessageDescriptor> getSubtypes() {
+            return subtypes;
+        }
+{% endif %}
 
 		@Override
 		protected void init() {
 		    base = {% if base %}{{ base.descriptor|indent(16) }}{% else %}null{% endif %};
+		    baseType = {% if base_type %}{{ base_type }}{% else %}null{% endif %};
 
-{% for field in declared_fields %}
+            {% for field in declared_fields %}
 			{{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
 			        {{ field.type.descriptor|indent(24) }}) {
 				@Override
@@ -142,12 +176,22 @@ public class {{ type }} extends {{ base_class }} {
 				}
 			};
 
-{% endfor %}
+            {% endfor %}
 			declaredFields = pdef.ImmutableSymbolTable.of(
-{% for field in declared_fields %}
+            {% for field in declared_fields %}
                     {{ field.name }}Field{% if not loop.last and loop.length > 1 %}, {% endif %}
 
-{% endfor %});
+            {% endfor %});
+            {% if is_polymorphic %}
+
+            typeField = {{ type_field.name }}Field;
+            defaultType = {{ default_type }};
+            subtypes = com.google.common.collect.ImmutableMap.<Enum<?>, pdef.MessageDescriptor>builder()
+            {% for enum_value, message in subtypes %}
+                    .put({{ enum_value }}, {{ message.descriptor }})
+            {% endfor %}
+                    .build();
+            {% endif %}
 		}
 
 		static {

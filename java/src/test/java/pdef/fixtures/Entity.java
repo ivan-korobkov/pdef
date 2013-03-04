@@ -68,7 +68,7 @@ public class Entity extends GeneratedMessage {
 		public Enum<?> getBaseType() { return Type.ENTITY; }
 
 		@Override
-		public Map<Enum<?>, MessageDescriptor> getTypeMap() { return typeMap; }
+		public Map<Enum<?>, MessageDescriptor> getSubtypes() { return typeMap; }
 
 		@Override
 		public SymbolTable<FieldDescriptor> getDeclaredFields() { return declaredFields; }

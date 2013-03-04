@@ -72,6 +72,10 @@ class Message(Type):
             return self._polymorphism
         return self.base.polymorphism if self.base else None
 
+    @property
+    def is_polymorphic(self):
+        return bool(self._polymorphism)
+
     def set_base(self, base, base_type):
         '''Set this message inheritance.'''
         check_state(not self.base, 'base is already set in %s', self)
@@ -176,6 +180,10 @@ class ParameterizedMessage(ParameterizedType):
         return self.rawtype.polymorphism
 
     @property
+    def is_polymorphic(self):
+        return self.rawtype.is_polymorphic
+
+    @property
     def declared_fields(self):
         self._check_built()
         return self._declared_fields
@@ -263,7 +271,7 @@ class Enum(Type):
             self._add_symbol(value)
 
 
-class EnumValue(Symbol):
+class EnumValue(Type):
     def __init__(self, name):
         super(EnumValue, self).__init__(name)
 

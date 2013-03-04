@@ -35,9 +35,21 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 	}
 
 	@Override
-	public Map<Enum<?>, MessageDescriptor> getTypeMap() {
+	public Enum<?> getDefaultType() {
 		MessageDescriptor base = getBase();
-		return base != null ? base.getTypeMap() : ImmutableMap.<Enum<?>, MessageDescriptor>of();
+		return base == null ? null : base.getDefaultType();
+	}
+
+	@Override
+	public FieldDescriptor getTypeField() {
+		MessageDescriptor base = getBase();
+		return base == null ? null : base.getTypeField();
+	}
+
+	@Override
+	public Map<Enum<?>, MessageDescriptor> getSubtypes() {
+		MessageDescriptor base = getBase();
+		return base == null ? ImmutableMap.<Enum<?>, MessageDescriptor>of() : base.getSubtypes();
 	}
 
 	@Override

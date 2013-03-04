@@ -1,29 +1,25 @@
 package pdef.fixtures;
 
-import pdef.SymbolTable;
-import pdef.VariableDescriptor;
-import pdef.provided.NativeVariableDescriptor;
+public class Base extends pdef.generated.GeneratedMessage {
+	private static final Base defaultInstance = new Base();
 
-public class Base<R> extends pdef.generated.GeneratedMessage {
-	private static final Base<?> defaultInstance = new Base();
-
-	public static Base<?> getDefaultInstance() {
+	public static Base getDefaultInstance() {
 		return defaultInstance;
 	}
 
-	private final R field0;
+	private final pdef.fixtures.Type discriminator;
 
 	protected Base() {
-		this(new Builder<R>());
+		this(new Builder());
 	}
 
-	protected Base(final Builder<R> builder) {
+	protected Base(final Builder builder) {
 		super(builder);
-		this.field0 = builder.getField0();
+		this.discriminator = builder.getDiscriminator();
 	}
 
-	public R getField0() {
-		return field0;
+	public pdef.fixtures.Type getDiscriminator() {
+		return discriminator;
 	}
 
 	@Override
@@ -35,26 +31,26 @@ public class Base<R> extends pdef.generated.GeneratedMessage {
 		return Descriptor.instance;
 	}
 
-	public static class Builder<R> extends pdef.generated.GeneratedMessage.Builder {
-		private R field0;
+	public static class Builder extends pdef.generated.GeneratedMessage.Builder {
+		private pdef.fixtures.Type discriminator;
 
-		public R getField0() {
-			return field0;
+		public pdef.fixtures.Type getDiscriminator() {
+			return discriminator;
 		}
 
-		public Builder<R> setField0(final R value) {
-			this.field0 = value;
+		public Builder setDiscriminator(final pdef.fixtures.Type value) {
+			this.discriminator = value;
 			return this;
 		}
 
-		public Builder<R> clearField0() {
-			this.field0 = null;
+		public Builder clearDiscriminator() {
+			this.discriminator = null;
 			return this;
 		}
 
 		@Override
-		public Base<R> build() {
-			return new Base<R>(this);
+		public Base build() {
+			return new Base(this);
 		}
 
 		@Override
@@ -66,23 +62,15 @@ public class Base<R> extends pdef.generated.GeneratedMessage {
 	public static class Descriptor extends pdef.generated.GeneratedMessageDescriptor {
 		private static final Descriptor instance = new Descriptor();
 
-		private final pdef.VariableDescriptor variableR;
-		private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
+		private Enum<?> defaultType;
+		private pdef.FieldDescriptor typeField;
+		private java.util.Map<Enum<?>, pdef.MessageDescriptor> subtypes;
 
-		private pdef.FieldDescriptor field0Field;
+		private pdef.FieldDescriptor discriminatorField;
 		private pdef.SymbolTable<pdef.FieldDescriptor> declaredFields;
 
 		protected Descriptor() {
 			super(Base.class);
-			variableR = new NativeVariableDescriptor("R");
-			variables = pdef.ImmutableSymbolTable.of(
-					variableR
-			);
-		}
-
-		@Override
-		public SymbolTable<VariableDescriptor> getVariables() {
-			return variables;
 		}
 
 		@Override
@@ -91,17 +79,32 @@ public class Base<R> extends pdef.generated.GeneratedMessage {
 		}
 
 		@Override
+		public pdef.FieldDescriptor getTypeField() {
+			return typeField;
+		}
+
+		@Override
+		public Enum<?> getDefaultType() {
+			return defaultType;
+		}
+
+		@Override
+		public java.util.Map<Enum<?>, pdef.MessageDescriptor> getSubtypes() {
+			return subtypes;
+		}
+
+		@Override
 		protected void init() {
-			field0Field = new pdef.generated.GeneratedFieldDescriptor("field0",
-					variableR) {
+			discriminatorField = new pdef.generated.GeneratedFieldDescriptor("discriminator",
+					pdef.fixtures.Type.getClassDescriptor()) {
 				@Override
 				public Object get(final pdef.Message message) {
-					return ((Base) message).getField0();
+					return ((Base) message).getDiscriminator();
 				}
 
 				@Override
 				public Object get(final pdef.Message.Builder builder) {
-					return ((Builder) builder).getField0();
+					return ((Builder) builder).getDiscriminator();
 				}
 
 				@Override
@@ -109,19 +112,27 @@ public class Base<R> extends pdef.generated.GeneratedMessage {
 					if (value == null) {
 						clear(builder);
 					} else {
-						((Builder) builder).setField0((Object) value);
+						((Builder) builder).setDiscriminator((pdef.fixtures.Type) value);
 					}
 				}
 
 				@Override
 				public void clear(final pdef.Message.Builder builder) {
-					((Builder) builder).clearField0();
+					((Builder) builder).clearDiscriminator();
 				}
 			};
 
 			declaredFields = pdef.ImmutableSymbolTable.of(
-					field0Field
+					discriminatorField
 			);
+
+			typeField = discriminatorField;
+			defaultType = pdef.fixtures.Type.BASE;
+			subtypes = com.google.common.collect.ImmutableMap.<Enum<?>, pdef.MessageDescriptor>builder()
+					.put(pdef.fixtures.Type.BASE, pdef.fixtures.Base.getClassDescriptor())
+					.put(pdef.fixtures.Type.PHOTO, pdef.fixtures.Photo.getClassDescriptor())
+					.put(pdef.fixtures.Type.USER, pdef.fixtures.User.getClassDescriptor())
+					.build();
 		}
 
 		static {

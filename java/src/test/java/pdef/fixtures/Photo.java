@@ -1,17 +1,18 @@
 package pdef.fixtures;
 
-public class User extends pdef.fixtures.Base {
-	private static final User defaultInstance = new User();
+public class Photo extends pdef.fixtures.Base {
+	private static final Photo defaultInstance = new Photo();
 
-	public static User getDefaultInstance() {
+	public static Photo getDefaultInstance() {
 		return defaultInstance;
 	}
 
-	protected User() {
+
+	protected Photo() {
 		this(new Builder());
 	}
 
-	protected User(final Builder builder) {
+	protected Photo(final Builder builder) {
 		super(builder);
 	}
 
@@ -27,8 +28,8 @@ public class User extends pdef.fixtures.Base {
 	public static class Builder extends pdef.fixtures.Base.Builder {
 
 		@Override
-		public User build() {
-			return new User(this);
+		public Photo build() {
+			return new Photo(this);
 		}
 
 		@Override
@@ -48,7 +49,7 @@ public class User extends pdef.fixtures.Base {
 		private pdef.SymbolTable<pdef.FieldDescriptor> declaredFields;
 
 		protected Descriptor() {
-			super(User.class);
+			super(Photo.class);
 			variables = pdef.ImmutableSymbolTable.of(
 			);
 		}
@@ -75,7 +76,7 @@ public class User extends pdef.fixtures.Base {
 		@Override
 		protected void init() {
 			base = pdef.fixtures.Base.getClassDescriptor();
-			baseType = pdef.fixtures.Type.USER;
+			baseType = pdef.fixtures.Type.PHOTO;
 
 			declaredFields = pdef.ImmutableSymbolTable.of(
 			);

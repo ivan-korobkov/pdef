@@ -7,6 +7,7 @@ public class Photo extends pdef.fixtures.Base {
 		return defaultInstance;
 	}
 
+	private pdef.fixtures.Base owner;
 
 	protected Photo() {
 		this(new Builder());
@@ -14,6 +15,20 @@ public class Photo extends pdef.fixtures.Base {
 
 	protected Photo(final Builder builder) {
 		super(builder);
+		if (builder.hasOwner()) {
+			this.owner = builder.getOwner();
+		}
+	}
+
+	public pdef.fixtures.Base getOwner() {
+		if (!hasOwner()) {
+			return null;
+		}
+		return owner;
+	}
+
+	public boolean hasOwner() {
+		return _fields.get(1);
 	}
 
 	@Override
@@ -26,6 +41,30 @@ public class Photo extends pdef.fixtures.Base {
 	}
 
 	public static class Builder extends pdef.fixtures.Base.Builder {
+		private pdef.fixtures.Base owner;
+
+		public pdef.fixtures.Base getOwner() {
+			if (!hasOwner()) {
+				return null;
+			}
+			return owner;
+		}
+
+		public boolean hasOwner() {
+			return _fields.get(1);
+		}
+
+		public Builder setOwner(final pdef.fixtures.Base value) {
+			this.owner = value;
+			_fields.set(1);
+			return this;
+		}
+
+		public Builder clearOwner() {
+			this.owner = null;
+			_fields.clear(1);
+			return this;
+		}
 
 		@Override
 		public Photo build() {
@@ -46,6 +85,7 @@ public class Photo extends pdef.fixtures.Base {
 		private pdef.MessageDescriptor base;
 		private Enum<?> baseType;
 
+		private pdef.FieldDescriptor ownerField;
 		private pdef.SymbolTable<pdef.FieldDescriptor> declaredFields;
 
 		protected Descriptor() {
@@ -78,7 +118,45 @@ public class Photo extends pdef.fixtures.Base {
 			base = pdef.fixtures.Base.getClassDescriptor();
 			baseType = pdef.fixtures.Type.PHOTO;
 
+			ownerField = new pdef.generated.GeneratedFieldDescriptor("owner",
+					pdef.fixtures.Base.getClassDescriptor()) {
+				@Override
+				public Object get(final pdef.Message message) {
+					return ((Photo) message).getOwner();
+				}
+
+				@Override
+				public Object get(final pdef.Message.Builder builder) {
+					return ((Builder) builder).getOwner();
+				}
+
+				@Override
+				public boolean isSet(final pdef.Message message) {
+					return ((Photo) message).hasOwner();
+				}
+
+				@Override
+				public boolean isSet(final pdef.Message.Builder builder) {
+					return ((Builder) builder).hasOwner();
+				}
+
+				@Override
+				public void set(final pdef.Message.Builder builder, final Object value) {
+					if (value == null) {
+						clear(builder);
+					} else {
+						((Builder) builder).setOwner((pdef.fixtures.Base) value);
+					}
+				}
+
+				@Override
+				public void clear(final pdef.Message.Builder builder) {
+					((Builder) builder).clearOwner();
+				}
+			};
+
 			declaredFields = pdef.ImmutableSymbolTable.of(
+					ownerField
 			);
 		}
 

@@ -1,7 +1,7 @@
 package pdef.fixtures;
 
 public enum Type implements pdef.EnumType {
-	BASE, USER, PHOTO;
+	ENTITY, BASE, USER, PHOTO;
 
 	@Override
 	public pdef.EnumDescriptor getDescriptor() {

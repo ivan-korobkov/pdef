@@ -36,6 +36,13 @@ class JavaMessage(object):
 
         self.variables = tuple(JavaRef.from_lang(var) for var in msg.variables)
 
+        index = len(msg.base.fields) if msg.base else 0
+        dfields = []
+        for field in msg.declared_fields:
+            dfields.append(JavaField(field, index))
+            index += 0
+        self.declared_fields = tuple(dfields)
+
         self.is_polymorphic = msg.is_polymorphic
         if self.is_polymorphic:
             polymorphism = msg.polymorphism
@@ -43,8 +50,6 @@ class JavaMessage(object):
                 for k, v in polymorphism.map.items())
             self.type_field = JavaField(polymorphism.field)
             self.default_type = JavaRef.from_lang(polymorphism.default_type)
-
-        self.declared_fields = tuple(JavaField(field) for field in msg.declared_fields)
 
     @property
     def code(self):
@@ -54,12 +59,14 @@ class JavaMessage(object):
 
 
 class JavaField(object):
-    def __init__(self, field):
+    def __init__(self, field, index=-1):
+        self.index = index
         self.name = field.name
         self.type = JavaRef.from_lang(field.type)
-        self.getter = 'get%s' % upper_first(self.name)
-        self.setter = 'set%s' % upper_first(self.name)
-        self.clearer = 'clear%s' % upper_first(self.name)
+        self.is_set = 'has%s' % upper_first(self.name)
+        self.get = 'get%s' % upper_first(self.name)
+        self.set = 'set%s' % upper_first(self.name)
+        self.clear = 'clear%s' % upper_first(self.name)
 
 
 class JavaEnum(object):

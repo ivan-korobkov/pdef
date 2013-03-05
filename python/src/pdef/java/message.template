@@ -8,7 +8,7 @@ public class {{ type }} extends {{ base_class }} {
 	}
 
 {% for field in declared_fields %}
-    private final {{ field.type }} {{ field.name }};
+    private {{ field.type }} {{ field.name }};
 {% endfor %}
 
 	protected {{ name }}() {
@@ -18,13 +18,22 @@ public class {{ type }} extends {{ base_class }} {
 	protected {{ name }}(final {{ builder }} builder) {
 		super(builder);
 {% for field in declared_fields %}
-        this.{{ field.name }} = builder.{{ field.getter }}();
+        if (builder.{{ field.is_set }}()) {
+            this.{{ field.name }} = builder.{{ field.get }}();
+        }
 {% endfor %}
 	}
 
 {% for field in declared_fields %}
-    public {{ field.type }} {{ field.getter }}() {
+    public {{ field.type }} {{ field.get }}() {
+        if (!{{ field.is_set }}()) {
+            return {{ field.type.default }};
+        }
         return {{ field.name }};
+    }
+
+    public boolean {{ field.is_set }}() {
+        return _fields.get({{ field.index }});
     }
 
 {% endfor %}
@@ -43,17 +52,26 @@ public class {{ type }} extends {{ base_class }} {
 {% endfor %}
 
 {% for field in declared_fields %}
-        public {{ field.type }} {{ field.getter }}() {
+        public {{ field.type }} {{ field.get }}() {
+            if (!{{ field.is_set }}()) {
+                return {{ field.type.default }};
+            }
             return {{ field.name }};
         }
 
-        public {{ builder }} {{ field.setter }}(final {{ field.type }} value) {
+        public boolean {{ field.is_set }}() {
+            return _fields.get({{ field.index }});
+        }
+
+        public {{ builder }} {{ field.set }}(final {{ field.type }} value) {
             this.{{ field.name }} = value;
+            _fields.set({{ field.index }});
             return this;
         }
 
-        public {{ builder }} {{ field.clearer }}() {
+        public {{ builder }} {{ field.clear }}() {
             this.{{ field.name }} = {{ field.type.default }};
+            _fields.clear({{ field.index }});
             return this;
         }
 
@@ -76,13 +94,13 @@ public class {{ type }} extends {{ base_class }} {
         private final pdef.VariableDescriptor variable{{ var }};
 {% endfor %}
         private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
-
 {% if base %}
+
         private pdef.MessageDescriptor base;
         private Enum<?> baseType;
-
 {% endif %}
 {% if is_polymorphic %}
+
         private Enum<?> defaultType;
         private pdef.FieldDescriptor typeField;
         private java.util.Map<Enum<?>, pdef.MessageDescriptor> subtypes;
@@ -145,20 +163,32 @@ public class {{ type }} extends {{ base_class }} {
 
 		@Override
 		protected void init() {
-		    base = {% if base %}{{ base.descriptor|indent(16) }}{% else %}null{% endif %};
-		    baseType = {% if base_type %}{{ base_type }}{% else %}null{% endif %};
+		    {% if base %}
+		    base = {{ base.descriptor|indent(16) }};
+		    baseType = {{ base_type }};
+		    {% endif %}
 
             {% for field in declared_fields %}
 			{{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
 			        {{ field.type.descriptor|indent(24) }}) {
 				@Override
 				public Object get(final pdef.Message message) {
-					return (({{ name }}) message).{{ field.getter }}();
+					return (({{ name }}) message).{{ field.get }}();
 				}
 
 				@Override
 				public Object get(final pdef.Message.Builder builder) {
-					return ((Builder) builder).{{ field.getter }}();
+					return ((Builder) builder).{{ field.get }}();
+				}
+
+				@Override
+				public boolean isSet(final pdef.Message message) {
+				    return (({{ name }}) message).{{ field.is_set }}();
+				}
+
+				@Override
+				public boolean isSet(final pdef.Message.Builder builder) {
+				    return ((Builder) builder).{{ field.is_set }}();
 				}
 
 				@Override
@@ -166,13 +196,13 @@ public class {{ type }} extends {{ base_class }} {
 				    if (value == null) {
 				        clear(builder);
 				    } else {
-					    ((Builder) builder).{{ field.setter }}(({{ field.type.boxed }}) value);
+					    ((Builder) builder).{{ field.set }}(({{ field.type.boxed }}) value);
 					}
 				}
 
 				@Override
 				public void clear(final pdef.Message.Builder builder) {
-				    ((Builder) builder).{{ field.clearer }}();
+				    ((Builder) builder).{{ field.clear }}();
 				}
 			};
 

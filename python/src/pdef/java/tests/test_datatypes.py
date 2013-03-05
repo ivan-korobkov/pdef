@@ -95,12 +95,19 @@ class TestPolymorphicJavaMessage(unittest.TestCase):
         base = Message('Base', polymorphism=MessagePolymorphism(field, base_type))
         base.add_fields(field)
 
-        user = Message('User', base=base, base_type=user_type)
-        photo = Message('Photo', base=base, base_type=photo_type)
+        photo = Message('Photo', base=base, base_type=photo_type, declared_fields=[
+            Field('owner', base)
+        ])
+        user = Message('User', base=base, base_type=user_type, declared_fields=[
+            Field('avatar', photo), Field('object', base)
+        ])
 
         base.compile_polymorphism()
+        base.compile_fields()
         user.compile_base_type()
+        user.compile_fields()
         photo.compile_base_type()
+        photo.compile_fields()
 
         module = Module('pdef.fixtures')
         module.add_definitions(enum, base, user, photo)

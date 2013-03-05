@@ -7,7 +7,7 @@ public class Base extends pdef.generated.GeneratedMessage {
 		return defaultInstance;
 	}
 
-	private final pdef.fixtures.Type discriminator;
+	private pdef.fixtures.Type discriminator;
 
 	protected Base() {
 		this(new Builder());
@@ -15,11 +15,20 @@ public class Base extends pdef.generated.GeneratedMessage {
 
 	protected Base(final Builder builder) {
 		super(builder);
-		this.discriminator = builder.getDiscriminator();
+		if (builder.hasDiscriminator()) {
+			this.discriminator = builder.getDiscriminator();
+		}
 	}
 
 	public pdef.fixtures.Type getDiscriminator() {
+		if (!hasDiscriminator()) {
+			return null;
+		}
 		return discriminator;
+	}
+
+	public boolean hasDiscriminator() {
+		return _fields.get(0);
 	}
 
 	@Override
@@ -35,16 +44,25 @@ public class Base extends pdef.generated.GeneratedMessage {
 		private pdef.fixtures.Type discriminator;
 
 		public pdef.fixtures.Type getDiscriminator() {
+			if (!hasDiscriminator()) {
+				return null;
+			}
 			return discriminator;
+		}
+
+		public boolean hasDiscriminator() {
+			return _fields.get(0);
 		}
 
 		public Builder setDiscriminator(final pdef.fixtures.Type value) {
 			this.discriminator = value;
+			_fields.set(0);
 			return this;
 		}
 
 		public Builder clearDiscriminator() {
 			this.discriminator = null;
+			_fields.clear(0);
 			return this;
 		}
 
@@ -62,6 +80,8 @@ public class Base extends pdef.generated.GeneratedMessage {
 	public static class Descriptor extends pdef.generated.GeneratedMessageDescriptor {
 		private static final Descriptor instance = new Descriptor();
 
+		private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
+
 		private Enum<?> defaultType;
 		private pdef.FieldDescriptor typeField;
 		private java.util.Map<Enum<?>, pdef.MessageDescriptor> subtypes;
@@ -71,6 +91,12 @@ public class Base extends pdef.generated.GeneratedMessage {
 
 		protected Descriptor() {
 			super(Base.class);
+			variables = pdef.ImmutableSymbolTable.of(
+			);
+		}
+		@Override
+		public pdef.SymbolTable<pdef.VariableDescriptor> getVariables() {
+			return variables;
 		}
 
 		@Override
@@ -95,6 +121,7 @@ public class Base extends pdef.generated.GeneratedMessage {
 
 		@Override
 		protected void init() {
+
 			discriminatorField = new pdef.generated.GeneratedFieldDescriptor("discriminator",
 					pdef.fixtures.Type.getClassDescriptor()) {
 				@Override
@@ -105,6 +132,16 @@ public class Base extends pdef.generated.GeneratedMessage {
 				@Override
 				public Object get(final pdef.Message.Builder builder) {
 					return ((Builder) builder).getDiscriminator();
+				}
+
+				@Override
+				public boolean isSet(final pdef.Message message) {
+					return ((Base) message).hasDiscriminator();
+				}
+
+				@Override
+				public boolean isSet(final pdef.Message.Builder builder) {
+					return ((Builder) builder).hasDiscriminator();
 				}
 
 				@Override

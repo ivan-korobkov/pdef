@@ -20,6 +20,7 @@ public class Base extends pdef.generated.GeneratedMessage {
 		}
 	}
 
+	@javax.annotation.Nullable
 	public pdef.fixtures.Type getDiscriminator() {
 		if (!hasDiscriminator()) {
 			return null;
@@ -43,6 +44,7 @@ public class Base extends pdef.generated.GeneratedMessage {
 	public static class Builder extends pdef.generated.GeneratedMessage.Builder {
 		private pdef.fixtures.Type discriminator;
 
+		@javax.annotation.Nullable
 		public pdef.fixtures.Type getDiscriminator() {
 			if (!hasDiscriminator()) {
 				return null;

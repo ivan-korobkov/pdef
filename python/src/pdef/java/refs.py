@@ -11,6 +11,8 @@ class JavaRef(object):
             return VariableJavaRef(ref)
         elif isinstance(ref, lang.ParameterizedType):
             return ParameterizedJavaRef(ref)
+        elif isinstance(ref, lang.Enum):
+            return EnumJavaRef(ref)
         else:
             return TypeJavaRef(ref)
 
@@ -37,6 +39,10 @@ class JavaRef(object):
     @property
     def generic(self):
         return bool(self.variables)
+
+    @property
+    def nullable(self):
+        return self.default == 'null'
 
     @property
     def local(self):
@@ -76,6 +82,12 @@ class TypeJavaRef(JavaRef):
             self.descriptor = '%s.%s.getClassDescriptor()' % (ref.parent.fullname, self.name)
         else:
             self.descriptor = '%s.getClassDescriptor()' % self.name
+
+
+class EnumJavaRef(TypeJavaRef):
+    def __init__(self, enum):
+        super(EnumJavaRef, self).__init__(enum)
+        self.default = JavaRef.from_lang(enum.values.items[0])
 
 
 class NativeJavaRef(JavaRef):

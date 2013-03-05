@@ -5,7 +5,6 @@ public enum {{ name }} implements pdef.EnumType {
         {{ value }}{% if not loop.last and loop.length > 1 %}, {% else %};{% endif %}
     {%- endfor %}
 
-
 	@Override
 	public pdef.EnumDescriptor getDescriptor() {
 		return descriptor;

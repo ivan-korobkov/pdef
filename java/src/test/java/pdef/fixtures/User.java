@@ -1,5 +1,7 @@
 package pdef.fixtures;
 
+import javax.annotation.Nullable;
+
 public class User extends pdef.fixtures.Base {
 	private static final User defaultInstance = new User();
 

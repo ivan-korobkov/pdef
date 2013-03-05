@@ -25,6 +25,9 @@ public class {{ type }} extends {{ base_class }} {
 	}
 
 {% for field in declared_fields %}
+{% if field.type.nullable %}
+    @javax.annotation.Nullable
+{% endif %}
     public {{ field.type }} {{ field.get }}() {
         if (!{{ field.is_set }}()) {
             return {{ field.type.default }};
@@ -52,6 +55,9 @@ public class {{ type }} extends {{ base_class }} {
 {% endfor %}
 
 {% for field in declared_fields %}
+{% if field.type.nullable %}
+        @javax.annotation.Nullable
+{% endif %}
         public {{ field.type }} {{ field.get }}() {
             if (!{{ field.is_set }}()) {
                 return {{ field.type.default }};

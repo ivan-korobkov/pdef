@@ -26,6 +26,9 @@ class TestJavaRef(unittest.TestCase):
     def test_boxed(self):
         assert str(self.ref) == str(self.ref.boxed)
 
+    def test_nullable(self):
+        assert self.ref.nullable
+
 
 class TestVariableJavaRef(unittest.TestCase):
     def setUp(self):
@@ -86,7 +89,10 @@ class TestTypeJavaRef(unittest.TestCase):
         assert self.ref.descriptor == 'module.Message.getClassDescriptor()'
 
     def test_default(self):
-        assert self.ref.default == 'null'
+        assert self.ref.default == 'module.Message.getDefaultInstance()'
+
+    def test_nullable(self):
+        assert not self.ref.nullable
 
 
 class TestNativeJavaRef(unittest.TestCase):
@@ -124,6 +130,9 @@ class TestNativeJavaRef(unittest.TestCase):
     def test_default(self):
         assert str(self.ref.default) == self.default
 
+    def test_nullable(self):
+        assert not self.ref.nullable
+
 
 class TestParameterizedJavaRef(unittest.TestCase):
     def setUp(self):
@@ -157,6 +166,10 @@ class TestParameterizedJavaRef(unittest.TestCase):
     def test_descriptor(self):
         assert self.ref.descriptor == \
 '''collect.Map.getClassDescriptor().parameterize(
-        string.getClassDescriptor(),
-        collect.List.getClassDescriptor().parameterize(
-                string.getClassDescriptor()))'''
+    string.getClassDescriptor(),
+    collect.List.getClassDescriptor().parameterize(
+        string.getClassDescriptor()))'''
+
+    def test_default(self):
+        assert self.ref.default == \
+               '(collect.Map<string, collect.List<string>>) collect.Map.getDefaultInstance()'

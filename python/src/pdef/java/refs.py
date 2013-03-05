@@ -83,9 +83,11 @@ class TypeJavaRef(JavaRef):
         self.variables = tuple(JavaRef.from_lang(var) for var in ref.variables)
 
         if ref.parent:
-            self.descriptor = '%s.%s.getClassDescriptor()' % (ref.parent.fullname, self.name)
+            self.descriptor = '%s.%s.getClassDescriptor()' % (self.package, self.name)
+            self.default = '%s.%s.getDefaultInstance()' % (self.package, self.name)
         else:
             self.descriptor = '%s.getClassDescriptor()' % self.name
+            self.default = '%s.getDefaultInstance()' % self.name
 
 
 class EnumJavaRef(TypeJavaRef):
@@ -120,6 +122,7 @@ class ParameterizedJavaRef(JavaRef):
 
         self.variables = tuple(JavaRef.from_lang(var) for var in ptype.variables)
         self.descriptor = self._create_descriptor()
+        self.default = '(%s) %s' % (self, self.rawtype.default)
 
     def _create_descriptor(self):
         descriptor = self.rawtype.descriptor

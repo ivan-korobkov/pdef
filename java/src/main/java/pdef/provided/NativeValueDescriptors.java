@@ -11,6 +11,7 @@ public class NativeValueDescriptors {
 	private static ValueDescriptor FLOAT0 = new NativeValueDescriptor(float.class);
 	private static ValueDescriptor DOUBLE0 = new NativeValueDescriptor(double.class);
 	private static ValueDescriptor STRING = new NativeValueDescriptor(String.class);
+	private static ValueDescriptor VOID = new NativeValueDescriptor(void.class);
 
 	private NativeValueDescriptors() {}
 
@@ -27,4 +28,6 @@ public class NativeValueDescriptors {
 	public static ValueDescriptor getDouble() { return DOUBLE0; }
 
 	public static ValueDescriptor getString() { return STRING; }
+
+	public static ValueDescriptor getVoid() { return VOID; }
 }

@@ -7,7 +7,6 @@ from pdef import lang
 
 
 class Tokens(object):
-
     # Simple reserved words.
     reserved = ('AS', 'ENUM', 'IMPORT', 'INHERITS', 'MESSAGE', 'ON', 'POLYMORPHIC', 'OPTIONS',
                 'MODULE', 'NATIVE')
@@ -173,8 +172,9 @@ class GrammarRules(object):
         '''
         name = t[2]
         variables = t[3]
-        options = t[5]
-        t[0] = lang.Native(name, variables=variables, options=options)
+        options = dict(t[5])
+        print options
+        t[0] = lang.Native(name, variables=variables, options=lang.NativeOptions(**options))
 
     # Enum definition.
     def p_enum(self, t):

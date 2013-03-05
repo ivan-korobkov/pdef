@@ -1,6 +1,11 @@
 module test.messages;
 
-native int32 {}
+native int32 {
+    java_type: "int",
+    java_boxed: "Integer",
+    java_descriptor: "pdef.provided.NativeValueDescriptors.getInt()",
+    java_default: "0"
+}
 native string {}
 native List<T> {}
 

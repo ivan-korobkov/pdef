@@ -51,6 +51,9 @@ class TestJavaMessage(unittest.TestCase):
 
 class TestGenericInheritedJavaMessage(unittest.TestCase):
     def setUp(self):
+        base_type = EnumValue('BASE')
+        message_type = EnumValue('MESSAGE')
+        enum = Enum('ExampleType', values=[base_type, message_type])
         int32 = Native('int32', options=NativeOptions(
             java_type='int',
             java_boxed='Integer',
@@ -59,16 +62,19 @@ class TestGenericInheritedJavaMessage(unittest.TestCase):
         ))
 
         base_var = Variable('R')
-        base = Message('Base', variables=[base_var],
+        base = Message('ExampleBase', variables=[base_var],
             declared_fields=[Field('field0', base_var)])
 
         var = Variable('T')
-        msg = Message('Example', variables=[var], base=base.parameterize(var),
-            base_type='type',
+        pbase = base.parameterize(var)
+        pbase.build()
+
+        msg = Message('ExampleMessage', variables=[var], base=pbase,
+            base_type=message_type,
             declared_fields=[Field('field1', var), Field('field2', int32)])
 
         module = Module('pdef.fixtures')
-        module.add_definitions(base, msg)
+        module.add_definitions(enum, base, msg)
 
         self.base = base
         self.msg = msg

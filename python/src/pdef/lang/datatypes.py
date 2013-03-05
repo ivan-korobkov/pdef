@@ -176,6 +176,18 @@ class ParameterizedMessage(ParameterizedType):
             base = base.base
 
     @property
+    def fields(self):
+        fields = SymbolTable(self)
+        reversed_bases = reversed(list(self.bases))
+        for base in reversed_bases:
+            for field in base.declared_fields:
+                fields.add(field)
+
+        for field in self.declared_fields:
+            fields.add(field)
+        return fields
+
+    @property
     def polymorphism(self):
         return self.rawtype.polymorphism
 

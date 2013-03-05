@@ -68,6 +68,10 @@ class VariableJavaRef(JavaRef):
         self.descriptor = 'variable%s' % self.name
 
     @property
+    def generic(self):
+        return True
+
+    @property
     def wildcard(self):
         return '?'
 

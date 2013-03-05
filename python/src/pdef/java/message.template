@@ -169,12 +169,12 @@ public class {{ type }} extends {{ base_class }} {
 
 		@Override
 		protected void init() {
-		    {% if base %}
+{% if base %}
 		    base = {{ base.descriptor|indent(16) }};
 		    baseType = {{ base_type }};
-		    {% endif %}
 
-            {% for field in declared_fields %}
+{% endif %}
+{% for field in declared_fields %}
 			{{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
 			        {{ field.type.descriptor|indent(24) }}) {
 				@Override
@@ -197,6 +197,9 @@ public class {{ type }} extends {{ base_class }} {
 				    return ((Builder) builder).{{ field.is_set }}();
 				}
 
+{% if field.type.generic %}
+                @SuppressWarnings("unchecked")
+{% endif %}
 				@Override
 				public void set(final pdef.Message.Builder builder, final Object value) {
 				    if (value == null) {
@@ -212,13 +215,13 @@ public class {{ type }} extends {{ base_class }} {
 				}
 			};
 
-            {% endfor %}
+{% endfor %}
 			declaredFields = pdef.ImmutableSymbolTable.of(
-            {% for field in declared_fields %}
+{% for field in declared_fields %}
                     {{ field.name }}Field{% if not loop.last and loop.length > 1 %}, {% endif %}
 
-            {% endfor %});
-            {% if is_polymorphic %}
+{% endfor %});
+{% if is_polymorphic %}
 
             typeField = {{ type_field.name }}Field;
             defaultType = {{ default_type }};
@@ -227,7 +230,7 @@ public class {{ type }} extends {{ base_class }} {
                     .put({{ enum_value }}, {{ message.descriptor }})
             {% endfor %}
                     .build();
-            {% endif %}
+{% endif %}
 		}
 
 		static {

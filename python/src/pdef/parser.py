@@ -173,7 +173,6 @@ class GrammarRules(object):
         name = t[2]
         variables = t[3]
         options = dict(t[5])
-        print options
         t[0] = lang.Native(name, variables=variables, options=lang.NativeOptions(**options))
 
     # Enum definition.

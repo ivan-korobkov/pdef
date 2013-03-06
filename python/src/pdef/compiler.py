@@ -1,112 +1,39 @@
-# encoding: utf-8
-import os
-import os.path
+#!/usr/bin/env python
+#encoding: utf-8
+import argparse
 import logging
-from pdef.lang import Package
 
-from pdef.linker import FieldCompiler
-from pdef.parser import Parser
-from pdef.preconditions import *
-from pdef.translators.java import JavaTranslator
-
-
-FILE_EXT = '.pdef'
-BUILTIN_FILE = os.path.join(os.path.dirname(__file__), "builtin.pdef")
+from pdef import Pdef
+from pdef.java import JavaPackage
 
 
 class Compiler(object):
-    def __init__(self, dirs, outdir, file_ext=FILE_EXT, with_builtin=True, debug=False):
-        self.dirs = tuple(dirs)
-        self.outdir = check_not_none(outdir)
-        self.file_ext = check_not_none(file_ext)
+    def __init__(self, path):
+        self.pdef = Pdef()
+        self.pdef.add_dirs(*path)
 
-        self.builtin = BUILTIN_FILE
-        self.with_builtin = with_builtin
+    def compile_java(self, outdir, *package_names):
+        for package_name in package_names:
+            package = self.pdef.get(package_name)
+            if not package:
+                raise ValueError('Package "%s" is not found' % package_name)
 
-        self.debug = debug
-        self.errors = []
+            jpackage = JavaPackage(package)
+            jpackage.write_to(outdir)
 
-    def _error(self, msg, *args):
-        logging.error(msg, *args)
-        self.errors.append(msg % args)
 
-    def compile(self):
-        # Scan directories for files.
-        filepaths = self._scan_dirs()
-        if self.errors:
-            return
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--verbose', help='increase output verbosity', action='store_true')
+    parser.add_argument('--debug', help='enable debug output', action='store_true', default=False)
+    parser.add_argument('--java', help='output directory for java files')
+    parser.add_argument('--path', help='specify package directories', nargs='+')
+    parser.add_argument('--packages', help='package names to compile', nargs='+')
+    args = parser.parse_args()
 
-        # Parse and translate the builtin package.
-        if self.with_builtin:
-            builtin_module = self._parse_file(self.builtin)
-            if self.errors:
-                return
+    level = logging.DEBUG if args.verbose or args.debug else logging.INFO
+    logging.basicConfig(format='%(message)s', level=level)
 
-            builtin = Package('builtin')
-            builtin.add_modules(builtin_module)
-
-            package = Package('default', builtin_package=builtin)
-        else:
-            package = Package('default')
-
-        modules = self._parse_files(filepaths)
-        if self.errors:
-            return
-
-        package.add_modules(*modules)
-        if self.errors:
-            return
-
-        package.build()
-        if self.errors:
-            return
-
-        print(package)
-        for module in package.modules:
-            print(module)
-
-        #logging.info("Generating java code...")
-        #java = JavaTranslator(self.outdir, pool)
-        #java.translate()
-        return package
-
-    def _scan_dirs(self):
-        filepaths = []
-        for d in self.dirs:
-            filepaths += self._scan_dir(d)
-
-        return filepaths
-
-    def _scan_dir(self, d, file_ext=FILE_EXT):
-        for dirpath, dirnames, filenames in os.walk(d):
-            logging.debug('Scanning %s', dirpath)
-            for filename in filenames:
-                ext = os.path.splitext(filename)[1].lower()
-                if ext != file_ext:
-                    continue
-
-                filepath = os.path.join(dirpath, filename)
-                logging.debug('Adding %s', filepath)
-                yield filepath
-
-    def _parse_files(self, filepaths):
-        pkg_nodes = []
-        for filename in filepaths:
-            pkg_node = self._parse_file(filename)
-            if not pkg_node:
-                continue
-
-            pkg_nodes.append(pkg_node)
-
-        return pkg_nodes
-
-    def _parse_file(self, filepath):
-        logging.info('Parsing %s', filepath)
-        with open(filepath, 'r') as f:
-            text = f.read()
-
-        parser = Parser(self.debug)
-        ast = parser.parse(text)
-
-        self.errors += parser.errors
-        return ast
+    compiler = Compiler(args.path)
+    if args.java:
+        compiler.compile_java(args.java, *args.packages)

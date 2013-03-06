@@ -1,18 +1,21 @@
-module default.fixtures;
-
-native int32 {}
-native string {}
-native List<T> {}
-
+module fixtures;
 
 message Message {
-    int     int32;
-    str     string;
-    list    List<string>;
-    msg2    Message2;
+    field0  bool;
+    field1  int16;
+    field2  int32;
+    field3  int64;
+    field4  float;
+    field5  double;
+    field6  string;
+    field7  list<string>;
+    field8  set<int32>;
+    field9  map<float, bool>;
+    field10 Message2;
 }
 
 
 message Message2 {
     msg1    Message;
 }
+

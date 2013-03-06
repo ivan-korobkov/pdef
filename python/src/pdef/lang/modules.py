@@ -71,8 +71,9 @@ class Builder(object):
 
 
 class Package(Symbol):
-    def __init__(self, name, builtin_package=None):
+    def __init__(self, name, version=None, builtin_package=None):
         super(Package, self).__init__(name)
+        self.version = version
 
         self.modules = SymbolTable(self)
         self.builtin = builtin_package

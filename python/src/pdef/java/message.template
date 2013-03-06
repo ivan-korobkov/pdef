@@ -1,30 +1,24 @@
 package {{ package }};
 
 public class {{ type }} extends {{ base_class }} {
-	private static final {{ type.wildcard }} defaultInstance = new {{ type.raw }}();
-
-	public static {{ type.wildcard }} getDefaultInstance() {
-		return defaultInstance;
-	}
 
 {% for field in declared_fields %}
     private {{ field.type }} {{ field.name }};
 {% endfor %}
 
-	protected {{ name }}() {
-	    this(new {{ builder }}());
-	}
+    protected {{ name }}() {
+        this(new {{ builder }}());
+    }
 
-	protected {{ name }}(final {{ builder }} builder) {
-		super(builder);
+    protected {{ name }}(final {{ builder }} builder) {
+        super(builder);
 {% for field in declared_fields %}
-        if (builder.{{ field.is_set }}()) {
-            this.{{ field.name }} = builder.{{ field.get }}();
-        }
+        if (builder.{{ field.is_set }}()) { this.{{ field.name }} = builder.{{ field.get }}(); }
 {% endfor %}
-	}
+    }
 
 {% for field in declared_fields %}
+    // {{ field.name }}
 {% if field.type.nullable %}
     @javax.annotation.Nullable
 {% endif %}
@@ -40,28 +34,33 @@ public class {{ type }} extends {{ base_class }} {
     }
 
 {% endfor %}
-	@Override
-	public pdef.MessageDescriptor getDescriptor() {
-	    return Descriptor.instance;
-	}
+    @Override
+    public pdef.MessageDescriptor getDescriptor() {
+        return Descriptor.instance;
+    }
 
     public static pdef.MessageDescriptor getClassDescriptor() {
         return Descriptor.instance;
     }
 
-	public static class {{ builder }} extends {{ base_builder }} {
+    private static final {{ type.wildcard }} defaultInstance = new {{ type.raw }}();
+
+    public static {{ type.wildcard }} getDefaultInstance() {
+        return defaultInstance;
+    }
+
+    public static class {{ builder }} extends {{ base_builder }} {
 {% for field in declared_fields %}
         private {{ field.type }} {{ field.name }};
 {% endfor %}
 
 {% for field in declared_fields %}
+        // {{ field.name }}
 {% if field.type.nullable %}
         @javax.annotation.Nullable
 {% endif %}
         public {{ field.type }} {{ field.get }}() {
-            if (!{{ field.is_set }}()) {
-                return {{ field.type.default }};
-            }
+            if (!{{ field.is_set }}()) { return {{ field.type.default }}; }
             return {{ field.name }};
         }
 
@@ -82,19 +81,19 @@ public class {{ type }} extends {{ base_class }} {
         }
 
 {% endfor %}
-		@Override
-		public {{ type }} build() {
-		    return new {{ type }}(this);
-		}
+        @Override
+        public {{ type }} build() {
+            return new {{ type }}(this);
+        }
 
-		@Override
-		public pdef.MessageDescriptor getDescriptor() {
-		    return Descriptor.instance;
-		}
-	}
+        @Override
+        public pdef.MessageDescriptor getDescriptor() {
+            return Descriptor.instance;
+        }
+    }
 
-	public static class Descriptor extends pdef.generated.GeneratedMessageDescriptor {
-		private static final Descriptor instance = new Descriptor();
+    public static class Descriptor extends pdef.generated.GeneratedMessageDescriptor {
+        private static final Descriptor instance = new Descriptor();
 
 {% for var in variables %}
         private final pdef.VariableDescriptor variable{{ var }};
@@ -115,10 +114,10 @@ public class {{ type }} extends {{ base_class }} {
 {% for field in declared_fields %}
         private pdef.FieldDescriptor {{ field.name }}Field;
 {% endfor %}
-		private pdef.SymbolTable<pdef.FieldDescriptor> declaredFields;
+        private pdef.SymbolTable<pdef.FieldDescriptor> declaredFields;
 
-		protected Descriptor() {
-		    super({{ name }}.class);
+        protected Descriptor() {
+            super({{ name }}.class);
 {% for var in variables %}
             variable{{ var }} = new NativeVariableDescriptor("{{ var.name }}");
 {% endfor %}
@@ -127,9 +126,9 @@ public class {{ type }} extends {{ base_class }} {
                     variable{{ var.name }}{% if not loop.last and loop.length > 1 %}, {% endif %}
 
 {% endfor %});
-		}
+        }
 {% if base %}
-		@Override
+        @Override
         public pdef.MessageDescriptor getBase() {
             return base;
         }
@@ -140,15 +139,15 @@ public class {{ type }} extends {{ base_class }} {
         }
 
 {% endif %}
-		@Override
+        @Override
         public pdef.SymbolTable<pdef.VariableDescriptor> getVariables() {
             return variables;
         }
 
-		@Override
-		public pdef.SymbolTable<pdef.FieldDescriptor> getDeclaredFields() {
-		    return declaredFields;
-		}
+        @Override
+        public pdef.SymbolTable<pdef.FieldDescriptor> getDeclaredFields() {
+            return declaredFields;
+        }
 {% if is_polymorphic %}
 
         @Override
@@ -167,56 +166,56 @@ public class {{ type }} extends {{ base_class }} {
         }
 {% endif %}
 
-		@Override
-		protected void init() {
+        @Override
+        protected void init() {
 {% if base %}
-		    base = {{ base.descriptor|indent(16) }};
-		    baseType = {{ base_type }};
+            base = {{ base.descriptor|indent(16) }};
+            baseType = {{ base_type }};
 
 {% endif %}
 {% for field in declared_fields %}
-			{{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
-			        {{ field.type.descriptor|indent(24) }}) {
-				@Override
-				public Object get(final pdef.Message message) {
-					return (({{ name }}) message).{{ field.get }}();
-				}
+            {{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
+                    {{ field.type.descriptor|indent(24) }}) {
+                @Override
+                public Object get(final pdef.Message message) {
+                    return (({{ name }}) message).{{ field.get }}();
+                }
 
-				@Override
-				public Object get(final pdef.Message.Builder builder) {
-					return ((Builder) builder).{{ field.get }}();
-				}
+                @Override
+                public Object get(final pdef.Message.Builder builder) {
+                    return ((Builder) builder).{{ field.get }}();
+                }
 
-				@Override
-				public boolean isSet(final pdef.Message message) {
-				    return (({{ name }}) message).{{ field.is_set }}();
-				}
+                @Override
+                public boolean isSet(final pdef.Message message) {
+                    return (({{ name }}) message).{{ field.is_set }}();
+                }
 
-				@Override
-				public boolean isSet(final pdef.Message.Builder builder) {
-				    return ((Builder) builder).{{ field.is_set }}();
-				}
+                @Override
+                public boolean isSet(final pdef.Message.Builder builder) {
+                    return ((Builder) builder).{{ field.is_set }}();
+                }
 
 {% if field.type.generic %}
                 @SuppressWarnings("unchecked")
 {% endif %}
-				@Override
-				public void set(final pdef.Message.Builder builder, final Object value) {
-				    if (value == null) {
-				        clear(builder);
-				    } else {
-					    ((Builder) builder).{{ field.set }}(({{ field.type.boxed }}) value);
-					}
-				}
+                @Override
+                public void set(final pdef.Message.Builder builder, final Object value) {
+                    if (value == null) {
+                        clear(builder);
+                    } else {
+                        ((Builder) builder).{{ field.set }}(({{ field.type.boxed }}) value);
+                    }
+                }
 
-				@Override
-				public void clear(final pdef.Message.Builder builder) {
-				    ((Builder) builder).{{ field.clear }}();
-				}
-			};
+                @Override
+                public void clear(final pdef.Message.Builder builder) {
+                    ((Builder) builder).{{ field.clear }}();
+                }
+            };
 
 {% endfor %}
-			declaredFields = pdef.ImmutableSymbolTable.of(
+            declaredFields = pdef.ImmutableSymbolTable.of(
 {% for field in declared_fields %}
                     {{ field.name }}Field{% if not loop.last and loop.length > 1 %}, {% endif %}
 
@@ -231,10 +230,10 @@ public class {{ type }} extends {{ base_class }} {
             {% endfor %}
                     .build();
 {% endif %}
-		}
+        }
 
-		static {
-			instance.link();
-		}
-	}
+        static {
+            instance.link();
+        }
+    }
 }

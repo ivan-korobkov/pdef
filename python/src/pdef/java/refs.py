@@ -5,6 +5,9 @@ from pdef import lang
 class JavaRef(object):
     @classmethod
     def from_lang(cls, ref):
+        if isinstance(ref, lang.Ref):
+            ref = ref.dereference()
+
         if isinstance(ref, lang.Native):
             return NativeJavaRef(ref)
         elif isinstance(ref, lang.Variable):

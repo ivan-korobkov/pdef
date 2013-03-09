@@ -60,7 +60,9 @@ public class {{ type }} extends {{ base_class }} {
         @javax.annotation.Nullable
 {% endif %}
         public {{ field.type }} {{ field.get }}() {
-            if (!{{ field.is_set }}()) { return {{ field.type.default }}; }
+            if (!{{ field.is_set }}()) {
+                return {{ field.type.default }};
+            }
             return {{ field.name }};
         }
 

@@ -78,6 +78,10 @@ class Ref(AbstractRef):
         self.delegate = self._lookup_delegate()
         self._add_child(self.delegate, always_parent=False)
 
+    def dereference(self):
+        self._check_delegate()
+        return self.delegate
+
     def _lookup_delegate(self):
         rawtype = self.lookup(self.name)
         if not rawtype:

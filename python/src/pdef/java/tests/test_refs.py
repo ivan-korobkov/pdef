@@ -89,7 +89,7 @@ class TestTypeJavaRef(unittest.TestCase):
         assert self.ref.descriptor == 'module.Message.getClassDescriptor()'
 
     def test_default(self):
-        assert self.ref.default == 'module.Message.getDefaultInstance()'
+        assert self.ref.default == 'module.Message.getInstanceOfMessage()'
 
     def test_nullable(self):
         assert not self.ref.nullable
@@ -176,4 +176,4 @@ class TestParameterizedJavaRef(unittest.TestCase):
         Descriptors.getInt32()))'''
 
     def test_default(self):
-        assert self.ref.default == 'collect.Map.getDefaultInstance()'
+        assert self.ref.default == 'collect.Map.getInstanceOfMap()'

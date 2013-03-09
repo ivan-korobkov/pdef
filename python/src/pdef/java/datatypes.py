@@ -51,6 +51,11 @@ class JavaMessage(object):
             self.type_field = JavaField(polymorphism.field)
             self.default_type = JavaRef.from_lang(polymorphism.default_type)
 
+        self.is_generic = bool(self.variables)
+        self.getInstance = 'getInstanceOf%s()' % self.name if self.is_generic else 'getInstance()'
+        self.getInstanceVars = '<%s>' % ', '.join(str(var) for var in self.variables) \
+                if self.is_generic else''
+
     @property
     def code(self):
         env = Environment(trim_blocks=True)

@@ -43,11 +43,18 @@ public class {{ type }} extends {{ base_class }} {
         return Descriptor.instance;
     }
 
-    private static final {{ type.wildcard }} defaultInstance = new {{ type.raw }}();
+    private static final {{ type.wildcard }} instance = new {{ type.raw }}();
 
-    public static {{ type.wildcard }} getDefaultInstance() {
-        return defaultInstance;
+{% if is_generic %}
+    @SuppressWarnings("unchecked")
+    public static {{ getInstanceVars }} {{ type }} {{ getInstance }} {
+        return ({{ type }}) instance;
     }
+{% else %}
+    public static {{ type }} {{ getInstance }} {
+        return instance;
+    }
+{% endif %}
 
     public static class {{ builder }} extends {{ base_builder }} {
 {% for field in declared_fields %}
@@ -96,11 +103,13 @@ public class {{ type }} extends {{ base_class }} {
 
     public static class Descriptor extends pdef.generated.GeneratedMessageDescriptor {
         private static final Descriptor instance = new Descriptor();
+{% if variables %}
 
 {% for var in variables %}
         private final pdef.VariableDescriptor variable{{ var }};
 {% endfor %}
         private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
+{% endif %}
 {% if base %}
 
         private pdef.MessageDescriptor base;
@@ -120,6 +129,7 @@ public class {{ type }} extends {{ base_class }} {
 
         protected Descriptor() {
             super({{ name }}.class);
+{% if variables %}
 {% for var in variables %}
             variable{{ var }} = new pdef.provided.NativeVariableDescriptor("{{ var.name }}");
 {% endfor %}
@@ -127,7 +137,9 @@ public class {{ type }} extends {{ base_class }} {
 {% for var in variables %}
                     variable{{ var.name }}{% if not loop.last and loop.length > 1 %}, {% endif %}
 
-{% endfor %});
+{% endfor %}
+            );
+{% endif %}
         }
 {% if base %}
         @Override
@@ -141,15 +153,18 @@ public class {{ type }} extends {{ base_class }} {
         }
 
 {% endif %}
+{% if variables %}
         @Override
         public pdef.SymbolTable<pdef.VariableDescriptor> getVariables() {
             return variables;
         }
 
+{% endif %}
         @Override
         public pdef.SymbolTable<pdef.FieldDescriptor> getDeclaredFields() {
             return declaredFields;
         }
+
 {% if is_polymorphic %}
 
         @Override
@@ -221,7 +236,8 @@ public class {{ type }} extends {{ base_class }} {
 {% for field in declared_fields %}
                     {{ field.name }}Field{% if not loop.last and loop.length > 1 %}, {% endif %}
 
-{% endfor %});
+{% endfor %}
+            );
 {% if is_polymorphic %}
 
             typeField = {{ type_field.name }}Field;

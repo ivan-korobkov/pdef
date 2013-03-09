@@ -90,12 +90,14 @@ class TypeJavaRef(JavaRef):
         self.package = ref.parent.fullname if ref.parent else None
         self.variables = tuple(JavaRef.from_lang(var) for var in ref.variables)
 
+        self.descriptor = '%s.getClassDescriptor()' % self.name
+        self.default = '%s.getInstanceOf%s()' % (self.name, self.name) if self.generic else \
+                '%s.getInstance()' % self.name
+
         if ref.parent:
-            self.descriptor = '%s.%s.getClassDescriptor()' % (self.package, self.name)
-            self.default = '%s.%s.getDefaultInstance()' % (self.package, self.name)
-        else:
-            self.descriptor = '%s.getClassDescriptor()' % self.name
-            self.default = '%s.getDefaultInstance()' % self.name
+            self.descriptor = '%s.%s' % (self.package, self.descriptor)
+            self.default = '%s.%s' % (self.package, self.default)
+
 
 
 class EnumJavaRef(TypeJavaRef):

@@ -44,10 +44,10 @@ class TestVariableJavaRef(unittest.TestCase):
         assert str(self.ref) == str(self.ref.local)
 
     def test_raw(self):
-        assert str(self.ref) == str(self.ref.raw)
+        assert str(self.ref.raw) == 'Object'
 
     def test_boxed(self):
-        assert str(self.ref.boxed) == 'Object'
+        assert str(self.ref.boxed) == 'T'
 
     def test_wildcard(self):
         assert str(self.ref.wildcard) == '?'
@@ -136,20 +136,25 @@ class TestNativeJavaRef(unittest.TestCase):
 
 class TestParameterizedJavaRef(unittest.TestCase):
     def setUp(self):
-        string = Message('string')
+        int32 = Native('int32', options=NativeOptions(
+            java_type='int',
+            java_boxed='Integer',
+            java_descriptor='Descriptors.getInt32()',
+            java_default='0'))
+
         List = Message('List', variables=[Variable('T')])
         Map = Message('Map', variables=[Variable('K'), Variable('V')])
         module = Module('collect')
-        module.add_definitions(List, Map)
+        module.add_definitions(int32, List, Map)
 
-        ptype = Map.parameterize(string, List.parameterize(string))
+        ptype = Map.parameterize(int32, List.parameterize(int32))
         self.ref = JavaRef.from_lang(ptype)
 
     def test(self):
-        assert str(self.ref) == 'collect.Map<string, collect.List<string>>'
+        assert str(self.ref) == 'collect.Map<Integer, collect.List<Integer>>'
 
     def test_local(self):
-        assert str(self.ref.local) == 'Map<string, collect.List<string>>'
+        assert str(self.ref.local) == 'Map<Integer, collect.List<Integer>>'
 
     def test_raw(self):
         assert str(self.ref.raw) == 'collect.Map'
@@ -158,18 +163,17 @@ class TestParameterizedJavaRef(unittest.TestCase):
         assert str(self.ref) == str(self.ref.boxed)
 
     def test_wildcard(self):
-        assert str(self.ref.wildcard) == 'collect.Map<string, collect.List<string>>'
+        assert str(self.ref.wildcard) == 'collect.Map<Integer, collect.List<Integer>>'
 
     def test_local_wildcard(self):
-        assert str(self.ref.local.wildcard) == 'Map<string, collect.List<string>>'
+        assert str(self.ref.local.wildcard) == 'Map<Integer, collect.List<Integer>>'
 
     def test_descriptor(self):
         assert self.ref.descriptor == \
 '''collect.Map.getClassDescriptor().parameterize(
-    string.getClassDescriptor(),
+    Descriptors.getInt32(),
     collect.List.getClassDescriptor().parameterize(
-        string.getClassDescriptor()))'''
+        Descriptors.getInt32()))'''
 
     def test_default(self):
-        assert self.ref.default == \
-               '(collect.Map<string, collect.List<string>>) collect.Map.getDefaultInstance()'
+        assert self.ref.default == 'collect.Map.getDefaultInstance()'

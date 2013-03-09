@@ -35,7 +35,7 @@ class JavaRef(object):
 
         s += self.name
         if self.variables:
-            s += '<%s>' % ', '.join(str(e) for e in self.variables)
+            s += '<%s>' % ', '.join(str(var.boxed) for var in self.variables)
 
         return s
 
@@ -67,16 +67,21 @@ class JavaRef(object):
 class VariableJavaRef(JavaRef):
     def __init__(self, var):
         super(VariableJavaRef, self).__init__(var.name)
-        self.boxed = SimpleJavaRef('Object')
         self.descriptor = 'variable%s' % self.name
+        self._raw = SimpleJavaRef('Object')
+        self._wildcard = SimpleJavaRef('?')
 
     @property
     def generic(self):
         return True
 
     @property
+    def raw(self):
+        return self._raw
+
+    @property
     def wildcard(self):
-        return '?'
+        return self._wildcard
 
 
 class TypeJavaRef(JavaRef):
@@ -125,7 +130,7 @@ class ParameterizedJavaRef(JavaRef):
 
         self.variables = tuple(JavaRef.from_lang(var) for var in ptype.variables)
         self.descriptor = self._create_descriptor()
-        self.default = '(%s) %s' % (self, self.rawtype.default)
+        self.default = '%s' % self.rawtype.default
 
     def _create_descriptor(self):
         descriptor = self.rawtype.descriptor

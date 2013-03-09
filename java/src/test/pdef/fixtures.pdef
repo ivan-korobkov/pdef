@@ -1,20 +1,15 @@
-package com.ivankorobkov.pdef.fixtures;
+module pdef.fixtures;
 
 enum ObjectType {
-    OBJECT,
-    USER;
+    OBJECT, USER;
 }
 
-message Id {
-    options [type_field: "type", format: "line"];
-
-    type ObjectType [value: "ObjectType.OBJECT"];
+message Id polymorphic on "type" as ObjectType.OBJECT {
+    type    ObjectType;
 }
 
-message UserId extends Id {
-    options [format: "line"];
-
-    type        ObjectType [value: "ObjectType.USER"];
+message UserId inherits Id as ObjectType.USER {
+    type        ObjectType;
     value       int64;
 }
 
@@ -24,7 +19,7 @@ message User {
     age         int32;
     sex         Sex;
     profile     Profile;
-    floats      Map<string, float>;
+    floats      map<string, float>;
 }
 
 message Profile {
@@ -43,8 +38,7 @@ message Profile {
 }
 
 enum Sex {
-    MALE,
-    FEMALE;
+    MALE, FEMALE;
 }
 
 enum Language {
@@ -52,8 +46,6 @@ enum Language {
 }
 
 message Birthday {
-    options [format: "line"];
-
     year    int32;
     month   int32;
     day     int32;
@@ -65,12 +57,9 @@ message Weighted<E, W> {
 }
 
 message WeightedSet<E, W> {
-    elements Set<Weighted<E, W>>;
-}
-
-message TimeSet<E> extends WeightedSet<E, int64> {
+    elements set<Weighted<E, W>>;
 }
 
 message Chat {
-    messages TimeSet<Birthday>;
+    messages WeightedSet<Birthday, int64>;
 }

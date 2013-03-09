@@ -121,7 +121,7 @@ public class {{ type }} extends {{ base_class }} {
         protected Descriptor() {
             super({{ name }}.class);
 {% for var in variables %}
-            variable{{ var }} = new NativeVariableDescriptor("{{ var.name }}");
+            variable{{ var }} = new pdef.provided.NativeVariableDescriptor("{{ var.name }}");
 {% endfor %}
             variables = pdef.ImmutableSymbolTable.of(
 {% for var in variables %}
@@ -206,7 +206,7 @@ public class {{ type }} extends {{ base_class }} {
                     if (value == null) {
                         clear(builder);
                     } else {
-                        ((Builder) builder).{{ field.set }}(({{ field.type.boxed }}) value);
+                        ((Builder) builder).{{ field.set }}(({{ field.type.boxed.raw }}) value);
                     }
                 }
 

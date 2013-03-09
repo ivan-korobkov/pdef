@@ -45,6 +45,7 @@ class Builder(object):
 
     def link_refs(self):
         for ref in self.walker.refs():
+            print(ref)
             ref.link()
 
     def check_circular_inheritance(self):

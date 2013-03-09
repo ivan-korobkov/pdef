@@ -221,6 +221,7 @@ class MessagePolymorphism(Node):
         self.field = check_not_none(field)
         self.default_type = check_not_none(default_type)
         self._add_child(field, always_parent=False)
+        self._add_child(default_type, always_parent=False)
 
         self.map = {}
         self.message = None

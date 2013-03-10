@@ -5,7 +5,7 @@ import os.path
 import logging
 
 from pdef.lang import Package
-from pdef.parser import Parser
+from pdef.parser import ModuleParser
 from pdef.preconditions import *
 
 FILE_EXT = '.pdef'
@@ -94,7 +94,7 @@ class ModuleFile(object):
             text = f.read()
 
         debug = logging.root.isEnabledFor(logging.DEBUG)
-        parser = Parser(debug)
+        parser = ModuleParser(debug)
         ast = parser.parse(text)
 
         if parser.errors:

@@ -3,7 +3,7 @@ import logging
 import ply.lex as lex
 import ply.yacc as yacc
 
-from pdef import lang
+from pdef import ast
 
 
 class Tokens(object):
@@ -70,7 +70,6 @@ class Tokens(object):
 
 
 class GrammarRules(object):
-
     # Starting point.
     def p_module(self, t):
         '''
@@ -79,7 +78,7 @@ class GrammarRules(object):
         name = t[1]
         imports = t[2]
         definitions = t[3]
-        t[0] = lang.Module(name, imports=imports, definitions=definitions)
+        t[0] = ast.Module(name, imports=imports, definitions=definitions)
 
     # Empty token to support optional values.
     def p_empty(self, t):
@@ -112,7 +111,7 @@ class GrammarRules(object):
         '''
         name = t[2]
         alias = name if len(t) == 4 else t[4]
-        t[0] = lang.ImportRef(name, alias)
+        t[0] = ast.ImportRef(name, alias)
 
     # Data dict fields: k: v, k1: v2
     def p_data_fields(self, t):
@@ -137,8 +136,8 @@ class GrammarRules(object):
              | IDENTIFIER
         '''
         name = t[1]
-        generic_args = [] if len(t) == 2 else t[3]
-        t[0] = lang.Ref(name, *generic_args)
+        vars = [] if len(t) == 2 else t[3]
+        t[0] = ast.Ref(name, variables=vars)
 
     # List of generic arguments.
     def p_types(self, t):
@@ -173,14 +172,14 @@ class GrammarRules(object):
         name = t[2]
         variables = t[3]
         options = dict(t[5])
-        t[0] = lang.Native(name, variables=variables, options=lang.NativeOptions(**options))
+        t[0] = ast.Native(name, variables=variables, options=options)
 
     # Enum definition.
     def p_enum(self, t):
         '''
         enum : ENUM IDENTIFIER LBRACE enum_values SEMI RBRACE
         '''
-        t[0] = lang.Enum(t[2], values=t[4])
+        t[0] = ast.Enum(t[2], values=t[4])
 
     # List of enum values.
     def p_enum_values(self, t):
@@ -195,32 +194,85 @@ class GrammarRules(object):
         '''
         enum_value : IDENTIFIER
         '''
-        t[0] = lang.EnumValue(t[1])
+        t[0] = t[1]
 
     # Message definition
     def p_message(self, t):
         '''
         message : MESSAGE IDENTIFIER message_header message_body
         '''
-        name = t[2]
-        variables, base, base_type, polymorphism = t[3]
-        options, fields = t[4]
+        name = t[2] # identifier
+        variables, base, base_tree_type, tree_field, tree_type = t[3] # message_header
+        options, declared_fields = t[4] # message_body
 
-        t[0] = lang.Message(name, variables=variables, base=base, base_type=base_type,
-                            polymorphism=polymorphism, declared_fields=fields)
+        t[0] = ast.Message(name, variables=variables,
+                           base=base, base_tree_type=base_tree_type,
+                           tree_field=tree_field,
+                           tree_type=tree_type,
+                           declared_fields=declared_fields)
 
     def p_message_header(self, t):
         '''
-        message_header : variables base polymorphism
+        message_header : variables message_base message_tree
         '''
-        base, base_type = t[2]
-        t[0] = t[1], base, base_type, t[3]
+        base, base_tree_type = t[2]
+        tree_field, tree_type = t[3]
+        t[0] = t[1], base, base_tree_type, tree_field, tree_type
 
     def p_message_body(self, t):
         '''
         message_body : LBRACE message_options fields RBRACE
         '''
         t[0] = (t[2], t[3])
+
+    # Generic variables in a definition name.
+    def p_variables(self, t):
+        '''
+        variables : LESS variable_list GREATER
+                  | empty
+        '''
+        if len(t) == 2:
+            t[0] = []
+        else:
+            t[0] = t[2]
+
+    # List of variable names in variables.
+    def p_variable_list(self, t):
+        '''
+        variable_list : variable_list COMMA variable
+                      | variable
+        '''
+        self._list(t, separated=1)
+
+    # Generic variable in a definition name.
+    def p_variable(self, t):
+        '''
+        variable : IDENTIFIER
+        '''
+        t[0] = t[1]
+
+    # Message inheritance
+    def p_message_base(self, t):
+        '''
+        message_base : INHERITS type AS IDENTIFIER
+                     | empty
+        '''
+        if len(t) == 2:
+            t[0] = None, None
+        else:
+            t[0] = t[2], ast.Ref(t[4])
+
+    def p_message_tree(self, t):
+        '''
+        message_tree : POLYMORPHIC ON STRING AS IDENTIFIER
+                     | empty
+        '''
+        if len(t) == 2:
+            t[0] = None, None
+        else:
+            tree_field = ast.Ref(t[3])
+            tree_type = ast.Ref(t[5])
+            t[0] = tree_field, tree_type
 
     # Message options: options [];
     def p_message_options(self, t):
@@ -256,67 +308,9 @@ class GrammarRules(object):
     # Single message field
     def p_field(self, t):
         '''
-        field : IDENTIFIER type field_options SEMI
+        field : IDENTIFIER type SEMI
         '''
-        # TODO: Field options
-        t[0] = lang.Field(t[1], type=t[2])
-
-    # Optional field options: {}
-    def p_field_options(self, t):
-        '''
-        field_options : options
-                      | empty
-        '''
-        t[0] = t[1]
-
-    # Generic variables in a definition name.
-    def p_variables(self, t):
-        '''
-        variables : LESS variable_list GREATER
-                  | empty
-        '''
-        if len(t) == 2:
-            t[0] = []
-        else:
-            t[0] = t[2]
-
-    # List of variable names in variables.
-    def p_variable_list(self, t):
-        '''
-        variable_list : variable_list COMMA variable
-                      | variable
-        '''
-        self._list(t, separated=1)
-
-    # Generic variable in a definition name.
-    def p_variable(self, t):
-        '''
-        variable : IDENTIFIER
-        '''
-        t[0] = lang.Variable(t[1])
-
-    # Message inheritance
-    def p_message_base(self, t):
-        '''
-        base : INHERITS type AS IDENTIFIER
-             | empty
-        '''
-        if len(t) == 2:
-            t[0] = None, None
-        else:
-            t[0] = t[2], lang.Ref(t[4])
-
-    def p_message_polymorphism(self, t):
-        '''
-        polymorphism : POLYMORPHIC ON STRING AS IDENTIFIER
-                     | empty
-        '''
-        if len(t) == 2:
-            t[0] = None
-        else:
-            field = lang.Ref(t[3])
-            default_type = lang.Ref(t[5])
-            t[0] = lang.MessagePolymorphism(field, default_type)
+        t[0] = ast.Field(t[1], type=t[2])
 
     def p_error(self, t):
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)
@@ -347,10 +341,9 @@ class GrammarRules(object):
         raise NotImplementedError()
 
 
-class Parser(Tokens, GrammarRules):
-
+class ModuleParser(Tokens, GrammarRules):
     def __init__(self, debug=False):
-        super(Parser, self).__init__()
+        super(ModuleParser, self).__init__()
         self.debug = debug
         self.lexer = lex.lex(module=self, debug=debug)
         self.parser = yacc.yacc(module=self, debug=debug, tabmodule='pdef.parsetab')

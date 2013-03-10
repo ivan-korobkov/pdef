@@ -1,0 +1,59 @@
+module pdef.lang;
+
+
+message Ref {
+    name        string;
+    variables   list<Ref>;
+}
+
+message ImportRef {
+    import_name string;
+    alias       string;
+}
+
+enum TypeEnum {
+    TYPE, NATIVE, MESSAGE, ENUM, ENUM_VALUE, VARIABLE;
+}
+
+message Type polymorphic on "type" as TypeEnum.TYPE {
+    type        TypeEnum;
+    name        string;
+    variables   list<Variable>;
+}
+
+message Native extends Type as TypeEnum.NATIVE {
+    options     map<string, string>;
+}
+
+message Variable extends Type as TypeEnum.VARIABLE {}
+
+message Message extends Type as TypeEnum.MESSAGE {
+    base            Ref;
+    base_tree_type  Ref;
+    tree_field      Ref;
+    tree_type       Ref;
+    declared_fields list<Field>;
+}
+
+message Field {
+    name    string;
+    type    Ref;
+}
+
+message Enum extends Type as TypeEnum.ENUM {
+    values  list<EnumValue>;
+}
+
+message EnumValue extends Type as TypeEnum.ENUM_VALUE {}
+
+message Module {
+    name        string;
+    imports     list<ImportRef>;
+    definitions list<Type>;
+}
+
+message Package {
+    name        string;
+    version     string;
+    modules     list<Module>;
+}

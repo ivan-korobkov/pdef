@@ -1,8 +1,8 @@
 # encoding: utf-8
 import os.path
 import unittest
-from pdef import lang
-from pdef.parser import Parser
+from pdef.ast import Module
+from pdef.parser import ModuleParser
 
 
 class TestParser(unittest.TestCase):
@@ -15,10 +15,10 @@ class TestParser(unittest.TestCase):
     def test_parse_module_with_messages(self):
         '''Should parse a test file with messages.'''
         s = self._read('messages.pdef')
-        parser = Parser()
+        parser = ModuleParser()
         module = parser.parse(s)
         assert module
-        assert isinstance(module, lang.Module)
+        assert isinstance(module, Module)
         assert module.name == 'test.messages'
 
         dd = list(module.definitions)

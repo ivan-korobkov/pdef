@@ -1,14 +1,67 @@
 # encoding: utf-8
 from collections import deque
-from pdef.lang import errors
 from pdef.preconditions import *
+
+
+class Symbol(object):
+    def __init__(self, name):
+        super(Symbol, self).__init__()
+        self.name = name
+        self.fullname = name
+
+
+class SymbolTable(object):
+    def __init__(self):
+        self.items = []
+        self.map = {}
+
+    def __eq__(self, other):
+        if not isinstance(other, SymbolTable):
+            return False
+        return self.items == other.items
+
+    def __iter__(self):
+        return iter(self.items)
+
+    def __len__(self):
+        return len(self.items)
+
+    def __contains__(self, key):
+        return key in self.map
+
+    def __getitem__(self, key):
+        return self.map[key]
+
+    def __setitem__(self, name, item):
+        if name in self.map:
+            raise ValueError('Duplicate symbol "%s"' % name)
+
+        self.map[name] = item
+        self.items.append(item)
+
+    def __add__(self, other):
+        new = SymbolTable()
+        new += self
+        new += other
+        return new
+
+    def __iadd__(self, other):
+        for item in other:
+            self.add(item)
+        return self
+
+    def add(self, item):
+        self[item.name] = item
+
+    def as_map(self):
+        return dict(self.map)
 
 
 class Node(object):
     def __init__(self):
         self.parent = None
         self.children = []
-        self.symbols = SymbolTable(self)
+        self.symbols = SymbolTable()
 
     def __repr__(self):
         return '<%s %s %s>' % (self.__class__.__name__, self.fullname, hex(id(self)))
@@ -66,58 +119,3 @@ class Node(object):
             child_name = '.'.join(child_parts)
             parent = self.symbols[parent_name]
             return parent._lookup_child(child_name)
-
-
-class Symbol(Node):
-    def __init__(self, name):
-        super(Symbol, self).__init__()
-        self.name = name
-
-    @property
-    def fullname(self):
-        if self.parent:
-            return '%s.%s' % (self.parent.fullname, self.name)
-
-        return self.name
-
-    @property
-    def generic(self):
-        return False
-
-
-class SymbolTable(object):
-    def __init__(self, parent):
-        self.parent = parent
-        self.items = []
-        self.map = {}
-
-    def __eq__(self, other):
-        if not isinstance(other, SymbolTable):
-            return False
-        return self.items == other.items
-
-    def __iter__(self):
-        return iter(self.items)
-
-    def __len__(self):
-        return len(self.items)
-
-    def __contains__(self, key):
-        return key in self.map
-
-    def __getitem__(self, key):
-        return self.map[key]
-
-    def add(self, item):
-        self.add_with_name(item.name, item)
-
-    def add_with_name(self, name, item):
-        if name in self.map:
-            errors.add(self.parent, 'duplicate symbol "%s"', name)
-            return
-
-        self.map[name] = item
-        self.items.append(item)
-
-    def as_map(self):
-        return dict(self.map)

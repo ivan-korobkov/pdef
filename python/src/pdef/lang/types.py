@@ -1,21 +1,31 @@
 # encoding: utf-8
+from collections import deque
 from pdef.preconditions import *
-from pdef.lang import errors
-from pdef.lang.nodes import Symbol, SymbolTable
+from pdef.lang.symbols import Symbol, SymbolTable
 
 
 class Type(Symbol):
-    def __init__(self, name, variables=None):
+    def __init__(self, name, variables=None, module=None):
         super(Type, self).__init__(name)
-
+        self.module = module
         self.rawtype = self
-        self.variables = SymbolTable(self)
+        self.is_initialized = False
+
+        self.variables = SymbolTable()
         if variables:
-            self.add_variables(*variables)
+            for var in variables:
+                check_isinstance(var, Variable)
+                self.variables.add(var)
+
+        self._pqueue = deque()
+        self._pmap = {}
+
+        if module:
+            module.add_definition(self)
 
     @property
     def fullname(self):
-        s = super(Type, self).fullname
+        s = '%s.%s' % (self.module.fullname, self.name) if self.module else self.name
         if self.variables:
             s += '<' + ', '.join(var.name for var in self.variables) + '>'
         return s
@@ -24,31 +34,47 @@ class Type(Symbol):
     def generic(self):
         return bool(self.variables)
 
-    def add_variables(self, *vars):
-        for var in vars:
-            self.variables.add(var)
-            self._add_symbol(var)
-
-    def parameterize(self, *variables):
-        '''Create a parameterized type.'''
-        raise NotImplementedError('Implement in a subclass')
+    def check_initialized(self):
+        check_state(self.is_initialized, '%s is not initialized', self)
 
     def bind(self, arg_map):
         '''Parameterized types and variables should redefine this method.'''
         return self
 
+    def parameterize(self, *variables):
+        '''Create a parameterized type.'''
+        vars = tuple(variables)
+        if vars in self._pmap:
+            return self._pmap[vars]
+
+        ptype = self._do_parameterize(variables)
+        self._pmap[vars] = ptype
+        self._pqueue.append(ptype)
+
+        if self.is_initialized:
+            self._init_parameterized()
+
+    def _init_parameterized(self):
+        while self._pqueue:
+            ptype = self._pqueue.pop()
+            ptype.init()
+
+    def _do_parameterize(self, *variables):
+        raise NotImplementedError('Implement in a subclass')
+
 
 class ParameterizedType(Type):
-    def __init__(self, rawtype, *variables):
-        super(ParameterizedType, self).__init__(rawtype.name)
+    def __init__(self, rawtype, variables):
+        super(ParameterizedType, self).__init__(rawtype.name, module=rawtype.module)
         check_argument(len(rawtype.variables) == len(variables),
-                       "wrong number of variables %s", variables)
+                       'Wrong number of variables %s for %s', variables, rawtype)
 
         self.rawtype = rawtype
-        self.variables = SymbolTable(self)
         for var, arg in zip(self.rawtype.variables, variables):
-            self.variables.add_with_name(var, arg)
-            self._add_child(arg, always_parent=False)
+            self.variables[var.name] = arg
+
+    def init(self):
+        self.is_initialized = True
 
     def bind(self, arg_map):
         bvariables = []
@@ -56,7 +82,7 @@ class ParameterizedType(Type):
             barg = arg.bind(arg_map)
             bvariables.append(barg)
 
-        return self.package.parameterized_symbol(self.rawtype, *bvariables)
+        return self.rawtype.parameterize(*bvariables)
 
 
 class Variable(Type):
@@ -69,5 +95,4 @@ class Variable(Type):
         if svar:
             return svar
 
-        errors.add(self, 'variable is not found in the variables map')
-
+        raise ValueError('Variable %s is not found in %s' % (self, arg_map))

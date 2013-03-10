@@ -2,6 +2,20 @@
 from pdef.preconditions import *
 
 
+class Package(object):
+    def __init__(self, name, version, modules=None):
+        self.name = name
+        self.version = version
+        self.modules = tuple(modules) if modules else ()
+
+
+class Module(object):
+    def __init__(self, name, imports=None, definitions=None):
+        self.name = name
+        self.imports = tuple(imports) if imports else ()
+        self.definitions = tuple(definitions) if definitions else ()
+
+
 class Ref(object):
     def __init__(self, name, variables=None):
         self.name = check_not_none(name)
@@ -50,17 +64,3 @@ class Enum(Type):
     def __init__(self, name, values=None):
         super(Enum, self).__init__(name)
         self.values = tuple(values) if values else ()
-
-
-class Module(object):
-    def __init__(self, name, imports=None, definitions=None):
-        self.name = name
-        self.imports = tuple(imports) if imports else ()
-        self.definitions = tuple(definitions) if definitions else ()
-
-
-class Package(object):
-    def __init__(self, name, version, modules=None):
-        self.name = name
-        self.version = version
-        self.modules = tuple(modules) if modules else ()

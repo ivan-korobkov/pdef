@@ -67,7 +67,7 @@ class TestGenericInheritedJavaMessage(unittest.TestCase):
 
         var = Variable('T')
         pbase = base.parameterize(var)
-        pbase.build()
+        pbase.init()
 
         msg = Message('ExampleMessage', variables=[var], base=pbase,
             base_type=message_type,

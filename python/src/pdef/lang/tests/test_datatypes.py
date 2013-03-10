@@ -105,7 +105,7 @@ class TestParameterizedMessage(PdefTest):
 
         int32 = Native('int32')
         pmsg = msg.parameterize(int32)
-        pmsg.build()
+        pmsg.init()
 
         assert pmsg.rawtype == msg
         assert pmsg.declared_fields['field'].type == int32

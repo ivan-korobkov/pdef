@@ -1,59 +1,91 @@
 # encoding: utf-8
+from pdef import ast
 from pdef.lang import *
 from pdef.lang.tests.test import PdefTest
 
 
 class TestPackage(PdefTest):
-    def test_symbol(self):
-        '''Should look up a symbol in a builtin package.'''
-        int32 = Native('int32')
-        builtin = Package('builtin')
-        builtin.add_modules(Module('builtin.types', definitions=[int32]))
+    def setUp(self):
+        self.node = ast.Package('test', version='1.0',
+                dependencies=('dep1', 'dep2'),
+                modules=(ast.Module('test.module1'), ast.Module('test.module2')))
 
-        pkg = Package('test', builtin)
-        symbol = pkg.lookup('int32')
-        assert symbol is int32
+    def test_from_node(self):
+        package = Package.from_node(self.node)
+        assert package.node == self.node
+        assert package.name == self.node.name
+        assert len(package.modules) == 2
+        assert 'test.module1' in package.modules
+        assert 'test.module2' in package.modules
 
-    def test_parameterized_symbol(self):
-        List = Native('List', variables=[Variable('T')])
-        int32 = Native('int32')
+    def test_link(self):
+        dep1 = Package('dep1')
+        dep2 = Package('dep2')
+        pdef = Pdef()
+        pdef.add_packages(dep1, dep2)
 
-        pkg = Package('test')
-        ptype = pkg.parameterized_symbol(List, int32)
+        package = Package.from_node(self.node, pdef)
+        package.link()
+        assert package.dependencies['dep1'] is dep1
+        assert package.dependencies['dep2'] is dep2
 
-        assert ptype.rawtype is List
-        assert list(ptype.variables) == [int32]
-        assert ptype in pkg.pqueue
-        assert (List, (int32, )) in pkg.parameterized
+    def test_add_dependency(self):
+        dep1 = Package('dep')
+        package = Package('test')
+        package.add_dependency(dep1)
+        assert 'dep' in package.symbols
+        assert package.dependencies['dep'] is dep1
 
-    def test_parameterized_symbol_present(self):
-        List = Native('List', variables=[Variable('T')])
-        int32 = Native('int32')
+        # Duplicate
+        dep2 = Package('dep')
+        self.assertRaises(ValueError, package.add_dependency, dep2)
 
-        pkg = Package('test')
-        ptype = pkg.parameterized_symbol(List, int32)
-        ptype2 = pkg.parameterized_symbol(List, int32)
-        assert ptype2 is ptype
+    def test_add_module(self):
+        module = Module('test.module')
+        package = Package('test')
+        package.add_module(module)
+        assert 'test.module' in package.symbols
+        assert package.modules['test.module'] is module
+
+        # Duplicate
+        module2 = Module('test.module')
+        self.assertRaises(ValueError, package.add_module, module2)
+
+    def test_add_module_wrong_name(self):
+        module = Module('module')
+        package = Package('test')
+        self.assertRaises(ValueError, package.add_module, module)
 
 
 class TestModule(PdefTest):
-    def test_symbol_from_definitions(self):
-        '''Should look up a symbol in the module's definitions.'''
-        int32 = Native('int32')
-        module = Module('test')
-        module.add_definitions(int32)
+    def setUp(self):
+        self.node = ast.Module('package.module',
+            imports=(
+                ast.ImportRef('package.module2', 'module2'),
+                ast.ImportRef('package.module3')
+            ),
+            definitions=(
+                ast.Native('int32'),
+                ast.Native('int64')
+            ))
 
-        symbol = module.lookup('int32')
-        assert symbol is int32
+    def test_from_node(self):
+        module = Module.from_node(self.node)
+        assert module.node is self.node
+        assert module.name == self.node.name
+        assert 'int32' in module.definitions
+        assert 'int64' in module.definitions
 
-    def test_symbol_from_imports(self):
-        '''Should look up a symbol in the module's imports definitions.'''
-        int32 = Native('int32')
-        imported = Module('imported')
-        imported.add_definitions(int32)
+    def test_link(self):
+        module2 = Module('package.module2')
+        module3 = Module('package.module3')
+        package = Package('package')
+        package.add_modules(module2, module3)
 
-        module = Module('with_import')
-        module.add_imports(imported)
+        module = Module.from_node(self.node, package)
+        module.link()
 
-        symbol = module.lookup('imported.int32')
-        assert symbol is int32
+        assert 'module2' in module.symbols
+        assert 'package.module3' in module.symbols
+        assert module.imports['module2'] is module2
+        assert module.imports['package.module3'] is module3

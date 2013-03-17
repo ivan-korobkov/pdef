@@ -1,10 +1,16 @@
 # encoding: utf-8
+from pdef import ast
 from pdef.preconditions import *
 from pdef.lang.symbols import SymbolTable
-from pdef.lang.types import Type, ParameterizedType
+from pdef.lang.types import Type, ParameterizedType, Variable
 
 
 class Message(Type):
+    @classmethod
+    def from_node(cls, node):
+        check_isinstance(node, ast.Message)
+        return Message(node.name, variables=(Variable(var) for var in node.variables))
+
     def __init__(self, name, variables=None, module=None):
         super(Message, self).__init__(name, variables, module)
 
@@ -146,6 +152,14 @@ class Field(object):
 
 
 class Enum(Type):
+    @classmethod
+    def from_node(cls, node):
+        check_isinstance(node, ast.Enum)
+        enum = Enum(node.name)
+        for name in node.values:
+            enum.add_value(EnumValue(name, enum))
+        return enum
+
     def __init__(self, name, module=None):
         super(Enum, self).__init__(name, module=module)
         self.values = SymbolTable()
@@ -162,6 +176,10 @@ class EnumValue(Type):
 
 
 class Native(Type):
+    @classmethod
+    def from_node(cls, node):
+        return Native(node.name, variables=(Variable(var) for var in node.variables))
+
     def __init__(self, name, variables=None, options=None, module=None):
         super(Native, self).__init__(name, variables, module=module)
         self.options = options

@@ -1,8 +1,9 @@
 # encoding: utf-8
+import json
 import os.path
 import logging
 
-from pdef.lang import Package
+from pdef import ast
 from pdef.parser import ModuleParser
 from pdef.preconditions import *
 
@@ -12,14 +13,14 @@ PACKAGE_INFO_FILE = 'package.json'
 
 class PackageDirectory(object):
     @classmethod
-    def read(cls, path, builtin=None):
+    def read(cls, path):
         info_path = os.path.join(path, PACKAGE_INFO_FILE)
         logging.info('Parsing %s', info_path)
 
         with open(info_path, 'r') as f:
             info = json.load(f)
 
-        package = Package(info['name'], version=info['version'], builtin_package=builtin)
+        package = ast.Package(info['name'], version=info['version'])
         return PackageDirectory(path, package)
 
     def __init__(self, path, package):

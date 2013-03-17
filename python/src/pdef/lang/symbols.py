@@ -7,7 +7,6 @@ class Symbol(object):
     def __init__(self, name):
         super(Symbol, self).__init__()
         self.name = name
-        self.fullname = name
 
 
 class SymbolTable(object):
@@ -50,47 +49,31 @@ class SymbolTable(object):
             self.add(item)
         return self
 
-    def add(self, item):
-        self[item.name] = item
+    def add(self, item, name=None):
+        name = name if name else item.name
+        self[name] = item
 
     def as_map(self):
         return dict(self.map)
 
 
-class Node(object):
-    def __init__(self):
+class Node(Symbol):
+    def __init__(self, name):
+        super(Node, self).__init__(name)
         self.parent = None
-        self.children = []
         self.symbols = SymbolTable()
 
-    def __repr__(self):
-        return '<%s %s %s>' % (self.__class__.__name__, self.fullname, hex(id(self)))
+    def link(self):
+        pass
 
-    def _add_child(self, child, always_parent=True):
-        from pdef.lang import Ref
-        if child is None:
-            return
-
-        self.children.append(child)
-        if always_parent or isinstance(child, Ref):
-            child.parent = self
-
-    def _add_symbol(self, symbol):
-        check_isinstance(symbol, Symbol, '%s is not a Symbol', symbol)
-        self._add_child(symbol)
-        self.symbols.add(symbol)
+    def init(self):
+        pass
 
     @property
     def fullname(self):
         if self.parent:
-            return '%s %s' % (self.parent.fullname, self.__class__.__name__)
-        return self.__class__.__name__
-
-    @property
-    def package(self):
-        if self.parent is None:
-            raise ValueError('Can\'t access the package, %s has no parent' % self)
-        return self.parent.package
+            return '%s %s' % (self.parent.fullname, self.name)
+        return self.name
 
     def lookup(self, name):
         symbol = self._lookup_child(name)

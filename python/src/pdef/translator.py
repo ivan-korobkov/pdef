@@ -3,39 +3,21 @@ from pdef import ast, lang
 from pdef.preconditions import *
 
 
-class AbstractTranslator(object):
-    def __init__(self):
-        self.children = []
-
-    def link_imports(self):
-        for child in self.children:
-            child.link_imports()
-
-    def init(self):
-        for child in self.children:
-            child.init()
-
-    def link(self, ref):
-        self.symbol.lookup(ref.name)
-        for var in ref.variables:
-            self.link(var)
-
-
-class PackagesTranslator(AbstractTranslator):
+class PackagesTranslator(object):
     def __init__(self, pdef, nodes):
-        super(PackagesTranslator, self).__init__()
-
         self.pdef = check_not_none(pdef)
         self.nodes = nodes
+
+        self.packages = []
         for node in self.nodes:
             translator = PackageTranslator(pdef, node)
-            self.children.append(translator)
+            self.packages.append(translator)
 
-        self.link_imports()
-        self.init()
+        for package in self.packages:
+            package.link_imports()
 
 
-class PackageTranslator(AbstractTranslator):
+class PackageTranslator(object):
     def __init__(self, pdef, node):
         super(PackageTranslator, self).__init__()
         check_isinstance(node, ast.Package)
@@ -51,7 +33,7 @@ class PackageTranslator(AbstractTranslator):
             self.children.append(translator)
 
 
-class ModuleTranslator(AbstractTranslator):
+class ModuleTranslator(object):
     def __init__(self, package, node):
         super(ModuleTranslator, self).__init__()
         check_isinstance(node, ast.Module)
@@ -81,7 +63,7 @@ class ModuleTranslator(AbstractTranslator):
             self.module.add_import(imported)
 
 
-class MessageTranslator(AbstractTranslator):
+class MessageTranslator(object):
     def __init__(self, module, node):
         super(MessageTranslator, self).__init__()
         check_isinstance(node, ast.Message)
@@ -115,7 +97,7 @@ class MessageTranslator(AbstractTranslator):
                      declared_fields=declared_fields)
 
 
-class EnumTranslator(AbstractTranslator):
+class EnumTranslator(object):
     def __init__(self, module, node):
         super(EnumTranslator, self).__init__()
         check_isinstance(node, ast.Enum)
@@ -128,7 +110,7 @@ class EnumTranslator(AbstractTranslator):
             self.enum.add_value(lang.EnumValue(name, self.enum))
 
 
-class NativeTranslator(AbstractTranslator):
+class NativeTranslator(object):
     def __init__(self, module, node):
         super(NativeTranslator, self).__init__()
         check_isinstance(node, ast.Native)

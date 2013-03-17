@@ -3,9 +3,10 @@ from pdef.preconditions import *
 
 
 class Package(object):
-    def __init__(self, name, version, modules=None):
+    def __init__(self, name, version, dependencies=None, modules=None):
         self.name = name
         self.version = version
+        self.dependencies = tuple(dependencies) if dependencies else ()
         self.modules = tuple(modules) if modules else ()
 
 
@@ -23,9 +24,9 @@ class Ref(object):
 
 
 class ImportRef(object):
-    def __init__(self, import_name, alias=None):
-        self.import_name = import_name
-        self.alias = alias if alias else import_name
+    def __init__(self, name, alias=None):
+        self.name = name
+        self.alias = alias if alias else name
 
 
 class Type(object):

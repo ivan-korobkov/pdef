@@ -3,6 +3,7 @@ from pdef import ast
 from pdef.preconditions import *
 from pdef.lang.symbols import SymbolTable
 from pdef.lang.types import Type, ParameterizedType, Variable
+from pdef.lang.enums import EnumValue
 
 
 class Message(Type):
@@ -258,71 +259,3 @@ class SubTree(AbstractMessageTree):
     @property
     def enum(self):
         return self.basetree.enum
-
-
-class Enum(Type):
-    @classmethod
-    def from_node(cls, node):
-        check_isinstance(node, ast.Enum)
-        enum = Enum(node.name)
-        for name in node.values:
-            EnumValue(name, enum)
-
-        return enum
-
-    def __init__(self, name, module=None, values=None):
-        super(Enum, self).__init__(name, module=module)
-        self.values = SymbolTable(self)
-        if values:
-            self.add_values(*values)
-
-    def add_value(self, value):
-        self.values.add(value)
-        self.symbols.add(value)
-
-    def add_values(self, *values):
-        map(self.add_value, values)
-
-    def __contains__(self, enum_value):
-        return enum_value in self.values.as_map().values()
-
-
-class EnumValue(Type):
-    def __init__(self, name, enum):
-        super(EnumValue, self).__init__(name, module=enum.module)
-        self.enum = enum
-        enum.add_value(self)
-
-    @property
-    def parent(self):
-        return self.enum
-
-
-class Native(Type):
-    @classmethod
-    def from_node(cls, node):
-        options = NativeOptions(**node.options)
-        return Native(node.name, variables=(Variable(var) for var in node.variables),
-                      options=options)
-
-    def __init__(self, name, variables=None, options=None, module=None):
-        super(Native, self).__init__(name, variables, module=module)
-        self.options = options
-
-    def _do_parameterize(self, variables):
-        '''Parameterize this native with the given variables and return a new one.'''
-        return ParameterizedNative(self, variables)
-
-
-class NativeOptions(object):
-    def __init__(self, java_type=None, java_boxed=None, java_descriptor=None, java_default=None):
-        self.java_type = java_type
-        self.java_boxed = java_boxed
-        self.java_descriptor = java_descriptor
-        self.java_default = java_default
-
-
-class ParameterizedNative(ParameterizedType):
-    @property
-    def options(self):
-        return self.rawtype.options

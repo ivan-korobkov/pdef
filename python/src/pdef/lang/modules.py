@@ -4,73 +4,12 @@ from pdef.lang.symbols import SymbolTable, Node
 from pdef.preconditions import *
 
 
-class Package(Node):
-    @classmethod
-    def from_node(cls, node, pdef=None):
-        check_isinstance(node, ast.Package)
-
-        package = Package(node.name, version=node.version, pdef=pdef)
-        package.node = node
-
-        for mnode in node.modules:
-            module = Module.from_node(mnode)
-            package.add_module(module)
-
-        return package
-
-    def __init__(self, name, version=None, pdef=None):
-        super(Package, self).__init__(name)
-        self.version = version
-        self.pdef = pdef
-        self.node = None
-
-        self.dependencies = SymbolTable(self)
-        self.modules = SymbolTable(self)
-
-        self.linked = False
-        self.inited = False
-
-    def link(self):
-        if self.linked: return
-        self.linked = True
-        if not self.node: return
-
-        for depname in self.node.dependencies:
-            dep = self.pdef.package(depname)
-            self.add_dependency(dep)
-
-        for module in self.modules:
-            module.link()
-
-    def init(self):
-        if self.inited: return
-        self.inited = True
-
-        for module in self.modules:
-            module.init()
-
-    def add_dependency(self, dep):
-        check_isinstance(dep, Package)
-        self.dependencies.add(dep)
-        self.symbols.add(dep)
-
-    def add_module(self, module):
-        check_isinstance(module, Module)
-
-        if not module.name.startswith(self.name):
-            raise ValueError('Module %s name must start with the package name "%s"' %
-                             (module, self.name))
-        self.modules.add(module)
-        self.symbols.add(module)
-
-    def add_modules(self, *modules):
-        map(self.add_module, modules)
-
-
 class Module(Node):
     @classmethod
     def from_node(cls, node, package=None):
-        from pdef.lang.datatypes import Message, Enum, Native
+        from pdef.lang.enums import Enum
+        from pdef.lang.messages import Message
+        from pdef.lang.natives import Native
         check_isinstance(node, ast.Module)
 
         module = Module(node.name, package=package)

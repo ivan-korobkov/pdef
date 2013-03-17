@@ -36,6 +36,18 @@ class Message(Type):
     def tree(self):
         return self.root_tree if self.root_tree else self.base_tree
 
+    def is_subtype_of(self, msg):
+        if isinstance(msg, ParameterizedMessage):
+            msg = msg.rawtype
+
+        for base in self.bases:
+            if isinstance(base, ParameterizedMessage):
+                base = base.rawtype
+            if base == msg:
+                return True
+
+        return False
+
     def _do_init(self):
         if not self.node:
             return
@@ -84,12 +96,14 @@ class Message(Type):
             self.bases = []
             return
 
-        check_isinstance(base, Message)
+        check_isinstance(base, (Message, ParameterizedMessage))
         check_isinstance(subtype, EnumValue)
-        check_argument(base.inited, '%s must be initialized to be used as base of %s', base, self)
+        check_argument(base.inited,
+            '%s must be initialized to be used as the base of %s', base, self)
         check_argument(self != base, '%s cannot inherit itself', self)
-        check_argument(not self in base.bases, 'Circular inheritance: %s',
-                       '->'.join(str(b) for b in ([self, base] + list(base.bases))))
+        check_argument(not base.is_subtype_of(self),
+            'Circular inheritance: %s',
+            '->'.join(str(b) for b in ([self, base] + list(base.bases))))
 
         self.base = check_not_none(base)
         self.bases = tuple([base] + list(base.bases))
@@ -132,9 +146,10 @@ class ParameterizedMessage(ParameterizedType):
     def root_tree(self):
         return self.rawtype.root_tree
 
-    def init(self):
-        super(ParameterizedMessage, self).init()
+    def is_subtype_of(self, msg):
+        return self.rawtype.is_subtype_of(msg)
 
+    def _do_init(self):
         vmap = self.variables.as_map()
         rawtype = self.rawtype
         base = rawtype.base.bind(vmap) if rawtype.base else None
@@ -150,12 +165,19 @@ class ParameterizedMessage(ParameterizedType):
         for field in rawtype.declared_fields:
             bfield = field.bind(vmap)
             self.declared_fields.add(bfield)
+            self.fields.add(bfield)
 
 
 class Field(object):
     def __init__(self, name, type):
         self.name = name
         self.type = type
+
+    def __repr__(self):
+        return '<Field %s>' % self
+
+    def __str__(self):
+        return '"%s" of %s' % (self.name, self.type)
 
     def bind(self, vmap):
         '''Bind this field type and return a new field.'''
@@ -196,7 +218,7 @@ class AbstractMessageTree(object):
         enum = self.enum
         subtypes = self.subtypes
 
-        check_argument(message in (submessage.bases or ()),
+        check_argument(submessage.is_subtype_of(message),
                 '%s must inherit %s', submessage, message)
         check_argument(subtype in enum,
                 'Wrong subtype in %s, it must be a value of enum %s, got %s',
@@ -279,7 +301,9 @@ class EnumValue(Type):
 class Native(Type):
     @classmethod
     def from_node(cls, node):
-        return Native(node.name, variables=(Variable(var) for var in node.variables))
+        options = NativeOptions(**node.options)
+        return Native(node.name, variables=(Variable(var) for var in node.variables),
+                      options=options)
 
     def __init__(self, name, variables=None, options=None, module=None):
         super(Native, self).__init__(name, variables, module=module)

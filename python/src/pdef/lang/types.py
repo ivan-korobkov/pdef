@@ -56,6 +56,8 @@ class Type(Node):
         if self.inited:
             self._init_parameterized()
 
+        return ptype
+
     def _init_parameterized(self):
         while self._pqueue:
             ptype = self._pqueue.pop()
@@ -76,10 +78,7 @@ class ParameterizedType(Type):
 
         self.rawtype = rawtype
         for var, arg in zip(self.rawtype.variables, variables):
-            self.variables[var.name] = arg
-
-    def init(self):
-        self.inited = True
+            self.variables[var] = arg
 
     def bind(self, arg_map):
         bvariables = []
@@ -88,6 +87,9 @@ class ParameterizedType(Type):
             bvariables.append(barg)
 
         return self.rawtype.parameterize(*bvariables)
+
+    def parameterize(self, *variables):
+        raise NotImplementedError('Parameterized types do not support parameterization, use bind')
 
 
 class Variable(Type):

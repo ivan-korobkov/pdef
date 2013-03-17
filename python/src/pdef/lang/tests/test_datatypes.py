@@ -140,7 +140,65 @@ class TestMessage(unittest.TestCase):
         self.assertRaises(ValueError, message._set_fields, duplicate_field)
 
     def test_parameterize(self):
-        assert False
+        k = Variable('K')
+        v = Variable('V')
+        map = Message('Map', variables=[k, v])
+        map.build(declared_fields=[
+            Field('key', k),
+            Field('value', v)
+        ])
+
+        int32 = Native('int32')
+        string = Native('string')
+        pmap = map.parameterize(int32, string)
+
+        assert pmap.rawtype is map
+        assert list(pmap.variables) == [int32, string]
+
+
+class TestParameterizedMessage(unittest.TestCase):
+    def test_parameterize_base(self):
+        type = Enum('Type')
+        type_col = EnumValue('COL', type)
+        type_list = EnumValue('LIST', type)
+
+        e = Variable('E')
+        type_field = Field('type', type)
+        collection = Message('Collection', variables=[e])
+        collection.build(type=type_col, type_field=type_field,
+            declared_fields=[Field('element', e)])
+
+        t = Variable('T')
+        lst = Message('List', variables=[t])
+        lst.build(base=collection.parameterize(t), subtype=type_list)
+
+        int32 = Native('int32')
+        plist = lst.parameterize(int32)
+
+        assert plist.rawtype is lst
+        assert plist.base.rawtype is collection
+        assert list(plist.base.variables) == [int32]
+        assert len(plist.fields) == 1
+        assert len(plist.declared_fields) == 0
+        assert plist.fields['element'].type is int32
+
+    def test_parameterize_fields(self):
+        k = Variable('K')
+        v = Variable('V')
+        map = Message('Map', variables=[k, v])
+        map.build(declared_fields=[Field('key', k), Field('value', v)])
+
+        int32 = Native('int32')
+        int64 = Native('int64')
+        pmap = map.parameterize(int32, int64)
+
+        assert pmap.rawtype is map
+        assert pmap.base is None
+        assert list(pmap.variables) == [int32, int64]
+        assert len(pmap.fields) == 2
+        assert len(pmap.declared_fields) == 2
+        assert pmap.fields['key'].type is int32
+        assert pmap.fields['value'].type is int64
 
 
 class TestTree(unittest.TestCase):

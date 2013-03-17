@@ -17,8 +17,8 @@ class TestMessage(unittest.TestCase):
         #   object     E;
         # }
         self.node = ast.Message('Message', variables=('E'),
-                base=ast.Ref('Base'), base_tree_type=ast.Ref('Type.EVENT'),
-                tree_field='event_type', tree_type=ast.Ref('EventType.EVENT'),
+                base=ast.Ref('Base'), subtype=ast.Ref('Type.EVENT'),
+                type_field='event_type', type=ast.Ref('EventType.EVENT'),
                 declared_fields=(
                     ast.Field('event_type', ast.Ref('EventType')),
                     ast.Field('object', ast.Ref('E'))
@@ -35,7 +35,7 @@ class TestMessage(unittest.TestCase):
 
         type_field = Field('type', type)
         base = Message('Base')
-        base.do_init(tree_type=type_base, tree_field=type_field, declared_fields=(type_field,))
+        base.build(type=type_base, type_field=type_field, declared_fields=(type_field,))
 
         module.add_definitions(type, event_type, base)
 
@@ -58,36 +58,14 @@ class TestMessage(unittest.TestCase):
         message.init()
 
         assert message.base is self.base
-        assert message.base_tree_type is self.type_event
         assert list(message.bases) == [self.base]
 
-        assert message.tree_type == self.event_type_value
-        assert message.tree_field == message.fields['event_type']
-        assert message.tree == {self.event_type_value: message}
+        assert message.root_tree.type == self.event_type_value
+        assert message.root_tree.field == message.fields['event_type']
 
         assert 'event_type' in message.declared_fields
         assert 'type' in message.fields
         assert 'event_type' in message.fields
-
-    def test_set_tree_type(self):
-        type = Enum('Type')
-        type_object = EnumValue('OBJECT', type)
-
-        field = Field('type', type)
-        message = Message('Message')
-        message._set_tree_type(type_object, field)
-        assert message.tree_type == type_object
-        assert message.tree_field == field
-        assert message.tree == {type_object: message}
-
-    def test_set_tree_type_wrong_enum(self):
-        type = Enum('Type')
-        wrong = Enum('Wrong')
-        wrong_value = EnumValue('WRONG', wrong)
-
-        field = Field('type', type)
-        message = Message('Message')
-        self.assertRaises(ValueError, message._set_tree_type, wrong_value, field)
 
     def test_set_base(self):
         type = Enum('Type')
@@ -96,15 +74,14 @@ class TestMessage(unittest.TestCase):
 
         type_field = Field('type', type)
         base = Message('Base')
-        base.do_init(tree_type=type_base, tree_field=type_field)
+        base.build(type=type_base, type_field=type_field)
 
         message = Message('Message')
-        message.do_init(base=base, base_tree_type=type_message)
+        message._set_base(base, type_message)
 
         assert message.base is base
-        assert message.base_tree_type is type_message
+        assert message.base_tree.type is type_message
         assert list(message.bases) == [base]
-        assert message.tree == {type_message: message}
 
     def test_set_base_circular(self):
         type = Enum('Type')
@@ -114,16 +91,13 @@ class TestMessage(unittest.TestCase):
         type_field = Field('type', type)
 
         base = Message('Base')
-        base.do_init(type_base, type_field)
-        base.init()
+        base.build(type_base, type_field)
 
         msg = Message('Message')
-        msg.do_init(base=base, base_tree_type=type_msg)
-        msg.init()
+        msg.build(base=base, subtype=type_msg)
 
         msg2 = Message('Message2')
-        msg2.do_init(base=msg, base_tree_type=type_msg2)
-        msg2.init()
+        msg2.build(base=msg, subtype=type_msg2)
 
         self.assertRaises(ValueError, base._set_base, msg2, type_base)
 
@@ -156,32 +130,99 @@ class TestMessage(unittest.TestCase):
         type_field = Field('type', type)
 
         base = Message('Base')
-        base.do_init(type_base, type_field, declared_fields=[type_field])
+        base.build(type_base, type_field, declared_fields=[type_field])
         base.init()
 
         message = Message('Message')
-        message.do_init(base=base, base_tree_type=type_msg)
+        message.build(base=base, subtype=type_msg)
 
         duplicate_field = Field('type', type)
         self.assertRaises(ValueError, message._set_fields, duplicate_field)
 
-    def test_add_subtype_duplicate(self):
+    def test_parameterize(self):
+        assert False
+
+
+class TestTree(unittest.TestCase):
+    def test_construct(self):
+        type = Enum('Type')
+        type_object = EnumValue('OBJECT', type)
+        field = Field('type', type)
+        message = Message('Message')
+
+        tree = RootTree(message, type_object, field)
+        assert tree.message == message
+        assert tree.enum == type
+        assert tree.type == type_object
+        assert tree.field == field
+        assert tree.as_map() == {type_object: message}
+
+    def test_type_of_different_enum(self):
+        type = Enum('Type')
+        wrong = Enum('Wrong')
+        wrong_value = EnumValue('WRONG', wrong)
+
+        field = Field('type', type)
+        message = Message('Message')
+        self.assertRaises(ValueError, RootTree, message, wrong_value, field)
+
+    def test_subtree(self):
         type = Enum('Type')
         type_base = EnumValue('BASE', type)
         type_msg = EnumValue('MSG', type)
-        type_field = Field('type', type)
 
         base = Message('Base')
-        base.do_init(tree_type=type_base, tree_field=type_field)
-        base.init()
-
         msg = Message('Message')
-        msg.do_init(base=base, base_tree_type=type_msg)
+        msg.bases = [base]
 
-        msg2 = Message('Message2')
-        self.assertRaises(ValueError, msg2.do_init, base=base, base_tree_type=type_msg)
+        field = Field('type', type)
+        basetree = RootTree(base, type_base, field)
+        msgtree = basetree.subtree(msg, type_msg)
 
-    def test_add_subtype_of_wrong_enum(self):
+        assert msgtree.field == basetree.field
+        assert msgtree.enum == basetree.enum
+        assert msgtree.type == type_msg
+        assert msgtree.as_map() == {type_msg: msg}
+        assert basetree.as_map() == {type_base: base, type_msg: msg}
+
+    def test_multilevel_subtree(self):
+        type = Enum('Type')
+        type_base = EnumValue('BASE', type)
+        type_post = EnumValue('POST', type)
+        type_note = EnumValue('NOTE', type)
+
+        base = Message('Base')
+        post = Message('Post')
+        post.bases = [base]
+        note = Message('Note')
+        note.bases = [post, base]
+
+        field = Field('type', type)
+        basetree = RootTree(base, type_base, field)
+        posttree = basetree.subtree(post, type_post)
+        notetree = posttree.subtree(note, type_note)
+
+        assert notetree.as_map() == {type_note: note}
+        assert posttree.as_map() == {type_note: note, type_post: post}
+        assert basetree.as_map() == {type_note: note, type_post: post, type_base: base}
+
+    def test_subtree_duplicate(self):
+        type = Enum('Type')
+        type_base = EnumValue('BASE', type)
+        type_post = EnumValue('POST', type)
+
+        base = Message('Base')
+        post = Message('Post')
+        post.bases = [base]
+        post2 = Message('Post')
+        post2.bases = [base]
+
+        field = Field('type', type)
+        tree = RootTree(base, type_base, field)
+        tree.subtree(post, type_post)
+        self.assertRaises(ValueError, tree.subtree, post2, type_post)
+
+    def test_subtree_subtype_of_different_enum(self):
         type = Enum('Type')
         type_base = EnumValue('BASE', type)
         type_field = Field('type', type)
@@ -190,14 +231,11 @@ class TestMessage(unittest.TestCase):
         wrong_value = EnumValue('WRONG', wrong)
 
         base = Message('Base')
-        base.do_init(tree_type=type_base, tree_field=type_field)
-        base.init()
+        tree = RootTree(base, type_base, type_field)
 
         msg = Message('Message')
-        self.assertRaises(ValueError, msg.do_init, base=base, base_tree_type=wrong_value)
-
-    def test_parameterize(self):
-        assert False
+        msg.bases = [base]
+        self.assertRaises(ValueError, tree.subtree, msg, wrong_value)
 
 
 class TestEnum(unittest.TestCase):
@@ -217,6 +255,14 @@ class TestEnum(unittest.TestCase):
         enum = Enum('Type')
         EnumValue('BASE', enum)
         self.assertRaises(ValueError, EnumValue, 'BASE', enum)
+
+    def test_contains(self):
+        enum = Enum('Type')
+        base = EnumValue('BASE', enum)
+        assert base in enum
+
+        enum2 = Enum('Type2')
+        assert base not in enum2
 
 
 class TestNative(unittest.TestCase):

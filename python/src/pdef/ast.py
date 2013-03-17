@@ -48,15 +48,15 @@ class Native(Type):
 
 
 class Message(Type):
-    def __init__(self, name, variables=None, base=None, base_tree_type=None,
-                 tree_field=None, tree_type=None, declared_fields=None):
+    def __init__(self, name, variables=None, base=None, subtype=None,
+                 type_field=None, type=None, declared_fields=None):
         super(Message, self).__init__(name, variables)
 
         self.base = base
-        self.base_tree_type = base_tree_type
+        self.subtype = subtype
 
-        self.tree_field = tree_field
-        self.tree_type = tree_type
+        self.type = type
+        self.type_field = type_field
 
         self.declared_fields = tuple(declared_fields) if declared_fields else ()
 

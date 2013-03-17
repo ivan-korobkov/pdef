@@ -206,9 +206,9 @@ class GrammarRules(object):
         options, declared_fields = t[4] # message_body
 
         t[0] = ast.Message(name, variables=variables,
-                           base=base, base_tree_type=base_tree_type,
-                           tree_field=tree_field,
-                           tree_type=tree_type,
+                           base=base, subtype=base_tree_type,
+                           type_field=tree_field,
+                           type=tree_type,
                            declared_fields=declared_fields)
 
     def p_message_header(self, t):

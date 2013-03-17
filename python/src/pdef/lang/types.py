@@ -12,11 +12,10 @@ class Type(Node):
         self.inited = False
 
         self.variables = SymbolTable()
-        if variables:
-            for var in variables:
-                check_isinstance(var, Variable)
-                self.variables.add(var)
-                self.symbols.add(var)
+        for var in (variables if variables else ()):
+            check_isinstance(var, Variable)
+            self.variables.add(var)
+            self.symbols.add(var)
 
         self._pqueue = deque()
         self._pmap = {}
@@ -32,8 +31,13 @@ class Type(Node):
     def generic(self):
         return bool(self.variables)
 
-    def check_initialized(self):
-        check_state(self.inited, '%s is not initialized', self)
+    def init(self):
+        if self.inited:
+            return
+
+        self.inited = True
+        self._do_init()
+        self._init_parameterized()
 
     def bind(self, arg_map):
         '''Parameterized types and variables should redefine this method.'''
@@ -57,8 +61,11 @@ class Type(Node):
             ptype = self._pqueue.pop()
             ptype.init()
 
+    def _do_init(self):
+        raise NotImplementedError
+
     def _do_parameterize(self, *variables):
-        raise NotImplementedError('Implement in a subclass')
+        raise NotImplementedError
 
 
 class ParameterizedType(Type):

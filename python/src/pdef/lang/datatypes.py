@@ -17,12 +17,11 @@ class Message(Type):
     def __init__(self, name, variables=None, module=None):
         super(Message, self).__init__(name, variables, module)
 
-        self.tree = None
-        self.tree_type = None
-
         self.base = None
-        self.base_tree_type = None
         self.bases = None
+
+        self.base_tree = None
+        self.root_tree = None
 
         self.fields = None
         self.declared_fields = None
@@ -31,78 +30,70 @@ class Message(Type):
 
     @property
     def parent(self):
-        return self.module if self.module else None
+        return self.module
 
-    def init(self):
-        if self.inited: return
-        self.inited = True
-        if not self.node: return
+    @property
+    def tree(self):
+        return self.root_tree if self.root_tree else self.base_tree
+
+    def _do_init(self):
+        if not self.node:
+            return
         node = self.node
 
         # Force base initialization for correct type tree and fields checks.
         base = self.lookup(node.base) if node.base else None
         base.init()
-        base_tree_type = self.lookup(node.base_tree_type) if node.base_tree_type else None
+        subtype = self.lookup(node.subtype) if node.subtype else None
 
         declared_fields = SymbolTable(self)
         for field_node in node.declared_fields:
-            name = field_node.name
-            type = self.lookup(field_node.type)
-            field = Field(name, type)
+            fname = field_node.name
+            ftype = self.lookup(field_node.type)
+            field = Field(fname, ftype)
             declared_fields.add(field)
 
-        tree_type = self.lookup(node.tree_type) if node.tree_type else None
-        tree_field_name = node.tree_field
-        tree_field = declared_fields.get(tree_field_name)
-        if not tree_field:
-            raise ValueError('Tree field "%s" is not found in %s' % (tree_field_name, self))
+        if node.type:
+            type = self.lookup(node.type) if node.type else None
+            type_field = declared_fields.get(node.type_field)
+            if not type_field:
+                raise ValueError('Tree field "%s" is not found in %s' % (node.type_field, self))
+        else:
+            type = None
+            type_field = None
 
-        self.do_init(tree_type=tree_type, tree_field=tree_field,
-                     base=base, base_tree_type=base_tree_type,
-                     declared_fields=declared_fields)
+        self.build(type=type, type_field=type_field,
+                   base=base, subtype=subtype,
+                   declared_fields=declared_fields)
 
-    def do_init(self, tree_type=None, tree_field=None, base=None, base_tree_type=None,
-                declared_fields=None):
-        self._set_tree_type(tree_type, tree_field)
-        self._set_base(base, base_tree_type)
+    def build(self, type=None, type_field=None, base=None, subtype=None, declared_fields=None):
+        self._set_type(type, type_field)
+        self._set_base(base, subtype)
         self._set_fields(*(declared_fields if declared_fields else ()))
 
         self.inited = True
 
-    def _set_tree_type(self, tree_type, tree_field):
-        if tree_type is None and tree_field is None:
+    def _set_type(self, type, field):
+        if type is None and field is None:
             return
-        check_isinstance(tree_type, EnumValue)
-        check_isinstance(tree_field, Field)
-        check_argument(tree_field.type == tree_type.enum,
-                       'Wrong tree value in %s, it must be of type "%s", got "%s"',
-                       self, tree_field.type, tree_type)
+        self.root_tree = RootTree(self, type, field)
 
-        self.tree_type = tree_type
-        self.tree_field = tree_field
-        self.tree = {tree_type: self}
-
-    def _set_base(self, base, base_tree_type):
+    def _set_base(self, base, subtype):
         '''Set this message base message and its type.'''
-        if base is None and base_tree_type is None:
+        if base is None and subtype is None:
             self.bases = []
             return
 
         check_isinstance(base, Message)
-        check_isinstance(base_tree_type, EnumValue)
+        check_isinstance(subtype, EnumValue)
         check_argument(base.inited, '%s must be initialized to be used as base of %s', base, self)
         check_argument(self != base, '%s cannot inherit itself', self)
         check_argument(not self in base.bases, 'Circular inheritance: %s',
                        '->'.join(str(b) for b in ([self, base] + list(base.bases))))
 
         self.base = check_not_none(base)
-        self.base_tree_type = check_not_none(base_tree_type)
         self.bases = tuple([base] + list(base.bases))
-        base.add_subtype(self)
-        if self.tree_type:
-            return
-
-        self.tree = {base_tree_type: self}
+        self.base_tree = base.tree.subtree(self, subtype)
 
     def _set_fields(self, *declared_fields):
         self.fields = SymbolTable(self)
@@ -114,31 +105,6 @@ class Message(Type):
             self.declared_fields.add(field)
             self.fields.add(field)
 
-    @property
-    def is_tree_root(self):
-        return bool(self.tree_type)
-
-    def add_subtype(self, sub_message):
-        check_state(self.inited, '%s must be initialized', self)
-        check_isinstance(sub_message, Message)
-
-        sub_type = sub_message.base_tree_type
-        check_isinstance(sub_type, EnumValue)
-        check_argument(self in sub_message.bases, '%s must inherit %s', sub_message, self)
-        check_state(sub_type not in self.tree, 'Duplicate values %s, %s for subtype %s in %s tree',
-                    sub_message, self.tree.get(sub_type), sub_type, self)
-        check_argument(sub_type.enum == self.tree_type.enum,
-                       'Wrong subtype value in %s, it must be a value of enum %s, got %s',
-                       sub_message, self.tree_type.enum, sub_type)
-
-        self.tree[sub_type] = sub_message
-        if self.is_tree_root:
-            return
-
-        check_state(self.base, 'Cannot add a subtype %s to %s '
-                   'which is neither a tree root nor a subtype', self)
-        self.base.add_subtype(sub_message)
-
     def _do_parameterize(self, *variables):
         '''Parameterize this message with the given arguments, return another message.'''
         return ParameterizedMessage(self, *variables)
@@ -149,7 +115,6 @@ class ParameterizedMessage(ParameterizedType):
         super(ParameterizedMessage, self).__init__(rawtype, variables)
 
         self.base = None
-        self.base_tree_type = None
         self.bases = None
 
         self.fields = None
@@ -160,12 +125,12 @@ class ParameterizedMessage(ParameterizedType):
         return self.rawtype.tree
 
     @property
-    def tree_type(self):
-        return self.rawtype.tree_type
+    def base_tree(self):
+        return self.rawtype.base_tree
 
     @property
-    def is_tree_root(self):
-        return self.rawtype.is_tree_root
+    def root_tree(self):
+        return self.rawtype.root_tree
 
     def init(self):
         super(ParameterizedMessage, self).init()
@@ -175,8 +140,7 @@ class ParameterizedMessage(ParameterizedType):
         base = rawtype.base.bind(vmap) if rawtype.base else None
 
         self.base = base
-        self.base_tree_type = base.base_tree_type if base else None
-        self.bases = tuple([base] + base.bases) if base else tuple()
+        self.bases = tuple([base] + list(base.bases)) if base else tuple()
 
         self.fields = SymbolTable(self)
         self.declared_fields = SymbolTable(self)
@@ -202,6 +166,78 @@ class Field(object):
         return Field(self.name, btype)
 
 
+class AbstractMessageTree(object):
+    # Implement in subclasses
+    field = None
+    enum = None
+
+    def __init__(self, message, type):
+        self.basetree = None
+        self.message = message
+        self.type = type
+        self.subtypes = SymbolTable(self)
+        self.subtypes.add(message, type)
+
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, self)
+
+    def __str__(self):
+        return 'tree on %s of %s in %s' % (self.field, self.enum, self.message)
+
+    def subtree(self, submessage, subtype):
+        self.add(submessage, subtype)
+        return SubTree(submessage, subtype, self)
+
+    def add(self, submessage, subtype):
+        check_isinstance(submessage, Message)
+        check_isinstance(subtype, EnumValue)
+
+        message = self.message
+        enum = self.enum
+        subtypes = self.subtypes
+
+        check_argument(message in (submessage.bases or ()),
+                '%s must inherit %s', submessage, message)
+        check_argument(subtype in enum,
+                'Wrong subtype in %s, it must be a value of enum %s, got %s',
+                submessage, enum, subtype)
+        check_state(subtype not in subtypes,
+                'Duplicate messages %s, %s for subtype %s in %s tree',
+                submessage, subtypes.get(subtype), subtype, message)
+
+        self.subtypes.add(submessage, subtype)
+        if self.basetree:
+            self.basetree.add(submessage, subtype)
+
+    def as_map(self):
+        return self.subtypes.as_map()
+
+
+class RootTree(AbstractMessageTree):
+    def __init__(self, message, type, field):
+        super(RootTree, self).__init__(message, type)
+        check_isinstance(type, EnumValue)
+        check_isinstance(field, Field)
+        check_argument(type in field.type)
+
+        self.field = field
+        self.enum = field.type
+
+
+class SubTree(AbstractMessageTree):
+    def __init__(self, message, type, basetree):
+        super(SubTree, self).__init__(message, type)
+        self.basetree = basetree
+
+    @property
+    def field(self):
+        return self.basetree.field
+
+    @property
+    def enum(self):
+        return self.basetree.enum
+
+
 class Enum(Type):
     @classmethod
     def from_node(cls, node):
@@ -224,6 +260,9 @@ class Enum(Type):
 
     def add_values(self, *values):
         map(self.add_value, values)
+
+    def __contains__(self, enum_value):
+        return enum_value in self.values.as_map().values()
 
 
 class EnumValue(Type):

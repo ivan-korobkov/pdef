@@ -1,10 +1,10 @@
 # encoding: utf-8
+import unittest
 from pdef import ast
 from pdef.lang import *
-from pdef.lang.tests.test import PdefTest
 
 
-class TestPackage(PdefTest):
+class TestPackage(unittest.TestCase):
     def setUp(self):
         self.node = ast.Package('test', version='1.0',
                 dependencies=('dep1', 'dep2'),
@@ -57,7 +57,7 @@ class TestPackage(PdefTest):
         self.assertRaises(ValueError, package.add_module, module)
 
 
-class TestModule(PdefTest):
+class TestModule(unittest.TestCase):
     def setUp(self):
         self.node = ast.Module('package.module',
             imports=(

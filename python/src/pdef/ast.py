@@ -22,6 +22,12 @@ class Ref(object):
         self.name = check_not_none(name)
         self.variables = tuple(variables) if variables else ()
 
+    def __repr__(self):
+        s = self.name
+        if self.variables:
+            s += '<%s>' % ', '.join(self.variables)
+        return s
+
 
 class ImportRef(object):
     def __init__(self, name, alias=None):

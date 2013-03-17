@@ -10,7 +10,8 @@ class Symbol(object):
 
 
 class SymbolTable(object):
-    def __init__(self):
+    def __init__(self, parent=None):
+        self.parent = parent
         self.items = []
         self.map = {}
 
@@ -33,7 +34,10 @@ class SymbolTable(object):
 
     def __setitem__(self, name, item):
         if name in self.map:
-            raise ValueError('Duplicate symbol "%s"' % name)
+            s = 'Duplicate symbol "%s"' % name
+            if self.parent:
+                s += ' in %s' % self.parent
+            raise ValueError(s)
 
         self.map[name] = item
         self.items.append(item)
@@ -53,21 +57,25 @@ class SymbolTable(object):
         name = name if name else item.name
         self[name] = item
 
+    def get(self, name, default=None):
+        return self.map.get(name, default)
+
     def as_map(self):
         return dict(self.map)
 
 
 class Node(Symbol):
+    parent = None
+
     def __init__(self, name):
         super(Node, self).__init__(name)
-        self.parent = None
         self.symbols = SymbolTable()
 
-    def link(self):
-        pass
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, self.fullname)
 
-    def init(self):
-        pass
+    def __str__(self):
+        return self.fullname
 
     @property
     def fullname(self):
@@ -75,7 +83,35 @@ class Node(Symbol):
             return '%s %s' % (self.parent.fullname, self.name)
         return self.name
 
-    def lookup(self, name):
+    def link(self):
+        pass
+
+    def init(self):
+        pass
+
+    def lookup(self, name_or_ref):
+        from pdef.ast import Ref
+        if isinstance(name_or_ref, Ref):
+            return self._lookup_ref(name_or_ref)
+        return self._lookup_name(name_or_ref)
+
+    def _lookup_ref(self, ref):
+        from pdef.ast import Ref
+        check_isinstance(ref, Ref)
+
+        rawtype = self.lookup(ref.name)
+        if not rawtype:
+            raise ValueError('Type not found %s' % ref)
+
+        if not rawtype.generic:
+            if ref.variables:
+                raise ValueError('Wrong number of generic vars in %s' % ref)
+            return rawtype
+
+        vars = tuple(self.lookup(var) for var in ref.variables)
+        return rawtype.parameterize(*vars)
+
+    def _lookup_name(self, name):
         symbol = self._lookup_child(name)
         if symbol is not None:
             return symbol

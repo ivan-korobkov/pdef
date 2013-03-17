@@ -1,31 +1,29 @@
 # encoding: utf-8
 from collections import deque
 from pdef.preconditions import *
-from pdef.lang.symbols import Symbol, SymbolTable
+from pdef.lang.symbols import SymbolTable, Node
 
 
-class Type(Symbol):
+class Type(Node):
     def __init__(self, name, variables=None, module=None):
         super(Type, self).__init__(name)
         self.module = module
         self.rawtype = self
-        self.is_initialized = False
+        self.inited = False
 
         self.variables = SymbolTable()
         if variables:
             for var in variables:
                 check_isinstance(var, Variable)
                 self.variables.add(var)
+                self.symbols.add(var)
 
         self._pqueue = deque()
         self._pmap = {}
 
-        if module:
-            module.add_definition(self)
-
     @property
     def fullname(self):
-        s = '%s.%s' % (self.module.fullname, self.name) if self.module else self.name
+        s = '%s.%s' % (self.parent.fullname, self.name) if self.parent else self.name
         if self.variables:
             s += '<' + ', '.join(var.name for var in self.variables) + '>'
         return s
@@ -35,7 +33,7 @@ class Type(Symbol):
         return bool(self.variables)
 
     def check_initialized(self):
-        check_state(self.is_initialized, '%s is not initialized', self)
+        check_state(self.inited, '%s is not initialized', self)
 
     def bind(self, arg_map):
         '''Parameterized types and variables should redefine this method.'''
@@ -51,7 +49,7 @@ class Type(Symbol):
         self._pmap[vars] = ptype
         self._pqueue.append(ptype)
 
-        if self.is_initialized:
+        if self.inited:
             self._init_parameterized()
 
     def _init_parameterized(self):
@@ -74,7 +72,7 @@ class ParameterizedType(Type):
             self.variables[var.name] = arg
 
     def init(self):
-        self.is_initialized = True
+        self.inited = True
 
     def bind(self, arg_map):
         bvariables = []

@@ -1,229 +1,229 @@
 # encoding: utf-8
+import unittest
+from pdef import ast
 from pdef.lang import *
-from pdef.lang.tests.test import PdefTest
 
 
-class TestNative(PdefTest):
-    def test_parameterize(self):
-        t = Variable('T')
-        List = Native('List')
-        List.add_variables(t)
+class TestMessage(unittest.TestCase):
+    def setUp(self):
+        # enum Type { BASE, EVENT };
+        # enum EventType { EVENT };
+        # Base polymorphic on "type" as Type.Base {
+        #   type Type;
+        # }
+        # Message<E> inherits Base as Type.EVENT
+        #            polymorphic on "event_type" as EventType.EVENT {
+        #   event_type EventType;
+        #   object     E;
+        # }
+        self.node = ast.Message('Message', variables=('E'),
+                base=ast.Ref('Base'), base_tree_type=ast.Ref('Type.EVENT'),
+                tree_field='event_type', tree_type=ast.Ref('EventType.EVENT'),
+                declared_fields=(
+                    ast.Field('event_type', ast.Ref('EventType')),
+                    ast.Field('object', ast.Ref('E'))
+                ))
 
-        string = Native('string')
-        special = List.parameterize(string)
-        assert special.rawtype is List
-        assert list(special.variables) == [string]
+        module = Module('module')
 
+        type = Enum('Type', module)
+        type_base = EnumValue('BASE', type)
+        type_event = EnumValue('EVENT', type)
 
-class TestMessage(PdefTest):
-    def test_bases(self):
+        event_type = Enum('EventType', module)
+        event_type_value = EnumValue('EVENT', event_type)
+
+        type_field = Field('type', type)
+        base = Message('Base')
+        base.do_init(tree_type=type_base, tree_field=type_field, declared_fields=(type_field,))
+
+        module.add_definitions(type, event_type, base)
+
+        self.module = module
+        self.type = type
+        self.type_event = type_event
+        self.event_type = event_type
+        self.event_type_value = event_type_value
+        self.base = base
+
+    def test_from_node(self):
+        message = Message.from_node(self.node)
+        assert message.node is self.node
+        assert message.name == self.node.name
+        assert 'E' in message.symbols
+        assert 'E' in message.variables
+
+    def test_init(self):
+        message = Message.from_node(self.node, self.module)
+        message.init()
+
+        assert message.base is self.base
+        assert message.base_tree_type is self.type_event
+        assert list(message.bases) == [self.base]
+
+        assert message.tree_type == self.event_type_value
+        assert message.tree_field == message.fields['event_type']
+        assert message.tree == {self.event_type_value: message}
+
+        assert 'event_type' in message.declared_fields
+        assert 'type' in message.fields
+        assert 'event_type' in message.fields
+
+    def test_set_tree_type(self):
+        type = Enum('Type')
+        type_object = EnumValue('OBJECT', type)
+
+        field = Field('type', type)
+        message = Message('Message')
+        message._set_tree_type(type_object, field)
+        assert message.tree_type == type_object
+        assert message.tree_field == field
+        assert message.tree == {type_object: message}
+
+    def test_set_tree_type_wrong_enum(self):
+        type = Enum('Type')
+        wrong = Enum('Wrong')
+        wrong_value = EnumValue('WRONG', wrong)
+
+        field = Field('type', type)
+        message = Message('Message')
+        self.assertRaises(ValueError, message._set_tree_type, wrong_value, field)
+
+    def test_set_base(self):
+        type = Enum('Type')
+        type_base = EnumValue('BASE', type)
+        type_message = EnumValue('MESSAGE', type)
+
+        type_field = Field('type', type)
+        base = Message('Base')
+        base.do_init(tree_type=type_base, tree_field=type_field)
+
+        message = Message('Message')
+        message.do_init(base=base, base_tree_type=type_message)
+
+        assert message.base is base
+        assert message.base_tree_type is type_message
+        assert list(message.bases) == [base]
+        assert message.tree == {type_message: message}
+
+    def test_set_base_circular(self):
+        type = Enum('Type')
+        type_base = EnumValue('BASE', type)
+        type_msg = EnumValue('MSG', type)
+        type_msg2 = EnumValue('MSG2', type)
+        type_field = Field('type', type)
+
+        base = Message('Base')
+        base.do_init(type_base, type_field)
+        base.init()
+
         msg = Message('Message')
-        msg2 = Message('Message2', base=msg, base_type='msg2')
-        msg3 = Message('Message3', base=msg2, base_type='msg3')
+        msg.do_init(base=base, base_tree_type=type_msg)
+        msg.init()
 
-        assert list(msg3.bases) == [msg2, msg]
-        assert list(msg2.bases) == [msg]
+        msg2 = Message('Message2')
+        msg2.do_init(base=msg, base_tree_type=type_msg2)
+        msg2.init()
 
-    def test_parameterize(self):
-        '''Should create a parameterized message.'''
-        t = Variable('T')
+        self.assertRaises(ValueError, base._set_base, msg2, type_base)
+
+    def test_set_fields(self):
+        int32 = Native('int32')
+        int64 = Native('int64')
+        field1 = Field('field1', int32)
+        field2 = Field('field2', int64)
+
         msg = Message('Message')
-        msg.add_variables(t)
-        msg.add_fields(Field('field', t))
+        msg._set_fields(field1, field2)
 
+        assert 'field1' in msg.fields
+        assert 'field2' in msg.fields
+        assert 'field1' in msg.declared_fields
+        assert 'field2' in msg.declared_fields
+
+    def test_set_fields_duplicates(self):
         int32 = Native('int32')
-        pmsg = msg.parameterize(int32)
-        assert pmsg.rawtype == msg
-        assert list(pmsg.variables) == [int32]
+        field1 = Field('field', int32)
+        field2 = Field('field', int32)
 
-    def test_compile_fields(self):
-        int32 = Native('int32')
-        f1 = Field('z', int32)
-        msg = Message('A')
-        msg.add_fields(f1)
-
-        f2 = Field('y', int32)
-        msg2 = Message('B', base=msg, base_type='b')
-        msg2.add_fields(f2)
-
-        f3 = Field('x', int32)
-        msg3 = Message('C', base=msg2, base_type='c')
-        msg3.add_fields(f3)
-
-        msg3.compile_fields()
-        assert list(msg3.fields) == [f1, f2, f3]
-
-    def test_compile_fields_clash(self):
-        int32 = Native('int32')
-        f1 = Field('field', int32)
-        msg = Message('A')
-        msg.add_fields(f1)
-
-        f2 = Field('field', int32)
-        msg2 = Message('B', base=msg, base_type='b')
-        msg2.add_fields(f2)
-        msg2.compile_fields()
-
-        assert len(errors.aslist()) == 1
-        assert 'duplicate' in errors.aslist()[0]
-
-    def test_check_circular_inheritance(self):
         msg = Message('Message')
-        msg2 = Message('Message2', base=msg, base_type='msg2')
-        msg3 = Message('Message3', base=msg2, base_type='msg3')
-        msg.set_base(msg3, 'type')
+        self.assertRaises(ValueError, msg._set_fields, field1, field2)
 
-        msg2.check_circular_inheritance()
-        assert len(errors.aslist()) == 1
-        assert 'circular inheritance' in errors.aslist()[0]
+    def test_set_fields_overriden_duplicate(self):
+        type = Enum('Type')
+        type_base = EnumValue('BASE', type)
+        type_msg = EnumValue('MSG', type)
+        type_field = Field('type', type)
 
-    def test_compile_polymorphism(self):
-        mp = MessagePolymorphism('field', 'A')
-        msg = Message('A', polymorphism=mp)
-        msg.compile_polymorphism()
+        base = Message('Base')
+        base.do_init(type_base, type_field, declared_fields=[type_field])
+        base.init()
 
-        assert mp.message == msg
-        assert mp.map == {'A': msg}
+        message = Message('Message')
+        message.do_init(base=base, base_tree_type=type_msg)
 
-    def test_compile_base_type(self):
-        msg = Message('A', polymorphism=MessagePolymorphism(Ref('field'), 'A'))
-        msg.compile_polymorphism()
-
-        msg2 = Message('B', base=msg, base_type='B')
-        msg2.compile_polymorphism()
-        msg2.compile_base_type()
-
-        assert msg.polymorphism.map == {'A': msg, 'B': msg2}
-
-
-class TestParameterizedMessage(PdefTest):
-    def test_build(self):
-        t = Variable('T')
-        msg = Message('Message')
-        msg.add_variables(t)
-        msg.add_fields(Field('field', t))
-
-        int32 = Native('int32')
-        pmsg = msg.parameterize(int32)
-        pmsg.init()
-
-        assert pmsg.rawtype == msg
-        assert pmsg.declared_fields['field'].type == int32
-
-
-class TestMessagePolymorphism(PdefTest):
-    def test_set_message(self):
-        obj = Message('Object')
-        mp = MessagePolymorphism('field', 'object')
-        mp.set_message(obj)
-
-        assert mp.map == {'object': obj}
-
-    def test_add_subtype(self):
-        obj = Message('Object')
-        mp = MessagePolymorphism('field', 'object')
-        mp.set_message(obj)
-
-        photo = Message('Photo', base=obj, base_type='photo')
-        mp.add_subtype(photo)
-        assert mp.map == {'photo': photo, 'object': obj}
+        duplicate_field = Field('type', type)
+        self.assertRaises(ValueError, message._set_fields, duplicate_field)
 
     def test_add_subtype_duplicate(self):
-        obj = Message('Object')
-        mp = MessagePolymorphism('field', 'object')
-        mp.set_message(obj)
+        type = Enum('Type')
+        type_base = EnumValue('BASE', type)
+        type_msg = EnumValue('MSG', type)
+        type_field = Field('type', type)
 
-        photo = Message('Photo', base=obj, base_type='photo')
-        photo2 = Message('Photo', base=obj, base_type='photo')
-        mp.add_subtype(photo)
-        mp.add_subtype(photo2)
-        assert len(errors.aslist()) == 1
-        assert 'duplicate subtype' in errors.aslist()[0]
+        base = Message('Base')
+        base.do_init(tree_type=type_base, tree_field=type_field)
+        base.init()
+
+        msg = Message('Message')
+        msg.do_init(base=base, base_tree_type=type_msg)
+
+        msg2 = Message('Message2')
+        self.assertRaises(ValueError, msg2.do_init, base=base, base_tree_type=type_msg)
+
+    def test_add_subtype_of_wrong_enum(self):
+        type = Enum('Type')
+        type_base = EnumValue('BASE', type)
+        type_field = Field('type', type)
+
+        wrong = Enum('Wrong')
+        wrong_value = EnumValue('WRONG', wrong)
+
+        base = Message('Base')
+        base.do_init(tree_type=type_base, tree_field=type_field)
+        base.init()
+
+        msg = Message('Message')
+        self.assertRaises(ValueError, msg.do_init, base=base, base_tree_type=wrong_value)
+
+    def test_parameterize(self):
+        assert False
 
 
-class TestParameterization(PdefTest):
-    def test_recursive(self):
-        '''Should support recursive parameterization.'''
-        # MyMessage:
-        #   MyList<int32> list
-        #
-        # MyList<E>:
-        #   List<Set<E>> items
-        int32 = Native('int32')
-        Set = Native('Set', variables=[Variable('T')])
-        List = Native('List', variables=[Variable('T')])
+class TestEnum(unittest.TestCase):
+    def setUp(self):
+        self.node = ast.Enum('Type', values=(
+            'BASE', 'OBJECT', 'EVENT'
+        ))
 
-        MyList = Message('MyList', variables=[Variable('E')])
-        MyList.add_fields(Field('items', Ref('List', Ref('Set', Ref('E')))))
+    def test_from_node(self):
+        enum = Enum.from_node(self.node)
+        assert enum.name == self.node.name
+        assert 'BASE' in enum.values
+        assert 'OBJECT' in enum.values
+        assert 'EVENT' in enum.values
 
-        MyMessage = Message('MyMessage')
-        MyMessage.add_fields(Field('list', Ref('MyList', Ref('int32'))))
+    def test_duplicate_value(self):
+        enum = Enum('Type')
+        EnumValue('BASE', enum)
+        self.assertRaises(ValueError, EnumValue, 'BASE', enum)
 
-        module = Module('test.module')
-        module.add_definitions(int32, Set, List, MyList, MyMessage)
 
-        pkg = Package('test')
-        pkg.add_modules(module)
-        pkg.build()
+class TestNative(unittest.TestCase):
+    def setUp(self):
+        self.node = ast.Native('list', variables=['E'])
 
-        # MyList<int32>:
-        #   List<Set<int32>> items
-        pmylist = MyMessage.declared_fields['list'].type
-
-        items = pmylist.declared_fields['items']
-        plist = items.type
-        assert plist.rawtype == List
-
-        pset = list(plist.variables)[0]
-        assert pset.rawtype == Set
-
-        pelement = list(pset.variables)[0]
-        assert pelement == int32
-
-    def test_circular(self):
-        '''Should support circular parameterization.'''
-        # Node<N>:
-        #   RootNode<N> root
-        # RootNode<R> extends Node<R>
-        # Graph:
-        #   Node<int32> node
-        int32 = Native('int32')
-        node_type = Enum('NodeType', values=[EnumValue('NODE'), EnumValue('ROOT')])
-
-        N = Variable('N')
-        Node = Message('Node')
-        Node.add_variables(N)
-        Node.add_fields(Field('root', Ref('RootNode', Ref('N'))))
-
-        R = Variable('R')
-        Root = Message('RootNode')
-        Root.add_variables(R)
-        Root.set_base(Ref('Node', Ref('R')), Ref('NodeType.ROOT'))
-
-        Graph = Message('Graph')
-        Graph.add_fields(Field('node', Ref('Node', Ref('int32'))))
-
-        module = Module('test')
-        module.add_definitions(int32, node_type, Node, Root, Graph)
-
-        pkg = Package('test')
-        pkg.add_modules(module)
-        pkg.build()
-
-        # First, check that node-root circle.
-        nroot = Node.declared_fields['root'].type
-        assert nroot.rawtype is Root
-        assert list(nroot.variables) == [N]
-        assert nroot.base is Node
-
-        # Second, check the bindings in Graph.
-        gnode = Graph.declared_fields['node'].type
-        assert gnode.rawtype == Node
-        assert list(gnode.variables) == [int32]
-
-        groot = gnode.declared_fields['root'].type
-        assert groot.rawtype == Root
-        assert list(gnode.variables) == [int32]
-
-        gbase = groot.base
-        assert gnode == gbase
+    def test_from_node(self):
+        native = Native.from_node(self.node)
+        assert native.name == self.node.name
+        assert 'E' in native.variables

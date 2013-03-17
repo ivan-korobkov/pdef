@@ -7,9 +7,12 @@ from pdef.lang.types import Type, ParameterizedType, Variable
 
 class Message(Type):
     @classmethod
-    def from_node(cls, node):
+    def from_node(cls, node, module=None):
         check_isinstance(node, ast.Message)
-        return Message(node.name, variables=(Variable(var) for var in node.variables))
+        message = Message(node.name, variables=(Variable(var) for var in node.variables),
+                          module=module)
+        message.node = node
+        return message
 
     def __init__(self, name, variables=None, module=None):
         super(Message, self).__init__(name, variables, module)
@@ -24,24 +27,60 @@ class Message(Type):
         self.fields = None
         self.declared_fields = None
 
-    def init(self, tree_type=None, tree_field=None, base=None, base_tree_type=None,
-              declared_fields=None):
-        check_state(not self.is_initialized, '%s is already initialized', self)
+        self.node = None
 
+    @property
+    def parent(self):
+        return self.module if self.module else None
+
+    def init(self):
+        if self.inited: return
+        self.inited = True
+        if not self.node: return
+        node = self.node
+
+        # Force base initialization for correct type tree and fields checks.
+        base = self.lookup(node.base) if node.base else None
+        base.init()
+        base_tree_type = self.lookup(node.base_tree_type) if node.base_tree_type else None
+
+        declared_fields = SymbolTable(self)
+        for field_node in node.declared_fields:
+            name = field_node.name
+            type = self.lookup(field_node.type)
+            field = Field(name, type)
+            declared_fields.add(field)
+
+        tree_type = self.lookup(node.tree_type) if node.tree_type else None
+        tree_field_name = node.tree_field
+        tree_field = declared_fields.get(tree_field_name)
+        if not tree_field:
+            raise ValueError('Tree field "%s" is not found in %s' % (tree_field_name, self))
+
+        self.do_init(tree_type=tree_type, tree_field=tree_field,
+                     base=base, base_tree_type=base_tree_type,
+                     declared_fields=declared_fields)
+
+    def do_init(self, tree_type=None, tree_field=None, base=None, base_tree_type=None,
+                declared_fields=None):
         self._set_tree_type(tree_type, tree_field)
         self._set_base(base, base_tree_type)
-        self._set_fields(declared_fields if declared_fields else ())
+        self._set_fields(*(declared_fields if declared_fields else ()))
 
-        self.is_initialized = True
+        self.inited = True
 
     def _set_tree_type(self, tree_type, tree_field):
         if tree_type is None and tree_field is None:
             return
         check_isinstance(tree_type, EnumValue)
         check_isinstance(tree_field, Field)
+        check_argument(tree_field.type == tree_type.enum,
+                       'Wrong tree value in %s, it must be of type "%s", got "%s"',
+                       self, tree_field.type, tree_type)
 
         self.tree_type = tree_type
         self.tree_field = tree_field
+        self.tree = {tree_type: self}
 
     def _set_base(self, base, base_tree_type):
         '''Set this message base message and its type.'''
@@ -51,17 +90,23 @@ class Message(Type):
 
         check_isinstance(base, Message)
         check_isinstance(base_tree_type, EnumValue)
-        check_argument(base.is_initialized, '%s must be initialized to be used as base of %s',
-                       base, self)
+        check_argument(base.inited, '%s must be initialized to be used as base of %s', base, self)
+        check_argument(self != base, '%s cannot inherit itself', self)
+        check_argument(not self in base.bases, 'Circular inheritance: %s',
+                       '->'.join(str(b) for b in ([self, base] + list(base.bases))))
 
         self.base = check_not_none(base)
         self.base_tree_type = check_not_none(base_tree_type)
-        self.bases = tuple([base] + base.bases)
-        base.add_subtype(self, base_tree_type)
+        self.bases = tuple([base] + list(base.bases))
+        base.add_subtype(self)
+        if self.tree_type:
+            return
 
-    def _set_fields(self, declared_fields):
-        self.fields = SymbolTable()
-        self.declared_fields = SymbolTable()
+        self.tree = {base_tree_type: self}
+
+    def _set_fields(self, *declared_fields):
+        self.fields = SymbolTable(self)
+        self.declared_fields = SymbolTable(self)
         if self.base:
             self.fields += self.base.fields
 
@@ -73,12 +118,18 @@ class Message(Type):
     def is_tree_root(self):
         return bool(self.tree_type)
 
-    def add_subtype(self, sub_message, sub_type):
+    def add_subtype(self, sub_message):
+        check_state(self.inited, '%s must be initialized', self)
         check_isinstance(sub_message, Message)
+
+        sub_type = sub_message.base_tree_type
         check_isinstance(sub_type, EnumValue)
-        check_argument(sub_message is not self)
         check_argument(self in sub_message.bases, '%s must inherit %s', sub_message, self)
-        check_state(sub_type not in self.tree, 'Duplicate subtype %s in %s tree', sub_type, self)
+        check_state(sub_type not in self.tree, 'Duplicate values %s, %s for subtype %s in %s tree',
+                    sub_message, self.tree.get(sub_type), sub_type, self)
+        check_argument(sub_type.enum == self.tree_type.enum,
+                       'Wrong subtype value in %s, it must be a value of enum %s, got %s',
+                       sub_message, self.tree_type.enum, sub_type)
 
         self.tree[sub_type] = sub_message
         if self.is_tree_root:
@@ -86,7 +137,7 @@ class Message(Type):
 
         check_state(self.base, 'Cannot add a subtype %s to %s '
                    'which is neither a tree root nor a subtype', self)
-        self.base.add_tree_subtype(sub_message, sub_type)
+        self.base.add_subtype(sub_message)
 
     def _do_parameterize(self, *variables):
         '''Parameterize this message with the given arguments, return another message.'''
@@ -127,8 +178,8 @@ class ParameterizedMessage(ParameterizedType):
         self.base_tree_type = base.base_tree_type if base else None
         self.bases = tuple([base] + base.bases) if base else tuple()
 
-        self.fields = SymbolTable()
-        self.declared_fields = SymbolTable()
+        self.fields = SymbolTable(self)
+        self.declared_fields = SymbolTable(self)
         if base:
             self.fields += base.fields
 
@@ -157,15 +208,22 @@ class Enum(Type):
         check_isinstance(node, ast.Enum)
         enum = Enum(node.name)
         for name in node.values:
-            enum.add_value(EnumValue(name, enum))
+            EnumValue(name, enum)
+
         return enum
 
-    def __init__(self, name, module=None):
+    def __init__(self, name, module=None, values=None):
         super(Enum, self).__init__(name, module=module)
-        self.values = SymbolTable()
+        self.values = SymbolTable(self)
+        if values:
+            self.add_values(*values)
 
     def add_value(self, value):
         self.values.add(value)
+        self.symbols.add(value)
+
+    def add_values(self, *values):
+        map(self.add_value, values)
 
 
 class EnumValue(Type):
@@ -173,6 +231,10 @@ class EnumValue(Type):
         super(EnumValue, self).__init__(name, module=enum.module)
         self.enum = enum
         enum.add_value(self)
+
+    @property
+    def parent(self):
+        return self.enum
 
 
 class Native(Type):

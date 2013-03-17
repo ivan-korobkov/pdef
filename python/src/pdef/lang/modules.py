@@ -24,19 +24,16 @@ class Package(Node):
         self.pdef = pdef
         self.node = None
 
-        self.dependencies = SymbolTable()
-        self.modules = SymbolTable()
+        self.dependencies = SymbolTable(self)
+        self.modules = SymbolTable(self)
 
         self.linked = False
         self.inited = False
 
     def link(self):
-        if self.linked:
-            return
+        if self.linked: return
         self.linked = True
-
-        if not self.node:
-            return
+        if not self.node: return
 
         for depname in self.node.dependencies:
             dep = self.pdef.package(depname)
@@ -44,6 +41,13 @@ class Package(Node):
 
         for module in self.modules:
             module.link()
+
+    def init(self):
+        if self.inited: return
+        self.inited = True
+
+        for module in self.modules:
+            module.init()
 
     def add_dependency(self, dep):
         check_isinstance(dep, Package)
@@ -87,8 +91,8 @@ class Module(Node):
 
     def __init__(self, name, package=None):
         super(Module, self).__init__(name)
-        self.imports = SymbolTable()
-        self.definitions = SymbolTable()
+        self.imports = SymbolTable(self)
+        self.definitions = SymbolTable(self)
         self.package = package
 
         self.node = None
@@ -96,12 +100,9 @@ class Module(Node):
         self.inited = False
 
     def link(self):
-        if self.linked:
-            return
+        if self.linked: return
         self.linked = True
-
-        if not self.node:
-            return
+        if not self.node: return
 
         for node in self.node.imports:
             imported = self.package.lookup(node.name)
@@ -109,6 +110,13 @@ class Module(Node):
                 raise ValueError('Import not found "%s"' % node.name)
 
             self.add_import(imported, node.alias)
+
+    def init(self):
+        if self.inited: return
+        self.inited = True
+
+        for definition in self.definitions:
+            definition.init()
 
     @property
     def fullname(self):

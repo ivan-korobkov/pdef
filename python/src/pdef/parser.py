@@ -8,14 +8,14 @@ from pdef import ast
 
 class Tokens(object):
     # Simple reserved words.
-    reserved = ('AS', 'ENUM', 'IMPORT', 'INHERITS', 'MESSAGE', 'ON', 'POLYMORPHIC', 'OPTIONS',
+    reserved = ('AS', 'ENUM', 'IMPORT', 'INHERITS', 'MESSAGE', 'ON', 'POLYMORPHIC',
                 'MODULE', 'NATIVE')
 
     # All tokens.
     tokens = reserved + (
         'COLON', 'COMMA', 'SEMI',
         'LESS', 'GREATER',
-        'LBRACE', 'RBRACE', 'LBRACKET', 'RBRACKET',
+        'LBRACE', 'RBRACE',
         'IDENTIFIER', 'STRING')
 
     # Regular expressions for simple rules
@@ -26,8 +26,6 @@ class Tokens(object):
     t_GREATER = r'\>'
     t_LBRACE  = r'\{'
     t_RBRACE  = r'\}'
-    t_LBRACKET = r'\['
-    t_RBRACKET = r'\]'
 
     # Ignored characters
     t_ignore = " \t"
@@ -113,22 +111,6 @@ class GrammarRules(object):
         alias = name if len(t) == 4 else t[4]
         t[0] = ast.ImportRef(name, alias)
 
-    # Data dict fields: k: v, k1: v2
-    def p_data_fields(self, t):
-        '''
-        data_fields : data_fields COMMA data_field
-                    | data_field
-                    | empty
-        '''
-        self._list(t, separated=True)
-
-    # Data field: "name: value"
-    def p_data_field(self, t):
-        '''
-        data_field : IDENTIFIER COLON STRING
-        '''
-        t[0] = (t[1], t[3])
-
     # Type reference with optional generic arguments.
     def p_type(self, t):
         '''
@@ -167,12 +149,28 @@ class GrammarRules(object):
     # Native type definition.
     def p_native(self, t):
         '''
-        native : NATIVE IDENTIFIER variables LBRACE data_fields RBRACE
+        native : NATIVE IDENTIFIER variables LBRACE native_options RBRACE
         '''
         name = t[2]
         variables = t[3]
         options = dict(t[5])
         t[0] = ast.Native(name, variables=variables, options=options)
+
+    # Native options: k: v, k1: v2
+    def p_native_options(self, t):
+        '''
+        native_options : native_options native_option
+                       | native_option
+                       | empty
+        '''
+        self._list(t)
+
+    # Native option: name: value;
+    def p_native_option(self, t):
+        '''
+        native_option : IDENTIFIER COLON STRING SEMI
+        '''
+        t[0] = (t[1], t[3])
 
     # Enum definition.
     def p_enum(self, t):
@@ -199,31 +197,63 @@ class GrammarRules(object):
     # Message definition
     def p_message(self, t):
         '''
-        message : MESSAGE IDENTIFIER message_header message_body
+        message : MESSAGE IDENTIFIER variables message_base message_type message_body
         '''
         name = t[2] # identifier
-        variables, base, base_tree_type, tree_field, tree_type = t[3] # message_header
-        options, declared_fields = t[4] # message_body
+        variables = t[3]
+        base, subtype = t[4]
+        type_field, _type = t[5]
+        declared_fields = t[6]
 
         t[0] = ast.Message(name, variables=variables,
-                           base=base, subtype=base_tree_type,
-                           type_field=tree_field,
-                           type=tree_type,
+                           base=base, subtype=subtype,
+                           type_field=type_field, type=_type,
                            declared_fields=declared_fields)
 
-    def p_message_header(self, t):
+    # Message inheritance
+    def p_message_base(self, t):
         '''
-        message_header : variables message_base message_tree
+        message_base : INHERITS type AS IDENTIFIER
+                     | empty
         '''
-        base, base_tree_type = t[2]
-        tree_field, tree_type = t[3]
-        t[0] = t[1], base, base_tree_type, tree_field, tree_type
+        if len(t) == 2:
+            t[0] = None, None
+        else:
+            t[0] = t[2], ast.Ref(t[4])
+
+    def p_message_type(self, t):
+        '''
+        message_type : POLYMORPHIC ON STRING AS IDENTIFIER
+                     | empty
+        '''
+        if len(t) == 2:
+            t[0] = None, None
+        else:
+            tree_field = t[3]
+            tree_type = ast.Ref(t[5])
+            t[0] = tree_field, tree_type
 
     def p_message_body(self, t):
         '''
-        message_body : LBRACE message_options fields RBRACE
+        message_body : LBRACE fields RBRACE
         '''
-        t[0] = (t[2], t[3])
+        t[0] = t[2]
+
+    # List of message fields
+    def p_fields(self, t):
+        '''
+        fields : fields field
+               | field
+               | empty
+        '''
+        self._list(t)
+
+    # Single message field
+    def p_field(self, t):
+        '''
+        field : IDENTIFIER type SEMI
+        '''
+        t[0] = ast.Field(t[1], type=t[2])
 
     # Generic variables in a definition name.
     def p_variables(self, t):
@@ -250,67 +280,6 @@ class GrammarRules(object):
         variable : IDENTIFIER
         '''
         t[0] = t[1]
-
-    # Message inheritance
-    def p_message_base(self, t):
-        '''
-        message_base : INHERITS type AS IDENTIFIER
-                     | empty
-        '''
-        if len(t) == 2:
-            t[0] = None, None
-        else:
-            t[0] = t[2], ast.Ref(t[4])
-
-    def p_message_tree(self, t):
-        '''
-        message_tree : POLYMORPHIC ON STRING AS IDENTIFIER
-                     | empty
-        '''
-        if len(t) == 2:
-            t[0] = None, None
-        else:
-            tree_field = ast.Ref(t[3])
-            tree_type = ast.Ref(t[5])
-            t[0] = tree_field, tree_type
-
-    # Message options: options [];
-    def p_message_options(self, t):
-        '''
-        message_options : OPTIONS options SEMI
-                        | empty
-        '''
-        if len(t) == 2:
-            t[0] = ()
-        else:
-            t[0] = t[2]
-
-    # Options dict: [name: value, name2: value2]
-    def p_options(self, t):
-        '''
-        options : LBRACKET data_fields RBRACKET
-                | empty
-        '''
-        if len(t) == 2:
-            t[0] = ()
-        else:
-            t[0] = t[2]
-
-    # List of message fields
-    def p_fields(self, t):
-        '''
-        fields : fields field
-               | field
-               | empty
-        '''
-        self._list(t)
-
-    # Single message field
-    def p_field(self, t):
-        '''
-        field : IDENTIFIER type SEMI
-        '''
-        t[0] = ast.Field(t[1], type=t[2])
 
     def p_error(self, t):
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)

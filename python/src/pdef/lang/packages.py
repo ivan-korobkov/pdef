@@ -13,7 +13,7 @@ class Package(Node):
         package.node = node
 
         for mnode in node.modules:
-            module = Module.from_node(mnode)
+            module = Module.from_node(mnode, package=package)
             package.add_module(module)
 
         return package
@@ -58,11 +58,10 @@ class Package(Node):
         check_isinstance(module, Module)
 
         if not module.name.startswith(self.name):
-            raise ValueError('Module %s name must start with the package name "%s"' %
-                             (module, self.name))
+            raise ValueError('%s: module "%s" name must start with the package name' %
+                             (self, module))
         self.modules.add(module)
         self.symbols.add(module)
 
     def add_modules(self, *modules):
         map(self.add_module, modules)
-

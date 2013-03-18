@@ -65,15 +65,15 @@ class Message(Type):
             declared_fields.add(field)
 
         if node.type:
-            type = self.lookup(node.type) if node.type else None
+            _type = self.lookup(node.type) if node.type else None
             type_field = declared_fields.get(node.type_field)
             if not type_field:
-                raise ValueError('Tree field "%s" is not found in %s' % (node.type_field, self))
+                raise ValueError('%s: tree field "%s" is not found' % (self, node.type_field))
         else:
-            type = None
+            _type = None
             type_field = None
 
-        self.build(type=type, type_field=type_field,
+        self.build(type=_type, type_field=type_field,
                    base=base, subtype=subtype,
                    declared_fields=declared_fields)
 
@@ -97,12 +97,10 @@ class Message(Type):
 
         check_isinstance(base, (Message, ParameterizedMessage))
         check_isinstance(subtype, EnumValue)
-        check_argument(base.inited,
-            '%s must be initialized to be used as the base of %s', base, self)
-        check_argument(self != base, '%s cannot inherit itself', self)
+        check_argument(self != base, '%s: cannot inherit itself', self)
         check_argument(not base.is_subtype_of(self),
-            'Circular inheritance: %s',
-            '->'.join(str(b) for b in ([self, base] + list(base.bases))))
+            '%s: circular inheritance %s',
+            (self, '->'.join(str(b) for b in ([self, base] + list(base.bases)))))
 
         self.base = check_not_none(base)
         self.bases = tuple([base] + list(base.bases))
@@ -218,13 +216,13 @@ class AbstractMessageTree(object):
         subtypes = self.subtypes
 
         check_argument(submessage.is_subtype_of(message),
-                '%s must inherit %s', submessage, message)
+                '%s: %s must be a submessage', message, submessage)
         check_argument(subtype in enum,
-                'Wrong subtype in %s, it must be a value of enum %s, got %s',
+                '%s: wrong subtype, it must be a value of enum %s, got %s',
                 submessage, enum, subtype)
         check_state(subtype not in subtypes,
-                'Duplicate messages %s, %s for subtype %s in %s tree',
-                submessage, subtypes.get(subtype), subtype, message)
+                '%s: duplicate messages %s, %s for subtype %s',
+                message, submessage, subtypes.get(subtype), subtype)
 
         self.subtypes.add(submessage, subtype)
         if self.basetree:

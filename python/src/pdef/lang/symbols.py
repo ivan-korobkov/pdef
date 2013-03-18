@@ -34,9 +34,9 @@ class SymbolTable(object):
 
     def __setitem__(self, name, item):
         if name in self.map:
-            s = 'Duplicate symbol "%s"' % name
+            s = 'duplicate symbol "%s"' % name
             if self.parent:
-                s += ' in %s' % self.parent
+                s = '%s: %s' % (self.parent, s)
             raise ValueError(s)
 
         self.map[name] = item
@@ -106,12 +106,12 @@ class Node(Symbol):
 
         rawtype = self.lookup(ref.name)
         if not rawtype:
-            raise ValueError('Type %s is not found' % ref)
+            raise ValueError('%s: type "%s" is not found' % (self, ref))
 
         if not rawtype.generic:
             if ref.variables:
-                raise ValueError('Type "%s" does not have generic variables, got %s' %
-                                 (rawtype, ref))
+                raise ValueError('%s: type "%s" does not have generic variables, got %s' %
+                                 (self, rawtype, ref))
             return rawtype
 
         vars = tuple(self.lookup(var) for var in ref.variables)

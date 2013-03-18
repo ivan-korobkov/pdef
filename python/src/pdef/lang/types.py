@@ -21,6 +21,10 @@ class Type(Node):
         self._pmap = {}
 
     @property
+    def parent(self):
+        return self.module
+
+    @property
     def fullname(self):
         s = '%s.%s' % (self.parent.fullname, self.name) if self.parent else self.name
         if self.variables:
@@ -67,14 +71,14 @@ class Type(Node):
         pass
 
     def _do_parameterize(self, *variables):
-        raise ValueError('%s does not support parameterization' % self)
+        raise ValueError('%s: does not support parameterization' % self)
 
 
 class ParameterizedType(Type):
     def __init__(self, rawtype, variables):
         super(ParameterizedType, self).__init__(rawtype.name, module=rawtype.module)
         check_argument(len(rawtype.variables) == len(variables),
-                       'Wrong number of variables %s for %s', variables, rawtype)
+                       '%s: wrong number of variables %s', rawtype, variables)
 
         self.rawtype = rawtype
         for var, arg in zip(self.rawtype.variables, variables):
@@ -89,7 +93,7 @@ class ParameterizedType(Type):
         return self.rawtype.parameterize(*bvariables)
 
     def parameterize(self, *variables):
-        raise NotImplementedError('Parameterized types do not support parameterization, use bind')
+        raise NotImplementedError('%s: parameterization is not supported, use bind' % self)
 
 
 class Variable(Type):
@@ -102,4 +106,4 @@ class Variable(Type):
         if svar:
             return svar
 
-        raise ValueError('Variable %s is not found in %s' % (self, arg_map))
+        raise ValueError('%s: variable is not found in %s' % (self, arg_map))

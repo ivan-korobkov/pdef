@@ -9,10 +9,15 @@ class Pdef(object):
         self.sources = []
 
     def package(self, name):
-        if name not in self.packages:
-            self._load_package(name)
+        if name in self.packages:
+            return self.packages[name]
 
-        return self.packages[name]
+        package = self._load(name)
+        self.add_package(package)
+
+        package.link()
+        package.init()
+        return package
 
     def add_package(self, package):
         self.packages.add(package)
@@ -21,12 +26,20 @@ class Pdef(object):
     def add_packages(self, *packages):
         map(self.add_package, packages)
 
-    def _load_package(self, package_name):
+    def add_source(self, source):
+        self.sources.append(source)
+
+    def add_sources(self, *sources):
+        map(self.add_source, sources)
+
+    def _load(self, name):
+        from pdef.lang.packages import Package
+        node = None
         for source in self.sources:
-            node = source.get(package_name)
+            node = source.get(name)
             if node:
                 break
+        if not node:
+            raise ValueError('Package "%s" is not found' % name)
 
-        package = parse_package(node)
-        self.packages.add(package)
-        package.init()
+        return Package.from_node(node, pdef=self)

@@ -4,10 +4,10 @@ from pdef.lang import Type, Variable, ParameterizedType
 
 class Native(Type):
     @classmethod
-    def from_node(cls, node):
+    def from_node(cls, node, module=None):
         options = NativeOptions(**node.options)
         return Native(node.name, variables=(Variable(var) for var in node.variables),
-                      options=options)
+                      options=options, module=module)
 
     def __init__(self, name, variables=None, options=None, module=None):
         super(Native, self).__init__(name, variables, module=module)

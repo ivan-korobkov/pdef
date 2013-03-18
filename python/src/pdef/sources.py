@@ -11,64 +11,44 @@ FILE_EXT = '.pdef'
 PACKAGE_INFO_FILE = 'package.json'
 
 
-class PackageDirectory(object):
-    @classmethod
-    def read(cls, path):
-        info_path = os.path.join(path, PACKAGE_INFO_FILE)
-        logging.info('Parsing %s', info_path)
+class Source(object):
+    def get(self, package_name):
+        raise NotImplementedError
 
-        with open(info_path, 'r') as f:
+
+class DirectorySource(object):
+    def __init__(self, path):
+        self.path = check_not_none(path)
+        self.info_path = os.path.join(path, PACKAGE_INFO_FILE)
+        logging.info('Parsing %s', self.info_path)
+
+        with open(self.info_path, 'r') as f:
             info = json.load(f)
 
-        package = ast.Package(info['name'], version=info['version'])
-        return PackageDirectory(path, package)
-
-    def __init__(self, path, package):
-        self._path = check_not_none(path)
-        self._package = check_not_none(package)
-        self._parsed = False
+        self.info = ast.Package(info['name'], version=info['version'])
+        self.modules = []
+        self.package = None
 
     def get(self, package_name):
-        if package_name != self._package.name:
+        if package_name != self.info.name:
             return
 
-        if not self._parsed:
-            self.parse()
-        return self._package
+        if not self.package:
+            self.package = self.parse()
+        return self.package
 
     def parse(self):
-        for module_file in self.module_files:
-            module = module_file.parse()
-            self._package.add_modules(module)
-
-        self._package.build()
-
-    @property
-    def module_files(self):
+        modules = []
         for filepath in self.files:
-            yield ModuleFile(filepath)
+            module = self.parse_file(filepath)
+            modules.append(module)
 
-    @property
-    def files(self):
-        for dirpath, dirnames, filenames in os.walk(self._path):
-            logging.debug('Scanning %s', dirpath)
-            for filename in filenames:
-                ext = os.path.splitext(filename)[1].lower()
-                if ext != FILE_EXT:
-                    continue
+        info = self.info
+        return ast.Package(info.name, info.version, modules=modules)
 
-                filepath = os.path.join(dirpath, filename)
-                logging.debug('Adding %s', filepath)
-                yield filepath
-
-
-class ModuleFile(object):
-    def __init__(self, filepath):
-        self._filepath = filepath
-
-    def parse(self):
-        logging.info('Parsing %s', self._filepath)
-        with open(self._filepath, 'r') as f:
+    def parse_file(self, filepath):
+        logging.info('Parsing %s', filepath)
+        with open(filepath, 'r') as f:
             text = f.read()
 
         debug = logging.root.isEnabledFor(logging.DEBUG)
@@ -79,3 +59,16 @@ class ModuleFile(object):
             raise ValueError(parser.errors)
 
         return ast
+
+    @property
+    def files(self):
+        for dirpath, dirnames, filenames in os.walk(self.path):
+            logging.debug('Scanning %s', dirpath)
+            for filename in filenames:
+                ext = os.path.splitext(filename)[1].lower()
+                if ext != FILE_EXT:
+                    continue
+
+                filepath = os.path.join(dirpath, filename)
+                logging.debug('Adding %s', filepath)
+                yield filepath

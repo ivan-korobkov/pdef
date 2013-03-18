@@ -1,4 +1,5 @@
 # encoding: utf-8
+import logging
 from pdef import ast
 from pdef.lang.symbols import SymbolTable, Node
 from pdef.preconditions import *
@@ -17,13 +18,13 @@ class Module(Node):
 
         for dnode in node.definitions:
             if isinstance(dnode, ast.Message):
-                definition = Message.from_node(dnode)
+                definition = Message.from_node(dnode, module=module)
             elif isinstance(dnode, ast.Enum):
-                definition = Enum.from_node(dnode)
+                definition = Enum.from_node(dnode, module=module)
             elif isinstance(dnode, ast.Native):
-                definition = Native.from_node(dnode)
+                definition = Native.from_node(dnode, module=module)
             else:
-                raise ValueError('Unsupported definition node %s' % dnode)
+                raise ValueError('%s: unsupported definition node %s' % (self, dnode))
             module.add_definition(definition)
 
         return module
@@ -65,12 +66,14 @@ class Module(Node):
         check_isinstance(module, Module)
         self.imports.add(module, alias)
         self.symbols.add(module, alias)
+        logging.info('%s: added an import "%s"', self, module)
 
     def add_definition(self, definition):
         from pdef.lang.types import Type
         check_isinstance(definition, Type)
         self.definitions.add(definition)
         self.symbols.add(definition)
+        logging.info('%s: added a definition "%s"', self, definition)
 
     def add_definitions(self, *definitions):
         map(self.add_definition, definitions)

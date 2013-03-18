@@ -3,21 +3,19 @@
 import argparse
 import logging
 
-from pdef import Pdef
+from pdef.lang import Pdef
 from pdef.java import JavaPackage
+from pdef.sources import DirectorySource
 
 
 class Compiler(object):
-    def __init__(self, path):
+    def __init__(self, dirs):
         self.pdef = Pdef()
-        self.pdef.add_dirs(*path)
+        self.pdef.add_sources(*[DirectorySource(p) for p in dirs])
 
     def compile_java(self, outdir, *package_names):
         for package_name in package_names:
-            package = self.pdef.get(package_name)
-            if not package:
-                raise ValueError('Package "%s" is not found' % package_name)
-
+            package = self.pdef.package(package_name)
             jpackage = JavaPackage(package)
             jpackage.write_to(outdir)
 

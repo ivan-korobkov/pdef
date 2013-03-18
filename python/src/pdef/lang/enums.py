@@ -6,9 +6,9 @@ from pdef.preconditions import *
 
 class Enum(Type):
     @classmethod
-    def from_node(cls, node):
+    def from_node(cls, node, module=None):
         check_isinstance(node, ast.Enum)
-        enum = Enum(node.name)
+        enum = Enum(node.name, module=module)
         for name in node.values:
             EnumValue(name, enum)
 

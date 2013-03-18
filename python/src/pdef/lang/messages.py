@@ -54,9 +54,7 @@ class Message(Type):
             return
         node = self.node
 
-        # Force base initialization for correct type tree and fields checks.
         base = self.lookup(node.base) if node.base else None
-        base.init()
         subtype = self.lookup(node.subtype) if node.subtype else None
 
         declared_fields = SymbolTable(self)

@@ -25,7 +25,7 @@ class Ref(object):
     def __repr__(self):
         s = self.name
         if self.variables:
-            s += '<%s>' % ', '.join(self.variables)
+            s += '<%s>' % ', '.join(str(v) for v in self.variables)
         return s
 
 

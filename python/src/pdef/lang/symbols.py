@@ -66,6 +66,8 @@ class SymbolTable(object):
 
 class Node(Symbol):
     parent = None
+    generic = False
+    variables = ()
 
     def __init__(self, name):
         super(Node, self).__init__(name)
@@ -77,23 +79,26 @@ class Node(Symbol):
     def __str__(self):
         return self.fullname
 
+    def init(self):
+        pass
+
     @property
     def fullname(self):
         if self.parent:
             return '%s %s' % (self.parent.fullname, self.name)
         return self.name
 
-    def link(self):
-        pass
-
-    def init(self):
-        pass
-
     def lookup(self, name_or_ref):
         from pdef.ast import Ref
         if isinstance(name_or_ref, Ref):
-            return self._lookup_ref(name_or_ref)
-        return self._lookup_name(name_or_ref)
+            node = self._lookup_ref(name_or_ref)
+        else:
+            node = self._lookup_name(name_or_ref)
+
+        if node:
+            node.init()
+
+        return node
 
     def _lookup_ref(self, ref):
         from pdef.ast import Ref
@@ -101,11 +106,12 @@ class Node(Symbol):
 
         rawtype = self.lookup(ref.name)
         if not rawtype:
-            raise ValueError('Type not found %s' % ref)
+            raise ValueError('Type %s is not found' % ref)
 
         if not rawtype.generic:
             if ref.variables:
-                raise ValueError('Wrong number of generic vars in %s' % ref)
+                raise ValueError('Type "%s" does not have generic variables, got %s' %
+                                 (rawtype, ref))
             return rawtype
 
         vars = tuple(self.lookup(var) for var in ref.variables)

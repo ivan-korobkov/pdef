@@ -64,10 +64,10 @@ class Type(Node):
             ptype.init()
 
     def _do_init(self):
-        raise NotImplementedError
+        pass
 
     def _do_parameterize(self, *variables):
-        raise NotImplementedError
+        raise ValueError('%s does not support parameterization' % self)
 
 
 class ParameterizedType(Type):

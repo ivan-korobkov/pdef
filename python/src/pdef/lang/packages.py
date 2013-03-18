@@ -30,6 +30,10 @@ class Package(Node):
         self.linked = False
         self.inited = False
 
+    @property
+    def globals(self):
+        return self.pdef.globals if self.pdef else None
+
     def link(self):
         if self.linked: return
         self.linked = True

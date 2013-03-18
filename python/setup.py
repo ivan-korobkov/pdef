@@ -12,7 +12,7 @@ setup(
     license='Apache License 2.0',
     package_dir={'': 'src'},
     packages=['pdef', 'pdef.java', 'pdef.lang', 'pdef.translators'],
-    package_data={'pdef': ['java/*.template', 'builtin/*']},
+    package_data={'pdef': ['java/*.template', 'lang/lang.pdef', 'lang/package.json']},
     scripts=['scripts/pdefc'],
     requires=['argparse', 'jinja2', 'ply']
 )

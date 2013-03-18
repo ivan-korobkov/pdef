@@ -1,4 +1,4 @@
-module pdef.builtin;
+module pdef.lang;
 
 
 native bool {

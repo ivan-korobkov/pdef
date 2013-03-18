@@ -9,7 +9,6 @@ message Id polymorphic on "type" as ObjectType.OBJECT {
 }
 
 message UserId inherits Id as ObjectType.USER {
-    type        ObjectType;
     value       int64;
 }
 

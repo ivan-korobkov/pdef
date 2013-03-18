@@ -159,16 +159,16 @@ class GrammarRules(object):
     # Native options: k: v, k1: v2
     def p_native_options(self, t):
         '''
-        native_options : native_options native_option
+        native_options : native_options COMMA native_option
                        | native_option
                        | empty
         '''
-        self._list(t)
+        self._list(t, separated=True)
 
     # Native option: name: value;
     def p_native_option(self, t):
         '''
-        native_option : IDENTIFIER COLON STRING SEMI
+        native_option : IDENTIFIER COLON STRING
         '''
         t[0] = (t[1], t[3])
 

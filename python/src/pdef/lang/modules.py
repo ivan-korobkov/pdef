@@ -24,7 +24,7 @@ class Module(Node):
             elif isinstance(dnode, ast.Native):
                 definition = Native.from_node(dnode, module=module)
             else:
-                raise ValueError('%s: unsupported definition node %s' % (self, dnode))
+                raise ValueError('%s: unsupported definition node %s' % (module, dnode))
             module.add_definition(definition)
 
         return module
@@ -38,6 +38,10 @@ class Module(Node):
         self.node = None
         self.linked = False
         self.inited = False
+
+    @property
+    def globals(self):
+        return self.package.globals if self.package else None
 
     def link(self):
         if self.linked: return
@@ -77,3 +81,10 @@ class Module(Node):
 
     def add_definitions(self, *definitions):
         map(self.add_definition, definitions)
+
+    # Override
+    def _lookup_child(self, name):
+        if self.globals and name in self.globals:
+            return self.globals[name]
+
+        return super(Module, self)._lookup_child(name)

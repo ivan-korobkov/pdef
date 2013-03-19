@@ -77,7 +77,7 @@ class Module(Node):
         check_isinstance(definition, Type)
         self.definitions.add(definition)
         self.symbols.add(definition)
-        logging.info('%s: added a definition "%s"', self, definition)
+        logging.info('%s: added a definition "%s"', self, definition.simplename)
 
     def add_definitions(self, *definitions):
         map(self.add_definition, definitions)

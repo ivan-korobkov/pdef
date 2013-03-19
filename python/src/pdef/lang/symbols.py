@@ -83,6 +83,10 @@ class Node(Symbol):
         pass
 
     @property
+    def simplename(self):
+        return self.name
+
+    @property
     def fullname(self):
         if self.parent:
             return '%s %s' % (self.parent.fullname, self.name)

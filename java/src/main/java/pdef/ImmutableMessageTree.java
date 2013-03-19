@@ -48,8 +48,8 @@ public class ImmutableMessageTree implements MessageTree {
 
 	@Override
 	public MessageTree.Builder subtreeBuilder(final EnumType subtype) {
+		checkArgument(map.containsKey(subtype));
 		return builder().setField(field).setType(subtype);
-
 	}
 
 	public static class Builder implements MessageTree.Builder {

@@ -24,13 +24,11 @@ class JavaMessage(object):
         if msg.base:
             base = msg.base
             self.base = JavaRef.from_lang(base)
-            self.base_type = JavaRef.from_lang(msg.base_type)
             self.base_class = self.base
             self.base_builder = SimpleJavaRef('Builder', str(self.base.raw),
                     variables=tuple(JavaRef.from_lang(var) for var in base.variables))
         else:
             self.base = None
-            self.base_type = None
             self.base_class = SimpleJavaRef('pdef.generated.GeneratedMessage')
             self.base_builder = SimpleJavaRef('pdef.generated.GeneratedMessage.Builder')
 
@@ -43,13 +41,8 @@ class JavaMessage(object):
             index += 0
         self.declared_fields = tuple(dfields)
 
-        self.is_polymorphic = msg.is_polymorphic
-        if self.is_polymorphic:
-            polymorphism = msg.polymorphism
-            self.subtypes = tuple((JavaRef.from_lang(k), JavaRef.from_lang(v))
-                for k, v in polymorphism.map.items())
-            self.type_field = JavaField(polymorphism.field)
-            self.default_type = JavaRef.from_lang(polymorphism.default_type)
+        self.base_tree = JavaMessageTree(msg.base_tree) if msg.base_tree else None
+        self.root_tree = JavaMessageTree(msg.root_tree) if msg.root_tree else None
 
         self.is_generic = bool(self.variables)
         self.getInstance = 'getInstanceOf%s()' % self.name if self.is_generic else 'getInstance()'
@@ -72,6 +65,14 @@ class JavaField(object):
         self.get = 'get%s' % upper_first(self.name)
         self.set = 'set%s' % upper_first(self.name)
         self.clear = 'clear%s' % upper_first(self.name)
+
+
+class JavaMessageTree(object):
+    def __init__(self, tree):
+        self.type = JavaRef.from_lang(tree.type)
+        self.subtypes = tuple((JavaRef.from_lang(k), JavaRef.from_lang(v))
+            for k, v in tree.as_map().items())
+        self.field = JavaField(tree.field)
 
 
 class JavaEnum(object):

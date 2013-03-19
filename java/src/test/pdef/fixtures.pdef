@@ -1,7 +1,7 @@
 module pdef.fixtures;
 
 enum ObjectType {
-    OBJECT, USER;
+    OBJECT, USER, POST, EVENT, PHOTO, NOTE, SYSTEM_EVENT;
 }
 
 message Id polymorphic on "type" as ObjectType.OBJECT {
@@ -10,6 +10,14 @@ message Id polymorphic on "type" as ObjectType.OBJECT {
 
 message UserId inherits Id as ObjectType.USER {
     value       int64;
+}
+
+message PostId inherits Id as ObjectType.POST {}
+message PhotoId inherits PostId as ObjectType.PHOTO {
+    photoId     int64;
+}
+message NoteId inherits PostId as ObjectType.NOTE {
+    noteId      int64;
 }
 
 message User {

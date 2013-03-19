@@ -110,22 +110,20 @@ public class {{ type }} extends {{ base_class }} {
 {% endfor %}
         private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
 {% endif %}
+
 {% if base %}
-
         private pdef.MessageDescriptor base;
-        private Enum<?> baseType;
+        private pdef.MessageTree baseTree;
 {% endif %}
-{% if is_polymorphic %}
-
-        private Enum<?> defaultType;
-        private pdef.FieldDescriptor typeField;
-        private java.util.Map<Enum<?>, pdef.MessageDescriptor> subtypes;
+{% if root_tree %}
+        private pdef.MessageTree rootTree;
 {% endif %}
 
 {% for field in declared_fields %}
         private pdef.FieldDescriptor {{ field.name }}Field;
 {% endfor %}
         private pdef.SymbolTable<pdef.FieldDescriptor> declaredFields;
+        private pdef.SymbolTable<pdef.FieldDescriptor> fields;
 
         protected Descriptor() {
             super({{ name }}.class);
@@ -141,22 +139,31 @@ public class {{ type }} extends {{ base_class }} {
             );
 {% endif %}
         }
+{% if variables %}
+        @Override
+        public pdef.SymbolTable<pdef.VariableDescriptor> getVariables() {
+            return variables;
+        }
+
+{% endif %}
 {% if base %}
         @Override
         public pdef.MessageDescriptor getBase() {
             return base;
         }
 
+{% endif %}
+{% if base_tree %}
         @Override
-        public Enum<?> getBaseType() {
-            return baseType;
+        public pdef.MessageTree getBaseTree() {
+            return baseTree;
         }
 
 {% endif %}
-{% if variables %}
+{% if root_tree %}
         @Override
-        public pdef.SymbolTable<pdef.VariableDescriptor> getVariables() {
-            return variables;
+        public pdef.MessageTree getRootTree() {
+            return rootTree;
         }
 
 {% endif %}
@@ -165,29 +172,15 @@ public class {{ type }} extends {{ base_class }} {
             return declaredFields;
         }
 
-{% if is_polymorphic %}
-
         @Override
-        public pdef.FieldDescriptor getTypeField() {
-            return typeField;
+        public pdef.SymbolTable<pdef.FieldDescriptor> getFields() {
+            return declaredFields;
         }
-
-        @Override
-        public Enum<?> getDefaultType() {
-            return defaultType;
-        }
-
-        @Override
-        public java.util.Map<Enum<?>, pdef.MessageDescriptor> getSubtypes() {
-            return subtypes;
-        }
-{% endif %}
 
         @Override
         protected void init() {
 {% if base %}
             base = {{ base.descriptor|indent(16) }};
-            baseType = {{ base_type }};
 
 {% endif %}
 {% for field in declared_fields %}
@@ -238,19 +231,36 @@ public class {{ type }} extends {{ base_class }} {
 
 {% endfor %}
             );
-{% if is_polymorphic %}
+{% if base %}
+            fields = base.getFields().merge(declaredFields);
+{% else %}
+            fields = declaredFields;
+{% endif %}
 
-            typeField = {{ type_field.name }}Field;
-            defaultType = {{ default_type }};
-            subtypes = com.google.common.collect.ImmutableMap.<Enum<?>, pdef.MessageDescriptor>builder()
-            {% for enum_value, message in subtypes %}
-                    .put({{ enum_value }}, {{ message.descriptor }})
-            {% endfor %}
+{% if root_tree %}
+            rootTree = pdef.ImmutableMessageTree.builder()
+                    .setType({{ root_tree.type }})
+                    .setField(fields.map().get("{{ root_tree.field.name }}"))
+{% for type, message in root_tree.subtypes %}
+                    .put({{ type }}, {{ message.descriptor }})
+{% endfor %}
+                    .build();
+{% endif %}
+{% if base_tree %}
+            baseTree = pdef.ImmutableMessageTree.builder()
+                    .setType({{ base_tree.type }})
+                    .setField(fields.map().get("{{ base_tree.field.name }}"))
+{% for type, message in base_tree.subtypes %}
+                    .put({{ type }}, {{ message.descriptor }})
+{% endfor %}
                     .build();
 {% endif %}
         }
 
         static {
+{% if base %}
+            {{ base.descriptor|indent(16) }};
+{% endif %}
             instance.link();
         }
     }

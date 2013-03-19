@@ -26,10 +26,13 @@ class Type(Node):
 
     @property
     def fullname(self):
-        s = '%s.%s' % (self.parent.fullname, self.name) if self.parent else self.name
-        if self.variables:
-            s += '<' + ', '.join(var.name for var in self.variables) + '>'
-        return s
+        return '%s.%s' % (self.parent.fullname, self.simplename) if self.parent else self.simplename
+
+    @property
+    def simplename(self):
+        if not self.variables:
+            return self.name
+        return self.name + '<' + ', '.join(var.simplename for var in self.variables) + '>'
 
     @property
     def generic(self):

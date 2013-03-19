@@ -1,5 +1,6 @@
 package pdef.provided;
 
+import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import pdef.*;
 
@@ -22,6 +23,13 @@ public final class NativeSetDescriptor implements SetDescriptor, NativeDescripto
 	}
 
 	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(variables)
+				.toString();
+	}
+
+	@Override
 	public TypeDescriptor getElement() { return element; }
 
 	@Override
@@ -41,6 +49,13 @@ public final class NativeSetDescriptor implements SetDescriptor, NativeDescripto
 		private final TypeDescriptor element;
 
 		Parameterized(final TypeDescriptor element) { this.element = element; }
+
+		@Override
+		public String toString() {
+			return Objects.toStringHelper(this)
+					.addValue(element)
+					.toString();
+		}
 
 		@Override
 		public TypeDescriptor getElement() { return element; }

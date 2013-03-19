@@ -1,5 +1,6 @@
 package pdef.provided;
 
+import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import pdef.*;
 
@@ -21,6 +22,13 @@ public final class NativeMapDescriptor implements MapDescriptor, NativeDescripto
 		key = new NativeVariableDescriptor("K");
 		value = new NativeVariableDescriptor("V");
 		variables = ImmutableSymbolTable.of(key, value);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(variables)
+				.toString();
 	}
 
 	@Override
@@ -49,6 +57,14 @@ public final class NativeMapDescriptor implements MapDescriptor, NativeDescripto
 		Parameterized(final TypeDescriptor key, final TypeDescriptor value) {
 			this.key = checkNotNull(key);
 			this.value = checkNotNull(value);
+		}
+
+		@Override
+		public String toString() {
+			return Objects.toStringHelper(this)
+					.addValue(key)
+					.addValue(value)
+					.toString();
 		}
 
 		@Override

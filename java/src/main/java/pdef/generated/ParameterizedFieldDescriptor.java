@@ -47,6 +47,16 @@ final class ParameterizedFieldDescriptor implements FieldDescriptor {
 	}
 
 	@Override
+	public boolean isSet(final Message message) {
+		return rawField.isSet(message);
+	}
+
+	@Override
+	public boolean isSet(final Message.Builder builder) {
+		return rawField.isSet(builder);
+	}
+
+	@Override
 	public void set(final Message.Builder builder, final Object value) {
 		rawField.set(builder, value);
 	}

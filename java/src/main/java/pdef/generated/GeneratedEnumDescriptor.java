@@ -1,21 +1,28 @@
 package pdef.generated;
 
+import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableMap;
-import pdef.ImmutableSymbolTable;
-import pdef.SymbolTable;
-import pdef.EnumDescriptor;
-import pdef.TypeDescriptor;
-import pdef.VariableDescriptor;
+import pdef.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
 public class GeneratedEnumDescriptor implements EnumDescriptor, GeneratedDescriptor {
+	private final Class<?> javaClass;
 	private final Map<String, Enum<?>> values;
 
 	public GeneratedEnumDescriptor(final Class<?> javaClass) {
+		this.javaClass = checkNotNull(javaClass);
 		values = getValueMap(javaClass);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(javaClass)
+				.toString();
 	}
 
 	@Override

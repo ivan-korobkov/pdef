@@ -1,5 +1,6 @@
 package pdef;
 
+import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -15,6 +16,7 @@ public class ImmutableSymbolTable<T extends Symbol> implements SymbolTable<T> {
 	private final ImmutableMap<String, T> map;
 
 	private static final ImmutableSymbolTable<?> EMPTY;
+
 	static {
 		@SuppressWarnings("unchecked")
 		ImmutableSymbolTable table = new ImmutableSymbolTable(Collections.emptyList());
@@ -43,6 +45,13 @@ public class ImmutableSymbolTable<T extends Symbol> implements SymbolTable<T> {
 			builder.put(symbol.getName(), symbol);
 		}
 		map = builder.build();
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(map)
+				.toString();
 	}
 
 	@Override

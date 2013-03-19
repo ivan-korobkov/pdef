@@ -1,36 +1,29 @@
 package pdef;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 public interface MessageDescriptor extends TypeDescriptor {
 
-	/**
-	 * Returns this message base.
-	 */
+	/** Returns this message base. */
 	MessageDescriptor getBase();
 
-	/**
-	 * Returns this message type in the base type tree.
-	 */
-	Enum<?> getBaseType();
+	/** Returns this message root tree or the base tree. */
+	@Nullable
+	MessageTree getTree();
 
-	/**
-	 * Returns the default type in this message type tree.
-	 */
-	Enum<?> getDefaultType();
+	/** Returns this message base tree. */
+	@Nullable
+	MessageTree getBaseTree();
 
-	/**
-	 * Returns the type field in this message type tree.
-	 */
-	FieldDescriptor getTypeField();
+	/** Returns this message root tree. */
+	@Nullable
+	MessageTree getRootTree();
 
-	/**
-	 * Returns this message type tree.
-	 */
-	Map<Enum<?>, MessageDescriptor> getSubtypes();
-
+	/** Returns the fields declared in this message. */
 	SymbolTable<FieldDescriptor> getDeclaredFields();
 
+	/** Returns all fields in this message (declared + from the super messages). */
 	SymbolTable<FieldDescriptor> getFields();
 
 	@Override

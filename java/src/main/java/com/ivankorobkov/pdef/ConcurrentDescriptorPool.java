@@ -73,7 +73,7 @@ public class ConcurrentDescriptorPool implements DescriptorPool {
 
 	private void processQueue() {
 		if (writeLock.isHeldByCurrentThread()) {
-			// Prevent recursive calls, because they break "add-link" passes.
+			// Prevent recursive calls, because they break "add-initialize" passes.
 			//System.out.println("Write locked already");
 			return;
 		}

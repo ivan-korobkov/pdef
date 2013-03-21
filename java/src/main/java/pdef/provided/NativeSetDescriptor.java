@@ -39,16 +39,16 @@ public final class NativeSetDescriptor implements SetDescriptor, NativeDescripto
 	public SetDescriptor parameterize(final TypeDescriptor... args) {
 		checkArgument(args.length == 1, "Wrong number of arguments for %s: %s", this,
 				Arrays.toString(args));
-		return new Parameterized(args[0]);
+		return new ParameterizedSetDescriptor(args[0]);
 	}
 
 	@Override
 	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
-	class Parameterized implements SetDescriptor {
+	class ParameterizedSetDescriptor implements SetDescriptor {
 		private final TypeDescriptor element;
 
-		Parameterized(final TypeDescriptor element) { this.element = element; }
+		ParameterizedSetDescriptor(final TypeDescriptor element) { this.element = element; }
 
 		@Override
 		public String toString() {

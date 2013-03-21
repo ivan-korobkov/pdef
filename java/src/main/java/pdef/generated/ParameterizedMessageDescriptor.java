@@ -44,6 +44,10 @@ final class ParameterizedMessageDescriptor extends GeneratedMessageDescriptor
 				.toString();
 	}
 
+	public MessageDescriptor getRawtype() {
+		return rawtype;
+	}
+
 	@Override
 	public MessageDescriptor getBase() {
 		return base;
@@ -65,12 +69,17 @@ final class ParameterizedMessageDescriptor extends GeneratedMessageDescriptor
 	}
 
 	@Override
-	protected void init() {
+	protected void link() {
 		Map<VariableDescriptor, TypeDescriptor> argMap = argMap();
 		Transform<MessageDescriptor> bindMessage = bindMessageFunc(argMap);
+		base = bindMessage.apply(rawtype.getBase());
+	}
+
+	@Override
+	protected void init() {
+		Map<VariableDescriptor, TypeDescriptor> argMap = argMap();
 		Transform<FieldDescriptor> bindField = bindFieldFunc(argMap);
 
-		base = bindMessage.apply(rawtype.getBase());
 		declaredFields = ImmutableSymbolTable.copyOf(
 				Iterables.transform(rawtype.getDeclaredFields(), bindField));
 		fields = base == null ? declaredFields : base.getFields().merge(declaredFields);

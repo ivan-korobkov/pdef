@@ -40,7 +40,7 @@ public class GeneratedEnumDescriptor implements EnumDescriptor, GeneratedDescrip
 	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
 	@Override
-	public void link() {}
+	public void initialize() {}
 
 	static Map<String, Enum<?>> getValueMap(final Class<?> type) {
 		Enum<?>[] array = getValues(type);

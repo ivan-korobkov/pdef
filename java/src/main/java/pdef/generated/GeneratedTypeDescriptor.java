@@ -4,6 +4,8 @@ import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import pdef.TypeDescriptor;
 
+import javax.annotation.concurrent.GuardedBy;
+
 abstract class GeneratedTypeDescriptor implements TypeDescriptor, GeneratedDescriptor {
 	private final Class<?> type;
 	private volatile State state = State.NEW;
@@ -23,30 +25,40 @@ abstract class GeneratedTypeDescriptor implements TypeDescriptor, GeneratedDescr
 		return type;
 	}
 
-	public boolean isLinked() {
-		return state == State.LINKED;
+	State getState() {
+		return state;
 	}
 
 	@Override
-	public void link() {
-		if (state != State.NEW) {
+	public void initialize() {
+		if (state == State.INITIALIZED) {
 			return;
 		}
 
-		synchronized (TypeDescriptor.class) {
-			if (state != State.NEW) {
-				return;
-			}
-
-			state = State.LINKING;
-			doLink();
-			state = State.LINKED;
-		}
+		GeneratedTypeInitializer.initialize(this);
 	}
 
-	protected abstract void doLink();
+	@GuardedBy("externally")
+	void executeLink() {
+		checkState(state == State.NEW);
+		state = State.LINKING;
+		link();
+		state = State.LINKED;
+	}
+
+	@GuardedBy("externally")
+	void executeInit() {
+		checkState(state == State.LINKED);
+		state = State.INITIALIZING;
+		init();
+		state = State.INITIALIZED;
+	}
+
+	protected abstract void link();
+
+	protected abstract void init();
 
 	enum State {
-		NEW, LINKING, LINKED
+		NEW, LINKING, LINKED, INITIALIZING, INITIALIZED
 	}
 }

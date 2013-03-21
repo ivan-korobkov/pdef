@@ -44,17 +44,17 @@ public final class NativeMapDescriptor implements MapDescriptor, NativeDescripto
 	public MapDescriptor parameterize(final TypeDescriptor... args) {
 		checkArgument(args.length == 2, "Wrong number of arguments for %s: %s", this,
 				Arrays.toString(args));
-		return new Parameterized(args[0], args[1]);
+		return new ParameterizedMapDescriptor(args[0], args[1]);
 	}
 
 	@Override
 	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
-	class Parameterized implements MapDescriptor {
+	class ParameterizedMapDescriptor implements MapDescriptor {
 		private final TypeDescriptor key;
 		private final TypeDescriptor value;
 
-		Parameterized(final TypeDescriptor key, final TypeDescriptor value) {
+		ParameterizedMapDescriptor(final TypeDescriptor key, final TypeDescriptor value) {
 			this.key = checkNotNull(key);
 			this.value = checkNotNull(value);
 		}

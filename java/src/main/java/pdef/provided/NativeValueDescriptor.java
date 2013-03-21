@@ -2,18 +2,15 @@ package pdef.provided;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
-import com.google.common.primitives.Primitives;
 import pdef.*;
 
 import java.util.Map;
 
 class NativeValueDescriptor implements ValueDescriptor {
 	private final Class<?> javaClass;
-	private final Class<?> primitiveClass;
 
 	NativeValueDescriptor(final Class<?> javaClass) {
 		this.javaClass = checkNotNull(javaClass);
-		this.primitiveClass = Primitives.unwrap(javaClass);
 	}
 
 	@Override

@@ -39,16 +39,16 @@ public final class NativeListDescriptor implements ListDescriptor, NativeDescrip
 	public ListDescriptor parameterize(final TypeDescriptor... args) {
 		checkArgument(args.length == 1, "Wrong number of arguments for %s: %s", this,
 				Arrays.toString(args));
-		return new Parameterized(args[0]);
+		return new ParameterizedListDescriptor(args[0]);
 	}
 
 	@Override
 	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
-	class Parameterized implements ListDescriptor {
+	class ParameterizedListDescriptor implements ListDescriptor {
 		private final TypeDescriptor element;
 
-		Parameterized(final TypeDescriptor element) { this.element = element; }
+		ParameterizedListDescriptor(final TypeDescriptor element) { this.element = element; }
 
 		@Override
 		public String toString() {

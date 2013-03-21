@@ -1,7 +1,6 @@
 package {{ package }};
 
 public class {{ type }} extends {{ base_class }} {
-
 {% for field in declared_fields %}
     private {{ field.type }} {{ field.name }};
 {% endfor %}
@@ -36,11 +35,11 @@ public class {{ type }} extends {{ base_class }} {
 {% endfor %}
     @Override
     public pdef.MessageDescriptor getDescriptor() {
-        return Descriptor.instance;
+        return Descriptor.getInstance();
     }
 
     public static pdef.MessageDescriptor getClassDescriptor() {
-        return Descriptor.instance;
+        return Descriptor.getInstance();
     }
 
     private static final {{ type.wildcard }} instance = new {{ type.raw }}();
@@ -97,12 +96,17 @@ public class {{ type }} extends {{ base_class }} {
 
         @Override
         public pdef.MessageDescriptor getDescriptor() {
-            return Descriptor.instance;
+            return Descriptor.getInstance();
         }
     }
 
     public static class Descriptor extends pdef.generated.GeneratedMessageDescriptor {
         private static final Descriptor instance = new Descriptor();
+
+        public static Descriptor getInstance() {
+            instance.initialize();
+            return instance;
+        }
 {% if variables %}
 
 {% for var in variables %}
@@ -174,15 +178,18 @@ public class {{ type }} extends {{ base_class }} {
 
         @Override
         public pdef.SymbolTable<pdef.FieldDescriptor> getFields() {
-            return declaredFields;
+            return fields;
+        }
+
+        @Override
+        public void link() {
+{% if base %}
+            base = {{ base.descriptor|indent(16) }};
+{% endif %}
         }
 
         @Override
         protected void init() {
-{% if base %}
-            base = {{ base.descriptor|indent(16) }};
-
-{% endif %}
 {% for field in declared_fields %}
             {{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
                     {{ field.type.descriptor|indent(24) }}) {
@@ -240,28 +247,20 @@ public class {{ type }} extends {{ base_class }} {
 {% if root_tree %}
             rootTree = pdef.ImmutableMessageTree.builder()
                     .setType({{ root_tree.type }})
-                    .setField(fields.map().get("{{ root_tree.field.name }}"))
+                    .setField({{ root_tree.field.name }}Field)
 {% for type, message in root_tree.subtypes %}
                     .put({{ type }}, {{ message.descriptor }})
 {% endfor %}
                     .build();
 {% endif %}
 {% if base_tree %}
-            baseTree = pdef.ImmutableMessageTree.builder()
-                    .setType({{ base_tree.type }})
-                    .setField(fields.map().get("{{ base_tree.field.name }}"))
+            pdef.MessageTree baseTreeTemp = base.getTree(); assert baseTreeTemp != null;
+            baseTree = baseTreeTemp.subtreeBuilder({{ base_tree.type }})
 {% for type, message in base_tree.subtypes %}
                     .put({{ type }}, {{ message.descriptor }})
 {% endfor %}
                     .build();
 {% endif %}
-        }
-
-        static {
-{% if base %}
-            {{ base.descriptor|indent(16) }};
-{% endif %}
-            instance.link();
         }
     }
 }

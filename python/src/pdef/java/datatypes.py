@@ -48,6 +48,7 @@ class JavaMessage(object):
         self.getInstance = 'getInstanceOf%s()' % self.name if self.is_generic else 'getInstance()'
         self.getInstanceVars = '<%s>' % ', '.join(str(var) for var in self.variables) \
                 if self.is_generic else''
+        self.createBuilder = 'builderOf%s()' % self.name if self.is_generic else 'builder()'
 
     @property
     def code(self):

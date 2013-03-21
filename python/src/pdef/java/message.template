@@ -1,9 +1,13 @@
 package {{ package }};
 
 public class {{ type }} extends {{ base_class }} {
+    private static final {{ type.wildcard }} instance = new {{ type.raw }}();
+{% if declared_fields %}
+
 {% for field in declared_fields %}
     private {{ field.type }} {{ field.name }};
 {% endfor %}
+{% endif %}
 
     protected {{ name }}() {
         this(new {{ builder }}());
@@ -14,6 +18,34 @@ public class {{ type }} extends {{ base_class }} {
 {% for field in declared_fields %}
         if (builder.{{ field.is_set }}()) { this.{{ field.name }} = builder.{{ field.get }}(); }
 {% endfor %}
+    }
+
+{% if is_generic %}
+    @SuppressWarnings("unchecked")
+    public static {{ getInstanceVars }} {{ type }} {{ getInstance }} {
+        return ({{ type }}) instance;
+    }
+
+    public static {{ getInstanceVars }} {{ builder }} {{ createBuilder }} {
+            return new {{ builder }}();
+    }
+{% else %}
+    public static {{ type }} {{ getInstance }} {
+        return instance;
+    }
+
+    public static {{ builder }} {{ createBuilder }} {
+        return new {{ builder }}();
+    }
+{% endif %}
+
+    public static pdef.MessageDescriptor getClassDescriptor() {
+        return Descriptor.getInstance();
+    }
+
+    @Override
+    public pdef.MessageDescriptor getDescriptor() {
+        return Descriptor.getInstance();
     }
 
 {% for field in declared_fields %}
@@ -33,28 +65,6 @@ public class {{ type }} extends {{ base_class }} {
     }
 
 {% endfor %}
-    @Override
-    public pdef.MessageDescriptor getDescriptor() {
-        return Descriptor.getInstance();
-    }
-
-    public static pdef.MessageDescriptor getClassDescriptor() {
-        return Descriptor.getInstance();
-    }
-
-    private static final {{ type.wildcard }} instance = new {{ type.raw }}();
-
-{% if is_generic %}
-    @SuppressWarnings("unchecked")
-    public static {{ getInstanceVars }} {{ type }} {{ getInstance }} {
-        return ({{ type }}) instance;
-    }
-{% else %}
-    public static {{ type }} {{ getInstance }} {
-        return instance;
-    }
-{% endif %}
-
     public static class {{ builder }} extends {{ base_builder }} {
 {% for field in declared_fields %}
         private {{ field.type }} {{ field.name }};

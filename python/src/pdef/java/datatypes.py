@@ -38,7 +38,7 @@ class JavaMessage(object):
         dfields = []
         for field in msg.declared_fields:
             dfields.append(JavaField(field, index))
-            index += 0
+            index += 1
         self.declared_fields = tuple(dfields)
 
         self.base_tree = JavaMessageTree(msg.base_tree) if msg.base_tree else None

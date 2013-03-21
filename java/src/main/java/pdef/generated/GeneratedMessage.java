@@ -17,6 +17,20 @@ public abstract class GeneratedMessage implements Message {
 	}
 
 	@Override
+	public Builder newBuilder() {
+		throw new UnsupportedOperationException("Implement in a subclass");
+	}
+
+	@Override
+	public Message.Builder toBuilder() {
+		Builder builder = newBuilder();
+		fill(builder);
+		return builder;
+	}
+
+	protected void fill(Builder builder) {}
+
+	@Override
 	public String toString() {
 		MessageDescriptor descriptor = getDescriptor();
 		Objects.ToStringHelper helper = Objects.toStringHelper(this);

@@ -20,13 +20,31 @@ message NoteId inherits PostId as ObjectType.NOTE {
     noteId      int64;
 }
 
-message User {
+message GenericObject
+    polymorphic on "type" as ObjectType.OBJECT {
+    type        ObjectType;
+    timestamp   int64;
+}
+
+message User inherits GenericObject as ObjectType.USER {
     id          UserId;
     name        string;
     age         int32;
     sex         Sex;
     profile     Profile;
     floats      map<string, float>;
+}
+
+message Post inherits GenericObject as ObjectType.POST {
+    userId      UserId;
+}
+
+message Photo inherits Post as ObjectType.PHOTO {
+    url         string;
+}
+
+message Note inherits Post as ObjectType.NOTE {
+    text        string;
 }
 
 message Profile {

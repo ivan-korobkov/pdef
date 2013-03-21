@@ -48,6 +48,25 @@ public class {{ type }} extends {{ base_class }} {
         return Descriptor.getInstance();
     }
 
+    @Override
+    public {{ builder }} newBuilder() {
+        return {{ createBuilder }};
+    }
+
+    @Override
+    public {{ builder }} toBuilder() {
+        {{ builder }} builder = newBuilder();
+        fill(builder);
+        return builder;
+    }
+
+    protected void fill({{ builder }} builder) {
+        super.fill(builder);
+{% for field in declared_fields %}
+        if (this.{{ field.is_set }}()) { builder.{{ field.set }}(this.{{ field.name }}); }
+{% endfor %}
+    }
+
 {% for field in declared_fields %}
     // {{ field.name }}
 {% if field.type.nullable %}

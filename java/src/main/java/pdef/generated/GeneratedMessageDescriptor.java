@@ -112,7 +112,7 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 	}
 
 	private Message doParse(final Map<?, ?> map, final MessageDescriptor real) {
-		Message.Builder builder = newBuilder();
+		Message.Builder builder = real.newBuilder();
 		for (FieldDescriptor field : real.getFields()) {
 			String name = field.getName();
 			if (!map.containsKey(name)) {

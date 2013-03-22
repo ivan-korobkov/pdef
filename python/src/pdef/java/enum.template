@@ -5,10 +5,21 @@ public enum {{ name }} implements pdef.EnumType {
         {{ value }}{% if not loop.last and loop.length > 1 %}, {% else %};{% endif %}
     {%- endfor %}
 
+
+    @Override
+    public Enum<?> getEnum() {
+        return this;
+    }
+
 	@Override
 	public pdef.EnumDescriptor getDescriptor() {
 		return descriptor;
 	}
+
+	@Override
+    public String serialize() {
+        return descriptor.serialize(this);
+    }
 
 	private static final pdef.EnumDescriptor descriptor =
 	        new pdef.generated.GeneratedEnumDescriptor({{ name }}.class);

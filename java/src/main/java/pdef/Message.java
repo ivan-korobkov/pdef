@@ -11,6 +11,7 @@ public interface Message extends Type {
 
 	Builder toBuilder();
 
+	@Override
 	Map<String, Object> serialize();
 
 	interface Builder {

@@ -7,5 +7,8 @@ public interface EnumDescriptor extends TypeDescriptor {
 	Map<String, Enum<?>> getValues();
 
 	@Override
-	EnumType serialize(Object object);
+	String serialize(Object object);
+
+	@Override
+	Enum<?> parse(Object object);
 }

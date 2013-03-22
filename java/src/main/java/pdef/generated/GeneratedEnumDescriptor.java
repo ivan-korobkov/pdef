@@ -9,7 +9,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-public class GeneratedEnumDescriptor implements EnumDescriptor, GeneratedDescriptor {
+public class GeneratedEnumDescriptor
+		implements EnumDescriptor, GeneratedDescriptor {
 	private final Class<?> javaClass;
 	private final Map<String, Enum<?>> values;
 
@@ -40,17 +41,21 @@ public class GeneratedEnumDescriptor implements EnumDescriptor, GeneratedDescrip
 	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
 	@Override
-	public EnumType serialize(final Object object) {
-		return (EnumType) object;
+	public String serialize(final Object object) {
+		if (object == null) {
+			return null;
+		}
+		EnumType type = (EnumType) object;
+		return type.getEnum().name().toLowerCase();
 	}
 
 	@Override
-	public Object parse(final Object object) {
+	public Enum<?> parse(final Object object) {
 		if (object == null) {
 			// TODO: return the default enum value.
 			return null;
 		}
-		String value = ((String) object).toLowerCase();
+		String value = ((String) object).toUpperCase();
 		return values.get(value);
 	}
 

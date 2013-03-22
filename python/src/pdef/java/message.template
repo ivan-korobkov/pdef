@@ -63,7 +63,9 @@ public class {{ type }} extends {{ base_class }} {
     protected void fill({{ builder }} builder) {
         super.fill(builder);
 {% for field in declared_fields %}
+{% if not field.is_type_field %}
         if (this.{{ field.is_set }}()) { builder.{{ field.set }}(this.{{ field.name }}); }
+{% endif %}
 {% endfor %}
     }
 
@@ -89,6 +91,14 @@ public class {{ type }} extends {{ base_class }} {
         private {{ field.type }} {{ field.name }};
 {% endfor %}
 
+        protected {{ builder.name }}() {
+{% for field in declared_fields %}
+{% if field.is_type_field %}
+            this.{{ field.do_set }}({{ field.type_value }});
+{% endif %}
+{% endfor %}
+        }
+
 {% for field in declared_fields %}
         // {{ field.name }}
 {% if field.type.nullable %}
@@ -106,15 +116,29 @@ public class {{ type }} extends {{ base_class }} {
         }
 
         public {{ builder }} {{ field.set }}(final {{ field.type }} value) {
+{% if field.is_type_field %}
+            throw new UnsupportedOperationException(
+                    "The field \"{{ field.name }}\" is a read-only type field");
+{% else %}
+            {{ field.do_set }}(value);
+            return this;
+{% endif %}
+        }
+
+        private void {{ field.do_set }}(final {{ field.type }} value) {
             this.{{ field.name }} = value;
             _fields.set({{ field.index }});
-            return this;
         }
 
         public {{ builder }} {{ field.clear }}() {
+{% if field.is_type_field %}
+            throw new UnsupportedOperationException(
+                    "The field \"{{ field.name }}\" is a read-only type field");
+{% else %}
             this.{{ field.name }} = {{ field.type.default }};
             _fields.clear({{ field.index }});
             return this;
+{% endif %}
         }
 
 {% endfor %}
@@ -227,6 +251,11 @@ public class {{ type }} extends {{ base_class }} {
 {% for field in declared_fields %}
             {{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
                     {{ field.type.descriptor|indent(24) }}) {
+                @Override
+                public boolean isTypeField() {
+                    return {% if field.is_type_field %}true{% else %}false{% endif %};
+                }
+
                 @Override
                 public Object get(final pdef.Message message) {
                     return (({{ name }}) message).{{ field.get }}();

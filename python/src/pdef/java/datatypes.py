@@ -65,7 +65,10 @@ class JavaField(object):
         self.is_set = 'has%s' % upper_first(self.name)
         self.get = 'get%s' % upper_first(self.name)
         self.set = 'set%s' % upper_first(self.name)
+        self.do_set = 'doSet%s' % upper_first(self.name)
         self.clear = 'clear%s' % upper_first(self.name)
+        self.is_type_field = field.is_type_field
+        self.type_value = JavaRef.from_lang(field.type_value) if field.type_value else None
 
 
 class JavaMessageTree(object):

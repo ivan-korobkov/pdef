@@ -122,6 +122,10 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 			TypeDescriptor type = field.getType();
 			Object rawValue = map.get(name);
 			Object value = type.parse(rawValue);
+			if (field.isTypeField()) {
+				// Even-though the field is read-only we still parse it to validate the data.
+				continue;
+			}
 			field.set(builder, value);
 		}
 		return builder.build();

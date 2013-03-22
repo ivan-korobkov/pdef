@@ -6,6 +6,8 @@ public interface FieldDescriptor extends Symbol {
 
 	TypeDescriptor getType();
 
+	boolean isTypeField();
+
 	Object get(Message message);
 
 	Object get(Message.Builder builder);

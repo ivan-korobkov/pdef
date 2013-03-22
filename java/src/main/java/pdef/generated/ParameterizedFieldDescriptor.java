@@ -32,6 +32,11 @@ final class ParameterizedFieldDescriptor implements FieldDescriptor {
 	}
 
 	@Override
+	public boolean isTypeField() {
+		return rawField.isTypeField();
+	}
+
+	@Override
 	public String getName() {
 		return rawField.getName();
 	}

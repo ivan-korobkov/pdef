@@ -12,7 +12,7 @@ public abstract class GeneratedFieldDescriptor implements FieldDescriptor {
 	private final String name;
 	private final TypeDescriptor type;
 
-	public GeneratedFieldDescriptor(final String name, final TypeDescriptor type) {
+	protected GeneratedFieldDescriptor(final String name, final TypeDescriptor type) {
 		this.name = checkNotNull(name);
 		this.type = checkNotNull(type);
 	}
@@ -36,6 +36,11 @@ public abstract class GeneratedFieldDescriptor implements FieldDescriptor {
 	}
 
 	@Override
+	public boolean isTypeField() {
+		return false;
+	}
+
+	@Override
 	public FieldDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
 		TypeDescriptor btype = type.bind(argMap);
 		if (type == btype) {
@@ -44,4 +49,5 @@ public abstract class GeneratedFieldDescriptor implements FieldDescriptor {
 
 		return new ParameterizedFieldDescriptor(this, btype);
 	}
+
 }

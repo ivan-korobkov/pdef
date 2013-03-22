@@ -69,6 +69,8 @@ class Message(Type):
             type_field = declared_fields.get(node.type_field)
             if not type_field:
                 raise ValueError('%s: tree field "%s" is not found' % (self, node.type_field))
+            type_field.is_type_field = True
+            type_field.type_value = _type
         else:
             _type = None
             type_field = None
@@ -169,6 +171,8 @@ class Field(object):
     def __init__(self, name, type):
         self.name = name
         self.type = type
+        self.is_type_field = False
+        self.type_value = None
 
     def __repr__(self):
         return '<Field %s>' % self

@@ -9,4 +9,8 @@ public interface TypeDescriptor {
 	TypeDescriptor parameterize(TypeDescriptor... args);
 
 	TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap);
+
+	Object serialize(Object object);
+
+	Object parse(Object object);
 }

@@ -31,4 +31,14 @@ public interface MessageDescriptor extends TypeDescriptor {
 
 	@Override
 	MessageDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap);
+
+	Message.Builder newBuilder();
+
+	@Override
+	Map<String, Object> serialize(Object object);
+
+	@Override
+	Message parse(Object object);
+
+	MessageDescriptor parseDescriptorType(Map<?, ?> map);
 }

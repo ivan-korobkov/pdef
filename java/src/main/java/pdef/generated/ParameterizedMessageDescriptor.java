@@ -7,12 +7,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import pdef.ImmutableSymbolTable;
-import pdef.SymbolTable;
-import pdef.FieldDescriptor;
-import pdef.MessageDescriptor;
-import pdef.TypeDescriptor;
-import pdef.VariableDescriptor;
+import pdef.*;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -92,6 +87,11 @@ final class ParameterizedMessageDescriptor extends GeneratedMessageDescriptor
 		List<TypeDescriptor> bargs = Lists.transform(args, bindArg);
 		TypeDescriptor[] array = new TypeDescriptor[bargs.size()];
 		return rawtype.parameterize(bargs.toArray(array));
+	}
+
+	@Override
+	public Message.Builder newBuilder() {
+		return rawtype.newBuilder();
 	}
 
 	private Map<VariableDescriptor, TypeDescriptor> argMap() {

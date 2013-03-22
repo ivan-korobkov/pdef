@@ -72,4 +72,84 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 	public MessageDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
 		return this;
 	}
+
+	@Override
+	public Map<String, Object> serialize(final Object object) {
+		if (object == null) {
+			return null;
+		}
+		Message message = (Message) object;
+		MessageDescriptor realDescriptor = message.getDescriptor();
+		return doSerialize(message, realDescriptor);
+	}
+
+	private Map<String, Object> doSerialize(final Message message, final MessageDescriptor real) {
+		Map<String, Object> map = Maps.newLinkedHashMap();
+		for (FieldDescriptor field : real.getFields()) {
+			if (!field.isSet(message)) {
+				continue;
+			}
+
+			String name = field.getName();
+			TypeDescriptor type = field.getType();
+
+			Object value = field.get(message);
+			Object rawValue = type.serialize(value);
+			map.put(name, rawValue);
+		}
+		return map;
+	}
+
+	@Override
+	public Message parse(final Object object) {
+		if (object == null) {
+			return null;
+		}
+
+		Map<?, ?> map = (Map<?, ?>) object;
+		MessageDescriptor real = parseDescriptorType(map);
+		return doParse(map, real);
+	}
+
+	private Message doParse(final Map<?, ?> map, final MessageDescriptor real) {
+		Message.Builder builder = newBuilder();
+		for (FieldDescriptor field : real.getFields()) {
+			String name = field.getName();
+			if (!map.containsKey(name)) {
+				continue;
+			}
+
+			TypeDescriptor type = field.getType();
+			Object rawValue = map.get(name);
+			Object value = type.parse(rawValue);
+			field.set(builder, value);
+		}
+		return builder.build();
+	}
+
+	@Override
+	public MessageDescriptor parseDescriptorType(final Map<?, ?> map) {
+		checkNotNull(map);
+		MessageTree tree = getTree();
+		if (tree == null) {
+			return this;
+		}
+
+		FieldDescriptor field = tree.getField();
+		String name = field.getName();
+		if (!map.containsKey(name)) {
+			return this;
+		}
+
+		TypeDescriptor type = field.getType();
+		Object rawValue = map.get(name);
+		Object value = type.parse(rawValue);
+		MessageDescriptor subdescriptor = tree.getMap().get(value);
+
+		if (subdescriptor == null || subdescriptor == this) {
+			// TODO: Log if a subtype is not found.
+			return this;
+		}
+		return subdescriptor.parseDescriptorType(map);
+	}
 }

@@ -40,6 +40,21 @@ public class GeneratedEnumDescriptor implements EnumDescriptor, GeneratedDescrip
 	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
 	@Override
+	public EnumType serialize(final Object object) {
+		return (EnumType) object;
+	}
+
+	@Override
+	public Object parse(final Object object) {
+		if (object == null) {
+			// TODO: return the default enum value.
+			return null;
+		}
+		String value = ((String) object).toLowerCase();
+		return values.get(value);
+	}
+
+	@Override
 	public void initialize() {}
 
 	static Map<String, Enum<?>> getValueMap(final Class<?> type) {

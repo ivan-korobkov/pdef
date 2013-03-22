@@ -2,6 +2,7 @@ package pdef.provided;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.Maps;
 import pdef.*;
 
 import java.util.Arrays;
@@ -48,6 +49,44 @@ public final class NativeMapDescriptor implements MapDescriptor, NativeDescripto
 	}
 
 	@Override
+	public Map<Object, Object> serialize(final Object object) {
+		return doSerialize(object, key, value);
+	}
+
+	private Map<Object, Object> doSerialize(final Object object, final TypeDescriptor key,
+			final TypeDescriptor value) {
+		Map<?, ?> map = (Map<?, ?>) object;
+		Map<Object, Object> result = Maps.newLinkedHashMap();
+		for (Map.Entry<?, ?> e : map.entrySet()) {
+			Object skey = key.serialize(e.getKey());
+			Object sval = value.serialize(e.getValue());
+			result.put(skey, sval);
+		}
+		return result;
+	}
+
+	@Override
+	public Map<Object, Object> parse(final Object object) {
+		return doParse(object, key, value);
+	}
+
+	private Map<Object, Object> doParse(final Object object, final TypeDescriptor key,
+			final TypeDescriptor value) {
+		if (object == null) {
+			return null;
+		}
+
+		Map<?, ?> map = (Map<?, ?>) object;
+		Map<Object, Object> result = Maps.newLinkedHashMap();
+		for (Map.Entry<?, ?> e : map.entrySet()) {
+			Object pkey = key.parse(e.getKey());
+			Object pvalue = value.parse(e.getValue());
+			result.put(pkey, pvalue);
+		}
+		return result;
+	}
+
+	@Override
 	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
 	class ParameterizedMapDescriptor implements MapDescriptor {
@@ -79,6 +118,16 @@ public final class NativeMapDescriptor implements MapDescriptor, NativeDescripto
 		@Override
 		public MapDescriptor parameterize(final TypeDescriptor... args) {
 			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Map<Object, Object> serialize(final Object object) {
+			return doSerialize(object, key, value);
+		}
+
+		@Override
+		public Map<Object, Object> parse(final Object object) {
+			return doParse(object, key, value);
 		}
 
 		@Override

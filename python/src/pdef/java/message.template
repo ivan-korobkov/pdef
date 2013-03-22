@@ -211,6 +211,11 @@ public class {{ type }} extends {{ base_class }} {
         }
 
         @Override
+        public {{ builder.wildcard }} newBuilder() {
+            return {{ type.raw }}.{{ createBuilder }};
+        }
+
+        @Override
         public void link() {
 {% if base %}
             base = {{ base.descriptor|indent(16) }};

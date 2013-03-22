@@ -1,5 +1,7 @@
 package pdef;
 
+import java.util.Map;
+
 public interface Message extends Type {
 
 	@Override
@@ -8,6 +10,8 @@ public interface Message extends Type {
 	Builder newBuilder();
 
 	Builder toBuilder();
+
+	Map<String, Object> serialize();
 
 	interface Builder {
 		MessageDescriptor getDescriptor();

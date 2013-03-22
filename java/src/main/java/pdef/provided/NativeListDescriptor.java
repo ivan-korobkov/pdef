@@ -2,9 +2,12 @@ package pdef.provided;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import pdef.*;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public final class NativeListDescriptor implements ListDescriptor, NativeDescriptor {
@@ -43,6 +46,41 @@ public final class NativeListDescriptor implements ListDescriptor, NativeDescrip
 	}
 
 	@Override
+	public List<Object> serialize(final Object object) {
+		return doSerialize(object, element);
+	}
+
+	protected List<Object> doSerialize(final Object object, final TypeDescriptor element) {
+		List<?> list = (List<?>) object;
+		ImmutableList.Builder<Object> builder = ImmutableList.builder();
+		for (Object e : list) {
+			Object serialized = element.serialize(e);
+			builder.add(serialized);
+		}
+		return builder.build();
+	}
+
+	@Override
+	public List<Object> parse(final Object object) {
+		return doParse(object, element);
+	}
+
+	private List<Object> doParse(final Object object, final TypeDescriptor element) {
+		if (object == null) {
+			return null;
+		}
+
+		List<?> list = (List<?>) object;
+		List<Object> result = Lists.newArrayList();
+		for (Object rawValue : list) {
+			Object value = element.parse(rawValue);
+			result.add(value);
+		}
+
+		return result;
+	}
+
+	@Override
 	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
 	class ParameterizedListDescriptor implements ListDescriptor {
@@ -66,6 +104,16 @@ public final class NativeListDescriptor implements ListDescriptor, NativeDescrip
 		@Override
 		public ListDescriptor parameterize(final TypeDescriptor... args) {
 			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<Object> serialize(final Object object) {
+			return doSerialize(object, element);
+		}
+
+		@Override
+		public List<Object> parse(final Object object) {
+			return doParse(object, element);
 		}
 
 		@Override

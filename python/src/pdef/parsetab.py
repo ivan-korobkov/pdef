@@ -5,9 +5,9 @@ _tabversion = '3.2'
 
 _lr_method = 'LALR'
 
-_lr_signature = '\x98lp\xed\xa6\xc5{\x98|\xe4\xc4\x93\xc43\x02\xd4'
+_lr_signature = '\xb7\xb0\xa1\xfe_\xa9\xe13\x03(\xce\xa6\x1cK\xc8\x86'
     
-_lr_action_items = {'INHERITS':([23,28,30,44,],[-2,-38,39,-37,]),'ON':([53,],[64,]),'STRING':([59,64,],[68,72,]),'LBRACE':([20,21,23,27,28,30,40,41,44,54,55,71,84,],[-2,29,-2,35,-38,-2,-2,-29,-37,66,-31,-28,-30,]),'POLYMORPHIC':([23,28,30,40,41,44,71,],[-2,-38,-2,53,-29,-37,-28,]),'SEMI':([4,19,31,36,37,38,51,61,77,82,],[9,25,42,-25,-26,49,-10,-24,-9,85,]),'LESS':([20,23,51,],[26,26,62,]),'RBRACE':([35,45,47,48,49,66,67,68,73,74,76,81,85,],[-2,57,-20,-21,60,-2,-19,-22,80,-34,-35,-33,-36,]),'ENUM':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,57,60,65,80,],[-2,13,-5,-6,-3,-17,-16,-4,-14,-15,13,-13,-8,-7,-18,-23,-27,-32,]),'MODULE':([0,],[1,]),'NATIVE':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,57,60,65,80,],[-2,11,-5,-6,-3,-17,-16,-4,-14,-15,11,-13,-8,-7,-18,-23,-27,-32,]),'AS':([19,51,52,72,77,],[24,-10,63,79,-9,]),'COLON':([46,],[59,]),'COMMA':([32,33,34,35,36,37,38,45,47,48,51,56,61,67,68,69,70,77,83,],[-40,-41,43,-2,-25,-26,50,58,-20,-21,-10,-39,-24,-19,-22,-12,78,-9,-11,]),'GREATER':([32,33,34,51,56,69,70,77,83,],[-40,-41,44,-10,-39,-12,77,-9,-11,]),'IMPORT':([3,5,7,8,9,14,25,42,],[6,6,-5,-6,-3,-4,-8,-7,]),'MESSAGE':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,57,60,65,80,],[-2,18,-5,-6,-3,-17,-16,-4,-14,-15,18,-13,-8,-7,-18,-23,-27,-32,]),'IDENTIFIER':([1,6,11,13,18,24,26,29,35,39,43,50,58,62,63,66,73,74,75,76,78,79,81,85,],[4,19,20,21,23,31,33,37,46,51,33,37,46,51,71,75,75,-34,51,-35,51,84,-33,-36,]),'$end':([2,10,12,15,16,17,22,57,60,65,80,],[0,-17,-16,-14,-15,-1,-13,-18,-23,-27,-32,]),}
+_lr_action_items = {'INHERITS':([23,28,30,44,],[-2,-38,39,-37,]),'ON':([53,],[64,]),'STRING':([59,64,],[68,72,]),'LBRACE':([20,21,23,27,28,30,40,41,44,54,55,71,87,],[-2,29,-2,35,-38,-2,-2,-29,-37,66,-31,-28,-30,]),'POLYMORPHIC':([23,28,30,40,41,44,71,],[-2,-38,-2,53,-29,-37,-28,]),'SEMI':([4,19,31,36,37,38,51,61,76,92,],[9,25,42,-25,-26,49,-10,-24,-9,94,]),'LESS':([20,23,51,],[26,26,62,]),'RBRACE':([35,45,47,48,49,66,67,68,74,75,82,83,85,88,91,94,],[-2,57,-20,-21,60,-2,-19,-22,-2,-43,90,-34,-35,-42,-33,-36,]),'ENUM':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,57,60,65,90,],[-2,13,-5,-6,-3,-17,-16,-4,-14,-15,13,-13,-8,-7,-18,-23,-27,-32,]),'MODULE':([0,],[1,]),'NATIVE':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,57,60,65,90,],[-2,11,-5,-6,-3,-17,-16,-4,-14,-15,11,-13,-8,-7,-18,-23,-27,-32,]),'AS':([19,51,52,72,76,],[24,-10,63,78,-9,]),'COLON':([46,],[59,]),'COMMA':([32,33,34,35,36,37,38,45,47,48,51,56,61,67,68,69,70,76,79,80,81,86,93,],[-40,-41,43,-2,-25,-26,50,58,-20,-21,-10,-39,-24,-19,-22,-12,77,-9,-45,89,-46,-11,-44,]),'LBRACKET':([66,],[73,]),'GREATER':([32,33,34,51,56,69,70,76,86,],[-40,-41,44,-10,-39,-12,76,-9,-11,]),'IMPORT':([3,5,7,8,9,14,25,42,],[6,6,-5,-6,-3,-4,-8,-7,]),'MESSAGE':([3,5,7,8,9,10,12,14,15,16,17,22,25,42,57,60,65,90,],[-2,18,-5,-6,-3,-17,-16,-4,-14,-15,18,-13,-8,-7,-18,-23,-27,-32,]),'IDENTIFIER':([1,6,11,13,18,24,26,29,35,39,43,50,58,62,63,66,73,74,75,77,78,82,83,84,85,88,89,91,94,],[4,19,20,21,23,31,33,37,46,51,33,37,46,51,71,-2,81,84,-43,51,87,84,-34,51,-35,-42,81,-33,-36,]),'RBRACKET':([79,80,81,93,],[-45,88,-46,-44,]),'$end':([2,10,12,15,16,17,22,57,60,65,90,],[0,-17,-16,-14,-15,-1,-13,-18,-23,-27,-32,]),}
 
 _lr_action = { }
 for _k, _v in _lr_action_items.items():
@@ -16,7 +16,7 @@ for _k, _v in _lr_action_items.items():
       _lr_action[_x][_k] = _y
 del _lr_action_items
 
-_lr_goto_items = {'message_body':([54,],[65,]),'imports':([3,],[5,]),'variables':([20,23,],[27,30,]),'module':([0,],[2,]),'message':([5,17,],[10,10,]),'native':([5,17,],[16,16,]),'native_option':([35,58,],[47,67,]),'field':([66,73,],[74,81,]),'import':([3,5,],[7,14,]),'type':([39,62,75,78,],[52,69,82,83,]),'variable_list':([26,],[34,]),'enum_value':([29,50,],[36,61,]),'native_options':([35,],[45,]),'enum':([5,17,],[12,12,]),'module_name':([0,],[3,]),'variable':([26,43,],[32,56,]),'types':([62,],[70,]),'enum_values':([29,],[38,]),'definition':([5,17,],[15,22,]),'fields':([66,],[73,]),'message_base':([30,],[40,]),'empty':([3,20,23,30,35,40,66,],[8,28,28,41,48,55,76,]),'definitions':([5,],[17,]),'message_type':([40,],[54,]),}
+_lr_goto_items = {'message_body':([54,],[65,]),'imports':([3,],[5,]),'variables':([20,23,],[27,30,]),'module':([0,],[2,]),'message':([5,17,],[10,10,]),'native':([5,17,],[16,16,]),'native_option':([35,58,],[47,67,]),'field':([74,82,],[83,91,]),'import':([3,5,],[7,14,]),'type':([39,62,77,84,],[52,69,86,92,]),'variable_list':([26,],[34,]),'option':([73,89,],[79,93,]),'enum_value':([29,50,],[36,61,]),'native_options':([35,],[45,]),'enum':([5,17,],[12,12,]),'module_name':([0,],[3,]),'variable':([26,43,],[32,56,]),'types':([62,],[70,]),'enum_values':([29,],[38,]),'definition':([5,17,],[15,22,]),'fields':([74,],[82,]),'option_list':([73,],[80,]),'message_base':([30,],[40,]),'empty':([3,20,23,30,35,40,66,74,],[8,28,28,41,48,55,75,85,]),'definitions':([5,],[17,]),'message_type':([40,],[54,]),'options':([66,],[74,]),}
 
 _lr_goto = { }
 for _k, _v in _lr_goto_items.items():
@@ -26,45 +26,50 @@ for _k, _v in _lr_goto_items.items():
 del _lr_goto_items
 _lr_productions = [
   ("S' -> module","S'",1,None,None,None),
-  ('module -> module_name imports definitions','module',3,'p_module','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',74),
-  ('empty -> <empty>','empty',0,'p_empty','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',84),
-  ('module_name -> MODULE IDENTIFIER SEMI','module_name',3,'p_module_name','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',91),
-  ('imports -> imports import','imports',2,'p_imports','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',98),
-  ('imports -> import','imports',1,'p_imports','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',99),
-  ('imports -> empty','imports',1,'p_imports','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',100),
-  ('import -> IMPORT IDENTIFIER AS IDENTIFIER SEMI','import',5,'p_import','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',107),
-  ('import -> IMPORT IDENTIFIER SEMI','import',3,'p_import','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',108),
-  ('type -> IDENTIFIER LESS types GREATER','type',4,'p_type','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',117),
-  ('type -> IDENTIFIER','type',1,'p_type','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',118),
-  ('types -> types COMMA type','types',3,'p_types','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',127),
-  ('types -> type','types',1,'p_types','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',128),
-  ('definitions -> definitions definition','definitions',2,'p_definitions','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',135),
-  ('definitions -> definition','definitions',1,'p_definitions','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',136),
-  ('definition -> native','definition',1,'p_definition','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',143),
-  ('definition -> enum','definition',1,'p_definition','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',144),
-  ('definition -> message','definition',1,'p_definition','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',145),
-  ('native -> NATIVE IDENTIFIER variables LBRACE native_options RBRACE','native',6,'p_native','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',152),
-  ('native_options -> native_options COMMA native_option','native_options',3,'p_native_options','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',162),
-  ('native_options -> native_option','native_options',1,'p_native_options','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',163),
-  ('native_options -> empty','native_options',1,'p_native_options','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',164),
-  ('native_option -> IDENTIFIER COLON STRING','native_option',3,'p_native_option','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',171),
-  ('enum -> ENUM IDENTIFIER LBRACE enum_values SEMI RBRACE','enum',6,'p_enum','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',178),
-  ('enum_values -> enum_values COMMA enum_value','enum_values',3,'p_enum_values','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',185),
-  ('enum_values -> enum_value','enum_values',1,'p_enum_values','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',186),
-  ('enum_value -> IDENTIFIER','enum_value',1,'p_enum_value','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',193),
-  ('message -> MESSAGE IDENTIFIER variables message_base message_type message_body','message',6,'p_message','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',200),
-  ('message_base -> INHERITS type AS IDENTIFIER','message_base',4,'p_message_base','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',216),
-  ('message_base -> empty','message_base',1,'p_message_base','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',217),
-  ('message_type -> POLYMORPHIC ON STRING AS IDENTIFIER','message_type',5,'p_message_type','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',226),
-  ('message_type -> empty','message_type',1,'p_message_type','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',227),
-  ('message_body -> LBRACE fields RBRACE','message_body',3,'p_message_body','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',238),
-  ('fields -> fields field','fields',2,'p_fields','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',245),
-  ('fields -> field','fields',1,'p_fields','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',246),
-  ('fields -> empty','fields',1,'p_fields','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',247),
-  ('field -> IDENTIFIER type SEMI','field',3,'p_field','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',254),
-  ('variables -> LESS variable_list GREATER','variables',3,'p_variables','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',261),
-  ('variables -> empty','variables',1,'p_variables','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',262),
-  ('variable_list -> variable_list COMMA variable','variable_list',3,'p_variable_list','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',272),
-  ('variable_list -> variable','variable_list',1,'p_variable_list','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',273),
-  ('variable -> IDENTIFIER','variable',1,'p_variable','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',280),
+  ('module -> module_name imports definitions','module',3,'p_module','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',77),
+  ('empty -> <empty>','empty',0,'p_empty','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',87),
+  ('module_name -> MODULE IDENTIFIER SEMI','module_name',3,'p_module_name','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',94),
+  ('imports -> imports import','imports',2,'p_imports','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',101),
+  ('imports -> import','imports',1,'p_imports','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',102),
+  ('imports -> empty','imports',1,'p_imports','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',103),
+  ('import -> IMPORT IDENTIFIER AS IDENTIFIER SEMI','import',5,'p_import','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',110),
+  ('import -> IMPORT IDENTIFIER SEMI','import',3,'p_import','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',111),
+  ('type -> IDENTIFIER LESS types GREATER','type',4,'p_type','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',120),
+  ('type -> IDENTIFIER','type',1,'p_type','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',121),
+  ('types -> types COMMA type','types',3,'p_types','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',130),
+  ('types -> type','types',1,'p_types','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',131),
+  ('definitions -> definitions definition','definitions',2,'p_definitions','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',138),
+  ('definitions -> definition','definitions',1,'p_definitions','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',139),
+  ('definition -> native','definition',1,'p_definition','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',146),
+  ('definition -> enum','definition',1,'p_definition','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',147),
+  ('definition -> message','definition',1,'p_definition','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',148),
+  ('native -> NATIVE IDENTIFIER variables LBRACE native_options RBRACE','native',6,'p_native','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',155),
+  ('native_options -> native_options COMMA native_option','native_options',3,'p_native_options','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',165),
+  ('native_options -> native_option','native_options',1,'p_native_options','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',166),
+  ('native_options -> empty','native_options',1,'p_native_options','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',167),
+  ('native_option -> IDENTIFIER COLON STRING','native_option',3,'p_native_option','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',174),
+  ('enum -> ENUM IDENTIFIER LBRACE enum_values SEMI RBRACE','enum',6,'p_enum','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',181),
+  ('enum_values -> enum_values COMMA enum_value','enum_values',3,'p_enum_values','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',188),
+  ('enum_values -> enum_value','enum_values',1,'p_enum_values','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',189),
+  ('enum_value -> IDENTIFIER','enum_value',1,'p_enum_value','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',196),
+  ('message -> MESSAGE IDENTIFIER variables message_base message_type message_body','message',6,'p_message','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',203),
+  ('message_base -> INHERITS type AS IDENTIFIER','message_base',4,'p_message_base','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',220),
+  ('message_base -> empty','message_base',1,'p_message_base','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',221),
+  ('message_type -> POLYMORPHIC ON STRING AS IDENTIFIER','message_type',5,'p_message_type','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',230),
+  ('message_type -> empty','message_type',1,'p_message_type','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',231),
+  ('message_body -> LBRACE options fields RBRACE','message_body',4,'p_message_body','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',242),
+  ('fields -> fields field','fields',2,'p_fields','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',249),
+  ('fields -> field','fields',1,'p_fields','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',250),
+  ('fields -> empty','fields',1,'p_fields','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',251),
+  ('field -> IDENTIFIER type SEMI','field',3,'p_field','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',258),
+  ('variables -> LESS variable_list GREATER','variables',3,'p_variables','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',265),
+  ('variables -> empty','variables',1,'p_variables','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',266),
+  ('variable_list -> variable_list COMMA variable','variable_list',3,'p_variable_list','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',276),
+  ('variable_list -> variable','variable_list',1,'p_variable_list','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',277),
+  ('variable -> IDENTIFIER','variable',1,'p_variable','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',284),
+  ('options -> LBRACKET option_list RBRACKET','options',3,'p_options','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',291),
+  ('options -> empty','options',1,'p_options','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',292),
+  ('option_list -> option_list COMMA option','option_list',3,'p_option_list','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',301),
+  ('option_list -> option','option_list',1,'p_option_list','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',302),
+  ('option -> IDENTIFIER','option',1,'p_option','/Users/ivan/Workspace/pdef/python/env/lib/python2.7/site-packages/pdef/parser.py',308),
 ]

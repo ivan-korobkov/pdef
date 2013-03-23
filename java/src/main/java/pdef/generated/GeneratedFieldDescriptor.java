@@ -49,5 +49,4 @@ public abstract class GeneratedFieldDescriptor implements FieldDescriptor {
 
 		return new ParameterizedFieldDescriptor(this, btype);
 	}
-
 }

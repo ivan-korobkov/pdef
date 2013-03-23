@@ -16,6 +16,7 @@ class Tokens(object):
         'COLON', 'COMMA', 'SEMI',
         'LESS', 'GREATER',
         'LBRACE', 'RBRACE',
+        'LBRACKET', 'RBRACKET',
         'IDENTIFIER', 'STRING')
 
     # Regular expressions for simple rules
@@ -26,6 +27,8 @@ class Tokens(object):
     t_GREATER = r'\>'
     t_LBRACE  = r'\{'
     t_RBRACE  = r'\}'
+    t_LBRACKET = r'\['
+    t_RBRACKET = r'\]'
 
     # Ignored characters
     t_ignore = " \t"
@@ -203,12 +206,13 @@ class GrammarRules(object):
         variables = t[3]
         base, subtype = t[4]
         type_field, _type = t[5]
-        declared_fields = t[6]
+        options, declared_fields = t[6]
 
         t[0] = ast.Message(name, variables=variables,
                            base=base, subtype=subtype,
                            type_field=type_field, type=_type,
-                           declared_fields=declared_fields)
+                           declared_fields=declared_fields,
+                           options=options)
 
     # Message inheritance
     def p_message_base(self, t):
@@ -235,9 +239,9 @@ class GrammarRules(object):
 
     def p_message_body(self, t):
         '''
-        message_body : LBRACE fields RBRACE
+        message_body : LBRACE options fields RBRACE
         '''
-        t[0] = t[2]
+        t[0] = t[2], t[3]
 
     # List of message fields
     def p_fields(self, t):
@@ -278,6 +282,30 @@ class GrammarRules(object):
     def p_variable(self, t):
         '''
         variable : IDENTIFIER
+        '''
+        t[0] = t[1]
+
+    # Definition and field options.
+    def p_options(self, t):
+        '''
+        options : LBRACKET option_list RBRACKET
+                | empty
+        '''
+        if len(t) == 2:
+            t[0] = []
+        else:
+            t[0] = t[2]
+
+    def p_option_list(self, t):
+        '''
+        option_list : option_list COMMA option
+                    | option
+        '''
+        self._list(t, separated=1)
+
+    def p_option(self, t):
+        '''
+        option : IDENTIFIER
         '''
         t[0] = t[1]
 

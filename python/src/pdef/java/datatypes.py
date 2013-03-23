@@ -5,17 +5,19 @@ from pdef.java.refs import JavaRef, SimpleJavaRef
 
 
 ENUM_FILE = os.path.join(os.path.dirname(__file__), "enum.template")
+MESSAGE_FILE = os.path.join(os.path.dirname(__file__), "message.template")
 with open(ENUM_FILE, "r") as f:
     ENUM_TEMPLATE = f.read()
-
-
-MESSAGE_FILE = os.path.join(os.path.dirname(__file__), "message.template")
 with open(MESSAGE_FILE, "r") as f:
     MESSAGE_TEMPLATE = f.read()
 
+ENV = Environment(trim_blocks=True)
+ENUM = ENV.from_string(ENUM_TEMPLATE)
+MESSAGE = ENV.from_string(MESSAGE_TEMPLATE)
+
 
 class JavaMessage(object):
-    def __init__(self, msg):
+    def __init__(self, msg,):
         self.name = msg.name
         self.type = JavaRef.from_lang(msg).local
         self.package = msg.parent.fullname
@@ -58,9 +60,7 @@ class JavaMessage(object):
 
     @property
     def code(self):
-        env = Environment(trim_blocks=True)
-        template = env.from_string(MESSAGE_TEMPLATE)
-        return template.render(**self.__dict__)
+        return MESSAGE.render(**self.__dict__)
 
 
 class JavaField(object):
@@ -98,9 +98,7 @@ class JavaEnum(object):
 
     @property
     def code(self):
-        env = Environment(trim_blocks=True)
-        template = env.from_string(ENUM_TEMPLATE)
-        return template.render(**self.__dict__)
+        return ENUM.render(**self.__dict__)
 
 
 def upper_first(s):

@@ -5,6 +5,8 @@ enum ObjectType {
 }
 
 message Id polymorphic on "type" as ObjectType.OBJECT {
+    [line_format]
+
     type    ObjectType;
 }
 

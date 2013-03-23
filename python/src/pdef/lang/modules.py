@@ -70,14 +70,14 @@ class Module(Node):
         check_isinstance(module, Module)
         self.imports.add(module, alias)
         self.symbols.add(module, alias)
-        logging.info('%s: added an import "%s"', self, module)
+        logging.info('%s: import "%s"', self, module)
 
     def add_definition(self, definition):
         from pdef.lang.types import Type
         check_isinstance(definition, Type)
         self.definitions.add(definition)
         self.symbols.add(definition)
-        logging.info('%s: added a definition "%s"', self, definition.simplename)
+        logging.info('%s: added "%s"', self, definition.simplename)
 
     def add_definitions(self, *definitions):
         map(self.add_definition, definitions)

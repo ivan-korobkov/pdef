@@ -40,5 +40,7 @@ public interface MessageDescriptor extends TypeDescriptor {
 	@Override
 	Message parse(Object object);
 
-	MessageDescriptor parseDescriptorType(Map<?, ?> map);
+	MessageDescriptor getDescriptorForType(Message message);
+
+	MessageDescriptor parseDescriptorForType(Map<?, ?> map);
 }

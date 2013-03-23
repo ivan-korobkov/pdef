@@ -79,8 +79,8 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 			return null;
 		}
 		Message message = (Message) object;
-		MessageDescriptor realDescriptor = message.getDescriptor();
-		return doSerialize(message, realDescriptor);
+		MessageDescriptor real = getDescriptorForType(message);
+		return doSerialize(message, real);
 	}
 
 	private Map<String, Object> doSerialize(final Message message, final MessageDescriptor real) {
@@ -101,13 +101,31 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 	}
 
 	@Override
+	public MessageDescriptor getDescriptorForType(final Message message) {
+		checkNotNull(message);
+		MessageTree tree = getTree();
+		if (tree == null) {
+			return this;
+		}
+
+		FieldDescriptor field = tree.getField();
+		Object type = field.get(message);
+		MessageDescriptor subdescriptor = tree.getMap().get(type);
+		if (subdescriptor == null || subdescriptor == this) {
+			// TODO: Log if a subtype is not found.
+			return this;
+		}
+		return subdescriptor.getDescriptorForType(message);
+	}
+
+	@Override
 	public Message parse(final Object object) {
 		if (object == null) {
 			return null;
 		}
 
 		Map<?, ?> map = (Map<?, ?>) object;
-		MessageDescriptor real = parseDescriptorType(map);
+		MessageDescriptor real = parseDescriptorForType(map);
 		return doParse(map, real);
 	}
 
@@ -132,7 +150,7 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 	}
 
 	@Override
-	public MessageDescriptor parseDescriptorType(final Map<?, ?> map) {
+	public MessageDescriptor parseDescriptorForType(final Map<?, ?> map) {
 		checkNotNull(map);
 		MessageTree tree = getTree();
 		if (tree == null) {
@@ -149,11 +167,10 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 		Object rawValue = map.get(name);
 		Object value = type.parse(rawValue);
 		MessageDescriptor subdescriptor = tree.getMap().get(value);
-
 		if (subdescriptor == null || subdescriptor == this) {
 			// TODO: Log if a subtype is not found.
 			return this;
 		}
-		return subdescriptor.parseDescriptorType(map);
+		return subdescriptor.parseDescriptorForType(map);
 	}
 }

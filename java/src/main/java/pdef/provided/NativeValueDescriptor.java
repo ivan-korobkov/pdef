@@ -6,7 +6,7 @@ import pdef.*;
 
 import java.util.Map;
 
-class NativeValueDescriptor implements ValueDescriptor {
+abstract class NativeValueDescriptor implements ValueDescriptor {
 	private final Class<?> javaClass;
 
 	NativeValueDescriptor(final Class<?> javaClass) {
@@ -33,14 +33,4 @@ class NativeValueDescriptor implements ValueDescriptor {
 
 	@Override
 	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
-
-	@Override
-	public Object serialize(final Object object) {
-		return object;
-	}
-
-	@Override
-	public Object parse(final Object object) {
-		return object;
-	}
 }

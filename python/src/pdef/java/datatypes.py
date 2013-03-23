@@ -34,11 +34,16 @@ class JavaMessage(object):
 
         self.variables = tuple(JavaRef.from_lang(var) for var in msg.variables)
 
-        index = len(msg.base.fields) if msg.base else 0
+        index = 0
+        fields = []
         dfields = []
-        for field in msg.declared_fields:
-            dfields.append(JavaField(field, index))
+        for field in msg.fields:
+            jfield = JavaField(field, index)
+            fields.append(jfield)
+            if (field.is_declared):
+                dfields.append(jfield)
             index += 1
+        self.fields = tuple(fields)
         self.declared_fields = tuple(dfields)
 
         self.base_tree = JavaMessageTree(msg.base_tree) if msg.base_tree else None
@@ -62,13 +67,18 @@ class JavaField(object):
         self.index = index
         self.name = field.name
         self.type = JavaRef.from_lang(field.type)
+
+        self.is_type = field.is_type
+        self.is_subtype = field.is_subtype
+        self.type_value = JavaRef.from_lang(field.type_value) if field.type_value else None
+        self.is_overriden = field.is_overriden
+        self.is_declared = field.is_declared
+
         self.is_set = 'has%s' % upper_first(self.name)
         self.get = 'get%s' % upper_first(self.name)
         self.set = 'set%s' % upper_first(self.name)
         self.do_set = 'doSet%s' % upper_first(self.name)
         self.clear = 'clear%s' % upper_first(self.name)
-        self.is_type_field = field.is_type_field
-        self.type_value = JavaRef.from_lang(field.type_value) if field.type_value else None
 
 
 class JavaMessageTree(object):

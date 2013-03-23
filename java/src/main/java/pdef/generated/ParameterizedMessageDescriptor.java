@@ -43,6 +43,24 @@ final class ParameterizedMessageDescriptor extends GeneratedMessageDescriptor
 		return rawtype;
 	}
 
+	@Nullable
+	@Override
+	public MessageTree getTree() {
+		return rawtype.getTree();
+	}
+
+	@Nullable
+	@Override
+	public MessageTree getBaseTree() {
+		return rawtype.getBaseTree();
+	}
+
+	@Nullable
+	@Override
+	public MessageTree getRootTree() {
+		return rawtype.getRootTree();
+	}
+
 	@Override
 	public MessageDescriptor getBase() {
 		return base;

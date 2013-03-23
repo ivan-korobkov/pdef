@@ -63,7 +63,7 @@ public class {{ type }} extends {{ base_class }} {
     protected void fill({{ builder }} builder) {
         super.fill(builder);
 {% for field in declared_fields %}
-{% if not field.is_type_field %}
+{% if not field.is_type %}
         if (this.{{ field.is_set }}()) { builder.{{ field.set }}(this.{{ field.name }}); }
 {% endif %}
 {% endfor %}
@@ -92,15 +92,16 @@ public class {{ type }} extends {{ base_class }} {
 {% endfor %}
 
         protected {{ builder.name }}() {
-{% for field in declared_fields %}
-{% if field.is_type_field %}
-            this.{{ field.do_set }}({{ field.type_value }});
+{% for field in fields %}
+{% if field.is_type or field.is_subtype %}
+            {{ field.do_set }}({{ field.type_value }});
 {% endif %}
 {% endfor %}
         }
 
-{% for field in declared_fields %}
+{% for field in fields %}
         // {{ field.name }}
+{% if field.is_declared %}
 {% if field.type.nullable %}
         @javax.annotation.Nullable
 {% endif %}
@@ -115,8 +116,13 @@ public class {{ type }} extends {{ base_class }} {
             return _fields.get({{ field.index }});
         }
 
+        protected void {{ field.do_set }}(final {{ field.type }} value) {
+            this.{{ field.name }} = value;
+            _fields.set({{ field.index }});
+        }
+
         public {{ builder }} {{ field.set }}(final {{ field.type }} value) {
-{% if field.is_type_field %}
+{% if field.is_type %}
             throw new UnsupportedOperationException(
                     "The field \"{{ field.name }}\" is a read-only type field");
 {% else %}
@@ -125,13 +131,8 @@ public class {{ type }} extends {{ base_class }} {
 {% endif %}
         }
 
-        private void {{ field.do_set }}(final {{ field.type }} value) {
-            this.{{ field.name }} = value;
-            _fields.set({{ field.index }});
-        }
-
         public {{ builder }} {{ field.clear }}() {
-{% if field.is_type_field %}
+{% if field.is_type %}
             throw new UnsupportedOperationException(
                     "The field \"{{ field.name }}\" is a read-only type field");
 {% else %}
@@ -140,6 +141,20 @@ public class {{ type }} extends {{ base_class }} {
             return this;
 {% endif %}
         }
+
+{% else %}
+        @Override
+        public {{ builder }} {{ field.set }}(final {{ field.type }} value) {
+            super.{{ field.set }}(value);
+            return this;
+        }
+
+        @Override
+        public {{ builder }} {{ field.clear }}() {
+            super.{{ field.clear }}();
+            return this;
+        }
+{% endif %}
 
 {% endfor %}
         @Override
@@ -253,7 +268,7 @@ public class {{ type }} extends {{ base_class }} {
                     {{ field.type.descriptor|indent(24) }}) {
                 @Override
                 public boolean isTypeField() {
-                    return {% if field.is_type_field %}true{% else %}false{% endif %};
+                    return {% if field.is_type %}true{% else %}false{% endif %};
                 }
 
                 @Override

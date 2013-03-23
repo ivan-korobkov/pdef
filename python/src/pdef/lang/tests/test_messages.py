@@ -35,7 +35,7 @@ class TestMessage(unittest.TestCase):
 
         type_field = Field('type', type)
         base = Message('Base')
-        base.build(type=type_base, type_field=type_field, declared_fields=(type_field,))
+        base.build(type=type_base, type_field_name=type_field, declared_fields=(type_field,))
 
         module.add_definitions(type, event_type, base)
 
@@ -74,10 +74,10 @@ class TestMessage(unittest.TestCase):
 
         type_field = Field('type', type)
         base = Message('Base')
-        base.build(type=type_base, type_field=type_field)
+        base.build(type=type_base, type_field_name=type_field)
 
         message = Message('Message')
-        message._set_base(base, type_message)
+        message.set_base(base, type_message)
 
         assert message.base is base
         assert message.base_tree.type is type_message
@@ -99,7 +99,7 @@ class TestMessage(unittest.TestCase):
         msg2 = Message('Message2')
         msg2.build(base=msg, subtype=type_msg2)
 
-        self.assertRaises(ValueError, base._set_base, msg2, type_base)
+        self.assertRaises(ValueError, base.set_base, msg2, type_base)
 
     def test_set_fields(self):
         int32 = Native('int32')
@@ -108,7 +108,7 @@ class TestMessage(unittest.TestCase):
         field2 = Field('field2', int64)
 
         msg = Message('Message')
-        msg._set_fields(field1, field2)
+        msg.add_fields(field1, field2)
 
         assert 'field1' in msg.fields
         assert 'field2' in msg.fields
@@ -121,7 +121,7 @@ class TestMessage(unittest.TestCase):
         field2 = Field('field', int32)
 
         msg = Message('Message')
-        self.assertRaises(ValueError, msg._set_fields, field1, field2)
+        self.assertRaises(ValueError, msg.add_fields, field1, field2)
 
     def test_set_fields_overriden_duplicate(self):
         type = Enum('Type')
@@ -137,7 +137,7 @@ class TestMessage(unittest.TestCase):
         message.build(base=base, subtype=type_msg)
 
         duplicate_field = Field('type', type)
-        self.assertRaises(ValueError, message._set_fields, duplicate_field)
+        self.assertRaises(ValueError, message.add_fields, duplicate_field)
 
     def test_parameterize(self):
         k = Variable('K')
@@ -165,7 +165,7 @@ class TestParameterizedMessage(unittest.TestCase):
         e = Variable('E')
         type_field = Field('type', type)
         collection = Message('Collection', variables=[e])
-        collection.build(type=type_col, type_field=type_field,
+        collection.build(type=type_col, type_field_name=type_field,
             declared_fields=[Field('element', e)])
 
         t = Variable('T')

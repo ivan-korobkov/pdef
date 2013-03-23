@@ -1,7 +1,7 @@
 module pdef.fixtures;
 
 enum ObjectType {
-    OBJECT, USER, POST, EVENT, PHOTO, NOTE, SYSTEM_EVENT;
+    OBJECT, USER, POST, PHOTO, NOTE, EVENT;
 }
 
 message Id polymorphic on "type" as ObjectType.OBJECT {
@@ -20,30 +20,31 @@ message NoteId inherits PostId as ObjectType.NOTE {
     noteId      int64;
 }
 
-message GenericObject
+message GenericObject<ID>
     polymorphic on "type" as ObjectType.OBJECT {
+    id          ID;
     type        ObjectType;
     timestamp   int64;
 }
 
-message User inherits GenericObject as ObjectType.USER {
-    id          UserId;
+message User inherits GenericObject<UserId> as ObjectType.USER {
     name        string;
     age         int32;
     sex         Sex;
     profile     Profile;
     floats      map<string, float>;
+    chats       list<Chat>;
 }
 
-message Post inherits GenericObject as ObjectType.POST {
+message Post<ID> inherits GenericObject<ID> as ObjectType.POST {
     userId      UserId;
 }
 
-message Photo inherits Post as ObjectType.PHOTO {
+message Photo inherits Post<PhotoId> as ObjectType.PHOTO {
     url         string;
 }
 
-message Note inherits Post as ObjectType.NOTE {
+message Note inherits Post<NoteId> as ObjectType.NOTE {
     text        string;
 }
 
@@ -60,6 +61,29 @@ message Profile {
 	info        string;
 
     complete    bool;
+}
+
+message Chat {
+    messages WeightedSet<string, int64>;
+}
+
+message EventId inherits Id as ObjectType.EVENT {
+    value       int64;
+}
+
+enum EventType {
+    GENERIC, SYSTEM;
+}
+
+message Event
+        inherits GenericObject<EventId> as ObjectType.EVENT
+        polymorphic on "eventType" as EventType.GENERIC {
+    eventType  EventType;
+    ip          string;
+}
+
+message SystemEvent inherits Event as EventType.SYSTEM {
+    process     string;
 }
 
 enum Sex {
@@ -83,8 +107,4 @@ message Weighted<E, W> {
 
 message WeightedSet<E, W> {
     elements set<Weighted<E, W>>;
-}
-
-message Chat {
-    messages WeightedSet<Birthday, int64>;
 }

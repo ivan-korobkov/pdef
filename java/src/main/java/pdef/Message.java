@@ -5,9 +5,9 @@ import java.util.Map;
 public interface Message extends Type {
 
 	@Override
-	MessageDescriptor getDescriptor();
+	MessageDescriptor getDescriptorForType();
 
-	Builder newBuilder();
+	Builder newBuilderForType();
 
 	Builder toBuilder();
 
@@ -15,7 +15,7 @@ public interface Message extends Type {
 	Map<String, Object> serialize();
 
 	interface Builder {
-		MessageDescriptor getDescriptor();
+		MessageDescriptor getDescriptorForType();
 
 		Message build();
 	}

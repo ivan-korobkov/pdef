@@ -8,6 +8,6 @@ public interface EnumType extends Type {
 	String serialize();
 
 	@Override
-	EnumDescriptor getDescriptor();
+	EnumDescriptor getDescriptorForType();
 
 }

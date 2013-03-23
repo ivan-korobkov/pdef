@@ -18,13 +18,13 @@ public abstract class GeneratedMessage implements Message {
 	}
 
 	@Override
-	public Builder newBuilder() {
+	public Builder newBuilderForType() {
 		throw new UnsupportedOperationException("Implement in a subclass");
 	}
 
 	@Override
 	public Message.Builder toBuilder() {
-		Builder builder = newBuilder();
+		Builder builder = newBuilderForType();
 		fill(builder);
 		return builder;
 	}
@@ -33,12 +33,12 @@ public abstract class GeneratedMessage implements Message {
 
 	@Override
 	public Map<String, Object> serialize() {
-		return getDescriptor().serialize(this);
+		return getDescriptorForType().serialize(this);
 	}
 
 	@Override
 	public String toString() {
-		MessageDescriptor descriptor = getDescriptor();
+		MessageDescriptor descriptor = getDescriptorForType();
 		Objects.ToStringHelper helper = Objects.toStringHelper(this);
 		for (FieldDescriptor field : descriptor.getFields()) {
 			if (!field.isSet(this)) {
@@ -56,7 +56,7 @@ public abstract class GeneratedMessage implements Message {
 		if (o == null || getClass() != o.getClass()) return false;
 
 		GeneratedMessage that = (GeneratedMessage) o;
-		MessageDescriptor descriptor = getDescriptor();
+		MessageDescriptor descriptor = getDescriptorForType();
 		for (FieldDescriptor field : descriptor.getFields()) {
 			Object value0 = field.get(this);
 			Object value1 = field.get(that);
@@ -72,7 +72,7 @@ public abstract class GeneratedMessage implements Message {
 	public int hashCode() {
 		int h = hash;
 		if (h == 0) {
-			MessageDescriptor descriptor = getDescriptor();
+			MessageDescriptor descriptor = getDescriptorForType();
 			for (FieldDescriptor field : descriptor.getFields()) {
 				Object val = field.get(this);
 				h = 31 * h + (val != null ? val.hashCode() : 0);

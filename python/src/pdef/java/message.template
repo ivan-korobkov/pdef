@@ -22,20 +22,26 @@ public class {{ type }} extends {{ base_class }} {
 
 {% if is_generic %}
     @SuppressWarnings("unchecked")
-    public static {{ getInstanceVars }} {{ type }} {{ getInstance }} {
+    public static {{ get_instance_vars }} {{ type }} {{ get_instance }} {
         return ({{ type }}) instance;
     }
 
-    public static {{ getInstanceVars }} {{ builder }} {{ createBuilder }} {
+    public static {{ get_instance_vars }} {{ builder }} {{ create_builder }} {
             return new {{ builder }}();
     }
 {% else %}
-    public static {{ type }} {{ getInstance }} {
+    public static {{ type }} {{ get_instance }} {
         return instance;
     }
 
-    public static {{ builder }} {{ createBuilder }} {
+    public static {{ builder }} {{ create_builder }} {
         return new {{ builder }}();
+    }
+{% endif %}
+{% if has_value_of %}
+
+    public static {{ type }} valueOf(final java.util.Map<String, Object> map) {
+        return ({{ type }}) getClassDescriptor().parse(map);
     }
 {% endif %}
 
@@ -44,18 +50,18 @@ public class {{ type }} extends {{ base_class }} {
     }
 
     @Override
-    public pdef.MessageDescriptor getDescriptor() {
+    public pdef.MessageDescriptor getDescriptorForType() {
         return Descriptor.getInstance();
     }
 
     @Override
-    public {{ builder }} newBuilder() {
-        return {{ createBuilder }};
+    public {{ builder }} newBuilderForType() {
+        return {{ create_builder }};
     }
 
     @Override
     public {{ builder }} toBuilder() {
-        {{ builder }} builder = newBuilder();
+        {{ builder }} builder = newBuilderForType();
         fill(builder);
         return builder;
     }
@@ -163,7 +169,7 @@ public class {{ type }} extends {{ base_class }} {
         }
 
         @Override
-        public pdef.MessageDescriptor getDescriptor() {
+        public pdef.MessageDescriptor getDescriptorForType() {
             return Descriptor.getInstance();
         }
     }
@@ -251,7 +257,7 @@ public class {{ type }} extends {{ base_class }} {
 
         @Override
         public {{ builder.wildcard }} newBuilder() {
-            return {{ type.raw }}.{{ createBuilder }};
+            return {{ type.raw }}.{{ create_builder }};
         }
 
         @Override

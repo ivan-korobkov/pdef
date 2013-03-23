@@ -50,10 +50,11 @@ class JavaMessage(object):
         self.root_tree = JavaMessageTree(msg.root_tree) if msg.root_tree else None
 
         self.is_generic = bool(self.variables)
-        self.getInstance = 'getInstanceOf%s()' % self.name if self.is_generic else 'getInstance()'
-        self.getInstanceVars = '<%s>' % ', '.join(str(var) for var in self.variables) \
+        self.get_instance = 'getInstanceOf%s()' % self.name if self.is_generic else 'getInstance()'
+        self.get_instance_vars = '<%s>' % ', '.join(str(var) for var in self.variables) \
                 if self.is_generic else''
-        self.createBuilder = 'builderOf%s()' % self.name if self.is_generic else 'builder()'
+        self.create_builder = 'builderOf%s()' % self.name if self.is_generic else 'builder()'
+        self.has_value_of = not self.is_generic
 
     @property
     def code(self):

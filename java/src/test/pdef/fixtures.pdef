@@ -106,5 +106,5 @@ message Weighted<E, W> {
 }
 
 message WeightedSet<E, W> {
-    elements set<Weighted<E, W>>;
+    elements list<Weighted<E, W>>;
 }

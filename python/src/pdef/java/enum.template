@@ -12,7 +12,7 @@ public enum {{ name }} implements pdef.EnumType {
     }
 
 	@Override
-	public pdef.EnumDescriptor getDescriptor() {
+	public pdef.EnumDescriptor getDescriptorForType() {
 		return descriptor;
 	}
 

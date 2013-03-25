@@ -9,10 +9,7 @@ import java.util.Set;
 public abstract class AbstractSerializer implements Serializer {
 	@Override
 	public Object serialize(final Message message) {
-		if (message == null) {
-			return null;
-		}
-
+		if (message == null) return null;
 		MessageDescriptor descriptor = message.getDescriptor();
 		return serialize(descriptor, message);
 	}
@@ -21,9 +18,7 @@ public abstract class AbstractSerializer implements Serializer {
 		if (descriptor instanceof ValueDescriptor) {
 			return serializeValue((ValueDescriptor) descriptor, object);
 		} else if (descriptor instanceof MessageDescriptor) {
-			Message message = (Message) object;
-			MessageDescriptor real = message.getDescriptor();
-			return serializeMessage(real, message);
+			return serializeMessage((MessageDescriptor) descriptor, (Message) object);
 		} else if (descriptor instanceof EnumDescriptor) {
 			return serializeEnum((EnumDescriptor) descriptor, (Enum<?>) object);
 		} else if (descriptor instanceof ListDescriptor) {

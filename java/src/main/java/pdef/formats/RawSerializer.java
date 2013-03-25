@@ -20,7 +20,8 @@ public class RawSerializer extends AbstractSerializer {
 	protected Map<String, Object> serializeMessage(final MessageDescriptor descriptor,
 			final Message message) {
 		if (message == null) return null;
-		SymbolTable<FieldDescriptor> fields = descriptor.getFields();
+		MessageDescriptor polymorphicOrParameterized = getDescriptorForType(descriptor, message);
+		SymbolTable<FieldDescriptor> fields = polymorphicOrParameterized.getFields();
 
 		Map<String, Object> result = Maps.newLinkedHashMap();
 		for (FieldDescriptor field : fields) {
@@ -34,6 +35,13 @@ public class RawSerializer extends AbstractSerializer {
 		}
 
 		return result;
+	}
+
+	private MessageDescriptor getDescriptorForType(final MessageDescriptor descriptor,
+			final Message message) {
+		MessageTree tree = descriptor.getTree();
+		if (tree == null) return descriptor;
+		return message.getDescriptor();
 	}
 
 	@Override

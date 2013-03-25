@@ -4,5 +4,5 @@ public interface Type {
 
 	Object serialize();
 
-	TypeDescriptor getDescriptorForType();
+	TypeDescriptor getDescriptor();
 }

@@ -53,9 +53,9 @@ public class GeneratedTypeInitializer {
 		if (descriptor.getState() == GeneratedTypeDescriptor.State.NEW) {
 			descriptor.executeLink();
 		}
-		if (descriptor instanceof ParameterizedMessageDescriptor) {
+		if (descriptor instanceof GeneratedMessageDescriptor.ParameterizedMessageDescriptor) {
 			// Process the rawtype of this parameterized message.
-			ParameterizedMessageDescriptor message = (ParameterizedMessageDescriptor) descriptor;
+			GeneratedMessageDescriptor.ParameterizedMessageDescriptor message = (GeneratedMessageDescriptor.ParameterizedMessageDescriptor) descriptor;
 			MessageDescriptor rawtype = message.getRawtype();
 			if (rawtype instanceof GeneratedMessageDescriptor) {
 				processInit((GeneratedTypeDescriptor) rawtype);

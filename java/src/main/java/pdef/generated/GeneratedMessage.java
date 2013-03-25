@@ -33,12 +33,12 @@ public abstract class GeneratedMessage implements Message {
 
 	@Override
 	public Map<String, Object> serialize() {
-		return getDescriptorForType().serialize(this);
+		return getDescriptor().serialize(this);
 	}
 
 	@Override
 	public String toString() {
-		MessageDescriptor descriptor = getDescriptorForType();
+		MessageDescriptor descriptor = getDescriptor();
 		Objects.ToStringHelper helper = Objects.toStringHelper(this);
 		for (FieldDescriptor field : descriptor.getFields()) {
 			if (!field.isSet(this)) {
@@ -56,7 +56,7 @@ public abstract class GeneratedMessage implements Message {
 		if (o == null || getClass() != o.getClass()) return false;
 
 		GeneratedMessage that = (GeneratedMessage) o;
-		MessageDescriptor descriptor = getDescriptorForType();
+		MessageDescriptor descriptor = getDescriptor();
 		for (FieldDescriptor field : descriptor.getFields()) {
 			Object value0 = field.get(this);
 			Object value1 = field.get(that);
@@ -72,7 +72,7 @@ public abstract class GeneratedMessage implements Message {
 	public int hashCode() {
 		int h = hash;
 		if (h == 0) {
-			MessageDescriptor descriptor = getDescriptorForType();
+			MessageDescriptor descriptor = getDescriptor();
 			for (FieldDescriptor field : descriptor.getFields()) {
 				Object val = field.get(this);
 				h = 31 * h + (val != null ? val.hashCode() : 0);

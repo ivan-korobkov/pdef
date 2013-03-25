@@ -20,6 +20,17 @@ public interface MessageDescriptor extends TypeDescriptor {
 	@Nullable
 	MessageTree getRootTree();
 
+	/** Returns this message polymorphic type field. */
+	@Nullable
+	FieldDescriptor getTypeField();
+
+	/** Returns this message subtype. */
+	@Nullable
+	MessageDescriptor getSubtype(Object object);
+
+	/** Returns true if this message has subtypes. */
+	boolean hasSubtypes();
+
 	/** Returns the fields declared in this message. */
 	SymbolTable<FieldDescriptor> getDeclaredFields();
 
@@ -31,6 +42,8 @@ public interface MessageDescriptor extends TypeDescriptor {
 
 	@Override
 	MessageDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap);
+
+	// Below is obsolete
 
 	Message.Builder newBuilder();
 

@@ -1,8 +1,9 @@
 package pdef.generated;
 
+import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
+import com.google.common.collect.*;
 import pdef.*;
 
 import javax.annotation.Nullable;
@@ -45,6 +46,25 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 	@Override
 	public SymbolTable<VariableDescriptor> getVariables() {
 		return ImmutableSymbolTable.of();
+	}
+
+	@Nullable
+	@Override
+	public FieldDescriptor getTypeField() {
+		MessageTree tree = getTree();
+		return tree == null ? null : tree.getField();
+	}
+
+	@Nullable
+	@Override
+	public MessageDescriptor getSubtype(final Object object) {
+		MessageTree tree = getTree();
+		return tree == null ? null : tree.getMap().get(object);
+	}
+
+	@Override
+	public boolean hasSubtypes() {
+		return getTree() != null;
 	}
 
 	@Override
@@ -167,10 +187,180 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 		Object rawValue = map.get(name);
 		Object value = type.parse(rawValue);
 		MessageDescriptor subdescriptor = tree.getMap().get(value);
-		if (subdescriptor == null || subdescriptor == this) {
-			// TODO: Log if a subtype is not found.
-			return this;
-		}
+
+		// TODO: Log if a subtype is not found.
+		if (subdescriptor == null || subdescriptor == this) return this;
 		return subdescriptor.parseDescriptorForType(map);
+	}
+
+	static final class ParameterizedMessageDescriptor extends GeneratedMessageDescriptor
+			implements MessageDescriptor {
+
+		private final MessageDescriptor rawtype;
+		private final List<TypeDescriptor> args;
+
+		private MessageDescriptor base;
+		private SymbolTable<FieldDescriptor> declaredFields;
+		private SymbolTable<FieldDescriptor> fields;
+
+		ParameterizedMessageDescriptor(final GeneratedMessageDescriptor rawtype,
+				final List<TypeDescriptor> args) {
+			super(rawtype.getJavaClass());
+			this.rawtype = checkNotNull(rawtype);
+			this.args = ImmutableList.copyOf(args);
+			checkArgument(args.size() == rawtype.getVariables().size());
+		}
+
+		@Override
+		public String toString() {
+			return Objects.toStringHelper(this)
+					.addValue(getJavaClass())
+					.addValue(args)
+					.toString();
+		}
+
+		public MessageDescriptor getRawtype() {
+			return rawtype;
+		}
+
+		@Nullable
+		@Override
+		public MessageTree getTree() {
+			return rawtype.getTree();
+		}
+
+		@Nullable
+		@Override
+		public MessageTree getBaseTree() {
+			return rawtype.getBaseTree();
+		}
+
+		@Nullable
+		@Override
+		public MessageTree getRootTree() {
+			return rawtype.getRootTree();
+		}
+
+		@Nullable
+		@Override
+		public FieldDescriptor getTypeField() {
+			return rawtype.getTypeField();
+		}
+
+		@Nullable
+		@Override
+		public MessageDescriptor getSubtype(final Object object) {
+			return rawtype.getSubtype(object);
+		}
+
+		@Override
+		public boolean hasSubtypes() {
+			return rawtype.hasSubtypes();
+		}
+
+		@Override
+		public MessageDescriptor getBase() {
+			return base;
+		}
+
+		@Override
+		public SymbolTable<FieldDescriptor> getDeclaredFields() {
+			return declaredFields;
+		}
+
+		@Override
+		public SymbolTable<FieldDescriptor> getFields() {
+			return fields;
+		}
+
+		@Override
+		public MessageDescriptor parameterize(final TypeDescriptor... args) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		protected void link() {
+			Map<VariableDescriptor, TypeDescriptor> argMap = argMap();
+			Transform<MessageDescriptor> bindMessage = bindMessageFunc(argMap);
+			base = bindMessage.apply(rawtype.getBase());
+		}
+
+		@Override
+		protected void init() {
+			Map<VariableDescriptor, TypeDescriptor> argMap = argMap();
+			Transform<FieldDescriptor> bindField = bindFieldFunc(argMap);
+
+			declaredFields = ImmutableSymbolTable.copyOf(
+					Iterables.transform(rawtype.getDeclaredFields(), bindField));
+			fields = base == null ? declaredFields : base.getFields().merge(declaredFields);
+		}
+
+		@Override
+		public MessageDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
+			checkNotNull(argMap);
+			Transform<TypeDescriptor> bindArg = bindArgFunc(argMap);
+			List<TypeDescriptor> bargs = Lists.transform(args, bindArg);
+			TypeDescriptor[] array = new TypeDescriptor[bargs.size()];
+			return rawtype.parameterize(bargs.toArray(array));
+		}
+
+		@Override
+		public Message.Builder newBuilder() {
+			return rawtype.newBuilder();
+		}
+
+		private Map<VariableDescriptor, TypeDescriptor> argMap() {
+			ImmutableMap.Builder<VariableDescriptor, TypeDescriptor> builder = ImmutableMap.builder();
+			List<VariableDescriptor> vars = rawtype.getVariables().list();
+
+			for (int i = 0; i < vars.size(); i++) {
+				VariableDescriptor var = vars.get(i);
+				TypeDescriptor arg = args.get(i);
+				builder.put(var, arg);
+			}
+
+			return builder.build();
+		}
+
+		private Transform<TypeDescriptor> bindArgFunc(
+				final Map<VariableDescriptor, TypeDescriptor> argMap) {
+			return new Transform<TypeDescriptor>() {
+				@Nullable
+				@Override
+				public TypeDescriptor apply(final TypeDescriptor input) {
+					assert input != null;
+					return input.bind(argMap);
+				}
+			};
+		}
+
+		private Transform<MessageDescriptor> bindMessageFunc(
+				final Map<VariableDescriptor, TypeDescriptor> argMap) {
+			return new Transform<MessageDescriptor>() {
+				@Nullable
+				@Override
+				public MessageDescriptor apply(@Nullable final MessageDescriptor input) {
+					if (input == null) {
+						return null;
+					}
+
+					return input.bind(argMap);
+				}
+			};
+		}
+
+		private Transform<FieldDescriptor> bindFieldFunc(
+				final Map<VariableDescriptor, TypeDescriptor> argMap) {
+			return new Transform<FieldDescriptor>() {
+				@Nullable
+				@Override
+				public FieldDescriptor apply(final FieldDescriptor input) {
+					assert input != null;
+					return input.bind(argMap);
+				}
+			};
+		}
+
+		private static interface Transform<T> extends Function<T, T> {}
 	}
 }

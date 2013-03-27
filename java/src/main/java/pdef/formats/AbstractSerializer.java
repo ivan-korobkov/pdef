@@ -82,4 +82,11 @@ public abstract class AbstractSerializer implements Serializer {
 	protected abstract Object serializeString(final String value);
 
 	protected Object serializeVoid() { return null; }
+
+	protected MessageDescriptor getDescriptorForType(final MessageDescriptor descriptor,
+			final Message message) {
+		MessageTree tree = descriptor.getTree();
+		if (tree == null) return descriptor;
+		return message.getDescriptor();
+	}
 }

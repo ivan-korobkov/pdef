@@ -37,13 +37,6 @@ public class RawSerializer extends AbstractSerializer {
 		return result;
 	}
 
-	private MessageDescriptor getDescriptorForType(final MessageDescriptor descriptor,
-			final Message message) {
-		MessageTree tree = descriptor.getTree();
-		if (tree == null) return descriptor;
-		return message.getDescriptor();
-	}
-
 	@Override
 	protected String serializeEnum(final EnumDescriptor descriptor, final Enum<?> object) {
 		if (object == null) return null;

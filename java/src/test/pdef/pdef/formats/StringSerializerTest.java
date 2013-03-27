@@ -1,5 +1,6 @@
 package pdef.formats;
 
+import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import pdef.fixtures.Profile;
 import pdef.fixtures.Sex;
@@ -12,18 +13,18 @@ public class StringSerializerTest {
 				.setAvatar(123L)
 				.setComplete(true)
 				.setWallpaper(7L)
-				.setFirstName("John")
-				.setLastName("Doe")
+				.setFirstName("-John-")
+				.setLastName(".Doe.")
 				.build();
 
 		User user = User.builder()
-				.setName("John Doe")
+				.setName("John+Doe")
 				.setSex(Sex.MALE)
 				.setProfile(profile)
 				.build();
 
 		StringSerializer serializer = new StringSerializer();
 		String s = (String) serializer.serialize(user);
-		System.out.println(s);
+		assertEquals("-user--John+Doe--male-{%2DJohn%2D-%2EDoe%2E--123-7----1}--", s);
 	}
 }

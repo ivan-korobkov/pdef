@@ -10,6 +10,8 @@ public class StringSerializer extends AbstractSerializer {
 	static final String TRUE = "1";
 	static final String FALSE = "0";
 	static final String FIELD_DELIMITER = "-";
+	static final String MESSAGE_START = "{";
+	static final String MESSAGE_END = "}";
 
 	@Override
 	public Object serialize(final Message message) {
@@ -19,23 +21,24 @@ public class StringSerializer extends AbstractSerializer {
 	}
 
 	@Override
-	protected String serializeMessage(final MessageDescriptor descriptor, final Message object) {
-		if (object == null) return "";
-		SymbolTable<FieldDescriptor> fields = descriptor.getFields();
+	protected String serializeMessage(final MessageDescriptor descriptor, final Message message) {
+		if (message == null) return "";
+		MessageDescriptor polymorphicOrParameterized = getDescriptorForType(descriptor, message);
+		SymbolTable<FieldDescriptor> fields = polymorphicOrParameterized.getFields();
 
 		boolean first = true;
 		StringBuilder sb = new StringBuilder();
-		sb.append('{');
+		sb.append(MESSAGE_START);
 		for (FieldDescriptor field : fields) {
 			if (first) first = false; else sb.append(FIELD_DELIMITER);
-			if (!field.isSet(object)) continue;
+			if (!field.isSet(message)) continue;
 
-			Object value = field.get(object);
+			Object value = field.get(message);
 			TypeDescriptor type = field.getType();
 			String s = (String) serialize(type, value);
 			sb.append(s);
 		}
-		sb.append('}');
+		sb.append(MESSAGE_END);
 		return sb.toString();
 	}
 
@@ -46,17 +49,17 @@ public class StringSerializer extends AbstractSerializer {
 
 	@Override
 	protected String serializeList(final ListDescriptor descriptor, final List<?> object) {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	protected String serializeSet(final SetDescriptor descriptor, final Set<?> object) {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	protected String serializeMap(final MapDescriptor descriptor, final Map<?, ?> object) {
-		throw new FormatException("Unsupported map " + descriptor + ", object " + object);
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -91,7 +94,7 @@ public class StringSerializer extends AbstractSerializer {
 
 	@Override
 	protected String serializeString(final String value) {
-		// TODO: escape
-		return value;
+		if (value == null) return "";
+		return StringParser.percentEncode(value);
 	}
 }

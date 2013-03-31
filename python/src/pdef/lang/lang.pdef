@@ -77,3 +77,11 @@ native map<K, V> {
     java_descriptor: "pdef.provided.NativeMapDescriptor.getInstance()",
     java_default: "com.google.common.collect.ImmutableMap.of()"
 }
+
+
+native object {
+    java_type: "Object",
+    java_boxed: "Object",
+    java_descriptor: "pdef.provided.NativeValueDescriptors.getObject()",
+    java_default: "null"
+}

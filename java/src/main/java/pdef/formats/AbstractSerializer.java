@@ -62,6 +62,8 @@ public abstract class AbstractSerializer implements Serializer {
 			return serializeString((String) value);
 		} else if (cls == void.class) {
 			return serializeVoid();
+		} else if (cls == Object.class) {
+			return serializeObject(value);
 		}
 
 		throw new FormatException("Unsupported value class " + cls + ", value " + value);
@@ -82,6 +84,8 @@ public abstract class AbstractSerializer implements Serializer {
 	protected abstract Object serializeString(final String value);
 
 	protected Object serializeVoid() { return null; }
+
+	protected Object serializeObject(final Object value) { return value; }
 
 	protected MessageDescriptor getDescriptorForType(final MessageDescriptor descriptor,
 			final Message message) {

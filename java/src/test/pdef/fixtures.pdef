@@ -81,7 +81,7 @@ message Event
         inherits GenericObject<EventId> as ObjectType.EVENT
         polymorphic on "eventType" as EventType.GENERIC {
     eventType  EventType;
-    ip          string;
+    ip         string;
 }
 
 message SystemEvent inherits Event as EventType.SYSTEM {
@@ -109,4 +109,9 @@ message Weighted<E, W> {
 
 message WeightedSet<E, W> {
     elements list<Weighted<E, W>>;
+}
+
+message MethodCall {
+    name    string;
+    args    object;
 }

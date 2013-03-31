@@ -54,6 +54,8 @@ public abstract class AbstractParser implements Parser {
 			return parseString(value);
 		} else if (cls == void.class) {
 			return parseVoid();
+		} else if (cls == Object.class) {
+			return parseObject(value);
 		}
 
 		throw new FormatException("Unsupported value class " + cls + ", value " + value);
@@ -74,4 +76,6 @@ public abstract class AbstractParser implements Parser {
 	protected abstract String parseString(final Object value);
 
 	protected Object parseVoid() { return null; }
+
+	protected Object parseObject(final Object value) { return value; }
 }

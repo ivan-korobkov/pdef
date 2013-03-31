@@ -5,7 +5,7 @@ import com.google.common.primitives.Shorts;
 import pdef.ValueDescriptor;
 
 public class NativeValueDescriptors {
-	private static ValueDescriptor BOOL = new NativeValueDescriptor(boolean.class) {
+	private static final ValueDescriptor BOOL = new NativeValueDescriptor(boolean.class) {
 		@Override
 		public Boolean serialize(final Object object) {
 			if (object == null) return false;
@@ -22,7 +22,7 @@ public class NativeValueDescriptors {
 			return s.equals("true");
 		}
 	};
-	private static ValueDescriptor INT16 = new NativeValueDescriptor(short.class) {
+	private static final ValueDescriptor INT16 = new NativeValueDescriptor(short.class) {
 		@Override
 		public Short serialize(final Object object) {
 			if (object == null) return 0;
@@ -39,7 +39,7 @@ public class NativeValueDescriptors {
 			return Short.parseShort(s);
 		}
 	};
-	private static ValueDescriptor INT32 = new NativeValueDescriptor(int.class) {
+	private static final ValueDescriptor INT32 = new NativeValueDescriptor(int.class) {
 		@Override
 		public Integer serialize(final Object object) {
 			if (object == null) return 0;
@@ -55,7 +55,7 @@ public class NativeValueDescriptors {
 			return Integer.parseInt(s);
 		}
 	};
-	private static ValueDescriptor INT64 = new NativeValueDescriptor(long.class) {
+	private static final ValueDescriptor INT64 = new NativeValueDescriptor(long.class) {
 		@Override
 		public Long serialize(final Object object) {
 			if (object == null) return 0L;
@@ -70,7 +70,7 @@ public class NativeValueDescriptors {
 			return Long.parseLong(s);
 		}
 	};
-	private static ValueDescriptor FLOAT0 = new NativeValueDescriptor(float.class) {
+	private static final ValueDescriptor FLOAT0 = new NativeValueDescriptor(float.class) {
 		@Override
 		public Float serialize(final Object object) {
 			if (object == null) return 0f;
@@ -88,7 +88,7 @@ public class NativeValueDescriptors {
 			return Float.parseFloat(s);
 		}
 	};
-	private static ValueDescriptor DOUBLE0 = new NativeValueDescriptor(double.class) {
+	private static final ValueDescriptor DOUBLE0 = new NativeValueDescriptor(double.class) {
 		@Override
 		public Double serialize(final Object object) {
 			if (object == null) return 0d;
@@ -106,7 +106,7 @@ public class NativeValueDescriptors {
 			return Double.parseDouble(s);
 		}
 	};
-	private static ValueDescriptor STRING = new NativeValueDescriptor(String.class) {
+	private static final ValueDescriptor STRING = new NativeValueDescriptor(String.class) {
 		@Override
 		public String serialize(final Object object) {
 			if (object == null) return null;
@@ -119,7 +119,7 @@ public class NativeValueDescriptors {
 			return (String) object;
 		}
 	};
-	private static ValueDescriptor VOID = new NativeValueDescriptor(void.class) {
+	private static final ValueDescriptor VOID = new NativeValueDescriptor(void.class) {
 		@Override
 		public Object serialize(final Object object) {
 			return null;
@@ -128,6 +128,17 @@ public class NativeValueDescriptors {
 		@Override
 		public Object parse(final Object object) {
 			return null;
+		}
+	};
+	private static final ValueDescriptor OBJECT = new NativeValueDescriptor(Object.class) {
+		@Override
+		public Object serialize(final Object object) {
+			return object;
+		}
+
+		@Override
+		public Object parse(final Object object) {
+			return object;
 		}
 	};
 
@@ -148,4 +159,6 @@ public class NativeValueDescriptors {
 	public static ValueDescriptor getString() { return STRING; }
 
 	public static ValueDescriptor getVoid() { return VOID; }
+
+	public static ValueDescriptor getObject() { return OBJECT; }
 }

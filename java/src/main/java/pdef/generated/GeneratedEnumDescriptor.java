@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 public class GeneratedEnumDescriptor
-		implements EnumDescriptor, GeneratedDescriptor {
+		implements EnumDescriptor, Generated {
 	private final Class<?> javaClass;
 	private final Map<String, Enum<?>> values;
 
@@ -38,26 +38,7 @@ public class GeneratedEnumDescriptor
 	}
 
 	@Override
-	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
-
-	@Override
-	public String serialize(final Object object) {
-		if (object == null) {
-			return null;
-		}
-		EnumType type = (EnumType) object;
-		return type.getEnum().name().toLowerCase();
-	}
-
-	@Override
-	public Enum<?> parse(final Object object) {
-		if (object == null) {
-			// TODO: return the default enum value.
-			return null;
-		}
-		String value = ((String) object).toUpperCase();
-		return values.get(value);
-	}
+	public DataTypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
 	@Override
 	public void initialize() {}

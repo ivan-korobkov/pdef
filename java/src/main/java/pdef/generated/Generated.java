@@ -1,6 +1,6 @@
 package pdef.generated;
 
-public interface GeneratedDescriptor {
+public interface Generated {
 
 	void initialize();
 }

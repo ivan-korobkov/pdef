@@ -6,7 +6,6 @@ import pdef.Message;
 import pdef.MessageDescriptor;
 
 import java.util.BitSet;
-import java.util.Map;
 
 public abstract class GeneratedMessage implements Message {
 	protected final BitSet _fields;
@@ -30,11 +29,6 @@ public abstract class GeneratedMessage implements Message {
 	}
 
 	protected void fill(Builder builder) {}
-
-	@Override
-	public Map<String, Object> serialize() {
-		return getDescriptor().serialize(this);
-	}
 
 	@Override
 	public String toString() {

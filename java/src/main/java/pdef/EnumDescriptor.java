@@ -2,13 +2,7 @@ package pdef;
 
 import java.util.Map;
 
-public interface EnumDescriptor extends TypeDescriptor {
+public interface EnumDescriptor extends DataTypeDescriptor {
 
 	Map<String, Enum<?>> getValues();
-
-	@Override
-	String serialize(Object object);
-
-	@Override
-	Enum<?> parse(Object object);
 }

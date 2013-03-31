@@ -1,8 +1,6 @@
 package pdef;
 
-import java.util.Map;
-
-public interface Message extends Type {
+public interface Message extends DataType {
 
 	@Override
 	MessageDescriptor getDescriptor();
@@ -10,9 +8,6 @@ public interface Message extends Type {
 	Builder newBuilderForType();
 
 	Builder toBuilder();
-
-	@Override
-	Map<String, Object> serialize();
 
 	interface Builder {
 		MessageDescriptor getDescriptor();

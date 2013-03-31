@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
-		implements MessageDescriptor, GeneratedDescriptor {
+		implements MessageDescriptor, Generated {
 	private final Map<List<TypeDescriptor>, ParameterizedMessageDescriptor> pmap;
 
 	protected GeneratedMessageDescriptor(final Class<?> type) {
@@ -91,106 +91,6 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 	@Override
 	public MessageDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
 		return this;
-	}
-
-	@Override
-	public Map<String, Object> serialize(final Object object) {
-		if (object == null) {
-			return null;
-		}
-		Message message = (Message) object;
-		MessageDescriptor real = getDescriptorForType(message);
-		return doSerialize(message, real);
-	}
-
-	private Map<String, Object> doSerialize(final Message message, final MessageDescriptor real) {
-		Map<String, Object> map = Maps.newLinkedHashMap();
-		for (FieldDescriptor field : real.getFields()) {
-			if (!field.isSet(message)) {
-				continue;
-			}
-
-			String name = field.getName();
-			TypeDescriptor type = field.getType();
-
-			Object value = field.get(message);
-			Object rawValue = type.serialize(value);
-			map.put(name, rawValue);
-		}
-		return map;
-	}
-
-	@Override
-	public MessageDescriptor getDescriptorForType(final Message message) {
-		checkNotNull(message);
-		MessageTree tree = getTree();
-		if (tree == null) {
-			return this;
-		}
-
-		FieldDescriptor field = tree.getField();
-		Object type = field.get(message);
-		MessageDescriptor subdescriptor = tree.getMap().get(type);
-		if (subdescriptor == null || subdescriptor == this) {
-			// TODO: Log if a subtype is not found.
-			return this;
-		}
-		return subdescriptor.getDescriptorForType(message);
-	}
-
-	@Override
-	public Message parse(final Object object) {
-		if (object == null) {
-			return null;
-		}
-
-		Map<?, ?> map = (Map<?, ?>) object;
-		MessageDescriptor real = parseDescriptorForType(map);
-		return doParse(map, real);
-	}
-
-	private Message doParse(final Map<?, ?> map, final MessageDescriptor real) {
-		Message.Builder builder = real.newBuilder();
-		for (FieldDescriptor field : real.getFields()) {
-			String name = field.getName();
-			if (!map.containsKey(name)) {
-				continue;
-			}
-
-			TypeDescriptor type = field.getType();
-			Object rawValue = map.get(name);
-			Object value = type.parse(rawValue);
-			if (field.isTypeField()) {
-				// Even-though the field is read-only we still parse it to validate the data.
-				continue;
-			}
-			field.set(builder, value);
-		}
-		return builder.build();
-	}
-
-	@Override
-	public MessageDescriptor parseDescriptorForType(final Map<?, ?> map) {
-		checkNotNull(map);
-		MessageTree tree = getTree();
-		if (tree == null) {
-			return this;
-		}
-
-		FieldDescriptor field = tree.getField();
-		String name = field.getName();
-		if (!map.containsKey(name)) {
-			return this;
-		}
-
-		TypeDescriptor type = field.getType();
-		Object rawValue = map.get(name);
-		Object value = type.parse(rawValue);
-		MessageDescriptor subdescriptor = tree.getMap().get(value);
-
-		// TODO: Log if a subtype is not found.
-		if (subdescriptor == null || subdescriptor == this) return this;
-		return subdescriptor.parseDescriptorForType(map);
 	}
 
 	static final class ParameterizedMessageDescriptor extends GeneratedMessageDescriptor

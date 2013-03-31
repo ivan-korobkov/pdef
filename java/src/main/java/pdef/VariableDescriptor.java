@@ -1,3 +1,3 @@
 package pdef;
 
-public interface VariableDescriptor extends TypeDescriptor, Symbol {}
+public interface VariableDescriptor extends DataTypeDescriptor, Symbol {}

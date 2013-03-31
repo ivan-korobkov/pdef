@@ -24,7 +24,7 @@ public class RawParser extends AbstractParser {
 
 			TypeDescriptor type = field.getType();
 			Object val = map.get(name);
-			Object pval = type.parse(val);
+			Object pval = parse(type, val);
 			// Even-though the field is read-only we still parse it to validate the data.
 			if (field.isTypeField()) continue;
 			field.set(builder, pval);
@@ -44,7 +44,7 @@ public class RawParser extends AbstractParser {
 
 		TypeDescriptor type = field.getType();
 		Object val = map.get(name);
-		Object pval = type.parse(val);
+		Object pval = parse(type, val);
 		MessageDescriptor subd = tree.getMap().get(pval);
 
 		// TODO: Log if a subtype is not found.

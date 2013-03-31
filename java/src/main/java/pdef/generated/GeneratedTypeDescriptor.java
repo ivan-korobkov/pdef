@@ -2,11 +2,11 @@ package pdef.generated;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
-import pdef.TypeDescriptor;
+import pdef.DataTypeDescriptor;
 
 import javax.annotation.concurrent.GuardedBy;
 
-abstract class GeneratedTypeDescriptor implements TypeDescriptor, GeneratedDescriptor {
+abstract class GeneratedTypeDescriptor implements DataTypeDescriptor, Generated {
 	private final Class<?> type;
 	private volatile State state = State.NEW;
 

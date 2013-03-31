@@ -15,8 +15,10 @@
 		<jackson.version>2.0.0</jackson.version>
 
 		<pdef.path>pdefc</pdef.path>
-		<pdef.src>${project.basedir}/src/test/pdef/</pdef.src>
-		<pdef.out>${project.basedir}/target/generated-test-sources/pdef/</pdef.out>
+		<pdef.src>${project.basedir}/src/main/pdef/</pdef.src>
+		<pdef.out>${project.basedir}/target/generated-sources/pdef/</pdef.out>
+		<pdef.test.src>${project.basedir}/src/test/pdef/</pdef.test.src>
+		<pdef.test.out>${project.basedir}/target/generated-test-sources/pdef/</pdef.test.out>
 	</properties>
 
 	<dependencies>
@@ -110,8 +112,26 @@
 						<configuration>
 							<tasks>
 								<exec executable="${pdef.path}" failonerror="true">
-									<arg value="--java_out=${pdef.out}" />
-									<arg line="${pdef.src}" />
+									<arg value="--java=${pdef.out}" />
+									<arg value="--path=${pdef.src}" />
+									<arg value="--packages=pdef.rpc" />
+								</exec>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+
+					<execution>
+						<id>generate-test-sources</id>
+						<phase>generate-test-sources</phase>
+						<configuration>
+							<tasks>
+								<exec executable="${pdef.path}" failonerror="true">
+									<arg value="--java=${pdef.test.out}" />
+									<arg value="--path=${pdef.test.src}" />
+									<arg value="--packages=pdef.fixtures" />
 								</exec>
 							</tasks>
 						</configuration>
@@ -127,6 +147,19 @@
 				<artifactId>build-helper-maven-plugin</artifactId>
 				<version>1.5</version>
 				<executions>
+					<execution>
+						<id>add-sources</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>${project.build.directory}/generated-sources/pdef/</source>
+							</sources>
+						</configuration>
+					</execution>
+
 					<execution>
 						<id>add-test-sources</id>
 						<phase>generate-test-sources</phase>

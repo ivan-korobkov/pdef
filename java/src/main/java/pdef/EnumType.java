@@ -1,13 +1,9 @@
 package pdef;
 
-public interface EnumType extends Type {
+public interface EnumType extends DataType {
 
 	Enum<?> getEnum();
 
 	@Override
-	String serialize();
-
-	@Override
 	EnumDescriptor getDescriptor();
-
 }

@@ -6,7 +6,7 @@ public abstract class AbstractParser implements Parser {
 	@Override
 	public Object parse(final MessageDescriptor descriptor, final Object object) {
 		if (object == null) return null;
-		return parse((TypeDescriptor) descriptor, object);
+		return parse(descriptor, object);
 	}
 
 	protected Object parse(TypeDescriptor descriptor, Object object) {

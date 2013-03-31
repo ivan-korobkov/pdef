@@ -78,7 +78,6 @@ native map<K, V> {
     java_default: "com.google.common.collect.ImmutableMap.of()"
 }
 
-
 native object {
     java_type: "Object",
     java_boxed: "Object",

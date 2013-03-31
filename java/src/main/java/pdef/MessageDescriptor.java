@@ -3,7 +3,7 @@ package pdef;
 import javax.annotation.Nullable;
 import java.util.Map;
 
-public interface MessageDescriptor extends TypeDescriptor {
+public interface MessageDescriptor extends DataTypeDescriptor {
 
 	/** Returns this message base. */
 	MessageDescriptor getBase();
@@ -46,14 +46,4 @@ public interface MessageDescriptor extends TypeDescriptor {
 	// Below is obsolete
 
 	Message.Builder newBuilder();
-
-	@Override
-	Map<String, Object> serialize(Object object);
-
-	@Override
-	Message parse(Object object);
-
-	MessageDescriptor getDescriptorForType(Message message);
-
-	MessageDescriptor parseDescriptorForType(Map<?, ?> map);
 }

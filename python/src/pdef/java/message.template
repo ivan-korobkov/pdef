@@ -38,12 +38,6 @@ public class {{ type }} extends {{ base_class }} {
         return new {{ builder }}();
     }
 {% endif %}
-{% if has_value_of %}
-
-    public static {{ type }} valueOf(final java.util.Map<String, Object> map) {
-        return ({{ type }}) getClassDescriptor().parse(map);
-    }
-{% endif %}
 
     public static pdef.MessageDescriptor getClassDescriptor() {
         return Descriptor.getInstance();

@@ -1,8 +1,6 @@
 package pdef;
 
-import java.util.Map;
-
-public interface MapDescriptor extends TypeDescriptor {
+public interface MapDescriptor extends DataTypeDescriptor {
 
 	TypeDescriptor getKey();
 
@@ -10,10 +8,4 @@ public interface MapDescriptor extends TypeDescriptor {
 
 	@Override
 	MapDescriptor parameterize(TypeDescriptor... args);
-
-	@Override
-	Map<Object, Object> serialize(Object object);
-
-	@Override
-	Map<Object, Object> parse(Object object);
 }

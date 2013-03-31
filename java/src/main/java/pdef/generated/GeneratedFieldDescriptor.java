@@ -2,10 +2,7 @@ package pdef.generated;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
-import pdef.FieldDescriptor;
-import pdef.Message;
-import pdef.TypeDescriptor;
-import pdef.VariableDescriptor;
+import pdef.*;
 
 import java.util.Map;
 
@@ -116,10 +113,7 @@ public abstract class GeneratedFieldDescriptor implements FieldDescriptor {
 		@Override
 		public FieldDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
 			TypeDescriptor btype = type.bind(argMap);
-			if (type == btype) {
-				return this;
-			}
-
+			if (type == btype) return this;
 			return new ParameterizedFieldDescriptor(this, btype);
 		}
 	}

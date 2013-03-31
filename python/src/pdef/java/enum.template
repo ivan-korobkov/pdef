@@ -16,11 +16,6 @@ public enum {{ name }} implements pdef.EnumType {
 		return descriptor;
 	}
 
-	@Override
-    public String serialize() {
-        return descriptor.serialize(this);
-    }
-
 	private static final pdef.EnumDescriptor descriptor =
 	        new pdef.generated.GeneratedEnumDescriptor({{ name }}.class);
 	public static pdef.EnumDescriptor getClassDescriptor() {

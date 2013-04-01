@@ -41,19 +41,17 @@ public abstract class GeneratedFieldDescriptor implements FieldDescriptor {
 	@Override
 	public FieldDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
 		TypeDescriptor btype = type.bind(argMap);
-		if (type == btype) {
-			return this;
-		}
+		if (type == btype) return this;
 
 		return new ParameterizedFieldDescriptor(this, btype);
 	}
 
 	static final class ParameterizedFieldDescriptor implements FieldDescriptor {
-		private final FieldDescriptor rawField;
+		private final FieldDescriptor raw;
 		private final TypeDescriptor type;
 
-		ParameterizedFieldDescriptor(final FieldDescriptor rawField, final TypeDescriptor type) {
-			this.rawField = checkNotNull(rawField);
+		ParameterizedFieldDescriptor(final FieldDescriptor raw, final TypeDescriptor type) {
+			this.raw = checkNotNull(raw);
 			this.type = checkNotNull(type);
 		}
 
@@ -72,49 +70,49 @@ public abstract class GeneratedFieldDescriptor implements FieldDescriptor {
 
 		@Override
 		public boolean isTypeField() {
-			return rawField.isTypeField();
+			return raw.isTypeField();
 		}
 
 		@Override
 		public String getName() {
-			return rawField.getName();
+			return raw.getName();
 		}
 
 		@Override
 		public Object get(final Message message) {
-			return rawField.get(message);
+			return raw.get(message);
 		}
 
 		@Override
 		public Object get(final Message.Builder builder) {
-			return rawField.get(builder);
+			return raw.get(builder);
 		}
 
 		@Override
 		public boolean isSet(final Message message) {
-			return rawField.isSet(message);
+			return raw.isSet(message);
 		}
 
 		@Override
 		public boolean isSet(final Message.Builder builder) {
-			return rawField.isSet(builder);
+			return raw.isSet(builder);
 		}
 
 		@Override
 		public void set(final Message.Builder builder, final Object value) {
-			rawField.set(builder, value);
+			raw.set(builder, value);
 		}
 
 		@Override
 		public void clear(final Message.Builder builder) {
-			rawField.clear(builder);
+			raw.clear(builder);
 		}
 
 		@Override
 		public FieldDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
 			TypeDescriptor btype = type.bind(argMap);
 			if (type == btype) return this;
-			return new ParameterizedFieldDescriptor(this, btype);
+			return new ParameterizedFieldDescriptor(raw, btype);
 		}
 	}
 }

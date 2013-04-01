@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Queues;
 import pdef.MessageDescriptor;
+import pdef.TypeDescriptor;
 
 import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
@@ -47,27 +48,25 @@ public class GeneratedTypeInitializer {
 	}
 
 	private void processInit(final GeneratedTypeDescriptor descriptor) {
-		if (descriptor.getState() != GeneratedTypeDescriptor.State.NEW) {
-			return;
-		}
-		if (descriptor.getState() == GeneratedTypeDescriptor.State.NEW) {
-			descriptor.executeLink();
-		}
-		if (descriptor instanceof GeneratedMessageDescriptor.ParameterizedMessageDescriptor) {
-			// Process the rawtype of this parameterized message.
-			GeneratedMessageDescriptor.ParameterizedMessageDescriptor message =
-					(GeneratedMessageDescriptor.ParameterizedMessageDescriptor) descriptor;
-			MessageDescriptor rawtype = message.getRawtype();
-			if (rawtype instanceof GeneratedMessageDescriptor) {
+		if (descriptor.getState() != GeneratedTypeDescriptor.State.NEW) return;
+		if (descriptor.getState() == GeneratedTypeDescriptor.State.NEW) descriptor.executeLink();
+
+		// Process the rawtype of this parameterized type.
+		if (descriptor instanceof ParameterizedTypeDescriptor<?>) {
+			ParameterizedTypeDescriptor<?> message =
+					(ParameterizedTypeDescriptor<?>) descriptor;
+			TypeDescriptor rawtype = message.getRaw();
+			if (rawtype instanceof GeneratedTypeDescriptor) {
 				processInit((GeneratedTypeDescriptor) rawtype);
 			}
 		}
-		if (descriptor instanceof GeneratedMessageDescriptor) {
-			// Process the base of this message.
-			GeneratedMessageDescriptor message = (GeneratedMessageDescriptor) descriptor;
+
+		// Process the base of this message.
+		if (descriptor instanceof MessageDescriptor) {
+			MessageDescriptor message = (MessageDescriptor) descriptor;
 			MessageDescriptor base = message.getBase();
-			if (base != null && base instanceof GeneratedMessageDescriptor) {
-				processInit((GeneratedMessageDescriptor) base);
+			if (base != null && base instanceof GeneratedTypeDescriptor) {
+				processInit((GeneratedTypeDescriptor) base);
 			}
 		}
 

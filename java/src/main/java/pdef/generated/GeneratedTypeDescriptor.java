@@ -1,17 +1,29 @@
 package pdef.generated;
 
+import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
-import pdef.DataTypeDescriptor;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+import pdef.Bindable;
+import pdef.TypeDescriptor;
+import pdef.VariableDescriptor;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
+import java.util.List;
+import java.util.Map;
 
-abstract class GeneratedTypeDescriptor implements DataTypeDescriptor, Generated {
+abstract class GeneratedTypeDescriptor implements Generated, TypeDescriptor {
+	enum State { NEW, LINKING, LINKED, INITIALIZING, INITIALIZED }
+
 	private final Class<?> type;
+	private final Map<List<TypeDescriptor>, TypeDescriptor> pmap;
 	private volatile State state = State.NEW;
 
 	protected GeneratedTypeDescriptor(final Class<?> type) {
 		this.type = checkNotNull(type);
+		pmap = Maps.newHashMap();
 	}
 
 	@Override
@@ -31,10 +43,7 @@ abstract class GeneratedTypeDescriptor implements DataTypeDescriptor, Generated 
 
 	@Override
 	public void initialize() {
-		if (state == State.INITIALIZED) {
-			return;
-		}
-
+		if (state == State.INITIALIZED) return;
 		GeneratedTypeInitializer.initialize(this);
 	}
 
@@ -58,7 +67,43 @@ abstract class GeneratedTypeDescriptor implements DataTypeDescriptor, Generated 
 
 	protected abstract void init();
 
-	enum State {
-		NEW, LINKING, LINKED, INITIALIZING, INITIALIZED
+	@Override
+	public TypeDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
+		return this;
+	}
+
+	@Override
+	public TypeDescriptor parameterize(final TypeDescriptor... args) {
+		checkNotNull(args);
+		checkArgument(getVariables().size() == args.length,
+				"Wrong number of args for %s: %s", this, args);
+		List<TypeDescriptor> argList = ImmutableList.copyOf(args);
+
+		final TypeDescriptor parameterized;
+		synchronized (this) {
+			if (pmap.containsKey(argList)) {
+				parameterized = pmap.get(argList);
+			} else {
+				parameterized = newParameterizedType(argList);
+				pmap.put(argList, parameterized);
+			}
+		}
+
+		if (parameterized instanceof Generated) ((Generated) parameterized).initialize();
+		return parameterized;
+	}
+
+	protected abstract TypeDescriptor newParameterizedType(final List<TypeDescriptor> args);
+
+	public static <T extends Bindable<T>> Function<T, T> bindFunc(
+			final Map<VariableDescriptor, TypeDescriptor> argMap) {
+		return new Function<T, T>() {
+			@Nullable
+			@Override
+			public T apply(@Nullable final T input) {
+				if (input == null) return null;
+				return input.bind(argMap);
+			}
+		};
 	}
 }

@@ -1,5 +1,3 @@
 package pdef;
 
-public interface DataTypeDescriptor extends TypeDescriptor {
-
-}
+public interface DataTypeDescriptor extends TypeDescriptor {}

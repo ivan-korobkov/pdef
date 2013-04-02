@@ -43,7 +43,7 @@ public class StringParser extends AbstractParser {
 
 	private MessageDescriptor parseDescriptorType(final MessageDescriptor descriptor,
 			final List<?> tokens) {
-		MessageTree tree = descriptor.getTree();
+		Subtypes tree = descriptor.getSubtypes();
 		if (tree == null) return descriptor;
 
 		Object typeToken = null;

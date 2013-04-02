@@ -89,7 +89,7 @@ public abstract class AbstractSerializer implements Serializer {
 
 	protected MessageDescriptor getDescriptorForType(final MessageDescriptor descriptor,
 			final Message message) {
-		MessageTree tree = descriptor.getTree();
+		Subtypes tree = descriptor.getSubtypes();
 		if (tree == null) return descriptor;
 		return message.getDescriptor();
 	}

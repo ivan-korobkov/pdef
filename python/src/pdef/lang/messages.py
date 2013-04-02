@@ -17,13 +17,10 @@ class Message(Type):
 
     def __init__(self, name, variables=None, module=None):
         super(Message, self).__init__(name, variables, module)
-
         self.base = None
         self.bases = None
         self.basetype = None
-
-        self.base_tree = None
-        self.root_tree = None
+        self.subtypes = None
 
         self.fields = SymbolTable(self)
         self.declared_fields = SymbolTable(self)
@@ -33,14 +30,6 @@ class Message(Type):
     @property
     def parent(self):
         return self.module
-
-    @property
-    def tree(self):
-        return self.root_tree if self.root_tree else self.base_tree
-
-    @property
-    def type_field(self):
-        return self.tree.field if self.tree else None
 
     def is_subtype_of(self, msg):
         if isinstance(msg, ParameterizedMessage):
@@ -100,11 +89,11 @@ class Message(Type):
 
         self.base = check_not_none(base)
         self.bases = tuple([base] + list(base.bases))
-        self.base_tree = base.tree.subtree(self, basetype)
         self.basetype = basetype
+        self.subtypes = base.subtypes.subclass(self, basetype)
 
         for field in self.base.fields:
-            overriden = field.subtype(basetype) if field is self.base.type_field \
+            overriden = field.subtype(basetype) if field is self.subtypes.field \
                     else field.override()
             self.fields.add(overriden)
 
@@ -121,7 +110,7 @@ class Message(Type):
             raise ValueError('%s: type field "%s" is not found' % (self, field_name))
 
         field.make_type(type)
-        self.root_tree = RootTree(self, type, field)
+        self.subtypes = RootSubtypes(self, type, field)
 
     def _do_parameterize(self, *variables):
         '''Parameterize this message with the given arguments, return another message.'''
@@ -139,20 +128,8 @@ class ParameterizedMessage(ParameterizedType):
         self.declared_fields = None
 
     @property
-    def tree(self):
-        return self.rawtype.tree
-
-    @property
-    def base_tree(self):
-        return self.rawtype.base_tree
-
-    @property
-    def type_field(self):
-        return self.rawtype.type_field
-
-    @property
-    def root_tree(self):
-        return self.rawtype.root_tree
+    def subtypes(self):
+        return self.rawtype.subtypes
 
     def is_subtype_of(self, msg):
         return self.rawtype.is_subtype_of(msg)
@@ -249,13 +226,13 @@ class ParameterizedField(AbstractField):
         self.declaring_field = declaring_field
 
 
-class AbstractMessageTree(object):
-    # Implement in subclasses
+class AbstractSubtypes(object):
     field = None
     enum = None
+    basetypes = None
+    is_root = False
 
     def __init__(self, message, type):
-        self.basetree = None
         self.message = message
         self.type = type
         self.subtypes = SymbolTable(self)
@@ -265,11 +242,11 @@ class AbstractMessageTree(object):
         return '<%s %s>' % (self.__class__.__name__, self)
 
     def __str__(self):
-        return 'tree on %s of %s in %s' % (self.field, self.enum, self.message)
+        return 'subtypes on %s of %s' in (self.field, self.enum)
 
-    def subtree(self, submessage, subtype):
+    def subclass(self, submessage, subtype):
         self.add(submessage, subtype)
-        return SubTree(submessage, subtype, self)
+        return SubclassSubtypes(submessage, subtype, self)
 
     def add(self, submessage, subtype):
         check_isinstance(submessage, Message)
@@ -279,26 +256,25 @@ class AbstractMessageTree(object):
         enum = self.enum
         subtypes = self.subtypes
 
-        check_argument(submessage.is_subtype_of(message),
-                '%s: %s must be a submessage', message, submessage)
-        check_argument(subtype in enum,
-                '%s: wrong subtype, it must be a value of enum %s, got %s',
-                submessage, enum, subtype)
-        check_state(subtype not in subtypes,
-                '%s: duplicate messages %s, %s for subtype %s',
-                message, submessage, subtypes.get(subtype), subtype)
+        check_argument(submessage.is_subtype_of(message), '%s: %s must be a submessage',
+                       message, submessage)
+        check_argument(subtype in enum, '%s: wrong subtype, it must be a value of enum %s, got %s',
+                       submessage, enum, subtype)
+        check_state(subtype not in subtypes, '%s: duplicate messages %s, %s for subtype %s',
+                    message, submessage, subtypes.get(subtype), subtype)
 
         self.subtypes.add(submessage, subtype)
-        if self.basetree:
-            self.basetree.add(submessage, subtype)
+        if self.basetypes:
+            self.basetypes.add(submessage, subtype)
 
     def as_map(self):
         return self.subtypes.as_map()
 
 
-class RootTree(AbstractMessageTree):
+class RootSubtypes(AbstractSubtypes):
+    is_root = True
     def __init__(self, message, type, field):
-        super(RootTree, self).__init__(message, type)
+        super(RootSubtypes, self).__init__(message, type)
         check_isinstance(type, EnumValue)
         check_isinstance(field, Field)
         check_argument(type in field.type)
@@ -307,15 +283,15 @@ class RootTree(AbstractMessageTree):
         self.enum = field.type
 
 
-class SubTree(AbstractMessageTree):
-    def __init__(self, message, type, basetree):
-        super(SubTree, self).__init__(message, type)
-        self.basetree = basetree
+class SubclassSubtypes(AbstractSubtypes):
+    def __init__(self, message, type, basetypes):
+        super(SubclassSubtypes, self).__init__(message, type)
+        self.basetypes = basetypes
 
     @property
     def field(self):
-        return self.basetree.field
+        return self.basetypes.field
 
     @property
     def enum(self):
-        return self.basetree.enum
+        return self.basetypes.enum

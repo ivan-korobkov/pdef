@@ -35,7 +35,7 @@ public class RawParser extends AbstractParser {
 
 	private MessageDescriptor parseDescriptorType(final MessageDescriptor descriptor,
 			final Map<?, ?> map) {
-		MessageTree tree = descriptor.getTree();
+		Subtypes tree = descriptor.getSubtypes();
 		if (tree == null) return descriptor;
 
 		FieldDescriptor field = tree.getField();

@@ -208,7 +208,7 @@ class TestTree(unittest.TestCase):
         field = Field('type', type)
         message = Message('Message')
 
-        tree = RootTree(message, type_object, field)
+        tree = RootSubtypes(message, type_object, field)
         assert tree.message == message
         assert tree.enum == type
         assert tree.type == type_object
@@ -222,7 +222,7 @@ class TestTree(unittest.TestCase):
 
         field = Field('type', type)
         message = Message('Message')
-        self.assertRaises(ValueError, RootTree, message, wrong_value, field)
+        self.assertRaises(ValueError, RootSubtypes, message, wrong_value, field)
 
     def test_subtree(self):
         type = Enum('Type')
@@ -234,7 +234,7 @@ class TestTree(unittest.TestCase):
         msg.bases = [base]
 
         field = Field('type', type)
-        basetree = RootTree(base, type_base, field)
+        basetree = RootSubtypes(base, type_base, field)
         msgtree = basetree.subtree(msg, type_msg)
 
         assert msgtree.field == basetree.field
@@ -256,7 +256,7 @@ class TestTree(unittest.TestCase):
         note.bases = [post, base]
 
         field = Field('type', type)
-        basetree = RootTree(base, type_base, field)
+        basetree = RootSubtypes(base, type_base, field)
         posttree = basetree.subtree(post, type_post)
         notetree = posttree.subtree(note, type_note)
 
@@ -276,7 +276,7 @@ class TestTree(unittest.TestCase):
         post2.bases = [base]
 
         field = Field('type', type)
-        tree = RootTree(base, type_base, field)
+        tree = RootSubtypes(base, type_base, field)
         tree.subtree(post, type_post)
         self.assertRaises(ValueError, tree.subtree, post2, type_post)
 
@@ -289,7 +289,7 @@ class TestTree(unittest.TestCase):
         wrong_value = EnumValue('WRONG', wrong)
 
         base = Message('Base')
-        tree = RootTree(base, type_base, type_field)
+        tree = RootSubtypes(base, type_base, type_field)
 
         msg = Message('Message')
         msg.bases = [base]

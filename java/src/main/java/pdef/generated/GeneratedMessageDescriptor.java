@@ -19,45 +19,13 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 
 	@Nullable
 	@Override
-	public MessageTree getTree() {
-		MessageTree tree = getRootTree();
-		return tree != null ? tree : getBaseTree();
-	}
-
-	@Nullable
-	@Override
-	public MessageTree getBaseTree() {
-		return null;
-	}
-
-	@Nullable
-	@Override
-	public MessageTree getRootTree() {
+	public Subtypes getSubtypes() {
 		return null;
 	}
 
 	@Override
 	public SymbolTable<VariableDescriptor> getVariables() {
 		return ImmutableSymbolTable.of();
-	}
-
-	@Nullable
-	@Override
-	public FieldDescriptor getTypeField() {
-		MessageTree tree = getTree();
-		return tree == null ? null : tree.getField();
-	}
-
-	@Nullable
-	@Override
-	public MessageDescriptor getSubtype(final Object object) {
-		MessageTree tree = getTree();
-		return tree == null ? null : tree.getMap().get(object);
-	}
-
-	@Override
-	public boolean hasSubtypes() {
-		return getTree() != null;
 	}
 
 	@Override
@@ -74,5 +42,4 @@ public abstract class GeneratedMessageDescriptor extends GeneratedTypeDescriptor
 	public MessageDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
 		return this;
 	}
-
 }

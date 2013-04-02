@@ -22,7 +22,8 @@ final class ParameterizedMessageDescriptor extends ParameterizedTypeDescriptor<M
 	@Override
 	protected void link() {
 		Map<VariableDescriptor, TypeDescriptor> argMap = argMap();
-		base = raw.getBase() == null ? null : raw.getBase().bind(argMap);
+		MessageDescriptor rawBase = raw.getBase();
+		base = rawBase == null ? null : rawBase.bind(argMap);
 	}
 
 	@Override
@@ -52,37 +53,8 @@ final class ParameterizedMessageDescriptor extends ParameterizedTypeDescriptor<M
 
 	@Nullable
 	@Override
-	public MessageTree getTree() {
-		return raw.getTree();
-	}
-
-	@Nullable
-	@Override
-	public MessageTree getBaseTree() {
-		return raw.getBaseTree();
-	}
-
-	@Nullable
-	@Override
-	public MessageTree getRootTree() {
-		return raw.getRootTree();
-	}
-
-	@Nullable
-	@Override
-	public FieldDescriptor getTypeField() {
-		return raw.getTypeField();
-	}
-
-	@Nullable
-	@Override
-	public MessageDescriptor getSubtype(final Object object) {
-		return raw.getSubtype(object);
-	}
-
-	@Override
-	public boolean hasSubtypes() {
-		return raw.hasSubtypes();
+	public Subtypes getSubtypes() {
+		return raw.getSubtypes();
 	}
 
 	@Override

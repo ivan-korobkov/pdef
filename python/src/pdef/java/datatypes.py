@@ -35,6 +35,7 @@ class JavaMessage(object):
             self.base_builder = SimpleJavaRef('pdef.generated.GeneratedMessage.Builder')
 
         self.variables = tuple(JavaRef.from_lang(var) for var in msg.variables)
+        self.subtypes = JavaSubtypes(msg.subtypes) if msg.subtypes else None
 
         index = 0
         fields = []
@@ -47,9 +48,6 @@ class JavaMessage(object):
             index += 1
         self.fields = tuple(fields)
         self.declared_fields = tuple(dfields)
-
-        self.base_tree = JavaMessageTree(msg.base_tree) if msg.base_tree else None
-        self.root_tree = JavaMessageTree(msg.root_tree) if msg.root_tree else None
 
         self.is_generic = bool(self.variables)
         self.get_instance = 'getInstanceOf%s()' % self.name if self.is_generic else 'getInstance()'
@@ -81,12 +79,13 @@ class JavaField(object):
         self.clear = 'clear%s' % upper_first(self.name)
 
 
-class JavaMessageTree(object):
-    def __init__(self, tree):
-        self.type = JavaRef.from_lang(tree.type)
-        self.subtypes = tuple((JavaRef.from_lang(k), JavaRef.from_lang(v))
-            for k, v in tree.as_map().items())
-        self.field = JavaField(tree.field)
+class JavaSubtypes(object):
+    def __init__(self, subtypes):
+        self.type = JavaRef.from_lang(subtypes.type)
+        self.items = tuple((JavaRef.from_lang(k), JavaRef.from_lang(v))
+            for k, v in subtypes.as_map().items())
+        self.field = JavaField(subtypes.field)
+        self.is_root = subtypes.is_root
 
 
 class JavaEnum(object):

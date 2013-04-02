@@ -185,10 +185,9 @@ public class {{ type }} extends {{ base_class }} {
 
 {% if base %}
         private pdef.MessageDescriptor base;
-        private pdef.MessageTree baseTree;
 {% endif %}
-{% if root_tree %}
-        private pdef.MessageTree rootTree;
+{% if subtypes %}
+        private pdef.Subtypes subtypes;
 {% endif %}
 
 {% for field in declared_fields %}
@@ -225,17 +224,10 @@ public class {{ type }} extends {{ base_class }} {
         }
 
 {% endif %}
-{% if base_tree %}
+{% if subtypes %}
         @Override
-        public pdef.MessageTree getBaseTree() {
-            return baseTree;
-        }
-
-{% endif %}
-{% if root_tree %}
-        @Override
-        public pdef.MessageTree getRootTree() {
-            return rootTree;
+        public pdef.Subtypes getSubtypes() {
+            return subtypes;
         }
 
 {% endif %}
@@ -322,19 +314,16 @@ public class {{ type }} extends {{ base_class }} {
             fields = declaredFields;
 {% endif %}
 
-{% if root_tree %}
-            rootTree = pdef.ImmutableMessageTree.builder()
-                    .setType({{ root_tree.type }})
-                    .setField({{ root_tree.field.name }}Field)
-{% for type, message in root_tree.subtypes %}
-                    .put({{ type }}, {{ message.descriptor }})
-{% endfor %}
-                    .build();
+{% if subtypes %}
+{% if subtypes.is_root %}
+            subtypes = pdef.ImmutableSubtypes.builder()
+                    .setField({{ subtypes.field.name }}Field)
+                    .setType({{ subtypes.type }})
+{% else %}
+            pdef.Subtypes basetypes = base.getSubtypes(); assert basetypes != null;
+            subtypes = basetypes.subclass({{ subtypes.type }})
 {% endif %}
-{% if base_tree %}
-            pdef.MessageTree baseTreeTemp = base.getTree(); assert baseTreeTemp != null;
-            baseTree = baseTreeTemp.subtreeBuilder({{ base_tree.type }})
-{% for type, message in base_tree.subtypes %}
+{% for type, message in subtypes.items %}
                     .put({{ type }}, {{ message.descriptor }})
 {% endfor %}
                     .build();

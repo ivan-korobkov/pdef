@@ -8,8 +8,8 @@ from pdef import ast
 
 class Tokens(object):
     # Simple reserved words.
-    reserved = ('AS', 'ENUM', 'IMPORT', 'INHERITS', 'MESSAGE', 'ON', 'POLYMORPHIC',
-                'MODULE', 'NATIVE')
+    reserved = ('AS', 'ENUM', 'EXTENDS', 'IMPORT', 'INTERFACE', 'INHERITS', 'MESSAGE', 'ON',
+                'POLYMORPHIC', 'MODULE', 'NATIVE')
 
     # All tokens.
     tokens = reserved + (
@@ -17,6 +17,7 @@ class Tokens(object):
         'LESS', 'GREATER',
         'LBRACE', 'RBRACE',
         'LBRACKET', 'RBRACKET',
+        'LPAREN', 'RPAREN',
         'IDENTIFIER', 'STRING')
 
     # Regular expressions for simple rules
@@ -29,6 +30,8 @@ class Tokens(object):
     t_RBRACE  = r'\}'
     t_LBRACKET = r'\['
     t_RBRACKET = r'\]'
+    t_LPAREN = r'\('
+    t_RPAREN = r'\)'
 
     # Ignored characters
     t_ignore = " \t"
@@ -146,6 +149,7 @@ class GrammarRules(object):
         definition : native
                    | enum
                    | message
+                   | interface
         '''
         t[0] = t[1]
 
@@ -258,6 +262,75 @@ class GrammarRules(object):
         field : IDENTIFIER type SEMI
         '''
         t[0] = ast.Field(t[1], type=t[2])
+
+    # Interface definition
+    def p_interface(self, t):
+        '''
+        interface : INTERFACE IDENTIFIER variables interface_bases interface_body
+        '''
+        name = t[2]
+        vars = t[3]
+        bases = t[4]
+        methods = t[5]
+        t[0] = ast.Interface(name, variables=vars, bases=bases, methods=methods)
+
+    def p_interface_bases(self, t):
+        '''
+        interface_bases : EXTENDS types
+                        | empty
+        '''
+        if len(t) == 2:
+            t[0] = []
+        else:
+            t[0] = t[2]
+
+    # Interface methods
+    def p_interface_body(self, t):
+        '''
+        interface_body : LBRACE methods RBRACE
+        '''
+        t[0] = t[2]
+
+    def p_methods(self, t):
+        '''
+        methods : methods method
+                | method
+                | empty
+        '''
+        self._list(t)
+
+    def p_method(self, t):
+        '''
+        method : IDENTIFIER LPAREN method_args RPAREN method_result SEMI
+        '''
+        name = t[1]
+        args = t[3]
+        result = t[5]
+        t[0] = ast.Method(name, args=args, result=result)
+
+    def p_method_args(self, t):
+        '''
+        method_args : method_args COMMA method_arg
+                    | method_arg
+                    | empty
+        '''
+        self._list(t, separated=1)
+
+    def p_method_arg(self, t):
+        '''
+        method_arg : IDENTIFIER type
+        '''
+        t[0] = ast.MethodArg(t[1], t[2])
+
+    def p_method_result(self, t):
+        '''
+        method_result : type
+                      | empty
+        '''
+        if len(t) == 2:
+            t[0] = None
+        else:
+            t[0] = t[2]
 
     # Generic variables in a definition name.
     def p_variables(self, t):

@@ -72,3 +72,24 @@ class Enum(Type):
     def __init__(self, name, values=None):
         super(Enum, self).__init__(name)
         self.values = tuple(values) if values else ()
+
+
+class Interface(Type):
+    def __init__(self, name, variables=None, bases=None, methods=None):
+        super(Interface, self).__init__(name, variables)
+
+        self.bases = tuple(bases) if bases else ()
+        self.methods = tuple(methods) if methods else ()
+
+
+class Method(object):
+    def __init__(self, name, args=None, result=None):
+        self.name = name
+        self.args = tuple(args) if args else ()
+        self.result = result
+
+
+class MethodArg(object):
+    def __init__(self, name, type):
+        self.name = name
+        self.type = type

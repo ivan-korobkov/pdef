@@ -36,5 +36,4 @@ public abstract class GeneratedInterfaceDescriptor extends GeneratedTypeDescript
 	public InterfaceDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
 		return this;
 	}
-
 }

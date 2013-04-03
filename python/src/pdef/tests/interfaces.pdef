@@ -1,39 +1,46 @@
-package test.interfaces;
+module test.interfaces;
 
 
 message UserData {
-    string id;
-    string name;
-    List<PhotoData> photos;
+    id      string;
+    name    string;
+    photos  list<PhotoData>;
 }
 
 message PhotoData {
-    string id;
-    string description;
-    string url;
+    id          string;
+    description string;
+    url         string;
 
-    UserData user;
+    user        UserData;
 }
 
 interface App {
-    photos() Photos;
+    photos()    Photos;
 }
 
-interface Users {
-    get(id string) User;
-    register(email string, password string) User;
+interface GenericObject<T> {
+    data()  T;
 }
 
-interface User {
-    data() UserData;
+interface GenericCollection<Id, T> {
+    get(id Id) T;
 }
 
-interface Photos {
-    get(id string) Photo;
-    create(description string, url string) Photo;
+interface Users extends GenericCollection<string, User> {
+    register(
+        email string,
+        password string) User;
 }
 
-interface Photo {
-    data() PhotoData;
-    comments() List<string>;
+interface User extends GenericObject<UserData> {}
+
+interface Photos extends GenericCollection<string, Photo> {
+    create(
+        description string,
+        url         string) Photo;
+}
+
+interface Photo extends GenericObject<PhotoData> {
+    comments()  list<string>;
 }

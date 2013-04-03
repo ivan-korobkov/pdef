@@ -1,0 +1,24 @@
+module pdef.interfaces;
+
+
+interface Collection<Id, T> {
+    get(Id id)  T;
+}
+
+interface User {
+    name() string;
+    rename(newName string) string;
+}
+
+interface Users extends Collection<int32, User> {
+    register(
+        name        string,
+        email       string,
+        birthday    Date) User;
+}
+
+message Date {
+    year    int32;
+    month   int32;
+    day     int32;
+}

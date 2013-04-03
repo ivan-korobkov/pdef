@@ -12,7 +12,7 @@ class TestParser(unittest.TestCase):
         with open(filepath, 'r') as f:
             return f.read()
 
-    def test_parse_module_with_messages(self):
+    def test_parse_messages(self):
         '''Should parse a test file with messages.'''
         s = self._read('messages.pdef')
         parser = ModuleParser()
@@ -26,3 +26,12 @@ class TestParser(unittest.TestCase):
         assert dd[0].name == 'int32'
         assert dd[1].name == 'string'
         assert dd[10].name == 'Note'
+
+    def test_parse_interfaces(self):
+        '''Should parse a test file with interfaces.'''
+        s = self._read('interfaces.pdef')
+        parser = ModuleParser()
+        module = parser.parse(s)
+        assert module
+        assert isinstance(module, Module)
+        assert module.name == 'test.interfaces'

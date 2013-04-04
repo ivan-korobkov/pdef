@@ -9,6 +9,7 @@ class Module(Node):
     @classmethod
     def from_node(cls, node, package=None):
         from pdef.lang.enums import Enum
+        from pdef.lang.interfaces import Interface
         from pdef.lang.messages import Message
         from pdef.lang.natives import Native
         check_isinstance(node, ast.Module)
@@ -23,6 +24,8 @@ class Module(Node):
                 definition = Enum.from_node(dnode, module=module)
             elif isinstance(dnode, ast.Native):
                 definition = Native.from_node(dnode, module=module)
+            elif isinstance(dnode, ast.Interface):
+                definition = Interface.from_node(dnode, module=module)
             else:
                 raise ValueError('%s: unsupported definition node %s' % (module, dnode))
             module.add_definition(definition)

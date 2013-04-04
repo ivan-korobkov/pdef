@@ -7,5 +7,6 @@ from pdef.lang.modules import *
 from pdef.lang.packages import *
 
 from pdef.lang.enums import *
+from pdef.lang.interfaces import *
 from pdef.lang.messages import *
 from pdef.lang.natives import *

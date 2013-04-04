@@ -43,7 +43,7 @@ class Message(Type):
 
         return False
 
-    def _do_init(self):
+    def _init(self):
         if not self.node:
             return
         node = self.node
@@ -134,7 +134,7 @@ class ParameterizedMessage(ParameterizedType):
     def is_subtype_of(self, msg):
         return self.rawtype.is_subtype_of(msg)
 
-    def _do_init(self):
+    def _init(self):
         vmap = self.variables.as_map()
         rawtype = self.rawtype
         base = rawtype.base.bind(vmap) if rawtype.base else None

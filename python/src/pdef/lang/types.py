@@ -43,7 +43,7 @@ class Type(Node):
             return
 
         self.inited = True
-        self._do_init()
+        self._init()
         self._init_parameterized()
 
     def bind(self, arg_map):
@@ -70,7 +70,7 @@ class Type(Node):
             ptype = self._pqueue.pop()
             ptype.init()
 
-    def _do_init(self):
+    def _init(self):
         pass
 
     def _do_parameterize(self, *variables):

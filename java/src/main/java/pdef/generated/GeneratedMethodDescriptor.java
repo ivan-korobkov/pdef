@@ -1,22 +1,31 @@
 package pdef.generated;
 
+import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import pdef.MethodDescriptor;
 import pdef.TypeDescriptor;
 import pdef.VariableDescriptor;
 
-import java.util.List;
 import java.util.Map;
 
 public abstract class GeneratedMethodDescriptor implements MethodDescriptor {
 	private final String name;
-	private final List<TypeDescriptor> args;
+	private final Map<String, TypeDescriptor> args;
 
-	public GeneratedMethodDescriptor(final String name, final TypeDescriptor... args) {
+	public GeneratedMethodDescriptor(final String name,
+			final Map<? extends String, ? extends TypeDescriptor> args) {
 		this.name = checkNotNull(name);
-		this.args = ImmutableList.copyOf(args);
+		this.args = ImmutableMap.copyOf(args);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(name)
+				.addValue(args)
+				.toString();
 	}
 
 	@Override
@@ -25,19 +34,18 @@ public abstract class GeneratedMethodDescriptor implements MethodDescriptor {
 	}
 
 	@Override
-	public List<TypeDescriptor> getArgs() {
+	public Map<String, TypeDescriptor> getArgs() {
 		return args;
 	}
 
 	@Override
 	public MethodDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
-		List<TypeDescriptor> parameterized = Lists.newArrayList();
-		for (TypeDescriptor arg : args) {
-			TypeDescriptor barg = arg.bind(argMap);
-			parameterized.add(barg);
+		Map<String, TypeDescriptor> parameterized = Maps.newLinkedHashMap();
+		for (Map.Entry<String, TypeDescriptor> entry : args.entrySet()) {
+			TypeDescriptor barg = entry.getValue().bind(argMap);
+			parameterized.put(entry.getKey(), barg);
 		}
 		if (parameterized.equals(args)) return this;
-		return new ParameterizedMethodDescriptor(this, args);
+		return new ParameterizedMethodDescriptor(this, parameterized);
 	}
-
 }

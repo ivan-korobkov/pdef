@@ -1,7 +1,5 @@
 package pdef;
 
-public interface Interface extends Type {
+public interface Interface {
 
-	@Override
-	InterfaceDescriptor getDescriptor();
 }

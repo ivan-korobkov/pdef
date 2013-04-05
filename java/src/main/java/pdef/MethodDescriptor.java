@@ -1,10 +1,10 @@
 package pdef;
 
-import java.util.List;
+import java.util.Map;
 
 public interface MethodDescriptor extends Symbol, Bindable<MethodDescriptor> {
 
-	List<TypeDescriptor> getArgs();
+	Map<String, TypeDescriptor> getArgs();
 
-	Object call(Interface iface, List<Object> args);
+	Object call(Interface iface, Map<String, Object> args);
 }

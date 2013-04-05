@@ -1,23 +1,31 @@
 package pdef.generated;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import pdef.Interface;
 import pdef.MethodDescriptor;
 import pdef.TypeDescriptor;
 import pdef.VariableDescriptor;
 
-import java.util.List;
 import java.util.Map;
 
 final class ParameterizedMethodDescriptor implements MethodDescriptor {
 	private final MethodDescriptor raw;
-	private final List<TypeDescriptor> args;
+	private final Map<String, TypeDescriptor> args;
 
-	ParameterizedMethodDescriptor(final MethodDescriptor raw, final List<TypeDescriptor> args) {
+	ParameterizedMethodDescriptor(final MethodDescriptor raw, final Map<String, TypeDescriptor> args) {
 		this.raw = checkNotNull(raw);
-		this.args = ImmutableList.copyOf(args);
+		this.args = ImmutableMap.copyOf(args);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(raw.getName())
+				.addValue(args)
+				.toString();
 	}
 
 	@Override
@@ -26,21 +34,21 @@ final class ParameterizedMethodDescriptor implements MethodDescriptor {
 	}
 
 	@Override
-	public List<TypeDescriptor> getArgs() {
+	public Map<String, TypeDescriptor> getArgs() {
 		return args;
 	}
 
 	@Override
-	public Object call(final Interface iface, final List<Object> args) {
+	public Object call(final Interface iface, final Map<String, Object> args) {
 		return raw.call(iface, args);
 	}
 
 	@Override
 	public MethodDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
-		List<TypeDescriptor> parameterized = Lists.newArrayList();
-		for (TypeDescriptor arg : args) {
-			TypeDescriptor barg = arg.bind(argMap);
-			parameterized.add(barg);
+		Map<String, TypeDescriptor> parameterized = Maps.newLinkedHashMap();
+		for (Map.Entry<String, TypeDescriptor> entry : args.entrySet()) {
+			TypeDescriptor barg = entry.getValue().bind(argMap);
+			parameterized.put(entry.getKey(), barg);
 		}
 		if (parameterized.equals(args)) return this;
 		return new ParameterizedMethodDescriptor(raw, parameterized);

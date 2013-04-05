@@ -3,6 +3,7 @@ package pdef.generated;
 import com.google.common.annotations.VisibleForTesting;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Queues;
+import pdef.InterfaceDescriptor;
 import pdef.MessageDescriptor;
 import pdef.TypeDescriptor;
 
@@ -47,29 +48,40 @@ public class GeneratedTypeInitializer {
 		}
 	}
 
-	private void processInit(final GeneratedTypeDescriptor descriptor) {
-		if (descriptor.getState() != GeneratedTypeDescriptor.State.NEW) return;
-		if (descriptor.getState() == GeneratedTypeDescriptor.State.NEW) descriptor.executeLink();
+	private void processInit(final TypeDescriptor descriptor) {
+		if (!(descriptor instanceof GeneratedTypeDescriptor)) return;
+		GeneratedTypeDescriptor d = (GeneratedTypeDescriptor) descriptor;
+
+		if (d.getState() != GeneratedTypeDescriptor.State.NEW) return;
+		if (d.getState() == GeneratedTypeDescriptor.State.NEW) d.executeLink();
 
 		// Process the rawtype of this parameterized type.
-		if (descriptor instanceof ParameterizedTypeDescriptor<?>) {
+		if (d instanceof ParameterizedTypeDescriptor<?>) {
 			ParameterizedTypeDescriptor<?> message =
-					(ParameterizedTypeDescriptor<?>) descriptor;
+					(ParameterizedTypeDescriptor<?>) d;
 			TypeDescriptor rawtype = message.getRaw();
 			if (rawtype instanceof GeneratedTypeDescriptor) {
-				processInit((GeneratedTypeDescriptor) rawtype);
+				processInit(rawtype);
 			}
 		}
 
 		// Process the base of this message.
-		if (descriptor instanceof MessageDescriptor) {
-			MessageDescriptor message = (MessageDescriptor) descriptor;
+		if (d instanceof MessageDescriptor) {
+			MessageDescriptor message = (MessageDescriptor) d;
 			MessageDescriptor base = message.getBase();
 			if (base != null && base instanceof GeneratedTypeDescriptor) {
-				processInit((GeneratedTypeDescriptor) base);
+				processInit(base);
 			}
 		}
 
-		descriptor.executeInit();
+		// Process the bases of this interface.
+		if (d instanceof InterfaceDescriptor) {
+			InterfaceDescriptor iface = (InterfaceDescriptor) d;
+			for (InterfaceDescriptor base : iface.getBases()) {
+				processInit(base);
+			}
+		}
+
+		d.executeInit();
 	}
 }

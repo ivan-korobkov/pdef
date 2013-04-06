@@ -13,6 +13,8 @@ class JavaRef(object):
             return ParameterizedJavaRef(ref)
         elif isinstance(ref, lang.Enum):
             return EnumJavaRef(ref)
+        elif isinstance(ref, lang.Interface):
+            return InterfaceJavaRef(ref)
         else:
             return TypeJavaRef(ref)
 
@@ -95,6 +97,16 @@ class TypeJavaRef(JavaRef):
             self.descriptor = '%s.%s' % (self.package, self.descriptor)
             self.default = '%s.%s' % (self.package, self.default)
 
+
+class InterfaceJavaRef(TypeJavaRef):
+    def __init__(self, ref):
+        super(InterfaceJavaRef, self).__init__(ref)
+
+        self.descriptor = '%s.Descriptor.getInstance()' % self.name
+        self.default = 'null'
+
+        if ref.parent:
+            self.descriptor = '%s.%s' % (self.package, self.descriptor)
 
 
 class EnumJavaRef(TypeJavaRef):

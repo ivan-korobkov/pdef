@@ -6,5 +6,5 @@ public interface MethodDescriptor extends Symbol, Bindable<MethodDescriptor> {
 
 	Map<String, TypeDescriptor> getArgs();
 
-	Object call(Interface iface, Map<String, Object> args);
+	Object call(Object iface, Map<String, Object> args);
 }

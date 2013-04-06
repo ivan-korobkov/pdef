@@ -115,8 +115,3 @@ message MethodCall {
     name    string;
     args    object;
 }
-
-
-interface Collection<T> {
-    get     T;
-}

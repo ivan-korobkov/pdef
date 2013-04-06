@@ -83,7 +83,7 @@ public interface App extends GenericCollection<Integer, String> {
 							.put("text", NativeValueDescriptors.getString())
 							.build()) {
 				@Override
-				public Object call(final Interface iface, final Map<String, Object> args) {
+				public Object call(final Object iface, final Map<String, Object> args) {
 					String text = (String) args.get("text");
 					return ((App) iface).echo(text);
 				}
@@ -96,7 +96,7 @@ public interface App extends GenericCollection<Integer, String> {
 							.put("password", NativeValueDescriptors.getString())
 							.build()) {
 				@Override
-				public Object call(final Interface iface, final Map<String, Object> args) {
+				public Object call(final Object iface, final Map<String, Object> args) {
 					String nick = (String) args.get("nick");
 					String email = (String) args.get("email");
 					String password = (String) args.get("password");
@@ -110,7 +110,7 @@ public interface App extends GenericCollection<Integer, String> {
 							.put("password", NativeValueDescriptors.getString())
 							.build()) {
 				@Override
-				public Object call(final Interface iface, final Map<String, Object> args) {
+				public Object call(final Object iface, final Map<String, Object> args) {
 					String email = (String) args.get("email");
 					String password = (String) args.get("password");
 					return ((App) iface).login(email, password);
@@ -121,7 +121,7 @@ public interface App extends GenericCollection<Integer, String> {
 					ImmutableMap.<String, TypeDescriptor>builder()
 							.build()) {
 				@Override
-				public Object call(final Interface iface, final Map<String, Object> args) {
+				public Object call(final Object iface, final Map<String, Object> args) {
 					((App) iface).ping();
 					return null;
 				}

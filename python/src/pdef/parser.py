@@ -301,7 +301,7 @@ class GrammarRules(object):
 
     def p_method(self, t):
         '''
-        method : IDENTIFIER LPAREN method_args RPAREN method_result SEMI
+        method : IDENTIFIER LPAREN method_args RPAREN type SEMI
         '''
         name = t[1]
         args = t[3]
@@ -321,16 +321,6 @@ class GrammarRules(object):
         method_arg : IDENTIFIER type
         '''
         t[0] = ast.MethodArg(t[1], t[2])
-
-    def p_method_result(self, t):
-        '''
-        method_result : type
-                      | empty
-        '''
-        if len(t) == 2:
-            t[0] = None
-        else:
-            t[0] = t[2]
 
     # Generic variables in a definition name.
     def p_variables(self, t):

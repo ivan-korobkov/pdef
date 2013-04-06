@@ -75,14 +75,23 @@ public class ImmutableSymbolTable<T extends Symbol> implements SymbolTable<T> {
 	}
 
 	@Override
-	public SymbolTable<T> merge(final SymbolTable<T> another) {
-		checkNotNull(another);
+	public SymbolTable<T> merge(final SymbolTable<T> table) {
+		checkNotNull(table);
 		List<T> list = Lists.newArrayList(list());
-		for (T element : another) {
+		for (T element : table) {
 			list.add(element);
 		}
 
 		return copyOf(list);
+	}
+
+	@Override
+	public SymbolTable<T> mergeAll(final SymbolTable<T>... tables) {
+		SymbolTable<T> table = this;
+		for (SymbolTable<T> t : tables) {
+			table = table.merge(t);
+		}
+		return table;
 	}
 
 	@Override

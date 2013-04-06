@@ -12,7 +12,9 @@ public interface SymbolTable<T extends Symbol> extends Iterable<T> {
 
 	Map<String, T> map();
 
-	SymbolTable<T> merge(SymbolTable<T> another);
+	SymbolTable<T> merge(SymbolTable<T> table);
+
+	SymbolTable<T> mergeAll(SymbolTable<T>... tables);
 
 	int size();
 }

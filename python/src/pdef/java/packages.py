@@ -1,8 +1,9 @@
 # encoding: utf-8
 import logging
 import os.path
-from pdef.lang import Message, Enum
+from pdef.lang import Message, Enum, Interface
 from pdef.java.datatypes import JavaMessage, JavaEnum
+from pdef.java.interfaces import JavaInterface
 
 
 class JavaPackage(object):
@@ -19,6 +20,8 @@ class JavaPackage(object):
             jdef = JavaMessage(definition)
         elif isinstance(definition, Enum):
             jdef = JavaEnum(definition)
+        elif isinstance(definition, Interface):
+            jdef = JavaInterface(definition)
         else:
             return
 

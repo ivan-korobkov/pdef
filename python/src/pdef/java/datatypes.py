@@ -4,11 +4,11 @@ from jinja2 import Environment
 from pdef.java.refs import JavaRef, SimpleJavaRef
 
 
-ENUM_FILE = os.path.join(os.path.dirname(__file__), "enum.template")
-MESSAGE_FILE = os.path.join(os.path.dirname(__file__), "message.template")
-with open(ENUM_FILE, "r") as f:
+ENUM_FILE = os.path.join(os.path.dirname(__file__), 'enum.template')
+MESSAGE_FILE = os.path.join(os.path.dirname(__file__), 'message.template')
+with open(ENUM_FILE, 'r') as f:
     ENUM_TEMPLATE = f.read()
-with open(MESSAGE_FILE, "r") as f:
+with open(MESSAGE_FILE, 'r') as f:
     MESSAGE_TEMPLATE = f.read()
 
 ENV = Environment(trim_blocks=True)
@@ -17,7 +17,7 @@ MESSAGE = ENV.from_string(MESSAGE_TEMPLATE)
 
 
 class JavaMessage(object):
-    def __init__(self, msg,):
+    def __init__(self, msg):
         self.name = msg.name
         self.type = JavaRef.from_lang(msg).local
         self.package = msg.parent.fullname

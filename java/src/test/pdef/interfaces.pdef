@@ -1,16 +1,21 @@
-module pdef.interfaces;
+module pdef.fixtures.interfaces;
+import pdef.fixtures as fixtures;
 
 
 interface Collection<Id, T> {
-    get(Id id)  T;
+    get(id Id)  T;
 }
 
 interface User {
     name() string;
-    rename(newName string) string;
+    rename(name string) string;
 }
 
-interface Users extends Collection<int32, User> {
+interface List<Id, T> {
+    find(ids list<Id>) list<T>;
+}
+
+interface Users extends Collection<int32, User>, List<int32, fixtures.User> {
     register(
         name        string,
         email       string,

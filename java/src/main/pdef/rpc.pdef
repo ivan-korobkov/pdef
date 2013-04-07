@@ -1,7 +1,0 @@
-module pdef.rpc;
-
-
-message MethodCall {
-    name    string;
-    args    object;
-}

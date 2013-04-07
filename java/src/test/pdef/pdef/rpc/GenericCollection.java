@@ -62,7 +62,7 @@ public interface GenericCollection<Id, T> extends Interface {
 							.build()) {
 				@SuppressWarnings("unchecked")
 				@Override
-				public Object call(final Interface iface, final Map<String, Object> args) {
+				public Object call(final Object iface, final Map<String, Object> args) {
 					Object id = args.get("id");
 					return ((GenericCollection) iface).get(id);
 				}

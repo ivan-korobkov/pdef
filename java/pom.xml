@@ -12,11 +12,9 @@
 	<url>http://github.com/ivan-korobkov/pdef</url>
 
 	<properties>
-		<jackson.version>2.0.0</jackson.version>
+		<jackson.version>2.1.1</jackson.version>
 
 		<pdef.path>pdefc</pdef.path>
-		<pdef.src>${project.basedir}/src/main/pdef/</pdef.src>
-		<pdef.out>${project.basedir}/target/generated-sources/pdef/</pdef.out>
 		<pdef.test.src>${project.basedir}/src/test/pdef/</pdef.test.src>
 		<pdef.test.out>${project.basedir}/target/generated-test-sources/pdef/</pdef.test.out>
 	</properties>
@@ -106,23 +104,6 @@
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>1.4</version>
 				<executions>
-					<execution>
-						<id>generate-sources</id>
-						<phase>generate-sources</phase>
-						<configuration>
-							<tasks>
-								<exec executable="${pdef.path}" failonerror="true">
-									<arg value="--java=${pdef.out}" />
-									<arg value="--path=${pdef.src}" />
-									<arg value="--packages=pdef.rpc" />
-								</exec>
-							</tasks>
-						</configuration>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-
 					<execution>
 						<id>generate-test-sources</id>
 						<phase>generate-test-sources</phase>

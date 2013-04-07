@@ -4,7 +4,6 @@ import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import pdef.Interface;
 import pdef.MethodDescriptor;
 import pdef.TypeDescriptor;
 import pdef.VariableDescriptor;
@@ -39,7 +38,7 @@ final class ParameterizedMethodDescriptor implements MethodDescriptor {
 	}
 
 	@Override
-	public Object call(final Interface iface, final Map<String, Object> args) {
+	public Object call(final Object iface, final Map<String, Object> args) {
 		return raw.call(iface, args);
 	}
 

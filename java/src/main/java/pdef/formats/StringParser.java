@@ -32,7 +32,7 @@ public class StringParser extends AbstractParser {
 			if (i == tokens.size()) break;
 
 			Object token = tokens.get(i);
-			Object value = parse(field.getType(), token);
+			Object value = doParse(field.getType(), token);
 			// Even-though the field is read-only we still parse it to validate the data.
 			if (field.isTypeField()) continue;
 			field.set(builder, value);
@@ -57,7 +57,7 @@ public class StringParser extends AbstractParser {
 		}
 
 		if (typeToken == null) return descriptor;
-		Object type = parse(typeField.getType(), typeToken);
+		Object type = doParse(typeField.getType(), typeToken);
 		MessageDescriptor subd = tree.getMap().get(type);
 
 		// TODO: Log if a subtype is not found.

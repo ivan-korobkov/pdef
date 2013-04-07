@@ -24,7 +24,7 @@ public class RawParser extends AbstractParser {
 
 			TypeDescriptor type = field.getType();
 			Object val = map.get(name);
-			Object pval = parse(type, val);
+			Object pval = doParse(type, val);
 			// Even-though the field is read-only we still parse it to validate the data.
 			if (field.isTypeField()) continue;
 			field.set(builder, pval);
@@ -44,11 +44,11 @@ public class RawParser extends AbstractParser {
 
 		TypeDescriptor type = field.getType();
 		Object val = map.get(name);
-		Object pval = parse(type, val);
+		Object pval = doParse(type, val);
 		MessageDescriptor subd = tree.getMap().get(pval);
 
 		// TODO: Log if a subtype is not found.
-		if (subd == null || subd == this) return descriptor;
+		if (subd == null || subd == descriptor) return descriptor;
 		return parseDescriptorType(subd, map);
 	}
 
@@ -67,7 +67,7 @@ public class RawParser extends AbstractParser {
 
 		ImmutableList.Builder<Object> builder = ImmutableList.builder();
 		for (Object o : list) {
-			Object p = parse(elementd, o);
+			Object p = doParse(elementd, o);
 			builder.add(p);
 		}
 
@@ -82,7 +82,7 @@ public class RawParser extends AbstractParser {
 
 		ImmutableSet.Builder<Object> builder = ImmutableSet.builder();
 		for (Object o : set) {
-			Object p = parse(elementd, o);
+			Object p = doParse(elementd, o);
 			builder.add(p);
 		}
 
@@ -98,8 +98,8 @@ public class RawParser extends AbstractParser {
 
 		ImmutableMap.Builder<Object, Object> builder = ImmutableMap.builder();
 		for (Map.Entry<?, ?> e : map.entrySet()) {
-			Object pkey = parse(keyd, e.getKey());
-			Object pval = parse(vald, e.getValue());
+			Object pkey = doParse(keyd, e.getKey());
+			Object pval = doParse(vald, e.getValue());
 			builder.put(pkey, pval);
 		}
 

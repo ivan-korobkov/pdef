@@ -4,7 +4,7 @@ import pdef.*;
 
 public abstract class AbstractParser implements Parser {
 	@Override
-	public Object parse(final MessageDescriptor descriptor, final Object object) {
+	public Object parse(final TypeDescriptor descriptor, final Object object) {
 		if (object == null) return null;
 		return doParse(descriptor, object);
 	}

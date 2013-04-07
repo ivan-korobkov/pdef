@@ -3,6 +3,7 @@ package pdef.formats;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import static com.google.common.base.Preconditions.*;
 import pdef.MessageDescriptor;
+import pdef.TypeDescriptor;
 
 import java.io.IOException;
 import java.util.Map;
@@ -21,7 +22,7 @@ public class JsonParser implements Parser {
 	}
 
 	@Override
-	public Object parse(final MessageDescriptor descriptor, final Object object) {
+	public Object parse(final TypeDescriptor descriptor, final Object object) {
 		if (object == null) return null;
 		String s = (String) object;
 		try {
@@ -31,7 +32,7 @@ public class JsonParser implements Parser {
 		}
 	}
 
-	private Object parse(final MessageDescriptor descriptor, final String s) throws IOException {
+	private Object parse(final TypeDescriptor descriptor, final String s) throws IOException {
 		Map map = mapper.readValue(s, Map.class);
 		return delegate.parse(descriptor, map);
 	}

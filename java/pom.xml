@@ -30,21 +30,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>13.0</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.google.protobuf</groupId>
-			<artifactId>protobuf-java</artifactId>
-			<version>2.4.1</version>
-		</dependency>
-
-		<dependency>
-			<!-- Only for the Types utility class -->
-			<!-- TODO: Rewrite Types and remove Guice dependency -->
-			<groupId>com.google.inject</groupId>
-			<artifactId>guice</artifactId>
-			<version>3.0</version>
+			<version>14.0.1</version>
 		</dependency>
 
 		<dependency>
@@ -128,19 +114,6 @@
 				<artifactId>build-helper-maven-plugin</artifactId>
 				<version>1.5</version>
 				<executions>
-					<execution>
-						<id>add-sources</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>add-source</goal>
-						</goals>
-						<configuration>
-							<sources>
-								<source>${project.build.directory}/generated-sources/pdef/</source>
-							</sources>
-						</configuration>
-					</execution>
-
 					<execution>
 						<id>add-test-sources</id>
 						<phase>generate-test-sources</phase>

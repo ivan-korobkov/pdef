@@ -1,8 +1,9 @@
 package pdef.formats;
 
 import pdef.MessageDescriptor;
+import pdef.TypeDescriptor;
 
 public interface Parser {
 
-	Object parse(MessageDescriptor descriptor, final Object object);
+	Object parse(TypeDescriptor descriptor, final Object object);
 }

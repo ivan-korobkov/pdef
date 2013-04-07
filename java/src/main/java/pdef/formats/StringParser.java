@@ -11,10 +11,10 @@ public class StringParser extends AbstractParser {
 	static final Splitter FIELD_SPLITTER = Splitter.on(StringSerializer.FIELD_DELIMITER);
 
 	@Override
-	public Object parse(final MessageDescriptor descriptor, final Object object) {
+	public Object parse(final TypeDescriptor descriptor, final Object object) {
 		String s = (String) object;
 		List<Object> tokens = parseTokens(s);
-		return parseMessage(descriptor, tokens);
+		return parseMessage((MessageDescriptor) descriptor, tokens);
 	}
 
 	@Override

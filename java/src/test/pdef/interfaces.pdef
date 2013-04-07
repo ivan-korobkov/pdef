@@ -2,6 +2,15 @@ module pdef.fixtures.interfaces;
 import pdef.fixtures as fixtures;
 
 
+interface App {
+    users() Users;
+    calc() Calc;
+}
+
+interface Calc {
+    sum(i0 int32, i1 int32) int32;
+}
+
 interface Collection<Id, T> {
     get(id Id)  T;
 }

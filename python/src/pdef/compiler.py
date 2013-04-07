@@ -29,7 +29,7 @@ def main():
     parser.add_argument('--packages', help='package names to compile', nargs='+')
     args = parser.parse_args()
 
-    level = logging.DEBUG if args.verbose or args.debug else logging.INFO
+    level = logging.DEBUG if args.debug else logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(format='%(message)s', level=level)
 
     compiler = Compiler(args.path)

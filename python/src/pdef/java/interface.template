@@ -66,6 +66,13 @@ public interface {{ type }}{% if not bases %} {{'{'}}{% else %} extends
         }
 
 {% endif %}
+{% if bases %}
+        @Override
+	    public java.util.List<pdef.InterfaceDescriptor> getBases() {
+		    return bases;
+	    }
+
+{% endif %}
         @Override
         public pdef.SymbolTable<pdef.MethodDescriptor> getDeclaredMethods() {
             return declaredMethods;
@@ -91,6 +98,7 @@ public interface {{ type }}{% if not bases %} {{'{'}}{% else %} extends
 		protected void init() {
 {% for method in declared_methods %}
             {{ method.name }}Method = new pdef.generated.GeneratedMethodDescriptor("{{ method.name }}",
+                    {{ method.result.descriptor|indent(32) }},
                     com.google.common.collect.ImmutableMap.<String, pdef.TypeDescriptor>builder()
 {% for arg in method.args %}
                             .put("{{ arg.name }}", {{ arg.type.descriptor|indent(32) }})
@@ -100,7 +108,7 @@ public interface {{ type }}{% if not bases %} {{'{'}}{% else %} extends
                 @Override
                 public Object call(final Object iface, final java.util.Map<String, Object> args) {
 {% for arg in method.args %}
-                    {{ arg.type.raw }} {{ arg.name }} = ({{ arg.type.raw }}) args.get("{{ arg.name }}");
+                    {{ arg.type.boxed.raw }} {{ arg.name }} = ({{ arg.type.boxed.raw }}) args.get("{{ arg.name }}");
 {% endfor %}
 {% if method.result %}
                     return (({{ type.raw }}) iface).{{ method.name }}({% for arg in method.args%}{{ arg.name }}{% if not loop.last %}, {% endif %}{% endfor %});

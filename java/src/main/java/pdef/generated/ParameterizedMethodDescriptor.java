@@ -12,10 +12,13 @@ import java.util.Map;
 
 final class ParameterizedMethodDescriptor implements MethodDescriptor {
 	private final MethodDescriptor raw;
+	private final TypeDescriptor result;
 	private final Map<String, TypeDescriptor> args;
 
-	ParameterizedMethodDescriptor(final MethodDescriptor raw, final Map<String, TypeDescriptor> args) {
+	ParameterizedMethodDescriptor(final MethodDescriptor raw, final TypeDescriptor result,
+			final Map<String, TypeDescriptor> args) {
 		this.raw = checkNotNull(raw);
+		this.result = checkNotNull(result);
 		this.args = ImmutableMap.copyOf(args);
 	}
 
@@ -32,6 +35,10 @@ final class ParameterizedMethodDescriptor implements MethodDescriptor {
 		return raw.getName();
 	}
 
+	public TypeDescriptor getResult() {
+		return result;
+	}
+
 	@Override
 	public Map<String, TypeDescriptor> getArgs() {
 		return args;
@@ -44,12 +51,13 @@ final class ParameterizedMethodDescriptor implements MethodDescriptor {
 
 	@Override
 	public MethodDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
+		TypeDescriptor presult = result.bind(argMap);
 		Map<String, TypeDescriptor> parameterized = Maps.newLinkedHashMap();
 		for (Map.Entry<String, TypeDescriptor> entry : args.entrySet()) {
 			TypeDescriptor barg = entry.getValue().bind(argMap);
 			parameterized.put(entry.getKey(), barg);
 		}
-		if (parameterized.equals(args)) return this;
-		return new ParameterizedMethodDescriptor(raw, parameterized);
+		if (presult.equals(result) && parameterized.equals(args)) return this;
+		return new ParameterizedMethodDescriptor(raw, presult, parameterized);
 	}
 }

@@ -12,41 +12,42 @@ import pdef.formats.Parser;
 import java.util.List;
 import java.util.Map;
 
-public class RawDispatcher implements Dispatcher {
+public class RawRpcParser implements RpcParser {
 	private final Parser parser;
 
-	public RawDispatcher(final Parser parser) {
+	public RawRpcParser(final Parser parser) {
 		this.parser = parser;
 	}
 
 	@Override
-	public Object dispatch(final InterfaceDescriptor descriptor, final Object service,
-			final Map<String, Object> request) {
+	public List<Call> parse(final InterfaceDescriptor descriptor, final Object object) {
 		checkNotNull(descriptor);
-		checkNotNull(service);
-		checkNotNull(request);
+		checkNotNull(object);
 
-		List<Call> rawCalls = parseMethodNames(descriptor, request);
-		List<Call> calls = parseMethodArgs(rawCalls);
-		return dispatch(service, calls);
+		Map<?, ?> map = (Map<?, ?>) object;
+		List <Call> rawCalls = parseMethodNames(descriptor, map);
+		return parseMethodArgs(rawCalls);
 	}
 
 	@VisibleForTesting
-	List<Call> parseMethodNames(final InterfaceDescriptor descriptor,
-			final Map<String, Object> request) {
+	List<Call> parseMethodNames(final InterfaceDescriptor descriptor, final Map<?, ?> map) {
 		List<Call> calls = Lists.newArrayList();
 
 		InterfaceDescriptor d = descriptor;
 		StringBuilder sb = new StringBuilder();
-		for (Map.Entry<String, Object> entry : request.entrySet()) {
-			String methodName = entry.getKey();
+		for (Map.Entry<?, ?> entry : map.entrySet()) {
+			Object methodName = entry.getKey();
 			if (sb.length() > 0) sb.append(".");
 			sb.append(methodName);
 
 			MethodDescriptor method = d.getMethods().map().get(methodName);
-			if (method == null) throw new DispatcherException("Method not found " + sb.toString());
+			if (method == null) {
+				throw new DispatcherException("Method not found " + sb.toString());
+			}
 
-			calls.add(new Call(method, (Map<?, ?>) entry.getValue()));
+			Map<?, ?> args = (Map<?, ?>) entry.getValue();
+			Call call = new Call(method, args);
+			calls.add(call);
 			TypeDescriptor result = method.getResult();
 			if (result instanceof InterfaceDescriptor) {
 				d = (InterfaceDescriptor) result;
@@ -63,8 +64,8 @@ public class RawDispatcher implements Dispatcher {
 		List<Call> calls = Lists.newArrayListWithCapacity(rawCalls.size());
 
 		for (Call rawCall : rawCalls) {
-			MethodDescriptor method = rawCall.method;
-			Object rawArgs = rawCall.args;
+			MethodDescriptor method = rawCall.getMethod();
+			Object rawArgs = rawCall.getArgs();
 
 			Map<String, Object> args = parseArgs(method.getArgs(), rawArgs);
 			calls.add(new Call(method, args));
@@ -88,31 +89,5 @@ public class RawDispatcher implements Dispatcher {
 		}
 
 		return args;
-	}
-
-	@VisibleForTesting
-	Object dispatch(final Object service, final List<Call> calls) {
-		checkNotNull(service);
-		checkNotNull(calls);
-
-		Object object = service;
-		for (Call call : calls) {
-			MethodDescriptor method = call.method;
-			@SuppressWarnings("unchecked")
-			Map<String, Object> args = (Map<String, Object>) call.args;
-			object = method.call(object, args);
-		}
-
-		return object;
-	}
-
-	private static class Call {
-		private final MethodDescriptor method;
-		private final Map<?, ?> args;
-
-		private Call(final MethodDescriptor method, final Map<?, ?> args) {
-			this.method = method;
-			this.args = args;
-		}
 	}
 }

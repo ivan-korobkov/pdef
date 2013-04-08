@@ -59,8 +59,12 @@ class JavaRef(object):
         if not self.variables:
             return self
 
-        vars = tuple(var.wildcard for var in self.variables)
-        return SimpleJavaRef(self.name, self.package, vars)
+        variables = tuple(var.wildcard for var in self.variables)
+        return SimpleJavaRef(self.name, self.package, variables)
+
+    @property
+    def is_void(self):
+        return self.name == 'void'
 
 
 class VariableJavaRef(JavaRef):

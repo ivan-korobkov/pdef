@@ -94,12 +94,13 @@ class Node(Symbol):
 
     def lookup(self, name_or_ref):
         from pdef.ast import Ref
+        from pdef.lang.types import Type
         if isinstance(name_or_ref, Ref):
             node = self._lookup_ref(name_or_ref)
         else:
             node = self._lookup_name(name_or_ref)
 
-        if node:
+        if node and isinstance(node, Type):
             node.init()
 
         return node

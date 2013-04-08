@@ -2,10 +2,12 @@ package pdef.formats;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import static com.google.common.base.Preconditions.*;
-import pdef.MessageDescriptor;
+import pdef.InterfaceDescriptor;
 import pdef.TypeDescriptor;
+import pdef.rpc.Call;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class JsonParser implements Parser {
@@ -30,6 +32,17 @@ public class JsonParser implements Parser {
 		} catch (IOException e) {
 			throw new FormatException(e);
 		}
+	}
+
+	@Override
+	public List<Call> parseCalls(final InterfaceDescriptor descriptor, final Object object) {
+		Map map;
+		try {
+			map = mapper.readValue((String) object, Map.class);
+		} catch (IOException e) {
+			throw new FormatException(e);
+		}
+		return delegate.parseCalls(descriptor, map);
 	}
 
 	private Object parse(final TypeDescriptor descriptor, final String s) throws IOException {

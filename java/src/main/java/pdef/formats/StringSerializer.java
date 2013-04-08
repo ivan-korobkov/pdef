@@ -1,6 +1,7 @@
 package pdef.formats;
 
 import pdef.*;
+import pdef.rpc.Call;
 
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,11 @@ public class StringSerializer extends AbstractSerializer {
 		String s = (String) super.serialize(message);
 		if (s.startsWith("{") && s.endsWith("}")) return s.substring(1, s.length() - 1);
 		return s;
+	}
+
+	@Override
+	public Object serializeCalls(final List<Call> calls) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

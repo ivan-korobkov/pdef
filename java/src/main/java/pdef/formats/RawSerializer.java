@@ -1,9 +1,12 @@
 package pdef.formats;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import pdef.*;
+import pdef.rpc.Call;
 
 import java.util.List;
 import java.util.Map;
@@ -121,5 +124,33 @@ public class RawSerializer extends AbstractSerializer {
 	@Override
 	protected String serializeString(final String value) {
 		return value == null ? null : value;
+	}
+
+	@Override
+	public Map<String, Object> serializeCalls(final List<Call> calls) {
+		checkNotNull(calls);
+		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+
+		for (Call call : calls) {
+			MethodDescriptor method = call.getMethod();
+			Map<String, Object> args = serializeArgs(method, call.getArgs());
+			builder.put(method.getName(), args);
+		}
+
+		return builder.build();
+	}
+
+	private Map<String, Object> serializeArgs(final MethodDescriptor method,
+			final Map<?, ?> args) {
+		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+		for (Map.Entry<String, TypeDescriptor> entry : method.getArgs().entrySet()) {
+			String name = entry.getKey();
+			TypeDescriptor type = entry.getValue();
+			Object arg = args.get(name);
+
+			Object rawArg = serialize(type, arg);
+			builder.put(name, rawArg);
+		}
+		return builder.build();
 	}
 }

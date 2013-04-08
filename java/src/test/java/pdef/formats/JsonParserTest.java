@@ -1,11 +1,17 @@
 package pdef.formats;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
+import pdef.MethodDescriptor;
 import pdef.fixtures.*;
+import pdef.fixtures.interfaces.App;
+import pdef.fixtures.interfaces.Calc;
+import pdef.rpc.Call;
 
+import java.util.List;
 import java.util.Map;
 
 public class JsonParserTest {
@@ -49,5 +55,24 @@ public class JsonParserTest {
 				.setFloats(floats)
 				.build();
 		assertEquals(user0, user);
+	}
+
+	@Test
+	public void testParseCalls() throws Exception {
+		String s = "{\"calc\":{},\"sum\":{\"i0\":10,\"i1\":11}}";
+		App.Descriptor app = App.Descriptor.getInstance();
+		Calc.Descriptor calc = Calc.Descriptor.getInstance();
+		MethodDescriptor calcMethod = app.getMethods().map().get("calc");
+		MethodDescriptor sumMethod = calc.getMethods().map().get("sum");
+
+		List<Call> calls = parser.parseCalls(app, s);
+		Call call0 = calls.get(0);
+		Call call1 = calls.get(1);
+
+		assertEquals(2, calls.size());
+		assertEquals(calcMethod, call0.getMethod());
+		assertEquals(sumMethod, call1.getMethod());
+		assertEquals(ImmutableMap.of(), call0.getArgs());
+		assertEquals(ImmutableMap.of("i0", 10, "i1", 11), call1.getArgs());
 	}
 }

@@ -1,13 +1,19 @@
 package pdef.formats;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
+import pdef.MethodDescriptor;
 import pdef.fixtures.*;
+import pdef.fixtures.interfaces.App;
+import pdef.fixtures.interfaces.Calc;
+import pdef.rpc.Call;
 
+import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
 
 public class JsonSerializerTest {
 	private JsonSerializer serializer;
@@ -54,5 +60,20 @@ public class JsonSerializerTest {
 						+ "\"preferedLanguage\":\"en\",\"complete\":true},\"floats\":{\"b\":0.0,"
 						+ "\"a\":1.2}}",
 				s);
+	}
+
+	@Test
+	public void testSerializeCalls() throws Exception {
+		App.Descriptor app = App.Descriptor.getInstance();
+		Calc.Descriptor calc = Calc.Descriptor.getInstance();
+		MethodDescriptor calcMethod = app.getMethods().map().get("calc");
+		MethodDescriptor sumMethod = calc.getMethods().map().get("sum");
+
+		List<Call> calls = ImmutableList.of(
+				new Call(calcMethod, ImmutableMap.of()),
+				new Call(sumMethod, ImmutableMap.of("i0", 10, "i1", 11)));
+		String result = (String) serializer.serializeCalls(calls);
+
+		assertEquals("{\"calc\":{},\"sum\":{\"i0\":10,\"i1\":11}}", result);
 	}
 }

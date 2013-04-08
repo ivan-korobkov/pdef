@@ -2,6 +2,7 @@ package pdef.rpc;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import pdef.MethodDescriptor;
@@ -9,8 +10,6 @@ import pdef.fixtures.interfaces.App;
 import pdef.fixtures.interfaces.Calc;
 
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 public class DefaultDispatcherTest {
 	private DefaultRpcDispatcher dispatcher;
@@ -35,5 +34,4 @@ public class DefaultDispatcherTest {
 		Object result = dispatcher.dispatch(calls, sevice);
 		assertEquals(3, (int) (Integer) result);
 	}
-
 }

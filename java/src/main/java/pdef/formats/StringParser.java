@@ -4,6 +4,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import pdef.*;
+import pdef.rpc.Call;
 
 import java.util.List;
 
@@ -15,6 +16,11 @@ public class StringParser extends AbstractParser {
 		String s = (String) object;
 		List<Object> tokens = parseTokens(s);
 		return parseMessage((MessageDescriptor) descriptor, tokens);
+	}
+
+	@Override
+	public List<Call> parseCalls(final InterfaceDescriptor descriptor, final Object object) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

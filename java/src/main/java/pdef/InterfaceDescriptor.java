@@ -5,6 +5,9 @@ import java.util.Map;
 
 public interface InterfaceDescriptor extends TypeDescriptor {
 
+	/** Returns this interface class. */
+	Class<?> getJavaClass();
+
 	/** Returns this interfaces base interfaces. */
 	List<InterfaceDescriptor> getBases();
 

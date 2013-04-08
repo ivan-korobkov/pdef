@@ -2,15 +2,15 @@ package pdef.rpc;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import pdef.MethodDescriptor;
 import pdef.fixtures.interfaces.App;
 import pdef.fixtures.interfaces.Calc;
-import pdef.fixtures.interfaces.Users;
 
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class DefaultDispatcherTest {
 	private DefaultRpcDispatcher dispatcher;
@@ -36,22 +36,4 @@ public class DefaultDispatcherTest {
 		assertEquals(3, (int) (Integer) result);
 	}
 
-	private static class TestApp implements App {
-		@Override
-		public Users users() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Calc calc() {
-			return new TestCalc();
-		}
-	}
-
-	private static class TestCalc implements Calc {
-		@Override
-		public int sum(final int i0, final int i1) {
-			return i0 + i1;
-		}
-	}
 }

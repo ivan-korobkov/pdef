@@ -1,12 +1,13 @@
 package pdef.formats;
 
 import com.google.common.collect.Maps;
-import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import pdef.fixtures.*;
 
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 public class JsonSerializerTest {
 	private JsonSerializer serializer;
@@ -46,10 +47,12 @@ public class JsonSerializerTest {
 				.build();
 
 		String s = (String) serializer.serialize(user);
-		assertEquals("{\"type\":\"user\",\"name\":\"Ivan Korobkov\",\"age\":25,\"sex\":\"male\","
-				+ "\"profile\":{\"firstName\":\"Ivan\",\"lastName\":\"Korobkov\","
-				+ "\"birthday\":{\"year\":1987,\"month\":8,\"day\":7},\"avatar\":123,"
-				+ "\"preferedLanguage\":\"en\",\"complete\":true},\"floats\":{\"b\":0.0,\"a\":1.2}}",
+		assertEquals(
+				"{\"type\":\"user\",\"name\":\"Ivan Korobkov\",\"age\":25,\"sex\":\"male\","
+						+ "\"profile\":{\"firstName\":\"Ivan\",\"lastName\":\"Korobkov\","
+						+ "\"birthday\":{\"year\":1987,\"month\":8,\"day\":7},\"avatar\":123,"
+						+ "\"preferedLanguage\":\"en\",\"complete\":true},\"floats\":{\"b\":0.0,"
+						+ "\"a\":1.2}}",
 				s);
 	}
 }

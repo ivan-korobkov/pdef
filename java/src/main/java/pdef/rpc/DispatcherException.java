@@ -16,10 +16,4 @@ public class DispatcherException extends RuntimeException {
 	public DispatcherException(final Throwable cause) {
 		super(cause);
 	}
-
-	public DispatcherException(final String message, final Throwable cause,
-			final boolean enableSuppression,
-			final boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
 }

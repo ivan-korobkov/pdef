@@ -1,10 +1,11 @@
 package pdef.formats;
 
-import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import pdef.fixtures.Profile;
 import pdef.fixtures.Sex;
 import pdef.fixtures.User;
+
+import static org.junit.Assert.assertEquals;
 
 public class StringSerializerTest {
 	@Test

@@ -14,7 +14,8 @@ public abstract class AbstractSerializer implements Serializer {
 		return serialize(descriptor, message);
 	}
 
-	protected Object serialize(TypeDescriptor descriptor, Object object) {
+	@Override
+	public Object serialize(TypeDescriptor descriptor, Object object) {
 		if (descriptor instanceof ValueDescriptor) {
 			return serializeValue((ValueDescriptor) descriptor, object);
 		} else if (descriptor instanceof MessageDescriptor) {

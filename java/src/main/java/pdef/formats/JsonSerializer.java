@@ -3,6 +3,7 @@ package pdef.formats;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import pdef.Message;
+import pdef.TypeDescriptor;
 
 public class JsonSerializer implements Serializer {
 	private final RawSerializer delegate;
@@ -22,6 +23,16 @@ public class JsonSerializer implements Serializer {
 		Object object = delegate.serialize(message);
 		try {
 			return mapper.writeValueAsString(object);
+		} catch (JsonProcessingException e) {
+			throw new FormatException(e);
+		}
+	}
+
+	@Override
+	public Object serialize(final TypeDescriptor type, final Object object) {
+		Object serialized = delegate.serialize(type, object);
+		try {
+			return mapper.writeValueAsString(serialized);
 		} catch (JsonProcessingException e) {
 			throw new FormatException(e);
 		}

@@ -1,21 +1,22 @@
 package pdef.rpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import pdef.InterfaceDescriptor;
 import pdef.MethodDescriptor;
 import pdef.TypeDescriptor;
-import pdef.formats.Parser;
+import pdef.formats.RawParser;
 
 import java.util.List;
 import java.util.Map;
 
-public class RawRpcParser implements RpcParser {
-	private final Parser parser;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-	public RawRpcParser(final Parser parser) {
+public class RawRpcParser implements RpcParser {
+	private final RawParser parser;
+
+	public RawRpcParser(final RawParser parser) {
 		this.parser = parser;
 	}
 

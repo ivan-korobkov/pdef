@@ -72,6 +72,7 @@ public class RpcInvocation implements InvocationHandler {
 		while (objectIterator.hasNext()) {
 			Object object = objectIterator.next();
 			String key = argIterator.next();
+			if (object == null) continue;
 			builder.put(key, object);
 		}
 

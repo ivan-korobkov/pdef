@@ -1,6 +1,5 @@
 package pdef.formats;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -11,6 +10,8 @@ import pdef.rpc.Call;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RawSerializer extends AbstractSerializer {
 	@Override
@@ -147,6 +148,7 @@ public class RawSerializer extends AbstractSerializer {
 			String name = entry.getKey();
 			TypeDescriptor type = entry.getValue();
 			Object arg = args.get(name);
+			if (arg == null) continue;
 
 			Object rawArg = serialize(type, arg);
 			builder.put(name, rawArg);

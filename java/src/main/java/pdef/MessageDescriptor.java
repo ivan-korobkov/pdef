@@ -3,7 +3,7 @@ package pdef;
 import javax.annotation.Nullable;
 import java.util.Map;
 
-public interface MessageDescriptor extends DataTypeDescriptor {
+public interface MessageDescriptor extends TypeDescriptor {
 
 	/** Returns this message base. */
 	@Nullable

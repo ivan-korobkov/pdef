@@ -1,8 +1,7 @@
 package pdef;
 
-public interface Message extends DataType {
+public interface Message {
 
-	@Override
 	MessageDescriptor getDescriptor();
 
 	Builder newBuilderForType();

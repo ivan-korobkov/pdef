@@ -38,7 +38,7 @@ public class GeneratedEnumDescriptor
 	}
 
 	@Override
-	public DataTypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
+	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
 	@Override
 	public void initialize() {}

@@ -1,6 +1,6 @@
 package pdef;
 
-public interface MapDescriptor extends DataTypeDescriptor {
+public interface MapDescriptor extends TypeDescriptor {
 
 	TypeDescriptor getKey();
 

@@ -43,7 +43,7 @@ public final class NativeSetDescriptor implements SetDescriptor, Native {
 	}
 
 	@Override
-	public DataTypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
+	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
 	class ParameterizedSetDescriptor implements SetDescriptor {
 		private final TypeDescriptor element;

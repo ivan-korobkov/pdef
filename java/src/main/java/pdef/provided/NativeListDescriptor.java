@@ -43,7 +43,7 @@ public final class NativeListDescriptor implements ListDescriptor, Native {
 	}
 
 	@Override
-	public DataTypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
+	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
 	class ParameterizedListDescriptor implements ListDescriptor {
 		private final TypeDescriptor element;

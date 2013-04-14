@@ -48,7 +48,7 @@ public final class NativeMapDescriptor implements MapDescriptor, Native {
 	}
 
 	@Override
-	public DataTypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
+	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 
 	class ParameterizedMapDescriptor implements MapDescriptor {
 		private final TypeDescriptor key;
@@ -82,7 +82,7 @@ public final class NativeMapDescriptor implements MapDescriptor, Native {
 		}
 
 		@Override
-		public DataTypeDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
+		public TypeDescriptor bind(final Map<VariableDescriptor, TypeDescriptor> argMap) {
 			TypeDescriptor bkey = key.bind(argMap);
 			TypeDescriptor bvalue = value.bind(argMap);
 			return NativeMapDescriptor.this.parameterize(bkey, bvalue);

@@ -6,7 +6,7 @@ import java.util.Map;
 public interface Subtypes {
 
 	/** Returns the type of the message which holds this tree. */
-	EnumType getType();
+	Enum<?> getType();
 
 	/** Returns the field which holds the type. */
 	FieldDescriptor getField();
@@ -16,19 +16,19 @@ public interface Subtypes {
 	MessageDescriptor getSubtype(Object object);
 
 	/** Returns a subtype map which includes this message and all its subclasses. */
-	Map<EnumType, MessageDescriptor> getMap();
+	Map<Enum<?>, MessageDescriptor> getMap();
 
-	Builder subclass(EnumType subtype);
+	Builder subclass(Enum<?> subtype);
 
 	public static interface Builder {
 
-		Builder setType(EnumType type);
+		Builder setType(Enum<?> type);
 
 		Builder setField(FieldDescriptor field);
 
-		Builder put(EnumType enumType, final MessageDescriptor message);
+		Builder put(Enum<?> enumType, final MessageDescriptor message);
 
-		Builder putAll(Map<? extends EnumType, ? extends MessageDescriptor> map);
+		Builder putAll(Map<? extends Enum<?>, ? extends MessageDescriptor> map);
 
 		Subtypes build();
 	}

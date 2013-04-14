@@ -10,7 +10,6 @@ import com.google.common.collect.Lists;
 import java.util.*;
 
 public class ImmutableSymbolTable<T extends Symbol> implements SymbolTable<T> {
-
 	private final ImmutableList<T> list;
 	private final ImmutableSet<T> set;
 	private final ImmutableMap<String, T> map;

@@ -1,6 +1,6 @@
 package pdef;
 
-public interface SetDescriptor extends DataTypeDescriptor {
+public interface SetDescriptor extends TypeDescriptor {
 
 	TypeDescriptor getElement();
 

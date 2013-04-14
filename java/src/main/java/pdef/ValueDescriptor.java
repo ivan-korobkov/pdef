@@ -1,6 +1,6 @@
 package pdef;
 
-public interface ValueDescriptor extends DataTypeDescriptor {
+public interface ValueDescriptor extends TypeDescriptor {
 
 	Class<?> getJavaClass();
 }

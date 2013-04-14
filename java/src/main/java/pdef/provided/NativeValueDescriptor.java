@@ -32,5 +32,5 @@ public class NativeValueDescriptor implements ValueDescriptor {
 	}
 
 	@Override
-	public DataTypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
+	public TypeDescriptor bind(Map<VariableDescriptor, TypeDescriptor> argMap) { return this; }
 }

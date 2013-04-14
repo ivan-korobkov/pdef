@@ -8,16 +8,16 @@ import javax.annotation.Nullable;
 import java.util.Map;
 
 public class ImmutableSubtypes implements Subtypes {
-	private final EnumType type;
+	private final Enum<?> type;
 	private final FieldDescriptor field;
-	private final ImmutableMap<EnumType, MessageDescriptor> map;
+	private final ImmutableMap<Enum<?>, MessageDescriptor> map;
 
 	public static Builder builder() {
 		return new Builder();
 	}
 
-	private ImmutableSubtypes(final EnumType type, final FieldDescriptor field,
-			final ImmutableMap<EnumType, MessageDescriptor> map) {
+	private ImmutableSubtypes(final Enum<?> type, final FieldDescriptor field,
+			final ImmutableMap<Enum<?>, MessageDescriptor> map) {
 		this.type = checkNotNull(type);
 		this.field = checkNotNull(field);
 		this.map = checkNotNull(map);
@@ -33,7 +33,7 @@ public class ImmutableSubtypes implements Subtypes {
 	}
 
 	@Override
-	public EnumType getType() {
+	public Enum<?> getType() {
 		return type;
 	}
 
@@ -49,27 +49,27 @@ public class ImmutableSubtypes implements Subtypes {
 	}
 
 	@Override
-	public ImmutableMap<EnumType, MessageDescriptor> getMap() {
+	public ImmutableMap<Enum<?>, MessageDescriptor> getMap() {
 		return map;
 	}
 
 	@Override
-	public Subtypes.Builder subclass(final EnumType subtype) {
+	public Subtypes.Builder subclass(final Enum<?> subtype) {
 		checkArgument(map.containsKey(subtype));
 		return builder().setField(field).setType(subtype);
 	}
 
 	public static class Builder implements Subtypes.Builder {
-		private EnumType type;
+		private Enum<?> type;
 		private FieldDescriptor field;
-		private ImmutableMap.Builder<EnumType, MessageDescriptor> map;
+		private ImmutableMap.Builder<Enum<?>, MessageDescriptor> map;
 
 		private Builder() {
 			map = ImmutableMap.builder();
 		}
 
 		@Override
-		public Builder setType(final EnumType type) {
+		public Builder setType(final Enum<?> type) {
 			checkState(this.type == null, "type is already set to %s", this.type);
 			this.type = type;
 			return this;
@@ -83,13 +83,13 @@ public class ImmutableSubtypes implements Subtypes {
 		}
 
 		@Override
-		public Builder put(final EnumType enumType, final MessageDescriptor message) {
+		public Builder put(final Enum<?> enumType, final MessageDescriptor message) {
 			map.put(enumType, message);
 			return this;
 		}
 
 		@Override
-		public Builder putAll(final Map<? extends EnumType, ? extends MessageDescriptor> map) {
+		public Builder putAll(final Map<? extends Enum<?>, ? extends MessageDescriptor> map) {
 			this.map.putAll(map);
 			return this;
 		}

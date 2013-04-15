@@ -25,7 +25,8 @@ public class RawSerializer extends AbstractSerializer {
 	protected Map<String, Object> serializeMessage(final MessageDescriptor descriptor,
 			final Message message) {
 		if (message == null) return null;
-		Collection<FieldDescriptor> fields = descriptor.getFields().values();
+		MessageDescriptor polymorphic = getDescriptorForType(descriptor, message);
+		Collection<FieldDescriptor> fields = polymorphic.getFields().values();
 
 		Map<String, Object> result = Maps.newLinkedHashMap();
 		for (FieldDescriptor field : fields) {
@@ -37,6 +38,12 @@ public class RawSerializer extends AbstractSerializer {
 		}
 
 		return result;
+	}
+
+	protected MessageDescriptor getDescriptorForType(final MessageDescriptor descriptor,
+			final Message message) {
+		if (descriptor.getSubtypes() == null) return descriptor;
+		return (MessageDescriptor) pool.getDescriptor(message.getClass());
 	}
 
 	@Override

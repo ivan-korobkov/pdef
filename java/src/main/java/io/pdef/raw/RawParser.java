@@ -26,11 +26,10 @@ public class RawParser extends AbstractParser {
 	protected Message parseMessage(final MessageDescriptor descriptor, final Object object) {
 		if (object == null) return null;
 		Map<?, ?> map = (Map<?, ?>) object;
-		// MessageDescriptor polymorphic = parseDescriptorType(descriptor, map);
-		//Collection<FieldDescriptor> fields = polymorphic.getFields().values();
+		MessageDescriptor polymorphic = parseDescriptorType(descriptor, map);
+		Collection<FieldDescriptor> fields = polymorphic.getFields().values();
 
-		Collection<FieldDescriptor> fields = descriptor.getFields().values();
-		Message.Builder builder = descriptor.newBuilder();
+		Message.Builder builder = polymorphic.newBuilder();
 		for (FieldDescriptor field : fields) {
 			String name = field.getName();
 			if (!map.containsKey(name)) continue;
@@ -40,6 +39,7 @@ public class RawParser extends AbstractParser {
 			Object pval = doParse(type, val);
 
 			// Even-though the field is read-only we still parse it to validate the data.
+			// TODO: type field
 			// if (field.isTypeField()) continue;
 			field.set(builder, pval);
 		}
@@ -47,24 +47,26 @@ public class RawParser extends AbstractParser {
 		return builder.build();
 	}
 
-//	private MessageDescriptor parseDescriptorType(final MessageDescriptor descriptor,
-//			final Map<?, ?> map) {
-//		Subtypes tree = descriptor.getSubtypes();
-//		if (tree == null) return descriptor;
-//
-//		FieldDescriptor field = tree.getField();
-//		String name = field.getName();
-//		if (!map.containsKey(name)) return descriptor;
-//
-//		TypeDescriptor type = field.getType();
-//		Object val = map.get(name);
-//		Object pval = doParse(type, val);
-//		MessageDescriptor subd = tree.getMap().get(pval);
-//
-//		// TODO: Log if a subtype is not found.
-//		if (subd == null || subd == descriptor) return descriptor;
-//		return parseDescriptorType(subd, map);
-//	}
+	private MessageDescriptor parseDescriptorType(final MessageDescriptor descriptor,
+			final Map<?, ?> map) {
+		SubtypesDescriptor subtypes = descriptor.getSubtypes();
+		if (subtypes == null) return descriptor;
+
+		FieldDescriptor field = subtypes.getField();
+		String name = field.getName();
+		if (!map.containsKey(name)) return descriptor;
+
+		Descriptor type = field.getType();
+		Object val = map.get(name);
+		Object pval = doParse(type, val);
+		Class<?> subtype = subtypes.getMap().get(pval);
+
+		if (descriptor.getJavaType() == subtype) return descriptor;
+		if (subtype == null) return descriptor;
+
+		MessageDescriptor subdescriptor = (MessageDescriptor) pool.getDescriptor(subtype);
+		return parseDescriptorType(subdescriptor, map);
+	}
 
 	@Override
 	protected Enum<?> parseEnum(final EnumDescriptor descriptor, final Object object) {

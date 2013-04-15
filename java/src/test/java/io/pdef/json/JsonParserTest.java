@@ -1,6 +1,7 @@
 package io.pdef.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.pdef.fixtures.GenericObject;
 import io.pdef.fixtures.Image;
 import io.pdef.fixtures.User;
 import io.pdef.raw.RawParser;
@@ -21,9 +22,8 @@ public class JsonParserTest {
 
 	@Test
 	public void testParse() throws Exception {
-		String s = "{\"name\":\"John Doe\",\"avatar\":{\"url\":\"http://example.com/image.jpg\","
-				+ "\"owner\":null,\"createdAt\":1234},\"photos\":null}";
-		User user = (User) parser.parse(User.class, s);
+		String s = "{\"type\":\"user\", \"name\":\"John Doe\",\"avatar\":{\"url\":\"http://example"
+				+ ".com/image.jpg\",\"owner\":null,\"createdAt\":1234},\"photos\":null}";
 
 		Image image = new Image.Builder()
 				.setUrl("http://example.com/image.jpg")
@@ -34,6 +34,8 @@ public class JsonParserTest {
 				.setName("John Doe")
 				.setAvatar(image)
 				.build();
+
+		User user = (User) parser.parse(GenericObject.class, s);
 		assertEquals(expected, user);
 	}
 }

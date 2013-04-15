@@ -27,6 +27,10 @@ public class GenericObject implements Message {
 	public static class Builder implements Message.Builder {
 		private ObjectType type;
 
+		public Builder() {
+			this.type = ObjectType.OBJECT;
+		}
+
 		public ObjectType getType() {
 			return type;
 		}

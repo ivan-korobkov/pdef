@@ -1,10 +1,8 @@
 package io.pdef.fixtures;
 
-import io.pdef.Message;
-
 import java.util.List;
 
-public class User implements Message {
+public class User extends GenericObject {
 	private String name;
 	private Image avatar;
 	private List<Image> photos;
@@ -12,6 +10,7 @@ public class User implements Message {
 	public User() {}
 
 	public User(final Builder builder) {
+		super(builder);
 		name = builder.name;
 		avatar = builder.avatar;
 		photos = builder.photos;
@@ -29,10 +28,14 @@ public class User implements Message {
 		return photos;
 	}
 
-	public static class Builder implements Message.Builder {
+	public static class Builder extends GenericObject.Builder {
 		private String name;
 		private Image avatar;
 		private List<Image> photos;
+
+		public Builder() {
+			this.setType(ObjectType.USER);
+		}
 
 		public Builder setName(final String name) {
 			this.name = name;
@@ -59,6 +62,7 @@ public class User implements Message {
 	public boolean equals(final Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
+		if (!super.equals(o)) return false;
 
 		User user = (User) o;
 
@@ -71,7 +75,8 @@ public class User implements Message {
 
 	@Override
 	public int hashCode() {
-		int result = name != null ? name.hashCode() : 0;
+		int result = super.hashCode();
+		result = 31 * result + (name != null ? name.hashCode() : 0);
 		result = 31 * result + (avatar != null ? avatar.hashCode() : 0);
 		result = 31 * result + (photos != null ? photos.hashCode() : 0);
 		return result;

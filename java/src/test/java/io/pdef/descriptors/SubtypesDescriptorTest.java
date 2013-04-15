@@ -20,7 +20,7 @@ public class SubtypesDescriptorTest {
 		SubtypesDescriptor subtypes = descriptor.getSubtypes();
 		assertEquals(ImmutableMap.<Enum<?>, Class<?>>of(ObjectType.OBJECT, GenericObject.class,
 				ObjectType.IMAGE, Image.class,
-				ObjectType.USER, User.class), subtypes.getSubtypes());
+				ObjectType.USER, User.class), subtypes.getMap());
 
 		assertEquals(descriptor.getFields().get("type"), subtypes.getField());
 	}

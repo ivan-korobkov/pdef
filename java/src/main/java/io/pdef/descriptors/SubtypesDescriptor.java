@@ -46,7 +46,7 @@ public class SubtypesDescriptor {
 		return message;
 	}
 
-	public Map<Enum<?>, Class<?>> getSubtypes() {
+	public Map<Enum<?>, Class<?>> getMap() {
 		return subtypes;
 	}
 

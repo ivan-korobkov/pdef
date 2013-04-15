@@ -31,6 +31,10 @@ public class Image extends GenericObject {
 		private User owner;
 		private long createdAt;
 
+		public Builder() {
+			this.setType(ObjectType.IMAGE);
+		}
+
 		public Builder setUrl(final String url) {
 			this.url = url;
 			return this;

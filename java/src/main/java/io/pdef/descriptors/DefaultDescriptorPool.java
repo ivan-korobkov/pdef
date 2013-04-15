@@ -3,6 +3,7 @@ package io.pdef.descriptors;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Primitives;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.pdef.Interface;
 import io.pdef.Message;
 
@@ -71,6 +72,7 @@ public class DefaultDescriptorPool implements DescriptorPool {
 		if (List.class == raw) return new ListDescriptor(type, this);
 		if (Set.class == raw) return new SetDescriptor(type, this);
 		if (Map.class == raw) return new MapDescriptor(type, this);
+		if (ListenableFuture.class == raw) return new FutureDescriptor(type, this);
 		return null;
 	}
 }

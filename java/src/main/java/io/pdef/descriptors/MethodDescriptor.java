@@ -1,5 +1,6 @@
 package io.pdef.descriptors;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
 import java.lang.reflect.Method;
@@ -27,6 +28,13 @@ public class MethodDescriptor {
 		args = builder.build();
 	}
 
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(name)
+				.toString();
+	}
+
 	public Method getMethod() {
 		return method;
 	}
@@ -41,5 +49,9 @@ public class MethodDescriptor {
 
 	public List<Descriptor> getArgs() {
 		return args;
+	}
+
+	public Object call(final Object object, final List<?> args) {
+		return null;
 	}
 }

@@ -1,4 +1,4 @@
-package pdef.descriptors;
+package io.pdef.descriptors;
 
 public class ValueDescriptor extends AbstractDescriptor {
 

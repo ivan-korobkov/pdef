@@ -1,13 +1,12 @@
-package pdef.descriptors;
+package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
-import pdef.Symbol;
 
 import java.lang.reflect.Field;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class FieldDescriptor implements Symbol {
+public class FieldDescriptor {
 	private final Field field;
 	private final String name;
 	private final Descriptor descriptor;
@@ -26,9 +25,8 @@ public class FieldDescriptor implements Symbol {
 				.toString();
 	}
 
-	@Override
 	public String getName() {
-		return name;
+		return field.getName();
 	}
 
 	public Field getField() {

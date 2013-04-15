@@ -1,13 +1,12 @@
-package pdef.descriptors;
+package io.pdef.descriptors;
 
+import io.pdef.Message;
 import org.junit.Test;
-import pdef.Message;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class MessageDescriptorTest {
@@ -16,7 +15,6 @@ public class MessageDescriptorTest {
 		DescriptorPool pool = new DefaultDescriptorPool();
 		MessageDescriptor descriptor = new MessageDescriptor(User.class, pool);
 		assertEquals(User.class, descriptor.getJavaType());
-		assertNull(descriptor.getBaseType());
 	}
 
 	@Test
@@ -25,7 +23,7 @@ public class MessageDescriptorTest {
 		MessageDescriptor descriptor = new MessageDescriptor(User.class, pool);
 		descriptor.link();
 
-		Map<String, FieldDescriptor> fields = descriptor.getDeclaredFields().map();
+		Map<String, FieldDescriptor> fields = descriptor.getDeclaredFields();
 		assertEquals(3, fields.size());
 		assertTrue(fields.containsKey("name"));
 		assertTrue(fields.containsKey("avatar"));
@@ -39,41 +37,11 @@ public class MessageDescriptorTest {
 		private String name;
 		private Image avatar;
 		private List<Image> photos;
-
-		@Override
-		public pdef.MessageDescriptor getDescriptor() {
-			return null;
-		}
-
-		@Override
-		public Builder newBuilderForType() {
-			return null;
-		}
-
-		@Override
-		public Builder toBuilder() {
-			return null;
-		}
 	}
 
 	private static class Image implements Message {
 		private String url;
 		private User owner;
 		private long createdAt;
-
-		@Override
-		public pdef.MessageDescriptor getDescriptor() {
-			return null;
-		}
-
-		@Override
-		public Builder newBuilderForType() {
-			return null;
-		}
-
-		@Override
-		public Builder toBuilder() {
-			return null;
-		}
 	}
 }

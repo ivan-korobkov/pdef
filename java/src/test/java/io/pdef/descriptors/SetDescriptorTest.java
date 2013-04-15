@@ -1,4 +1,4 @@
-package pdef.descriptors;
+package io.pdef.descriptors;
 
 import org.junit.Test;
 

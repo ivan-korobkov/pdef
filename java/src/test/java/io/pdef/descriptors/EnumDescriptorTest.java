@@ -1,4 +1,4 @@
-package pdef.descriptors;
+package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;

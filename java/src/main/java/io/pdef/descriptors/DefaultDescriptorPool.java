@@ -1,9 +1,10 @@
-package pdef.descriptors;
+package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Primitives;
-import pdef.Message;
+import io.pdef.Interface;
+import io.pdef.Message;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -59,6 +60,7 @@ public class DefaultDescriptorPool implements DescriptorPool {
 	protected Descriptor createDescriptor(final Class<?> cls1) {
 		Class<?> cls = Primitives.unwrap(cls1);
 		if (Message.class.isAssignableFrom(cls)) return new MessageDescriptor(cls, this);
+		if (Interface.class.isAssignableFrom(cls)) return new InterfaceDescriptor(cls, this);
 		if (VALUE_CLASSES.contains(cls)) return new ValueDescriptor(cls, this);
 		if (cls.isEnum()) return new EnumDescriptor(cls, this);
 		return null;

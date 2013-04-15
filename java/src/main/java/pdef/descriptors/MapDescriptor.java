@@ -1,38 +1,41 @@
 package pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Map;
 
 public class MapDescriptor extends AbstractDescriptor {
-	private final ParameterizedType mapType;
-	private final Type key;
-	private final Type element;
+	private final Type keyType;
+	private final Type valueType;
+	private Descriptor key;
+	private Descriptor element;
 
 	public MapDescriptor(final ParameterizedType mapType, final DescriptorPool pool) {
-		super(DescriptorType.MAP, pool);
-		this.mapType = checkNotNull(mapType);
-		checkArgument(mapType.getRawType() == Map.class);
+		super(mapType, DescriptorType.MAP, pool);
 
 		Type[] args = mapType.getActualTypeArguments();
-		key = args[0];
-		element = args[1];
+		keyType = args[0];
+		valueType = args[1];
 	}
 
-	public ParameterizedType getMapType() {
-		return mapType;
+	public Type getKeyType() {
+		return keyType;
 	}
 
-	public Type getKey() {
+	public Type getValueType() {
+		return valueType;
+	}
+
+	public Descriptor getKey() {
 		return key;
 	}
 
-	public Type getElement() {
+	public Descriptor getElement() {
 		return element;
 	}
 
 	@Override
-	protected void doLink() {}
+	protected void doLink() {
+		key = pool.getDescriptor(keyType);
+		element = pool.getDescriptor(valueType);
+	}
 }

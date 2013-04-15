@@ -1,6 +1,5 @@
 package pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import pdef.ImmutableSymbolTable;
 import pdef.Message;
@@ -10,19 +9,41 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class MessageDescriptor extends AbstractDescriptor {
-	private final Class<?> cls;
 	private final Type baseType;
 
 	private MessageDescriptor base;
 	private SymbolTable<FieldDescriptor> fields;
 	private SymbolTable<FieldDescriptor> declaredFields;
 
-	public MessageDescriptor(final Class<?> cls, final DescriptorPool pool) {
-		super(DescriptorType.MESSAGE, pool);
-		this.cls = checkNotNull(cls);
-		baseType = cls.getGenericSuperclass();
-		checkArgument(Message.class.isAssignableFrom(cls));
+	public MessageDescriptor(final Class<?> messageType, final DescriptorPool pool) {
+		super(messageType, DescriptorType.MESSAGE, pool);
+		Type superclass = messageType.getGenericSuperclass();
+		baseType = superclass == Object.class ? null : superclass;
+		checkArgument(Message.class.isAssignableFrom(messageType));
+	}
+
+	@Override
+	public Class<?> getJavaType() {
+		return (Class<?>) super.getJavaType();
+	}
+
+	public Type getBaseType() {
+		return baseType;
+	}
+
+	public MessageDescriptor getBase() {
+		return base;
+	}
+
+	public SymbolTable<FieldDescriptor> getFields() {
+		return fields;
+	}
+
+	public SymbolTable<FieldDescriptor> getDeclaredFields() {
+		return declaredFields;
 	}
 
 	@Override
@@ -37,10 +58,10 @@ public class MessageDescriptor extends AbstractDescriptor {
 	}
 
 	private void linkDeclaredFields() {
-		Field[] declared = cls.getDeclaredFields();
+		Field[] declared = getJavaType().getDeclaredFields();
 		List<FieldDescriptor> temp = Lists.newArrayList();
 		for (Field field : declared) {
-			FieldDescriptor fdescriptor = new FieldDescriptor(field);
+			FieldDescriptor fdescriptor = new FieldDescriptor(field, pool);
 			temp.add(fdescriptor);
 		}
 		declaredFields = ImmutableSymbolTable.copyOf(temp);
@@ -54,17 +75,5 @@ public class MessageDescriptor extends AbstractDescriptor {
 					.merge(base.getFields())
 					.merge(declaredFields);
 		}
-	}
-
-	public MessageDescriptor getBase() {
-		return base;
-	}
-
-	public SymbolTable<FieldDescriptor> getFields() {
-		return fields;
-	}
-
-	public SymbolTable<FieldDescriptor> getDeclaredFields() {
-		return declaredFields;
 	}
 }

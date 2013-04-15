@@ -1,20 +1,29 @@
 package pdef.descriptors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Objects;
 import pdef.Symbol;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class FieldDescriptor implements Symbol {
 	private final Field field;
 	private final String name;
-	private final Type type;
+	private final Descriptor descriptor;
 
-	public FieldDescriptor(final Field field) {
+	public FieldDescriptor(final Field field, final DescriptorPool pool) {
 		this.field = checkNotNull(field);
 		name = field.getName();
-		type = field.getGenericType();
+		descriptor = pool.getDescriptor(field.getGenericType());
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(name)
+				.addValue(descriptor.getJavaType())
+				.toString();
 	}
 
 	@Override
@@ -22,7 +31,11 @@ public class FieldDescriptor implements Symbol {
 		return name;
 	}
 
-	public Type getType() {
-		return type;
+	public Field getField() {
+		return field;
+	}
+
+	public Descriptor getDescriptor() {
+		return descriptor;
 	}
 }

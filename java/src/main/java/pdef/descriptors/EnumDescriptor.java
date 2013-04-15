@@ -1,24 +1,20 @@
 package pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableMap;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class EnumDescriptor extends AbstractDescriptor {
-	private final Class<?> enumClass;
 	private final Map<String, Enum<?>> values;
 
 	public EnumDescriptor(final Class<?> enumClass, final DescriptorPool pool) {
-		super(DescriptorType.ENUM, pool);
-		this.enumClass = checkNotNull(enumClass);
+		super(enumClass, DescriptorType.ENUM, pool);
+		checkArgument(enumClass.isEnum());
 		values = getValueMap(enumClass);
-	}
-
-	public Class<?> getEnumClass() {
-		return enumClass;
 	}
 
 	public Map<String, Enum<?>> getValues() {

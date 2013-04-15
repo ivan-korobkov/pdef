@@ -2,6 +2,8 @@ package pdef.formats;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.pdef.SerializationException;
+import io.pdef.SerializationException;
 import pdef.Message;
 import pdef.TypeDescriptor;
 import pdef.rpc.Call;
@@ -43,7 +45,7 @@ public class JsonSerializer implements Serializer {
 		try {
 			return mapper.writeValueAsString(serialized);
 		} catch (JsonProcessingException e) {
-			throw new FormatException(e);
+			throw new SerializationException(e);
 		}
 	}
 }

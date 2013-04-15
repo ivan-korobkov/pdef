@@ -3,6 +3,8 @@ package pdef.formats;
 import com.google.common.annotations.VisibleForTesting;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.*;
+import io.pdef.SerializationException;
+import io.pdef.SerializationException;
 import pdef.*;
 import pdef.rpc.Call;
 import pdef.rpc.DispatcherException;
@@ -116,12 +118,12 @@ public class RawParser extends AbstractParser {
 			int v = ((Number) value).intValue();
 			if (v == 1) return true;
 			if (v == 0) return false;
-			throw new FormatException("Unexpected boolean value " + value);
+			throw new SerializationException("Unexpected boolean value " + value);
 		}
 		String s = ((String) value).toLowerCase();
 		if (s.equals("true")) return true;
 		if (s.equals("false")) return false;
-		throw new FormatException("Unexpected boolean value " + value);
+		throw new SerializationException("Unexpected boolean value " + value);
 	}
 
 	@Override

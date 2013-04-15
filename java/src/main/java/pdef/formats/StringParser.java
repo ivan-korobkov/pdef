@@ -2,6 +2,8 @@ package pdef.formats;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import io.pdef.SerializationException;
+import io.pdef.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 import pdef.*;
 import pdef.rpc.Call;
@@ -80,19 +82,19 @@ public class StringParser extends AbstractParser {
 	@Override
 	protected Object parseList(final ListDescriptor descriptor, final Object object) {
 		if ("".equals(object)) return null;
-		throw new FormatException("StringParser does not support lists, got " + object);
+		throw new SerializationException("StringParser does not support lists, got " + object);
 	}
 
 	@Override
 	protected Object parseSet(final SetDescriptor descriptor, final Object object) {
 		if ("".equals(object)) return null;
-		throw new FormatException("StringParser does not support sets, got " + object);
+		throw new SerializationException("StringParser does not support sets, got " + object);
 	}
 
 	@Override
 	protected Object parseMap(final MapDescriptor descriptor, final Object object) {
 		if ("".equals(object)) return null;
-		throw new FormatException("StringParser does not support maps, got " + object);
+		throw new SerializationException("StringParser does not support maps, got " + object);
 	}
 
 	@Override
@@ -100,7 +102,7 @@ public class StringParser extends AbstractParser {
 		if (StringSerializer.TRUE.equals(value)) return true;
 		if (StringSerializer.FALSE.equals(value)) return false;
 		if ("".equals(value)) return false;
-		throw new FormatException("Failed to parse a boolean from " + value);
+		throw new SerializationException("Failed to parse a boolean from " + value);
 	}
 
 	@Override
@@ -185,7 +187,7 @@ public class StringParser extends AbstractParser {
 					}
 
 					// Malformed string.
-					throw new FormatException("Malformed string \"" + s +"\"");
+					throw new SerializationException("Malformed string \"" + s +"\"");
 
 				} else {
 					message.add(field);

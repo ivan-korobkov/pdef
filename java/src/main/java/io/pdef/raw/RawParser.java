@@ -5,8 +5,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.pdef.AbstractParser;
 import io.pdef.Message;
+import io.pdef.SerializationException;
 import io.pdef.descriptors.*;
-import pdef.formats.FormatException;
+import io.pdef.SerializationException;
 
 import java.util.Collection;
 import java.util.List;
@@ -130,12 +131,12 @@ public class RawParser extends AbstractParser {
 			int v = ((Number) value).intValue();
 			if (v == 1) return true;
 			if (v == 0) return false;
-			throw new FormatException("Unexpected boolean value " + value);
+			throw new SerializationException("Unexpected boolean value " + value);
 		}
 		String s = ((String) value).toLowerCase();
 		if (s.equals("true")) return true;
 		if (s.equals("false")) return false;
-		throw new FormatException("Unexpected boolean value " + value);
+		throw new SerializationException("Unexpected boolean value " + value);
 	}
 
 	@Override

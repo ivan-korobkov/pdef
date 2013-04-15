@@ -2,9 +2,10 @@ package io.pdef.json;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.pdef.SerializationException;
 import io.pdef.Serializer;
 import io.pdef.raw.RawSerializer;
-import pdef.formats.FormatException;
+import io.pdef.SerializationException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -23,7 +24,7 @@ public class JsonSerializer implements Serializer {
 		try {
 			return mapper.writeValueAsString(raw);
 		} catch (JsonProcessingException e) {
-			throw new FormatException(e);
+			throw new SerializationException(e);
 		}
 	}
 }

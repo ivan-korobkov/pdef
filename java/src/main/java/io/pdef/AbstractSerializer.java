@@ -1,7 +1,6 @@
 package io.pdef;
 
 import io.pdef.descriptors.*;
-import pdef.formats.FormatException;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +32,7 @@ public abstract class AbstractSerializer implements Serializer {
 			// case INTERFACE is not supported
 		}
 
-		throw new FormatException("Unsupported descriptor " + descriptor + ", object " + object);
+		throw new SerializationException("Unsupported descriptor " + descriptor + ", object " + object);
 	}
 
 	protected Object serializeValue(final ValueDescriptor descriptor, final Object value) {
@@ -48,7 +47,7 @@ public abstract class AbstractSerializer implements Serializer {
 		else if (cls == Object.class) return serializeObject(value);
 		else if (cls == void.class) return serializeVoid();
 
-		throw new FormatException("Unsupported value class " + cls + ", value " + value);
+		throw new SerializationException("Unsupported value class " + cls + ", value " + value);
 	}
 
 	protected Object serializeObject(final Object value) { return value; }

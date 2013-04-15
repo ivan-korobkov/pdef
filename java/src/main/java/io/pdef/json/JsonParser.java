@@ -2,8 +2,9 @@ package io.pdef.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pdef.Parser;
+import io.pdef.SerializationException;
 import io.pdef.raw.RawParser;
-import pdef.formats.FormatException;
+import io.pdef.SerializationException;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -31,7 +32,7 @@ public class JsonParser implements Parser {
 		try {
 			map = mapper.readValue(s, Map.class);
 		} catch (IOException e) {
-			throw new FormatException(e);
+			throw new SerializationException(e);
 		}
 
 		return parser.parse(type, map);

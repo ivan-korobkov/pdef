@@ -2,6 +2,9 @@ package pdef.formats;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import static com.google.common.base.Preconditions.*;
+
+import io.pdef.SerializationException;
+import io.pdef.SerializationException;
 import pdef.InterfaceDescriptor;
 import pdef.TypeDescriptor;
 import pdef.rpc.Call;
@@ -30,7 +33,7 @@ public class JsonParser implements Parser {
 		try {
 			return parse(descriptor, s);
 		} catch (IOException e) {
-			throw new FormatException(e);
+			throw new SerializationException(e);
 		}
 	}
 
@@ -40,7 +43,7 @@ public class JsonParser implements Parser {
 		try {
 			map = mapper.readValue((String) object, Map.class);
 		} catch (IOException e) {
-			throw new FormatException(e);
+			throw new SerializationException(e);
 		}
 		return delegate.parseCalls(descriptor, map);
 	}

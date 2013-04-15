@@ -1,5 +1,7 @@
 package pdef.formats;
 
+import io.pdef.SerializationException;
+import io.pdef.SerializationException;
 import pdef.*;
 
 public abstract class AbstractParser implements Parser {
@@ -23,7 +25,7 @@ public abstract class AbstractParser implements Parser {
 		} else if (descriptor instanceof MapDescriptor) {
 			return parseMap((MapDescriptor) descriptor, object);
 		}
-		throw new FormatException("Unsupported descriptor " + descriptor + ", object " + object);
+		throw new SerializationException("Unsupported descriptor " + descriptor + ", object " + object);
 	}
 
 	protected abstract Object parseMessage(final MessageDescriptor descriptor, final Object object);
@@ -58,7 +60,7 @@ public abstract class AbstractParser implements Parser {
 			return parseObject(value);
 		}
 
-		throw new FormatException("Unsupported value class " + cls + ", value " + value);
+		throw new SerializationException("Unsupported value class " + cls + ", value " + value);
 	}
 
 	protected abstract Boolean parseBoolean(final Object value);

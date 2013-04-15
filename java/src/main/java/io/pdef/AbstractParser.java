@@ -1,7 +1,6 @@
 package io.pdef;
 
 import io.pdef.descriptors.*;
-import pdef.formats.FormatException;
 
 import java.lang.reflect.Type;
 
@@ -30,7 +29,7 @@ public abstract class AbstractParser implements Parser {
 			// case INTERFACE is not supported
 		}
 
-		throw new FormatException("Unsupported descriptor " + descriptor + ", object " + object);
+		throw new SerializationException("Unsupported descriptor " + descriptor + ", object " + object);
 	}
 
 	protected Object parseValue(final ValueDescriptor descriptor, final Object value) {
@@ -44,7 +43,7 @@ public abstract class AbstractParser implements Parser {
 		else if (cls == String.class) return parseString(value);
 		else if (cls == void.class) return parseVoid();
 		else if (cls == Object.class) return parseObject(value);
-		throw new FormatException("Unsupported value class " + cls + ", value " + value);
+		throw new SerializationException("Unsupported value class " + cls + ", value " + value);
 	}
 
 	protected Object parseVoid() { return null; }

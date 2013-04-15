@@ -7,5 +7,10 @@ public class ValueDescriptor extends AbstractDescriptor {
 	}
 
 	@Override
+	public Class<?> getJavaType() {
+		return (Class<?>) super.getJavaType();
+	}
+
+	@Override
 	protected void doLink() {}
 }

@@ -1,9 +1,9 @@
 package io.pdef.descriptors;
 
-import io.pdef.Message;
+import io.pdef.fixtures.Image;
+import io.pdef.fixtures.User;
 import org.junit.Test;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -30,18 +30,6 @@ public class MessageDescriptorTest {
 		assertTrue(fields.containsKey("photos"));
 
 		MessageDescriptor image = (MessageDescriptor) pool.getDescriptor(Image.class);
-		assertEquals(image, fields.get("avatar").getDescriptor());
-	}
-
-	private static class User implements Message {
-		private String name;
-		private Image avatar;
-		private List<Image> photos;
-	}
-
-	private static class Image implements Message {
-		private String url;
-		private User owner;
-		private long createdAt;
+		assertEquals(image, fields.get("avatar").getType());
 	}
 }

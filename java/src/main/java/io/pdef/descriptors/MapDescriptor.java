@@ -7,7 +7,7 @@ public class MapDescriptor extends AbstractDescriptor {
 	private final Type keyType;
 	private final Type valueType;
 	private Descriptor key;
-	private Descriptor element;
+	private Descriptor value;
 
 	public MapDescriptor(final ParameterizedType mapType, final DescriptorPool pool) {
 		super(mapType, DescriptorType.MAP, pool);
@@ -29,13 +29,13 @@ public class MapDescriptor extends AbstractDescriptor {
 		return key;
 	}
 
-	public Descriptor getElement() {
-		return element;
+	public Descriptor getValue() {
+		return value;
 	}
 
 	@Override
 	protected void doLink() {
 		key = pool.getDescriptor(keyType);
-		element = pool.getDescriptor(valueType);
+		value = pool.getDescriptor(valueType);
 	}
 }

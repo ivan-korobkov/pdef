@@ -2,7 +2,6 @@ package pdef.formats;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import pdef.MethodDescriptor;
@@ -13,6 +12,8 @@ import pdef.rpc.Call;
 
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 public class JsonParserTest {
 	private JsonParser parser;

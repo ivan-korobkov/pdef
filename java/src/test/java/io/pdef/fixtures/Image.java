@@ -1,8 +1,6 @@
 package io.pdef.fixtures;
 
-import io.pdef.Message;
-
-public class Image implements Message {
+public class Image extends GenericObject {
 	private String url;
 	private User owner;
 	private long createdAt;
@@ -10,6 +8,7 @@ public class Image implements Message {
 	public Image() {}
 
 	public Image(final Builder builder) {
+		super(builder);
 		url = builder.url;
 		owner = builder.owner;
 		createdAt = builder.createdAt;
@@ -27,7 +26,7 @@ public class Image implements Message {
 		return createdAt;
 	}
 
-	public static class Builder implements Message.Builder {
+	public static class Builder extends GenericObject.Builder {
 		private String url;
 		private User owner;
 		private long createdAt;

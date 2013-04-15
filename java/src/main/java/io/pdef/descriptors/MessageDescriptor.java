@@ -17,6 +17,7 @@ public class MessageDescriptor extends AbstractDescriptor {
 	private MessageDescriptor base;
 	private Map<String, FieldDescriptor> fields;
 	private Map<String, FieldDescriptor> declaredFields;
+	private SubtypesDescriptor subtypes;
 
 	public MessageDescriptor(final Class<?> messageType, final DescriptorPool pool) {
 		super(messageType, DescriptorType.MESSAGE, pool);
@@ -44,6 +45,10 @@ public class MessageDescriptor extends AbstractDescriptor {
 		return declaredFields;
 	}
 
+	public SubtypesDescriptor getSubtypes() {
+		return subtypes;
+	}
+
 	public Message.Builder newBuilder() {
 		try {
 			return (Message.Builder) builderConstructor.newInstance();
@@ -58,6 +63,7 @@ public class MessageDescriptor extends AbstractDescriptor {
 		linkBase();
 		linkDeclaredFields();
 		linkFields();
+		linkSubtypes();
 	}
 
 	private void linkBuilder() {
@@ -97,5 +103,10 @@ public class MessageDescriptor extends AbstractDescriptor {
 					.putAll(declaredFields)
 					.build();
 		}
+	}
+
+	private void linkSubtypes() {
+		if (!SubtypesDescriptor.hasSubtypes(getJavaType())) return;
+		subtypes = new SubtypesDescriptor(this);
 	}
 }

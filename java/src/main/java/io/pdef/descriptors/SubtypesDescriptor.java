@@ -1,0 +1,56 @@
+package io.pdef.descriptors;
+
+import com.google.common.collect.ImmutableMap;
+import io.pdef.annotations.Subtype;
+import io.pdef.annotations.Subtypes;
+import io.pdef.annotations.TypeField;
+
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class SubtypesDescriptor {
+	private final MessageDescriptor message;
+	private final Map<Enum<?>, Class<?>> subtypes;
+	private final FieldDescriptor field;
+
+	public SubtypesDescriptor(final MessageDescriptor message) {
+		this.message = message;
+		Class<?> cls = message.getJavaType();
+		checkArgument(hasSubtypes(cls), "No subtypes in %s", cls);
+
+		TypeField fieldAnnotation = cls.getAnnotation(TypeField.class);
+		Subtypes subtypesAnnotation = cls.getAnnotation(Subtypes.class);
+		checkNotNull(fieldAnnotation, "TypeField annotation must be present in %s", cls);
+		checkNotNull(subtypesAnnotation, "Subtypes annotation must be present in %s", cls);
+
+		field = message.getFields().get(fieldAnnotation.value());
+		checkNotNull(field, "Type field %s is not found in %s", fieldAnnotation.value(), cls);
+
+		EnumDescriptor enumType = (EnumDescriptor) field.getType();
+		ImmutableMap.Builder<Enum<?>, Class<?>> builder = ImmutableMap.builder();
+		for (Subtype value : subtypesAnnotation.value()) {
+			String typeName = value.type();
+			Enum<?> subtype = enumType.getValues().get(typeName.toUpperCase());
+			builder.put(subtype, value.value());
+		}
+		subtypes = builder.build();
+	}
+
+	public static boolean hasSubtypes(final Class<?> cls) {
+		return cls.isAnnotationPresent(Subtypes.class);
+	}
+
+	public MessageDescriptor getMessage() {
+		return message;
+	}
+
+	public Map<Enum<?>, Class<?>> getSubtypes() {
+		return subtypes;
+	}
+
+	public FieldDescriptor getField() {
+		return field;
+	}
+}

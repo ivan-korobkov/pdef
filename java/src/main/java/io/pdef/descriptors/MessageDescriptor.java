@@ -6,6 +6,7 @@ import io.pdef.Message;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Map;
 
@@ -88,6 +89,7 @@ public class MessageDescriptor extends AbstractDescriptor {
 
 		ImmutableMap.Builder<String, FieldDescriptor> builder = ImmutableMap.builder();
 		for (Field field : declared) {
+			if (Modifier.isStatic(field.getModifiers())) continue;
 			FieldDescriptor fdescriptor = new FieldDescriptor(field, this);
 			builder.put(fdescriptor.getName(), fdescriptor);
 		}

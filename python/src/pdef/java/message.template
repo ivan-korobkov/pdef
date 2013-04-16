@@ -76,7 +76,7 @@ public class {{ name }} extends {% if base_class -%}{{ base_class }}{%- else -%}
         protected {{ field.type }} {{ field.name }};
 {% endfor %}
 
-        protected Builder() {
+        public Builder() {
 {% for field in fields %}
 {% if field.is_type or field.is_subtype %}
             this.{{ field.name }} = {{ field.type_value }};

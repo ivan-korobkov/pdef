@@ -1,5 +1,14 @@
 package {{ package }};
 
+{% if subtypes %}
+@io.pdef.annotations.TypeField("{{ subtypes.field.name }}")
+@io.pdef.annotations.Subtypes({
+{% for type, submessage in subtypes.items %}
+        @io.pdef.annotations.Subtype(type = "{{ type }}", value = {{ submessage }}.class){% if loop.length > 1 and not loop.last %}, {% endif %}
+
+{% endfor %}
+})
+{% endif %}
 public class {{ name }} extends {% if base_class -%}{{ base_class }}{%- else -%}
         io.pdef.GeneratedMessage{%- endif %} {
     private static final {{ name }} instance = new {{ name }}();

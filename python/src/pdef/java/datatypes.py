@@ -71,7 +71,7 @@ class JavaField(object):
 class JavaSubtypes(object):
     def __init__(self, subtypes):
         self.type = JavaRef.from_lang(subtypes.type)
-        self.items = tuple((JavaRef.from_lang(k), JavaRef.from_lang(v))
+        self.items = tuple((k.name.lower(), JavaRef.from_lang(v))
             for k, v in subtypes.as_map().items())
         self.field = JavaField(subtypes.field)
         self.is_root = subtypes.is_root

@@ -2,9 +2,11 @@ package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import io.pdef.Interface;
 
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,11 +67,11 @@ public class InterfaceDescriptor extends AbstractDescriptor {
 	}
 
 	private void linkMethods() {
-		ImmutableMap.Builder<String, MethodDescriptor> builder = ImmutableMap.builder();
+		LinkedHashMap<String, MethodDescriptor> temp = Maps.newLinkedHashMap();
 		for (InterfaceDescriptor base : bases) {
-			builder.putAll(base.getMethods());
+			temp.putAll(base.getMethods());
 		}
-		builder.putAll(declaredMethods);
-		methods = builder.build();
+		temp.putAll(declaredMethods);
+		methods = ImmutableMap.copyOf(temp);
 	}
 }

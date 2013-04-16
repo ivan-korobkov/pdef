@@ -46,6 +46,21 @@ public class InterfaceDescriptorTest {
 		assertEquals(2, methods.size());
 	}
 
+	@Test
+	public void testOverriding() throws Exception {
+		DescriptorPool pool = new DefaultDescriptorPool();
+		InterfaceDescriptor base = new InterfaceDescriptor(OverridingBase.class, pool);
+		InterfaceDescriptor overriden = new InterfaceDescriptor(OverridenClass.class, pool);
+		base.link();
+		overriden.link();
+
+		Descriptor app = pool.getDescriptor(App.class);
+		Descriptor extended = pool.getDescriptor(ExtendedApp.class);
+
+		assertEquals(app, base.getMethods().get("app").getResult());
+		assertEquals(extended, overriden.getMethods().get("app").getResult());
+	}
+
 	private static interface App extends Interface {
 		Calc calc();
 	}
@@ -56,5 +71,13 @@ public class InterfaceDescriptorTest {
 
 	private static interface ExtendedApp extends App {
 		String echo(String text);
+	}
+
+	private static interface OverridingBase extends Interface {
+		App app();
+	}
+
+	private static interface OverridenClass extends OverridingBase {
+		ExtendedApp app();
 	}
 }

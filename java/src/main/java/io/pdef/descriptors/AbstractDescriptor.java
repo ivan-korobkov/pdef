@@ -1,5 +1,7 @@
 package io.pdef.descriptors;
 
+import com.google.common.base.Objects;
+
 import java.lang.reflect.Type;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -15,6 +17,13 @@ public abstract class AbstractDescriptor implements Descriptor {
 		this.javaType = javaType;
 		this.type = checkNotNull(type);
 		this.pool = checkNotNull(pool);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(javaType)
+				.toString();
 	}
 
 	public Type getJavaType() {

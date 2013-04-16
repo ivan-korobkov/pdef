@@ -28,8 +28,11 @@ class JavaInterface(object):
 class JavaMethod(object):
     def __init__(self, method):
         self.name = method.name
-        self.result = JavaRef.from_lang(method.result)
         self.args = [JavaMethodArg(arg) for arg in method.args]
+
+        self.result = JavaRef.from_lang(method.result)
+        if not self.result.interface:
+            self.result = JavaRef('ListenableFuture<%s>' % self.result.boxed)
 
 
 class JavaMethodArg(object):

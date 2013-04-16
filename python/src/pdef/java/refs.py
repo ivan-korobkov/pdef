@@ -11,6 +11,8 @@ class JavaRef(object):
             return ParameterizedJavaRef(ref)
         elif isinstance(ref, lang.Enum):
             return JavaRef.from_enum(ref)
+        elif isinstance(ref, lang.Interface):
+            return JavaRef.from_interface(ref)
         else:
             return JavaRef.from_message(ref)
 
@@ -18,7 +20,7 @@ class JavaRef(object):
     def from_enum(cls, enum):
         name = enum.parent.fullname + '.' + enum.name if enum.parent else enum.name
         default = JavaRef.from_lang(enum.values.items[0])
-        return JavaRef(enum.name, default=default)
+        return JavaRef(name, default=default)
 
     @classmethod
     def from_message(cls, message):
@@ -26,11 +28,19 @@ class JavaRef(object):
         default = '%s.getInstance()' % message.name
         return JavaRef(name, default=default)
 
+    @classmethod
+    def from_interface(cls, iface):
+        name = iface.parent.fullname + '.' + iface.name if iface.parent else iface.name
+        jref = JavaRef(name)
+        jref.interface = True
+        return jref
+
     def __init__(self, name, default='null', boxed=None, primitive=False):
         self.name = name
         self.default = default
         self.boxed = boxed if boxed else self
         self.primitive = primitive
+        self.interface = False
 
     def __str__(self):
         return self.name

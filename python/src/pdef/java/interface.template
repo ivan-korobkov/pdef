@@ -1,14 +1,16 @@
 package {{ package }};
+import com.google.common.util.concurrent.ListenableFuture;
 
-public interface {{ name }}{% if not bases %} {{'{'}}{% else %}
+{% if not bases %}
+public interface {{ name }} extends io.pdef.Interface {
+{% else %}
+public interface {{ name }} extends {% for base in bases -%}
+        {{ base }}{% if loop.last %} {{'{'}}{% elif loop.length > 1%}, {% endif %}
+{%- endfor %}
 
-{% for base in bases %}
-        {% if loop.first %}extends {% endif %}{{ base }}{% if loop.last %} {{'{'}}{% elif loop.length > 1%}, {% endif %}
-
-{% endfor %}
 {% endif %}
-{% for method in declared_methods %}
 
+{% for method in declared_methods %}
 {% if not method.args %}
     {{ method.result }} {{ method.name }}();
 {% elif method.args|length < 3 %}
@@ -22,6 +24,7 @@ public interface {{ name }}{% if not bases %} {{'{'}}{% else %}
 
 {% endfor %}
 {% endif %}
+
 {% endfor %}
 }
 

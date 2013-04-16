@@ -1,5 +1,5 @@
-module pdef.fixtures.interfaces;
-import pdef.fixtures as fixtures;
+module io.pdef.test.interfaces;
+import io.pdef.test as test;
 
 
 interface App {
@@ -11,24 +11,27 @@ interface Calc {
     sum(i0 int32, i1 int32) int32;
 }
 
-interface Collection<Id, T> {
-    get(id Id)  T;
-}
-
 interface User {
     name() string;
     rename(name string) string;
 }
 
-interface List<Id, T> {
-    find(ids list<Id>) list<T>;
-}
+interface Users {
+    get(id int32) User;
 
-interface Users extends Collection<int32, User>, List<int32, fixtures.User> {
     register(
         name        string,
         email       string,
         birthday    Date) User;
+}
+
+interface InternalUsers extends Users {
+    delete(id int32) void;
+    create(newUser test.User) test.User;
+}
+
+interface Posts {
+    create(title string, text string) test.Post;
 }
 
 message Date {

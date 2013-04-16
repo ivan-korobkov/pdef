@@ -2,23 +2,19 @@
 from pdef import ast
 from pdef.preconditions import *
 from pdef.lang.symbols import SymbolTable
-from pdef.lang.types import Type, ParameterizedType, Variable
+from pdef.lang.types import Type
 
 
 class Interface(Type):
     @classmethod
     def from_node(cls, node, module=None):
         check_isinstance(node, ast.Interface)
-        interface = Interface(node.name, variables=(Variable(var) for var in node.variables),
-                              module=module)
+        interface = Interface(node.name, module=module)
         interface.node = node
         return interface
 
-    is_rawtype = True
-    is_parameterized = False
-
-    def __init__(self, name, variables=None, module=None):
-        super(Interface, self).__init__(name, variables, module)
+    def __init__(self, name, module=None):
+        super(Interface, self).__init__(name, module)
 
         self.bases = []
         self.methods = SymbolTable(self)
@@ -56,7 +52,7 @@ class Interface(Type):
             self.add_method(method)
 
     def add_base(self, base):
-        check_isinstance(base, (Interface, ParameterizedInterface))
+        check_isinstance(base, Interface)
         check_argument(base is not self, '%s: self inheritance', self)
         check_argument(base not in self.bases, '%s: duplicate base %s', self, base)
         all_bases = set(base.all_bases)
@@ -72,46 +68,9 @@ class Interface(Type):
         self.methods.add(method)
         self.declared_methods.add(method)
 
-    def _do_parameterize(self, *variables):
-        return ParameterizedInterface(self, *variables)
-
-
-class ParameterizedInterface(ParameterizedType):
-    is_rawtype = False
-    is_parameterized = True
-
-    def __init__(self, rawtype, variables):
-        super(ParameterizedInterface, self).__init__(rawtype, variables)
-
-        self.bases = []
-        self.methods = SymbolTable(self)
-        self.declared_methods = SymbolTable(self)
-
-    @property
-    def all_bases(self):
-        for base in self.bases:
-            yield base
-            for b in base.all_bases:
-                yield b
-
-    def _init(self):
-        vmap = self.variables.as_map()
-        rawtype = self.rawtype
-
-        self.bases = tuple(base.bind(vmap) for base in rawtype.bases)
-        for base in self.bases:
-            base.init()
-            self.methods += base.methods
-
-        for method in rawtype.declared_methods:
-            bmethod = method.bind(vmap)
-            self.declared_methods.add(bmethod)
-            self.methods.add(bmethod)
-
 
 class Method(object):
     is_declared = True
-    is_parameterized = False
     def __init__(self, name, args=None, result=None):
         self.name = name
         self.args = SymbolTable(self)
@@ -128,22 +87,6 @@ class Method(object):
     def add_arg(self, arg):
         check_isinstance(arg, MethodArg)
         self.args.add(arg)
-
-    def bind(self, vmap):
-        bargs = [arg.bind(vmap) for arg in self.args]
-        bresult = self.result.bind(vmap) if self.result else None
-        if bargs == list(self.args) and bresult == self.result:
-            return self
-
-        return ParameterizedMethod(self, bargs, bresult)
-
-
-class ParameterizedMethod(Method):
-    is_declared = False
-    is_parameterized = True
-    def __init__(self, declaring_method, bound_args, bound_result):
-        super(ParameterizedMethod, self).__init__(declaring_method.name, bound_args, bound_result)
-        self.declaring_method = declaring_method
 
 
 class MethodArg(object):

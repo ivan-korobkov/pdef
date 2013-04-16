@@ -36,21 +36,21 @@ class ImportRef(object):
 
 
 class Type(object):
-    def __init__(self, name, variables=None):
+    def __init__(self, name):
         self.name = name
-        self.variables = tuple(variables) if variables else ()
 
 
 class Native(Type):
     def __init__(self, name, variables=None, options=None):
-        super(Native, self).__init__(name, variables)
+        super(Native, self).__init__(name)
         self.options = dict(options) if options else {}
+        self.variables = tuple(variables) if variables else ()
 
 
 class Message(Type):
-    def __init__(self, name, variables=None, base=None, subtype=None,
-                 type_field=None, type=None, declared_fields=None, options=None):
-        super(Message, self).__init__(name, variables)
+    def __init__(self, name, base=None, subtype=None, type_field=None, type=None,
+                 declared_fields=None, options=None):
+        super(Message, self).__init__(name)
 
         self.base = base
         self.subtype = subtype
@@ -75,8 +75,8 @@ class Enum(Type):
 
 
 class Interface(Type):
-    def __init__(self, name, variables=None, bases=None, methods=None):
-        super(Interface, self).__init__(name, variables)
+    def __init__(self, name, bases=None, methods=None):
+        super(Interface, self).__init__(name)
 
         self.bases = tuple(bases) if bases else ()
         self.declared_methods = tuple(methods) if methods else ()

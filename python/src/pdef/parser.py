@@ -204,19 +204,15 @@ class GrammarRules(object):
     # Message definition
     def p_message(self, t):
         '''
-        message : MESSAGE IDENTIFIER variables message_base message_type message_body
+        message : MESSAGE IDENTIFIER message_base message_type message_body
         '''
         name = t[2] # identifier
-        variables = t[3]
-        base, subtype = t[4]
-        type_field, _type = t[5]
-        options, declared_fields = t[6]
+        base, subtype = t[3]
+        type_field, _type = t[4]
+        options, declared_fields = t[5]
 
-        t[0] = ast.Message(name, variables=variables,
-                           base=base, subtype=subtype,
-                           type_field=type_field, type=_type,
-                           declared_fields=declared_fields,
-                           options=options)
+        t[0] = ast.Message(name, base=base, subtype=subtype,type_field=type_field,
+                           type=_type,declared_fields=declared_fields,options=options)
 
     # Message inheritance
     def p_message_base(self, t):
@@ -266,13 +262,12 @@ class GrammarRules(object):
     # Interface definition
     def p_interface(self, t):
         '''
-        interface : INTERFACE IDENTIFIER variables interface_bases interface_body
+        interface : INTERFACE IDENTIFIER interface_bases interface_body
         '''
         name = t[2]
-        vars = t[3]
-        bases = t[4]
-        methods = t[5]
-        t[0] = ast.Interface(name, variables=vars, bases=bases, methods=methods)
+        bases = t[3]
+        methods = t[4]
+        t[0] = ast.Interface(name, bases=bases, methods=methods)
 
     def p_interface_bases(self, t):
         '''

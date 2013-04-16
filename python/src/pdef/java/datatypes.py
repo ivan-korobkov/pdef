@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os.path
 from jinja2 import Environment
-from pdef.java.refs import JavaRef, SimpleJavaRef
+from pdef.java.refs import JavaRef
 
 
 ENUM_FILE = os.path.join(os.path.dirname(__file__), 'enum.template')
@@ -19,20 +19,17 @@ MESSAGE = ENV.from_string(MESSAGE_TEMPLATE)
 class JavaMessage(object):
     def __init__(self, msg):
         self.name = msg.name
-        self.type = JavaRef.from_lang(msg).local
         self.package = msg.parent.fullname
-        self.builder = SimpleJavaRef('Builder', variables=self.type.variables)
 
         if msg.base:
             base = msg.base
             self.base = JavaRef.from_lang(base)
             self.base_class = self.base
-            self.base_builder = SimpleJavaRef('Builder', str(self.base.raw),
-                    variables=tuple(JavaRef.from_lang(var) for var in base.variables))
+            self.base_builder = JavaRef(str(self.base) + '.Builder')
         else:
             self.base = None
-            self.base_class = SimpleJavaRef('pdef.generated.GeneratedMessage')
-            self.base_builder = SimpleJavaRef('pdef.generated.GeneratedMessage.Builder')
+            self.base_class = JavaRef('io.pdef.GeneratedMessage')
+            self.base_builder = JavaRef('io.pdef.GeneratedMessage.Builder')
 
         self.variables = tuple(JavaRef.from_lang(var) for var in msg.variables)
         self.subtypes = JavaSubtypes(msg.subtypes) if msg.subtypes else None
@@ -48,12 +45,6 @@ class JavaMessage(object):
             index += 1
         self.fields = tuple(fields)
         self.declared_fields = tuple(dfields)
-
-        self.is_generic = bool(self.variables)
-        self.get_instance = 'getInstanceOf%s()' % self.name if self.is_generic else 'getInstance()'
-        self.get_instance_vars = '<%s>' % ', '.join(str(var) for var in self.variables) \
-                if self.is_generic else''
-        self.create_builder = 'builderOf%s()' % self.name if self.is_generic else 'builder()'
 
     @property
     def code(self):
@@ -72,10 +63,8 @@ class JavaField(object):
         self.is_overriden = field.is_overriden
         self.is_declared = field.is_declared
 
-        self.is_set = 'has%s' % upper_first(self.name)
         self.get = 'get%s' % upper_first(self.name)
         self.set = 'set%s' % upper_first(self.name)
-        self.do_set = 'doSet%s' % upper_first(self.name)
         self.clear = 'clear%s' % upper_first(self.name)
 
 

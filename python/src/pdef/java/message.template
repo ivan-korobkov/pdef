@@ -1,333 +1,131 @@
 package {{ package }};
 
-public class {{ type }} extends {{ base_class }} {
-    private static final {{ type.wildcard }} instance = new {{ type.raw }}();
-{% if declared_fields %}
+public class {{ name }} extends {{ base_class }} {
+    private static final {{ name }} instance = new {{ name }}();
 
+{% if declared_fields %}
 {% for field in declared_fields %}
     private {{ field.type }} {{ field.name }};
 {% endfor %}
 {% endif %}
 
-    protected {{ name }}() {
-        this(new {{ builder }}());
+    public {{ name }}() {
+        this(new Builder());
     }
 
-    protected {{ name }}(final {{ builder }} builder) {
+    public {{ name }}(final Builder builder) {
         super(builder);
 {% for field in declared_fields %}
-        if (builder.{{ field.is_set }}()) { this.{{ field.name }} = builder.{{ field.get }}(); }
-{% endfor %}
-    }
-
-{% if is_generic %}
-    @SuppressWarnings("unchecked")
-    public static {{ get_instance_vars }} {{ type }} {{ get_instance }} {
-        return ({{ type }}) instance;
-    }
-
-    public static {{ get_instance_vars }} {{ builder }} {{ create_builder }} {
-            return new {{ builder }}();
-    }
-{% else %}
-    public static {{ type }} {{ get_instance }} {
-        return instance;
-    }
-
-    public static {{ builder }} {{ create_builder }} {
-        return new {{ builder }}();
-    }
-{% endif %}
-
-    public static pdef.MessageDescriptor getClassDescriptor() {
-        return Descriptor.getInstance();
-    }
-
-    @Override
-    public pdef.MessageDescriptor getDescriptor() {
-        return Descriptor.getInstance();
-    }
-
-    @Override
-    public {{ builder }} newBuilderForType() {
-        return {{ create_builder }};
-    }
-
-    @Override
-    public {{ builder }} toBuilder() {
-        {{ builder }} builder = newBuilderForType();
-        fill(builder);
-        return builder;
-    }
-
-    protected void fill({{ builder }} builder) {
-        super.fill(builder);
-{% for field in declared_fields %}
-{% if not field.is_type %}
-        if (this.{{ field.is_set }}()) { builder.{{ field.set }}(this.{{ field.name }}); }
-{% endif %}
+        this.{{ field.name }} = builder.{{ field.get }}();
 {% endfor %}
     }
 
 {% for field in declared_fields %}
-    // {{ field.name }}
 {% if field.type.nullable %}
     @javax.annotation.Nullable
 {% endif %}
     public {{ field.type }} {{ field.get }}() {
-        if (!{{ field.is_set }}()) {
-            return {{ field.type.default }};
-        }
+{% if not field.type.primitive %}
+        if ({{ field.name }} == null ) return {{ field.type.default }};
+{% endif %}
         return {{ field.name }};
     }
 
-    public boolean {{ field.is_set }}() {
-        return _fields.get({{ field.index }});
+{% endfor %}
+    @Override
+    public Builder newBuilderForType() {
+        return builder();
     }
 
-{% endfor %}
-    public static class {{ builder }} extends {{ base_builder }} {
+    @Override
+    public Builder toBuilder() {
+        Builder builder = newBuilderForType();
+        fill(builder);
+        return builder;
+    }
+
+    protected void fill(Builder builder) {
+        super.fill(builder);
 {% for field in declared_fields %}
-        private {{ field.type }} {{ field.name }};
+{% if not field.is_type %}
+        builder.{{ field.set }}(this.{{ field.name }});
+{% endif %}
+{% endfor %}
+    }
+
+    public static {{ name }} getInstance() {
+        return instance;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder extends {{ base_builder }} {
+{% for field in declared_fields %}
+        protected {{ field.type }} {{ field.name }};
 {% endfor %}
 
-        protected {{ builder.name }}() {
+        protected Builder() {
 {% for field in fields %}
 {% if field.is_type or field.is_subtype %}
-            {{ field.do_set }}({{ field.type_value }});
+            this.{{ field.name }} = {{ field.type_value }};
 {% endif %}
 {% endfor %}
         }
 
 {% for field in fields %}
-        // {{ field.name }}
 {% if field.is_declared %}
 {% if field.type.nullable %}
         @javax.annotation.Nullable
 {% endif %}
         public {{ field.type }} {{ field.get }}() {
-            if (!{{ field.is_set }}()) {
-                return {{ field.type.default }};
-            }
+{% if not field.type.primitive %}
+            if ({{ field.name }} == null ) return {{ field.type.default }};
+{% endif %}
             return {{ field.name }};
         }
 
-        public boolean {{ field.is_set }}() {
-            return _fields.get({{ field.index }});
-        }
-
-        protected void {{ field.do_set }}(final {{ field.type }} value) {
-            this.{{ field.name }} = value;
-            _fields.set({{ field.index }});
-        }
-
-        public {{ builder }} {{ field.set }}(final {{ field.type }} value) {
+        public Builder {{ field.set }}(final {{ field.type }} value) {
 {% if field.is_type %}
             throw new UnsupportedOperationException(
                     "The field \"{{ field.name }}\" is a read-only type field");
 {% else %}
-            {{ field.do_set }}(value);
+            this.{{ field.name }} = value;
             return this;
 {% endif %}
         }
 
-        public {{ builder }} {{ field.clear }}() {
+        public Builder {{ field.clear }}() {
 {% if field.is_type %}
             throw new UnsupportedOperationException(
                     "The field \"{{ field.name }}\" is a read-only type field");
 {% else %}
             this.{{ field.name }} = {{ field.type.default }};
-            _fields.clear({{ field.index }});
             return this;
 {% endif %}
         }
 
 {% else %}
         @Override
-        public {{ builder }} {{ field.set }}(final {{ field.type }} value) {
+        public Builder {{ field.set }}(final {{ field.type }} value) {
             super.{{ field.set }}(value);
             return this;
         }
 
         @Override
-        public {{ builder }} {{ field.clear }}() {
+        public Builder {{ field.clear }}() {
             super.{{ field.clear }}();
             return this;
         }
+
 {% endif %}
 
 {% endfor %}
         @Override
-        public {{ type }} build() {
-            return new {{ type }}(this);
-        }
-
-        @Override
-        public pdef.MessageDescriptor getDescriptor() {
-            return Descriptor.getInstance();
-        }
-    }
-
-    public static class Descriptor extends pdef.generated.GeneratedMessageDescriptor {
-        private static final Descriptor instance = new Descriptor();
-
-        public static Descriptor getInstance() {
-            instance.initialize();
-            return instance;
-        }
-{% if variables %}
-
-{% for var in variables %}
-        private final pdef.VariableDescriptor variable{{ var }};
-{% endfor %}
-        private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
-{% endif %}
-
-{% if base %}
-        private pdef.MessageDescriptor base;
-{% endif %}
-{% if subtypes %}
-        private pdef.Subtypes subtypes;
-{% endif %}
-
-{% for field in declared_fields %}
-        private pdef.FieldDescriptor {{ field.name }}Field;
-{% endfor %}
-        private pdef.SymbolTable<pdef.FieldDescriptor> declaredFields;
-        private pdef.SymbolTable<pdef.FieldDescriptor> fields;
-
-        protected Descriptor() {
-            super({{ name }}.class);
-{% if variables %}
-{% for var in variables %}
-            variable{{ var }} = new pdef.provided.NativeVariableDescriptor("{{ var.name }}");
-{% endfor %}
-            variables = pdef.ImmutableSymbolTable.of(
-{% for var in variables %}
-                    variable{{ var.name }}{% if not loop.last and loop.length > 1 %}, {% endif %}
-
-{% endfor %}
-            );
-{% endif %}
-        }
-{% if variables %}
-        @Override
-        public pdef.SymbolTable<pdef.VariableDescriptor> getVariables() {
-            return variables;
-        }
-
-{% endif %}
-{% if base %}
-        @Override
-        public pdef.MessageDescriptor getBase() {
-            return base;
-        }
-
-{% endif %}
-{% if subtypes %}
-        @Override
-        public pdef.Subtypes getSubtypes() {
-            return subtypes;
-        }
-
-{% endif %}
-        @Override
-        public pdef.SymbolTable<pdef.FieldDescriptor> getDeclaredFields() {
-            return declaredFields;
-        }
-
-        @Override
-        public pdef.SymbolTable<pdef.FieldDescriptor> getFields() {
-            return fields;
-        }
-
-        @Override
-        public {{ builder.wildcard }} newBuilder() {
-            return {{ type.raw }}.{{ create_builder }};
-        }
-
-        @Override
-        public void link() {
-{% if base %}
-            base = {{ base.descriptor|indent(16) }};
-{% endif %}
-        }
-
-        @Override
-        protected void init() {
-{% for field in declared_fields %}
-            {{ field.name }}Field = new pdef.generated.GeneratedFieldDescriptor("{{ field.name }}",
-                    {{ field.type.descriptor|indent(24) }}) {
-                @Override
-                public boolean isTypeField() {
-                    return {% if field.is_type %}true{% else %}false{% endif %};
-                }
-
-                @Override
-                public Object get(final pdef.Message message) {
-                    return (({{ name }}) message).{{ field.get }}();
-                }
-
-                @Override
-                public Object get(final pdef.Message.Builder builder) {
-                    return ((Builder) builder).{{ field.get }}();
-                }
-
-                @Override
-                public boolean isSet(final pdef.Message message) {
-                    return (({{ name }}) message).{{ field.is_set }}();
-                }
-
-                @Override
-                public boolean isSet(final pdef.Message.Builder builder) {
-                    return ((Builder) builder).{{ field.is_set }}();
-                }
-
-{% if field.type.generic %}
-                @SuppressWarnings("unchecked")
-{% endif %}
-                @Override
-                public void set(final pdef.Message.Builder builder, final Object value) {
-                    if (value == null) {
-                        clear(builder);
-                    } else {
-                        ((Builder) builder).{{ field.set }}(({{ field.type.boxed.raw }}) value);
-                    }
-                }
-
-                @Override
-                public void clear(final pdef.Message.Builder builder) {
-                    ((Builder) builder).{{ field.clear }}();
-                }
-            };
-
-{% endfor %}
-            declaredFields = pdef.ImmutableSymbolTable.of(
-{% for field in declared_fields %}
-                    {{ field.name }}Field{% if not loop.last and loop.length > 1 %}, {% endif %}
-
-{% endfor %}
-            );
-{% if base %}
-            fields = base.getFields().merge(declaredFields);
-{% else %}
-            fields = declaredFields;
-{% endif %}
-
-{% if subtypes %}
-{% if subtypes.is_root %}
-            subtypes = pdef.ImmutableSubtypes.builder()
-                    .setField({{ subtypes.field.name }}Field)
-                    .setType({{ subtypes.type }})
-{% else %}
-            pdef.Subtypes basetypes = base.getSubtypes(); assert basetypes != null;
-            subtypes = basetypes.subclass({{ subtypes.type }})
-{% endif %}
-{% for type, message in subtypes.items %}
-                    .put({{ type }}, {{ message.descriptor }})
-{% endfor %}
-                    .build();
-{% endif %}
+        public {{ name }} build() {
+            return new {{ name }}(this);
         }
     }
 }
+

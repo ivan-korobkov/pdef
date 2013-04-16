@@ -1,52 +1,35 @@
-module pdef.fixtures;
+module io.pdef.test;
 
 enum ObjectType {
     OBJECT, USER, POST, PHOTO, NOTE, EVENT;
 }
 
-message Id polymorphic on "type" as ObjectType.OBJECT {
-    [line_format]
 
-    type    ObjectType;
-}
-
-message UserId inherits Id as ObjectType.USER {
-    value       int64;
-}
-
-message PostId inherits Id as ObjectType.POST {}
-message PhotoId inherits PostId as ObjectType.PHOTO {
-    photoId     int64;
-}
-message NoteId inherits PostId as ObjectType.NOTE {
-    noteId      int64;
-}
-
-message GenericObject<ID>
-    polymorphic on "type" as ObjectType.OBJECT {
-    id          ID;
+message GenericObject polymorphic on "type" as ObjectType.OBJECT {
+    id          string;
     type        ObjectType;
     timestamp   int64;
 }
 
-message User inherits GenericObject<UserId> as ObjectType.USER {
+message User inherits GenericObject as ObjectType.USER {
     name        string;
     age         int32;
     sex         Sex;
     profile     Profile;
     floats      map<string, float>;
     chats       list<Chat>;
+    ints        map<int16, int64>;
 }
 
-message Post<ID> inherits GenericObject<ID> as ObjectType.POST {
-    userId      UserId;
+message Post inherits GenericObject as ObjectType.POST {
+    userId      string;
 }
 
-message Photo inherits Post<PhotoId> as ObjectType.PHOTO {
+message Photo inherits Post as ObjectType.PHOTO {
     url         string;
 }
 
-message Note inherits Post<NoteId> as ObjectType.NOTE {
+message Note inherits Post as ObjectType.NOTE {
     text        string;
 }
 
@@ -66,11 +49,7 @@ message Profile {
 }
 
 message Chat {
-    messages WeightedSet<string, int64>;
-}
-
-message EventId inherits Id as ObjectType.EVENT {
-    value       int64;
+    messages    list<string>;
 }
 
 enum EventType {
@@ -78,7 +57,7 @@ enum EventType {
 }
 
 message Event
-        inherits GenericObject<EventId> as ObjectType.EVENT
+        inherits GenericObject as ObjectType.EVENT
         polymorphic on "eventType" as EventType.GENERIC {
     eventType  EventType;
     ip         string;
@@ -100,18 +79,4 @@ message Birthday {
     year    int32;
     month   int32;
     day     int32;
-}
-
-message Weighted<E, W> {
-    element E;
-    weight  W;
-}
-
-message WeightedSet<E, W> {
-    elements list<Weighted<E, W>>;
-}
-
-message MethodCall {
-    name    string;
-    args    object;
 }

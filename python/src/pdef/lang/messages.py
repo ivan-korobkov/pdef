@@ -2,7 +2,7 @@
 from pdef import ast
 from pdef.preconditions import *
 from pdef.lang.symbols import SymbolTable
-from pdef.lang.types import Type, ParameterizedType, Variable
+from pdef.lang.types import Type
 from pdef.lang.enums import EnumValue
 
 
@@ -10,13 +10,12 @@ class Message(Type):
     @classmethod
     def from_node(cls, node, module=None):
         check_isinstance(node, ast.Message)
-        message = Message(node.name, variables=(Variable(var) for var in node.variables),
-                          module=module)
+        message = Message(node.name, module=module)
         message.node = node
         return message
 
-    def __init__(self, name, variables=None, module=None):
-        super(Message, self).__init__(name, variables, module)
+    def __init__(self, name, module=None):
+        super(Message, self).__init__(name, module)
         self.base = None
         self.bases = None
         self.basetype = None
@@ -32,12 +31,7 @@ class Message(Type):
         return self.module
 
     def is_subtype_of(self, msg):
-        if isinstance(msg, ParameterizedMessage):
-            msg = msg.rawtype
-
         for base in self.bases:
-            if isinstance(base, ParameterizedMessage):
-                base = base.rawtype
             if base == msg:
                 return True
 
@@ -80,7 +74,7 @@ class Message(Type):
             self.bases = []
             return
 
-        check_isinstance(base, (Message, ParameterizedMessage))
+        check_isinstance(base, Message)
         check_isinstance(basetype, EnumValue)
         check_argument(self != base, '%s: cannot inherit itself', self)
         check_argument(not base.is_subtype_of(self),
@@ -112,46 +106,6 @@ class Message(Type):
         field.make_type(type)
         self.subtypes = RootSubtypes(self, type, field)
 
-    def _do_parameterize(self, *variables):
-        '''Parameterize this message with the given arguments, return another message.'''
-        return ParameterizedMessage(self, *variables)
-
-
-class ParameterizedMessage(ParameterizedType):
-    def __init__(self, rawtype, variables):
-        super(ParameterizedMessage, self).__init__(rawtype, variables)
-
-        self.base = None
-        self.bases = None
-
-        self.fields = None
-        self.declared_fields = None
-
-    @property
-    def subtypes(self):
-        return self.rawtype.subtypes
-
-    def is_subtype_of(self, msg):
-        return self.rawtype.is_subtype_of(msg)
-
-    def _init(self):
-        vmap = self.variables.as_map()
-        rawtype = self.rawtype
-        base = rawtype.base.bind(vmap) if rawtype.base else None
-
-        self.base = base
-        self.bases = tuple([base] + list(base.bases)) if base else tuple()
-
-        self.fields = SymbolTable(self)
-        self.declared_fields = SymbolTable(self)
-        if base:
-            self.fields += base.fields
-
-        for field in rawtype.declared_fields:
-            bfield = field.bind(vmap)
-            self.declared_fields.add(bfield)
-            self.fields.add(bfield)
-
 
 class AbstractField(object):
     name = None
@@ -175,14 +129,6 @@ class AbstractField(object):
 
     def subtype(self, type_value):
         return SubtypeField(self, type_value)
-
-    def bind(self, vmap):
-        '''Bind this field type and return a new field.'''
-        btype = self.type.bind(vmap)
-        if btype == self.type:
-            return self
-
-        return ParameterizedField(self, btype)
 
 
 class Field(AbstractField):
@@ -217,13 +163,6 @@ class SubtypeField(OverridenField):
         check_argument(declaring_field.is_type, '%s must be a type field', declaring_field)
         self.is_subtype = True
         self.type_value = type_value
-
-
-class ParameterizedField(AbstractField):
-    def __init__(self, declaring_field, bound_type):
-        self.name = declaring_field.name
-        self.type = bound_type
-        self.declaring_field = declaring_field
 
 
 class AbstractSubtypes(object):

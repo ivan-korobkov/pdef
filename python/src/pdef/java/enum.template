@@ -2,12 +2,8 @@ package {{ package }};
 
 public enum {{ name }} {
     {% for value in values -%}
-        {{ value }}{% if not loop.last and loop.length > 1 %}, {% else %};{% endif %}
+        {{ value }}{% if not loop.last and loop.length > 1 %}, {% endif %}
     {%- endfor %}
 
-	private static final pdef.EnumDescriptor descriptor =
-	        new pdef.generated.GeneratedEnumDescriptor({{ name }}.class);
-	public static pdef.EnumDescriptor getClassDescriptor() {
-		return descriptor;
-	}
 }
+

@@ -1,138 +1,27 @@
 package {{ package }};
 
-public interface {{ type }}{% if not bases %} {{'{'}}{% else %} extends
+public interface {{ name }}{% if not bases %} {{'{'}}{% else %}
+
 {% for base in bases %}
-        {{ base }}{% if loop.last %} {{'{'}}{% elif loop.length > 1%}, {% endif %}
+        {% if loop.first %}extends {% endif %}{{ base }}{% if loop.last %} {{'{'}}{% elif loop.length > 1%}, {% endif %}
 
 {% endfor %}
 {% endif %}
 {% for method in declared_methods %}
 
-{% if method.args %}
+{% if not method.args %}
+    {{ method.result }} {{ method.name }}();
+{% elif method.args|length < 3 %}
+    {{ method.result }} {{ method.name }}({% for arg in method.args -%}
+            {{ arg.type }} {{ arg.name }}{% if not loop.last and loop.length > 1 %}, {% endif %}
+{%- endfor %});
+{% else %}
     {{ method.result }} {{ method.name }}(
 {% for arg in method.args %}
             {{ arg.type }} {{ arg.name }}{% if loop.last %}); {% elif loop.length > 1 %}, {% endif %}
 
 {% endfor %}
-
-{% else %}
-    {{ method.result }} {{ method.name }}();
 {% endif %}
 {% endfor %}
-
-    public static class Descriptor extends pdef.generated.GeneratedInterfaceDescriptor {
-        private static final Descriptor instance = new Descriptor();
-
-        public static Descriptor getInstance() {
-            instance.initialize();
-            return instance;
-        }
-{% if variables %}
-
-{% for var in variables %}
-        private final pdef.VariableDescriptor variable{{ var }};
-{% endfor %}
-        private final pdef.SymbolTable<pdef.VariableDescriptor> variables;
-{% endif %}
-{% if bases %}
-        private java.util.List<pdef.InterfaceDescriptor> bases;
-{% endif %}
-
-{% for method in declared_methods %}
-        private pdef.MethodDescriptor {{ method.name }}Method;
-{% endfor %}
-        private pdef.SymbolTable<pdef.MethodDescriptor> declaredMethods;
-        private pdef.SymbolTable<pdef.MethodDescriptor> methods;
-
-        protected Descriptor() {
-            super({{ name }}.class);
-{% if variables %}
-{% for var in variables %}
-            variable{{ var }} = new pdef.provided.NativeVariableDescriptor("{{ var.name }}");
-{% endfor %}
-            variables = pdef.ImmutableSymbolTable.of(
-{% for var in variables %}
-                    variable{{ var.name }}{% if not loop.last and loop.length > 1 %}, {% endif %}
-
-{% endfor %}
-            );
-{% endif %}
-        }
-
-{% if variables %}
-        @Override
-        public pdef.SymbolTable<pdef.VariableDescriptor> getVariables() {
-            return variables;
-        }
-
-{% endif %}
-{% if bases %}
-        @Override
-	    public java.util.List<pdef.InterfaceDescriptor> getBases() {
-		    return bases;
-	    }
-
-{% endif %}
-        @Override
-        public pdef.SymbolTable<pdef.MethodDescriptor> getDeclaredMethods() {
-            return declaredMethods;
-        }
-
-        @Override
-        public pdef.SymbolTable<pdef.MethodDescriptor> getMethods() {
-            return methods;
-        }
-
-		@Override
-		protected void link() {
-{% if bases %}
-			bases = com.google.common.collect.ImmutableList.<pdef.InterfaceDescriptor>of(
-{% for base in bases %}
-                    {{ base.descriptor|indent(24) }}{% if loop.last %});{% elif loop.length > 1%}, {% endif %}
-
-{% endfor %}
-{% endif %}
-		}
-
-		@Override
-		protected void init() {
-{% for method in declared_methods %}
-            {{ method.name }}Method = new pdef.generated.GeneratedMethodDescriptor("{{ method.name }}",
-                    {{ method.result.descriptor|indent(32) }},
-                    com.google.common.collect.ImmutableMap.<String, pdef.TypeDescriptor>builder()
-{% for arg in method.args %}
-                            .put("{{ arg.name }}", {{ arg.type.descriptor|indent(32) }})
-{% endfor %}
-                            .build()) {
-                @SuppressWarnings("unchecked")
-                @Override
-                public Object call(final Object iface, final java.util.Map<String, Object> args) {
-{% for arg in method.args %}
-                    {{ arg.type.boxed.raw }} {{ arg.name }} = ({{ arg.type.boxed.raw }}) args.get("{{ arg.name }}");
-{% endfor %}
-{% if method.result.is_void %}
-                    (({{ type.raw }}) iface).{{ method.name }}({% for arg in method.args%}{{ arg.name }}{% if not loop.last %}, {% endif %}{% endfor %});
-                    return null;
-{% else %}
-                    return (({{ type.raw }}) iface).{{ method.name }}({% for arg in method.args%}{{ arg.name }}{% if not loop.last %}, {% endif %}{% endfor %});
-{% endif %}
-                }
-            };
-{% endfor %}
-            declaredMethods = pdef.ImmutableSymbolTable.of(
-{% for method in declared_methods %}
-                    {{ method.name }}Method{% if not loop.last %}, {% endif %}
-
-{% endfor %});
-{% if bases %}
-            methods = pdef.ImmutableSymbolTable.of();
-            for (pdef.InterfaceDescriptor base : bases) {
-				methods = methods.merge(base.getMethods());
-			}
-{% else %}
-            methods = declaredMethods;
-{% endif %}
-		}
-    }
 }
 

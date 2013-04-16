@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os.path
 from jinja2 import Environment
-from pdef.java.refs import JavaRef, SimpleJavaRef
+from pdef.java.refs import JavaRef
 
 
 IFACE_FILE = os.path.join(os.path.dirname(__file__), 'interface.template')
@@ -15,10 +15,8 @@ IFACE = ENV.from_string(IFACE_TEMPLATE)
 class JavaInterface(object):
     def __init__(self, iface):
         self.name = iface.name
-        self.type = JavaRef.from_lang(iface).local
         self.package = iface.parent.fullname
 
-        self.variables = tuple(JavaRef.from_lang(var) for var in iface.variables)
         self.bases = [JavaRef.from_lang(base) for base in iface.bases]
         self.declared_methods = [JavaMethod(method) for method in iface.declared_methods]
 

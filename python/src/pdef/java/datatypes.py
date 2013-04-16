@@ -28,8 +28,8 @@ class JavaMessage(object):
             self.base_builder = JavaRef(str(self.base) + '.Builder')
         else:
             self.base = None
-            self.base_class = JavaRef('io.pdef.GeneratedMessage')
-            self.base_builder = JavaRef('io.pdef.GeneratedMessage.Builder')
+            self.base_class = None
+            self.base_builder = None
 
         self.variables = tuple(JavaRef.from_lang(var) for var in msg.variables)
         self.subtypes = JavaSubtypes(msg.subtypes) if msg.subtypes else None

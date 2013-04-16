@@ -1,11 +1,12 @@
 package {{ package }};
 
-public class {{ name }} extends {{ base_class }} {
+public class {{ name }} extends {% if base_class -%}{{ base_class }}{%- else -%}
+        io.pdef.GeneratedMessage{%- endif %} {
     private static final {{ name }} instance = new {{ name }}();
 
 {% if declared_fields %}
 {% for field in declared_fields %}
-    private {{ field.type }} {{ field.name }};
+    protected {{ field.type }} {{ field.name }};
 {% endfor %}
 {% endif %}
 
@@ -61,7 +62,7 @@ public class {{ name }} extends {{ base_class }} {
         return new Builder();
     }
 
-    public static class Builder extends {{ base_builder }} {
+    public static class Builder extends {% if base_builder %}{{ base_builder }}{% else %}io.pdef.GeneratedMessage.Builder{% endif %} {
 {% for field in declared_fields %}
         protected {{ field.type }} {{ field.name }};
 {% endfor %}
@@ -127,5 +128,48 @@ public class {{ name }} extends {{ base_class }} {
             return new {{ name }}(this);
         }
     }
+
+    @Override
+    public String toString() {
+        return com.google.common.base.Objects.toStringHelper(this)
+{% for field in fields %}
+                .add("{{ field.name }}", {{ field.name }})
+{% endfor %}
+                .toString();
+    }
+
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+{% if base_class %}
+		if (!super.equals(o)) return false;
+{% endif %}
+
+		{{ name }} cast = ({{ name }}) o;
+
+{% for field in declared_fields %}
+{% if field.type.primitive %}
+        if (this.{{ field.name }} != cast.{{ field.name }}) return false;
+{% else %}
+        if (this.{{ field.name }} != null ? !this.{{ field.name }}.equals(cast.{{ field.name }}) : cast.{{ field.name }} != null) return false;
+{% endif %}
+{% endfor %}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+{% if base_class %}
+		int result = super.hashCode();
+{% else %}
+        int result = 31;
+{% endif %}
+        return com.google.common.base.Objects.hashCode(result,
+                {% for field in declared_fields -%}this.{{ field.name }}
+                {%- if loop.length > 1 and not loop .last -%}
+                , {% endif %}{%- endfor %});
+	}
 }
 

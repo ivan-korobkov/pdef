@@ -4,5 +4,5 @@ import java.util.List;
 
 public interface InvocationSerializer {
 
-	Object serializer(List<Invocation> invocations);
+	Object serializeInvocations(List<Invocation> invocations);
 }

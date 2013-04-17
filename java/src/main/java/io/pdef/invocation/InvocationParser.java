@@ -4,5 +4,5 @@ import java.util.List;
 
 public interface InvocationParser {
 
-	List<Invocation> parse(Class<?> interfaceClass, Object object);
+	List<Invocation> parseInvocations(Class<?> interfaceClass, Object object);
 }

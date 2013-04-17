@@ -24,7 +24,7 @@ public class RawMapInvocationParser implements InvocationParser {
 	}
 
 	@Override
-	public List<Invocation> parse(final Class<?> interfaceClass, final Object object) {
+	public List<Invocation> parseInvocations(final Class<?> interfaceClass, final Object object) {
 		checkNotNull(interfaceClass);
 		checkNotNull(object);
 

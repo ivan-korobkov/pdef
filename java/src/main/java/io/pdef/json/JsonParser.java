@@ -3,22 +3,28 @@ package io.pdef.json;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pdef.Parser;
 import io.pdef.SerializationException;
+import io.pdef.descriptors.DescriptorPool;
+import io.pdef.invocation.Invocation;
+import io.pdef.invocation.InvocationParser;
+import io.pdef.raw.RawMapInvocationParser;
 import io.pdef.raw.RawParser;
-import io.pdef.SerializationException;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class JsonParser implements Parser {
+public class JsonParser implements Parser, InvocationParser {
 	private final ObjectMapper mapper;
 	private final RawParser parser;
+	private final RawMapInvocationParser invocationParser;
 
-	public JsonParser(final RawParser parser, final ObjectMapper mapper) {
+	public JsonParser(final DescriptorPool pool, final ObjectMapper mapper) {
 		this.mapper = checkNotNull(mapper);
-		this.parser = checkNotNull(parser);
+		parser = new RawParser(pool);
+		invocationParser = new RawMapInvocationParser(pool);
 	}
 
 	@Override
@@ -36,5 +42,17 @@ public class JsonParser implements Parser {
 		}
 
 		return parser.parse(type, map);
+	}
+
+	@Override
+	public List<Invocation> parseInvocations(final Class<?> interfaceClass, final Object object) {
+		Map map;
+		try {
+			map = mapper.readValue((String) object, Map.class);
+		} catch (IOException e) {
+			throw new SerializationException(e);
+		}
+
+		return invocationParser.parseInvocations(interfaceClass, map);
 	}
 }

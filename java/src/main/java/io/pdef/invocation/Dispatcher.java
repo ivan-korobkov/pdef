@@ -9,7 +9,6 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Dispatcher {
-
 	public Object dispatch(final Object service, final List<Invocation> invocations) {
 		checkNotNull(service);
 		checkNotNull(invocations);
@@ -24,7 +23,7 @@ public class Dispatcher {
 			Invocation invocation = iterator.next();
 			MethodDescriptor method = invocation.getMethod();
 			List<?> args = invocation.getArgs();
-			object = method.call(object, args);
+			object = method.invoke(object, args);
 		}
 
 		return object;

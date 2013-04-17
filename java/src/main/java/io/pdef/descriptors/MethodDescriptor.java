@@ -1,8 +1,10 @@
 package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -57,7 +59,15 @@ public class MethodDescriptor {
 		return argTypes;
 	}
 
-	public Object call(final Object object, final List<?> args) {
-		return null;
+	public Object invoke(final Object object, final List<?> args) {
+		Object[] array = args.toArray();
+		try {
+			return method.invoke(object, array);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause();
+			throw Throwables.propagate(cause);
+		}
 	}
 }

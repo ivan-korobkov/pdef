@@ -14,14 +14,16 @@ public class MethodDescriptor {
 	private final String name;
 	private final Descriptor result;
 	private final List<Descriptor> args;
+	private final List<Type> argTypes;
 
 	public MethodDescriptor(final Method method, final DescriptorPool pool) {
 		this.method = checkNotNull(method);
 		name = method.getName();
 		result = pool.getDescriptor(method.getGenericReturnType());
+		argTypes = ImmutableList.copyOf(method.getGenericParameterTypes());
 
 		ImmutableList.Builder<Descriptor> builder = ImmutableList.builder();
-		for (Type type : method.getGenericParameterTypes()) {
+		for (Type type : argTypes) {
 			Descriptor arg = pool.getDescriptor(type);
 			builder.add(arg);
 		}
@@ -49,6 +51,10 @@ public class MethodDescriptor {
 
 	public List<Descriptor> getArgs() {
 		return args;
+	}
+
+	public List<Type> getArgTypes() {
+		return argTypes;
 	}
 
 	public Object call(final Object object, final List<?> args) {

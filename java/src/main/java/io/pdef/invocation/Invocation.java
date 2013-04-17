@@ -28,7 +28,7 @@ public class Invocation {
 	@Override
 	public String toString() {
 		return Objects.toStringHelper(this)
-				.addValue(method)
+				.addValue(method.getName())
 				.addValue(args)
 				.toString();
 	}

@@ -1,16 +1,17 @@
 package io.pdef.raw;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import io.pdef.AbstractSerializer;
 import io.pdef.Message;
 import io.pdef.descriptors.*;
+import io.pdef.Invocation;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RawSerializer extends AbstractSerializer {
 	public RawSerializer() {
@@ -130,5 +131,24 @@ public class RawSerializer extends AbstractSerializer {
 	@Override
 	protected String serializeString(final String value) {
 		return value == null ? null : value;
+	}
+
+	@Override
+	public Map<String, List<Object>> serializeInvocations(final List<Invocation> invocations) {
+		checkNotNull(invocations);
+
+		ImmutableMap.Builder<String, List<Object>> builder = ImmutableMap.builder();
+		for (Invocation invocation : invocations) {
+			String name = invocation.getMethod().getName();
+
+			ImmutableList.Builder<Object> args = ImmutableList.builder();
+			for (Object arg : invocation.getArgs()) {
+				Object rawArg = serialize(arg);
+				args.add(rawArg);
+			}
+			builder.put(name, args.build());
+		}
+
+		return builder.build();
 	}
 }

@@ -1,4 +1,4 @@
-package io.pdef.invocation;
+package io.pdef;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -17,15 +17,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Invoker implements InvocationHandler {
 	@Nullable private final Invoker parent;
 	@Nullable private final Invocation invocation;
-	private final Handler handler;
+	private final InvocationListHandler handler;
 	private final Descriptor descriptor;
 
-	public static Invoker of(final InterfaceDescriptor descriptor, final Handler handler) {
+	public static Invoker of(final InterfaceDescriptor descriptor, final InvocationListHandler handler) {
 		return new Invoker(null, null, handler, descriptor);
 	}
 
 	private Invoker(@Nullable final Invoker parent, @Nullable final Invocation invocation,
-			final Handler handler, final Descriptor resultDescriptor) {
+			final InvocationListHandler handler, final Descriptor resultDescriptor) {
 		this.parent = parent;
 		this.invocation = invocation;
 		this.handler = checkNotNull(handler);

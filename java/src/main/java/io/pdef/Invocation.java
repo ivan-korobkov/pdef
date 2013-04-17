@@ -1,4 +1,4 @@
-package io.pdef.invocation;
+package io.pdef;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;

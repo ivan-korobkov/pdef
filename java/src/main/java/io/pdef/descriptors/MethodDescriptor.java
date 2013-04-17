@@ -14,6 +14,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class MethodDescriptor {
 	private final Method method;
 	private final String name;
+	private final Type resultType;
 	private final Descriptor result;
 	private final List<Descriptor> args;
 	private final List<Type> argTypes;
@@ -21,7 +22,8 @@ public class MethodDescriptor {
 	public MethodDescriptor(final Method method, final DescriptorPool pool) {
 		this.method = checkNotNull(method);
 		name = method.getName();
-		result = pool.getDescriptor(method.getGenericReturnType());
+		resultType = method.getGenericReturnType();
+		result = pool.getDescriptor(resultType);
 		argTypes = ImmutableList.copyOf(method.getGenericParameterTypes());
 
 		ImmutableList.Builder<Descriptor> builder = ImmutableList.builder();
@@ -49,6 +51,10 @@ public class MethodDescriptor {
 
 	public Descriptor getResult() {
 		return result;
+	}
+
+	public Type getResultType() {
+		return resultType;
 	}
 
 	public List<Descriptor> getArgs() {

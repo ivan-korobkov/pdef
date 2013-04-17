@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pdef.Parser;
 import io.pdef.SerializationException;
 import io.pdef.descriptors.DescriptorPool;
-import io.pdef.invocation.Invocation;
-import io.pdef.invocation.InvocationParser;
-import io.pdef.raw.RawMapInvocationParser;
+import io.pdef.Invocation;
 import io.pdef.raw.RawParser;
 
 import java.io.IOException;
@@ -16,15 +14,13 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class JsonParser implements Parser, InvocationParser {
+public class JsonParser implements Parser {
 	private final ObjectMapper mapper;
 	private final RawParser parser;
-	private final RawMapInvocationParser invocationParser;
 
 	public JsonParser(final DescriptorPool pool, final ObjectMapper mapper) {
 		this.mapper = checkNotNull(mapper);
 		parser = new RawParser(pool);
-		invocationParser = new RawMapInvocationParser(pool);
 	}
 
 	@Override
@@ -53,6 +49,6 @@ public class JsonParser implements Parser, InvocationParser {
 			throw new SerializationException(e);
 		}
 
-		return invocationParser.parseInvocations(interfaceClass, map);
+		return parser.parseInvocations(interfaceClass, map);
 	}
 }

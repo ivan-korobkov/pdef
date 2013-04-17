@@ -1,41 +1,37 @@
-package io.pdef.invocation;
+package io.pdef;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import io.pdef.descriptors.DefaultDescriptorPool;
 import io.pdef.descriptors.DescriptorPool;
-import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.fixtures.App;
 import io.pdef.fixtures.Calc;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.junit.Assert.assertEquals;
 
-public class DispatcherTest {
+public class ServerTest {
 	private DescriptorPool pool;
-	private InterfaceDescriptor descriptor;
 
 	@Before
 	public void setUp() throws Exception {
 		pool = new DefaultDescriptorPool();
-		descriptor = (InterfaceDescriptor) pool.getDescriptor(App.class);
 	}
 
 	@Test
 	public void test() throws Exception {
-		final App app = new TestApp();
-		final Dispatcher dispatcher = new Dispatcher();
-		Invoker invoker = Invoker.of(descriptor, new Handler() {
-			@Override
-			public Object handle(final List<Invocation> invocations) {
-				return dispatcher.dispatch(app, invocations);
-			}
-		});
+		App app = new TestApp();
+		final Server<App> server = new Server<App>(app, App.class, pool);
+		Client<App> client = new Client<App>(App.class, pool,
+				new ClientRequestHandler() {
+					@Override
+					public ListenableFuture<?> handle(final Object request) {
+						return server.handle(request);
+					}
+				});
 
-		App proxy = (App) invoker.toProxy();
+		App proxy = client.proxy();
 		int result = proxy.calc().sum(123, 456).get();
 		assertEquals(579, result);
 

@@ -1,8 +1,8 @@
-package io.pdef.invocation;
+package io.pdef;
 
 import java.util.List;
 
-public interface Handler {
+public interface InvocationListHandler {
 
 	Object handle(List<Invocation> invocations);
 }

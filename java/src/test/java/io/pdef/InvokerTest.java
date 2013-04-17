@@ -1,4 +1,4 @@
-package io.pdef.invocation;
+package io.pdef;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Atomics;
@@ -17,7 +17,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
 public class InvokerTest {
-
 	@Test
 	public void testInvoke() throws Exception {
 		DescriptorPool pool = new DefaultDescriptorPool();
@@ -65,7 +64,7 @@ public class InvokerTest {
 		assertEquals(ImmutableList.of(1, 2), i1.getArgs());
 	}
 
-	private static class Capture implements Handler {
+	private static class Capture implements InvocationListHandler {
 		private final AtomicReference<List<Invocation>> ref;
 
 		private Capture(final AtomicReference<List<Invocation>> ref) {

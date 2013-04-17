@@ -9,7 +9,7 @@ import io.pdef.fixtures.App;
 import io.pdef.fixtures.Calc;
 import io.pdef.fixtures.Image;
 import io.pdef.fixtures.User;
-import io.pdef.invocation.Invocation;
+import io.pdef.Invocation;
 import org.junit.Before;
 import org.junit.Test;
 

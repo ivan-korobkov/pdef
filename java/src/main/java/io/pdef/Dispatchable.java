@@ -1,4 +1,4 @@
-package io.pdef.invocation;
+package io.pdef;
 
 import java.util.List;
 

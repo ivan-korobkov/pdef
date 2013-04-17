@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableList;
 import io.pdef.descriptors.DefaultDescriptorPool;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.fixtures.*;
-import io.pdef.invocation.Invocation;
+import io.pdef.Invocation;
 import org.junit.Before;
 import org.junit.Test;
 

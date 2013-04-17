@@ -137,18 +137,18 @@ public class RawSerializer extends AbstractSerializer {
 	public Map<String, List<Object>> serializeInvocations(final List<Invocation> invocations) {
 		checkNotNull(invocations);
 
-		ImmutableMap.Builder<String, List<Object>> builder = ImmutableMap.builder();
+		Map<String, List<Object>> map = Maps.newLinkedHashMap();
 		for (Invocation invocation : invocations) {
 			String name = invocation.getMethod().getName();
 
-			ImmutableList.Builder<Object> args = ImmutableList.builder();
+			List<Object> args = Lists.newArrayList();
 			for (Object arg : invocation.getArgs()) {
 				Object rawArg = serialize(arg);
 				args.add(rawArg);
 			}
-			builder.put(name, args.build());
+			map.put(name, args);
 		}
 
-		return builder.build();
+		return map;
 	}
 }

@@ -1,7 +1,7 @@
 package io.pdef;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import io.pdef.descriptors.MethodDescriptor;
 
 import java.util.List;
@@ -14,7 +14,7 @@ public class Invocation {
 
 	public Invocation(final MethodDescriptor method, final List<?> args) {
 		this.method = checkNotNull(method);
-		this.args = ImmutableList.copyOf(args);
+		this.args = args;
 	}
 
 	public MethodDescriptor getMethod() {
@@ -22,7 +22,7 @@ public class Invocation {
 	}
 
 	public List<?> getArgs() {
-		return args;
+		return Lists.newArrayList(args);
 	}
 
 	@Override

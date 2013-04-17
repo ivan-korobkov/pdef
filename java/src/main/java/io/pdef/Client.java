@@ -71,7 +71,7 @@ public class Client<T> {
 			final Object[] objects) {
 		if (objects == null) return new Invocation(methodDescriptor, ImmutableList.of());
 
-		ImmutableList<Object> args = ImmutableList.copyOf(objects);
+		List<Object> args = Lists.newArrayList(objects);
 		return new Invocation(methodDescriptor, args);
 	}
 

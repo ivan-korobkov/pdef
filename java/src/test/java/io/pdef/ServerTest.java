@@ -8,6 +8,8 @@ import io.pdef.fixtures.Calc;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
+
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.junit.Assert.assertEquals;
 
@@ -22,12 +24,12 @@ public class ServerTest {
 	@Test
 	public void test() throws Exception {
 		App app = new TestApp();
-		final Server<App> server = new Server<App>(app, App.class, pool);
-		Client<App> client = new Client<App>(App.class, pool,
-				new ClientRequestHandler() {
+		final Server<App> server = new Server<App>(app);
+		Client<App> client = Client.of(App.class, pool,
+				new InvocationsHandler() {
 					@Override
-					public ListenableFuture<?> handle(final Object request) {
-						return server.handle(request);
+					public Object handle(final List<Invocation> invocations) {
+						return server.handle(invocations);
 					}
 				});
 

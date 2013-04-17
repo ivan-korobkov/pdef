@@ -1,86 +1,101 @@
 package io.pdef;
 
-import com.google.common.base.Function;
-import com.google.common.base.Objects;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.reflect.Reflection;
+import io.pdef.descriptors.Descriptor;
 import io.pdef.descriptors.DescriptorPool;
-import io.pdef.descriptors.FutureDescriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
-import io.pdef.raw.RawParser;
-import io.pdef.raw.RawSerializer;
+import io.pdef.descriptors.MethodDescriptor;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Type;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.util.concurrent.Futures.transform;
 
 public class Client<T> {
-	private final Class<T> cls;
-	private final ClientRequestHandler requestHandler;
+	@Nullable private final Client parent;
+	@Nullable private final Invocation invocation;
+	private final InvocationsHandler handler;
+	private final Descriptor descriptor;
 
-	private final Parser parser;
-	private final Serializer serializer;
-	private final InterfaceDescriptor descriptor;
-
-	public Client(final Class<T> cls, final DescriptorPool pool,
-			final ClientRequestHandler requestHandler) {
-		this.cls = checkNotNull(cls);
-		this.requestHandler = checkNotNull(requestHandler);
-
-		parser = new RawParser(pool);
-		serializer = new RawSerializer(pool);
-		descriptor = (InterfaceDescriptor) pool.getDescriptor(cls);
+	@SuppressWarnings("unchecked")
+	public static <T> Client<T> of(final Class<T> cls, final DescriptorPool pool,
+			final InvocationsHandler handler) {
+		checkNotNull(cls);
+		checkNotNull(pool);
+		checkNotNull(handler);
+		InterfaceDescriptor descriptor = (InterfaceDescriptor) pool.getDescriptor(cls);
+		return new Client<T>(null, null, handler, descriptor);
 	}
 
-	@Override
-	public String toString() {
-		return Objects.toStringHelper(this)
-				.addValue(cls)
-				.toString();
+	private Client(@Nullable final Client parent, @Nullable final Invocation invocation,
+			final InvocationsHandler handler, final Descriptor resultDescriptor) {
+		this.parent = parent;
+		this.invocation = invocation;
+		this.handler = checkNotNull(handler);
+		this.descriptor = checkNotNull(resultDescriptor);
 	}
 
 	@SuppressWarnings("unchecked")
 	public T proxy() {
-		Invoker invoker = Invoker.of(descriptor, new InvocationHandler());
-		return (T) invoker.toProxy();
+		Class<?> cls = ((InterfaceDescriptor) descriptor).getJavaType();
+		return (T) Reflection.newProxy(cls, new Handler());
 	}
 
-	private Object doHandle(final List<Invocation> invocations) {
-		checkNotNull(invocations);
-		checkArgument(!invocations.isEmpty());
-		FutureDescriptor descriptor = (FutureDescriptor) invocations.get(invocations.size() - 1)
-				.getMethod().getResult();
+	private Object doInvoke(final Object o, final Method method, final Object[] objects)
+			throws Throwable {
+		String name = method.getName();
+		InterfaceDescriptor iface = (InterfaceDescriptor) descriptor;
+		MethodDescriptor methodDescriptor = iface.getMethods().get(name);
+		if (methodDescriptor == null) return method.invoke(this, objects);
 
-		Object request = serializer.serializeInvocations(invocations);
-		ListenableFuture<?> future = requestHandler.handle(request);
-		return transform(future, new ResultFunction(descriptor));
-	}
-
-	protected Object onResult(final FutureDescriptor descriptor, final Object result) {
-		Type resultType = descriptor.getElementType();
-		return parser.parse(resultType, result);
-	}
-
-	private class InvocationHandler implements InvocationListHandler {
-		@Override
-		public Object handle(final List<Invocation> invocations) {
-			return doHandle(invocations);
-		}
-	}
-
-	private class ResultFunction implements Function<Object, Object> {
-		private final FutureDescriptor descriptor;
-
-		private ResultFunction(final FutureDescriptor descriptor) {
-			this.descriptor = checkNotNull(descriptor);
+		Invocation nextInvocation = toInvocation(methodDescriptor, objects);
+		Client nextClient = nextInvoker(methodDescriptor, nextInvocation);
+		if (methodDescriptor.getResult() instanceof InterfaceDescriptor) {
+			return nextClient.proxy();
 		}
 
+		return nextClient.handle();
+	}
+
+	private Client<?> nextInvoker(final MethodDescriptor methodDescriptor,
+			final Invocation nextInvocation) {
+		Descriptor result = methodDescriptor.getResult();
+		return new Client<Object>(this, nextInvocation, handler, result);
+	}
+
+	private Invocation toInvocation(final MethodDescriptor methodDescriptor,
+			final Object[] objects) {
+		if (objects == null) return new Invocation(methodDescriptor, ImmutableList.of());
+
+		ImmutableList<Object> args = ImmutableList.copyOf(objects);
+		return new Invocation(methodDescriptor, args);
+	}
+
+	private Object handle() {
+		List<Invocation> invocations = toInvocations();
+		return handler.handle(invocations);
+	}
+
+	private List<Invocation> toInvocations() {
+		List<Invocation> calls = Lists.newLinkedList();
+		Client client = this;
+		while (client != null && client.invocation != null) {
+			calls.add(0, client.invocation);
+			client = client.parent;
+		}
+
+		return ImmutableList.copyOf(calls);
+	}
+
+	private class Handler implements InvocationHandler {
 		@Override
-		public Object apply(@Nullable final Object input) {
-			return onResult(descriptor, input);
+		public Object invoke(final Object o, final Method method, final Object[] objects)
+				throws Throwable {
+			return doInvoke(o, method, objects);
 		}
 	}
 }

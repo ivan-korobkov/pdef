@@ -1,44 +1,35 @@
 package io.pdef;
 
-import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
-import io.pdef.descriptors.DescriptorPool;
 import io.pdef.descriptors.MethodDescriptor;
-import io.pdef.raw.RawParser;
-import io.pdef.raw.RawSerializer;
 
-import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.util.concurrent.Futures.transform;
 
 public class Server<T> {
 	private final T service;
-	private final Class<T> cls;
-	private final Parser parser;
-	private final Serializer serializer;
 
-	public Server(final T service, final Class<T> cls, final DescriptorPool pool) {
+	public Server(final T service) {
 		this.service = checkNotNull(service);
-		this.cls = checkNotNull(cls);
-		parser = new RawParser(pool);
-		serializer = new RawSerializer(pool);
 	}
 
-	public ListenableFuture<?> handle(Object request) {
-		List<Invocation> invocations = parser.parseInvocations(cls, request);
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(service)
+				.toString();
+	}
+
+	public ListenableFuture<?> handle(List<Invocation> invocations) {
+		checkNotNull(invocations);
 		checkArgument(!invocations.isEmpty());
 
-		ListenableFuture<?> future = (ListenableFuture<?>) doDispatch(service, invocations);
-		return transform(future, new ResultFunction());
-	}
-
-	private Object onResult(final Object input) {
-		return serializer.serialize(input);
+		return (ListenableFuture<?>) doDispatch(service, invocations);
 	}
 
 	private Object doDispatch(final T service, final List<Invocation> invocations) {
@@ -59,13 +50,5 @@ public class Server<T> {
 		}
 
 		return object;
-	}
-
-	private class ResultFunction implements Function<Object, Object> {
-		@Nullable
-		@Override
-		public Object apply(@Nullable final Object input) {
-			return onResult(input);
-		}
 	}
 }

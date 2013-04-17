@@ -16,16 +16,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
-public class InvokerTest {
+public class ClientTest {
 	@Test
 	public void testInvoke() throws Exception {
 		DescriptorPool pool = new DefaultDescriptorPool();
-		InterfaceDescriptor app = (InterfaceDescriptor) pool.getDescriptor(App.class);
-
 		AtomicReference<List<Invocation>> ref = Atomics.newReference();
-		Invoker invoker = Invoker.of(app, new Capture(ref));
+		Client<App> client = Client.of(App.class, pool, new Capture(ref));
 
-		App proxy = (App) invoker.toProxy();
+		App proxy = client.proxy();
 		ListenableFuture<String> future = proxy.echo("Hello, world");
 		assertNull(future);
 
@@ -34,7 +32,8 @@ public class InvokerTest {
 		assertEquals(1, invocations.size());
 
 		Invocation invocation = invocations.get(0);
-		assertEquals(app.getMethods().get("echo"), invocation.getMethod());
+		InterfaceDescriptor descriptor = (InterfaceDescriptor) pool.getDescriptor(App.class);
+		assertEquals(descriptor.getMethods().get("echo"), invocation.getMethod());
 		assertEquals(ImmutableList.of("Hello, world"), invocation.getArgs());
 	}
 
@@ -45,9 +44,9 @@ public class InvokerTest {
 		InterfaceDescriptor calc = (InterfaceDescriptor) pool.getDescriptor(Calc.class);
 
 		AtomicReference<List<Invocation>> ref = Atomics.newReference();
-		Invoker invoker = Invoker.of(app, new Capture(ref));
+		Client<App> client = Client.of(App.class, pool, new Capture(ref));
 
-		App proxy = (App) invoker.toProxy();
+		App proxy = client.proxy();
 		ListenableFuture<Integer> future = proxy.calc().sum(1, 2);
 		assertNull(future);
 
@@ -64,7 +63,7 @@ public class InvokerTest {
 		assertEquals(ImmutableList.of(1, 2), i1.getArgs());
 	}
 
-	private static class Capture implements InvocationListHandler {
+	private static class Capture implements InvocationsHandler {
 		private final AtomicReference<List<Invocation>> ref;
 
 		private Capture(final AtomicReference<List<Invocation>> ref) {

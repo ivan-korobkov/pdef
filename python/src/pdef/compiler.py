@@ -4,6 +4,7 @@ import argparse
 import logging
 
 from pdef.lang import Pdef
+from pdef.csharp import CsharpPackage
 from pdef.java import JavaPackage
 from pdef.sources import DirectorySource
 
@@ -12,6 +13,12 @@ class Compiler(object):
     def __init__(self, dirs):
         self.pdef = Pdef()
         self.pdef.add_sources(*[DirectorySource(p) for p in dirs])
+
+    def compile_cs(self, outdir, *package_names):
+        for package_name in package_names:
+            package = self.pdef.package(package_name)
+            cs = CsharpPackage(package)
+            cs.write_to(outdir)
 
     def compile_java(self, outdir, *package_names):
         for package_name in package_names:
@@ -25,6 +32,7 @@ def main():
     parser.add_argument('-v', '--verbose', help='increase output verbosity', action='store_true')
     parser.add_argument('--debug', help='enable debug output', action='store_true', default=False)
     parser.add_argument('--java', help='output directory for java files')
+    parser.add_argument('--cs', help='output directory for c# files')
     parser.add_argument('--path', help='specify package directories', nargs='+')
     parser.add_argument('--packages', help='package names to compile', nargs='+')
     args = parser.parse_args()
@@ -33,5 +41,7 @@ def main():
     logging.basicConfig(format='%(message)s', level=level)
 
     compiler = Compiler(args.path)
+    if args.cs:
+        compiler.compile_cs(args.cs, *args.packages)
     if args.java:
         compiler.compile_java(args.java, *args.packages)

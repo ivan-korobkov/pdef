@@ -1,0 +1,19 @@
+{% if type_field %}
+[TypeField("{{ type_field }}")]
+{% endif %}
+{% if subtypes %}
+{% for enum, type in subtypes %}
+[SubType("{{ enum }}", typeof({{ type }}))]
+{% endfor %}
+{% endif %}
+{% if base %}
+public class {{ name }} : {{ base }}
+{% else %}
+public class {{ name }}
+{% endif %}
+{
+{% for field in declared_fields %}
+    public {{ field.type }} {{ field.name }} { get; set; }
+{% endfor %}
+}
+

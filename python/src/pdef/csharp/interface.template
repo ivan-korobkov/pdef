@@ -1,0 +1,13 @@
+{% if bases %}
+public interface {{ name }} : {% for base in bases -%}
+{{ base }}{% if loop.length > 1 and not loop.last %}, {% endif %}{%- endfor %}
+{% else %}
+public interface {{ name }}
+{% endif %}
+{
+{% for method in declared_methods %}
+    {{ method.result }} {{ method.name }}({% for aname, atype in method.args -%}
+{{ atype }} {{ aname }}{% if loop.length > 1 and not loop.last %}, {% endif %}
+{%- endfor %});
+{% endfor %}
+}

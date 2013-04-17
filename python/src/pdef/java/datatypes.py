@@ -2,6 +2,7 @@
 import os.path
 from jinja2 import Environment
 from pdef.java.refs import JavaRef
+from pdef.utils import upper_first
 
 
 ENUM_FILE = os.path.join(os.path.dirname(__file__), 'enum.template')
@@ -31,18 +32,15 @@ class JavaMessage(object):
             self.base_class = None
             self.base_builder = None
 
-        self.variables = tuple(JavaRef.from_lang(var) for var in msg.variables)
         self.subtypes = JavaSubtypes(msg.subtypes) if msg.subtypes else None
 
-        index = 0
         fields = []
         dfields = []
         for field in msg.fields:
-            jfield = JavaField(field, index)
+            jfield = JavaField(field)
             fields.append(jfield)
             if (field.is_declared):
                 dfields.append(jfield)
-            index += 1
         self.fields = tuple(fields)
         self.declared_fields = tuple(dfields)
 
@@ -52,8 +50,7 @@ class JavaMessage(object):
 
 
 class JavaField(object):
-    def __init__(self, field, index=-1):
-        self.index = index
+    def __init__(self, field):
         self.name = field.name
         self.type = JavaRef.from_lang(field.type)
 
@@ -86,9 +83,3 @@ class JavaEnum(object):
     @property
     def code(self):
         return ENUM.render(**self.__dict__)
-
-
-def upper_first(s):
-    if not s:
-        return s
-    return s[0].upper() + s[1:]

@@ -12,13 +12,16 @@ message GenericObject polymorphic on "type" as ObjectType.OBJECT {
 }
 
 message User inherits GenericObject as ObjectType.USER {
+    isActive    bool;
     name        string;
     age         int32;
     sex         Sex;
     profile     Profile;
     floats      map<string, float>;
     chats       list<Chat>;
-    ints        map<int16, int64>;
+    shorts      map<int16, int64>;
+    ints        set<int32>;
+    weight      double;      
 }
 
 message Post inherits GenericObject as ObjectType.POST {

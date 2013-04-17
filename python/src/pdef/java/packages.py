@@ -53,7 +53,7 @@ class JavaFile(object):
         fullpath = os.path.join(fulldir, self.filename)
 
         code = self.jdef.code
-        with open(fullpath, 'w') as f:
+        with open(fullpath, 'wt') as f:
             f.write(code)
 
         logging.info('Created %s', fullpath)

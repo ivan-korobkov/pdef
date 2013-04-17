@@ -1,0 +1,9 @@
+namespace {{ namespace }}
+{
+{% for d in definitions %}
+    {{ d|indent(4) }}
+
+
+{% endfor %}
+}
+

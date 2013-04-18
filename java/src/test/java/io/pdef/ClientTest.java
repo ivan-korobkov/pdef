@@ -1,6 +1,5 @@
 package io.pdef;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Atomics;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.pdef.descriptors.DefaultDescriptorPool;
@@ -34,7 +33,7 @@ public class ClientTest {
 		Invocation invocation = invocations.get(0);
 		InterfaceDescriptor descriptor = (InterfaceDescriptor) pool.getDescriptor(App.class);
 		assertEquals(descriptor.getMethods().get("echo"), invocation.getMethod());
-		assertEquals(ImmutableList.of("Hello, world"), invocation.getArgs());
+		assertArrayEquals(new Object[]{"Hello, world"}, invocation.getArgs());
 	}
 
 	@Test
@@ -59,8 +58,8 @@ public class ClientTest {
 		assertEquals(app.getMethods().get("calc"), i0.getMethod());
 		assertEquals(calc.getMethods().get("sum"), i1.getMethod());
 
-		assertEquals(ImmutableList.of(), i0.getArgs());
-		assertEquals(ImmutableList.of(1, 2), i1.getArgs());
+		assertArrayEquals(new Object[0], i0.getArgs());
+		assertArrayEquals(new Object[]{1, 2}, i1.getArgs());
 	}
 
 	private static class Capture implements InvocationsHandler {

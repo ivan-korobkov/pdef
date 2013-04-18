@@ -212,8 +212,8 @@ public class RawParser extends AbstractParser {
 				throw new SerializationException(path.toString() + ": method not found ");
 			}
 
-			List rawArgs = (List) entry.getValue();
-			List<?> args = parseArgs(method, rawArgs, path);
+			Map<?, ?> rawArgs = (Map<?, ?>) entry.getValue();
+			Object[] args = parseArgs(method, rawArgs);
 			Invocation Invocation = new Invocation(method, args);
 			Invocations.add(Invocation);
 
@@ -228,24 +228,19 @@ public class RawParser extends AbstractParser {
 		return Invocations;
 	}
 
-	private List<?> parseArgs(final MethodDescriptor method, final List<Object> rawArgs,
-			final StringBuilder path) {
-		List<Type> argDescriptors = method.getArgTypes();
-		if (rawArgs.size() != argDescriptors.size()) {
-			throw new SerializationException(path.toString() + ": wrong number of arguments, "
-					+ argDescriptors.size() + " expected");
-		}
+	private Object[] parseArgs(final MethodDescriptor method, final Map<?, ?> rawArgs) {
+		Map<String, Type> argTypes = method.getArgTypes();
+		Object[] args = new Object[argTypes.size()];
 
-		ImmutableList.Builder<Object> builder = ImmutableList.builder();
-		Iterator<Type> iterator0 = argDescriptors.iterator();
-		Iterator<Object> iterator1 = rawArgs.iterator();
-		while (iterator0.hasNext()) {
-			Type argType = iterator0.next();
-			Object rawArg = iterator1.next();
+		int i = 0;
+		for (Map.Entry<String, Type> e : argTypes.entrySet()) {
+			String name = e.getKey();
+			Type argType = e.getValue();
+			Object rawArg = rawArgs.get(name);
 			Object arg = parse(argType, rawArg);
-			builder.add(arg);
+			args[i++] = arg;
 		}
 
-		return builder.build();
+		return args;
 	}
 }

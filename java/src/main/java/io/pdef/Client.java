@@ -69,10 +69,8 @@ public class Client<T> {
 
 	private Invocation toInvocation(final MethodDescriptor methodDescriptor,
 			final Object[] objects) {
-		if (objects == null) return new Invocation(methodDescriptor, ImmutableList.of());
-
-		List<Object> args = Lists.newArrayList(objects);
-		return new Invocation(methodDescriptor, args);
+		if (objects == null) return new Invocation(methodDescriptor, new Object[0]);
+		return new Invocation(methodDescriptor, objects);
 	}
 
 	private Object handle() {

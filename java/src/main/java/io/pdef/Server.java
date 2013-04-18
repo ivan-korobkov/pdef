@@ -45,7 +45,7 @@ public class Server<T> {
 
 			Invocation invocation = iterator.next();
 			MethodDescriptor method = invocation.getMethod();
-			List<?> args = invocation.getArgs();
+			Object[] args = invocation.getArgs();
 			object = method.invoke(object, args);
 		}
 

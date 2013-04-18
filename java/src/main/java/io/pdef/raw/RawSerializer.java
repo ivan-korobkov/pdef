@@ -2,14 +2,11 @@ package io.pdef.raw;
 
 import com.google.common.collect.*;
 import io.pdef.AbstractSerializer;
+import io.pdef.Invocation;
 import io.pdef.Message;
 import io.pdef.descriptors.*;
-import io.pdef.Invocation;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -134,21 +131,29 @@ public class RawSerializer extends AbstractSerializer {
 	}
 
 	@Override
-	public Map<String, List<Object>> serializeInvocations(final List<Invocation> invocations) {
+	public Map<String, Map<String, Object>> serializeInvocations(
+			final List<Invocation> invocations) {
 		checkNotNull(invocations);
 
-		Map<String, List<Object>> map = Maps.newLinkedHashMap();
+		ImmutableMap.Builder<String, Map<String, Object>> builder = ImmutableMap.builder();
 		for (Invocation invocation : invocations) {
-			String name = invocation.getMethod().getName();
+			Iterator<String> names = invocation.getMethod().getArgs().keySet().iterator();
+			Iterator<Object> args = Iterators.forArray(invocation.getArgs());
 
-			List<Object> args = Lists.newArrayList();
-			for (Object arg : invocation.getArgs()) {
+			ImmutableMap.Builder<String, Object> argBuilder = ImmutableMap.builder();
+			while (names.hasNext()) {
+				String name = names.next();
+				Object arg = args.next();
 				Object rawArg = serialize(arg);
-				args.add(rawArg);
+				if (rawArg == null) continue;
+				argBuilder.put(name, rawArg);
 			}
-			map.put(name, args);
+
+			String name = invocation.getMethod().getName();
+			Map<String, Object> rawArgs = argBuilder.build();
+			builder.put(name, rawArgs);
 		}
 
-		return map;
+		return builder.build();
 	}
 }

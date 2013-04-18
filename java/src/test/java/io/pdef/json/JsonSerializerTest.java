@@ -2,6 +2,7 @@ package io.pdef.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import io.pdef.Invocation;
 import io.pdef.descriptors.DefaultDescriptorPool;
 import io.pdef.descriptors.DescriptorPool;
 import io.pdef.descriptors.InterfaceDescriptor;
@@ -9,11 +10,9 @@ import io.pdef.fixtures.App;
 import io.pdef.fixtures.Calc;
 import io.pdef.fixtures.Image;
 import io.pdef.fixtures.User;
-import io.pdef.Invocation;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -52,10 +51,10 @@ public class JsonSerializerTest {
 		InterfaceDescriptor app = (InterfaceDescriptor) pool.getDescriptor(App.class);
 		InterfaceDescriptor calc = (InterfaceDescriptor) pool.getDescriptor(Calc.class);
 		List<Invocation> invocations = ImmutableList.of(
-				new Invocation(app.getMethods().get("calc"), Arrays.asList()),
-				new Invocation(calc.getMethods().get("sum"), Arrays.asList(3, 4)));
+				new Invocation(app.getMethods().get("calc"), new Object[0]),
+				new Invocation(calc.getMethods().get("sum"), new Object[] {3, 4}));
 
 		String s = serializer.serializeInvocations(invocations);
-		assertEquals("{\"calc\":[],\"sum\":[3,4]}", s);
+		assertEquals("{\"calc\":{},\"sum\":{\"i0\":3,\"i1\":4}}", s);
 	}
 }

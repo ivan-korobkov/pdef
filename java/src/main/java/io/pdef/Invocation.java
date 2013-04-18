@@ -1,28 +1,25 @@
 package io.pdef;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
 import io.pdef.descriptors.MethodDescriptor;
-
-import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Invocation {
 	private final MethodDescriptor method;
-	private final List<?> args;
+	private final Object[] args;
 
-	public Invocation(final MethodDescriptor method, final List<?> args) {
+	public Invocation(final MethodDescriptor method, final Object[] args) {
 		this.method = checkNotNull(method);
-		this.args = args;
+		this.args = args.clone();
 	}
 
 	public MethodDescriptor getMethod() {
 		return method;
 	}
 
-	public List<?> getArgs() {
-		return Lists.newArrayList(args);
+	public Object[] getArgs() {
+		return args.clone();
 	}
 
 	@Override

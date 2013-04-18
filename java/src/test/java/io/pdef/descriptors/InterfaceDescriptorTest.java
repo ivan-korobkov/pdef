@@ -1,6 +1,7 @@
 package io.pdef.descriptors;
 
 import io.pdef.Interface;
+import io.pdef.annotations.Name;
 import org.junit.Test;
 
 import java.util.Map;
@@ -66,11 +67,11 @@ public class InterfaceDescriptorTest {
 	}
 
 	private static interface Calc extends Interface {
-		int sum(int i0, int i1);
+		int sum(@Name("i0") int i0, @Name("i1") int i1);
 	}
 
 	private static interface ExtendedApp extends App {
-		String echo(String text);
+		String echo(@Name("text") String text);
 	}
 
 	private static interface OverridingBase extends Interface {

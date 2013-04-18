@@ -35,7 +35,7 @@ public class JsonSerializer implements Serializer {
 	@Override
 	public String serializeInvocations(final List<Invocation> invocations) {
 		checkNotNull(invocations);
-		Map<String, List<Object>> raw = serializer.serializeInvocations(invocations);
+		Map<String, Map<String, Object>> raw = serializer.serializeInvocations(invocations);
 		try {
 			return mapper.writeValueAsString(raw);
 		} catch (JsonProcessingException e) {

@@ -1,16 +1,16 @@
 package io.pdef.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
+import io.pdef.Invocation;
 import io.pdef.descriptors.DefaultDescriptorPool;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.fixtures.*;
-import io.pdef.Invocation;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -46,7 +46,7 @@ public class JsonParserTest {
 
 	@Test
 	public void testParseInvocations() throws Exception {
-		String s = "{\"calc\": [], \"sum\": [10, 11]}";
+		String s = "{\"calc\": {}, \"sum\": {\"i0\": 10, \"i1\": 11}}";
 
 		List<Invocation> invocations = parser.parseInvocations(App.class, s);
 		InterfaceDescriptor app = (InterfaceDescriptor) pool.getDescriptor(App.class);
@@ -55,7 +55,7 @@ public class JsonParserTest {
 		assertEquals(app.getMethods().get("calc"), invocations.get(0).getMethod());
 		assertEquals(calc.getMethods().get("sum"), invocations.get(1).getMethod());
 
-		assertTrue(invocations.get(0).getArgs().isEmpty());
-		assertEquals(ImmutableList.of(10, 11), invocations.get(1).getArgs());
+		assertTrue(invocations.get(0).getArgs().length == 0);
+		assertArrayEquals(new Object[]{10, 11}, invocations.get(1).getArgs());
 	}
 }

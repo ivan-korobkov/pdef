@@ -1,9 +1,9 @@
 package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableMap;
-import io.pdef.annotations.Subtype;
-import io.pdef.annotations.Subtypes;
-import io.pdef.annotations.TypeField;
+import io.pdef.Subtype;
+import io.pdef.Subtypes;
+import io.pdef.TypeField;
 
 import java.util.Map;
 

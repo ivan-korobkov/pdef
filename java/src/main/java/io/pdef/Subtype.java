@@ -1,4 +1,4 @@
-package io.pdef.annotations;
+package io.pdef;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(value = ElementType.TYPE)
 @Retention(value = RetentionPolicy.RUNTIME)
-public @interface TypeField {
-	String value();
+public @interface Subtype {
+	Class<?> value();
+	String type();
 }

@@ -3,7 +3,7 @@ package io.pdef.descriptors;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import io.pdef.annotations.Name;
+import io.pdef.Name;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;

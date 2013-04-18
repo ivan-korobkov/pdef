@@ -1,9 +1,9 @@
 package io.pdef.fixtures;
 
 import io.pdef.Message;
-import io.pdef.annotations.Subtype;
-import io.pdef.annotations.Subtypes;
-import io.pdef.annotations.TypeField;
+import io.pdef.Subtype;
+import io.pdef.Subtypes;
+import io.pdef.TypeField;
 
 @TypeField("type")
 @Subtypes({

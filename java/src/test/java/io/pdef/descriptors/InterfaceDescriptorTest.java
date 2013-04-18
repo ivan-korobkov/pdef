@@ -1,7 +1,7 @@
 package io.pdef.descriptors;
 
 import io.pdef.Interface;
-import io.pdef.annotations.Name;
+import io.pdef.Name;
 import org.junit.Test;
 
 import java.util.Map;

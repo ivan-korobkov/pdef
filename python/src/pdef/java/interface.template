@@ -15,12 +15,12 @@ public interface {{ name }} extends {% for base in bases -%}
     {{ method.result }} {{ method.name }}();
 {% elif method.args|length < 3 %}
     {{ method.result }} {{ method.name }}({% for arg in method.args -%}
-            io.pdef.Name("{{ arg.name }}") {{ arg.type }} {{ arg.name }}{% if not loop.last and loop.length > 1 %}, {% endif %}
+            @io.pdef.Name("{{ arg.name }}") {{ arg.type }} {{ arg.name }}{% if not loop.last and loop.length > 1 %}, {% endif %}
 {%- endfor %});
 {% else %}
     {{ method.result }} {{ method.name }}(
 {% for arg in method.args %}
-            io.pdef.Name("{{ arg.name }}") {{ arg.type }} {{ arg.name }}{% if loop.last %}); {% elif loop.length > 1 %}, {% endif %}
+            @io.pdef.Name("{{ arg.name }}") {{ arg.type }} {{ arg.name }}{% if loop.last %}); {% elif loop.length > 1 %}, {% endif %}
 
 {% endfor %}
 {% endif %}

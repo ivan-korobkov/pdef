@@ -1,10 +1,10 @@
 package {{ package }};
 
 {% if subtypes %}
-@io.pdef.annotations.TypeField("{{ subtypes.field.name }}")
-@io.pdef.annotations.Subtypes({
+@io.pdef.TypeField("{{ subtypes.field.name }}")
+@io.pdef.Subtypes({
 {% for type, submessage in subtypes.items %}
-        @io.pdef.annotations.Subtype(type = "{{ type }}", value = {{ submessage }}.class){% if loop.length > 1 and not loop.last %}, {% endif %}
+        @io.pdef.Subtype(type = "{{ type }}", value = {{ submessage }}.class){% if loop.length > 1 and not loop.last %}, {% endif %}
 
 {% endfor %}
 })

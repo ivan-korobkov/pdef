@@ -1,6 +1,6 @@
 package io.pdef.rpc;
 
-public interface Func<I, O> {
+public interface Func<In, Out> {
 
-	O handle(I in);
+	Out apply(In in);
 }

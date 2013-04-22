@@ -6,36 +6,34 @@ public class TestFunctional {
 
 	@org.junit.Test
 	public void test() throws Exception {
-		Func<String, String> service = PipelineBuilder
-				.start(new Square())
-				.add(new StringFilter())
-				.add(new MetricFilter<String, String>())
-				.build();
+		Func<String, String> func = new StringFilter()
+				.then(new MetricFilter<Integer, Integer>())
+				.then(new Square());
 
-		String out = service.handle("12");
+		String out = func.apply("12");
 		assertEquals("144", out);
 	}
 
-	public static class MetricFilter<I, O> implements Observer<I, O> {
-
+	public static class MetricFilter<I, O> extends Filter<I, O, I, O> {
 		@Override
-		public O handle(final I in, final Func<I, O> next) {
-			return next.handle(in);
+		public O apply(final I request, final Func<I, O> func) {
+			return func.apply(request);
 		}
 	}
 
 	public static class Square implements Func<Integer, Integer> {
 		@Override
-		public Integer handle(final Integer in) {
+		public Integer apply(final Integer in) {
 			return in * in;
 		}
 	}
 
-	public static class StringFilter implements Filter<String, String, Integer, Integer> {
+	public static class StringFilter extends Filter<String, String, Integer, Integer> {
 
-		public String handle(final String in, Func<Integer, Integer> next) {
-			Integer i = Integer.valueOf(in);
-			Integer o = next.handle(i);
+		@Override
+		public String apply(final String request, final Func<Integer, Integer> func) {
+			Integer i = Integer.valueOf(request);
+			Integer o = func.apply(i);
 			return Integer.toString(o);
 		}
 	}

@@ -1,4 +1,4 @@
 package io.pdef.rpc;
 
-public interface Observer<I, O> extends Filter<I, O, I, O> {
+public abstract class Observer<In, Out> extends Filter<In, Out, In, Out> {
 }

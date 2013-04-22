@@ -1,19 +1,21 @@
-package io.pdef;
+package io.pdef.rpc;
 
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.pdef.Client;
+import io.pdef.Invocation;
+import io.pdef.InvocationsHandler;
 import io.pdef.descriptors.DefaultDescriptorPool;
 import io.pdef.descriptors.DescriptorPool;
 import io.pdef.fixtures.App;
 import io.pdef.fixtures.Calc;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
-import static com.google.common.util.concurrent.Futures.immediateFuture;
-import static org.junit.Assert.assertEquals;
-
-public class ServerTest {
+public class AsyncDispatcherTest {
 	private DescriptorPool pool;
 
 	@Before
@@ -24,12 +26,12 @@ public class ServerTest {
 	@Test
 	public void test() throws Exception {
 		App app = new TestApp();
-		final Server<App> server = new Server<App>(app);
+		final AsyncDispatcher<App> asyncDispatcher = new AsyncDispatcher<App>(app);
 		Client<App> client = Client.of(App.class, pool,
 				new InvocationsHandler() {
 					@Override
 					public Object handle(final List<Invocation> invocations) {
-						return server.handle(invocations);
+						return asyncDispatcher.apply(invocations);
 					}
 				});
 

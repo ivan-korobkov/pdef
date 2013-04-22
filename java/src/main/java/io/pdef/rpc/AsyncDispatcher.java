@@ -1,20 +1,20 @@
-package io.pdef;
+package io.pdef.rpc;
 
 import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.pdef.Dispatchable;
+import io.pdef.Invocation;
 import io.pdef.descriptors.MethodDescriptor;
 
 import java.util.Iterator;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public class Server<T> {
+public class AsyncDispatcher<T> implements Func<List<Invocation>, ListenableFuture<Object>> {
 	private final T service;
 
-	public Server(final T service) {
+	public AsyncDispatcher(final T service) {
 		this.service = checkNotNull(service);
 	}
 
@@ -25,11 +25,13 @@ public class Server<T> {
 				.toString();
 	}
 
-	public ListenableFuture<?> handle(List<Invocation> invocations) {
+	@SuppressWarnings("unchecked")
+	@Override
+	public ListenableFuture<Object> apply(final List<Invocation> invocations) {
 		checkNotNull(invocations);
 		checkArgument(!invocations.isEmpty());
 
-		return (ListenableFuture<?>) doDispatch(service, invocations);
+		return (ListenableFuture<Object>) doDispatch(service, invocations);
 	}
 
 	private Object doDispatch(final T service, final List<Invocation> invocations) {

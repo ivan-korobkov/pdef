@@ -97,23 +97,13 @@ public class {{ name }} extends {% if base_class -%}{{ base_class }}{%- else -%}
         }
 
         public Builder {{ field.set }}(final {{ field.type }} value) {
-{% if field.is_type %}
-            throw new UnsupportedOperationException(
-                    "The field \"{{ field.name }}\" is a read-only type field");
-{% else %}
             this.{{ field.name }} = value;
             return this;
-{% endif %}
         }
 
         public Builder {{ field.clear }}() {
-{% if field.is_type %}
-            throw new UnsupportedOperationException(
-                    "The field \"{{ field.name }}\" is a read-only type field");
-{% else %}
             this.{{ field.name }} = {{ field.type.default }};
             return this;
-{% endif %}
         }
 
 {% else %}

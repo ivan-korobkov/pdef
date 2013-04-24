@@ -7,11 +7,11 @@
 {% endfor %}
 {% endif %}
 {% if base %}
-public class {{ name }} : {{ base }}
+public partial class {{ name }} : {{ base }}
 {% elif is_exception %}
-public class {{ name }} : Exception
+public partial class {{ name }} : Exception
 {% else %}
-public class {{ name }}
+public partial class {{ name }}
 {% endif %}
 {
 {% for field in declared_fields %}

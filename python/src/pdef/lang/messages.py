@@ -25,6 +25,11 @@ class Message(Type):
         self.declared_fields = SymbolTable(self)
 
         self.node = None
+        self.is_exception = False
+
+    def __repr__(self):
+        m = 'Exception' if self.is_exception else 'Message'
+        return '<%s %s>' % (m, self.fullname)
 
     @property
     def parent(self):
@@ -58,11 +63,12 @@ class Message(Type):
             _type = None
             type_field_name = None
 
-        self.build(type=_type, type_field_name=type_field_name,
-                   base=base, subtype=subtype,
-                   declared_fields=declared_fields)
+        self.build(type=_type, type_field_name=type_field_name, base=base, subtype=subtype,
+                   declared_fields=declared_fields, is_exception=node.is_exception)
 
-    def build(self, type=None, type_field_name=None, base=None, subtype=None, declared_fields=None):
+    def build(self, type=None, type_field_name=None, base=None, subtype=None, declared_fields=None,
+              is_exception=False):
+        self.is_exception = is_exception
         self.set_base(base, subtype)
         self.add_fields(*(declared_fields if declared_fields else ()))
         self.set_type(type, type_field_name)
@@ -80,6 +86,7 @@ class Message(Type):
         check_argument(not base.is_subtype_of(self),
             '%s: circular inheritance %s',
             (self, '->'.join(str(b) for b in ([self, base] + list(base.bases)))))
+        check_argument(self.is_exception == base.is_exception, '%s: cannot inherit %s', self, base)
 
         self.base = check_not_none(base)
         self.bases = tuple([base] + list(base.bases))

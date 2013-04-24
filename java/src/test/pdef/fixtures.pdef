@@ -1,7 +1,7 @@
 module io.pdef.test;
 
 enum ObjectType {
-    OBJECT, USER, POST, PHOTO, NOTE, EVENT;
+    OBJECT, USER, POST, PHOTO, NOTE, EVENT
 }
 
 
@@ -56,7 +56,7 @@ message Chat {
 }
 
 enum EventType {
-    GENERIC, SYSTEM;
+    GENERIC, SYSTEM
 }
 
 message Event
@@ -71,11 +71,11 @@ message SystemEvent inherits Event as EventType.SYSTEM {
 }
 
 enum Sex {
-    MALE, FEMALE;
+    MALE, FEMALE
 }
 
 enum Language {
-    EN, RU, FR, DE;
+    EN, RU, FR, DE
 }
 
 message Birthday {
@@ -83,3 +83,14 @@ message Birthday {
     month   int32;
     day     int32;
 }
+
+enum ExceptionType {
+    ERROR, AUTH_EXCEPTION
+}
+
+exception AppException polymorphic on "type" as ExceptionType.ERROR {
+    type    ExceptionType;
+    text    string;
+}
+
+exception AuthException inherits AppException as ExceptionType.AUTH_EXCEPTION {}

@@ -43,6 +43,7 @@ class JavaMessage(object):
                 dfields.append(jfield)
         self.fields = tuple(fields)
         self.declared_fields = tuple(dfields)
+        self.is_exception = msg.is_exception
 
     @property
     def code(self):

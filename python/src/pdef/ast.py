@@ -49,7 +49,7 @@ class Native(Type):
 
 class Message(Type):
     def __init__(self, name, base=None, subtype=None, type_field=None, type=None,
-                 declared_fields=None, options=None):
+                 declared_fields=None, options=None, is_exception=False):
         super(Message, self).__init__(name)
 
         self.base = base
@@ -60,6 +60,7 @@ class Message(Type):
 
         self.declared_fields = tuple(declared_fields) if declared_fields else ()
         self.options = tuple(options) if options else ()
+        self.is_exception = is_exception
 
 
 class Field(object):

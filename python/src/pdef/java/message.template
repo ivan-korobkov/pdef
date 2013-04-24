@@ -9,8 +9,10 @@ package {{ package }};
 {% endfor %}
 })
 {% endif %}
-public class {{ name }} extends {% if base_class -%}{{ base_class }}{%- else -%}
-        io.pdef.GeneratedMessage{%- endif %} {
+public class {{ name }} extends {% if base_class -%}
+    {{ base_class }}
+    {%- elif is_exception -%}io.pdef.GeneratedException
+    {%- else -%}io.pdef.GeneratedMessage{%- endif %} {
     private static final {{ name }} instance = new {{ name }}();
 
 {% if declared_fields %}
@@ -71,7 +73,9 @@ public class {{ name }} extends {% if base_class -%}{{ base_class }}{%- else -%}
         return new Builder();
     }
 
-    public static class Builder extends {% if base_builder %}{{ base_builder }}{% else %}io.pdef.GeneratedMessage.Builder{% endif %} {
+    public static class Builder extends {% if base_builder -%}{{ base_builder }}
+        {%- elif is_exception -%}io.pdef.GeneratedException.Builder
+        {%- else -%}io.pdef.GeneratedMessage.Builder{%- endif %} {
 {% for field in declared_fields %}
         protected {{ field.type }} {{ field.name }};
 {% endfor %}
@@ -139,6 +143,9 @@ public class {{ name }} extends {% if base_class -%}{{ base_class }}{%- else -%}
 
 	@Override
 	public boolean equals(final Object o) {
+{% if not declared_fields %}
+        return super.equals(o);
+{% else %}
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 {% if base_class %}
@@ -156,10 +163,14 @@ public class {{ name }} extends {% if base_class -%}{{ base_class }}{%- else -%}
 {% endfor %}
 
 		return true;
+{% endif %}
 	}
 
 	@Override
 	public int hashCode() {
+{% if not declared_fields %}
+        return super.hashCode();
+{% else %}
 {% if base_class %}
 		int result = super.hashCode();
 {% else %}
@@ -169,6 +180,7 @@ public class {{ name }} extends {% if base_class -%}{{ base_class }}{%- else -%}
                 {% for field in declared_fields -%}this.{{ field.name }}
                 {%- if loop.length > 1 and not loop .last -%}
                 , {% endif %}{%- endfor %});
+{% endif %}
 	}
 }
 

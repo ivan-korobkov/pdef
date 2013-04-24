@@ -8,8 +8,8 @@ from pdef import ast
 
 class Tokens(object):
     # Simple reserved words.
-    reserved = ('AS', 'ENUM', 'EXTENDS', 'IMPORT', 'INTERFACE', 'INHERITS', 'MESSAGE', 'ON',
-                'POLYMORPHIC', 'MODULE', 'NATIVE')
+    reserved = ('AS', 'ENUM', 'EXCEPTION', 'EXTENDS', 'IMPORT', 'INTERFACE', 'INHERITS',
+                'MESSAGE', 'ON', 'POLYMORPHIC', 'MODULE', 'NATIVE')
 
     # All tokens.
     tokens = reserved + (
@@ -182,7 +182,7 @@ class GrammarRules(object):
     # Enum definition.
     def p_enum(self, t):
         '''
-        enum : ENUM IDENTIFIER LBRACE enum_values SEMI RBRACE
+        enum : ENUM IDENTIFIER LBRACE enum_values RBRACE
         '''
         t[0] = ast.Enum(t[2], values=t[4])
 
@@ -204,15 +204,25 @@ class GrammarRules(object):
     # Message definition
     def p_message(self, t):
         '''
-        message : MESSAGE IDENTIFIER message_base message_type message_body
+        message : message_or_exc IDENTIFIER message_base message_type message_body
         '''
+        is_exception = t[1].lower() == 'exception'
         name = t[2] # identifier
         base, subtype = t[3]
         type_field, _type = t[4]
         options, declared_fields = t[5]
 
         t[0] = ast.Message(name, base=base, subtype=subtype,type_field=type_field,
-                           type=_type,declared_fields=declared_fields,options=options)
+            type=_type, declared_fields=declared_fields, options=options,
+            is_exception=is_exception)
+
+    # Message or exception
+    def p_message_or_exception(self, t):
+        '''
+        message_or_exc : MESSAGE
+                       | EXCEPTION
+        '''
+        t[0] = t[1]
 
     # Message inheritance
     def p_message_base(self, t):

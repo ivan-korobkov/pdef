@@ -1,13 +1,15 @@
+{% if subtypes and subtypes|length > 1%}
 {% if type_field %}
 [TypeField("{{ type_field }}")]
 {% endif %}
-{% if subtypes %}
 {% for enum, type in subtypes %}
 [SubType("{{ enum }}", typeof({{ type }}))]
 {% endfor %}
 {% endif %}
 {% if base %}
 public class {{ name }} : {{ base }}
+{% elif is_exception %}
+public class {{ name }} : Exception
 {% else %}
 public class {{ name }}
 {% endif %}

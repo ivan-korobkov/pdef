@@ -115,8 +115,10 @@ class CsharpMessage(object):
         self.declared_fields = [CsharpField(f) for f in msg.declared_fields]
 
         self.type_field = upper_first(msg.subtypes.field.name) if msg.subtypes else None
-        self.subtypes = tuple((upper_first(k.name), ref(v))
+        self.subtypes = tuple((k.name.lower(), ref(v))
             for k, v in msg.subtypes.as_map().items()) if msg.subtypes else ()
+
+        self.is_exception = msg.is_exception
 
     @property
     def code(self):
@@ -143,12 +145,13 @@ class CsharpInterface(object):
 class CsharpMethod(object):
     def __init__(self, method):
         self.name = upper_first(method.name)
-        self.args = tuple((upper_first(a.name), ref(a.type)) for a in method.args)
+        self.args = tuple((a.name, ref(a.type)) for a in method.args)
 
         if isinstance(method.result, lang.Interface):
             self.result = ref(method.result)
         else:
-            self.result = 'Task<%s>' % ref(method.result)
+            s = ref(method.result)
+            self.result = s if s == 'void' else 'IObservable<%s>' % ref(method.result)
 
 
 def ref(t):

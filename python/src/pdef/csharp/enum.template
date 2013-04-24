@@ -4,5 +4,5 @@ public enum {{ name }}
     {{ value }}{% if loop.length > 1 and not loop.last %},{% endif %}
 
 {% endfor %}
-};
+}
 

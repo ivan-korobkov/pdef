@@ -80,7 +80,12 @@ public class MessageDescriptor extends AbstractDescriptor {
 
 	private void linkBase() {
 		Type superclass = getJavaType().getGenericSuperclass();
-		Type baseType = superclass == Object.class ? null : superclass;
+		Type baseType;
+		if (superclass == Object.class || superclass == RuntimeException.class) {
+			baseType = null;
+		} else {
+			baseType = superclass;
+		}
 		base = baseType == null ? null : (MessageDescriptor) pool.getDescriptor(baseType);
 	}
 

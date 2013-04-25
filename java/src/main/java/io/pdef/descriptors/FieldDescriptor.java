@@ -18,7 +18,7 @@ public class FieldDescriptor {
 	public FieldDescriptor(final Field field, final MessageDescriptor message) {
 		this.field = checkNotNull(field);
 		this.message = checkNotNull(message);
-		name = field.getName();
+		name = field.getName().toLowerCase();
 		type = message.getPool().getDescriptor(field.getGenericType());
 		accessor = new Accessor(field, message.getJavaType(), message.getBuilderType());
 	}
@@ -36,7 +36,7 @@ public class FieldDescriptor {
 	}
 
 	public String getName() {
-		return field.getName();
+		return name;
 	}
 
 	public Field getField() {

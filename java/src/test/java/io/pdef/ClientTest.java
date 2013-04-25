@@ -23,7 +23,7 @@ public class ClientTest {
 		Client<App> client = Client.of(App.class, pool, new Capture(ref));
 
 		App proxy = client.proxy();
-		ListenableFuture<String> future = proxy.echo("Hello, world");
+		ListenableFuture<String> future = proxy.echoText("Hello, world");
 		assertNull(future);
 
 		List<Invocation> invocations = ref.get();
@@ -32,7 +32,7 @@ public class ClientTest {
 
 		Invocation invocation = invocations.get(0);
 		InterfaceDescriptor descriptor = (InterfaceDescriptor) pool.getDescriptor(App.class);
-		assertEquals(descriptor.getMethods().get("echo"), invocation.getMethod());
+		assertEquals(descriptor.getMethods().get("echotext"), invocation.getMethod());
 		assertArrayEquals(new Object[]{"Hello, world"}, invocation.getArgs());
 	}
 

@@ -8,5 +8,5 @@ public interface App extends Interface {
 
 	Calc calc();
 
-	ListenableFuture<String> echo(@Name("text") String text);
+	ListenableFuture<String> echoText(@Name("text") String text);
 }

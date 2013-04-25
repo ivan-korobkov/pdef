@@ -42,7 +42,7 @@ public class JsonSerializerTest {
 
 		String s = serializer.serialize(user);
 		assertEquals("{\"type\":\"user\",\"name\":\"John Doe\",\"avatar\":{\"type\":\"image\","
-				+ "\"url\":\"http://example.com/image.jpg\",\"owner\":null,\"createdAt\":1234},"
+				+ "\"url\":\"http://example.com/image.jpg\",\"owner\":null,\"createdat\":1234},"
 				+ "\"photos\":null}", s);
 	}
 

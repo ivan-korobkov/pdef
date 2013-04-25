@@ -28,7 +28,7 @@ public class JsonParserTest {
 	@Test
 	public void testParse() throws Exception {
 		String s = "{\"type\":\"user\", \"name\":\"John Doe\",\"avatar\":{\"url\":\"http://example"
-				+ ".com/image.jpg\",\"owner\":null,\"createdAt\":1234},\"photos\":null}";
+				+ ".com/image.jpg\",\"owner\":null,\"createdat\":1234},\"photos\":null}";
 
 		Image image = new Image.Builder()
 				.setUrl("http://example.com/image.jpg")

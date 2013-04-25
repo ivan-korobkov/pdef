@@ -39,7 +39,7 @@ public class AsyncDispatcherTest {
 		int result = proxy.calc().sum(123, 456).get();
 		assertEquals(579, result);
 
-		String echo = proxy.echo("Hello, world").get();
+		String echo = proxy.echoText("Hello, world").get();
 		assertEquals("Hello, world", echo);
 	}
 
@@ -55,7 +55,7 @@ public class AsyncDispatcherTest {
 		}
 
 		@Override
-		public ListenableFuture<String> echo(final String text) {
+		public ListenableFuture<String> echoText(final String text) {
 			return immediateFuture(text);
 		}
 	}

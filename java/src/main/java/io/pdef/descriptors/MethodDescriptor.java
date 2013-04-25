@@ -23,7 +23,7 @@ public class MethodDescriptor {
 
 	public MethodDescriptor(final Method method, final DescriptorPool pool) {
 		this.method = checkNotNull(method);
-		name = method.getName();
+		name = method.getName().toLowerCase();
 		resultType = method.getGenericReturnType();
 		result = pool.getDescriptor(resultType);
 

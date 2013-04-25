@@ -47,7 +47,7 @@ public class Client<T> {
 
 	private Object doInvoke(final Object o, final Method method, final Object[] objects)
 			throws Throwable {
-		String name = method.getName();
+		String name = method.getName().toLowerCase();
 		InterfaceDescriptor iface = (InterfaceDescriptor) descriptor;
 		MethodDescriptor methodDescriptor = iface.getMethods().get(name);
 		if (methodDescriptor == null) return method.invoke(this, objects);

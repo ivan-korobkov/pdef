@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace {{ namespace }}
 {
 {% for d in definitions %}

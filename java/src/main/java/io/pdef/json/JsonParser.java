@@ -26,14 +26,13 @@ public class JsonParser implements Parser {
 	@Override
 	public Object parse(final Type type, final Object object) {
 		checkNotNull(type);
-
 		if (object == null) return null;
-		String s = (String) object;
 
 		Map<?, ?> map;
 		try {
+			String s = (String) object;
 			map = mapper.readValue(s, Map.class);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new SerializationException(e);
 		}
 

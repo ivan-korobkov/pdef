@@ -46,7 +46,7 @@ public class JsonParserTest {
 
 	@Test
 	public void testParseInvocations() throws Exception {
-		String s = "{\"calc\": {}, \"sum\": {\"i0\": 10, \"i1\": 11}}";
+		String s = "{\"Calc\": {}, \"Sum\": {\"i0\": 10, \"i1\": 11}}";
 
 		List<Invocation> invocations = parser.parseInvocations(App.class, s);
 		InterfaceDescriptor app = (InterfaceDescriptor) pool.getDescriptor(App.class);

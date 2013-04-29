@@ -190,9 +190,16 @@ public class RawParser extends AbstractParser {
 		checkNotNull(interfaceClass);
 		checkNotNull(object);
 
-		Map<?, ?> map = (Map<?, ?>) object;
-		InterfaceDescriptor descriptor = (InterfaceDescriptor) pool.getDescriptor(interfaceClass);
-		return parseMethodNames(descriptor, map);
+		try {
+			Map<?, ?> map = (Map<?, ?>) object;
+			InterfaceDescriptor descriptor = (InterfaceDescriptor) pool
+					.getDescriptor(interfaceClass);
+			return parseMethodNames(descriptor, map);
+		} catch (SerializationException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new SerializationException(e);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -203,7 +210,7 @@ public class RawParser extends AbstractParser {
 		InterfaceDescriptor d = descriptor;
 		StringBuilder path = new StringBuilder();
 		for (Map.Entry<?, ?> entry : map.entrySet()) {
-			Object methodName = entry.getKey();
+			String methodName = ((String) entry.getKey()).toLowerCase();
 			if (path.length() > 0) path.append(".");
 			path.append(methodName);
 

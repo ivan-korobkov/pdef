@@ -13,9 +13,15 @@ public abstract class AbstractParser implements Parser {
 
 	@Override
 	public Object parse(final Type type, final Object object) {
-		if (object == null) return null;
-		Descriptor descriptor = pool.getDescriptor(type);
-		return doParse(descriptor, object);
+		try {
+			if (object == null) return null;
+			Descriptor descriptor = pool.getDescriptor(type);
+			return doParse(descriptor, object);
+		} catch (SerializationException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new SerializationException(e);
+		}
 	}
 
 	protected Object doParse(Descriptor descriptor, Object object) {

@@ -64,6 +64,7 @@ class JavaField(object):
         self.get = 'get%s' % upper_first(self.name)
         self.set = 'set%s' % upper_first(self.name)
         self.clear = 'clear%s' % upper_first(self.name)
+        self.present = 'has%s' % upper_first(self.name)
 
 
 class JavaSubtypes(object):

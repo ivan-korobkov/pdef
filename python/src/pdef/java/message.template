@@ -38,9 +38,17 @@ public class {{ name }} extends {% if base_class -%}
 {% endif %}
     public {{ field.type }} {{ field.get }}() {
 {% if not field.type.primitive %}
-        if ({{ field.name }} == null ) return {{ field.type.default }};
+        if ({{ field.name }} == null) return {{ field.type.default }};
 {% endif %}
         return {{ field.name }};
+    }
+
+    public boolean {{ field.present }}() {
+{% if field.type.primitive %}
+        return true;
+{% else %}
+        return {{ field.name }} != null;
+{% endif %}
     }
 
 {% endfor %}
@@ -106,8 +114,20 @@ public class {{ name }} extends {% if base_class -%}
         }
 
         public Builder {{ field.clear }}() {
+{% if field.type.primitive %}
             this.{{ field.name }} = {{ field.type.default }};
+{% else %}
+            this.{{ field.name }} = null;
+{% endif %}
             return this;
+        }
+
+        public boolean {{ field.present }}() {
+{% if field.type.primitive %}
+            return true;
+{% else %}
+            return {{ field.name }} != null;
+{% endif %}
         }
 
 {% else %}

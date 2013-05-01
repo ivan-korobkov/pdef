@@ -130,6 +130,16 @@ public class {{ name }} extends {% if base_class -%}
         public {{ name }} build() {
             return new {{ name }}(this);
         }
+
+
+        @Override
+        public String toString() {
+            return com.google.common.base.Objects.toStringHelper(this)
+{% for field in fields %}
+                    .add("{{ field.name }}", {{ field.name }})
+{% endfor %}
+                    .toString();
+        }
     }
 
     @Override

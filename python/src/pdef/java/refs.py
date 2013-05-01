@@ -25,7 +25,7 @@ class JavaRef(object):
     @classmethod
     def from_message(cls, message):
         name = message.parent.fullname + '.' + message.name if message.parent else message.name
-        default = '%s.getInstance()' % message.name
+        default = '%s.getInstance()' % name
         return JavaRef(name, default=default)
 
     @classmethod

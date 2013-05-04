@@ -5,14 +5,11 @@ import io.pdef.Invocation;
 import io.pdef.descriptors.DefaultDescriptorPool;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.fixtures.*;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class JsonParserTest {
 	private DefaultDescriptorPool pool;
@@ -27,8 +24,8 @@ public class JsonParserTest {
 
 	@Test
 	public void testParse() throws Exception {
-		String s = "{\"type\":\"user\", \"name\":\"John Doe\",\"avatar\":{\"url\":\"http://example"
-				+ ".com/image.jpg\",\"owner\":null,\"createdat\":1234},\"photos\":null}";
+		String s = "{\"type\":\"user\", \"Name\":\"John Doe\",\"Avatar\":{\"url\":\"http://example"
+				+ ".com/image.jpg\",\"owner\":null,\"CREATEDAT\":1234},\"photos\":null}";
 
 		Image image = new Image.Builder()
 				.setUrl("http://example.com/image.jpg")

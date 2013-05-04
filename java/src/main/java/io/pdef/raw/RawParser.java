@@ -1,19 +1,18 @@
 package io.pdef.raw;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
+import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.*;
 import io.pdef.AbstractParser;
+import io.pdef.Invocation;
 import io.pdef.Message;
 import io.pdef.SerializationException;
 import io.pdef.descriptors.*;
-import io.pdef.Invocation;
 
 import java.lang.reflect.Type;
-import java.util.*;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class RawParser extends AbstractParser {
 	public RawParser() {
@@ -27,7 +26,13 @@ public class RawParser extends AbstractParser {
 	@Override
 	protected Message parseMessage(final MessageDescriptor descriptor, final Object object) {
 		if (object == null) return null;
-		Map<?, ?> map = (Map<?, ?>) object;
+		Map<String, Object> map = Maps.newLinkedHashMap();
+		for (Map.Entry<?, ?> entry : ((Map<?, ?>) object).entrySet()) {
+			String key = (String) entry.getKey();
+			Object value = entry.getValue();
+			map.put(key.toLowerCase(), value);
+		}
+
 		MessageDescriptor polymorphic = parseDescriptorType(descriptor, map);
 		Collection<FieldDescriptor> fields = polymorphic.getFields().values();
 

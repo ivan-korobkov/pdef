@@ -1,6 +1,7 @@
 package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.Name;
@@ -10,8 +11,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MethodDescriptor {
 	private final Method method;
@@ -85,7 +84,7 @@ public class MethodDescriptor {
 			String name = null;
 			for (Annotation pannotation : pannotations) {
 				if (pannotation.annotationType() == Name.class) {
-					name = ((Name) pannotation).value();
+					name = ((Name) pannotation).value().toLowerCase();
 					break;
 				}
 			}

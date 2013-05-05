@@ -21,7 +21,8 @@ public abstract class AbstractSerializer implements Serializer {
 		return serialize(descriptor, object);
 	}
 
-	protected Object serialize(final Descriptor descriptor, final Object object) {
+	@Override
+	public Object serialize(final Descriptor descriptor, final Object object) {
 		switch (descriptor.getType()) {
 			case MESSAGE: return serializeMessage((MessageDescriptor) descriptor, (Message) object);
 			case ENUM: return serializeEnum((EnumDescriptor) descriptor, (Enum<?>) object);
@@ -29,6 +30,7 @@ public abstract class AbstractSerializer implements Serializer {
 			case MAP: return serializeMap((MapDescriptor) descriptor, (Map<?, ?>) object);
 			case SET: return serializeSet((SetDescriptor) descriptor, (Set<?>) object);
 			case VALUE: return serializeValue((ValueDescriptor) descriptor, object);
+			case FUTURE: return serialize(((FutureDescriptor) descriptor).getElement(), object);
 			// case INTERFACE is not supported
 		}
 

@@ -1,0 +1,84 @@
+module pdef;
+
+
+enum Type {
+    // Base value types.
+    BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL, DATE, DATETIME, STRING, UUID,
+
+    // Special value objects.
+    OBJECT, VOID,
+
+    // Collection types.
+    LIST, MAP, SET,
+
+    // User types.
+    ENUM, MESSAGE, EXCEPTION, INTERFACE
+}
+
+
+message File {
+    path        string;
+    module_name string;
+    definitions list<Definition>;
+}
+
+
+// References
+message Ref {
+    type Type discriminator;
+}
+
+message ListRef : Ref {
+    element Ref;
+}
+
+message SetRef : Ref {
+    element Ref;
+}
+
+message MapRef : Ref {
+    key Ref; value Ref;
+}
+
+message DefinitionRef : Ref {
+    name    String;
+}
+
+
+// Definitions
+message Definition {
+    name    string;
+}
+
+message Message : Definition {
+    isException bool;
+    base        Ref;
+    base_type   Ref;
+    fields      list<Field>;
+}
+
+message Field {
+    name    string;
+    type    Ref;
+    isDiscriminator bool;
+}
+
+message Enum : Definition {
+    values  list<string>;
+}
+
+message Interface : Definition {
+    bases   InterfaceRef;
+    methods list<Method>;
+}
+
+message Method {
+    name    string;
+    args    list<MethodArg>;
+    result  Ref;
+}
+
+message MethodArg {
+    name    string;
+    type    Ref;
+}

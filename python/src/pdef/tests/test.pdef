@@ -1,0 +1,63 @@
+module pdef.test;
+
+
+// Enum definition
+enum Enum {
+    FIRST, SECOND, THIRD
+}
+
+message Message {
+    // Polymorphic discriminator
+    type_field      Enum discriminator;
+
+    bool_field      bool;
+    int16_field     int16;
+    int32_field     int32;
+    int64_field     int64;
+    float_field     float;
+    double_field    double;
+    decimal_field   decimal;
+    date_field      date;
+    datetime_field  datetime;
+    string_field    string;
+    uuid_field      uuid;
+    object_field    object;
+
+    list_field      list<SubMessage1>;
+    set_field       set<SubMessage2>;
+    map_field       map<string, SubMessage3>;
+}
+
+message SubMessage1 : Message(Enum.FIRST) {
+    sub_field1      Message;
+    sub_field2      string;
+}
+
+message SubMessage2 : Message(Enum.SECOND) {
+    sub_field1      int32;
+}
+
+message SubMessage3 : SubMessage2(Enum.THIRD) {
+    sub_field2      int32;
+}
+
+exception Exception {
+    code    string;
+}
+
+exception RuntimeException : Exception {}
+
+
+interface Interface {
+    method() void;
+    sum(i0 int32, i1 int32) int32;
+    echo(text string) string;
+}
+
+interface Support {
+    callSupport() void;
+}
+
+interface SubInterface : Interface, Support {
+    submethod(msg1 SubMessage1, msg2 SubMessage2) SubMessage3;
+}

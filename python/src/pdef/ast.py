@@ -1,81 +1,105 @@
 # encoding: utf-8
-from pdef.preconditions import *
 
 
-class Package(object):
-    def __init__(self, name, version, dependencies=None, modules=None):
+class Type(object):
+    # Base value types.
+    BOOL = 'bool'
+    INT16 = 'int16'
+    INT32 = 'int32'
+    FLOAT = 'float'
+    DOUBLE = 'double'
+    DECIMAL = 'decimal'
+    DATE = 'date'
+    DATETIME = 'datetime'
+    STRING = 'string'
+    UUID = 'uuid'
+
+    # Special value types.
+    OBJECT = 'object'
+    VOID = 'void'
+
+    # Collection types.
+    LIST = 'list'
+    MAP = 'map'
+    SET = 'set'
+
+    # User types.
+    DEFINITION = 'definition' # Abstract definition type.
+    ENUM = 'enum'
+    MESSAGE = 'message'
+    EXCEPTION = 'exception'
+    INTERFACE = 'interface'
+
+
+class File(object):
+    def __init__(self, name, definitions=None):
         self.name = name
-        self.version = version
-        self.dependencies = tuple(dependencies) if dependencies else ()
-        self.modules = tuple(modules) if modules else ()
-
-
-class Module(object):
-    def __init__(self, name, imports=None, definitions=None):
-        self.name = name
-        self.imports = tuple(imports) if imports else ()
         self.definitions = tuple(definitions) if definitions else ()
 
 
 class Ref(object):
-    def __init__(self, name, variables=None):
-        self.name = check_not_none(name)
-        self.variables = tuple(variables) if variables else ()
+    def __init__(self, type):
+        self.type = type
 
     def __repr__(self):
-        s = self.name
-        if self.variables:
-            s += '<%s>' % ', '.join(str(v) for v in self.variables)
-        return s
+        return '<%s %s>' % (self.__class__.__name__, self.type)
 
 
-class ImportRef(object):
-    def __init__(self, name, alias=None):
+class ListRef(Ref):
+    def __init__(self, element):
+        Ref.__init__(self, Type.LIST)
+        self.element = element
+
+
+class SetRef(Ref):
+    def __init__(self, element):
+        Ref.__init__(self, Type.SET)
+        self.element = element
+
+
+class MapRef(Ref):
+    def __init__(self, key, value):
+        Ref.__init__(self, Type.MAP)
+        self.key = key
+        self.value = value
+
+
+class DefinitionRef(Ref):
+    def __init__(self, name):
+        Ref.__init__(self, Type.DEFINITION)
         self.name = name
-        self.alias = alias if alias else name
 
 
-class Type(object):
+class Definition(object):
     def __init__(self, name):
         self.name = name
 
 
-class Native(Type):
-    def __init__(self, name, variables=None, options=None):
-        super(Native, self).__init__(name)
-        self.options = dict(options) if options else {}
-        self.variables = tuple(variables) if variables else ()
-
-
-class Message(Type):
-    def __init__(self, name, base=None, subtype=None, type_field=None, type=None,
-                 declared_fields=None, options=None, is_exception=False):
+class Message(Definition):
+    def __init__(self, name, base=None, base_type=None, fields=None, is_exception=False):
         super(Message, self).__init__(name)
 
         self.base = base
-        self.subtype = subtype
+        self.base_type = base_type
 
-        self.type = type
-        self.type_field = type_field
-
-        self.declared_fields = tuple(declared_fields) if declared_fields else ()
-        self.options = tuple(options) if options else ()
+        self.fields = tuple(fields) if fields else ()
         self.is_exception = is_exception
 
 
 class Field(object):
-    def __init__(self, name, type):
+    def __init__(self, name, type, is_discriminator=False):
         self.name = name
         self.type = type
+        self.is_discriminator = is_discriminator
 
 
-class Enum(Type):
+class Enum(Definition):
     def __init__(self, name, values=None):
         super(Enum, self).__init__(name)
         self.values = tuple(values) if values else ()
 
 
-class Interface(Type):
+class Interface(Definition):
     def __init__(self, name, bases=None, methods=None):
         super(Interface, self).__init__(name)
 

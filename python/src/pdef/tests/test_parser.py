@@ -1,8 +1,7 @@
 # encoding: utf-8
 import os.path
 import unittest
-from pdef.ast import Module
-from pdef.parser import ModuleParser
+from pdef.parser import Parser
 
 
 class TestParser(unittest.TestCase):
@@ -12,26 +11,15 @@ class TestParser(unittest.TestCase):
         with open(filepath, 'r') as f:
             return f.read()
 
-    def test_parse_messages(self):
-        '''Should parse a test file with messages.'''
-        s = self._read('messages.pdef')
-        parser = ModuleParser()
+    def test_parse(self):
+        '''Should parse a test pdef file.'''
+        s = self._read('test.pdef')
+        parser = Parser()
         module = parser.parse(s)
-        assert module
-        assert isinstance(module, Module)
-        assert module.name == 'test.messages'
+        defs = dict((d.name, d) for d in module.definitions)
 
-        dd = list(module.definitions)
-        assert len(dd) == 15
-        assert dd[0].name == 'int32'
-        assert dd[1].name == 'string'
-        assert dd[10].name == 'Note'
+        assert module.name == 'pdef.test'
+        assert 'Message' in defs
 
-    def test_parse_interfaces(self):
-        '''Should parse a test file with interfaces.'''
-        s = self._read('interfaces.pdef')
-        parser = ModuleParser()
-        module = parser.parse(s)
-        assert module
-        assert isinstance(module, Module)
-        assert module.name == 'test.interfaces'
+        assert 'Enum' in defs
+        assert 'Interface' in defs

@@ -307,10 +307,20 @@ class Parser(Tokens, GrammarRules):
         self.lexer = lex.lex(module=self, debug=debug)
         self.parser = yacc.yacc(module=self, debug=debug, tabmodule='pdef.parsetab', start='file')
         self.errors = []
+        self.filepath = 'stream'
+
+    def parse_file(self, filepath, **kwargs):
+        self.filepath = filepath
+        try:
+            with open(filepath, 'r') as f:
+                s = f.read()
+
+            return self.parse(s, **kwargs)
+        finally:
+            self.filepath = 'stream'
 
     def parse(self, s, **kwargs):
         return self.parser.parse(s, debug=self.debug, **kwargs)
 
     def _error(self, msg, *args):
-        logging.error(msg, *args)
-        self.errors.append(msg % args)
+        logging.error('%s: %s' % (self.filepath, msg), *args)

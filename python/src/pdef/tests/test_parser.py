@@ -11,15 +11,17 @@ class TestParser(unittest.TestCase):
         with open(filepath, 'r') as f:
             return f.read()
 
+    def _filepath(self, filename):
+        return os.path.join(os.path.dirname(__file__), filename)
+
     def test_parse(self):
         '''Should parse a test pdef file.'''
-        s = self._read('test.pdef')
+        s = self._filepath('test.pdef')
         parser = Parser()
-        module = parser.parse(s)
+        module = parser.parse_file(s)
         defs = dict((d.name, d) for d in module.definitions)
 
         assert module.name == 'pdef.test'
         assert 'Message' in defs
-
         assert 'Enum' in defs
         assert 'Interface' in defs

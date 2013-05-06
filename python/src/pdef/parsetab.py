@@ -5,9 +5,9 @@ _tabversion = '3.2'
 
 _lr_method = 'LALR'
 
-_lr_signature = ']l\x9aD\xbdE:\x8f!\xf60\x00\x08\x87\xfa\xce'
+_lr_signature = '\x8c\xf5\x1c\xf4<*/\x084\x0e\x94\x83\xe6\xeb|\xd4'
     
-_lr_action_items = {'EXCEPTION':([4,5,9,11,12,13,18,54,70,78,],[6,-3,-4,-6,6,-5,-2,-31,-34,-45,]),'LESS':([35,44,48,],[60,62,63,]),'VOID':([21,24,58,60,61,62,63,68,85,89,93,],[29,29,29,29,29,29,29,29,29,29,29,]),'OBJECT':([21,24,58,60,61,62,63,68,85,89,93,],[39,39,39,39,39,39,39,39,39,39,39,]),'DATE':([21,24,58,60,61,62,63,68,85,89,93,],[32,32,32,32,32,32,32,32,32,32,32,]),'RBRACE':([26,27,28,51,56,57,59,65,66,67,69,71,79,82,91,99,],[-33,54,-7,-7,70,-41,-42,-49,-50,78,-32,-40,-48,-44,-43,-51,]),'INT32':([21,24,58,60,61,62,63,68,85,89,93,],[34,34,34,34,34,34,34,34,34,34,34,]),'SET':([21,24,58,60,61,62,63,68,85,89,93,],[35,35,35,35,35,35,35,35,35,35,35,]),'RPAREN':([29,30,31,32,33,34,36,37,39,40,41,42,43,45,46,47,49,50,74,77,83,86,87,88,90,95,96,98,],[-26,-11,-12,-21,-10,-16,-8,-30,-25,-23,-20,-22,-17,-24,-19,-18,-15,-9,84,-7,-28,-27,93,-53,-54,-55,-29,-52,]),'SEMI':([3,29,30,31,32,33,34,36,37,39,40,41,42,43,45,46,47,49,50,72,81,83,86,96,97,],[4,-26,-11,-12,-21,-10,-16,-8,-30,-25,-23,-20,-22,-17,-24,-19,-18,-15,-9,82,91,-28,-27,-29,99,]),'COLON':([16,17,],[21,24,]),'COMMA':([26,27,29,30,31,32,33,34,36,37,39,40,41,42,43,45,46,47,49,50,52,53,69,75,77,80,83,86,87,88,90,95,96,98,],[-33,55,-26,-11,-12,-21,-10,-16,-8,-30,-25,-23,-20,-22,-17,-24,-19,-18,-15,-9,-14,68,-32,85,-7,-13,-28,-27,94,-53,-54,-55,-29,-52,]),'IDENTIFIER':([1,6,7,8,10,14,19,21,24,28,51,55,56,57,58,59,60,61,62,63,65,66,67,68,71,77,79,82,85,89,91,93,94,99,],[3,-36,15,16,17,-35,26,37,37,58,64,69,58,-41,37,-42,37,37,37,37,-49,-50,64,37,-40,89,-48,-44,37,37,-43,37,89,-51,]),'$end':([2,5,9,11,12,13,18,54,70,78,],[0,-3,-4,-6,-1,-5,-2,-31,-34,-45,]),'STRING':([21,24,58,60,61,62,63,68,85,89,93,],[40,40,40,40,40,40,40,40,40,40,40,]),'DECIMAL':([21,24,58,60,61,62,63,68,85,89,93,],[41,41,41,41,41,41,41,41,41,41,41,]),'ENUM':([4,5,9,11,12,13,18,54,70,78,],[7,-3,-4,-6,7,-5,-2,-31,-34,-45,]),'MODULE':([0,],[1,]),'DATETIME':([21,24,58,60,61,62,63,68,85,89,93,],[42,42,42,42,42,42,42,42,42,42,42,]),'INT64':([21,24,58,60,61,62,63,68,85,89,93,],[43,43,43,43,43,43,43,43,43,43,43,]),'LPAREN':([29,30,31,32,33,34,36,37,38,39,40,41,42,43,45,46,47,49,50,64,83,86,96,],[-26,-11,-12,-21,-10,-16,-8,-30,61,-25,-23,-20,-22,-17,-24,-19,-18,-15,-9,77,-28,-27,-29,]),'GREATER':([29,30,31,32,33,34,36,37,39,40,41,42,43,45,46,47,49,50,73,76,83,86,92,96,],[-26,-11,-12,-21,-10,-16,-8,-30,-25,-23,-20,-22,-17,-24,-19,-18,-15,-9,83,86,-28,-27,96,-29,]),'MAP':([21,24,58,60,61,62,63,68,85,89,93,],[44,44,44,44,44,44,44,44,44,44,44,]),'LBRACE':([15,16,17,20,22,23,25,29,30,31,32,33,34,36,37,38,39,40,41,42,43,45,46,47,49,50,52,53,80,83,84,86,96,],[19,-7,-7,28,-39,51,-47,-26,-11,-12,-21,-10,-16,-8,-30,-38,-25,-23,-20,-22,-17,-24,-19,-18,-15,-9,-14,-46,-13,-28,-37,-27,-29,]),'UUID':([21,24,58,60,61,62,63,68,85,89,93,],[45,45,45,45,45,45,45,45,45,45,45,]),'DOUBLE':([21,24,58,60,61,62,63,68,85,89,93,],[46,46,46,46,46,46,46,46,46,46,46,]),'FLOAT':([21,24,58,60,61,62,63,68,85,89,93,],[47,47,47,47,47,47,47,47,47,47,47,]),'LIST':([21,24,58,60,61,62,63,68,85,89,93,],[48,48,48,48,48,48,48,48,48,48,48,]),'BOOL':([21,24,58,60,61,62,63,68,85,89,93,],[49,49,49,49,49,49,49,49,49,49,49,]),'INTERFACE':([4,5,9,11,12,13,18,54,70,78,],[10,-3,-4,-6,10,-5,-2,-31,-34,-45,]),'DISCRIMINATOR':([29,30,31,32,33,34,36,37,39,40,41,42,43,45,46,47,49,50,72,83,86,96,],[-26,-11,-12,-21,-10,-16,-8,-30,-25,-23,-20,-22,-17,-24,-19,-18,-15,-9,81,-28,-27,-29,]),'MESSAGE':([4,5,9,11,12,13,18,54,70,78,],[14,-3,-4,-6,14,-5,-2,-31,-34,-45,]),}
+_lr_action_items = {'EXCEPTION':([4,5,9,11,12,13,18,55,71,79,],[6,-3,-4,-6,6,-5,-2,-32,-35,-46,]),'LESS':([43,45,49,],[62,63,64,]),'VOID':([21,24,59,61,62,63,64,69,86,90,94,],[29,29,29,29,29,29,29,29,29,29,29,]),'OBJECT':([21,24,59,61,62,63,64,69,86,90,94,],[39,39,39,39,39,39,39,39,39,39,39,]),'DATE':([21,24,59,61,62,63,64,69,86,90,94,],[32,32,32,32,32,32,32,32,32,32,32,]),'RBRACE':([26,27,28,52,57,58,60,66,67,68,70,72,80,83,92,100,],[-34,55,-7,-7,71,-42,-43,-50,-51,79,-33,-41,-49,-45,-44,-52,]),'INT32':([21,24,59,61,62,63,64,69,86,90,94,],[34,34,34,34,34,34,34,34,34,34,34,]),'INT16':([21,24,59,61,62,63,64,69,86,90,94,],[35,35,35,35,35,35,35,35,35,35,35,]),'RPAREN':([29,30,31,32,33,34,35,36,37,39,40,41,42,44,46,47,48,50,51,74,78,85,87,88,89,91,96,97,99,],[-27,-11,-12,-22,-10,-17,-16,-8,-31,-26,-24,-21,-23,-18,-25,-20,-19,-15,-9,84,-7,-29,-28,94,-54,-55,-56,-30,-53,]),'SEMI':([3,29,30,31,32,33,34,35,36,37,39,40,41,42,44,46,47,48,50,51,73,82,85,87,97,98,],[4,-27,-11,-12,-22,-10,-17,-16,-8,-31,-26,-24,-21,-23,-18,-25,-20,-19,-15,-9,83,92,-29,-28,-30,100,]),'COLON':([16,17,],[21,24,]),'COMMA':([26,27,29,30,31,32,33,34,35,36,37,39,40,41,42,44,46,47,48,50,51,53,54,70,76,78,81,85,87,88,89,91,96,97,99,],[-34,56,-27,-11,-12,-22,-10,-17,-16,-8,-31,-26,-24,-21,-23,-18,-25,-20,-19,-15,-9,-14,69,-33,86,-7,-13,-29,-28,95,-54,-55,-56,-30,-53,]),'IDENTIFIER':([1,6,7,8,10,14,19,21,24,28,52,56,57,58,59,60,61,62,63,64,66,67,68,69,72,78,80,83,86,90,92,94,95,100,],[3,-37,15,16,17,-36,26,37,37,59,65,70,59,-42,37,-43,37,37,37,37,-50,-51,65,37,-41,90,-49,-45,37,37,-44,37,90,-52,]),'$end':([2,5,9,11,12,13,18,55,71,79,],[0,-3,-4,-6,-1,-5,-2,-32,-35,-46,]),'STRING':([21,24,59,61,62,63,64,69,86,90,94,],[40,40,40,40,40,40,40,40,40,40,40,]),'DECIMAL':([21,24,59,61,62,63,64,69,86,90,94,],[41,41,41,41,41,41,41,41,41,41,41,]),'ENUM':([4,5,9,11,12,13,18,55,71,79,],[7,-3,-4,-6,7,-5,-2,-32,-35,-46,]),'MODULE':([0,],[1,]),'DATETIME':([21,24,59,61,62,63,64,69,86,90,94,],[42,42,42,42,42,42,42,42,42,42,42,]),'SET':([21,24,59,61,62,63,64,69,86,90,94,],[43,43,43,43,43,43,43,43,43,43,43,]),'INT64':([21,24,59,61,62,63,64,69,86,90,94,],[44,44,44,44,44,44,44,44,44,44,44,]),'LPAREN':([29,30,31,32,33,34,35,36,37,38,39,40,41,42,44,46,47,48,50,51,65,85,87,97,],[-27,-11,-12,-22,-10,-17,-16,-8,-31,61,-26,-24,-21,-23,-18,-25,-20,-19,-15,-9,78,-29,-28,-30,]),'GREATER':([29,30,31,32,33,34,35,36,37,39,40,41,42,44,46,47,48,50,51,75,77,85,87,93,97,],[-27,-11,-12,-22,-10,-17,-16,-8,-31,-26,-24,-21,-23,-18,-25,-20,-19,-15,-9,85,87,-29,-28,97,-30,]),'MAP':([21,24,59,61,62,63,64,69,86,90,94,],[45,45,45,45,45,45,45,45,45,45,45,]),'LBRACE':([15,16,17,20,22,23,25,29,30,31,32,33,34,35,36,37,38,39,40,41,42,44,46,47,48,50,51,53,54,81,84,85,87,97,],[19,-7,-7,28,-40,52,-48,-27,-11,-12,-22,-10,-17,-16,-8,-31,-39,-26,-24,-21,-23,-18,-25,-20,-19,-15,-9,-14,-47,-13,-38,-29,-28,-30,]),'UUID':([21,24,59,61,62,63,64,69,86,90,94,],[46,46,46,46,46,46,46,46,46,46,46,]),'DOUBLE':([21,24,59,61,62,63,64,69,86,90,94,],[47,47,47,47,47,47,47,47,47,47,47,]),'FLOAT':([21,24,59,61,62,63,64,69,86,90,94,],[48,48,48,48,48,48,48,48,48,48,48,]),'LIST':([21,24,59,61,62,63,64,69,86,90,94,],[49,49,49,49,49,49,49,49,49,49,49,]),'BOOL':([21,24,59,61,62,63,64,69,86,90,94,],[50,50,50,50,50,50,50,50,50,50,50,]),'INTERFACE':([4,5,9,11,12,13,18,55,71,79,],[10,-3,-4,-6,10,-5,-2,-32,-35,-46,]),'DISCRIMINATOR':([29,30,31,32,33,34,35,36,37,39,40,41,42,44,46,47,48,50,51,73,85,87,97,],[-27,-11,-12,-22,-10,-17,-16,-8,-31,-26,-24,-21,-23,-18,-25,-20,-19,-15,-9,82,-29,-28,-30,]),'MESSAGE':([4,5,9,11,12,13,18,55,71,79,],[14,-3,-4,-6,14,-5,-2,-32,-35,-46,]),}
 
 _lr_action = { }
 for _k, _v in _lr_action_items.items():
@@ -16,7 +16,7 @@ for _k, _v in _lr_action_items.items():
       _lr_action[_x][_k] = _y
 del _lr_action_items
 
-_lr_goto_items = {'method_args':([77,],[87,]),'methods':([51,],[67,]),'refs':([24,],[53,]),'map_ref':([21,24,58,60,61,62,63,68,85,89,93,],[30,30,30,30,30,30,30,30,30,30,30,]),'def_ref':([21,24,58,60,61,62,63,68,85,89,93,],[31,31,31,31,31,31,31,31,31,31,31,]),'file':([0,],[2,]),'set_ref':([21,24,58,60,61,62,63,68,85,89,93,],[33,33,33,33,33,33,33,33,33,33,33,]),'message':([4,12,],[13,13,]),'field':([28,56,],[57,71,]),'value_ref':([21,24,58,60,61,62,63,68,85,89,93,],[36,36,36,36,36,36,36,36,36,36,36,]),'ref':([21,24,58,60,61,62,63,68,85,89,93,],[38,52,72,73,74,75,76,80,92,95,97,]),'method':([51,67,],[65,79,]),'empty':([16,17,28,51,77,],[22,25,59,66,90,]),'message_or_exc':([4,12,],[8,8,]),'enum':([4,12,],[9,9,]),'interface_bases':([17,],[23,]),'interface':([4,12,],[11,11,]),'enum_values':([19,],[27,]),'definition':([4,12,],[5,18,]),'fields':([28,],[56,]),'message_base':([16,],[20,]),'method_arg':([77,94,],[88,98,]),'definitions':([4,],[12,]),'list_ref':([21,24,58,60,61,62,63,68,85,89,93,],[50,50,50,50,50,50,50,50,50,50,50,]),}
+_lr_goto_items = {'method_args':([78,],[88,]),'methods':([52,],[68,]),'refs':([24,],[54,]),'map_ref':([21,24,59,61,62,63,64,69,86,90,94,],[30,30,30,30,30,30,30,30,30,30,30,]),'def_ref':([21,24,59,61,62,63,64,69,86,90,94,],[31,31,31,31,31,31,31,31,31,31,31,]),'file':([0,],[2,]),'set_ref':([21,24,59,61,62,63,64,69,86,90,94,],[33,33,33,33,33,33,33,33,33,33,33,]),'message':([4,12,],[13,13,]),'field':([28,57,],[58,72,]),'value_ref':([21,24,59,61,62,63,64,69,86,90,94,],[36,36,36,36,36,36,36,36,36,36,36,]),'ref':([21,24,59,61,62,63,64,69,86,90,94,],[38,53,73,74,75,76,77,81,93,96,98,]),'method':([52,68,],[66,80,]),'empty':([16,17,28,52,78,],[22,25,60,67,91,]),'message_or_exc':([4,12,],[8,8,]),'enum':([4,12,],[9,9,]),'interface_bases':([17,],[23,]),'interface':([4,12,],[11,11,]),'enum_values':([19,],[27,]),'definition':([4,12,],[5,18,]),'fields':([28,],[57,]),'message_base':([16,],[20,]),'method_arg':([78,95,],[89,99,]),'definitions':([4,],[12,]),'list_ref':([21,24,59,61,62,63,64,69,86,90,94,],[51,51,51,51,51,51,51,51,51,51,51,]),}
 
 _lr_goto = { }
 for _k, _v in _lr_goto_items.items():
@@ -41,44 +41,45 @@ _lr_productions = [
   ('refs -> refs COMMA ref','refs',3,'p_refs','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',113),
   ('refs -> ref','refs',1,'p_refs','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',114),
   ('value_ref -> BOOL','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',120),
-  ('value_ref -> INT32','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',121),
-  ('value_ref -> INT64','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',122),
-  ('value_ref -> FLOAT','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',123),
-  ('value_ref -> DOUBLE','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',124),
-  ('value_ref -> DECIMAL','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',125),
-  ('value_ref -> DATE','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',126),
-  ('value_ref -> DATETIME','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',127),
-  ('value_ref -> STRING','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',128),
-  ('value_ref -> UUID','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',129),
-  ('value_ref -> OBJECT','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',130),
-  ('value_ref -> VOID','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',131),
-  ('list_ref -> LIST LESS ref GREATER','list_ref',4,'p_list_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',137),
-  ('set_ref -> SET LESS ref GREATER','set_ref',4,'p_set_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',143),
-  ('map_ref -> MAP LESS ref COMMA ref GREATER','map_ref',6,'p_map_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',149),
-  ('def_ref -> IDENTIFIER','def_ref',1,'p_def_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',155),
-  ('enum -> ENUM IDENTIFIER LBRACE enum_values RBRACE','enum',5,'p_enum','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',161),
-  ('enum_values -> enum_values COMMA IDENTIFIER','enum_values',3,'p_enum_values','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',167),
-  ('enum_values -> IDENTIFIER','enum_values',1,'p_enum_values','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',168),
-  ('message -> message_or_exc IDENTIFIER message_base LBRACE fields RBRACE','message',6,'p_message','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',175),
-  ('message_or_exc -> MESSAGE','message_or_exc',1,'p_message_or_exception','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',187),
-  ('message_or_exc -> EXCEPTION','message_or_exc',1,'p_message_or_exception','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',188),
-  ('message_base -> COLON ref LPAREN ref RPAREN','message_base',5,'p_message_base','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',194),
-  ('message_base -> COLON ref','message_base',2,'p_message_base','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',195),
-  ('message_base -> empty','message_base',1,'p_message_base','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',196),
-  ('fields -> fields field','fields',2,'p_fields','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',208),
-  ('fields -> field','fields',1,'p_fields','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',209),
-  ('fields -> empty','fields',1,'p_fields','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',210),
-  ('field -> IDENTIFIER ref DISCRIMINATOR SEMI','field',4,'p_field','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',217),
-  ('field -> IDENTIFIER ref SEMI','field',3,'p_field','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',218),
-  ('interface -> INTERFACE IDENTIFIER interface_bases LBRACE methods RBRACE','interface',6,'p_interface','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',225),
-  ('interface_bases -> COLON refs','interface_bases',2,'p_interface_bases','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',234),
-  ('interface_bases -> empty','interface_bases',1,'p_interface_bases','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',235),
-  ('methods -> methods method','methods',2,'p_methods','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',244),
-  ('methods -> method','methods',1,'p_methods','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',245),
-  ('methods -> empty','methods',1,'p_methods','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',246),
-  ('method -> IDENTIFIER LPAREN method_args RPAREN ref SEMI','method',6,'p_method','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',252),
-  ('method_args -> method_args COMMA method_arg','method_args',3,'p_method_args','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',261),
-  ('method_args -> method_arg','method_args',1,'p_method_args','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',262),
-  ('method_args -> empty','method_args',1,'p_method_args','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',263),
-  ('method_arg -> IDENTIFIER ref','method_arg',2,'p_method_arg','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',269),
+  ('value_ref -> INT16','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',121),
+  ('value_ref -> INT32','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',122),
+  ('value_ref -> INT64','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',123),
+  ('value_ref -> FLOAT','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',124),
+  ('value_ref -> DOUBLE','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',125),
+  ('value_ref -> DECIMAL','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',126),
+  ('value_ref -> DATE','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',127),
+  ('value_ref -> DATETIME','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',128),
+  ('value_ref -> STRING','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',129),
+  ('value_ref -> UUID','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',130),
+  ('value_ref -> OBJECT','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',131),
+  ('value_ref -> VOID','value_ref',1,'p_value_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',132),
+  ('list_ref -> LIST LESS ref GREATER','list_ref',4,'p_list_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',138),
+  ('set_ref -> SET LESS ref GREATER','set_ref',4,'p_set_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',144),
+  ('map_ref -> MAP LESS ref COMMA ref GREATER','map_ref',6,'p_map_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',150),
+  ('def_ref -> IDENTIFIER','def_ref',1,'p_def_ref','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',156),
+  ('enum -> ENUM IDENTIFIER LBRACE enum_values RBRACE','enum',5,'p_enum','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',162),
+  ('enum_values -> enum_values COMMA IDENTIFIER','enum_values',3,'p_enum_values','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',168),
+  ('enum_values -> IDENTIFIER','enum_values',1,'p_enum_values','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',169),
+  ('message -> message_or_exc IDENTIFIER message_base LBRACE fields RBRACE','message',6,'p_message','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',176),
+  ('message_or_exc -> MESSAGE','message_or_exc',1,'p_message_or_exception','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',188),
+  ('message_or_exc -> EXCEPTION','message_or_exc',1,'p_message_or_exception','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',189),
+  ('message_base -> COLON ref LPAREN ref RPAREN','message_base',5,'p_message_base','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',195),
+  ('message_base -> COLON ref','message_base',2,'p_message_base','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',196),
+  ('message_base -> empty','message_base',1,'p_message_base','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',197),
+  ('fields -> fields field','fields',2,'p_fields','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',209),
+  ('fields -> field','fields',1,'p_fields','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',210),
+  ('fields -> empty','fields',1,'p_fields','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',211),
+  ('field -> IDENTIFIER ref DISCRIMINATOR SEMI','field',4,'p_field','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',218),
+  ('field -> IDENTIFIER ref SEMI','field',3,'p_field','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',219),
+  ('interface -> INTERFACE IDENTIFIER interface_bases LBRACE methods RBRACE','interface',6,'p_interface','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',226),
+  ('interface_bases -> COLON refs','interface_bases',2,'p_interface_bases','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',235),
+  ('interface_bases -> empty','interface_bases',1,'p_interface_bases','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',236),
+  ('methods -> methods method','methods',2,'p_methods','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',245),
+  ('methods -> method','methods',1,'p_methods','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',246),
+  ('methods -> empty','methods',1,'p_methods','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',247),
+  ('method -> IDENTIFIER LPAREN method_args RPAREN ref SEMI','method',6,'p_method','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',253),
+  ('method_args -> method_args COMMA method_arg','method_args',3,'p_method_args','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',262),
+  ('method_args -> method_arg','method_args',1,'p_method_args','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',263),
+  ('method_args -> empty','method_args',1,'p_method_args','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',264),
+  ('method_arg -> IDENTIFIER ref','method_arg',2,'p_method_arg','/home/ikorobkov/Workspace/pdef/python/src/pdef/parser.py',270),
 ]

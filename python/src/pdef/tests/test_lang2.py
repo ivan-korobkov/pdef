@@ -166,6 +166,39 @@ class TestMessage(unittest.TestCase):
         except Exception, e:
             assert 'cannot inherit' in e.message
 
+    def test_set_base_add_subtypes(self):
+        '''Should set a message base with a base type and add the message to the base subtypes.'''
+        enum = Enum('Type')
+        subtype = enum.add_value('SUBTYPE')
+
+        base = Message('Base')
+        base.add_field('type', enum, is_discriminator=True)
+        msg = Message('Msg')
+        msg.set_base(base, subtype)
+
+        assert msg.base is base
+        assert msg.base_type is subtype
+        assert subtype in base.subtypes
+        assert base.subtypes[subtype] is msg
+
+    def test_set_base_subtype_tree(self):
+        '''Should set a message base with a base type and add the message to the subtype tree.'''
+        enum = Enum('Type')
+        type0 = enum.add_value('Type0')
+        type1 = enum.add_value('Type1')
+
+        base = Message('Base')
+        base.add_field('type', enum, is_discriminator=True)
+
+        msg0 = Message('Msg0')
+        msg0.set_base(base, type0)
+
+        msg1 = Message('Msg1')
+        msg1.set_base(msg0, type1)
+
+        assert msg0.subtypes == {type1 : msg1}
+        assert base.subtypes == {type0: msg0, type1: msg1}
+
     def test_add_field(self):
         msg = Message('Msg')
         msg.add_field('field', Values.INT32)
@@ -181,6 +214,14 @@ class TestMessage(unittest.TestCase):
             msg.add_field('field', Values.INT32)
         except Exception, e:
             assert 'duplicate' in e.message
+
+    def test_add_field_set_discriminator(self):
+        enum = Enum('Type')
+        msg = Message('Msg')
+
+        field = msg.add_field('type', enum, is_discriminator=True)
+        assert field.is_discriminator
+        assert msg.discriminator_field is field
 
 
 class TestInterface(unittest.TestCase):

@@ -1,4 +1,5 @@
 # encoding: utf-8
+from collections import OrderedDict
 import logging
 from pdef import ast
 from pdef.consts import Type
@@ -207,6 +208,9 @@ class Enum(Definition):
     def add_values(self, *value_names):
         map(self.add_value, value_names)
 
+    def __contains__(self, item):
+        return item in self.values.items
+
 
 class EnumValue(Definition):
     '''Single enum value which has a name and a pointer to the declaring enum.'''
@@ -231,12 +235,19 @@ class Message(Definition):
         self.is_exception = is_exception
 
         self.base = None
-        self.subtypes = None
+        self.base_type = None
+        self.subtypes = OrderedDict()
+        self._discriminator_field = None
 
         self.fields = SymbolTable(self)
         self.declared_fields = SymbolTable(self)
 
         self._node = None
+
+    @property
+    def discriminator_field(self):
+        return self._discriminator_field if self._discriminator_field \
+            else self.base.discriminator_field if self.base else None
 
     def set_base(self, base, base_type=None):
         '''Sets this message base.'''
@@ -249,11 +260,33 @@ class Message(Definition):
 
         self.base = base
         self.base_type = base_type
+        if base_type: base._add_subtype(self)
 
-    def add_field(self, name, definition):
-        '''Adds a new field to this message.'''
-        field = Field(name, definition)
+    def _add_subtype(self, subtype):
+        '''Adds a new subtype to this message, checks its base_type.'''
+        check_isinstance(subtype, Message)
+        check_state(self.discriminator_field, '%s: is not polymorphic, no discriminator field', self)
+        check_argument(subtype.base_type in self.discriminator_field.type)
+        check_argument(subtype.base_type not in self.subtypes, '%s: duplicate subtype %s',
+                       self, subtype.base_type)
+
+        self.subtypes[subtype.base_type] = subtype
+        if self.base and self.base.discriminator_field == self.discriminator_field:
+            self.base._add_subtype(subtype)
+
+    def add_field(self, name, definition, is_discriminator=False):
+        '''Adds a new field to this message and returns the field.'''
+        field = Field(name, definition, is_discriminator)
         self.declared_fields.add(field)
+
+        if is_discriminator:
+            check_state(not self.discriminator_field, '%s: duplicate discriminator field', self)
+            check_argument(isinstance(field.type, Enum), '%s: discriminator field %s must be an enum',
+                           self, field)
+            check_state(not self.subtypes,
+                        '%s: discriminator field must be set before adding subtypes', self)
+            self._discriminator_field = field
+        return field
 
     def _link(self):
         '''Initializes this message from its AST node if present.'''
@@ -271,7 +304,7 @@ class Message(Definition):
         for field_node in node.fields:
             fname = field_node.name
             ftype = module.lookup(field_node.type)
-            self.add_field(fname, ftype)
+            field = self.add_field(fname, ftype, field_node.is_discriminator)
 
     @property
     def _bases(self):
@@ -288,9 +321,10 @@ class Message(Definition):
 
 class Field(object):
     '''Single message field.'''
-    def __init__(self, name, type):
+    def __init__(self, name, type, is_discriminator=False):
         self.name = name
         self.type = type
+        self.is_discriminator = is_discriminator
         check_isinstance(type, Definition)
 
     def __repr__(self):

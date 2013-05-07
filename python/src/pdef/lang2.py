@@ -229,28 +229,16 @@ class Message(Definition):
         self._node = None
 
     def set_base(self, base, base_type=None):
+        '''Sets this message base.'''
         check_isinstance(base, Message)
-        if base_type: check_isinstance(base_type, EnumValue)
-
         check_argument(self != base, '%s: cannot inherit itself', self)
-        check_argument(self not in base._bases, '%s: circular inheritance %s',
-                       self, '->'.join(b.fullname for b in [self, base] + base._bases))
-        check_argument(self.is_exception == base.is_exception, '%s: cannot inherit %s',
-                       self, base.fullname)
+        check_argument(self not in base._bases, '%s: circular inheritance with %s', self, base)
+        check_argument(self.is_exception == base.is_exception, '%s: cannot inherit %s', self,
+                       base.fullname)
+        if base_type: check_isinstance(base_type, EnumValue)
 
         self.base = base
         self.base_type = base_type
-
-    @property
-    def _bases(self):
-        bases = []
-
-        b = self
-        while b.base:
-            bases.append(b.base)
-            b = b.base
-
-        return bases
 
     def add_field(self, name, definition):
         '''Adds a new field to this message.'''
@@ -258,7 +246,7 @@ class Message(Definition):
         self.declared_fields.add(field)
 
     def _link(self):
-        '''Initializes this message from its AST node if it's present.'''
+        '''Initializes this message from its AST node if present.'''
         node = self._node
         if not node: return
 
@@ -275,6 +263,18 @@ class Message(Definition):
             ftype = module.lookup(field_node.type)
             self.add_field(fname, ftype)
 
+    @property
+    def _bases(self):
+        '''Internal, returns all this message bases.'''
+        bases = []
+
+        b = self
+        while b.base:
+            bases.append(b.base)
+            b = b.base
+
+        return bases
+
 
 class Field(object):
     '''Single message field.'''
@@ -287,11 +287,102 @@ class Field(object):
         return '<%s %s>' % (self.name, self.type)
 
 
+class Interface(Definition):
+    @classmethod
+    def from_ast(cls, node, module=None):
+        '''Creates a new interface from an AST node.'''
+        check_isinstance(node, ast.Interface)
+        iface = Interface(node.name, module=module)
+        iface._node = node
+        return iface
+
+    def __init__(self, name, module=None):
+        super(Interface, self).__init__(Type.INTERFACE, name, module=module)
+
+        self.bases = []
+        self.methods = SymbolTable(self)
+        self.declared_methods = SymbolTable(self)
+
+        self._node = None
+
+    def add_base(self, base):
+        '''Adds a new base to this interface.'''
+        check_isinstance(base, Interface)
+        check_argument(base is not self, '%s: self inheritance', self)
+        check_argument(base not in self.bases, '%s: duplicate base %s', self, base)
+        check_argument(self not in base._all_bases, '%s: circular inheritance with %s', self, base)
+
+        self.bases.append(base)
+
+    def add_method(self, name, result=Values.VOID, *args_tuples):
+        '''Adds a new method to this interface and returns the method.'''
+        method = Method(name, result, args_tuples)
+        self.declared_methods.add(method)
+        return method
+
+    def _link(self):
+        '''Initializes this interface from its AST node if present.'''
+        node = self._node
+        if not node: return
+
+        module = self.module
+        check_state(module, '%: cannot link, module is required', self)
+
+        for base_node in node.bases:
+            base = module.lookup(base_node)
+            self.add_base(base)
+
+        for method_node in node.methods:
+            method_name = method_node.name
+            result = module.lookup(method_node.result)
+            args = []
+            for arg_node in method_node.args:
+                arg_name = arg_node.name
+                arg_type = module.lookup(arg_node.type)
+                args.append((arg_name, arg_type))
+
+            self.add_method(method_name, result, *args)
+
+    @property
+    def _all_bases(self):
+        '''Internal, returns all bases including the ones from the inherited interfaces.'''
+        bases = []
+        for b in self.bases:
+            bases.append(b)
+            bases.extend(b._all_bases)
+        return bases
+
+
+class Method(object):
+    def __init__(self, name, result, args_tuples=None):
+        self.name = name
+        self.result = result
+        self.args = SymbolTable(self)
+        for arg_name, arg_def in args_tuples:
+            self.args.add(MethodArg(arg_name, arg_def))
+
+    def __repr__(self):
+        return "<%s%s=>%s>" % (self.name, self.args, self.result)
+
+
+class MethodArg(object):
+    def __init__(self, name, definition):
+        self.name = name
+        self.type = definition
+        check_isinstance(definition, Definition)
+
+    def __repr__(self):
+        return '%s %s' % (self.name, self.type)
+
+
 class SymbolTable(object):
     def __init__(self, parent=None):
         self.parent = parent
         self.items = []
         self.map = {}
+
+    def __repr__(self):
+        return repr(self.items)
 
     def __eq__(self, other):
         if not isinstance(other, SymbolTable):

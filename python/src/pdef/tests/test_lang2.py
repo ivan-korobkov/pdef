@@ -159,3 +159,104 @@ class TestMessage(unittest.TestCase):
             msg.add_field('field', Values.INT32)
         except Exception, e:
             assert 'duplicate' in e.message
+
+
+class TestInterface(unittest.TestCase):
+    def test_from_ast(self):
+        '''Should create an interface from an AST node.'''
+        node = ast.Interface('Iface', bases=[ast.DefinitionRef('Base')],
+            methods=[ast.Method('echo', args=[ast.MethodArg('text', ast.Ref(Type.STRING))],
+                                result=ast.Ref(Type.STRING))])
+        iface = Interface.from_ast(node)
+        assert iface.name == node.name
+        assert iface._node is node
+
+    def test_link(self):
+        '''Should init and link an interface from an AST node if present.'''
+        base = Interface('Base')
+        module = Module('test')
+        module.add_definition(base)
+
+        node = ast.Interface('Iface', bases=[ast.DefinitionRef('Base')],
+            methods=[ast.Method('echo', args=[ast.MethodArg('text', ast.Ref(Type.STRING))],
+                                result=ast.Ref(Type.STRING))])
+        iface = Interface.from_ast(node, module=module)
+        iface.link()
+
+        assert iface.bases == [base]
+
+        method = iface.declared_methods['echo']
+        assert method.name == 'echo'
+        assert method.result is Values.STRING
+
+        arg = method.args['text']
+        assert arg.name == 'text'
+        assert arg.type is Values.STRING
+
+    def test_add_base(self):
+        '''Should add a base to the interface.'''
+        base = Interface('Base')
+        iface = Interface('Iface')
+        iface.add_base(base)
+        assert iface.bases == [base]
+
+    def test_add_base_self_inheritance(self):
+        '''Should prevent interface self-inheritance.'''
+        iface = Interface('Iface')
+        try:
+            iface.add_base(iface)
+            self.fail()
+        except Exception, e:
+            assert 'self inheritance' in e.message
+
+    def test_add_base_duplicate(self):
+        '''Should prevent duplicate interface bases.'''
+        base = Interface('Base')
+        iface = Interface('Iface')
+        iface.add_base(base)
+        try:
+            iface.add_base(base)
+            self.fail()
+        except Exception, e:
+            assert 'duplicate' in e.message
+
+    def test_add_base_circular_inheritance(self):
+        '''Should prevent circular interface inheritance.'''
+        iface0 = Interface('Iface0')
+        iface1 = Interface('Iface1')
+        iface2 = Interface('Iface2')
+
+        iface1.add_base(iface0)
+        iface2.add_base(iface1)
+
+        try:
+            iface0.add_base(iface2)
+            self.fail()
+        except Exception, e:
+            assert 'circular' in e.message
+
+    def test_add_method(self):
+        '''Should add a new method to this interface.'''
+        iface = Interface('Calc')
+        method = iface.add_method('sum', Values.INT32, ('i0', Values.INT32), ('i1', Values.INT32))
+
+        assert 'sum' in iface.declared_methods
+        assert method.name == 'sum'
+        assert method.result is Values.INT32
+
+        i0 = method.args['i0']
+        i1 = method.args['i1']
+        assert i0.name == 'i0'
+        assert i1.name == 'i1'
+        assert i0.type is Values.INT32
+        assert i1.type is Values.INT32
+
+    def test_add_method_duplicate(self):
+        '''Should prevent duplicate methods in interfaces.'''
+        iface = Interface('Iface')
+        iface.add_method('doNothing')
+        try:
+            iface.add_method('doNothing')
+            self.fail()
+        except Exception, e:
+            assert 'duplicate' in e.message

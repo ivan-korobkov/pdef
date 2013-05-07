@@ -87,7 +87,7 @@ class Interface(Definition):
         super(Interface, self).__init__(name)
 
         self.bases = tuple(bases) if bases else ()
-        self.declared_methods = tuple(methods) if methods else ()
+        self.methods = tuple(methods) if methods else ()
 
 
 class Method(object):

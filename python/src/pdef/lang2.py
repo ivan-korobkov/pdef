@@ -1,15 +1,16 @@
 # encoding: utf-8
 import logging
-from collections import deque
 from pdef import ast
+from pdef.consts import Type
 from pdef.preconditions import *
 
 
 class Definition(object):
-    def __init__(self, name, module=None):
+    def __init__(self, type, name, module=None):
+        self.type = type
         self.name = name
         self.module = module
-        self._inited = False
+        self._linked = False
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.fullname)
@@ -20,40 +21,90 @@ class Definition(object):
             return '%s %s' % (self.module.name, self.name)
         return self.name
 
-    def init(self):
-        if self._inited:
+    def link(self):
+        if self._linked:
             return
 
-        self._inited = True
-        self._init()
+        self._linked = True
+        self._link()
 
-    def _init(self):
+    def _link(self):
         pass
 
 
+class Value(Definition):
+    '''Value definition.'''
+    def __init__(self, type):
+        super(Value, self).__init__(type, type)
+        self.type = type
+
+
+class Values(object):
+    '''Value definition singletons.'''
+    BOOL = Value(Type.BOOL)
+    INT16 = Value(Type.INT16)
+    INT32 = Value(Type.INT32)
+    INT64 = Value(Type.INT64)
+    FLOAT = Value(Type.FLOAT)
+    DOUBLE = Value(Type.DOUBLE)
+    DECIMAL = Value(Type.DECIMAL)
+    DATE = Value(Type.DATE)
+    DATETIME = Value(Type.DATETIME)
+    STRING = Value(Type.STRING)
+    UUID = Value(Type.UUID)
+
+    OBJECT = Value(Type.OBJECT)
+    VOID = Value(Type.VOID)
+
+    _BY_TYPE = {
+        Type.BOOL: BOOL,
+        Type.INT16: INT16,
+        Type.INT32: INT32,
+        Type.INT64: INT64,
+        Type.FLOAT: FLOAT,
+        Type.DOUBLE: DOUBLE,
+        Type.DECIMAL: DECIMAL,
+        Type.DATE: DATE,
+        Type.DATETIME: DATETIME,
+        Type.STRING: STRING,
+        Type.UUID: UUID,
+        Type.OBJECT: OBJECT,
+        Type.VOID: VOID
+    }
+
+    @classmethod
+    def get_by_type(cls, t):
+        '''Returns a value by its type or none.'''
+        return cls._BY_TYPE.get(t)
+
+
 class List(Definition):
-    def __init__(self, element):
-        super(List, self).__init__('List')
+    def __init__(self, element, module=None):
+        super(List, self).__init__(Type.LIST, 'List', module=module)
         self.element = element
 
-    def _init(self):
+    def _link(self):
         self.element = self.module.lookup(self.element)
 
 
 class Set(Definition):
-    def __init__(self, element):
-        super(Set, self).__init__('Set')
+    def __init__(self, element, module=None):
+        super(Set, self).__init__(Type.SET, 'Set', module=module)
         self.element = element
 
-    def _init(self):
+    def _link(self):
         self.element = self.module.lookup(self.element)
 
 
 class Map(Definition):
-    def __init__(self, key, value):
-        super(Map, self).__init__('Map')
+    def __init__(self, key, value, module=None):
+        super(Map, self).__init__(Type.MAP, 'Map', module=module)
         self.key = key
         self.value = value
+
+    def _link(self):
+        self.key = self.module.lookup(self.key)
+        self.value = self.module.lookup(self.value)
 
 
 class Enum(Definition):
@@ -63,7 +114,7 @@ class Enum(Definition):
         return Enum(ast.name, module=module, values=ast.values)
 
     def __init__(self, name, module=None, values=None):
-        super(Enum, self).__init__(name, module=module)
+        super(Enum, self).__init__(Type.ENUM, name, module=module)
         self.values = SymbolTable(self)
         if values:
             self.add_values(*values)
@@ -90,17 +141,16 @@ class Module(object):
         self.definitions = SymbolTable(self)
 
         self._ast = None
-        self._linked = False
-        self._inited = False
+        self._imports_linked = False
+        self._defs_linked = False
 
         if definitions:
             map(self.add_definition, definitions)
 
     def link_imports(self):
-        if self._linked: return
-        self._linked = True
+        if self._imports_linked: return
+        self._imports_linked = True
         if not self._ast: return
-
     #        for node in self._ast.imports:
     #            imported = self.package.lookup(node.name)
     #            if not imported:
@@ -108,9 +158,9 @@ class Module(object):
     #
     #            self.add_import(imported, node.alias)
 
-    def init(self):
-        if self._inited: return
-        self._inited = True
+    def link_definitions(self):
+        if self._defs_linked: return
+        self._defs_linked = True
 
         for definition in self.definitions:
             definition.init()
@@ -119,67 +169,37 @@ class Module(object):
         check_isinstance(definition, Definition)
 
         self.definitions.add(definition)
-        logging.info('%s: added "%s"', self, definition.simplename)
+        logging.info('%s: added "%s"', self, definition.name)
 
     def add_definitions(self, *definitions):
         map(self.add_definition, definitions)
 
-    def lookup(self, name_or_ref):
-        from pdef.ast import Ref
-        if isinstance(name_or_ref, Ref):
-            d = self._lookup_ref(name_or_ref)
+    def lookup(self, ref_or_def):
+        '''Lookups a definition if a reference, then links the definition, and returns it.'''
+        if isinstance(ref_or_def, Definition):
+            def0 = ref_or_def
+        elif isinstance(ref_or_def, ast.Ref):
+            def0 = self._lookup_ref(ref_or_def)
         else:
-            d = self._lookup_name(name_or_ref)
+            raise ValueError('%s: unsupported lookup reference or definition %s' % (self, ref_or_def))
 
-        if d and isinstance(d, Definition):
-            d.init()
-
-        return d
+        def0.link()
+        return def0
 
     def _lookup_ref(self, ref):
-        from pdef.ast import Ref
-        check_isinstance(ref, Ref)
+        def0 = Values.get_by_type(ref.type)
+        if def0: return def0 # It's a simple value.
 
-        rawtype = self.lookup(ref.name)
-        if not rawtype:
-            raise ValueError('%s: type "%s" is not found' % (self, ref))
+        t = ref.type
+        if t == Type.LIST: return List(ref.element, module=self)
+        elif t == Type.SET: return Set(ref.element, module=self)
+        elif t == Type.MAP: return Map(ref.key, ref.value, module=self)
 
-        if not rawtype.generic:
-            if ref.variables:
-                raise ValueError('%s: type "%s" does not have generic variables, got %s' %
-                                 (self, rawtype, ref))
-            return rawtype
+        # It must be an import or a user defined type.
+        def0 = self.definitions[ref.name]
+        if def0 : return def0
 
-        vars = tuple(self.lookup(var) for var in ref.variables)
-        return rawtype.parameterize(*vars)
-
-    def _lookup_name(self, name):
-        symbol = self._lookup_child(name)
-        if symbol is not None:
-            return symbol
-
-        if self.parent:
-            return self.parent.lookup(name)
-
-    def _lookup_child(self, name):
-        if name in self.symbols:
-            return self.symbols[name]
-
-        if '.' not in name:
-            return
-
-        child_parts = deque(name.split('.'))
-        parent_parts = [child_parts.popleft()]
-
-        while child_parts:
-            parent_name = '.'.join(parent_parts)
-            if parent_name not in self.symbols:
-                parent_parts.append(child_parts.popleft())
-                continue
-
-            child_name = '.'.join(child_parts)
-            parent = self.symbols[parent_name]
-            return parent._lookup_child(child_name)
+        raise ValueError('%s: type "%s" is not found' % (self, ref))
 
 
 class SymbolTable(object):

@@ -27,6 +27,7 @@ class Type(object):
     # User types.
     DEFINITION = 'definition' # Abstract definition type, used in references.
     ENUM = 'enum'
+    ENUM_VALUE = 'enum_value'
     MESSAGE = 'message'
     EXCEPTION = 'exception'
     INTERFACE = 'interface'

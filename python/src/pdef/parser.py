@@ -42,9 +42,10 @@ class Tokens(object):
 
     def t_IDENTIFIER(self, t):
         r'~?[a-zA-Z_]{1}[a-zA-Z0-9_]*(\.[a-zA-Z_]{1}[a-zA-Z0-9_]*)*'
-        t.type = self.reserved_map.get(t.value, "IDENTIFIER")
         if t.value.startswith('~'): # Allows to use reserved words.
             t.value = t.value[1:]
+        else:
+            t.type = self.reserved_map.get(t.value, "IDENTIFIER")
 
         return t
 
@@ -155,7 +156,15 @@ class GrammarRules(object):
         '''
         def_ref : IDENTIFIER
         '''
-        t[0] = ast.DefinitionRef(t[1])
+        if '.' in t[1]:
+            if t[1].count('.') != 1:
+                self._error('Wrong identifier %s, line %s', t[1], t.lexer.lineno)
+                raise SyntaxError
+            else:
+                enum, value = t[1].split('.')
+                t[0] = ast.EnumValueRef(ast.DefinitionRef(enum), value)
+        else:
+            t[0] = ast.DefinitionRef(t[1])
 
     def p_enum(self, t):
         '''
@@ -192,13 +201,16 @@ class GrammarRules(object):
 
     def p_message_base(self, t):
         '''
-        message_base : COLON ref LPAREN ref RPAREN
+        message_base : COLON ref LPAREN def_ref RPAREN
                      | COLON ref
                      | empty
         '''
         if len(t) == 2:
             t[0] = None, None
         elif len(t) == 6:
+            if not isinstance(t[4], ast.EnumValueRef):
+                self._error('Enum value required, got %s, line %s', t[4], t.lexer.lineno)
+                raise SyntaxError
             t[0] = t[2], t[4]
         else:
             t[0] = t[2], None
@@ -300,7 +312,7 @@ class GrammarRules(object):
         raise NotImplementedError()
 
 
-class Parser(Tokens, GrammarRules):
+class Parser(GrammarRules, Tokens):
     def __init__(self, debug=False):
         super(Parser, self).__init__()
         self.debug = debug

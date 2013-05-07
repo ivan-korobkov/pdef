@@ -34,6 +34,28 @@ class TestModule(unittest.TestCase):
         assert map0.key is Values.STRING
         assert map0.value is Values.INT32
 
+    def test_lookup_enum_value(self):
+        '''Should look up an enum value.'''
+        enum = Enum('Number')
+        enum.add_value('ONE')
+
+        module = Module('test')
+        module.add_definition(enum)
+        one = module.lookup(ast.EnumValueRef(ast.DefinitionRef('Number'), 'ONE'))
+        assert one is enum.values['ONE']
+
+    def test_lookup_enum_value_not_present(self):
+        '''Should raise an error when an enum does not have a specified value.'''
+        enum = Enum('Number')
+        module = Module('test')
+        module.add_definition(enum)
+
+        try:
+            module.lookup(ast.EnumValueRef(ast.DefinitionRef('Number'), 'ONE'))
+            self.fail()
+        except Exception, e:
+            assert 'not found' in e.message
+
     def test_lookup_user_defined(self):
         '''Should look up a user-defined definition by its reference.'''
         def0 = Definition(Type.DEFINITION, 'Test')

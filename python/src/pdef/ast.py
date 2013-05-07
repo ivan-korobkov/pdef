@@ -1,5 +1,6 @@
 # encoding: utf-8
 from pdef.consts import Type
+from pdef.preconditions import *
 
 
 class File(object):
@@ -42,6 +43,17 @@ class MapRef(Ref):
 
     def __repr__(self):
         return 'map<%s, %s>' % (self.key, self.value)
+
+
+class EnumValueRef(Ref):
+    def __init__(self, enum, value):
+        super(EnumValueRef, self).__init__(Type.ENUM_VALUE)
+        check_isinstance(enum, DefinitionRef)
+        self.enum = enum
+        self.value = value
+
+    def __repr__(self):
+        return '%s.%s' % (self.enum, self.value)
 
 
 class DefinitionRef(Ref):

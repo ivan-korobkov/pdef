@@ -21,6 +21,7 @@ class Module(object):
         return '<%s %s>' % (self.__class__.__name__, self.name)
 
     def link_imports(self):
+        '''Links this method imports, must be called before link_definitions().'''
         if self._imports_linked: return
         self._imports_linked = True
         if not self._node: return
@@ -32,6 +33,7 @@ class Module(object):
     #            self.add_import(imported, node.alias)
 
     def link_definitions(self):
+        '''Links this module definitions, must be called after link_imports().'''
         if self._defs_linked: return
         self._defs_linked = True
 
@@ -39,12 +41,14 @@ class Module(object):
             definition.init()
 
     def add_definition(self, definition):
+        '''Adds a new definition to this module.'''
         check_isinstance(definition, Definition)
 
         self.definitions.add(definition)
         logging.info('%s: added "%s"', self, definition.name)
 
     def add_definitions(self, *definitions):
+        '''Adds all definitions to this module.'''
         map(self.add_definition, definitions)
 
     def lookup(self, ref_or_def):
@@ -67,11 +71,16 @@ class Module(object):
         if t == Type.LIST: return List(ref.element, module=self)
         elif t == Type.SET: return Set(ref.element, module=self)
         elif t == Type.MAP: return Map(ref.key, ref.value, module=self)
+        elif t == Type.ENUM_VALUE:
+            enum = self.lookup(ref.enum)
+            value = enum.values.get(ref.value)
+            if not value:
+                raise ValueError('%s: enum value "%s" is not found' % (self, ref))
+            return value
 
         # It must be an import or a user defined type.
         def0 = self.definitions.get(ref.name)
         if def0 : return def0
-
         raise ValueError('%s: type "%s" is not found' % (self, ref))
 
 
@@ -199,9 +208,10 @@ class Enum(Definition):
         map(self.add_value, value_names)
 
 
-class EnumValue(object):
+class EnumValue(Definition):
     '''Single enum value which has a name and a pointer to the declaring enum.'''
     def __init__(self, enum, name):
+        super(EnumValue, self).__init__(Type.ENUM_VALUE, name)
         self.enum = enum
         self.name = name
 

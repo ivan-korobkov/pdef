@@ -13,7 +13,7 @@ class Ref(object):
         self.type = type
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.type)
+        return self.type
 
 
 class ListRef(Ref):
@@ -21,11 +21,17 @@ class ListRef(Ref):
         Ref.__init__(self, Type.LIST)
         self.element = element
 
+    def __repr__(self):
+        return 'list<%s>' % self.element
+
 
 class SetRef(Ref):
     def __init__(self, element):
         Ref.__init__(self, Type.SET)
         self.element = element
+
+    def __repr__(self):
+        return 'set<%s>' % self.element
 
 
 class MapRef(Ref):
@@ -34,11 +40,17 @@ class MapRef(Ref):
         self.key = key
         self.value = value
 
+    def __repr__(self):
+        return 'map<%s, %s>' % (self.key, self.value)
+
 
 class DefinitionRef(Ref):
     def __init__(self, name):
         Ref.__init__(self, Type.DEFINITION)
         self.name = name
+
+    def __repr__(self):
+        return self.name
 
 
 class Definition(object):

@@ -76,3 +76,86 @@ class TestEnum(unittest.TestCase):
         assert isinstance(one, EnumValue)
         assert one.name == 'ONE'
         assert one.enum is enum
+
+
+class TestMessage(unittest.TestCase):
+    def test_from_ast(self):
+        '''Should create a message from an AST node.'''
+        node = ast.Message('Msg', base=ast.DefinitionRef('Base'),
+                           fields=[ast.Field('field', ast.Ref(Type.INT32))])
+        msg = Message.from_ast(node)
+        assert msg.name == node.name
+        assert msg._node == node
+
+    def test_link(self):
+        '''Should init and link a message when its AST node present.'''
+        base = Message('Base')
+        module = Module('test')
+        module.add_definition(base)
+
+        node = ast.Message('Msg', base=ast.DefinitionRef('Base'),
+                           fields=[ast.Field('field', ast.Ref(Type.INT32))])
+        msg = Message.from_ast(node, module)
+        msg.link()
+
+        assert msg.base is base
+        assert msg.base_type is None
+        field = msg.declared_fields['field']
+        assert field.name == 'field'
+        assert field.type is Values.INT32
+
+    def test_set_base(self):
+        '''Should set a message base.'''
+        base = Message('Base')
+        msg = Message('Msg')
+        msg.set_base(base)
+
+        assert base in msg._bases
+
+    def test_set_base_self_inheritance(self):
+        '''Should prevent self-inheritance.'''
+        msg = Message('Msg')
+        try:
+            msg.set_base(msg)
+            self.fail()
+        except Exception, e:
+            assert 'cannot inherit itself' in e.message
+
+    def test_set_base_circular_inheritance(self):
+        '''Should prevent circular inheritance.'''
+        msg0 = Message('Msg0')
+        msg1 = Message('Msg1')
+
+        msg0.set_base(msg1)
+        try:
+            msg1.set_base(msg0)
+            self.fail()
+        except Exception, e:
+            assert 'circular inheritance' in e.message
+
+    def test_set_base_message_exception_clash(self):
+        '''Should prevent message<->exception inheritance.'''
+        msg = Message('Msg')
+        exc = Message('Exc', is_exception=True)
+
+        try:
+            exc.set_base(msg)
+            self.fail()
+        except Exception, e:
+            assert 'cannot inherit' in e.message
+
+    def test_add_field(self):
+        msg = Message('Msg')
+        msg.add_field('field', Values.INT32)
+
+        field = msg.declared_fields['field']
+        assert field.name == 'field'
+        assert field.type == Values.INT32
+
+    def test_add_field_duplicate(self):
+        msg = Message('Msg')
+        msg.add_field('field', Values.INT32)
+        try:
+            msg.add_field('field', Values.INT32)
+        except Exception, e:
+            assert 'duplicate' in e.message

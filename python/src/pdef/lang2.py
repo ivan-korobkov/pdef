@@ -10,17 +10,20 @@ class Module(object):
         self.name = name
         self.definitions = SymbolTable(self)
 
-        self._ast = None
+        self._node = None
         self._imports_linked = False
         self._defs_linked = False
 
         if definitions:
             map(self.add_definition, definitions)
 
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, self.name)
+
     def link_imports(self):
         if self._imports_linked: return
         self._imports_linked = True
-        if not self._ast: return
+        if not self._node: return
         #        for node in self._ast.imports:
     #            imported = self.package.lookup(node.name)
     #            if not imported:
@@ -66,7 +69,7 @@ class Module(object):
         elif t == Type.MAP: return Map(ref.key, ref.value, module=self)
 
         # It must be an import or a user defined type.
-        def0 = self.definitions[ref.name]
+        def0 = self.definitions.get(ref.name)
         if def0 : return def0
 
         raise ValueError('%s: type "%s" is not found' % (self, ref))
@@ -201,6 +204,87 @@ class EnumValue(object):
     def __init__(self, enum, name):
         self.enum = enum
         self.name = name
+
+
+class Message(Definition):
+    '''User-defined message.'''
+    @classmethod
+    def from_ast(cls, node, module=None):
+        '''Creates a new unlinked message from an AST node.'''
+        check_isinstance(node, ast.Message)
+        msg = Message(node.name, module=module)
+        msg._node = node
+        return msg
+
+    def __init__(self, name, is_exception=False, module=None):
+        super(Message, self).__init__(Type.MESSAGE, name, module=module)
+        self.is_exception = is_exception
+
+        self.base = None
+        self.subtypes = None
+
+        self.fields = SymbolTable(self)
+        self.declared_fields = SymbolTable(self)
+
+        self._node = None
+
+    def set_base(self, base, base_type=None):
+        check_isinstance(base, Message)
+        if base_type: check_isinstance(base_type, EnumValue)
+
+        check_argument(self != base, '%s: cannot inherit itself', self)
+        check_argument(self not in base._bases, '%s: circular inheritance %s',
+                       self, '->'.join(b.fullname for b in [self, base] + base._bases))
+        check_argument(self.is_exception == base.is_exception, '%s: cannot inherit %s',
+                       self, base.fullname)
+
+        self.base = base
+        self.base_type = base_type
+
+    @property
+    def _bases(self):
+        bases = []
+
+        b = self
+        while b.base:
+            bases.append(b.base)
+            b = b.base
+
+        return bases
+
+    def add_field(self, name, definition):
+        '''Adds a new field to this message.'''
+        field = Field(name, definition)
+        self.declared_fields.add(field)
+
+    def _link(self):
+        '''Initializes this message from its AST node if it's present.'''
+        node = self._node
+        if not node: return
+
+        module = self.module
+        check_state(module, '%: cannot link, module is required', self)
+
+        if node.base:
+            base = module.lookup(node.base)
+            base_type = module.lookup(node.base_type) if node.base_type else None
+            self.set_base(base, base_type)
+
+        for field_node in node.fields:
+            fname = field_node.name
+            ftype = module.lookup(field_node.type)
+            self.add_field(fname, ftype)
+
+
+class Field(object):
+    '''Single message field.'''
+    def __init__(self, name, type):
+        self.name = name
+        self.type = type
+        check_isinstance(type, Definition)
+
+    def __repr__(self):
+        return '<%s %s>' % (self.name, self.type)
 
 
 class SymbolTable(object):

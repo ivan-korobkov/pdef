@@ -55,3 +55,24 @@ class TestModule(unittest.TestCase):
         ref = ast.DefinitionRef('Test')
         result = module.lookup(ref)
         assert result._linked
+
+
+class TestEnum(unittest.TestCase):
+    def test_from_ast(self):
+        '''Should create an enum from an AST node.'''
+        node = ast.Enum('Number', values=('ONE', 'TWO', 'THREE'))
+        enum = Enum.from_ast(node)
+
+        assert len(enum.values) == 3
+        assert 'ONE' in enum.values
+        assert 'TWO' in enum.values
+        assert 'THREE' in enum.values
+
+    def test_add_value(self):
+        '''Should add to enum a new value by its name.'''
+        enum = Enum('Number')
+        one = enum.add_value('ONE')
+
+        assert isinstance(one, EnumValue)
+        assert one.name == 'ONE'
+        assert one.enum is enum

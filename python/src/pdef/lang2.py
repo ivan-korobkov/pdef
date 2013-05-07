@@ -5,6 +5,73 @@ from pdef.consts import Type
 from pdef.preconditions import *
 
 
+class Module(object):
+    def __init__(self, name, definitions=None):
+        self.name = name
+        self.definitions = SymbolTable(self)
+
+        self._ast = None
+        self._imports_linked = False
+        self._defs_linked = False
+
+        if definitions:
+            map(self.add_definition, definitions)
+
+    def link_imports(self):
+        if self._imports_linked: return
+        self._imports_linked = True
+        if not self._ast: return
+        #        for node in self._ast.imports:
+    #            imported = self.package.lookup(node.name)
+    #            if not imported:
+    #                raise ValueError('Import not found "%s"' % node.name)
+    #
+    #            self.add_import(imported, node.alias)
+
+    def link_definitions(self):
+        if self._defs_linked: return
+        self._defs_linked = True
+
+        for definition in self.definitions:
+            definition.init()
+
+    def add_definition(self, definition):
+        check_isinstance(definition, Definition)
+
+        self.definitions.add(definition)
+        logging.info('%s: added "%s"', self, definition.name)
+
+    def add_definitions(self, *definitions):
+        map(self.add_definition, definitions)
+
+    def lookup(self, ref_or_def):
+        '''Lookups a definition if a reference, then links the definition, and returns it.'''
+        if isinstance(ref_or_def, Definition):
+            def0 = ref_or_def
+        elif isinstance(ref_or_def, ast.Ref):
+            def0 = self._lookup_ref(ref_or_def)
+        else:
+            raise ValueError('%s: unsupported lookup reference or definition %s' % (self, ref_or_def))
+
+        def0.link()
+        return def0
+
+    def _lookup_ref(self, ref):
+        def0 = Values.get_by_type(ref.type)
+        if def0: return def0 # It's a simple value.
+
+        t = ref.type
+        if t == Type.LIST: return List(ref.element, module=self)
+        elif t == Type.SET: return Set(ref.element, module=self)
+        elif t == Type.MAP: return Map(ref.key, ref.value, module=self)
+
+        # It must be an import or a user defined type.
+        def0 = self.definitions[ref.name]
+        if def0 : return def0
+
+        raise ValueError('%s: type "%s" is not found' % (self, ref))
+
+
 class Definition(object):
     def __init__(self, type, name, module=None):
         self.type = type
@@ -109,97 +176,31 @@ class Map(Definition):
 
 class Enum(Definition):
     @classmethod
-    def from_ast(cls, ast, module=None):
-        check_isinstance(ast, ast.Enum)
-        return Enum(ast.name, module=module, values=ast.values)
+    def from_ast(cls, node, module=None):
+        check_isinstance(node, ast.Enum)
+        return Enum(node.name, values=node.values, module=module)
 
-    def __init__(self, name, module=None, values=None):
+    def __init__(self, name, values=None, module=None):
         super(Enum, self).__init__(Type.ENUM, name, module=module)
         self.values = SymbolTable(self)
         if values:
             self.add_values(*values)
 
     def add_value(self, value_name):
-        self.values.add(EnumValue(self, value_name))
+        '''Creates a new enum value by its name, adds it to this enum, and returns it.'''
+        value = EnumValue(self, value_name)
+        self.values.add(value)
+        return value
 
     def add_values(self, *value_names):
         map(self.add_value, value_names)
 
-    def __contains__(self, enum_value):
-        return enum_value in self.values.as_map().values()
-
 
 class EnumValue(object):
+    '''Single enum value which has a name and a pointer to the declaring enum.'''
     def __init__(self, enum, name):
         self.enum = enum
         self.name = name
-
-
-class Module(object):
-    def __init__(self, name, definitions=None):
-        self.name = name
-        self.definitions = SymbolTable(self)
-
-        self._ast = None
-        self._imports_linked = False
-        self._defs_linked = False
-
-        if definitions:
-            map(self.add_definition, definitions)
-
-    def link_imports(self):
-        if self._imports_linked: return
-        self._imports_linked = True
-        if not self._ast: return
-    #        for node in self._ast.imports:
-    #            imported = self.package.lookup(node.name)
-    #            if not imported:
-    #                raise ValueError('Import not found "%s"' % node.name)
-    #
-    #            self.add_import(imported, node.alias)
-
-    def link_definitions(self):
-        if self._defs_linked: return
-        self._defs_linked = True
-
-        for definition in self.definitions:
-            definition.init()
-
-    def add_definition(self, definition):
-        check_isinstance(definition, Definition)
-
-        self.definitions.add(definition)
-        logging.info('%s: added "%s"', self, definition.name)
-
-    def add_definitions(self, *definitions):
-        map(self.add_definition, definitions)
-
-    def lookup(self, ref_or_def):
-        '''Lookups a definition if a reference, then links the definition, and returns it.'''
-        if isinstance(ref_or_def, Definition):
-            def0 = ref_or_def
-        elif isinstance(ref_or_def, ast.Ref):
-            def0 = self._lookup_ref(ref_or_def)
-        else:
-            raise ValueError('%s: unsupported lookup reference or definition %s' % (self, ref_or_def))
-
-        def0.link()
-        return def0
-
-    def _lookup_ref(self, ref):
-        def0 = Values.get_by_type(ref.type)
-        if def0: return def0 # It's a simple value.
-
-        t = ref.type
-        if t == Type.LIST: return List(ref.element, module=self)
-        elif t == Type.SET: return Set(ref.element, module=self)
-        elif t == Type.MAP: return Map(ref.key, ref.value, module=self)
-
-        # It must be an import or a user defined type.
-        def0 = self.definitions[ref.name]
-        if def0 : return def0
-
-        raise ValueError('%s: type "%s" is not found' % (self, ref))
 
 
 class SymbolTable(object):

@@ -224,7 +224,6 @@ class GrammarRules(object):
     def p_message_base(self, t):
         '''
         message_base : COLON ref LPAREN def_ref RPAREN
-                     | COLON ref
                      | empty
         '''
         if len(t) == 2:
@@ -235,7 +234,7 @@ class GrammarRules(object):
                 raise SyntaxError
             t[0] = t[2], t[4]
         else:
-            t[0] = t[2], None
+            raise SyntaxError
 
     # List of message fields
     def p_fields(self, t):

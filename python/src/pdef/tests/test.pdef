@@ -47,8 +47,6 @@ exception Exception {
     code    string;
 }
 
-exception RuntimeException : Exception {}
-
 
 interface Interface {
     method() void;

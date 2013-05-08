@@ -320,18 +320,18 @@ class Message(Definition):
         return self._discriminator_field if self._discriminator_field \
             else self.base.discriminator_field if self.base else None
 
-    def set_base(self, base, base_type=None):
+    def set_base(self, base, base_type):
         '''Sets this message base and inherits its fields.'''
         check_isinstance(base, Message)
+        check_isinstance(base_type, EnumValue)
         check_argument(self != base, '%s: cannot inherit itself', self)
         check_argument(self not in base._bases, '%s: circular inheritance with %s', self, base)
         check_argument(self.is_exception == base.is_exception, '%s: cannot inherit %s', self,
                        base.fullname)
-        if base_type: check_isinstance(base_type, EnumValue)
 
         self.base = base
         self.base_type = base_type
-        if base_type: base._add_subtype(self)
+        base._add_subtype(self)
 
         for field in base.fields.values():
             self.inherited_fields.add(field)

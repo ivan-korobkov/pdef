@@ -206,58 +206,79 @@ class TestMessage(unittest.TestCase):
 
     def test_link(self):
         '''Should init and link a message when its AST node present.'''
+        enum = Enum('Type')
+        enum.add_value('ONE')
         base = Message('Base')
+        base.add_field('type', enum, is_discriminator=True)
         node = ast.Message('Msg', base=ast.DefinitionRef('Base'),
+                           base_type=ast.EnumValueRef(ast.DefinitionRef('Type'), 'ONE'),
                            fields=[ast.Field('field', ast.Ref(Type.INT32))])
         msg = Message.from_ast(node)
 
         module = Module('test')
+        module.add_definition(enum)
         module.add_definition(base)
         module.add_definition(msg)
         msg.link()
 
         assert msg.base is base
-        assert msg.base_type is None
+        assert msg.base_type is enum.values['ONE']
         field = msg.declared_fields['field']
         assert field.name == 'field'
         assert field.type is Values.INT32
 
     def test_set_base(self):
         '''Should set a message base.'''
+        enum = Enum('Type')
+        subtype = enum.add_value('SUBTYPE')
+
         base = Message('Base')
+        base.add_field('type', enum, is_discriminator=True)
+
         msg = Message('Msg')
-        msg.set_base(base)
+        msg.set_base(base, subtype)
 
         assert base in msg._bases
 
     def test_set_base_self_inheritance(self):
         '''Should prevent self-inheritance.'''
+        enum = Enum('Type')
+        one = enum.add_value('ONE')
+
         msg = Message('Msg')
         try:
-            msg.set_base(msg)
+            msg.set_base(msg, one)
             self.fail()
         except PdefException, e:
             assert 'cannot inherit itself' in e.message
 
     def test_set_base_circular_inheritance(self):
         '''Should prevent circular inheritance.'''
-        msg0 = Message('Msg0')
-        msg1 = Message('Msg1')
+        enum = Enum('Type')
+        one = enum.add_value('ONE')
+        two = enum.add_value('TWO')
 
-        msg0.set_base(msg1)
+        msg0 = Message('Msg0')
+        msg0.add_field('type', enum, is_discriminator=True)
+        msg1 = Message('Msg1')
+        msg1.set_base(msg0, two)
+
         try:
-            msg1.set_base(msg0)
+            msg0.set_base(msg1, one)
             self.fail()
         except PdefException, e:
             assert 'circular inheritance' in e.message
 
     def test_set_base_message_exception_clash(self):
         '''Should prevent message<->exception inheritance.'''
+        enum = Enum('Type')
+        one = enum.add_value('ONE')
+
         msg = Message('Msg')
         exc = Message('Exc', is_exception=True)
 
         try:
-            exc.set_base(msg)
+            exc.set_base(msg, one)
             self.fail()
         except PdefException, e:
             assert 'cannot inherit' in e.message

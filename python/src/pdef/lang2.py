@@ -7,16 +7,14 @@ from pdef.preconditions import *
 
 
 class Module(object):
-    def __init__(self, name, definitions=None):
+    def __init__(self, name, pdef=None):
         self.name = name
+        self.pdef = pdef
         self.definitions = SymbolTable(self)
 
         self._node = None
         self._imports_linked = False
         self._defs_linked = False
-
-        if definitions:
-            map(self.add_definition, definitions)
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.name)
@@ -212,7 +210,7 @@ class Enum(Definition):
         map(self.add_value, value_names)
 
     def __contains__(self, item):
-        return item in self.values.items
+        return item in self.values.values()
 
 
 class EnumValue(Definition):
@@ -310,7 +308,7 @@ class Message(Definition):
             base_type = module.lookup(node.base_type) if node.base_type else None
             self.set_base(base, base_type)
 
-        for field_node in node.fields.values():
+        for field_node in node.fields:
             fname = field_node.name
             ftype = module.lookup(field_node.type)
             self.add_field(fname, ftype, field_node.is_discriminator)
@@ -431,7 +429,7 @@ class Method(object):
     @property
     def fullname(self):
         return '%s.%s(%s)=>%s' % (self.interface.fullname, self.name,
-                                  ', '.join(str(a) for a in self.args), self.result)
+                                  ', '.join(str(a) for a in self.args.values()), self.result)
 
 
 class MethodArg(object):

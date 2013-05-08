@@ -250,7 +250,6 @@ class TestField(unittest.TestCase):
         module = Module('test')
         message = Message('Message', module=module)
         field = message.add_field('field', Values.STRING)
-        print field.fullname
         assert field.fullname == 'test.Message.field=string'
 
 

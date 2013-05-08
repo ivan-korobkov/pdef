@@ -278,7 +278,7 @@ class TestInterface(unittest.TestCase):
         assert arg.type is Values.STRING
 
     def test_add_base(self):
-        '''Should add a base to the interface.'''
+        '''Should add a base to an interface.'''
         base = Interface('Base')
         iface = Interface('Iface')
         iface.add_base(base)
@@ -318,6 +318,24 @@ class TestInterface(unittest.TestCase):
             self.fail()
         except Exception, e:
             assert 'circular' in e.message
+
+    def test_add_base_inherit_methods(self):
+        '''Should add a base to an interface and inherit its methods.'''
+        iface0 = Interface('Iface0')
+        method0 = iface0.add_method('method0')
+
+        iface1 = Interface('Iface1')
+        iface1.add_base(iface0)
+        method1 = iface1.add_method('method1')
+
+        iface2 = Interface('Iface2')
+        iface2.add_base(iface1)
+        method2 = iface2.add_method('method2')
+
+        assert iface1.inherited_methods.as_map() == {'method0': method0}
+        assert iface1.methods.as_map() == {'method0': method0, 'method1': method1}
+        assert iface2.inherited_methods.as_map() == {'method0': method0, 'method1': method1}
+        assert iface2.methods.as_map() == {'method0': method0, 'method1': method1, 'method2': method2}
 
     def test_add_method(self):
         '''Should add a new method to this interface.'''

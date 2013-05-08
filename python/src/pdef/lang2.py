@@ -240,8 +240,8 @@ class Message(Definition):
         self._discriminator_field = None
 
         self.fields = SymbolTable(self)
-        self.inherited_fields = SymbolTable(self)
         self.declared_fields = SymbolTable(self)
+        self.inherited_fields = SymbolTable(self)
 
         self._node = None
 
@@ -310,7 +310,7 @@ class Message(Definition):
         for field_node in node.fields:
             fname = field_node.name
             ftype = module.lookup(field_node.type)
-            field = self.add_field(fname, ftype, field_node.is_discriminator)
+            self.add_field(fname, ftype, field_node.is_discriminator)
 
     @property
     def _bases(self):
@@ -352,6 +352,7 @@ class Interface(Definition):
         self.bases = []
         self.methods = SymbolTable(self)
         self.declared_methods = SymbolTable(self)
+        self.inherited_methods = SymbolTable(self)
 
         self._node = None
 
@@ -363,11 +364,15 @@ class Interface(Definition):
         check_argument(self not in base._all_bases, '%s: circular inheritance with %s', self, base)
 
         self.bases.append(base)
+        for method in base.methods:
+            self.inherited_methods.add(method)
+            self.methods.add(method)
 
     def add_method(self, name, result=Values.VOID, *args_tuples):
         '''Adds a new method to this interface and returns the method.'''
         method = Method(name, result, args_tuples)
         self.declared_methods.add(method)
+        self.methods.add(method)
         return method
 
     def _link(self):

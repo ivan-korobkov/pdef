@@ -2,6 +2,8 @@
 
 
 class Type(object):
+    '''Pdef type enum.'''
+
     # Base value types.
     BOOL = 'bool'
     INT16 = 'int16'
@@ -31,3 +33,8 @@ class Type(object):
     MESSAGE = 'message'
     EXCEPTION = 'exception'
     INTERFACE = 'interface'
+
+
+class PdefException(Exception):
+    '''General Pdef exception.'''
+    pass

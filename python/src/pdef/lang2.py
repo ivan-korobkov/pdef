@@ -1,8 +1,7 @@
 # encoding: utf-8
 from collections import OrderedDict
-import logging
 from pdef import ast
-from pdef.consts import Type
+from pdef.common import Type, PdefException
 from pdef.preconditions import *
 
 
@@ -19,7 +18,7 @@ class Pdef(object):
     def get_module(self, name):
         '''Returns a module by its name, or raises and exception.'''
         module = self.modules.get(name)
-        if not module: raise ValueError('%s: module %r is not found', self, name)
+        if not module: raise PdefException('%s: module %r is not found', self, name)
         return module
 
 
@@ -66,8 +65,8 @@ class Module(object):
             for name in node.names:
                 try:
                     def0 = module.get_definition(name)
-                except ValueError, e:
-                    raise ValueError('%s: import %r is not found in %s' % (self, name, module))
+                except PdefException:
+                    raise PdefException('%s: import %r is not found in %s' % (self, name, module))
                 self.add_import(def0)
 
     def link_definitions(self):
@@ -100,7 +99,7 @@ class Module(object):
     def get_definition(self, name):
         '''Returns a definition by its name, or raises an exception.'''
         def0 = self.definitions.get(name)
-        if not def0: raise ValueError('%s: definitions %r is not found' % (self, name))
+        if not def0: raise PdefException('%s: definitions %r is not found' % (self, name))
         return def0
 
     def lookup(self, ref_or_def):
@@ -110,7 +109,8 @@ class Module(object):
         elif isinstance(ref_or_def, ast.Ref):
             def0 = self._lookup_ref(ref_or_def)
         else:
-            raise ValueError('%s: unsupported lookup reference or definition %s' % (self, ref_or_def))
+            raise PdefException('%s: unsupported lookup reference or definition %s' %
+                                (self, ref_or_def))
 
         def0.link()
         return def0
@@ -127,14 +127,14 @@ class Module(object):
             enum = self.lookup(ref.enum)
             value = enum.values.get(ref.value)
             if not value:
-                raise ValueError('%s: enum value "%s" is not found' % (self, ref))
+                raise PdefException('%s: enum value "%s" is not found' % (self, ref))
             return value
 
         # It must be an import or a user defined type.
         name = ref.name
         if name in self.imported_definitions: return self.imported_definitions[name]
         if name in self.definitions: return self.definitions[name]
-        raise ValueError('%s: type "%s" is not found' % (self, ref))
+        raise PdefException('%s: type "%s" is not found' % (self, ref))
 
 
 class Definition(object):

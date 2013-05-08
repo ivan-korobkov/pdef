@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
 from pdef import ast
-from pdef.consts import Type
+from pdef.common import Type
 from pdef.lang2 import *
 
 
@@ -102,7 +102,7 @@ class TestModule(unittest.TestCase):
         try:
             module.lookup(ast.EnumValueRef(ast.DefinitionRef('Number'), 'ONE'))
             self.fail()
-        except Exception, e:
+        except PdefException, e:
             assert 'not found' in e.message
 
     def test_lookup_user_defined(self):
@@ -156,7 +156,7 @@ class TestModule(unittest.TestCase):
         try:
             module.add_definition(def1)
             self.fail()
-        except Exception, e:
+        except PdefException, e:
             assert 'duplicate' in e.message
 
     def test_add_definition_import_clash(self):
@@ -170,7 +170,7 @@ class TestModule(unittest.TestCase):
         try:
             module.add_definition(def1)
             self.fail()
-        except Exception, e:
+        except PdefException, e:
             assert 'clashes with an import' in e.message
 
 
@@ -236,7 +236,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg.set_base(msg)
             self.fail()
-        except Exception, e:
+        except PdefException, e:
             assert 'cannot inherit itself' in e.message
 
     def test_set_base_circular_inheritance(self):
@@ -248,7 +248,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg1.set_base(msg0)
             self.fail()
-        except Exception, e:
+        except PdefException, e:
             assert 'circular inheritance' in e.message
 
     def test_set_base_message_exception_clash(self):
@@ -259,7 +259,7 @@ class TestMessage(unittest.TestCase):
         try:
             exc.set_base(msg)
             self.fail()
-        except Exception, e:
+        except PdefException, e:
             assert 'cannot inherit' in e.message
 
     def test_set_base_add_subtypes(self):
@@ -329,7 +329,7 @@ class TestMessage(unittest.TestCase):
         msg.add_field('field', Values.INT32)
         try:
             msg.add_field('field', Values.INT32)
-        except Exception, e:
+        except PdefException, e:
             assert 'duplicate' in e.message
 
     def test_add_field_set_discriminator(self):
@@ -398,7 +398,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.add_base(iface)
             self.fail()
-        except Exception, e:
+        except PdefException, e:
             assert 'self inheritance' in e.message
 
     def test_add_base_duplicate(self):
@@ -409,7 +409,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.add_base(base)
             self.fail()
-        except Exception, e:
+        except PdefException, e:
             assert 'duplicate' in e.message
 
     def test_add_base_circular_inheritance(self):
@@ -424,7 +424,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface0.add_base(iface2)
             self.fail()
-        except Exception, e:
+        except PdefException, e:
             assert 'circular' in e.message
 
     def test_add_base_inherit_methods(self):
@@ -468,7 +468,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.add_method('doNothing')
             self.fail()
-        except Exception, e:
+        except PdefException, e:
             assert 'duplicate' in e.message
 
 

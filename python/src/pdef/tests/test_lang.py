@@ -2,7 +2,7 @@
 import unittest
 from pdef import ast
 from pdef.common import Type
-from pdef.lang2 import *
+from pdef.lang import *
 
 
 class TestPdef(unittest.TestCase):

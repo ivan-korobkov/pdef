@@ -38,3 +38,10 @@ class Type(object):
 class PdefException(Exception):
     '''General Pdef exception.'''
     pass
+
+
+def upper_first(s):
+    '''Uppercase the first letter in a string.'''
+    if not s:
+        return s
+    return s[0].upper() + s[1:]

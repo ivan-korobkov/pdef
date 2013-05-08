@@ -199,6 +199,27 @@ class TestMessage(unittest.TestCase):
         assert msg0.subtypes == {type1 : msg1}
         assert base.subtypes == {type0: msg0, type1: msg1}
 
+    def test_set_base_inherit_fields(self):
+        '''Should set a message base and inherit its fields.'''
+        enum = Enum('Type')
+        type0 = enum.add_value('Type0')
+        type1 = enum.add_value('Type1')
+
+        base = Message('Base')
+        type_field = base.add_field('type', enum, is_discriminator=True)
+        msg0 = Message('Msg0')
+        msg0.set_base(base, type0)
+        field0 = msg0.add_field('field0', Values.INT32)
+
+        msg1 = Message('Msg1')
+        msg1.set_base(msg0, type1)
+        field1 = msg1.add_field('field1', Values.STRING)
+
+        assert msg1.fields.as_map() == {'type': type_field, 'field0': field0, 'field1': field1}
+        assert msg1.inherited_fields.as_map() == {'type': type_field, 'field0': field0}
+        assert msg0.fields.as_map() == {'type': type_field, 'field0': field0}
+        assert msg0.inherited_fields.as_map() == {'type': type_field}
+
     def test_add_field(self):
         msg = Message('Msg')
         msg.add_field('field', Values.INT32)

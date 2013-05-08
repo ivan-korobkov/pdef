@@ -240,6 +240,7 @@ class Message(Definition):
         self._discriminator_field = None
 
         self.fields = SymbolTable(self)
+        self.inherited_fields = SymbolTable(self)
         self.declared_fields = SymbolTable(self)
 
         self._node = None
@@ -250,7 +251,7 @@ class Message(Definition):
             else self.base.discriminator_field if self.base else None
 
     def set_base(self, base, base_type=None):
-        '''Sets this message base.'''
+        '''Sets this message base and inherits its fields.'''
         check_isinstance(base, Message)
         check_argument(self != base, '%s: cannot inherit itself', self)
         check_argument(self not in base._bases, '%s: circular inheritance with %s', self, base)
@@ -261,6 +262,10 @@ class Message(Definition):
         self.base = base
         self.base_type = base_type
         if base_type: base._add_subtype(self)
+
+        for field in base.fields:
+            self.inherited_fields.add(field)
+            self.fields.add(field)
 
     def _add_subtype(self, subtype):
         '''Adds a new subtype to this message, checks its base_type.'''
@@ -278,6 +283,7 @@ class Message(Definition):
         '''Adds a new field to this message and returns the field.'''
         field = Field(name, definition, is_discriminator)
         self.declared_fields.add(field)
+        self.fields.add(field)
 
         if is_discriminator:
             check_state(not self.discriminator_field, '%s: duplicate discriminator field', self)

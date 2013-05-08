@@ -95,10 +95,13 @@ class Definition(object):
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.fullname)
 
+    def __str__(self):
+        return self.fullname
+
     @property
     def fullname(self):
         if self.module:
-            return '%s %s' % (self.module.name, self.name)
+            return '%s.%s' % (self.module.name, self.name)
         return self.name
 
     def link(self):
@@ -281,7 +284,7 @@ class Message(Definition):
 
     def add_field(self, name, definition, is_discriminator=False):
         '''Adds a new field to this message and returns the field.'''
-        field = Field(name, definition, is_discriminator)
+        field = Field(self, name, definition, is_discriminator)
         self.declared_fields.add(field)
         self.fields.add(field)
 
@@ -327,14 +330,19 @@ class Message(Definition):
 
 class Field(object):
     '''Single message field.'''
-    def __init__(self, name, type, is_discriminator=False):
+    def __init__(self, message, name, type, is_discriminator=False):
+        self.message = message
         self.name = name
         self.type = type
         self.is_discriminator = is_discriminator
         check_isinstance(type, Definition)
 
     def __repr__(self):
-        return '<%s %s>' % (self.name, self.type)
+        return '%s %s' % (self.name, self.type)
+
+    @property
+    def fullname(self):
+        return '%s.%s=%s' % (self.message.fullname, self.name, self.type)
 
 
 class Interface(Definition):
@@ -370,7 +378,7 @@ class Interface(Definition):
 
     def add_method(self, name, result=Values.VOID, *args_tuples):
         '''Adds a new method to this interface and returns the method.'''
-        method = Method(name, result, args_tuples)
+        method = Method(self, name, result, args_tuples)
         self.declared_methods.add(method)
         self.methods.add(method)
         return method
@@ -409,7 +417,8 @@ class Interface(Definition):
 
 
 class Method(object):
-    def __init__(self, name, result, args_tuples=None):
+    def __init__(self, interface, name, result, args_tuples=None):
+        self.interface = interface
         self.name = name
         self.result = result
         self.args = SymbolTable(self)
@@ -417,7 +426,12 @@ class Method(object):
             self.args.add(MethodArg(arg_name, arg_def))
 
     def __repr__(self):
-        return "<%s%s=>%s>" % (self.name, self.args, self.result)
+        return '%s%s=>%s' % (self.name, self.args, self.result)
+
+    @property
+    def fullname(self):
+        return '%s.%s(%s)=>%s' % (self.interface.fullname, self.name,
+                                  ', '.join(str(a) for a in self.args), self.result)
 
 
 class MethodArg(object):

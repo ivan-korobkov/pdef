@@ -245,6 +245,15 @@ class TestMessage(unittest.TestCase):
         assert msg.discriminator_field is field
 
 
+class TestField(unittest.TestCase):
+    def test_fullname(self):
+        module = Module('test')
+        message = Message('Message', module=module)
+        field = message.add_field('field', Values.STRING)
+        print field.fullname
+        assert field.fullname == 'test.Message.field=string'
+
+
 class TestInterface(unittest.TestCase):
     def test_from_ast(self):
         '''Should create an interface from an AST node.'''
@@ -362,3 +371,11 @@ class TestInterface(unittest.TestCase):
             self.fail()
         except Exception, e:
             assert 'duplicate' in e.message
+
+
+class TestMethod(unittest.TestCase):
+    def test_fullname(self):
+        module = Module('test')
+        iface = Interface('Interface', module)
+        method = iface.add_method('method', Values.INT32, ('i0', Values.INT32), ('i1', Values.INT32))
+        assert method.fullname == 'test.Interface.method(i0 int32, i1 int32)=>int32'

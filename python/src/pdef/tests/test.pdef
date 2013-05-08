@@ -1,4 +1,6 @@
 module pdef.test;
+from another_module import Message0;
+from pdef.test.imports import Exc0, Exc1, Interface0;
 
 
 // Enum definition

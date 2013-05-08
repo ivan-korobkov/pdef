@@ -8,7 +8,7 @@ from pdef import ast
 
 class Tokens(object):
     # Simple reserved words.
-    reserved = ('DISCRIMINATOR', 'MODULE',
+    reserved = ('DISCRIMINATOR', 'MODULE', 'FROM', 'IMPORT',
                 'BOOL', 'INT16', 'INT32', 'INT64', 'FLOAT', 'DOUBLE', 'DECIMAL',
                 'DATE', 'DATETIME', 'STRING', 'UUID', 'OBJECT', 'VOID',
                 'LIST', 'SET', 'MAP', 'ENUM', 'MESSAGE', 'EXCEPTION', 'INTERFACE')
@@ -71,11 +71,33 @@ class GrammarRules(object):
     # Starting point.
     def p_file(self, t):
         '''
-        file : MODULE IDENTIFIER SEMI definitions
+        file : MODULE IDENTIFIER SEMI imports definitions
         '''
         name = t[2]
-        definitions = t[4]
-        t[0] = ast.File(name, definitions=definitions)
+        imports = t[4]
+        definitions = t[5]
+        t[0] = ast.File(name, imports=imports, definitions=definitions)
+
+    def p_imports(self, t):
+        '''
+        imports : imports import
+                | import
+                | empty
+        '''
+        self._list(t)
+
+    def p_import(self, t):
+        '''
+        import : FROM IDENTIFIER IMPORT import_names SEMI
+        '''
+        t[0] = ast.Import(t[2], *t[4])
+
+    def p_import_names(self, t):
+        '''
+        import_names : import_names COMMA IDENTIFIER
+                     | IDENTIFIER
+        '''
+        self._list(t, separated=True)
 
     def p_definitions(self, t):
         '''

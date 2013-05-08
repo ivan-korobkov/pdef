@@ -4,9 +4,16 @@ from pdef.preconditions import *
 
 
 class File(object):
-    def __init__(self, name, definitions=None):
+    def __init__(self, name, imports=None, definitions=None):
         self.name = name
+        self.imports = tuple(imports) if imports else ()
         self.definitions = tuple(definitions) if definitions else ()
+
+
+class Import(object):
+    def __init__(self, module_name, *names):
+        self.module_name = module_name
+        self.names = names
 
 
 class Ref(object):

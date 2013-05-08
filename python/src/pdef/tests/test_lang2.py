@@ -6,6 +6,21 @@ from pdef.lang2 import *
 
 
 class TestModule(unittest.TestCase):
+    def test_link_imports(self):
+        pdef = Pdef()
+        module0 = Module('module0', pdef)
+        def0 = Definition(Type.DEFINITION, 'def0', module0)
+        def1 = Definition(Type.DEFINITION, 'def1', module0)
+        module0.add_definition(def0)
+        module0.add_definition(def1)
+        pdef.add_module(module0)
+
+        node = ast.File('module1', imports=(ast.Import('module0', 'def0', 'def1'), ))
+        module1 = Module.from_ast(node, pdef)
+        module1.link_imports()
+
+        assert module1.imported_definitions == {'def0': def0, 'def1': def1}
+
     def test_lookup_value(self):
         '''Should lookup a value by its ref.'''
         module = Module('test')
@@ -67,7 +82,17 @@ class TestModule(unittest.TestCase):
         result = module.lookup(ref)
         assert def0 is result
 
-    def test_lookup_link(self):
+    def test_lookup_import(self):
+        '''Should look up an imported definition.'''
+        def0 = Definition(Type.DEFINITION, 'def0')
+        module0 = Module('module0')
+        module0.add_import(def0)
+
+        ref = ast.DefinitionRef('def0')
+        result = module0.lookup(ref)
+        assert def0 is result
+
+    def test_lookup_and_link(self):
         '''Should look up a definition by its reference and link the definition.'''
         def0 = Definition(Type.DEFINITION, 'Test')
 
@@ -77,6 +102,42 @@ class TestModule(unittest.TestCase):
         ref = ast.DefinitionRef('Test')
         result = module.lookup(ref)
         assert result._linked
+
+    def test_add_definition(self):
+        '''Should add a new definition to a module.'''
+        def0 = Definition(Type.DEFINITION, 'Test')
+        module = Module('test')
+        module.add_definition(def0)
+
+        assert 'Test' in module.definitions
+
+    def test_add_definition_duplicate(self):
+        '''Should prevent adding a duplicate definition to a module.'''
+        def0 = Definition(Type.DEFINITION, 'Test')
+        def1 = Definition(Type.DEFINITION, 'Test')
+
+        module = Module('test')
+        module.add_definition(def0)
+
+        try:
+            module.add_definition(def1)
+            self.fail()
+        except Exception, e:
+            assert 'duplicate' in e.message
+
+    def test_add_definition_import_clash(self):
+        '''Should prevent adding a definition to a module when its name clashes with an import.'''
+        def0 = Definition(Type.DEFINITION, 'Test')
+        def1 = Definition(Type.DEFINITION, 'Test')
+
+        module = Module('test')
+        module.add_import(def0)
+
+        try:
+            module.add_definition(def1)
+            self.fail()
+        except Exception, e:
+            assert 'clashes with an import' in e.message
 
 
 class TestEnum(unittest.TestCase):

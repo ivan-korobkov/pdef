@@ -6,11 +6,34 @@ from pdef.consts import Type
 from pdef.preconditions import *
 
 
+class Pdef(object):
+    def __init__(self):
+        self.modules = SymbolTable()
+
+    def add_module(self, module):
+        '''Adds a new module to Pdef.'''
+        self.modules.add(module)
+
+    def get_module(self, name):
+        '''Returns a module by its name, or raises and exception.'''
+        module = self.modules.get(name)
+        if not module: raise ValueError('%s: module %r is not found', self, name)
+        return module
+
+
 class Module(object):
+    @classmethod
+    def from_ast(cls, node, pdef=None):
+        '''Creates a new module from an AST node.'''
+        module = Module(node.name, pdef)
+        module._node = node
+        return module
+
     def __init__(self, name, pdef=None):
         self.name = name
         self.pdef = pdef
         self.definitions = SymbolTable(self)
+        self.imported_definitions = SymbolTable(self)
 
         self._node = None
         self._imports_linked = False
@@ -19,17 +42,23 @@ class Module(object):
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.name)
 
+    def __str__(self):
+        return self.name
+
     def link_imports(self):
         '''Links this method imports, must be called before link_definitions().'''
         if self._imports_linked: return
         self._imports_linked = True
         if not self._node: return
-        #        for node in self._ast.imports:
-    #            imported = self.package.lookup(node.name)
-    #            if not imported:
-    #                raise ValueError('Import not found "%s"' % node.name)
-    #
-    #            self.add_import(imported, node.alias)
+
+        pdef = self.pdef
+        check_state(pdef is not None, '%s: cannot link, pdef is required', self)
+
+        for node in self._node.imports:
+            module = pdef.get_module(node.module_name)
+            for name in node.names:
+                def0 = module.get_definition(name)
+                self.add_import(def0)
 
     def link_definitions(self):
         '''Links this module definitions, must be called after link_imports().'''
@@ -39,16 +68,28 @@ class Module(object):
         for definition in self.definitions.items():
             definition.init()
 
+    def add_import(self, definition):
+        '''Adds an imported definition to this module.'''
+        check_isinstance(definition, Definition)
+        self.imported_definitions.add(definition)
+
     def add_definition(self, definition):
         '''Adds a new definition to this module.'''
         check_isinstance(definition, Definition)
+        if definition.name in self.imported_definitions:
+            raise ValueError('%s: definition %r clashes with an import' % (self, definition.name))
 
         self.definitions.add(definition)
-        logging.info('%s: added "%s"', self, definition.name)
 
     def add_definitions(self, *definitions):
         '''Adds all definitions to this module.'''
         map(self.add_definition, definitions)
+
+    def get_definition(self, name):
+        '''Returns a definition by its name, or raises an exception.'''
+        def0 = self.definitions.get(name)
+        if not def0: raise ValueError('%s: definitions %r is not found', self, name)
+        return def0
 
     def lookup(self, ref_or_def):
         '''Lookups a definition if a reference, then links the definition, and returns it.'''
@@ -78,8 +119,9 @@ class Module(object):
             return value
 
         # It must be an import or a user defined type.
-        def0 = self.definitions.get(ref.name)
-        if def0 : return def0
+        name = ref.name
+        if name in self.imported_definitions: return self.imported_definitions[name]
+        if name in self.definitions: return self.definitions[name]
         raise ValueError('%s: type "%s" is not found' % (self, ref))
 
 
@@ -422,6 +464,8 @@ class Method(object):
         self.args = SymbolTable(self)
         for arg_name, arg_def in args_tuples:
             self.args.add(MethodArg(arg_name, arg_def))
+
+        check_isinstance(result, Definition)
 
     def __repr__(self):
         return '%s%s=>%s' % (self.name, self.args, self.result)

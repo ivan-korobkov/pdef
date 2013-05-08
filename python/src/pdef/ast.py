@@ -73,13 +73,14 @@ class DefinitionRef(Ref):
 
 
 class Definition(object):
-    def __init__(self, name):
+    def __init__(self, name, type):
         self.name = name
+        self.type = type
 
 
 class Message(Definition):
     def __init__(self, name, base=None, base_type=None, fields=None, is_exception=False):
-        super(Message, self).__init__(name)
+        super(Message, self).__init__(name, Type.MESSAGE)
 
         self.base = base
         self.base_type = base_type
@@ -97,13 +98,13 @@ class Field(object):
 
 class Enum(Definition):
     def __init__(self, name, values=None):
-        super(Enum, self).__init__(name)
+        super(Enum, self).__init__(name, Type.ENUM)
         self.values = tuple(values) if values else ()
 
 
 class Interface(Definition):
     def __init__(self, name, bases=None, methods=None):
-        super(Interface, self).__init__(name)
+        super(Interface, self).__init__(name, Type.INTERFACE)
 
         self.bases = tuple(bases) if bases else ()
         self.methods = tuple(methods) if methods else ()

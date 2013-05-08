@@ -29,6 +29,11 @@ class Module(object):
         '''Creates a new module from an AST node.'''
         module = Module(node.name)
         module._node = node
+
+        for def_node in node.definitions:
+            def0 = Definition.from_ast_polymorphic(def_node)
+            module.add_definition(def0)
+
         return module
 
     def __init__(self, name):
@@ -59,7 +64,10 @@ class Module(object):
         for node in self._node.imports:
             module = pdef.get_module(node.module_name)
             for name in node.names:
-                def0 = module.get_definition(name)
+                try:
+                    def0 = module.get_definition(name)
+                except ValueError, e:
+                    raise ValueError('%s: import %r is not found in %s' % (self, name, module))
                 self.add_import(def0)
 
     def link_definitions(self):
@@ -67,7 +75,7 @@ class Module(object):
         if self._defs_linked: return
         self._defs_linked = True
 
-        for definition in self.definitions.items():
+        for definition in self.definitions.values():
             definition.link()
 
     def add_import(self, definition):
@@ -92,7 +100,7 @@ class Module(object):
     def get_definition(self, name):
         '''Returns a definition by its name, or raises an exception.'''
         def0 = self.definitions.get(name)
-        if not def0: raise ValueError('%s: definitions %r is not found', self, name)
+        if not def0: raise ValueError('%s: definitions %r is not found' % (self, name))
         return def0
 
     def lookup(self, ref_or_def):
@@ -130,6 +138,18 @@ class Module(object):
 
 
 class Definition(object):
+    @classmethod
+    def from_ast_polymorphic(cls, node):
+        '''Creates a new definition from an AST node, supports enums, messages and interfaces.'''
+        if node.type == Type.ENUM:
+            return Enum.from_ast(node)
+        elif node.type == Type.MESSAGE:
+            return Message.from_ast(node)
+        elif node.type == Type.INTERFACE:
+            return Interface.from_ast(node)
+
+        raise ValueError('Unsupported definition node %s' % node)
+
     def __init__(self, type, name):
         self.type = type
         self.name = name

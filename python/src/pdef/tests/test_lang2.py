@@ -5,8 +5,40 @@ from pdef.consts import Type
 from pdef.lang2 import *
 
 
+class TestPdef(unittest.TestCase):
+    def test(self):
+        '''Should create a module from an AST node, link its imports and definitions.'''
+        enum = Enum('Type', values=['MESSAGE'])
+        base = Message('Base')
+        base.add_field('type', enum, is_discriminator=True)
+        module0 = Module('module0')
+        module0.add_definition(enum)
+        module0.add_definition(base)
+
+        import_node = ast.Import('module0', 'Type', 'Base')
+        def_node = ast.Message('Message',
+                               base=ast.DefinitionRef('Base'),
+                               base_type=ast.EnumValueRef(ast.DefinitionRef('Type'), 'MESSAGE'),
+                               fields=[ast.Field('field', ast.Ref(Type.INT32))])
+        file_node = ast.File('module1', imports=[import_node], definitions=[def_node])
+        module1 = Module.from_ast(file_node)
+
+        pdef = Pdef()
+        pdef.add_module(module0)
+        pdef.add_module(module1)
+
+        module1.link_imports()
+        module1.link_definitions()
+
+        message = module1.definitions['Message']
+        assert message.name == 'Message'
+        assert message.base is base
+        assert message.base_type is enum.values['MESSAGE']
+
+
 class TestModule(unittest.TestCase):
     def test_link_imports(self):
+        '''Should link all imports from an AST node in a module.'''
         def0 = Definition(Type.DEFINITION, 'def0')
         def1 = Definition(Type.DEFINITION, 'def1')
         module0 = Module('module0')

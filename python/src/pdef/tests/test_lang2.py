@@ -7,18 +7,20 @@ from pdef.lang2 import *
 
 class TestModule(unittest.TestCase):
     def test_link_imports(self):
-        pdef = Pdef()
-        module0 = Module('module0', pdef)
-        def0 = Definition(Type.DEFINITION, 'def0', module0)
-        def1 = Definition(Type.DEFINITION, 'def1', module0)
+        def0 = Definition(Type.DEFINITION, 'def0')
+        def1 = Definition(Type.DEFINITION, 'def1')
+        module0 = Module('module0')
         module0.add_definition(def0)
         module0.add_definition(def1)
-        pdef.add_module(module0)
 
         node = ast.File('module1', imports=(ast.Import('module0', 'def0', 'def1'), ))
-        module1 = Module.from_ast(node, pdef)
-        module1.link_imports()
+        module1 = Module.from_ast(node)
 
+        pdef = Pdef()
+        pdef.add_module(module0)
+        pdef.add_module(module1)
+
+        module1.link_imports()
         assert module1.imported_definitions == {'def0': def0, 'def1': def1}
 
     def test_lookup_value(self):
@@ -173,12 +175,13 @@ class TestMessage(unittest.TestCase):
     def test_link(self):
         '''Should init and link a message when its AST node present.'''
         base = Message('Base')
-        module = Module('test')
-        module.add_definition(base)
-
         node = ast.Message('Msg', base=ast.DefinitionRef('Base'),
                            fields=[ast.Field('field', ast.Ref(Type.INT32))])
-        msg = Message.from_ast(node, module)
+        msg = Message.from_ast(node)
+
+        module = Module('test')
+        module.add_definition(base)
+        module.add_definition(msg)
         msg.link()
 
         assert msg.base is base
@@ -308,9 +311,12 @@ class TestMessage(unittest.TestCase):
 
 class TestField(unittest.TestCase):
     def test_fullname(self):
-        module = Module('test')
-        message = Message('Message', module=module)
+        message = Message('Message')
         field = message.add_field('field', Values.STRING)
+
+        module = Module('test')
+        module.add_definition(message)
+
         assert field.fullname == 'test.Message.field=string'
 
 
@@ -327,13 +333,14 @@ class TestInterface(unittest.TestCase):
     def test_link(self):
         '''Should init and link an interface from an AST node if present.'''
         base = Interface('Base')
-        module = Module('test')
-        module.add_definition(base)
-
         node = ast.Interface('Iface', bases=[ast.DefinitionRef('Base')],
             methods=[ast.Method('echo', args=[ast.MethodArg('text', ast.Ref(Type.STRING))],
                                 result=ast.Ref(Type.STRING))])
-        iface = Interface.from_ast(node, module=module)
+        iface = Interface.from_ast(node)
+
+        module = Module('test')
+        module.add_definition(base)
+        module.add_definition(iface)
         iface.link()
 
         assert iface.bases == [base]
@@ -435,7 +442,10 @@ class TestInterface(unittest.TestCase):
 
 class TestMethod(unittest.TestCase):
     def test_fullname(self):
-        module = Module('test')
-        iface = Interface('Interface', module)
+        iface = Interface('Interface')
         method = iface.add_method('method', Values.INT32, ('i0', Values.INT32), ('i1', Values.INT32))
+
+        module = Module('test')
+        module.add_definition(iface)
+
         assert method.fullname == 'test.Interface.method(i0 int32, i1 int32)=>int32'

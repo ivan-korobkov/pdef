@@ -12,6 +12,8 @@ class Pdef(object):
 
     def add_module(self, module):
         '''Adds a new module to Pdef.'''
+        check_argument(module.pdef is None, '%s is already added to another pdef instance', module)
+        module.pdef = self
         self.modules.add(module)
 
     def get_module(self, name):
@@ -23,17 +25,17 @@ class Pdef(object):
 
 class Module(object):
     @classmethod
-    def from_ast(cls, node, pdef=None):
+    def from_ast(cls, node):
         '''Creates a new module from an AST node.'''
-        module = Module(node.name, pdef)
+        module = Module(node.name)
         module._node = node
         return module
 
-    def __init__(self, name, pdef=None):
+    def __init__(self, name):
         self.name = name
-        self.pdef = pdef
         self.definitions = SymbolTable(self)
         self.imported_definitions = SymbolTable(self)
+        self.pdef = None
 
         self._node = None
         self._imports_linked = False
@@ -66,7 +68,7 @@ class Module(object):
         self._defs_linked = True
 
         for definition in self.definitions.items():
-            definition.init()
+            definition.link()
 
     def add_import(self, definition):
         '''Adds an imported definition to this module.'''
@@ -76,9 +78,11 @@ class Module(object):
     def add_definition(self, definition):
         '''Adds a new definition to this module.'''
         check_isinstance(definition, Definition)
-        if definition.name in self.imported_definitions:
-            raise ValueError('%s: definition %r clashes with an import' % (self, definition.name))
+        check_argument(definition.module is None, '%s is already added to another module', definition)
+        check_argument(definition.name not in self.imported_definitions,
+                       '%s: definition %r clashes with an import' % (self, definition.name))
 
+        definition.module = self
         self.definitions.add(definition)
 
     def add_definitions(self, *definitions):
@@ -126,10 +130,10 @@ class Module(object):
 
 
 class Definition(object):
-    def __init__(self, type, name, module=None):
+    def __init__(self, type, name):
         self.type = type
         self.name = name
-        self.module = module
+        self.module = None
         self._linked = False
 
     def __repr__(self):
@@ -203,8 +207,9 @@ class Values(object):
 
 class List(Definition):
     def __init__(self, element, module=None):
-        super(List, self).__init__(Type.LIST, 'List', module=module)
+        super(List, self).__init__(Type.LIST, 'List')
         self.element = element
+        self.module = module
 
     def _link(self):
         self.element = self.module.lookup(self.element)
@@ -212,8 +217,9 @@ class List(Definition):
 
 class Set(Definition):
     def __init__(self, element, module=None):
-        super(Set, self).__init__(Type.SET, 'Set', module=module)
+        super(Set, self).__init__(Type.SET, 'Set')
         self.element = element
+        self.module = module
 
     def _link(self):
         self.element = self.module.lookup(self.element)
@@ -221,9 +227,10 @@ class Set(Definition):
 
 class Map(Definition):
     def __init__(self, key, value, module=None):
-        super(Map, self).__init__(Type.MAP, 'Map', module=module)
+        super(Map, self).__init__(Type.MAP, 'Map')
         self.key = key
         self.value = value
+        self.module = module
 
     def _link(self):
         self.key = self.module.lookup(self.key)
@@ -232,12 +239,12 @@ class Map(Definition):
 
 class Enum(Definition):
     @classmethod
-    def from_ast(cls, node, module=None):
+    def from_ast(cls, node):
         check_isinstance(node, ast.Enum)
-        return Enum(node.name, values=node.values, module=module)
+        return Enum(node.name, values=node.values)
 
-    def __init__(self, name, values=None, module=None):
-        super(Enum, self).__init__(Type.ENUM, name, module=module)
+    def __init__(self, name, values=None):
+        super(Enum, self).__init__(Type.ENUM, name)
         self.values = SymbolTable(self)
         if values:
             self.add_values(*values)
@@ -266,15 +273,15 @@ class EnumValue(Definition):
 class Message(Definition):
     '''User-defined message.'''
     @classmethod
-    def from_ast(cls, node, module=None):
+    def from_ast(cls, node):
         '''Creates a new unlinked message from an AST node.'''
         check_isinstance(node, ast.Message)
-        msg = Message(node.name, module=module)
+        msg = Message(node.name)
         msg._node = node
         return msg
 
-    def __init__(self, name, is_exception=False, module=None):
-        super(Message, self).__init__(Type.MESSAGE, name, module=module)
+    def __init__(self, name, is_exception=False):
+        super(Message, self).__init__(Type.MESSAGE, name)
         self.is_exception = is_exception
 
         self.base = None
@@ -387,15 +394,15 @@ class Field(object):
 
 class Interface(Definition):
     @classmethod
-    def from_ast(cls, node, module=None):
+    def from_ast(cls, node):
         '''Creates a new interface from an AST node.'''
         check_isinstance(node, ast.Interface)
-        iface = Interface(node.name, module=module)
+        iface = Interface(node.name)
         iface._node = node
         return iface
 
-    def __init__(self, name, module=None):
-        super(Interface, self).__init__(Type.INTERFACE, name, module=module)
+    def __init__(self, name):
+        super(Interface, self).__init__(Type.INTERFACE, name)
 
         self.bases = []
         self.methods = SymbolTable(self)

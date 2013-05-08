@@ -38,7 +38,7 @@ class Module(object):
         if self._defs_linked: return
         self._defs_linked = True
 
-        for definition in self.definitions:
+        for definition in self.definitions.items():
             definition.init()
 
     def add_definition(self, definition):
@@ -266,7 +266,7 @@ class Message(Definition):
         self.base_type = base_type
         if base_type: base._add_subtype(self)
 
-        for field in base.fields:
+        for field in base.fields.values():
             self.inherited_fields.add(field)
             self.fields.add(field)
 
@@ -310,7 +310,7 @@ class Message(Definition):
             base_type = module.lookup(node.base_type) if node.base_type else None
             self.set_base(base, base_type)
 
-        for field_node in node.fields:
+        for field_node in node.fields.values():
             fname = field_node.name
             ftype = module.lookup(field_node.type)
             self.add_field(fname, ftype, field_node.is_discriminator)
@@ -372,7 +372,7 @@ class Interface(Definition):
         check_argument(self not in base._all_bases, '%s: circular inheritance with %s', self, base)
 
         self.bases.append(base)
-        for method in base.methods:
+        for method in base.methods.values():
             self.inherited_methods.add(method)
             self.methods.add(method)
 
@@ -444,59 +444,17 @@ class MethodArg(object):
         return '%s %s' % (self.name, self.type)
 
 
-class SymbolTable(object):
-    def __init__(self, parent=None):
+class SymbolTable(OrderedDict):
+    '''SymbolTable is an ordered dict which supports adding items using item.name as a key,
+    and prevents duplicate items.'''
+    def __init__(self, parent=None, *args, **kwds):
+        super(SymbolTable, self).__init__(*args, **kwds)
         self.parent = parent
-        self.items = []
-        self.map = {}
 
-    def __repr__(self):
-        return repr(self.items)
+    def add(self, item):
+        '''Adds an item by with item.name as the key.'''
+        self[item.name] = item
 
-    def __eq__(self, other):
-        if not isinstance(other, SymbolTable):
-            return False
-        return self.items == other.items
-
-    def __iter__(self):
-        return iter(self.items)
-
-    def __len__(self):
-        return len(self.items)
-
-    def __contains__(self, key):
-        return key in self.map
-
-    def __getitem__(self, key):
-        return self.map[key]
-
-    def __setitem__(self, name, item):
-        if name in self.map:
-            s = 'duplicate symbol "%s"' % name
-            if self.parent:
-                s = '%s: %s' % (self.parent, s)
-            raise ValueError(s)
-
-        self.map[name] = item
-        self.items.append(item)
-
-    def __add__(self, other):
-        new = SymbolTable()
-        new += self
-        new += other
-        return new
-
-    def __iadd__(self, other):
-        for item in other:
-            self.add(item)
-        return self
-
-    def add(self, item, name=None):
-        name = name if name else item.name
-        self[name] = item
-
-    def get(self, name, default=None):
-        return self.map.get(name, default)
-
-    def as_map(self):
-        return dict(self.map)
+    def __setitem__(self, key, value):
+        check_state(key not in self, '%s: duplicate item %s', self, key)
+        super(SymbolTable, self).__setitem__(key, value)

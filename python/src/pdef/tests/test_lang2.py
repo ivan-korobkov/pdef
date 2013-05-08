@@ -215,10 +215,10 @@ class TestMessage(unittest.TestCase):
         msg1.set_base(msg0, type1)
         field1 = msg1.add_field('field1', Values.STRING)
 
-        assert msg1.fields.as_map() == {'type': type_field, 'field0': field0, 'field1': field1}
-        assert msg1.inherited_fields.as_map() == {'type': type_field, 'field0': field0}
-        assert msg0.fields.as_map() == {'type': type_field, 'field0': field0}
-        assert msg0.inherited_fields.as_map() == {'type': type_field}
+        assert msg1.fields == {'type': type_field, 'field0': field0, 'field1': field1}
+        assert msg1.inherited_fields == {'type': type_field, 'field0': field0}
+        assert msg0.fields == {'type': type_field, 'field0': field0}
+        assert msg0.inherited_fields == {'type': type_field}
 
     def test_add_field(self):
         msg = Message('Msg')
@@ -341,10 +341,10 @@ class TestInterface(unittest.TestCase):
         iface2.add_base(iface1)
         method2 = iface2.add_method('method2')
 
-        assert iface1.inherited_methods.as_map() == {'method0': method0}
-        assert iface1.methods.as_map() == {'method0': method0, 'method1': method1}
-        assert iface2.inherited_methods.as_map() == {'method0': method0, 'method1': method1}
-        assert iface2.methods.as_map() == {'method0': method0, 'method1': method1, 'method2': method2}
+        assert iface1.inherited_methods == {'method0': method0}
+        assert iface1.methods == {'method0': method0, 'method1': method1}
+        assert iface2.inherited_methods == {'method0': method0, 'method1': method1}
+        assert iface2.methods == {'method0': method0, 'method1': method1, 'method2': method2}
 
     def test_add_method(self):
         '''Should add a new method to this interface.'''

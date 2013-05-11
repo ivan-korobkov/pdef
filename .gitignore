@@ -1,3 +1,5 @@
 .*
 *.pyc
-
+*.iml
+java/target/
+python/build/

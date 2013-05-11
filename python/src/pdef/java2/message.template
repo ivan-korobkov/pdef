@@ -9,17 +9,12 @@ package {{ package }};
 {% endfor %}
 })
 {% endif %}
-public class {{ name }} extends {% if base_class -%}
-    {{ base_class }}
-    {%- elif is_exception -%}io.pdef.GeneratedException
-    {%- else -%}io.pdef.GeneratedMessage{%- endif %} {
+public class {{ name }} extends {{ base }} {
     private static final {{ name }} instance = new {{ name }}();
 
-{% if declared_fields %}
 {% for field in declared_fields %}
     protected {{ field.type }} {{ field.name }};
 {% endfor %}
-{% endif %}
 
     public {{ name }}() {
         this(new Builder());
@@ -33,22 +28,25 @@ public class {{ name }} extends {% if base_class -%}
     }
 
 {% for field in declared_fields %}
-{% if field.type.nullable %}
+{% if field.type.is_nullable%}
     @javax.annotation.Nullable
 {% endif %}
     public {{ field.type }} {{ field.get }}() {
-{% if not field.type.primitive %}
-        if ({{ field.name }} == null) return {{ field.type.default }};
-{% endif %}
-        return {{ field.name }};
+        {% if field.type.is_primitive -%}
+            return {{ field.name }};
+        {%- else -%}
+            return {{ field.name }} == null ? {{ field.type.default }} : {{ field.name }};
+        {%- endif %}
+
     }
 
     public boolean {{ field.present }}() {
-{% if field.type.primitive %}
-        return true;
-{% else %}
-        return {{ field.name }} != null;
-{% endif %}
+        {% if field.type.is_primitive -%}
+            return true;
+        {%- else -%}
+            return {{ field.name }} != null;
+        {%- endif %}
+
     }
 
 {% endfor %}
@@ -67,9 +65,7 @@ public class {{ name }} extends {% if base_class -%}
     protected void fill(Builder builder) {
         super.fill(builder);
 {% for field in declared_fields %}
-{% if not field.is_type %}
         builder.{{ field.set }}(this.{{ field.name }});
-{% endif %}
 {% endfor %}
     }
 
@@ -81,31 +77,22 @@ public class {{ name }} extends {% if base_class -%}
         return new Builder();
     }
 
-    public static class Builder extends {% if base_builder -%}{{ base_builder }}
-        {%- elif is_exception -%}io.pdef.GeneratedException.Builder
-        {%- else -%}io.pdef.GeneratedMessage.Builder{%- endif %} {
+    public static class Builder extends {{ base_builder }} {
 {% for field in declared_fields %}
         protected {{ field.type }} {{ field.name }};
 {% endfor %}
 
-        public Builder() {
-{% for field in fields %}
-{% if field.is_type or field.is_subtype %}
-            this.{{ field.name }} = {{ field.type_value }};
-{% endif %}
-{% endfor %}
-        }
+        public Builder() {}
 
-{% for field in fields %}
-{% if field.is_declared %}
-{% if field.type.nullable %}
-        @javax.annotation.Nullable
-{% endif %}
+{% for field in declared_fields %}
+        {% if field.type.nullable -%} @javax.annotation.Nullable {%- endif -%}
         public {{ field.type }} {{ field.get }}() {
-{% if not field.type.primitive %}
-            if ({{ field.name }} == null ) return {{ field.type.default }};
-{% endif %}
-            return {{ field.name }};
+            {% if field.type.is_primitive -%}
+                return {{ field.name }};
+            {%- else -%}
+                return {{ field.name }} == null ? {{ field.type.default }} : {{ field.name }};
+            {%- endif %}
+
         }
 
         public Builder {{ field.set }}(final {{ field.type }} value) {
@@ -114,23 +101,26 @@ public class {{ name }} extends {% if base_class -%}
         }
 
         public Builder {{ field.clear }}() {
-{% if field.type.primitive %}
-            this.{{ field.name }} = {{ field.type.default }};
-{% else %}
-            this.{{ field.name }} = null;
-{% endif %}
+            {% if field.type.is_primitive -%}
+                this.{{ field.name }} = {{ field.type.default }};
+            {%- else -%}
+                this.{{ field.name }} = null;
+            {%- endif %}
+
             return this;
         }
 
         public boolean {{ field.present }}() {
-{% if field.type.primitive %}
-            return true;
-{% else %}
-            return {{ field.name }} != null;
-{% endif %}
+            {% if field.type.is_primitive -%}
+                return true;
+            {%- else -%}
+                return {{ field.name }} != null;
+            {% endif %}
+
         }
 
-{% else %}
+{% endfor %}
+{% for field in inherited_fields %}
         @Override
         public Builder {{ field.set }}(final {{ field.type }} value) {
             super.{{ field.set }}(value);
@@ -142,8 +132,6 @@ public class {{ name }} extends {% if base_class -%}
             super.{{ field.clear }}();
             return this;
         }
-
-{% endif %}
 
 {% endfor %}
         @Override
@@ -171,46 +159,43 @@ public class {{ name }} extends {% if base_class -%}
                 .toString();
     }
 
-	@Override
-	public boolean equals(final Object o) {
+    @Override
+    public boolean equals(final Object o) {
 {% if not declared_fields %}
         return super.equals(o);
 {% else %}
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-{% if base_class %}
-		if (!super.equals(o)) return false;
-{% endif %}
-
-		{{ name }} cast = ({{ name }}) o;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        {{ name }} cast = ({{ name }}) o;
 
 {% for field in declared_fields %}
-{% if field.type.primitive %}
-        if (this.{{ field.name }} != cast.{{ field.name }}) return false;
-{% else %}
-        if (this.{{ field.name }} != null ? !this.{{ field.name }}.equals(cast.{{ field.name }}) : cast.{{ field.name }} != null) return false;
-{% endif %}
+        {% if field.type.is_primitive -%}
+            if (this.{{ field.name }} != cast.{{ field.name }}) return false;
+        {%- else -%}
+            if (this.{{ field.name }} != null ? !this.{{ field.name }}.equals(cast.{{ field.name }})
+                : cast.{{ field.name }} != null) return false;
+        {%- endif %}
+
 {% endfor %}
 
-		return true;
+        return true;
 {% endif %}
-	}
+    }
 
-	@Override
-	public int hashCode() {
-{% if not declared_fields %}
-        return super.hashCode();
-{% else %}
-{% if base_class %}
-		int result = super.hashCode();
-{% else %}
-        int result = 31;
-{% endif %}
+    @Override
+    public int hashCode() {
+        {% if not declared_fields -%}
+            return super.hashCode();
+        {%- else -%}
+        int result = super.hashCode();
         return com.google.common.base.Objects.hashCode(result,
                 {% for field in declared_fields -%}this.{{ field.name }}
-                {%- if loop.length > 1 and not loop .last -%}
-                , {% endif %}{%- endfor %});
-{% endif %}
-	}
+                {%- if loop.length > 1 and not loop.last -%}, {% elif loop.last %}); {% endif %}
+
+                {% endfor %}
+        {%- endif %}
+
+    }
 }
 

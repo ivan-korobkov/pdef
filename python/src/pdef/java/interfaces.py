@@ -4,7 +4,7 @@ from jinja2 import Environment
 from pdef.java.refs import JavaRef
 
 
-IFACE_FILE = os.path.join(os.path.dirname(__file__), 'interface.template')
+IFACE_FILE = os.path.join(os.path.dirname(__file__), '../java2/interface.template')
 with open(IFACE_FILE, 'r') as f:
     IFACE_TEMPLATE = f.read()
 

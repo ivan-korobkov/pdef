@@ -5,8 +5,8 @@ from pdef.java.refs import JavaRef
 from pdef.utils import upper_first
 
 
-ENUM_FILE = os.path.join(os.path.dirname(__file__), 'enum.template')
-MESSAGE_FILE = os.path.join(os.path.dirname(__file__), 'message.template')
+ENUM_FILE = os.path.join(os.path.dirname(__file__), '../java2/enum.template')
+MESSAGE_FILE = os.path.join(os.path.dirname(__file__), '../java2/message.template')
 with open(ENUM_FILE, 'r') as f:
     ENUM_TEMPLATE = f.read()
 with open(MESSAGE_FILE, 'r') as f:

@@ -1,0 +1,27 @@
+package {{ package }};
+import com.google.common.util.concurrent.ListenableFuture;
+
+{% if not bases %}
+public interface {{ name }} extends io.pdef.Interface {
+{% else %}
+public interface {{ name }} extends {% for base in bases -%}
+        {{ base }}{% if loop.last %} {{'{'}}{% elif loop.length > 1%}, {% endif %}
+{%- endfor %}
+
+{% endif %}
+
+{% for method in declared_methods %}
+{% if method.args|length < 3 %}
+    {{ method.result }} {{ method.name }}({% for arg, argtype in method.args -%}
+                @io.pdef.Name("{{ arg }}") {{ argtype }} {{ arg }}{% if not loop.last and loop.length > 1 %}, {% endif %}
+        {%- endfor %});
+
+{% else %}
+    {{ method.result }} {{ method.name }}(
+{% for arg, argtype in method.args %}
+            @io.pdef.Name("{{ arg }}") {{ argtype }} {{ arg }}{% if loop.last %}); {% elif loop.length > 1 %}, {% endif %}
+
+{% endfor %}
+{% endif %}
+{% endfor %}
+}

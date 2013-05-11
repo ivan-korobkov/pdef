@@ -203,25 +203,17 @@ class Values(object):
     OBJECT = Value(Type.OBJECT)
     VOID = Value(Type.VOID)
 
-    _BY_TYPE = {
-        Type.BOOL: BOOL,
-        Type.INT16: INT16,
-        Type.INT32: INT32,
-        Type.INT64: INT64,
-        Type.FLOAT: FLOAT,
-        Type.DOUBLE: DOUBLE,
-        Type.DECIMAL: DECIMAL,
-        Type.DATE: DATE,
-        Type.DATETIME: DATETIME,
-        Type.STRING: STRING,
-        Type.UUID: UUID,
-        Type.OBJECT: OBJECT,
-        Type.VOID: VOID
-    }
+    _BY_TYPE = None
 
     @classmethod
     def get_by_type(cls, t):
         '''Returns a value by its type or none.'''
+        if cls._BY_TYPE is None:
+            cls._BY_TYPE = {}
+            for k, v in cls.__dict__.items():
+                if not isinstance(v, Value): continue
+                cls._BY_TYPE[v.type] = v
+
         return cls._BY_TYPE.get(t)
 
 
@@ -261,9 +253,9 @@ class Enum(Definition):
     @classmethod
     def from_ast(cls, node):
         check_isinstance(node, ast.Enum)
-        return Enum(node.name, values=node.values)
+        return Enum(node.name, *node.values)
 
-    def __init__(self, name, values=None):
+    def __init__(self, name, *values):
         super(Enum, self).__init__(Type.ENUM, name)
         self.values = SymbolTable(self)
         if values:

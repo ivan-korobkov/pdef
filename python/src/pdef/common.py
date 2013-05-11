@@ -1,4 +1,5 @@
 # encoding: utf-8
+import os
 
 
 class Type(object):
@@ -45,3 +46,10 @@ def upper_first(s):
     if not s:
         return s
     return s[0].upper() + s[1:]
+
+
+
+def mkdir_p(dirname):
+    if os.path.exists(dirname):
+        return
+    os.makedirs(dirname)

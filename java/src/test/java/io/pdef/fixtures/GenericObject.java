@@ -1,11 +1,11 @@
 package io.pdef.fixtures;
 
+import io.pdef.Discriminator;
 import io.pdef.Message;
 import io.pdef.Subtype;
 import io.pdef.Subtypes;
-import io.pdef.TypeField;
 
-@TypeField("type")
+@Discriminator("type")
 @Subtypes({
 	@Subtype(value = GenericObject.class, type = "object"),
 	@Subtype(value = Image.class, type = "image"),

@@ -1,10 +1,11 @@
 package {{ package }};
 
 {% if subtypes %}
-@io.pdef.TypeField("{{ subtypes.field.name }}")
+@io.pdef.Discriminator("{{ discriminator_field.name }}")
 @io.pdef.Subtypes({
-{% for type, submessage in subtypes.items %}
-        @io.pdef.Subtype(type = "{{ type }}", value = {{ submessage }}.class){% if loop.length > 1 and not loop.last %}, {% endif %}
+{% for type, submessage in subtypes %}
+        @io.pdef.Subtype(type = "{{ type }}", value = {{ submessage }}.class)
+        {%- if loop.length > 1 and not loop.last %}, {% endif %}
 
 {% endfor %}
 })
@@ -23,7 +24,7 @@ public class {{ name }} extends {{ base }} {
     public {{ name }}(final Builder builder) {
         super(builder);
 {% for field in declared_fields %}
-        this.{{ field.name }} = builder.{{ field.get }}();
+        this.{{ field.name }} = builder.{{ field.name }};
 {% endfor %}
     }
 

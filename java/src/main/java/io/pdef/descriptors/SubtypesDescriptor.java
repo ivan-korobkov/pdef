@@ -1,9 +1,9 @@
 package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableMap;
+import io.pdef.Discriminator;
 import io.pdef.Subtype;
 import io.pdef.Subtypes;
-import io.pdef.TypeField;
 
 import java.util.Map;
 
@@ -20,9 +20,9 @@ public class SubtypesDescriptor {
 		Class<?> cls = message.getJavaType();
 		checkArgument(hasSubtypes(cls), "No subtypes in %s", cls);
 
-		TypeField fieldAnnotation = cls.getAnnotation(TypeField.class);
+		Discriminator fieldAnnotation = cls.getAnnotation(Discriminator.class);
 		Subtypes subtypesAnnotation = cls.getAnnotation(Subtypes.class);
-		checkNotNull(fieldAnnotation, "TypeField annotation must be present in %s", cls);
+		checkNotNull(fieldAnnotation, "Discriminator annotation must be present in %s", cls);
 		checkNotNull(subtypesAnnotation, "Subtypes annotation must be present in %s", cls);
 
 		field = message.getFields().get(fieldAnnotation.value());

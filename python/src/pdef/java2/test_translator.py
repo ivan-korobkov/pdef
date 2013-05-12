@@ -66,5 +66,7 @@ class TestMessage(unittest.TestCase):
 
         translator = JavaTranslator('/dev/null')
         jmsg = JavaMessage(msg, translator.message_template)
-        print jmsg.code
-        assert jmsg.code
+        jbase = JavaMessage(base, translator.message_template)
+        print jbase.code
+        #print jmsg.code
+        #assert jmsg.code

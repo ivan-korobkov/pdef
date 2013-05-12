@@ -76,10 +76,13 @@ class JavaMessage(JavaDefinition):
         super(JavaMessage, self).__init__(msg, template)
 
         self.base = ref(msg.base) if msg.base else 'io.pdef.GeneratedMessage'
+        self.base_type = ref(msg.base_type) if msg.base_type else None
         self.base_builder = '%s.Builder' % self.base
+        self.discriminator_field = JavaField(msg.discriminator_field) \
+            if msg.discriminator_field else None
 
-        self.declared_fields = [JavaField(f) for f in msg.declared_fields]
-        self.inherited_fields = [JavaField(f) for f in msg.inherited_fields]
+        self.declared_fields = [JavaField(f) for f in msg.declared_fields.values()]
+        self.inherited_fields = [JavaField(f) for f in msg.inherited_fields.values()]
         self.is_exception = msg.is_exception
 
 
@@ -94,7 +97,6 @@ class JavaField(object):
     def __init__(self, field):
         self.name = field.name
         self.type = ref(field.type)
-        self.is_discriminator = field.is_discriminator
 
         self.get = 'get%s' % upper_first(self.name)
         self.set = 'set%s' % upper_first(self.name)

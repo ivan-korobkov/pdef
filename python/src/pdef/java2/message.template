@@ -82,7 +82,12 @@ public class {{ name }} extends {{ base }} {
         protected {{ field.type }} {{ field.name }};
 {% endfor %}
 
-        public Builder() {}
+        public Builder() {
+            {% if base_type -%}
+                this.{{ discriminator_field.name }} = {{ base_type }};
+            {%- endif %}
+
+        }
 
 {% for field in declared_fields %}
         {% if field.type.nullable -%} @javax.annotation.Nullable {%- endif -%}
@@ -115,7 +120,7 @@ public class {{ name }} extends {{ base }} {
                 return true;
             {%- else -%}
                 return {{ field.name }} != null;
-            {% endif %}
+            {%- endif %}
 
         }
 

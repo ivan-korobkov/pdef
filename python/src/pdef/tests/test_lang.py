@@ -8,7 +8,7 @@ from pdef.lang import *
 class TestPdef(unittest.TestCase):
     def test(self):
         '''Should create a module from an AST node, link its imports and definitions.'''
-        enum = Enum('Type', values=['MESSAGE'])
+        enum = Enum('Type', 'MESSAGE')
         base = Message('Base')
         base.add_field('type', enum, is_discriminator=True)
         module0 = Module('module0')

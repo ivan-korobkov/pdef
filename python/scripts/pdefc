@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 #encoding: utf-8
-import argparse
-import logging
-from pdef.compiler import Compiler, main
+from pdef.compiler import Compiler
 
 
 if __name__ == '__main__':
-    main()
-
+    compiler = Compiler()
+    compiler.package()

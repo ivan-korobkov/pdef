@@ -3,7 +3,7 @@ import logging
 import os.path
 from jinja2 import Environment
 from pdef import lang
-from pdef.utils import upper_first
+from pdef.common import upper_first
 
 # Map from pdef types to c# types
 NATIVE_MAP = {

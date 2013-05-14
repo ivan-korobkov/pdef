@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
 from pdef.lang import *
-from pdef.java2.translator import *
+from pdef.java.translator import *
 
 
 class TestJavaEnum(unittest.TestCase):
@@ -12,7 +12,6 @@ class TestJavaEnum(unittest.TestCase):
 
         translator = JavaTranslator('/dev/null')
         jenum = JavaEnum(enum, translator.enum_template)
-        print jenum.code
         assert jenum.code
 
 
@@ -45,11 +44,9 @@ class TestInterface(unittest.TestCase):
 
     def test(self):
         assert self.jiface.code
-        print self.jiface.code
 
     def test_async(self):
         assert self.jiface.async_code
-        print self.jiface.async_code
 
 
 class TestMessage(unittest.TestCase):
@@ -78,6 +75,62 @@ class TestMessage(unittest.TestCase):
         translator = JavaTranslator('/dev/null')
         jmsg = JavaMessage(msg, translator.message_template)
         jbase = JavaMessage(base, translator.message_template)
-        #print jbase.code
-        print jmsg.code
-        #assert jmsg.code
+        assert jbase.code
+        assert jmsg.code
+
+
+class TestRef(unittest.TestCase):
+    def test_list(self):
+        obj = List(Values.INT32)
+        jobj = ref(obj)
+        assert str(jobj) == 'java.lang.List<Integer>'
+        assert jobj.is_list
+
+    def test_set(self):
+        obj = Set(Values.BOOL)
+        jobj = ref(obj)
+        assert str(jobj) == 'java.lang.Set<Boolean>'
+        assert jobj.is_set
+
+    def test_map(self):
+        obj = Map(Values.STRING, Values.FLOAT)
+        jobj = ref(obj)
+        assert str(jobj) == 'java.lang.Map<String, Float>'
+        assert jobj.is_map
+
+    def test_native(self):
+        jobj = ref(Values.INT64)
+        assert jobj.name == 'long'
+        assert jobj.boxed == 'Long'
+        assert jobj.default == '0L'
+        assert jobj.is_primitive
+        assert not jobj.is_nullable
+
+    def test_enum_value(self):
+        enum = Enum('Number')
+        one = enum.add_value('ONE')
+
+        module = Module('test.module')
+        module.add_definition(enum)
+
+        jone = ref(one)
+        assert str(jone) == 'test.module.Number.ONE'
+
+    def test_interface(self):
+        iface = Interface('Interface')
+        module = Module('test.module')
+        module.add_definition(iface)
+
+        jface = ref(iface)
+        assert str(jface) == 'test.module.Interface'
+        assert jface.async_name == 'test.module.AsyncInterface'
+        assert jface.is_interface
+
+    def test_message(self):
+        msg = Message('Message')
+        module = Module('test.module')
+        module.add_definition(msg)
+
+        jmsg = ref(msg)
+        assert str(jmsg) == 'test.module.Message'
+        assert jmsg.default == 'test.module.Message.getInstance()'

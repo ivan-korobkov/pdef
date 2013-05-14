@@ -124,19 +124,19 @@ def ref(obj):
     if t in NATIVE_MAP: return NATIVE_MAP[t]
 
     elif t == Type.LIST: return JavaType(Type.LIST,
-            name='java.lang.List<%s>' % ref(obj.element),
+            name='java.lang.List<%s>' % ref(obj.element).boxed,
             default='com.google.common.collect.ImmutableList.of()')
 
     elif t == Type.SET: return JavaType(Type.SET,
-            name='java.lang.Set<%s>' % ref(obj.element),
+            name='java.lang.Set<%s>' % ref(obj.element).boxed,
             default='com.google.common.collect.ImmutableSet.of()')
 
     elif t == Type.MAP: return JavaType(Type.MAP,
-            name='java.lang.Map<%s, %s>' % (ref(obj.key), ref(obj.val)),
+            name='java.lang.Map<%s, %s>' % (ref(obj.key).boxed, ref(obj.value).boxed),
             default='com.google.common.collect.ImmutableMap.of()')
 
     elif t == Type.ENUM_VALUE: return JavaType(Type.ENUM_VALUE,
-            name='%s.%s' % (obj.enum, obj.name))
+            name='%s.%s' % (ref(obj.enum), obj.name))
 
     name = '%s.%s' % (obj.module.name, obj.name) if obj.module else obj.name
     async_name = name

@@ -3,3 +3,4 @@
 *.iml
 java/target/
 python/build/
+python/env/

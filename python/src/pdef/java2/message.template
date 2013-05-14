@@ -24,7 +24,19 @@ public class {{ name }} extends {{ base }} {
     public {{ name }}(final Builder builder) {
         super(builder);
 {% for field in declared_fields %}
-        this.{{ field.name }} = builder.{{ field.name }};
+        {% if field.type.is_list -%}
+            this.{{ field.name }} = builder.{{ field.name }} == null ? null
+                : com.google.common.collect.ImmutableList.copyOf(builder.{{ field.name }});
+        {%- elif field.type.is_set -%}
+            this.{{ field.name }} = builder.{{ field.name }} == null ? null
+                : com.google.common.collect.ImmutableSet.copyOf(builder.{{ field.name }});
+        {%- elif field.type.is_map -%}
+            this.{{ field.name }} = builder.{{ field.name }} == null ? null
+                : com.google.common.collect.ImmutableMap.copyOf(builder.{{ field.name }});
+        {%- else -%}
+            this.{{ field.name }} = builder.{{ field.name }};
+        {%- endif %}
+
 {% endfor %}
     }
 
@@ -36,7 +48,7 @@ public class {{ name }} extends {{ base }} {
         {% if field.type.is_primitive -%}
             return {{ field.name }};
         {%- else -%}
-            return {{ field.name }} == null ? {{ field.type.default }} : {{ field.name }};
+            return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
         {%- endif %}
 
     }
@@ -96,7 +108,7 @@ public class {{ name }} extends {{ base }} {
             {% if field.type.is_primitive -%}
                 return {{ field.name }};
             {%- else -%}
-                return {{ field.name }} == null ? {{ field.type.default }} : {{ field.name }};
+                return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
             {%- endif %}
 
         }

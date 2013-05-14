@@ -57,6 +57,8 @@ class TestMessage(unittest.TestCase):
         msg.add_field('field2', Values.INT32)
         msg.add_field('field3', Values.STRING)
         msg.add_field('field4', msg0)
+        msg.add_field('field5', base)
+        msg.add_field('field6', List(msg))
 
         module0 = Module('test.module0')
         module0.add_definitions(enum, base, msg0)
@@ -67,6 +69,6 @@ class TestMessage(unittest.TestCase):
         translator = JavaTranslator('/dev/null')
         jmsg = JavaMessage(msg, translator.message_template)
         jbase = JavaMessage(base, translator.message_template)
-        print jbase.code
-        #print jmsg.code
+        #print jbase.code
+        print jmsg.code
         #assert jmsg.code

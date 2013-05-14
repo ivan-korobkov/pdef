@@ -1,5 +1,4 @@
 # encoding: utf-8
-from collections import OrderedDict
 import logging
 import os.path
 from jinja2 import Environment
@@ -22,7 +21,7 @@ class JavaTranslator(object):
 
         dirs = jdef.package.split('.')
         fulldir = os.path.join(self.out, os.path.join(*dirs))
-        fullpath = os.path.join(fulldir, jdef.name)
+        fullpath = os.path.join(fulldir, jdef.name, '.java')
 
         mkdir_p(fulldir)
         with open(fullpath, 'wt') as f:
@@ -33,19 +32,10 @@ class JavaTranslator(object):
     def definition(self, def0):
         '''Creates and returns a java definition.'''
         t = def0.type
-        if t == Type.ENUM: return self.enum(def0)
-        elif t == Type.MESSAGE: return self.message(def0)
-        elif t == Type.INTERFACE: return self.interface(def0)
+        if t == Type.ENUM: JavaEnum(def0, self.enum_template)
+        elif t == Type.MESSAGE: JavaMessage(def0, self.message_template)
+        elif t == Type.INTERFACE: JavaInterface(def0, self.interface_template)
         raise ValueError('Unsupported definition %s' % def0)
-
-    def enum(self, def0):
-        return JavaEnum(def0, self.enum_template)
-
-    def message(self, def0):
-        return JavaMessage(def0, self.message_template)
-
-    def interface(self, def0):
-        return JavaInterface(def0, self.interface_template)
 
     def read_template(self, name):
         path = os.path.join(os.path.dirname(__file__), name)
@@ -80,17 +70,12 @@ class JavaMessage(JavaDefinition):
         self.base_builder = '%s.Builder' % self.base
         self.discriminator_field = JavaField(msg.discriminator_field) \
             if msg.discriminator_field else None
+        self.subtypes = tuple((key.name.lower(), ref(val)) for key, val in msg.subtypes.items())
 
+        self.fields = [JavaField(f) for f in msg.fields.values()]
         self.declared_fields = [JavaField(f) for f in msg.declared_fields.values()]
         self.inherited_fields = [JavaField(f) for f in msg.inherited_fields.values()]
         self.is_exception = msg.is_exception
-
-
-class JavaSubtypes(object):
-    def __init__(self, subtypes):
-        self.type = ref(subtypes.type)
-        self.items = tuple((k.name.lower(), ref(v)) for k, v in subtypes.as_map().items())
-        self.field = JavaField(subtypes.field)
 
 
 class JavaField(object):
@@ -121,92 +106,58 @@ class JavaMethod(object):
             self.result = 'ListenableFuture<%s>' % self.result.boxed
 
 
-class JavaRef(object):
-    def __init__(self, type, name, boxed=None, default='null', is_primitive=False,
-                 is_interface =False):
+def ref(obj):
+    t = obj.type
+    if t in NATIVE_MAP: return NATIVE_MAP[t]
+
+    elif t == Type.LIST: return JavaType(Type.LIST,
+            name='java.lang.List<%s>' % ref(obj.element),
+            default='com.google.common.collect.ImmutableList.of()')
+
+    elif t == Type.SET: return JavaType(Type.SET,
+            name='java.lang.Set<%s>' % ref(obj.element),
+            default='com.google.common.collect.ImmutableSet.of()')
+
+    elif t == Type.MAP: return JavaType(Type.MAP,
+            name='java.lang.Map<%s, %s>' % (ref(obj.key), ref(obj.val)),
+            default='com.google.common.collect.ImmutableMap.of()')
+
+    elif t == Type.ENUM_VALUE: return JavaType(Type.ENUM_VALUE,
+            name='%s.%s' % (obj.enum, obj.name))
+
+    name = '%s.%s' % (obj.module.name, obj.name) if obj.module else obj.name
+    default = '%s.getInstance()' % name if t == Type.MESSAGE else 'null'
+    return JavaType(t, name, default=default)
+
+
+class JavaType(object):
+    def __init__(self, type, name, boxed=None, default='null', is_primitive=False):
         self.type = type
         self.name = name
         self.boxed = boxed if boxed else self
         self.default = default
+
         self.is_primitive = is_primitive
-        self.is_interface = is_interface
+        self.is_nullable = True
+        self.is_nullable = default == 'null'
+
+        self.is_interface = type == Type.INTERFACE
+        self.is_list = type == Type.LIST
+        self.is_set = type == Type.SET
+        self.is_map = type == Type.MAP
 
     def __str__(self):
         return self.name
 
 
-class JavaTypes(object):
-    BOOL = JavaRef(Type.BOOL, 'boolean', 'Boolean', default='false', is_primitive=True)
-    INT16 = JavaRef(Type.INT16, 'short', 'Short', default='(short) 0', is_primitive=True)
-    INT32 = JavaRef(Type.INT32, 'int', 'Integer', default='0', is_primitive=True)
-    INT64 = JavaRef(Type.INT64, 'long', 'Long', default='0L', is_primitive=True)
-    FLOAT = JavaRef(Type.FLOAT, 'float', 'Float', default='0f', is_primitive=True)
-    DOUBLE = JavaRef(Type.DOUBLE, 'double', 'Double', default='0.0', is_primitive=True)
-    STRING = JavaRef(Type.STRING, 'String')
-    OBJECT = JavaRef(Type.OBJECT, 'Object')
-    VOID = JavaRef(Type.VOID, 'void', 'Void', is_primitive=True)
-
-    _BY_TYPE = None
-
-    @classmethod
-    def get_by_type(cls, t):
-        if cls._BY_TYPE is None:
-            cls._BY_TYPE = {}
-            for k, v in cls.__dict__.items():
-                if not isinstance(v, JavaRef): continue
-                cls._BY_TYPE[v.type] = v
-
-        return cls._BY_TYPE.get(t)
-
-
-class JavaList(JavaRef):
-    def __init__(self, listref):
-        super(JavaList, self).__init__(Type.LIST, 'java.lang.List')
-        self.element = ref(listref.element)
-
-    def __str__(self):
-        return 'java.lang.List<%s>' % self.element.boxed
-
-
-class JavaSet(JavaRef):
-    def __init__(self, setref):
-        super(JavaSet, self).__init__(Type.SET, 'java.lang.Set')
-        self.element = ref(setref.element)
-
-    def __str__(self):
-        return 'java.lang.Set<%s>' % self.element.boxed
-
-
-class JavaMap(JavaRef):
-    def __init__(self, mapref):
-        super(JavaMap, self).__init__(Type.MAP, 'java.lang.Map')
-        self.key = ref(mapref.key)
-        self.value = ref(mapref.value)
-
-    def __str__(self):
-        return 'java.lang.Map<%s, %s>' % (self.key.boxed, self.value.boxed)
-
-
-class JavaEnumValue(JavaRef):
-    def __init__(self, value):
-        super(JavaEnumValue, self).__init__(Type.ENUM_VALUE, value.name)
-        self.enum = ref(value.enum)
-
-    def __str__(self):
-        return '%s.%s' % (self.enum, self.name)
-
-
-class JavaObject(JavaRef):
-    def __init__(self, obj):
-        super(JavaObject, self).__init__(Type.DEFINITION, obj.name)
-        self.name = '%s.%s' % (obj.module.name, obj.name)
-
-
-def ref(obj):
-    t = obj.type
-    if JavaTypes.get_by_type(t): return JavaTypes.get_by_type(t)
-    elif t == Type.LIST: return JavaList(obj)
-    elif t == Type.SET: return JavaSet(obj)
-    elif t == Type.MAP: return JavaMap(obj)
-    elif t == Type.ENUM_VALUE: return JavaEnumValue(obj)
-    return JavaObject(obj)
+NATIVE_MAP = {
+    Type.BOOL: JavaType(Type.BOOL, 'boolean', 'Boolean', default='false', is_primitive=True),
+    Type.INT16: JavaType(Type.INT16, 'short', 'Short', default='(short) 0', is_primitive=True),
+    Type.INT32: JavaType(Type.INT32, 'int', 'Integer', default='0', is_primitive=True),
+    Type.INT64: JavaType(Type.INT64, 'long', 'Long', default='0L', is_primitive=True),
+    Type.FLOAT: JavaType(Type.FLOAT, 'float', 'Float', default='0f', is_primitive=True),
+    Type.DOUBLE: JavaType(Type.DOUBLE, 'double', 'Double', default='0.0', is_primitive=True),
+    Type.STRING: JavaType(Type.STRING, 'String'),
+    Type.OBJECT: JavaType(Type.OBJECT, 'Object'),
+    Type.VOID: JavaType(Type.VOID, 'void', 'Void', is_primitive=True)
+}

@@ -17,7 +17,7 @@ class TestJavaEnum(unittest.TestCase):
 
 
 class TestInterface(unittest.TestCase):
-    def test(self):
+    def setUp(self):
         base0 = Interface('Base0')
         base1 = Interface('Base1')
 
@@ -31,6 +31,9 @@ class TestInterface(unittest.TestCase):
         iface.add_method('abc', Values.STRING, ('a', Values.STRING), ('b', Values.STRING),
                          ('c', Values.STRING))
 
+        iface.add_method('base0', base0)
+        iface.add_method('base1', base1)
+
         module0 = Module('test.module0')
         module0.add_definitions(base0, base1)
 
@@ -38,9 +41,15 @@ class TestInterface(unittest.TestCase):
         module1.add_definition(iface)
 
         translator = JavaTranslator('/dev/null')
-        jiface = JavaInterface(iface, translator.interface_template)
-        print jiface.code
-        assert jiface.code
+        self.jiface = JavaInterface(iface, translator.interface_template)
+
+    def test(self):
+        assert self.jiface.code
+        print self.jiface.code
+
+    def test_async(self):
+        assert self.jiface.async_code
+        print self.jiface.async_code
 
 
 class TestMessage(unittest.TestCase):

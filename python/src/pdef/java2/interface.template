@@ -1,27 +1,59 @@
 package {{ package }};
 import com.google.common.util.concurrent.ListenableFuture;
 
-{% if not bases %}
-public interface {{ name }} extends io.pdef.Interface {
-{% else %}
-public interface {{ name }} extends {% for base in bases -%}
-        {{ base }}{% if loop.last %} {{'{'}}{% elif loop.length > 1%}, {% endif %}
-{%- endfor %}
+{% macro iface_name(name) -%}
+    {%- if async -%}
+        {{ async_name }}
+    {%- else -%}
+        {{ name }}
+    {%- endif -%}
+{%- endmacro -%}
 
-{% endif %}
+{% macro method_result(ref) -%}
+    {%- if async -%}
+        {%- if ref.is_interface -%}
+            {{ ref.async_name }}
+        {%- else -%}
+            ListenableFuture<{{ ref }}>
+        {%- endif -%}
+    {%- else -%}
+        {{ ref }}
+    {%- endif -%}
+{%- endmacro -%}
+
+{% macro iface_base(base) -%}
+    {%- if async -%}
+        {{ base.async_name }}
+    {%- else -%}
+        {{ base }}
+    {%- endif -%}
+{%- endmacro -%}
+
+{% if not bases %}
+public interface {{ iface_name(name) }} extends io.pdef.Interface {
+{% else %}
+public interface {{ iface_name(name) }} extends {% for base in bases -%}
+        {{ iface_base(base) }}
+        {%- if loop.length > 1 and not loop.last %}, {% endif %}
+{%- endfor %} {
+
+{% endif -%}
 
 {% for method in declared_methods %}
 {% if method.args|length < 3 %}
-    {{ method.result }} {{ method.name }}({% for arg, argtype in method.args -%}
-                @io.pdef.Name("{{ arg }}") {{ argtype }} {{ arg }}{% if not loop.last and loop.length > 1 %}, {% endif %}
+    {{ method_result(method.result) }} {{ method.name }}({% for arg, argtype in method.args -%}
+                @io.pdef.Name("{{ arg }}") {{ argtype }} {{ arg }}
+                {%- if loop.length > 1 and not loop.last %}, {% endif %}
         {%- endfor %});
 
 {% else %}
-    {{ method.result }} {{ method.name }}(
+    {{ method_result(method.result) }} {{ method.name }}(
 {% for arg, argtype in method.args %}
-            @io.pdef.Name("{{ arg }}") {{ argtype }} {{ arg }}{% if loop.last %}); {% elif loop.length > 1 %}, {% endif %}
+            @io.pdef.Name("{{ arg }}") {{ argtype }} {{ arg }}
+            {%- if loop.last %}); {% elif loop.length > 1 %}, {% endif %}
 
 {% endfor %}
+
 {% endif %}
 {% endfor %}
 }

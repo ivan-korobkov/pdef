@@ -6,8 +6,9 @@ from pdef.common import Type, upper_first, mkdir_p
 
 
 class JavaTranslator(object):
-    def __init__(self, out):
+    def __init__(self, out, async=True):
         self.out = out
+        self.async = async
 
         self.env = Environment(trim_blocks=True)
         self.enum_template = self.read_template('enum.template')
@@ -17,13 +18,17 @@ class JavaTranslator(object):
     def write_definition(self, def0):
         '''Writes a java definition to the output directory.'''
         jdef = self.definition(def0)
-        code = jdef.code
+        self._write_file(jdef.package, jdef.name, jdef.code)
 
-        dirs = jdef.package.split('.')
+        if self.async and jdef.type == Type.INTERFACE:
+            self._write_file(jdef.package, jdef.async_name, jdef.async_code)
+
+    def _write_file(self, package_name, def_name, code):
+        dirs = package_name.split('.')
         fulldir = os.path.join(self.out, os.path.join(*dirs))
-        fullpath = os.path.join(fulldir, jdef.name, '.java')
-
         mkdir_p(fulldir)
+
+        fullpath = os.path.join(fulldir, def_name, '.java')
         with open(fullpath, 'wt') as f:
             f.write(code)
 
@@ -95,6 +100,16 @@ class JavaInterface(JavaDefinition):
 
         self.bases = [ref(base) for base in iface.bases]
         self.declared_methods = [JavaMethod(method) for method in iface.declared_methods.values()]
+        self.async = False
+        self.async_name = 'Async%s' % self.name
+
+    @property
+    def async_code(self):
+        try:
+            self.async = True
+            return self.code
+        finally:
+            self.async = False
 
 
 class JavaMethod(object):
@@ -102,8 +117,6 @@ class JavaMethod(object):
         self.name = method.name
         self.args = list((arg.name, ref(arg.type)) for arg in method.args.values())
         self.result = ref(method.result)
-        if not self.result.is_interface:
-            self.result = 'ListenableFuture<%s>' % self.result.boxed
 
 
 def ref(obj):
@@ -126,19 +139,24 @@ def ref(obj):
             name='%s.%s' % (obj.enum, obj.name))
 
     name = '%s.%s' % (obj.module.name, obj.name) if obj.module else obj.name
+    async_name = name
+    if t == Type.INTERFACE:
+        async_name = '%s.Async%s' % (obj.module.name, obj.name) \
+            if obj.module else 'Async%s' % obj.name
+
     default = '%s.getInstance()' % name if t == Type.MESSAGE else 'null'
-    return JavaType(t, name, default=default)
+    return JavaType(t, name, default=default, async_name=async_name)
 
 
 class JavaType(object):
-    def __init__(self, type, name, boxed=None, default='null', is_primitive=False):
+    def __init__(self, type, name, boxed=None, default='null', is_primitive=False, async_name=None):
         self.type = type
         self.name = name
         self.boxed = boxed if boxed else self
         self.default = default
+        self.async_name = async_name
 
         self.is_primitive = is_primitive
-        self.is_nullable = True
         self.is_nullable = default == 'null'
 
         self.is_interface = type == Type.INTERFACE

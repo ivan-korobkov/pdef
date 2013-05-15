@@ -154,7 +154,7 @@ class GrammarRules(object):
                   | OBJECT
                   | VOID
         '''
-        t[0] = t[1].lower()
+        t[0] = ast.Ref(t[1].lower())
 
     def p_list_ref(self, t):
         '''
@@ -260,7 +260,7 @@ class GrammarRules(object):
         '''
         name = t[2]
         bases = t[3]
-        methods = t[4]
+        methods = t[5]
         t[0] = ast.Interface(name, bases=bases, methods=methods)
 
     def p_interface_bases(self, t):

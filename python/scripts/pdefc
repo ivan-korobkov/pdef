@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 #encoding: utf-8
+import logging
+from pdef.common import PdefException
 from pdef.compiler import Compiler
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
+
     compiler = Compiler()
-    compiler.package()
+    try:
+        compiler.package()
+    except PdefException, e:
+        logging.error("%s", e)

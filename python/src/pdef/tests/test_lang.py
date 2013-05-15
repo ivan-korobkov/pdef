@@ -59,29 +59,29 @@ class TestModule(unittest.TestCase):
         '''Should lookup a value by its ref.'''
         module = Module('test')
         int64 = module.lookup(ast.Ref(Type.INT64))
-        assert int64 is Values.INT64
+        assert int64 is Types.INT64
 
     def test_lookup_list(self):
         '''Should create and link a list by its ref.'''
         module = Module('test')
         list0 = module.lookup(ast.ListRef(ast.Ref(Type.STRING)))
         assert isinstance(list0, List)
-        assert list0.element is Values.STRING
+        assert list0.element is Types.STRING
 
     def test_lookup_set(self):
         '''Should create and link a set by its ref.'''
         module = Module('test')
         set0 = module.lookup(ast.SetRef(ast.Ref(Type.FLOAT)))
         assert isinstance(set0, Set)
-        assert set0.element is Values.FLOAT
+        assert set0.element is Types.FLOAT
 
     def test_lookup_map(self):
         '''Should create and link a map by its ref.'''
         module = Module('test')
         map0 = module.lookup(ast.MapRef(ast.Ref(Type.STRING), ast.Ref(Type.INT32)))
         assert isinstance(map0, Map)
-        assert map0.key is Values.STRING
-        assert map0.value is Values.INT32
+        assert map0.key is Types.STRING
+        assert map0.value is Types.INT32
 
     def test_lookup_enum_value(self):
         '''Should look up an enum value.'''
@@ -225,7 +225,7 @@ class TestMessage(unittest.TestCase):
         assert msg.base_type is enum.values['ONE']
         field = msg.declared_fields['field']
         assert field.name == 'field'
-        assert field.type is Values.INT32
+        assert field.type is Types.INT32
 
     def test_set_base(self):
         '''Should set a message base.'''
@@ -326,11 +326,11 @@ class TestMessage(unittest.TestCase):
         type_field = base.add_field('type', enum, is_discriminator=True)
         msg0 = Message('Msg0')
         msg0.set_base(base, type0)
-        field0 = msg0.add_field('field0', Values.INT32)
+        field0 = msg0.add_field('field0', Types.INT32)
 
         msg1 = Message('Msg1')
         msg1.set_base(msg0, type1)
-        field1 = msg1.add_field('field1', Values.STRING)
+        field1 = msg1.add_field('field1', Types.STRING)
 
         assert msg1.fields == {'type': type_field, 'field0': field0, 'field1': field1}
         assert msg1.inherited_fields == {'type': type_field, 'field0': field0}
@@ -339,17 +339,17 @@ class TestMessage(unittest.TestCase):
 
     def test_add_field(self):
         msg = Message('Msg')
-        msg.add_field('field', Values.INT32)
+        msg.add_field('field', Types.INT32)
 
         field = msg.declared_fields['field']
         assert field.name == 'field'
-        assert field.type == Values.INT32
+        assert field.type == Types.INT32
 
     def test_add_field_duplicate(self):
         msg = Message('Msg')
-        msg.add_field('field', Values.INT32)
+        msg.add_field('field', Types.INT32)
         try:
-            msg.add_field('field', Values.INT32)
+            msg.add_field('field', Types.INT32)
         except PdefException, e:
             assert 'duplicate' in e.message
 
@@ -365,7 +365,7 @@ class TestMessage(unittest.TestCase):
 class TestField(unittest.TestCase):
     def test_fullname(self):
         message = Message('Message')
-        field = message.add_field('field', Values.STRING)
+        field = message.add_field('field', Types.STRING)
 
         module = Module('test')
         module.add_definition(message)
@@ -400,11 +400,11 @@ class TestInterface(unittest.TestCase):
 
         method = iface.declared_methods['echo']
         assert method.name == 'echo'
-        assert method.result is Values.STRING
+        assert method.result is Types.STRING
 
         arg = method.args['text']
         assert arg.name == 'text'
-        assert arg.type is Values.STRING
+        assert arg.type is Types.STRING
 
     def test_add_base(self):
         '''Should add a base to an interface.'''
@@ -469,18 +469,18 @@ class TestInterface(unittest.TestCase):
     def test_add_method(self):
         '''Should add a new method to this interface.'''
         iface = Interface('Calc')
-        method = iface.add_method('sum', Values.INT32, ('i0', Values.INT32), ('i1', Values.INT32))
+        method = iface.add_method('sum', Types.INT32, ('i0', Types.INT32), ('i1', Types.INT32))
 
         assert 'sum' in iface.declared_methods
         assert method.name == 'sum'
-        assert method.result is Values.INT32
+        assert method.result is Types.INT32
 
         i0 = method.args['i0']
         i1 = method.args['i1']
         assert i0.name == 'i0'
         assert i1.name == 'i1'
-        assert i0.type is Values.INT32
-        assert i1.type is Values.INT32
+        assert i0.type is Types.INT32
+        assert i1.type is Types.INT32
 
     def test_add_method_duplicate(self):
         '''Should prevent duplicate methods in interfaces.'''
@@ -496,7 +496,7 @@ class TestInterface(unittest.TestCase):
 class TestMethod(unittest.TestCase):
     def test_fullname(self):
         iface = Interface('Interface')
-        method = iface.add_method('method', Values.INT32, ('i0', Values.INT32), ('i1', Values.INT32))
+        method = iface.add_method('method', Types.INT32, ('i0', Types.INT32), ('i1', Types.INT32))
 
         module = Module('test')
         module.add_definition(iface)

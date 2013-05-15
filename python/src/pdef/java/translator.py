@@ -15,6 +15,9 @@ class JavaTranslator(object):
         self.message_template = self.read_template('message.template')
         self.interface_template = self.read_template('interface.template')
 
+    def __str__(self):
+        return 'JavaTranslator'
+
     def write_definition(self, def0):
         '''Writes a java definition to the output directory.'''
         jdef = self.definition(def0)
@@ -28,7 +31,7 @@ class JavaTranslator(object):
         fulldir = os.path.join(self.out, os.path.join(*dirs))
         mkdir_p(fulldir)
 
-        fullpath = os.path.join(fulldir, def_name, '.java')
+        fullpath = os.path.join(fulldir, '%s.java' % def_name)
         with open(fullpath, 'wt') as f:
             f.write(code)
 
@@ -37,9 +40,9 @@ class JavaTranslator(object):
     def definition(self, def0):
         '''Creates and returns a java definition.'''
         t = def0.type
-        if t == Type.ENUM: JavaEnum(def0, self.enum_template)
-        elif t == Type.MESSAGE: JavaMessage(def0, self.message_template)
-        elif t == Type.INTERFACE: JavaInterface(def0, self.interface_template)
+        if t == Type.ENUM: return JavaEnum(def0, self.enum_template)
+        elif t == Type.MESSAGE: return JavaMessage(def0, self.message_template)
+        elif t == Type.INTERFACE: return JavaInterface(def0, self.interface_template)
         raise ValueError('Unsupported definition %s' % def0)
 
     def read_template(self, name):
@@ -52,6 +55,7 @@ class JavaTranslator(object):
 class JavaDefinition(object):
     def __init__(self, obj, template):
         self.name = obj.name
+        self.type = obj.type
         self.package = obj.module.name
         self._template = template
 

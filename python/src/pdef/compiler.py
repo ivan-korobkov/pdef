@@ -2,18 +2,32 @@
 import json
 from pdef.java.translator import JavaTranslator
 from pdef.lang import Pdef
+from pdef.parser import Parser
 
 
 class Compiler(object):
     def __init__(self):
         self.pdef = Pdef()
-        self._paths = []
-        self._deps = []
+        self.parser = Parser()
+        self.paths = []
+        self.deps = []
 
         self._defs = None
 
     @property
     def defs(self):
+        for path in self.deps:
+            file_node = self.parser.parse_file(path)
+            self.pdef.add_file_node(file_node)
+
+        defs = []
+        for path in self.paths:
+            file_node = self.parser.parse_file(path)
+            module, file_defs = self.pdef.add_file_node(file_node)
+            defs += file_defs
+
+        self._defs = tuple(defs)
+        self.pdef.link()
         return self._defs
 
     def package(self):
@@ -22,21 +36,23 @@ class Compiler(object):
             text = f.read()
 
         info = json.loads(text)
-        self.path(*info['path'])
+        self.add_paths(*info['path'])
         del info['path']
 
         if 'deps' in info:
-            self.deps(*info['deps'])
+            self.add_deps(*info['deps'])
             del info['deps']
 
         for key, value in info.items():
             getattr(self, key)(**value)
 
-    def deps(self, *deps):
-        self._deps += deps
+    def add_deps(self, *deps):
+        '''Add dependency paths.'''
+        self.deps += deps
 
-    def path(self, *path):
-        self._paths += path
+    def add_paths(self, *paths):
+        '''Add definition paths.'''
+        self.paths += paths
 
     def java(self, out, async=True):
         translator = JavaTranslator(out, async)

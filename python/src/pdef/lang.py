@@ -1,4 +1,5 @@
 # encoding: utf-8
+import logging
 from collections import OrderedDict
 from pdef import ast
 from pdef.common import Type, PdefException
@@ -6,23 +7,44 @@ from pdef.preconditions import *
 
 
 class Pdef(object):
+    '''Protocol definition.'''
     def __init__(self):
         self.modules = SymbolTable()
+
+    def __str__(self):
+        return 'Pdef'
 
     def add_module(self, module):
         '''Adds a new module to Pdef.'''
         check_argument(module.pdef is None, '%s is already added to another pdef instance', module)
         module.pdef = self
         self.modules.add(module)
+        logging.info('%s: added a module "%s"', self, module)
+
+    def add_file_node(self, file_node):
+        '''Adds a new file AST node, returns a tuple (module, added_definitions).'''
+        module = Module.from_ast(file_node)
+        self.add_module(module)
+
+        return module, tuple(module.definitions.values())
+
+    def link(self):
+        for module in self.modules.values():
+            module.link_imports()
+
+        for module in self.modules.values():
+            module.link_definitions()
+        logging.info('%s: linked', self)
 
     def get_module(self, name):
         '''Returns a module by its name, or raises and exception.'''
         module = self.modules.get(name)
-        if not module: raise PdefException('%s: module %r is not found', self, name)
+        if not module: raise PdefException('%s: module %r is not found' % (self, name))
         return module
 
 
 class Module(object):
+    '''Module in a protocol definition.'''
     @classmethod
     def from_ast(cls, node):
         '''Creates a new module from an AST node.'''
@@ -69,6 +91,8 @@ class Module(object):
                     raise PdefException('%s: import %r is not found in %s' % (self, name, module))
                 self.add_import(def0)
 
+        logging.info('%s: linked imports', self)
+
     def link_definitions(self):
         '''Links this module definitions, must be called after link_imports().'''
         if self._defs_linked: return
@@ -76,6 +100,8 @@ class Module(object):
 
         for definition in self.definitions.values():
             definition.link()
+
+        logging.info('%s: linked definitions', self)
 
     def add_import(self, definition):
         '''Adds an imported definition to this module.'''
@@ -91,6 +117,7 @@ class Module(object):
 
         definition.module = self
         self.definitions.add(definition)
+        logging.info('%s: added a definition "%s"', self, definition)
 
     def add_definitions(self, *definitions):
         '''Adds all definitions to this module.'''
@@ -109,14 +136,14 @@ class Module(object):
         elif isinstance(ref_or_def, ast.Ref):
             def0 = self._lookup_ref(ref_or_def)
         else:
-            raise PdefException('%s: unsupported lookup reference or definition %s' %
+            raise PdefException('%s: unsupported lookup reference or definition %r' %
                                 (self, ref_or_def))
 
         def0.link()
         return def0
 
     def _lookup_ref(self, ref):
-        def0 = Values.get_by_type(ref.type)
+        def0 = Types.get_by_type(ref.type)
         if def0: return def0 # It's a simple value.
 
         t = ref.type
@@ -138,6 +165,7 @@ class Module(object):
 
 
 class Definition(object):
+    '''Base definition.'''
     @classmethod
     def from_ast_polymorphic(cls, node):
         '''Creates a new definition from an AST node, supports enums, messages and interfaces.'''
@@ -179,29 +207,29 @@ class Definition(object):
         pass
 
 
-class Value(Definition):
-    '''Value definition.'''
+class NativeType(Definition):
+    '''Native type definition, i.e. it defines a native language type such as string, int, etc.'''
     def __init__(self, type):
-        super(Value, self).__init__(type, type)
+        super(NativeType, self).__init__(type, type)
         self.type = type
 
 
-class Values(object):
-    '''Value definition singletons.'''
-    BOOL = Value(Type.BOOL)
-    INT16 = Value(Type.INT16)
-    INT32 = Value(Type.INT32)
-    INT64 = Value(Type.INT64)
-    FLOAT = Value(Type.FLOAT)
-    DOUBLE = Value(Type.DOUBLE)
-    DECIMAL = Value(Type.DECIMAL)
-    DATE = Value(Type.DATE)
-    DATETIME = Value(Type.DATETIME)
-    STRING = Value(Type.STRING)
-    UUID = Value(Type.UUID)
+class Types(object):
+    '''Native types.'''
+    BOOL = NativeType(Type.BOOL)
+    INT16 = NativeType(Type.INT16)
+    INT32 = NativeType(Type.INT32)
+    INT64 = NativeType(Type.INT64)
+    FLOAT = NativeType(Type.FLOAT)
+    DOUBLE = NativeType(Type.DOUBLE)
+    DECIMAL = NativeType(Type.DECIMAL)
+    DATE = NativeType(Type.DATE)
+    DATETIME = NativeType(Type.DATETIME)
+    STRING = NativeType(Type.STRING)
+    UUID = NativeType(Type.UUID)
 
-    OBJECT = Value(Type.OBJECT)
-    VOID = Value(Type.VOID)
+    OBJECT = NativeType(Type.OBJECT)
+    VOID = NativeType(Type.VOID)
 
     _BY_TYPE = None
 
@@ -211,13 +239,14 @@ class Values(object):
         if cls._BY_TYPE is None:
             cls._BY_TYPE = {}
             for k, v in cls.__dict__.items():
-                if not isinstance(v, Value): continue
+                if not isinstance(v, NativeType): continue
                 cls._BY_TYPE[v.type] = v
 
         return cls._BY_TYPE.get(t)
 
 
 class List(Definition):
+    '''List definition.'''
     def __init__(self, element, module=None):
         super(List, self).__init__(Type.LIST, 'List')
         self.element = element
@@ -228,6 +257,7 @@ class List(Definition):
 
 
 class Set(Definition):
+    '''Set definition.'''
     def __init__(self, element, module=None):
         super(Set, self).__init__(Type.SET, 'Set')
         self.element = element
@@ -238,6 +268,7 @@ class Set(Definition):
 
 
 class Map(Definition):
+    '''Map definition.'''
     def __init__(self, key, value, module=None):
         super(Map, self).__init__(Type.MAP, 'Map')
         self.key = key
@@ -250,6 +281,7 @@ class Map(Definition):
 
 
 class Enum(Definition):
+    '''Enum definition.'''
     @classmethod
     def from_ast(cls, node):
         check_isinstance(node, ast.Enum)
@@ -329,6 +361,8 @@ class Message(Definition):
             self.inherited_fields.add(field)
             self.fields.add(field)
 
+        logging.info('%s: set base to "%s"', self, base)
+
     def _add_subtype(self, subtype):
         '''Adds a new subtype to this message, checks its base_type.'''
         check_isinstance(subtype, Message)
@@ -354,6 +388,8 @@ class Message(Definition):
             check_state(not self.subtypes,
                         '%s: discriminator field must be set before adding subtypes', self)
             self._discriminator_field = field
+
+        logging.info('%s: added a field "%s"', self, field)
         return field
 
     def _link(self):
@@ -373,6 +409,8 @@ class Message(Definition):
             fname = field_node.name
             ftype = module.lookup(field_node.type)
             self.add_field(fname, ftype, field_node.is_discriminator)
+
+        logging.info('%s: linked', self)
 
     @property
     def _bases(self):
@@ -405,6 +443,7 @@ class Field(object):
 
 
 class Interface(Definition):
+    '''User-defined interface.'''
     @classmethod
     def from_ast(cls, node):
         '''Creates a new interface from an AST node.'''
@@ -435,11 +474,14 @@ class Interface(Definition):
             self.inherited_methods.add(method)
             self.methods.add(method)
 
-    def add_method(self, name, result=Values.VOID, *args_tuples):
+        logging.info('%s: added a base "%s"', self, base)
+
+    def add_method(self, name, result=Types.VOID, *args_tuples):
         '''Adds a new method to this interface and returns the method.'''
         method = Method(self, name, result, args_tuples)
         self.declared_methods.add(method)
         self.methods.add(method)
+        logging.info('%s: added a method "%s"', self, method)
         return method
 
     def _link(self):
@@ -465,6 +507,8 @@ class Interface(Definition):
 
             self.add_method(method_name, result, *args)
 
+        logging.info("%s: linked", self)
+
     @property
     def _all_bases(self):
         '''Internal, returns all bases including the ones from the inherited interfaces.'''
@@ -476,6 +520,7 @@ class Interface(Definition):
 
 
 class Method(object):
+    '''Interface method.'''
     def __init__(self, interface, name, result, args_tuples=None):
         self.interface = interface
         self.name = name
@@ -486,16 +531,16 @@ class Method(object):
 
         check_isinstance(result, Definition)
 
-    def __repr__(self):
-        return '%s%s=>%s' % (self.name, self.args, self.result)
+    def __str__(self):
+        return '%s(%s)=>%s' % (self.name, ', '.join(str(a) for a in self.args.values()), self.result)
 
     @property
     def fullname(self):
-        return '%s.%s(%s)=>%s' % (self.interface.fullname, self.name,
-                                  ', '.join(str(a) for a in self.args.values()), self.result)
+        return '%s.%s' % (self.interface.fullname, self)
 
 
 class MethodArg(object):
+    '''Single method argument.'''
     def __init__(self, name, definition):
         self.name = name
         self.type = definition

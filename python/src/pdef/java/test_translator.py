@@ -25,10 +25,10 @@ class TestInterface(unittest.TestCase):
         iface.add_base(base1)
         iface.add_method('ping')
         iface.add_method('pong')
-        iface.add_method('echo', Values.STRING, ('text', Values.STRING))
-        iface.add_method('sum', Values.INT32, ('z', Values.INT32), ('a', Values.INT32))
-        iface.add_method('abc', Values.STRING, ('a', Values.STRING), ('b', Values.STRING),
-                         ('c', Values.STRING))
+        iface.add_method('echo', Types.STRING, ('text', Types.STRING))
+        iface.add_method('sum', Types.INT32, ('z', Types.INT32), ('a', Types.INT32))
+        iface.add_method('abc', Types.STRING, ('a', Types.STRING), ('b', Types.STRING),
+                         ('c', Types.STRING))
 
         iface.add_method('base0', base0)
         iface.add_method('base1', base1)
@@ -54,14 +54,14 @@ class TestMessage(unittest.TestCase):
         enum = Enum('Type', 'MSG')
         base = Message('Base')
         base.add_field('type', enum, is_discriminator=True)
-        base.add_field('field0', Values.BOOL)
-        base.add_field('field1', Values.INT16)
+        base.add_field('field0', Types.BOOL)
+        base.add_field('field1', Types.INT16)
         msg0 = Message('Message0')
 
         msg = Message('Message')
         msg.set_base(base, enum.values['MSG'])
-        msg.add_field('field2', Values.INT32)
-        msg.add_field('field3', Values.STRING)
+        msg.add_field('field2', Types.INT32)
+        msg.add_field('field3', Types.STRING)
         msg.add_field('field4', msg0)
         msg.add_field('field5', base)
         msg.add_field('field6', List(msg))
@@ -81,25 +81,25 @@ class TestMessage(unittest.TestCase):
 
 class TestRef(unittest.TestCase):
     def test_list(self):
-        obj = List(Values.INT32)
+        obj = List(Types.INT32)
         jobj = ref(obj)
         assert str(jobj) == 'java.lang.List<Integer>'
         assert jobj.is_list
 
     def test_set(self):
-        obj = Set(Values.BOOL)
+        obj = Set(Types.BOOL)
         jobj = ref(obj)
         assert str(jobj) == 'java.lang.Set<Boolean>'
         assert jobj.is_set
 
     def test_map(self):
-        obj = Map(Values.STRING, Values.FLOAT)
+        obj = Map(Types.STRING, Types.FLOAT)
         jobj = ref(obj)
         assert str(jobj) == 'java.lang.Map<String, Float>'
         assert jobj.is_map
 
     def test_native(self):
-        jobj = ref(Values.INT64)
+        jobj = ref(Types.INT64)
         assert jobj.name == 'long'
         assert jobj.boxed == 'Long'
         assert jobj.default == '0L'

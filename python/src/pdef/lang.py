@@ -320,7 +320,7 @@ class Message(Definition):
     def from_ast(cls, node):
         '''Creates a new unlinked message from an AST node.'''
         check_isinstance(node, ast.Message)
-        msg = Message(node.name)
+        msg = Message(node.name, is_exception=node.is_exception)
         msg._node = node
         return msg
 

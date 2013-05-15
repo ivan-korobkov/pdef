@@ -74,7 +74,8 @@ class JavaMessage(JavaDefinition):
     def __init__(self, msg, template):
         super(JavaMessage, self).__init__(msg, template)
 
-        self.base = ref(msg.base) if msg.base else 'io.pdef.GeneratedMessage'
+        self.base = ref(msg.base) if msg.base else \
+                'io.pdef.GeneratedException' if msg.is_exception else 'io.pdef.GeneratedMessage'
         self.base_type = ref(msg.base_type) if msg.base_type else None
         self.base_builder = '%s.Builder' % self.base
         self.discriminator_field = JavaField(msg.discriminator_field) \

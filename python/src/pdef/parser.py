@@ -274,10 +274,10 @@ class GrammarRules(object):
     # Single message field
     def p_field(self, t):
         '''
-        field : IDENTIFIER ref DISCRIMINATOR SEMI
+        field : IDENTIFIER ref COMMA DISCRIMINATOR SEMI
               | IDENTIFIER ref SEMI
         '''
-        t[0] = ast.Field(t[1], type=t[2], is_discriminator=len(t) == 5)
+        t[0] = ast.Field(t[1], type=t[2], is_discriminator=len(t) == 6)
 
     # Interface definition
     def p_interface(self, t):

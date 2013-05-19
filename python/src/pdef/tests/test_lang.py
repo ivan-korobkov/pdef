@@ -316,6 +316,27 @@ class TestMessage(unittest.TestCase):
         assert msg0.subtypes == {type1 : msg1}
         assert base.subtypes == {type0: msg0, type1: msg1}
 
+    def test_set_base_multiple_tree_discriminators(self):
+        '''Should set a message base when another discriminator is present.'''
+        enum0 = Enum('Type0')
+        enum1 = Enum('Type1')
+
+        sub0 = enum0.add_value('SUB0')
+        sub1 = enum1.add_value('SUB1')
+
+        msg0 = Message('Msg0')
+        msg0.add_field('type0', enum0, is_discriminator=True)
+
+        msg1 = Message('Msg1')
+        msg1.add_field('type1', enum1, is_discriminator=True)
+        msg1.set_base(msg0, sub0)
+
+        msg2 = Message('Msg2')
+        msg2.set_base(msg1, sub1)
+        assert msg2.discriminator_field is msg1.discriminator_field
+        assert msg1.subtypes == {sub1: msg2}
+        assert msg0.subtypes == {sub0: msg1}
+
     def test_set_base_inherit_fields(self):
         '''Should set a message base and inherit its fields.'''
         enum = Enum('Type')
@@ -325,12 +346,12 @@ class TestMessage(unittest.TestCase):
         base = Message('Base')
         type_field = base.add_field('type', enum, is_discriminator=True)
         msg0 = Message('Msg0')
-        msg0.set_base(base, type0)
         field0 = msg0.add_field('field0', Types.INT32)
+        msg0.set_base(base, type0)
 
         msg1 = Message('Msg1')
-        msg1.set_base(msg0, type1)
         field1 = msg1.add_field('field1', Types.STRING)
+        msg1.set_base(msg0, type1)
 
         assert msg1.fields == {'type': type_field, 'field0': field0, 'field1': field1}
         assert msg1.inherited_fields == {'type': type_field, 'field0': field0}
@@ -338,6 +359,7 @@ class TestMessage(unittest.TestCase):
         assert msg0.inherited_fields == {'type': type_field}
 
     def test_add_field(self):
+        '''Should add a new field to a message.'''
         msg = Message('Msg')
         msg.add_field('field', Types.INT32)
 
@@ -346,6 +368,7 @@ class TestMessage(unittest.TestCase):
         assert field.type == Types.INT32
 
     def test_add_field_duplicate(self):
+        '''Should prevent duplicate message fields.'''
         msg = Message('Msg')
         msg.add_field('field', Types.INT32)
         try:
@@ -354,12 +377,24 @@ class TestMessage(unittest.TestCase):
             assert 'duplicate' in e.message
 
     def test_add_field_set_discriminator(self):
+        '''Should set a message discriminator when a field is a discriminator.'''
         enum = Enum('Type')
         msg = Message('Msg')
 
         field = msg.add_field('type', enum, is_discriminator=True)
         assert field.is_discriminator
         assert msg.discriminator_field is field
+
+    def test_add_field_duplicate_discriminator(self):
+        '''Should prevent multiple discriminators in a message'''
+        enum = Enum('Type')
+        msg = Message('Msg')
+        msg.add_field('type0', enum, is_discriminator=True)
+        try:
+            msg.add_field('type1', enum, is_discriminator=True)
+            self.fail()
+        except PdefException, e:
+            assert 'duplicate discriminator' in e.message
 
 
 class TestField(unittest.TestCase):

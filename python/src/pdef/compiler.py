@@ -1,8 +1,9 @@
 # encoding: utf-8
 import json
-from pdef.java.translator import JavaTranslator
 from pdef.lang import Pdef
 from pdef.parser import Parser
+from pdef.java import JavaTranslator
+from pdef.csharp import CsharpTranslator
 
 
 class Compiler(object):
@@ -16,6 +17,8 @@ class Compiler(object):
 
     @property
     def defs(self):
+        if self._defs: return self._defs
+
         for path in self.deps:
             file_node = self.parser.parse_file(path)
             self.pdef.add_file_node(file_node)
@@ -58,3 +61,7 @@ class Compiler(object):
         translator = JavaTranslator(out, async)
         for def0 in self.defs:
             translator.write_definition(def0)
+
+    def csharp(self, out):
+        translator = CsharpTranslator(out)
+        translator.write_definitions(self.defs)

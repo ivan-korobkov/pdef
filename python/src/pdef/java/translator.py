@@ -19,7 +19,7 @@ class JavaTranslator(object):
         return 'JavaTranslator'
 
     def write_definition(self, def0):
-        '''Writes a java definition to the output directory.'''
+        '''Writes a definition to the output directory.'''
         jdef = self.definition(def0)
         self._write_file(jdef.package, jdef.name, jdef.code)
 
@@ -125,6 +125,7 @@ class JavaMethod(object):
 
 
 def ref(obj):
+    '''Returns a java reference for a pdef type.'''
     t = obj.type
     if t in NATIVE_MAP: return NATIVE_MAP[t]
 

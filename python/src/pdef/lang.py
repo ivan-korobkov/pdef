@@ -9,7 +9,7 @@ from pdef.preconditions import *
 class Pdef(object):
     '''Protocol definition.'''
     def __init__(self):
-        self.modules = SymbolTable()
+        self.modules = SymbolTable(self, name='modules')
 
     def __str__(self):
         return 'Pdef'
@@ -19,7 +19,7 @@ class Pdef(object):
         check_argument(module.pdef is None, '%s is already added to another pdef instance', module)
         module.pdef = self
         self.modules.add(module)
-        logging.info('%s: added a module "%s"', self, module)
+        logging.debug('%s: added a module "%s"', self, module)
 
     def add_file_node(self, file_node):
         '''Adds a new file AST node, returns a tuple (module, added_definitions).'''
@@ -34,7 +34,7 @@ class Pdef(object):
 
         for module in self.modules.values():
             module.link_definitions()
-        logging.info('%s: linked', self)
+        logging.debug('%s: linked', self)
 
     def get_module(self, name):
         '''Returns a module by its name, or raises and exception.'''
@@ -59,8 +59,8 @@ class Module(object):
 
     def __init__(self, name):
         self.name = name
-        self.definitions = SymbolTable(self)
-        self.imported_definitions = SymbolTable(self)
+        self.definitions = SymbolTable(self, 'definitions')
+        self.imported_definitions = SymbolTable(self, 'imported_definitions')
         self.pdef = None
 
         self._node = None
@@ -91,7 +91,7 @@ class Module(object):
                     raise PdefException('%s: import %r is not found in %s' % (self, name, module))
                 self.add_import(def0)
 
-        logging.info('%s: linked imports', self)
+        logging.debug('%s: linked imports', self)
 
     def link_definitions(self):
         '''Links this module definitions, must be called after link_imports().'''
@@ -101,7 +101,7 @@ class Module(object):
         for definition in self.definitions.values():
             definition.link()
 
-        logging.info('%s: linked definitions', self)
+        logging.debug('%s: linked definitions', self)
 
     def add_import(self, definition):
         '''Adds an imported definition to this module.'''
@@ -117,7 +117,7 @@ class Module(object):
 
         definition.module = self
         self.definitions.add(definition)
-        logging.info('%s: added a definition "%s"', self, definition)
+        logging.debug('%s: added a definition "%s"', self, definition)
 
     def add_definitions(self, *definitions):
         '''Adds all definitions to this module.'''
@@ -289,7 +289,7 @@ class Enum(Definition):
 
     def __init__(self, name, *values):
         super(Enum, self).__init__(Type.ENUM, name)
-        self.values = SymbolTable(self)
+        self.values = SymbolTable(self, 'values')
         if values:
             self.add_values(*values)
 
@@ -333,9 +333,9 @@ class Message(Definition):
         self.subtypes = OrderedDict()
         self._discriminator_field = None
 
-        self.fields = SymbolTable(self)
-        self.declared_fields = SymbolTable(self)
-        self.inherited_fields = SymbolTable(self)
+        self.fields = SymbolTable(self, 'fields')
+        self.declared_fields = SymbolTable(self, 'declared_fields')
+        self.inherited_fields = SymbolTable(self, 'inherited_fields')
 
         self._node = None
 
@@ -361,7 +361,7 @@ class Message(Definition):
             self.inherited_fields.add(field)
             self.fields.add(field)
 
-        logging.info('%s: set base to "%s"', self, base)
+        logging.debug('%s: set base to "%s"', self, base)
 
     def _add_subtype(self, subtype):
         '''Adds a new subtype to this message, checks its base_type.'''
@@ -382,14 +382,15 @@ class Message(Definition):
         self.fields.add(field)
 
         if is_discriminator:
-            check_state(not self.discriminator_field, '%s: duplicate discriminator field', self)
-            check_argument(isinstance(field.type, Enum), '%s: discriminator field %s must be an enum',
-                           self, field)
+            check_state(not self._discriminator_field,
+                        '%s: duplicate discriminator field %s', self, field)
+            check_argument(isinstance(field.type, Enum),
+                           '%s: discriminator field %s must be an enum', self, field)
             check_state(not self.subtypes,
                         '%s: discriminator field must be set before adding subtypes', self)
             self._discriminator_field = field
 
-        logging.info('%s: added a field "%s"', self, field)
+        logging.debug('%s: added a field "%s"', self, field)
         return field
 
     def _link(self):
@@ -410,7 +411,7 @@ class Message(Definition):
             ftype = module.lookup(field_node.type)
             self.add_field(fname, ftype, field_node.is_discriminator)
 
-        logging.info('%s: linked', self)
+        logging.debug('%s: linked', self)
 
     @property
     def _bases(self):
@@ -456,9 +457,9 @@ class Interface(Definition):
         super(Interface, self).__init__(Type.INTERFACE, name)
 
         self.bases = []
-        self.methods = SymbolTable(self)
-        self.declared_methods = SymbolTable(self)
-        self.inherited_methods = SymbolTable(self)
+        self.methods = SymbolTable(self, 'methods')
+        self.declared_methods = SymbolTable(self, 'declared_methods')
+        self.inherited_methods = SymbolTable(self, 'inherited_methods')
 
         self._node = None
 
@@ -474,14 +475,14 @@ class Interface(Definition):
             self.inherited_methods.add(method)
             self.methods.add(method)
 
-        logging.info('%s: added a base "%s"', self, base)
+        logging.debug('%s: added a base "%s"', self, base)
 
     def add_method(self, name, result=Types.VOID, *args_tuples):
         '''Adds a new method to this interface and returns the method.'''
         method = Method(self, name, result, args_tuples)
         self.declared_methods.add(method)
         self.methods.add(method)
-        logging.info('%s: added a method "%s"', self, method)
+        logging.debug('%s: added a method "%s"', self, method)
         return method
 
     def _link(self):
@@ -507,7 +508,7 @@ class Interface(Definition):
 
             self.add_method(method_name, result, *args)
 
-        logging.info("%s: linked", self)
+        logging.debug("%s: linked", self)
 
     @property
     def _all_bases(self):
@@ -525,7 +526,7 @@ class Method(object):
         self.interface = interface
         self.name = name
         self.result = result
-        self.args = SymbolTable(self)
+        self.args = SymbolTable(self, 'args')
         for arg_name, arg_def in args_tuples:
             self.args.add(MethodArg(arg_name, arg_def))
 
@@ -553,14 +554,15 @@ class MethodArg(object):
 class SymbolTable(OrderedDict):
     '''SymbolTable is an ordered dict which supports adding items using item.name as a key,
     and prevents duplicate items.'''
-    def __init__(self, parent=None, *args, **kwds):
+    def __init__(self, parent=None, name='items', *args, **kwds):
         super(SymbolTable, self).__init__(*args, **kwds)
         self.parent = parent
+        self.name = name
 
     def add(self, item):
         '''Adds an item by with item.name as the key.'''
         self[item.name] = item
 
     def __setitem__(self, key, value):
-        check_state(key not in self, '%s: duplicate item %s', self, key)
+        check_state(key not in self, '%s.%s: duplicate %s', self.parent, self.name, key)
         super(SymbolTable, self).__setitem__(key, value)

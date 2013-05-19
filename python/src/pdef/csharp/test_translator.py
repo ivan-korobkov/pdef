@@ -1,22 +1,22 @@
 # encoding: utf-8
 import unittest
 from pdef.lang import *
-from pdef.java.translator import *
+from pdef.csharp.translator import *
 
 
-class TestJavaEnum(unittest.TestCase):
+class TestCsharpEnum(unittest.TestCase):
     def test(self):
         enum = Enum('Number', 'ONE', 'TWO')
         module = Module('test.module')
         module.add_definition(enum)
 
-        translator = JavaTranslator('/tmp')
-        jenum = JavaEnum(enum, translator.enum_template)
-        assert jenum.code
+        translator = CsharpTranslator('/tmp')
+        csenum = CsharpEnum(enum, translator.enum_template)
+        assert csenum.code
 
 
 class TestInterface(unittest.TestCase):
-    def setUp(self):
+    def test(self):
         base0 = Interface('Base0')
         base1 = Interface('Base1')
 
@@ -39,14 +39,10 @@ class TestInterface(unittest.TestCase):
         module1 = Module('test.module1')
         module1.add_definition(iface)
 
-        translator = JavaTranslator('/tmp')
-        self.jiface = JavaInterface(iface, translator.interface_template)
+        translator = CsharpTranslator('/tmp')
+        csface = CsharpInterface(iface, translator.interface_template)
 
-    def test(self):
-        assert self.jiface.code
-
-    def test_async(self):
-        assert self.jiface.async_code
+        assert csface.code
 
 
 class TestMessage(unittest.TestCase):
@@ -72,9 +68,9 @@ class TestMessage(unittest.TestCase):
         module1 = Module('test.module1')
         module1.add_definition(msg)
 
-        translator = JavaTranslator('/tmp')
-        jmsg = JavaMessage(msg, translator.message_template)
-        jbase = JavaMessage(base, translator.message_template)
+        translator = CsharpTranslator('/tmp')
+        jmsg = CsharpMessage(msg, translator.message_template)
+        jbase = CsharpMessage(base, translator.message_template)
         assert jbase.code
         assert jmsg.code
 
@@ -82,29 +78,22 @@ class TestMessage(unittest.TestCase):
 class TestRef(unittest.TestCase):
     def test_list(self):
         obj = List(Types.INT32)
-        jobj = ref(obj)
-        assert str(jobj) == 'java.lang.List<Integer>'
-        assert jobj.is_list
+        cs = ref(obj)
+        assert str(cs) == 'IList<int>'
 
     def test_set(self):
         obj = Set(Types.BOOL)
-        jobj = ref(obj)
-        assert str(jobj) == 'java.lang.Set<Boolean>'
-        assert jobj.is_set
+        cs = ref(obj)
+        assert str(cs) == 'ISet<bool>'
 
     def test_map(self):
         obj = Map(Types.STRING, Types.FLOAT)
-        jobj = ref(obj)
-        assert str(jobj) == 'java.lang.Map<String, Float>'
-        assert jobj.is_map
+        cs = ref(obj)
+        assert str(cs) == 'IDictionary<string, float>'
 
     def test_native(self):
-        jobj = ref(Types.INT64)
-        assert jobj.name == 'long'
-        assert jobj.boxed == 'Long'
-        assert jobj.default == '0L'
-        assert jobj.is_primitive
-        assert not jobj.is_nullable
+        cs = ref(Types.INT64)
+        assert cs == 'long'
 
     def test_enum_value(self):
         enum = Enum('Number')
@@ -113,24 +102,21 @@ class TestRef(unittest.TestCase):
         module = Module('test.module')
         module.add_definition(enum)
 
-        jone = ref(one)
-        assert str(jone) == 'test.module.Number.ONE'
+        cs = ref(one)
+        assert str(cs) == 'Number.ONE'
 
     def test_interface(self):
         iface = Interface('Interface')
         module = Module('test.module')
         module.add_definition(iface)
 
-        jface = ref(iface)
-        assert str(jface) == 'test.module.Interface'
-        assert jface.async_name == 'test.module.AsyncInterface'
-        assert jface.is_interface
+        cs = ref(iface)
+        assert str(cs) == 'IInterface'
 
     def test_message(self):
         msg = Message('Message')
         module = Module('test.module')
         module.add_definition(msg)
 
-        jmsg = ref(msg)
-        assert str(jmsg) == 'test.module.Message'
-        assert jmsg.default == 'test.module.Message.getInstance()'
+        cs = ref(msg)
+        assert str(cs) == 'Message'

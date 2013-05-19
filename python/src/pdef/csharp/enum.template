@@ -1,3 +1,6 @@
+{% if doc %}
+/** {{ doc }} */
+{% endif %}
 public enum {{ name }}
 {
 {% for value in values %}

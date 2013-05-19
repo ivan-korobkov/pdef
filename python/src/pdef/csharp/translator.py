@@ -86,9 +86,10 @@ class CsharpFile(object):
 
 
 class CsharpDefinition(object):
-    def __init__(self, name, template):
+    def __init__(self, name, template, doc=None):
         self.name = name
         self.template = template
+        self.doc = doc
 
     @property
     def code(self):
@@ -97,13 +98,13 @@ class CsharpDefinition(object):
 
 class CsharpEnum(CsharpDefinition):
     def __init__(self, enum, template):
-        super(CsharpEnum, self).__init__(enum.name, template)
+        super(CsharpEnum, self).__init__(enum.name, template, doc=enum.doc)
         self.values = [v.name.upper() for v in enum.values.values()]
 
 
 class CsharpMessage(CsharpDefinition):
     def __init__(self, msg, template):
-        super(CsharpMessage, self).__init__(msg.name, template)
+        super(CsharpMessage, self).__init__(msg.name, template, doc=msg.doc)
         self.base = ref(msg.base) if msg.base else None
 
         self.discriminator_field = CsharpField(msg.discriminator_field) \
@@ -122,7 +123,7 @@ class CsharpField(object):
 
 class CsharpInterface(CsharpDefinition):
     def __init__(self, iface, template):
-        super(CsharpInterface, self).__init__('I' + iface.name, template)
+        super(CsharpInterface, self).__init__('I' + iface.name, template, doc=iface.doc)
         self.bases = [ref(base) for base in iface.bases]
         self.declared_methods = [CsharpMethod(m) for m in iface.declared_methods.values()]
 
@@ -131,6 +132,7 @@ class CsharpMethod(object):
     def __init__(self, method):
         self.name = upper_first(method.name)
         self.args = tuple((a.name, ref(a.type)) for a in method.args.values())
+        self.doc = method.doc
 
         if isinstance(method.result, lang.Interface):
             self.result = ref(method.result)

@@ -1,5 +1,8 @@
 package {{package}};
 
+{% if doc %}
+/** {{ doc }} */
+{% endif %}
 public enum {{name}} {
     {% for value in values -%}
         {{value}}{% if not loop.last and loop.length > 1 %}, {% endif %}

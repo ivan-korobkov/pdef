@@ -1,3 +1,6 @@
+{% if doc %}
+/** {{ doc }} */
+{% endif %}
 {% if subtypes and subtypes|length > 1%}
 {% if type_field %}
 [TypeField("{{ type_field }}")]

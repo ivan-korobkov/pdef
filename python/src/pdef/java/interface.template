@@ -14,7 +14,7 @@ import com.google.common.util.concurrent.ListenableFuture;
         {%- if ref.is_interface -%}
             {{ ref.async_name }}
         {%- else -%}
-            ListenableFuture<{{ ref }}>
+            ListenableFuture<{{ ref.boxed }}>
         {%- endif -%}
     {%- else -%}
         {{ ref }}

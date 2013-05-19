@@ -1,5 +1,5 @@
-module io.pdef.test.interfaces;
-import io.pdef.test as test;
+module io.pdef.interfaces;
+from io.pdef.test import User, Post;
 
 
 interface App {
@@ -25,13 +25,13 @@ interface Users {
         birthday    Date) User;
 }
 
-interface InternalUsers extends Users {
+interface InternalUsers : Users {
     delete(id int32) void;
-    create(newUser test.User) test.User;
+    create(newUser User) User;
 }
 
 interface Posts {
-    create(title string, text string) test.Post;
+    create(title string, text string) Post;
 }
 
 message Date {

@@ -333,7 +333,7 @@ class TestMessage(unittest.TestCase):
 
         msg2 = Message('Msg2')
         msg2.set_base(msg1, sub1)
-        assert msg2.discriminator_field is msg1.discriminator_field
+        assert msg2.polymorphic_discriminator_field is msg1.polymorphic_discriminator_field
         assert msg1.subtypes == {sub1: msg2}
         assert msg0.subtypes == {sub0: msg1}
 

@@ -100,10 +100,16 @@ public class {{ name }} extends {{ base }} {
 
         public Builder() {
             {% if base_type -%}
-                this.{{ discriminator_field.name }} = {{ base_type }};
+                super({{ base_type }});
             {%- endif %}
 
         }
+{% if discriminator_field %}
+
+        public Builder(final {{ discriminator_field.type }} {{ discriminator_field.name }}) {
+            this.{{ discriminator_field.name }} = {{ discriminator_field.name }};
+        }
+{% endif %}
 
 {% for field in declared_fields %}
         {% if field.type.nullable -%} @javax.annotation.Nullable {%- endif -%}

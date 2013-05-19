@@ -5,13 +5,13 @@ enum ObjectType {
 }
 
 
-message GenericObject polymorphic on "type" as ObjectType.OBJECT {
+message GenericObject {
     id          string;
-    type        ObjectType;
+    type        ObjectType, discriminator;
     timestamp   int64;
 }
 
-message User inherits GenericObject as ObjectType.USER {
+message User : GenericObject(ObjectType.USER) {
     isActive    bool;
     name        string;
     age         int32;
@@ -24,15 +24,15 @@ message User inherits GenericObject as ObjectType.USER {
     weight      double;      
 }
 
-message Post inherits GenericObject as ObjectType.POST {
+message Post : GenericObject(ObjectType.POST) {
     userId      string;
 }
 
-message Photo inherits Post as ObjectType.PHOTO {
+message Photo : Post(ObjectType.PHOTO) {
     url         string;
 }
 
-message Note inherits Post as ObjectType.NOTE {
+message Note : Post(ObjectType.NOTE) {
     text        string;
 }
 
@@ -59,14 +59,12 @@ enum EventType {
     GENERIC, SYSTEM
 }
 
-message Event
-        inherits GenericObject as ObjectType.EVENT
-        polymorphic on "eventType" as EventType.GENERIC {
-    eventType  EventType;
+message Event : GenericObject(ObjectType.EVENT) {
+    eventType  EventType, discriminator;
     ip         string;
 }
 
-message SystemEvent inherits Event as EventType.SYSTEM {
+message SystemEvent : Event(EventType.SYSTEM) {
     process     string;
 }
 
@@ -88,9 +86,9 @@ enum ExceptionType {
     ERROR, AUTH_EXCEPTION
 }
 
-exception AppException polymorphic on "type" as ExceptionType.ERROR {
-    type    ExceptionType;
+exception AppException {
+    type    ExceptionType, discriminator;
     text    string;
 }
 
-exception AuthException inherits AppException as ExceptionType.AUTH_EXCEPTION {}
+exception AuthException : AppException(ExceptionType.AUTH_EXCEPTION) {}

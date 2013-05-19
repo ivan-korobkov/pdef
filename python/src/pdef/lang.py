@@ -334,7 +334,7 @@ class Message(Definition):
         self.base = None
         self.base_type = None
         self.subtypes = OrderedDict()
-        self._discriminator_field = None
+        self.discriminator_field = None
 
         self.fields = SymbolTable(self, 'fields')
         self.declared_fields = SymbolTable(self, 'declared_fields')
@@ -343,8 +343,9 @@ class Message(Definition):
         self._node = None
 
     @property
-    def discriminator_field(self):
-        return self._discriminator_field if self._discriminator_field \
+    def polymorphic_discriminator_field(self):
+        '''Returns this message discriminator field, base discriminator field, or None.'''
+        return self.discriminator_field if self.discriminator_field \
             else self.base.discriminator_field if self.base else None
 
     def set_base(self, base, base_type):
@@ -369,13 +370,14 @@ class Message(Definition):
     def _add_subtype(self, subtype):
         '''Adds a new subtype to this message, checks its base_type.'''
         check_isinstance(subtype, Message)
-        check_state(self.discriminator_field, '%s: is not polymorphic, no discriminator field', self)
-        check_argument(subtype.base_type in self.discriminator_field.type)
+        check_state(self.polymorphic_discriminator_field,
+                    '%s: is not polymorphic, no discriminator field', self)
+        check_argument(subtype.base_type in self.polymorphic_discriminator_field.type)
         check_argument(subtype.base_type not in self.subtypes, '%s: duplicate subtype %s',
                        self, subtype.base_type)
 
         self.subtypes[subtype.base_type] = subtype
-        if self.base and self.base.discriminator_field == self.discriminator_field:
+        if self.base and self.base.discriminator_field == self.polymorphic_discriminator_field:
             self.base._add_subtype(subtype)
 
     def add_field(self, name, definition, is_discriminator=False):
@@ -385,13 +387,13 @@ class Message(Definition):
         self.fields.add(field)
 
         if is_discriminator:
-            check_state(not self._discriminator_field,
+            check_state(not self.discriminator_field,
                         '%s: duplicate discriminator field %s', self, field)
             check_argument(isinstance(field.type, Enum),
                            '%s: discriminator field %s must be an enum', self, field)
             check_state(not self.subtypes,
                         '%s: discriminator field must be set before adding subtypes', self)
-            self._discriminator_field = field
+            self.discriminator_field = field
 
         logging.debug('%s: added a field "%s"', self, field)
         return field

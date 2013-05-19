@@ -79,8 +79,8 @@ class JavaMessage(JavaDefinition):
                 'io.pdef.GeneratedException' if msg.is_exception else 'io.pdef.GeneratedMessage'
         self.base_type = ref(msg.base_type) if msg.base_type else None
         self.base_builder = '%s.Builder' % self.base
-        self.discriminator_field = JavaField(msg.discriminator_field) \
-            if msg.discriminator_field else None
+        self.discriminator_field = JavaField(msg.polymorphic_discriminator_field) \
+            if msg.polymorphic_discriminator_field else None
         self.subtypes = tuple((key.name.lower(), ref(val)) for key, val in msg.subtypes.items())
 
         self.fields = [JavaField(f) for f in msg.fields.values()]
@@ -131,17 +131,24 @@ def ref(obj):
     t = obj.type
     if t in NATIVE_MAP: return NATIVE_MAP[t]
 
-    elif t == Type.LIST: return JavaType(Type.LIST,
-            name='java.lang.List<%s>' % ref(obj.element).boxed,
-            default='com.google.common.collect.ImmutableList.of()')
+    elif t == Type.LIST:
+        element = ref(obj.element).boxed
+        return JavaType(Type.LIST,
+            name='java.util.List<%s>' % element,
+            default='com.google.common.collect.ImmutableList.<%s>of()' % element)
 
-    elif t == Type.SET: return JavaType(Type.SET,
-            name='java.lang.Set<%s>' % ref(obj.element).boxed,
-            default='com.google.common.collect.ImmutableSet.of()')
+    elif t == Type.SET:
+        element = ref(obj.element).boxed
+        return JavaType(Type.SET,
+            name='java.util.Set<%s>' % element,
+            default='com.google.common.collect.ImmutableSet.<%s>of()' % element)
 
-    elif t == Type.MAP: return JavaType(Type.MAP,
-            name='java.lang.Map<%s, %s>' % (ref(obj.key).boxed, ref(obj.value).boxed),
-            default='com.google.common.collect.ImmutableMap.of()')
+    elif t == Type.MAP:
+        key = ref(obj.key).boxed
+        value = ref(obj.value).boxed
+        return JavaType(Type.MAP,
+            name='java.util.Map<%s, %s>' % (key, value),
+            default='com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key, value))
 
     elif t == Type.ENUM_VALUE: return JavaType(Type.ENUM_VALUE,
             name='%s.%s' % (ref(obj.enum), obj.name))

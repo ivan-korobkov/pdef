@@ -59,15 +59,18 @@ class Tokens(object):
         r'\n+'
         t.lexer.lineno += t.value.count("\n")
 
-    doc_start = re.compile('\s*\*\s*')
+    doc_start = re.compile('^\s*\**\s*', re.MULTILINE)
+    doc_end = re.compile('\s\*$', re.MULTILINE)
 
     # Pdef docstring.
     def t_DOC(self, t):
         r'\/\*\*((.|\n)*?)\*\/'
         t.lineno += t.value.count('\n')
-
-        value = self.doc_start.sub('', t.value)
-        t.value = value.strip(' /')
+        value = t.value.strip('/')
+        value = self.doc_start.sub('', value)
+        value = self.doc_end.sub('', value)
+        t.value = value
+        return t
 
     # Print the error message
     def t_error(self, t):

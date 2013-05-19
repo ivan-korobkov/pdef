@@ -178,10 +178,11 @@ class Definition(object):
 
         raise ValueError('Unsupported definition node %s' % node)
 
-    def __init__(self, type, name):
+    def __init__(self, type, name, doc=None):
         self.type = type
         self.name = name
         self.module = None
+        self.doc = doc
         self._linked = False
 
     def __repr__(self):
@@ -285,7 +286,9 @@ class Enum(Definition):
     @classmethod
     def from_ast(cls, node):
         check_isinstance(node, ast.Enum)
-        return Enum(node.name, *node.values)
+        enum = Enum(node.name, *node.values)
+        enum.doc = node.doc
+        return enum
 
     def __init__(self, name, *values):
         super(Enum, self).__init__(Type.ENUM, name)
@@ -320,12 +323,12 @@ class Message(Definition):
     def from_ast(cls, node):
         '''Creates a new unlinked message from an AST node.'''
         check_isinstance(node, ast.Message)
-        msg = Message(node.name, is_exception=node.is_exception)
+        msg = Message(node.name, is_exception=node.is_exception, doc=node.doc)
         msg._node = node
         return msg
 
-    def __init__(self, name, is_exception=False):
-        super(Message, self).__init__(Type.MESSAGE, name)
+    def __init__(self, name, is_exception=False, doc=None):
+        super(Message, self).__init__(Type.MESSAGE, name, doc=doc)
         self.is_exception = is_exception
 
         self.base = None
@@ -449,12 +452,12 @@ class Interface(Definition):
     def from_ast(cls, node):
         '''Creates a new interface from an AST node.'''
         check_isinstance(node, ast.Interface)
-        iface = Interface(node.name)
+        iface = Interface(node.name, doc=node.doc)
         iface._node = node
         return iface
 
-    def __init__(self, name):
-        super(Interface, self).__init__(Type.INTERFACE, name)
+    def __init__(self, name, doc=None):
+        super(Interface, self).__init__(Type.INTERFACE, name, doc=doc)
 
         self.bases = []
         self.methods = SymbolTable(self, 'methods')
@@ -506,7 +509,8 @@ class Interface(Definition):
                 arg_type = module.lookup(arg_node.type)
                 args.append((arg_name, arg_type))
 
-            self.add_method(method_name, result, *args)
+            method = self.add_method(method_name, result, *args)
+            method.doc = method_node.doc
 
         logging.debug("%s: linked", self)
 
@@ -522,10 +526,11 @@ class Interface(Definition):
 
 class Method(object):
     '''Interface method.'''
-    def __init__(self, interface, name, result, args_tuples=None):
+    def __init__(self, interface, name, result, args_tuples=None, doc=None):
         self.interface = interface
         self.name = name
         self.result = result
+        self.doc = doc
         self.args = SymbolTable(self, 'args')
         for arg_name, arg_def in args_tuples:
             self.args.add(MethodArg(arg_name, arg_def))

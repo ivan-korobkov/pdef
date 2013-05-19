@@ -1,5 +1,8 @@
 package {{ package }};
 
+{% if doc %}
+/** {{ doc }} */
+{% endif %}
 {% if subtypes %}
 @io.pdef.Discriminator("{{ discriminator_field.name }}")
 @io.pdef.Subtypes({

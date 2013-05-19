@@ -29,6 +29,9 @@ import com.google.common.util.concurrent.ListenableFuture;
     {%- endif -%}
 {%- endmacro -%}
 
+{% if doc %}
+/** {{ doc }} */
+{% endif %}
 {% if not bases %}
 public interface {{ iface_name(name) }} extends io.pdef.Interface {
 {% else %}
@@ -40,6 +43,9 @@ public interface {{ iface_name(name) }} extends {% for base in bases -%}
 {% endif -%}
 
 {% for method in declared_methods %}
+{% if method.doc %}
+    /** {{ method.doc|indent(4) }} */
+{% endif %}
 {% if method.args|length < 3 %}
     {{ method_result(method.result) }} {{ method.name }}({% for arg, argtype in method.args -%}
                 @io.pdef.Name("{{ arg }}") {{ argtype }} {{ arg }}

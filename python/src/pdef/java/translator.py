@@ -57,6 +57,7 @@ class JavaDefinition(object):
         self.name = obj.name
         self.type = obj.type
         self.package = obj.module.name
+        self.doc = obj.doc
         self._template = template
 
     @property
@@ -122,6 +123,7 @@ class JavaMethod(object):
         self.name = method.name
         self.args = list((arg.name, ref(arg.type)) for arg in method.args.values())
         self.result = ref(method.result)
+        self.doc = method.doc
 
 
 def ref(obj):

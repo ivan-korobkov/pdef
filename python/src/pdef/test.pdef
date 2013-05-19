@@ -8,6 +8,7 @@ enum Enum {
     FIRST, SECOND, THIRD
 }
 
+/** Simple message. */
 message Message {
     // Polymorphic discriminator
     type_field      Enum discriminator;
@@ -30,6 +31,9 @@ message Message {
     map_field       map<string, SubMessage3>;
 }
 
+/** Multi-line
+* doc comment.
+*/
 message SubMessage1 : Message(Enum.FIRST) {
     sub_field1      Message;
     sub_field2      string;
@@ -48,16 +52,25 @@ exception Exception {
 }
 
 
+/** Base interface. */
 interface Interface {
+    /** Does nothing. */
     method() void;
+
+    /** Sums two integers. */
     sum(i0 int32, i1 int32) int32;
+
+    /** Echos back a string. */
     echo(text string) string;
 }
 
+/** Another interface. */
 interface Support {
+    /** Calls support. */
     callSupport() void;
 }
 
 interface SubInterface : Interface, Support {
+    /** Submethod. */
     submethod(msg1 SubMessage1, msg2 SubMessage2) SubMessage3;
 }

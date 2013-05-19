@@ -1,5 +1,6 @@
 # encoding: utf-8
 import logging
+import re
 import ply.lex as lex
 import ply.yacc as yacc
 
@@ -18,7 +19,7 @@ class Tokens(object):
         'LESS', 'GREATER',
         'LBRACE', 'RBRACE',
         'LPAREN', 'RPAREN',
-        'IDENTIFIER')
+        'IDENTIFIER', 'DOC')
 
     # Regular expressions for simple rules
     t_COLON = r'\:'
@@ -58,6 +59,16 @@ class Tokens(object):
         r'\n+'
         t.lexer.lineno += t.value.count("\n")
 
+    doc_start = re.compile('\s*\*\s*')
+
+    # Pdef docstring.
+    def t_DOC(self, t):
+        r'\/\*\*((.|\n)*?)\*\/'
+        t.lineno += t.value.count('\n')
+
+        value = self.doc_start.sub('', t.value)
+        t.value = value.strip(' /')
+
     # Print the error message
     def t_error(self, t):
         self._error("Illegal character %s", t.value[0])
@@ -77,6 +88,13 @@ class GrammarRules(object):
         imports = t[4]
         definitions = t[5]
         t[0] = ast.File(name, imports=imports, definitions=definitions)
+
+    # Empty token to support optional values.
+    def p_empty(self, t):
+        '''
+        empty :
+        '''
+        pass
 
     def p_imports(self, t):
         '''
@@ -108,18 +126,23 @@ class GrammarRules(object):
 
     def p_definition(self, t):
         '''
-        definition : enum
-                   | message
-                   | interface
+        definition : doc enum
+                   | doc message
+                   | doc interface
         '''
-        t[0] = t[1]
+        d = t[2]
+        d.doc = t[1]
+        t[0] = d
 
-    # Empty token to support optional values.
-    def p_empty(self, t):
+    def p_doc(self, t):
         '''
-        empty :
+        doc : DOC
+            | empty
         '''
-        pass
+        if len(t) == 2:
+            t[0] = t[1]
+        else:
+            t[0] = ''
 
     def p_ref(self, t):
         '''
@@ -283,12 +306,13 @@ class GrammarRules(object):
 
     def p_method(self, t):
         '''
-        method : IDENTIFIER LPAREN method_args RPAREN ref SEMI
+        method : doc IDENTIFIER LPAREN method_args RPAREN ref SEMI
         '''
-        name = t[1]
-        args = t[3]
-        result = t[5]
-        t[0] = ast.Method(name, args=args, result=result)
+        doc = t[1]
+        name = t[2]
+        args = t[4]
+        result = t[6]
+        t[0] = ast.Method(name, args=args, result=result, doc=doc)
 
     def p_method_args(self, t):
         '''

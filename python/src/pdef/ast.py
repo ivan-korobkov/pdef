@@ -73,9 +73,10 @@ class DefinitionRef(Ref):
 
 
 class Definition(object):
-    def __init__(self, name, type):
+    def __init__(self, name, type, doc=None):
         self.name = name
         self.type = type
+        self.doc = doc
 
 
 class Message(Definition):
@@ -111,10 +112,11 @@ class Interface(Definition):
 
 
 class Method(object):
-    def __init__(self, name, args=None, result=None):
+    def __init__(self, name, args=None, result=None, doc=None):
         self.name = name
         self.args = tuple(args) if args else ()
         self.result = result
+        self.doc = doc
 
 
 class MethodArg(object):

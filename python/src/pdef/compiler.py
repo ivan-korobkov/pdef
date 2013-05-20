@@ -33,22 +33,6 @@ class Compiler(object):
         self.pdef.link()
         return self._defs
 
-    def package(self):
-        '''Generates a package from the package.json in the current directory.'''
-        with open('package.json', 'rt') as f:
-            text = f.read()
-
-        info = json.loads(text)
-        self.add_paths(*info['path'])
-        del info['path']
-
-        if 'deps' in info:
-            self.add_deps(*info['deps'])
-            del info['deps']
-
-        for key, value in info.items():
-            getattr(self, key)(**value)
-
     def add_deps(self, *deps):
         '''Add dependency paths.'''
         self.deps += deps
@@ -65,3 +49,19 @@ class Compiler(object):
     def csharp(self, out):
         translator = CsharpTranslator(out)
         translator.write_definitions(self.defs)
+
+    def execute_config(self, config):
+        '''Reads a configuration file and executes it.'''
+        with open(config, 'rt') as f:
+            text = f.read()
+
+        info = json.loads(text)
+        self.add_paths(*info['path'])
+        del info['path']
+
+        if 'deps' in info:
+            self.add_deps(*info['deps'])
+            del info['deps']
+
+        for key, value in info.items():
+            getattr(self, key)(**value)

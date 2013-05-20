@@ -1,17 +1,24 @@
 #!/usr/bin/env python
 #encoding: utf-8
+import argparse
 import logging
-import sys
 from pdef.common import PdefException
 from pdef.compiler import Compiler
 
 
 if __name__ == '__main__':
-    level = logging.DEBUG if '-v' in sys.argv else logging.INFO
+    parser = argparse.ArgumentParser(description='Protocol definition compiler')
+    parser.add_argument('--config', '-c', action='store', required=True,
+                        help='json configuration file')
+    parser.add_argument('--verbose', '-v', action='store_true')
+    args = parser.parse_args()
+
+    level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=level, format='%(message)s')
 
+    config = args.config
     compiler = Compiler()
     try:
-        compiler.package()
+        compiler.execute_config(config)
     except PdefException, e:
         logging.error("%s", e)

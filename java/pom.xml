@@ -103,7 +103,9 @@
 						<phase>generate-test-sources</phase>
 						<configuration>
 							<tasks>
-								<exec executable="${pdef.path}" failonerror="true" />
+								<exec executable="${pdef.path}" failonerror="true">
+									<arg value="--config=package.json" />
+								</exec>
 							</tasks>
 						</configuration>
 						<goals>

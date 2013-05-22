@@ -56,7 +56,7 @@ message Chat {
 }
 
 enum EventType {
-    GENERIC, SYSTEM
+    GENERIC, SYSTEM, USER
 }
 
 message Event : GenericObject(ObjectType.EVENT) {
@@ -66,6 +66,10 @@ message Event : GenericObject(ObjectType.EVENT) {
 
 message SystemEvent : Event(EventType.SYSTEM) {
     process     string;
+}
+
+message UserEvent : Event(EventType.USER) {
+    user    User;
 }
 
 enum Sex {

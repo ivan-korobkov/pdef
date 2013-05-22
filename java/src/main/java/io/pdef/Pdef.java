@@ -19,6 +19,11 @@ import static com.google.common.base.Preconditions.checkState;
 public class Pdef {
 	private Pdef() {}
 
+	public static enum TypeEnum {
+		BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL, DATE, DATETIME, STRING, UUID, OBJECT,
+		VOID, LIST, SET, MAP, MESSAGE, ENUM
+	}
+
 	public static TypeInfo info(final Type javaType) { return info(javaType, new Pool()); }
 	public static TypeInfo info(final Type javaType, final Pool pool) {
 		checkNotNull(javaType);
@@ -52,11 +57,6 @@ public class Pdef {
 
 	private static TypeInfo info(final Type javaType, final TypeEnum type, final Pool pool) {
 		return new TypeInfo(javaType, type, pool);
-	}
-
-	public static enum TypeEnum {
-		BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL, DATE, DATETIME, STRING, UUID, OBJECT,
-		VOID, LIST, SET, MAP, MESSAGE, ENUM
 	}
 
 	public static class Pool {

@@ -54,6 +54,6 @@ public class PdefJacksonAnnotationIntrospector extends AnnotationIntrospector {
 	}
 
 	protected StdTypeResolverBuilder constructTypeResolverBuilder() {
-		return new StdTypeResolverBuilder();
+		return new PdefTypeResolver();
 	}
 }

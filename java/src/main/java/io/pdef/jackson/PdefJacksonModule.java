@@ -27,7 +27,6 @@ public class PdefJacksonModule extends Module {
 					final JavaType type, final BeanDescription beanDesc) {
 				Class<?> cls = type.getRawClass();
 				if (!Enum.class.isAssignableFrom(cls)) return null;
-
 				return new LowercaseEnumSerializer((Class<Enum<?>>) cls);
 			}
 		});

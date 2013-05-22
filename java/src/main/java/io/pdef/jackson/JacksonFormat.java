@@ -11,10 +11,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.IOException;
 import java.lang.reflect.Type;
 
-public class JsonFormat {
+public class JacksonFormat {
 	private final ObjectMapper mapper;
 
-	public JsonFormat() {
+	public JacksonFormat() {
 		mapper = new ObjectMapper();
 		mapper.registerModule(new PdefJacksonModule());
 
@@ -30,7 +30,7 @@ public class JsonFormat {
 				.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 	}
 
-	public JsonFormat(final ObjectMapper mapper) {
+	public JacksonFormat(final ObjectMapper mapper) {
 		this.mapper = mapper;
 	}
 
@@ -38,7 +38,7 @@ public class JsonFormat {
 		try {
 			return mapper.writeValueAsString(object);
 		} catch (JsonProcessingException e) {
-			throw new RuntimeException();
+			throw new RuntimeException(e);
 		}
 	}
 

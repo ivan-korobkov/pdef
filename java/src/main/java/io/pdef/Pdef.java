@@ -251,27 +251,39 @@ public class Pdef {
 		public Map<String, FieldInfo> getDeclaredFields() { return declaredFields; }
 		public String getDiscriminator() { return discriminator; }
 		public Map<String, MessageInfo> getSubtypes() { return subtypes; }
+		public Message.Builder createBuilder() {
+			try {
+				return (Message.Builder) builderConstructor.newInstance();
+			} catch (Exception e) {
+				throw Throwables.propagate(e);
+			}
+		}
 	}
 
 	public static class FieldInfo {
 		private final MessageInfo message;
 		private final Field field;
+		private final String name;
 		private final TypeInfo type;
-		private final Method messageGetter;
-		private final Method builderSetter;
+		private final Method messageGet;
+		private final Method messageHas;
+		private final Method builderSet;
 
 		public FieldInfo(final MessageInfo message, final Field field) {
 			this.message = checkNotNull(message);
 			this.field = checkNotNull(field);
 			type = message.infoOf(field.getGenericType());
+			name = field.getName().toLowerCase();
 
-			String name = field.getName();
-			String upperFirst = Character.toUpperCase(name.charAt(0)) + name.substring(1);
-			String getterName = "get" + upperFirst;
-			String setterName = "set" + upperFirst;
+			String upperFirst = Character.toUpperCase(field.getName().charAt(0))
+					+ field.getName().substring(1);
+			String get = "get" + upperFirst;
+			String has = "has" + upperFirst;
+			String set = "set" + upperFirst;
 			try {
-				messageGetter = message.getJavaClass().getMethod(getterName);
-				builderSetter = message.builderClass.getMethod(setterName, field.getType());
+				messageGet = message.getJavaClass().getMethod(get);
+				messageHas = message.getJavaClass().getMethod(has);
+				builderSet = message.builderClass.getMethod(set, field.getType());
 			} catch (NoSuchMethodException e) {
 				throw new RuntimeException(e);
 			}
@@ -282,14 +294,24 @@ public class Pdef {
 			return Objects.toStringHelper(this).addValue(getName()).addValue(getType()).toString();
 		}
 
-		public String getName() { return field.getName(); }
+		public String getName() { return name; }
 		public MessageInfo getMessage() { return message; }
 		public Field getField() { return field; }
 		public TypeInfo getType() { return type; }
 
 		public Object get(final Object message) {
 			try {
-				return messageGetter.invoke(message);
+				return messageGet.invoke(message);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			} catch (InvocationTargetException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		public boolean isSet(final Object message) {
+			try {
+				return (Boolean) messageHas.invoke(message);
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException(e);
 			} catch (InvocationTargetException e) {
@@ -299,7 +321,7 @@ public class Pdef {
 
 		public void set(final Object builder, final Object value) {
 			try {
-				builderSetter.invoke(builder, value);
+				builderSet.invoke(builder, value);
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException(e);
 			} catch (InvocationTargetException e) {
@@ -313,6 +335,7 @@ public class Pdef {
 	}
 
 	@SuppressWarnings("unchecked")
+
 	static Enum<?>[] enumValues(final Type javaType) {
 		Class<?> cls = (Class<?>) javaType;
 		try {

@@ -2,11 +2,9 @@ package io.pdef;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import com.google.common.collect.*;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,7 +17,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class Pdef {
 	public static enum TypeEnum {
 		BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL, DATE, DATETIME, STRING, UUID, OBJECT,
-		VOID, LIST, SET, MAP, MESSAGE, ENUM
+		VOID, LIST, SET, MAP, MESSAGE, ENUM, INTERFACE
 	}
 
 	private final Map<Type, TypeInfo> map = Maps.newHashMap();
@@ -184,7 +182,7 @@ public class Pdef {
 
 		protected MessageInfo(final Class<?> cls, final Pdef pdef) {
 			super(cls, TypeEnum.MESSAGE, pdef);
-			Type baseType = cls.getGenericSuperclass();
+			Class<?> baseType = cls.getSuperclass();
 			try {
 				builderClass = Class.forName(cls.getName() + "$Builder");
 				builderConstructor = builderClass.getConstructor();
@@ -199,7 +197,7 @@ public class Pdef {
 				ImmutableMap.Builder<String, FieldInfo> builder = ImmutableMap.builder();
 				for (Field field : declared) {
 					if (Modifier.isStatic(field.getModifiers())) continue;
-					FieldInfo fieldInfo = new FieldInfo(this, field);
+					FieldInfo fieldInfo = new FieldInfo(field, this);
 					builder.put(fieldInfo.getName(), fieldInfo);
 				}
 				declaredFields = builder.build();
@@ -257,17 +255,17 @@ public class Pdef {
 	}
 
 	public static class FieldInfo {
-		private final MessageInfo message;
 		private final Field field;
+		private final MessageInfo message;
 		private final String name;
 		private final TypeInfo type;
 		private final Method messageGet;
 		private final Method messageHas;
 		private final Method builderSet;
 
-		public FieldInfo(final MessageInfo message, final Field field) {
-			this.message = checkNotNull(message);
+		public FieldInfo(final Field field, final MessageInfo message) {
 			this.field = checkNotNull(field);
+			this.message = checkNotNull(message);
 			type = message.infoOf(field.getGenericType());
 			name = field.getName().toLowerCase();
 
@@ -323,6 +321,117 @@ public class Pdef {
 			} catch (InvocationTargetException e) {
 				throw new RuntimeException(e);
 			}
+		}
+	}
+
+	public static class InterfaceInfo extends TypeInfo {
+		private final Set<InterfaceInfo> bases;
+		private final Map<String, MethodInfo> methods;
+		private final Map<String, MethodInfo> declaredMethods;
+
+		protected InterfaceInfo(final Class<?> cls, final Pdef pdef) {
+			super(cls, TypeEnum.INTERFACE, pdef);
+
+			ImmutableSet.Builder<InterfaceInfo> baseBuilder = ImmutableSet.builder();
+			for (Class<?> base : cls.getInterfaces()) {
+				InterfaceInfo baseInfo = (InterfaceInfo) pdef.get(base);
+				baseBuilder.add(baseInfo);
+			}
+			bases = baseBuilder.build();
+
+			ImmutableMap.Builder<String, MethodInfo> declaredBuilder = ImmutableMap.builder();
+			for (Method method : cls.getDeclaredMethods()) {
+				MethodInfo methodInfo = new MethodInfo(method, this);
+				declaredBuilder.put(methodInfo.getName(), methodInfo);
+			}
+			declaredMethods = declaredBuilder.build();
+
+			ImmutableMap.Builder<String, MethodInfo> methodBuilder = ImmutableMap.builder();
+			for (InterfaceInfo base : bases) {
+				methodBuilder.putAll(base.methods);
+			}
+			methodBuilder.putAll(declaredMethods);
+			methods = methodBuilder.build();
+		}
+
+		public Set<InterfaceInfo> getBases() { return bases; }
+		public Map<String, MethodInfo> getMethods() { return methods; }
+		public Map<String, MethodInfo> getDeclaredMethods() { return declaredMethods; }
+	}
+
+	public static class MethodInfo {
+		private final Method method;
+		private final InterfaceInfo iface;
+		private final String name;
+		private final TypeInfo result;
+		private final Map<String, TypeInfo> args;
+
+		public MethodInfo(final Method method, final InterfaceInfo iface) {
+			this.method = checkNotNull(method);
+			this.iface = checkNotNull(iface);
+
+			name = method.getName().toLowerCase();
+			result = iface.pdef.get(method.getGenericReturnType());
+
+			Type[] params = method.getGenericParameterTypes();
+			Annotation[][] annotations = method.getParameterAnnotations();
+			ImmutableMap.Builder<String, TypeInfo> argBuilder = ImmutableMap.builder();
+			for (int i = 0; i < params.length; i++) {
+				Type arg = params[i];
+				Annotation[] pannotations = annotations[i];
+
+				String name = null;
+				for (Annotation pannotation : pannotations) {
+					if (pannotation.annotationType() == Name.class) {
+						name = ((Name) pannotation).value().toLowerCase();
+						break;
+					}
+				}
+
+				if (name == null) throw new IllegalArgumentException(
+						"All params must be annotated with @Name(param) in " + method);
+				TypeInfo argInfo = iface.pdef.get(arg);
+				argBuilder.put(name, argInfo);
+			}
+			args = argBuilder.build();
+		}
+
+		public String getName() { return name; }
+		public Method getMethod() { return method; }
+		public InterfaceInfo getIface() { return iface; }
+		public TypeInfo getResult() { return result; }
+		public Map<String, TypeInfo> getArgs() { return args; }
+
+		public Object invoke(final Object o, final Object[] args) {
+			try {
+				return method.invoke(o, args);
+			} catch (Exception e) {
+				throw Throwables.propagate(e);
+			}
+		}
+	}
+
+	public static class Invocation {
+		private final MethodInfo method;
+		private final Object[] args;
+
+		public Invocation(final MethodInfo method, final Object[] args) {
+			this.method = checkNotNull(method);
+			this.args = args == null ? new Object[] {} : args.clone();
+		}
+
+		public MethodInfo getMethod() { return method; }
+		public Object[] getArgs() { return args.clone(); }
+		public Object invokeOn(final Object o) {
+			return method.invoke(o, args);
+		}
+
+		@Override
+		public String toString() {
+			return Objects.toStringHelper(this)
+					.addValue(method.getName())
+					.addValue(args)
+					.toString();
 		}
 	}
 

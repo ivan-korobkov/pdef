@@ -1,4 +1,4 @@
-module io.pdef.interfaces;
+module io.pdef.test.interfaces;
 from io.pdef.test import User, Post;
 
 

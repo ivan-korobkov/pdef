@@ -24,7 +24,7 @@ public class Pdef {
 
 	private final Map<Type, TypeInfo> map = Maps.newHashMap();
 
-	public TypeInfo get(final Type javaType) {
+	public synchronized TypeInfo get(final Type javaType) {
 		TypeInfo info = map.get(javaType);
 		if (info != null) return info;
 		return info(javaType);
@@ -180,7 +180,7 @@ public class Pdef {
 		private final Map<String, FieldInfo> fields;
 		private final Map<String, FieldInfo> declaredFields;
 		private final Map<String, MessageInfo> subtypes;
-		private final String discriminator;
+		private final FieldInfo discriminator;
 
 		protected MessageInfo(final Class<?> cls, final Pdef pdef) {
 			super(cls, TypeEnum.MESSAGE, pdef);
@@ -216,19 +216,21 @@ public class Pdef {
 				discriminator = null;
 				subtypes = ImmutableMap.of();
 			} else {
-				Discriminator fieldAnnotation = cls.getAnnotation(Discriminator.class);
-				Subtypes subtypesAnnotation = cls.getAnnotation(Subtypes.class);
-				checkNotNull(fieldAnnotation, "Discriminator annotation must be present in %s", cls);
-				checkNotNull(subtypesAnnotation, "Subtypes annotation must be present in %s", cls);
+				Discriminator dann = cls.getAnnotation(Discriminator.class);
+				Subtypes sann = cls.getAnnotation(Subtypes.class);
+				checkNotNull(dann, "Discriminator annotation must be present in %s", cls);
+				checkNotNull(sann, "Subtypes annotation must be present in %s", cls);
 
 				ImmutableMap.Builder<String, MessageInfo> builder = ImmutableMap.builder();
-				for (Subtype value : subtypesAnnotation.value()) {
+				for (Subtype value : sann.value()) {
 					String name = value.type();
 					MessageInfo info = (MessageInfo) infoOf(value.value());
 					builder.put(name, info);
 				}
 				subtypes = builder.build();
-				discriminator = fieldAnnotation.value();
+				discriminator = fields.get(dann.value().toLowerCase());
+				checkState(discriminator != null, "Discriminator field \"%s\" is not found in %s",
+						dann.value(), cls);
 			}
 		}
 
@@ -242,8 +244,9 @@ public class Pdef {
 		public MessageInfo getBase() { return base; }
 		public Map<String, FieldInfo> getFields() { return fields; }
 		public Map<String, FieldInfo> getDeclaredFields() { return declaredFields; }
-		public String getDiscriminator() { return discriminator; }
+		public FieldInfo getDiscriminator() { return discriminator; }
 		public Map<String, MessageInfo> getSubtypes() { return subtypes; }
+		public boolean isPolymorphic() { return !subtypes.isEmpty(); }
 		public Message.Builder createBuilder() {
 			try {
 				return (Message.Builder) builderConstructor.newInstance();

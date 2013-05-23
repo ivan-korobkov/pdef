@@ -1,5 +1,6 @@
 package io.pdef;
 
+import io.pdef.test.GenericObject;
 import io.pdef.test.Sex;
 import io.pdef.test.User;
 import io.pdef.test.UserEvent;
@@ -17,7 +18,7 @@ public class JsonFormatTest {
 				+ "\"age\":18,\"sex\":\"male\",\"weight\":0.0}}";
 
 		JsonFormat format = new JsonFormat();
-		UserEvent event = (UserEvent) format.read(UserEvent.class, s);
+		UserEvent event = (UserEvent) format.read(GenericObject.class, s);
 		UserEvent expected = getUserEvent();
 
 		assertEquals(expected, event);

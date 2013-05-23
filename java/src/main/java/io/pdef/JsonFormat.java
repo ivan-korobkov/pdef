@@ -1,37 +1,34 @@
 package io.pdef;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Type;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class JsonFormat {
-	private final JsonFactory jsonFactory;
+	private final ObjectMapper mapper;
 	private final Pdef pdef = new Pdef();
 
 	public JsonFormat() {
-		this.jsonFactory = new JsonFactory();
-		jsonFactory.enable(JsonParser.Feature.ALLOW_COMMENTS);
-	}
-
-	public JsonFormat(final JsonFactory jsonFactory) {
-		this.jsonFactory = jsonFactory;
+		this.mapper = new ObjectMapper();
 	}
 
 	public Object read(final Type type, final String s) {
 		try {
 			Pdef.TypeInfo info = pdef.get(type);
-			JsonParser parser = jsonFactory.createJsonParser(s);
-			return read(info, parser);
+			JsonNode tree = mapper.readTree(s);
+			return read(info, tree);
 		} catch (FormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -53,7 +50,7 @@ public class JsonFormat {
 	public String write(final Object object, final Pdef.TypeInfo info) {
 		try {
 			StringWriter out = new StringWriter();
-			JsonGenerator generator = jsonFactory.createGenerator(out);
+			JsonGenerator generator = mapper.getFactory().createGenerator(out);
 			write(info, object, generator);
 			generator.close();
 			return out.toString();
@@ -64,81 +61,105 @@ public class JsonFormat {
 		}
 	}
 
-	private Object read(final Pdef.TypeInfo info, final JsonParser parser) throws IOException {
-		parser.nextToken();
-
+	private Object read(final Pdef.TypeInfo info, final JsonNode node) throws IOException {
 		switch (info.getType()) {
-			case BOOL: return parser.getValueAsBoolean();
-			case INT16: return (short) parser.getValueAsInt();
-			case INT32: return parser.getValueAsInt();
-			case INT64: return parser.getValueAsLong();
-			case FLOAT: return (float) parser.getValueAsDouble();
-			case DOUBLE: return parser.getValueAsDouble();
-			case STRING: return parser.getValueAsString();
+			case BOOL: return node.asBoolean();
+			case INT16: return (short) node.asInt();
+			case INT32: return node.asInt();
+			case INT64: return node.asLong();
+			case FLOAT: return (float) node.asDouble();
+			case DOUBLE: return node.asDouble();
+			case STRING: return node.asText();
 
-			case LIST: return readList(info.asList(), parser);
-			case SET: return readSet(info.asSet(), parser);
-			case MAP: return readMap(info.asMap(), parser);
+			case LIST: return readList(info.asList(), node);
+			case SET: return readSet(info.asSet(), node);
+			case MAP: return readMap(info.asMap(), node);
 
-			case MESSAGE: return readMessage(info.asMesage(), parser);
-			case ENUM: return readEnum(info.asEnum(), parser);
-			case OBJECT: return readObject(info, parser);
+			case MESSAGE: return readMessage(info.asMesage(), node);
+			case ENUM: return readEnum(info.asEnum(), node);
+			case OBJECT: return readObject(info, node);
 		}
 		throw new FormatException("Unsupported type " + info);
 	}
 
-	private List<?> readList(final Pdef.ListInfo info, final JsonParser parser) throws IOException {
-		if (parser.getCurrentToken() != JsonToken.START_ARRAY) throw new FormatException();
+	private List<?> readList(final Pdef.ListInfo info, final JsonNode node) throws IOException {
+		if (node.isNull()) return null;
+
+		ArrayNode arrayNode = (ArrayNode) node;
+		Pdef.TypeInfo element = info.getElement();
 
 		ImmutableList.Builder<Object> builder = ImmutableList.builder();
-		while (parser.nextToken() != JsonToken.END_ARRAY) {
-			builder.add(read(info.getElement(), parser));
+		for (int i = 0; i < arrayNode.size(); i++) {
+			JsonNode child = arrayNode.get(i);
+			builder.add(read(element, child));
 		}
 
 		return builder.build();
 	}
 
-	private Set<?> readSet(final Pdef.SetInfo info, final JsonParser parser) throws IOException {
-		if (parser.getCurrentToken() != JsonToken.START_ARRAY) throw new FormatException();
+	private Set<?> readSet(final Pdef.SetInfo info, final JsonNode node) throws IOException {
+		if (node.isNull()) return null;
+
+		ArrayNode arrayNode = (ArrayNode) node;
+		Pdef.TypeInfo element = info.getElement();
 
 		ImmutableSet.Builder<Object> builder = ImmutableSet.builder();
-		while (parser.nextToken() != JsonToken.END_ARRAY) {
-			builder.add(read(info.getElement(), parser));
+		for (int i = 0; i < arrayNode.size(); i++) {
+			JsonNode child = arrayNode.get(i);
+			builder.add(read(element, child));
 		}
 
 		return builder.build();
 	}
 
-	private Object readMap(final Pdef.MapInfo info, final JsonParser parser) throws IOException {
+	private Object readMap(final Pdef.MapInfo info, final JsonNode node) throws IOException {
 		throw new UnsupportedOperationException("StringFormat required");
 	}
 
-	private Object readMessage(final Pdef.MessageInfo info, final JsonParser parser)
+	private Object readMessage(final Pdef.MessageInfo info, final JsonNode node)
 			throws IOException {
-		if (parser.getCurrentToken() == JsonToken.VALUE_NULL) return null;
-		if (parser.getCurrentToken() != JsonToken.START_OBJECT) throw new FormatException();
+		if (node.isNull()) return null;
+		ObjectNode objectNode = (ObjectNode) node;
 
-		Message.Builder builder = info.createBuilder();
-		Map<String,Pdef.FieldInfo> fields = info.getFields();
+		Pdef.MessageInfo polymorphic = readMessageType(info, objectNode);
+		Map<String, Pdef.FieldInfo> fields = polymorphic.getFields();
+		Iterator<Map.Entry<String, JsonNode>> children = objectNode.fields();
+		Message.Builder builder = polymorphic.createBuilder();
 
-		while (parser.nextToken() != JsonToken.END_OBJECT) {
-			String fname = parser.getCurrentName();
-			Pdef.FieldInfo finfo = fields.get(fname.toLowerCase());
-			if (finfo == null) continue;
+		while (children.hasNext()) {
+			Map.Entry<String, JsonNode> child = children.next();
+			String name = child.getKey().toLowerCase();
+			if (!fields.containsKey(name)) continue;
 
-			Object value = read(finfo.getType(), parser);
+			JsonNode childNode = child.getValue();
+			Pdef.FieldInfo finfo = fields.get(name);
+			Object value = read(finfo.getType(), childNode);
 			finfo.set(builder, value);
 		}
 
 		return builder.build();
 	}
 
-	private Object readEnum(final Pdef.EnumInfo info, final JsonParser parser) throws IOException {
-		String value = parser.getValueAsString();
+	private Pdef.MessageInfo readMessageType(final Pdef.MessageInfo info, final JsonNode node) {
+		if (!info.isPolymorphic()) return info;
+
+		Pdef.FieldInfo discriminator = info.getDiscriminator();
+		JsonNode child = node.get(discriminator.getName());
+		if (child == null) return info;
+
+		String value = child.asText().toLowerCase();
+		Pdef.MessageInfo subinfo = info.getSubtypes().get(value);
+
+		if (subinfo == null || subinfo == info) return info;
+		return readMessageType(subinfo, node);
+	}
+
+	private Enum<?> readEnum(final Pdef.EnumInfo info, final JsonNode node) {
+		String value = node.asText();
 		return info.getValues().get(value == null ? null : value.toUpperCase());
 	}
 
-	private Object readObject(final Pdef.TypeInfo info, final JsonParser parser) {
+	private Object readObject(final Pdef.TypeInfo info, final JsonNode node) {
 		throw new FormatException("Unsupported operation");
 	}
 
@@ -202,8 +223,12 @@ public class JsonFormat {
 			return;
 		}
 
+		// Get a polymorphic message info, because a message field can point to a supertype.
+		Pdef.MessageInfo polymorphic = info.getSubtypes().isEmpty() ? info : (Pdef.MessageInfo)
+				pdef.get(message.getClass());
+
 		generator.writeStartObject();
-		for (Pdef.FieldInfo field : info.getFields().values()) {
+		for (Pdef.FieldInfo field : polymorphic.getFields().values()) {
 			if (!field.isSet(message)) continue;
 
 			Object value = field.get(message);

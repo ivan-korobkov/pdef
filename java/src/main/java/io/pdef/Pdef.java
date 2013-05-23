@@ -17,74 +17,67 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public class Pdef {
-	private Pdef() {}
-
 	public static enum TypeEnum {
 		BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL, DATE, DATETIME, STRING, UUID, OBJECT,
 		VOID, LIST, SET, MAP, MESSAGE, ENUM
 	}
 
-	public static TypeInfo info(final Type javaType) { return info(javaType, new Pool()); }
-	public static TypeInfo info(final Type javaType, final Pool pool) {
+	private final Map<Type, TypeInfo> map = Maps.newHashMap();
+
+	public TypeInfo get(final Type javaType) {
+		TypeInfo info = map.get(javaType);
+		if (info != null) return info;
+		return info(javaType);
+	}
+
+	private void add(final Type javaType, final TypeInfo typeInfo) {
+		checkState(!map.containsKey(javaType), "Duplicate type info for " + javaType);
+		map.put(javaType, typeInfo);
+	}
+
+	private TypeInfo info(final Type javaType) {
 		checkNotNull(javaType);
-		checkNotNull(pool);
 
 		Class<?> cls = (javaType instanceof ParameterizedType)
 					   ? (Class<?>) ((ParameterizedType) javaType).getRawType()
 					   : (Class<?>) javaType;
 
-		if (cls == boolean.class || cls == Boolean.class) return info(javaType, TypeEnum.BOOL, pool);
-		if (cls == short.class || cls == Short.class) return info(javaType, TypeEnum.INT16, pool);
-		if (cls == int.class || cls == Integer.class) return info(javaType, TypeEnum.INT32, pool);
-		if (cls == long.class || cls == Long.class) return info(javaType, TypeEnum.INT64, pool);
-		if (cls == float.class || cls == Float.class) return info(javaType, TypeEnum.FLOAT, pool);
-		if (cls == double.class || cls == Double.class) return info(javaType, TypeEnum.DOUBLE,
-				pool);
+		if (cls == boolean.class || cls == Boolean.class) return value(javaType, TypeEnum.BOOL);
+		if (cls == short.class || cls == Short.class) return value(javaType, TypeEnum.INT16);
+		if (cls == int.class || cls == Integer.class) return value(javaType, TypeEnum.INT32);
+		if (cls == long.class || cls == Long.class) return value(javaType, TypeEnum.INT64);
+		if (cls == float.class || cls == Float.class) return value(javaType, TypeEnum.FLOAT);
+		if (cls == double.class || cls == Double.class) return value(javaType, TypeEnum.DOUBLE);
 
-		if (cls == BigDecimal.class) return info(javaType, TypeEnum.DECIMAL, pool);
-		if (cls == String.class) return info(javaType, TypeEnum.STRING, pool);
-		if (cls == Object.class) return info(javaType, TypeEnum.OBJECT, pool);
-		if (cls == void.class || cls == Void.class) return info(javaType, TypeEnum.VOID, pool);
+		if (cls == BigDecimal.class) return value(javaType, TypeEnum.DECIMAL);
+		if (cls == String.class) return value(javaType, TypeEnum.STRING);
+		if (cls == Object.class) return value(javaType, TypeEnum.OBJECT);
+		if (cls == void.class || cls == Void.class) return value(javaType, TypeEnum.VOID);
 
-		if (cls == List.class) return new ListInfo(javaType, pool);
-		if (cls == Set.class) return new SetInfo(javaType, pool);
-		if (cls == Map.class) return new MapInfo(javaType, pool);
-		if (cls.isEnum()) return new EnumInfo(javaType, pool);
-		if (Message.class.isAssignableFrom(cls)) return new MessageInfo(cls, pool);
+		if (cls == List.class) return new ListInfo(javaType, this);
+		if (cls == Set.class) return new SetInfo(javaType, this);
+		if (cls == Map.class) return new MapInfo(javaType, this);
+		if (cls.isEnum()) return new EnumInfo(javaType, this);
+		if (Message.class.isAssignableFrom(cls)) return new MessageInfo(cls, this);
 
 		throw new IllegalArgumentException("Unsupported java type " + javaType);
 	}
 
-	private static TypeInfo info(final Type javaType, final TypeEnum type, final Pool pool) {
-		return new TypeInfo(javaType, type, pool);
-	}
-
-	public static class Pool {
-		private final Map<Type, TypeInfo> map = Maps.newHashMap();
-
-		public TypeInfo get(final Type javaType) {
-			TypeInfo info = map.get(javaType);
-			if (info != null) return info;
-			return info(javaType, this);
-		}
-
-		private void add(final Type javaType, final TypeInfo typeInfo) {
-			checkState(!map.containsKey(javaType), "Duplicate type info for " + javaType);
-			map.put(javaType, typeInfo);
-		}
+	private TypeInfo value(final Type javaType, final TypeEnum type) {
+		return new TypeInfo(javaType, type, this);
 	}
 
 	public static class TypeInfo {
 		protected final Type javaType;
 		protected final TypeEnum type;
-		protected final Pool pool;
+		protected final Pdef pdef;
 
-		protected TypeInfo(final Type javaType, final TypeEnum type, final Pool pool) {
+		protected TypeInfo(final Type javaType, final TypeEnum type, final Pdef pdef) {
 			this.javaType = javaType;
 			this.type = type;
-			this.pool = pool;
+			this.pdef = pdef;
 
-			pool.add(javaType, this);
+			this.pdef.add(javaType, this);
 		}
 
 		@Override
@@ -95,7 +88,7 @@ public class Pdef {
 		public Type getJavaType() { return javaType; }
 		public Class<?> getJavaClass() { return (Class<?>) javaType; }
 		public TypeEnum getType() { return type; }
-		public Pool getPool() { return pool; }
+		public Pdef getPdef() { return pdef; }
 
 		public ListInfo asList() { return (ListInfo) this; }
 		public SetInfo asSet() { return (SetInfo) this; }
@@ -103,13 +96,13 @@ public class Pdef {
 		public MessageInfo asMesage() { return (MessageInfo) this; }
 		public EnumInfo asEnum() { return (EnumInfo) this; }
 
-		protected TypeInfo infoOf(final Type javaType1) { return pool.get(javaType1); }
+		protected TypeInfo infoOf(final Type javaType1) { return pdef.get(javaType1); }
 	}
 
 	public static class ListInfo extends TypeInfo {
 		private final TypeInfo element;
-		protected ListInfo(final Type javaType, final Pool pool) {
-			super(javaType, TypeEnum.LIST, pool);
+		protected ListInfo(final Type javaType, final Pdef pdef) {
+			super(javaType, TypeEnum.LIST, pdef);
 			element = infoOf(param(javaType).getActualTypeArguments()[0]);
 		}
 
@@ -125,8 +118,8 @@ public class Pdef {
 
 	public static class SetInfo extends TypeInfo {
 		private final TypeInfo element;
-		protected SetInfo(final Type javaType, final Pool pool) {
-			super(javaType, TypeEnum.SET, pool);
+		protected SetInfo(final Type javaType, final Pdef pdef) {
+			super(javaType, TypeEnum.SET, pdef);
 			element = infoOf(param(javaType).getActualTypeArguments()[0]);
 		}
 
@@ -143,8 +136,8 @@ public class Pdef {
 	public static class MapInfo extends TypeInfo {
 		private final TypeInfo key;
 		private final TypeInfo value;
-		protected MapInfo(final Type javaType, final Pool pool) {
-			super(javaType, TypeEnum.MAP, pool);
+		protected MapInfo(final Type javaType, final Pdef pdef) {
+			super(javaType, TypeEnum.MAP, pdef);
 			key = infoOf(param(javaType).getActualTypeArguments()[0]);
 			value = infoOf(param(javaType).getActualTypeArguments()[1]);
 		}
@@ -162,8 +155,8 @@ public class Pdef {
 
 	public static class EnumInfo extends TypeInfo {
 		private final BiMap<String, Enum<?>> values;
-		protected EnumInfo(final Type javaType, final Pool pool) {
-			super(javaType, TypeEnum.ENUM, pool);
+		protected EnumInfo(final Type javaType, final Pdef pdef) {
+			super(javaType, TypeEnum.ENUM, pdef);
 
 			ImmutableBiMap.Builder<String, Enum<?>> builder = ImmutableBiMap.builder();
 			for (Enum<?> anEnum : enumValues(javaType)) {
@@ -189,8 +182,8 @@ public class Pdef {
 		private final Map<String, MessageInfo> subtypes;
 		private final String discriminator;
 
-		protected MessageInfo(final Class<?> cls, final Pool pool) {
-			super(cls, TypeEnum.MESSAGE, pool);
+		protected MessageInfo(final Class<?> cls, final Pdef pdef) {
+			super(cls, TypeEnum.MESSAGE, pdef);
 			Type baseType = cls.getGenericSuperclass();
 			try {
 				builderClass = Class.forName(cls.getName() + "$Builder");

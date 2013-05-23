@@ -13,5 +13,25 @@ public abstract class GeneratedMessage implements Message {
 
 	public abstract Builder newBuilderForType();
 
-	public static abstract class Builder implements Message.Builder {}
+	@Override
+	public boolean equals(final Object o) {
+		return this == o || !(o == null || getClass() != o.getClass());
+	}
+
+	@Override
+	public int hashCode() {
+		return 31;
+	}
+
+	public static abstract class Builder implements Message.Builder {
+		@Override
+		public boolean equals(final Object o) {
+			return this == o || !(o == null || getClass() != o.getClass());
+		}
+
+		@Override
+		public int hashCode() {
+			return 31;
+		}
+	}
 }

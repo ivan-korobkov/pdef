@@ -16,6 +16,7 @@ import java.util.Set;
 
 public class JsonFormat {
 	private final JsonFactory jsonFactory;
+	private final Pdef pdef = new Pdef();
 
 	public JsonFormat() {
 		this.jsonFactory = new JsonFactory();
@@ -28,7 +29,7 @@ public class JsonFormat {
 
 	public Object read(final Type type, final String s) {
 		try {
-			Pdef.TypeInfo info = Pdef.info(type);
+			Pdef.TypeInfo info = pdef.get(type);
 			JsonParser parser = jsonFactory.createJsonParser(s);
 			return read(info, parser);
 		} catch (FormatException e) {
@@ -40,7 +41,7 @@ public class JsonFormat {
 
 	public String write(final Object object) {
 		try {
-			Pdef.TypeInfo info = Pdef.info(object.getClass());
+			Pdef.TypeInfo info = pdef.get(object.getClass());
 			return write(object, info);
 		} catch (FormatException e) {
 			throw e;

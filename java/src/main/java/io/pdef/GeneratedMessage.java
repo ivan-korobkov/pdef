@@ -3,6 +3,8 @@ package io.pdef;
 import java.io.Serializable;
 
 public abstract class GeneratedMessage implements Message, Serializable {
+	private transient int hash;
+
 	protected GeneratedMessage(final Builder builder) {}
 
 	public Builder toBuilder() {
@@ -22,6 +24,11 @@ public abstract class GeneratedMessage implements Message, Serializable {
 
 	@Override
 	public int hashCode() {
+		if (hash == 0) hash = generateHashCode();
+		return hash;
+	}
+
+	protected int generateHashCode() {
 		return 31;
 	}
 

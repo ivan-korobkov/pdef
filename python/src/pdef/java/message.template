@@ -176,6 +176,46 @@ public class {{ name }} extends {{ base }} {
 {% endfor %}
                     .toString();
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            {% if not declared_fields -%}
+                return super.equals(o);
+            {% else %}
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+            {{ name }} cast = ({{ name }}) o;
+
+            {% for field in declared_fields -%}
+            {% if field.type.is_primitive -%}
+                if (this.{{ field.name }} != cast.{{ field.name }}) return false;
+            {%- else -%}
+                if (this.{{ field.name }} != null ? !this.{{ field.name }}.equals(cast.{{ field.name }})
+                    : cast.{{ field.name }} != null) return false;
+            {%- endif %}
+
+            {% endfor %}
+
+            return true;
+            {% endif %}
+
+        }
+
+        @Override
+        public int hashCode() {
+            {% if not declared_fields -%}
+                return super.hashCode();
+            {%- else -%}
+            int result = super.hashCode();
+            return com.google.common.base.Objects.hashCode(result,
+                    {% for field in declared_fields -%}this.{{ field.name }}
+                    {%- if loop.length > 1 and not loop.last -%}, {% elif loop.last %}); {% endif %}
+
+                    {% endfor %}
+            {%- endif %}
+
+        }
     }
 
     @Override
@@ -212,11 +252,11 @@ public class {{ name }} extends {{ base }} {
     }
 
     @Override
-    public int hashCode() {
+    public int generateHashCode() {
         {% if not declared_fields -%}
-            return super.hashCode();
+            return super.generateHashCode();
         {%- else -%}
-        int result = super.hashCode();
+        int result = super.generateHashCode();
         return com.google.common.base.Objects.hashCode(result,
                 {% for field in declared_fields -%}this.{{ field.name }}
                 {%- if loop.length > 1 and not loop.last -%}, {% elif loop.last %}); {% endif %}

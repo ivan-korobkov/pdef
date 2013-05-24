@@ -83,19 +83,19 @@ class TestRef(unittest.TestCase):
     def test_list(self):
         obj = List(Types.INT32)
         jobj = ref(obj)
-        assert str(jobj) == 'java.lang.List<Integer>'
+        assert str(jobj) == 'java.util.List<Integer>'
         assert jobj.is_list
 
     def test_set(self):
         obj = Set(Types.BOOL)
         jobj = ref(obj)
-        assert str(jobj) == 'java.lang.Set<Boolean>'
+        assert str(jobj) == 'java.util.Set<Boolean>'
         assert jobj.is_set
 
     def test_map(self):
         obj = Map(Types.STRING, Types.FLOAT)
         jobj = ref(obj)
-        assert str(jobj) == 'java.lang.Map<String, Float>'
+        assert str(jobj) == 'java.util.Map<String, Float>'
         assert jobj.is_map
 
     def test_native(self):

@@ -4,18 +4,11 @@ import java.io.Serializable;
 
 public abstract class GeneratedMessage implements Message, Serializable {
 	private transient int hash;
-
 	protected GeneratedMessage(final Builder builder) {}
 
-	public Builder toBuilder() {
-		Builder builder = newBuilderForType();
-		fill(builder);
-		return builder;
-	}
+	public abstract Builder toBuilder();
 
-	protected void fill(Builder builder) {}
-
-	public abstract Builder newBuilderForType();
+	public abstract Builder newEmptyBuilder();
 
 	@Override
 	public boolean equals(final Object o) {
@@ -33,6 +26,9 @@ public abstract class GeneratedMessage implements Message, Serializable {
 	}
 
 	public static abstract class Builder implements Message.Builder {
+		protected Builder() {}
+		protected Builder(final GeneratedMessage message) {}
+
 		@Override
 		public boolean equals(final Object o) {
 			return this == o || !(o == null || getClass() != o.getClass());

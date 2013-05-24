@@ -203,7 +203,7 @@ public class Pdef {
 
 	public static class MessageInfo extends TypeInfo {
 		private final Class<?> builderClass;
-		private final Constructor<?> builderConstructor;
+		private final Method builderMethod;
 		private final MessageInfo base;
 		private final Map<String, FieldInfo> fields;
 		private final Map<String, FieldInfo> declaredFields;
@@ -215,8 +215,8 @@ public class Pdef {
 			Class<?> baseType = cls.getSuperclass();
 			try {
 				builderClass = Class.forName(cls.getName() + "$Builder");
-				builderConstructor = builderClass.getConstructor();
-				base = baseType == Object.class || baseType == RuntimeException.class
+				builderMethod = cls.getDeclaredMethod("builder");
+				base = baseType == GeneratedMessage.class || baseType == GeneratedException.class
 					   ? null : (MessageInfo) infoOf(baseType);
 			} catch (Exception e) {
 				throw Throwables.propagate(e);
@@ -268,7 +268,6 @@ public class Pdef {
 		}
 
 		public Class<?> getBuilderClass() { return builderClass; }
-		public Constructor<?> getBuilderConstructor() { return builderConstructor; }
 		public MessageInfo getBase() { return base; }
 		public Map<String, FieldInfo> getFields() { return fields; }
 		public Map<String, FieldInfo> getDeclaredFields() { return declaredFields; }
@@ -277,7 +276,7 @@ public class Pdef {
 		public boolean isPolymorphic() { return !subtypes.isEmpty(); }
 		public Message.Builder createBuilder() {
 			try {
-				return (Message.Builder) builderConstructor.newInstance();
+				return (Message.Builder) builderMethod.invoke(null);
 			} catch (Exception e) {
 				throw Throwables.propagate(e);
 			}

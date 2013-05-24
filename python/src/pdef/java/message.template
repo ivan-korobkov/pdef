@@ -67,22 +67,13 @@ public class {{ name }} extends {{ base }} {
 
 {% endfor %}
     @Override
-    public Builder newBuilderForType() {
-        return builder();
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     @Override
-    public Builder toBuilder() {
-        Builder builder = newBuilderForType();
-        fill(builder);
-        return builder;
-    }
-
-    protected void fill(Builder builder) {
-        super.fill(builder);
-{% for field in declared_fields %}
-        builder.{{ field.set }}(this.{{ field.name }});
-{% endfor %}
+    public Builder newEmptyBuilder() {
+        return builder();
     }
 
     public static {{ name }} getInstance() {
@@ -98,15 +89,23 @@ public class {{ name }} extends {{ base }} {
         protected {{ field.type }} {{ field.name }};
 {% endfor %}
 
-        public Builder() {
+        protected Builder() {
             {% if base_type -%}
                 super({{ base_type }});
             {%- endif %}
 
         }
+
+        protected Builder(final {{ name }} message) {
+            super(message);
+            {% for field in declared_fields -%}
+                this.{{ field.name }} = message.{{ field.name }};
+            {% endfor %}
+
+        }
 {% if discriminator_field %}
 
-        public Builder(final {{ discriminator_field.type }} {{ discriminator_field.name }}) {
+        protected Builder(final {{ discriminator_field.type }} {{ discriminator_field.name }}) {
             this();
             this.{{ discriminator_field.name }} = {{ discriminator_field.name }};
         }

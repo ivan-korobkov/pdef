@@ -32,21 +32,21 @@ import com.google.common.util.concurrent.ListenableFuture;
 {% if doc %}
 /** {{ doc }} */
 {% endif %}
-{% if not bases %}
-public interface {{ iface_name(name) }} extends io.pdef.Interface {
-{% else %}
-public interface {{ iface_name(name) }} extends {% for base in bases -%}
+{% if not bases -%}
+    public interface {{ iface_name(name) }} {
+{%- else -%}
+    public interface {{ iface_name(name) }} extends {% for base in bases -%}
         {{ iface_base(base) }}
         {%- if loop.length > 1 and not loop.last %}, {% endif %}
 {%- endfor %} {
 
-{% endif -%}
+{% endif %}
 
 {% for method in declared_methods %}
 {% if method.doc %}
     /** {{ method.doc|indent(4) }} */
 {% endif %}
-{% if method.args|length < 3 %}
+{% if method.args|length <= 1 %}
     {{ method_result(method.result) }} {{ method.name }}({% for arg, argtype in method.args -%}
                 @io.pdef.Name("{{ arg }}") {{ argtype }} {{ arg }}
                 {%- if loop.length > 1 and not loop.last %}, {% endif %}
@@ -63,3 +63,4 @@ public interface {{ iface_name(name) }} extends {% for base in bases -%}
 {% endif %}
 {% endfor %}
 }
+

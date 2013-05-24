@@ -1,5 +1,6 @@
 package io.pdef;
 
+import com.google.common.collect.ImmutableMap;
 import io.pdef.test.GenericObject;
 import io.pdef.test.Sex;
 import io.pdef.test.User;
@@ -12,10 +13,10 @@ public class JsonFormatTest {
 
 	@Test
 	public void testRead() throws Exception {
-		String s = "{\"id\":\"id\",\"type\":\"EVENT\",\"TiMeStamP\":1369301577283,"
-				+ "\"eventtype\":\"user\",\"ip\":\"192.168.0.1\",\"USER\":{\"id\":\"user-10\","
-				+ "\"type\":\"user\",\"timestamp\":0,\"ISACTIVE\":true,\"name\":\"John Doe\","
-				+ "\"age\":18,\"sex\":\"male\",\"weight\":0.0}}";
+		String s = "{\"id\":\"id\",\"type\":\"event\",\"timestamp\":1369301577283,"
+				+ "\"eventtype\":\"user\",\"ip\":\"192.168.0.1\",\"user\":{\"id\":\"user-10\","
+				+ "\"type\":\"user\",\"timestamp\":0,\"isactive\":true,\"name\":\"John Doe\","
+				+ "\"age\":18,\"sex\":\"male\",\"shorts\":{\"10\":11,\"12\":13},\"weight\":0.0}}";
 
 		JsonFormat format = new JsonFormat();
 		UserEvent event = (UserEvent) format.read(GenericObject.class, s);
@@ -46,6 +47,7 @@ public class JsonFormatTest {
 							.setName("John Doe")
 							.setIsActive(true)
 							.setAge(18)
+							.setShorts(ImmutableMap.of((short) 10, 11L, (short) 12, 13L))
 							.build())
 					.build();
 	}

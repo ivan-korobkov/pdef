@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
@@ -17,11 +18,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class JsonFormat {
+	private final Pdef pdef;
 	private final ObjectMapper mapper;
-	private final Pdef pdef = new Pdef();
+	private final StringFormat stringFormat;
 
 	public JsonFormat() {
-		this.mapper = new ObjectMapper();
+		pdef = new Pdef();
+		mapper = new ObjectMapper();
+		stringFormat = new StringFormat(pdef);
 	}
 
 	public Object read(final Type type, final String s) {
@@ -113,7 +117,26 @@ public class JsonFormat {
 	}
 
 	private Object readMap(final Pdef.MapInfo info, final JsonNode node) throws IOException {
-		throw new UnsupportedOperationException("StringFormat required");
+		if (node.isNull()) return null;
+
+		ObjectNode objectNode = (ObjectNode) node;
+		Pdef.TypeInfo key = info.getKey();
+		Pdef.TypeInfo value = info.getValue();
+
+		ImmutableMap.Builder<Object, Object> builder = ImmutableMap.builder();
+		Iterator<Map.Entry<String, JsonNode>> children = objectNode.fields();
+
+		while (children.hasNext()) {
+			Map.Entry<String, JsonNode> child = children.next();
+			String name = child.getKey();
+			JsonNode childNode = child.getValue();
+
+			Object k = stringFormat.read(key, name);
+			Object v = read(value, childNode);
+			builder.put(k, v);
+		}
+
+		return builder.build();
 	}
 
 	private Object readMessage(final Pdef.MessageInfo info, final JsonNode node)
@@ -212,8 +235,22 @@ public class JsonFormat {
 	}
 
 	private void writeMap(final Pdef.MapInfo info, final Map<?, ?> object,
-			final JsonGenerator generator) {
-		throw new FormatException("Unsupported operation, StringFormat required");
+			final JsonGenerator generator) throws IOException {
+		if (object == null) {
+			generator.writeNull();
+			return;
+		}
+
+		Pdef.TypeInfo key = info.getKey();
+		Pdef.TypeInfo element = info.getValue();
+
+		generator.writeStartObject();
+		for (Map.Entry<?, ?> entry : object.entrySet()) {
+			String name = stringFormat.write(key, entry.getKey());
+			generator.writeFieldName(name);
+			write(element, entry.getValue(), generator);
+		}
+		generator.writeEndObject();
 	}
 
 	private void writeMessage(final Pdef.MessageInfo info, final Object message,

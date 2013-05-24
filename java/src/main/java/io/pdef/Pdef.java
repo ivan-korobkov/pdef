@@ -7,9 +7,11 @@ import com.google.common.collect.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -17,15 +19,36 @@ import static com.google.common.base.Preconditions.checkState;
 public class Pdef {
 	public static enum TypeEnum {
 		BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL, DATE, DATETIME, STRING, UUID, OBJECT,
-		VOID, LIST, SET, MAP, MESSAGE, ENUM, INTERFACE
+		VOID, LIST, SET, MAP, MESSAGE, ENUM, INTERFACE, FUTURE
 	}
 
 	private final Map<Type, TypeInfo> map = Maps.newHashMap();
+	private final Map<Class<?>, Constructor<?>> proxyConstructors = Maps.newHashMap();
 
 	public synchronized TypeInfo get(final Type javaType) {
 		TypeInfo info = map.get(javaType);
 		if (info != null) return info;
 		return info(javaType);
+	}
+
+	@SuppressWarnings("unchecked")
+	public synchronized <T> T proxy(final Class<T> cls, final InvocationHandler handler) {
+		Constructor<?> constructor = proxyConstructors.get(cls);
+		if (constructor == null) {
+			Class<?> proxyClass = Proxy.getProxyClass(cls.getClassLoader(), new Class[]{cls});
+			try {
+				constructor = proxyClass.getConstructor(new Class[] { InvocationHandler.class});
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			}
+			proxyConstructors.put(cls, constructor);
+		}
+
+		try {
+			return (T) constructor.newInstance(handler);
+		} catch (Exception e) {
+			throw Throwables.propagate(e);
+		}
 	}
 
 	private void add(final Type javaType, final TypeInfo typeInfo) {
@@ -35,10 +58,15 @@ public class Pdef {
 
 	private TypeInfo info(final Type javaType) {
 		checkNotNull(javaType);
-
-		Class<?> cls = (javaType instanceof ParameterizedType)
-					   ? (Class<?>) ((ParameterizedType) javaType).getRawType()
-					   : (Class<?>) javaType;
+		Class<?> cls;
+		if (javaType instanceof Class<?>) {
+			cls = (Class<?>) javaType;
+		} else if (javaType instanceof ParameterizedType) {
+			cls = (Class<?>) ((ParameterizedType) javaType).getRawType();
+		}
+		else {
+			throw new IllegalArgumentException("Unsupported java type " + javaType);
+		}
 
 		if (cls == boolean.class || cls == Boolean.class) return value(javaType, TypeEnum.BOOL);
 		if (cls == short.class || cls == Short.class) return value(javaType, TypeEnum.INT16);
@@ -57,6 +85,8 @@ public class Pdef {
 		if (cls == Map.class) return new MapInfo(javaType, this);
 		if (cls.isEnum()) return new EnumInfo(javaType, this);
 		if (Message.class.isAssignableFrom(cls)) return new MessageInfo(cls, this);
+		if (Future.class.isAssignableFrom(cls)) return new FutureInfo(javaType, this);
+		if (cls.isInterface()) return new InterfaceInfo(cls, this);
 
 		throw new IllegalArgumentException("Unsupported java type " + javaType);
 	}
@@ -99,7 +129,7 @@ public class Pdef {
 
 	public static class ListInfo extends TypeInfo {
 		private final TypeInfo element;
-		protected ListInfo(final Type javaType, final Pdef pdef) {
+		ListInfo(final Type javaType, final Pdef pdef) {
 			super(javaType, TypeEnum.LIST, pdef);
 			element = infoOf(param(javaType).getActualTypeArguments()[0]);
 		}
@@ -116,7 +146,7 @@ public class Pdef {
 
 	public static class SetInfo extends TypeInfo {
 		private final TypeInfo element;
-		protected SetInfo(final Type javaType, final Pdef pdef) {
+		SetInfo(final Type javaType, final Pdef pdef) {
 			super(javaType, TypeEnum.SET, pdef);
 			element = infoOf(param(javaType).getActualTypeArguments()[0]);
 		}
@@ -134,7 +164,7 @@ public class Pdef {
 	public static class MapInfo extends TypeInfo {
 		private final TypeInfo key;
 		private final TypeInfo value;
-		protected MapInfo(final Type javaType, final Pdef pdef) {
+		MapInfo(final Type javaType, final Pdef pdef) {
 			super(javaType, TypeEnum.MAP, pdef);
 			key = infoOf(param(javaType).getActualTypeArguments()[0]);
 			value = infoOf(param(javaType).getActualTypeArguments()[1]);
@@ -153,7 +183,7 @@ public class Pdef {
 
 	public static class EnumInfo extends TypeInfo {
 		private final BiMap<String, Enum<?>> values;
-		protected EnumInfo(final Type javaType, final Pdef pdef) {
+		EnumInfo(final Type javaType, final Pdef pdef) {
 			super(javaType, TypeEnum.ENUM, pdef);
 
 			ImmutableBiMap.Builder<String, Enum<?>> builder = ImmutableBiMap.builder();
@@ -180,7 +210,7 @@ public class Pdef {
 		private final Map<String, MessageInfo> subtypes;
 		private final FieldInfo discriminator;
 
-		protected MessageInfo(final Class<?> cls, final Pdef pdef) {
+		MessageInfo(final Class<?> cls, final Pdef pdef) {
 			super(cls, TypeEnum.MESSAGE, pdef);
 			Class<?> baseType = cls.getSuperclass();
 			try {
@@ -263,7 +293,7 @@ public class Pdef {
 		private final Method messageHas;
 		private final Method builderSet;
 
-		public FieldInfo(final Field field, final MessageInfo message) {
+		FieldInfo(final Field field, final MessageInfo message) {
 			this.field = checkNotNull(field);
 			this.message = checkNotNull(message);
 			type = message.infoOf(field.getGenericType());
@@ -329,7 +359,7 @@ public class Pdef {
 		private final Map<String, MethodInfo> methods;
 		private final Map<String, MethodInfo> declaredMethods;
 
-		protected InterfaceInfo(final Class<?> cls, final Pdef pdef) {
+		InterfaceInfo(final Class<?> cls, final Pdef pdef) {
 			super(cls, TypeEnum.INTERFACE, pdef);
 
 			ImmutableSet.Builder<InterfaceInfo> baseBuilder = ImmutableSet.builder();
@@ -366,7 +396,7 @@ public class Pdef {
 		private final TypeInfo result;
 		private final Map<String, TypeInfo> args;
 
-		public MethodInfo(final Method method, final InterfaceInfo iface) {
+		MethodInfo(final Method method, final InterfaceInfo iface) {
 			this.method = checkNotNull(method);
 			this.iface = checkNotNull(iface);
 
@@ -411,6 +441,17 @@ public class Pdef {
 		}
 	}
 
+	public static class FutureInfo extends TypeInfo {
+		private final TypeInfo element;
+
+		FutureInfo(final Type javaType, final Pdef pdef) {
+			super(javaType, TypeEnum.FUTURE, pdef);
+			element = pdef.get(param(javaType).getActualTypeArguments()[0]);
+		}
+
+		public TypeInfo getElement() { return element; }
+	}
+
 	public static class Invocation {
 		private final MethodInfo method;
 		private final Object[] args;
@@ -432,6 +473,27 @@ public class Pdef {
 					.addValue(method.getName())
 					.addValue(args)
 					.toString();
+		}
+
+		@Override
+		public boolean equals(final Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+
+			Invocation that = (Invocation) o;
+
+			// Probably incorrect - comparing Object[] arrays with Arrays.equals
+			if (!Arrays.equals(args, that.args)) return false;
+			if (method != null ? !method.equals(that.method) : that.method != null) return false;
+
+			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			int result = method != null ? method.hashCode() : 0;
+			result = 31 * result + (args != null ? Arrays.hashCode(args) : 0);
+			return result;
 		}
 	}
 

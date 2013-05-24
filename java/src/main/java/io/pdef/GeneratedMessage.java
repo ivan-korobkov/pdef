@@ -1,6 +1,8 @@
 package io.pdef;
 
-public abstract class GeneratedMessage implements Message {
+import java.io.Serializable;
+
+public abstract class GeneratedMessage implements Message, Serializable {
 	protected GeneratedMessage(final Builder builder) {}
 
 	public Builder toBuilder() {

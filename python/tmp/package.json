@@ -1,0 +1,11 @@
+{
+    "path": ["test.pdef"],
+    "deps": [],
+    "java": {
+        "out": "out",
+        "async": true
+    },
+    "csharp": {
+        "out": "c#"
+    }
+}

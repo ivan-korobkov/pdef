@@ -1,8 +1,6 @@
 package io.pdef;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.Reflection;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationHandler;
@@ -12,31 +10,36 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ClientProxy<T> implements InvocationHandler {
+	private final Class<T> cls;
 	private final Pdef.InterfaceInfo info;
-	private final InvocationsHandler handler;
+	private final InvocationChainHandler handler;
 
 	@Nullable private final ClientProxy parent;
 	@Nullable private final Pdef.Invocation invocation;
 
-	public ClientProxy(final Class<T> cls, final InvocationsHandler handler, final Pdef pdef) {
+	private T proxy;
+
+	public ClientProxy(final Class<T> cls, final Pdef pdef, final InvocationChainHandler handler) {
+		this.cls = checkNotNull(cls);
 		this.handler = checkNotNull(handler);
 		info = (Pdef.InterfaceInfo) pdef.get(cls);
 		parent = null;
 		invocation = null;
 	}
 
+	@SuppressWarnings("unchecked")
 	private ClientProxy(final ClientProxy parent, final Pdef.Invocation invocation,
-			final InvocationsHandler handler, final Pdef.InterfaceInfo info) {
+			final InvocationChainHandler handler, final Pdef.InterfaceInfo info) {
+		this.cls = (Class<T>) info.getJavaClass();
+		this.handler = checkNotNull(handler);
 		this.parent = checkNotNull(parent);
 		this.invocation = checkNotNull(invocation);
-		this.handler = checkNotNull(handler);
 		this.info = checkNotNull(info);
 	}
 
-	@SuppressWarnings("unchecked")
 	public T proxy() {
-		Class<?> cls = info.getJavaClass();
-		return (T) Reflection.newProxy(cls, this);
+		if (proxy == null) proxy = info.pdef.proxy(cls, this);
+		return proxy;
 	}
 
 	@Override
@@ -49,8 +52,9 @@ public class ClientProxy<T> implements InvocationHandler {
 		Pdef.Invocation nextInvocation = new Pdef.Invocation(minfo, objects);
 		Pdef.TypeInfo resultInfo = minfo.getResult();
 		if (resultInfo.getType() == Pdef.TypeEnum.INTERFACE) {
-			return new ClientProxy<Object>(this, nextInvocation, handler,
-					(Pdef.InterfaceInfo) resultInfo);
+			ClientProxy<Object> clientProxy = new ClientProxy<Object>(this, nextInvocation,
+					handler, (Pdef.InterfaceInfo) resultInfo);
+			return clientProxy.proxy();
 		}
 
 		List<Pdef.Invocation> chain = getChain(nextInvocation);
@@ -68,6 +72,6 @@ public class ClientProxy<T> implements InvocationHandler {
 			client = client.parent;
 		}
 
-		return ImmutableList.copyOf(calls);
+		return calls;
 	}
 }

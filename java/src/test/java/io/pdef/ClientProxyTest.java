@@ -1,63 +1,105 @@
 package io.pdef;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Atomics;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import io.pdef.test.interfaces.App;
+import io.pdef.test.interfaces.AsyncApp;
+import io.pdef.test.interfaces.Calc;
+import org.junit.Test;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.Assert.assertEquals;
+
 public class ClientProxyTest {
-//	@Test
-//	public void testInvoke() throws Exception {
-//		Pdef pdef = new Pdef();
-//		AtomicReference<List<Pdef.Invocation>> ref = Atomics.newReference();
-//		ClientProxy<App> client = ClientProxy.of(App.class, pdef, new Capture(ref));
-//
-//		App proxy = client.proxy();
-//		ListenableFuture<String> future = proxy.echoText("Hello, world");
-//		assertNull(future);
-//
-//		List<Pdef.Invocation> invocations = ref.get();
-//		assertNotNull(invocations);
-//		assertEquals(1, invocations.size());
-//
-//		Pdef.Invocation invocation = invocations.get(0);
-//		InterfaceDescriptor descriptor = (InterfaceDescriptor) pdef.getDescriptor(App.class);
-//		assertEquals(descriptor.getMethods().get("echotext"), invocation.getMethod());
-//		assertArrayEquals(new Object[]{"Hello, world"}, invocation.getArgs());
-//	}
-//
-//	@Test
-//	public void testInvokeChained() throws Exception {
-//		DescriptorPool pdef = new DefaultDescriptorPool();
-//		InterfaceDescriptor app = (InterfaceDescriptor) pdef.getDescriptor(App.class);
-//		InterfaceDescriptor calc = (InterfaceDescriptor) pdef.getDescriptor(Calc.class);
-//
-//		AtomicReference<List<Pdef.Invocation>> ref = Atomics.newReference();
-//		ClientProxy<App> client = ClientProxy.of(App.class, pdef, new Capture(ref));
-//
-//		App proxy = client.proxy();
-//		ListenableFuture<Integer> future = proxy.calc().sum(1, 2);
-//		assertNull(future);
-//
-//		List<Pdef.Invocation> invocations = ref.get();
-//		assertNotNull(invocations);
-//		assertEquals(2, invocations.size());
-//
-//		Pdef.Invocation i0 = invocations.get(0);
-//		Pdef.Invocation i1 = invocations.get(1);
-//		assertEquals(app.getMethods().get("calc"), i0.getMethod());
-//		assertEquals(calc.getMethods().get("sum"), i1.getMethod());
-//
-//		assertArrayEquals(new Object[0], i0.getArgs());
-//		assertArrayEquals(new Object[]{1, 2}, i1.getArgs());
-//	}
-//
-//	private static class Capture implements InvocationsHandler {
-//		private final AtomicReference<List<Pdef.Invocation>> ref;
-//
-//		private Capture(final AtomicReference<List<Pdef.Invocation>> ref) {
-//			this.ref = checkNotNull(ref);
-//		}
-//
-//		@Override
-//		public Object handle(final List<Pdef.Invocation> invocations) {
-//			ref.set(invocations);
-//			return null;
-//		}
-//	}
+	@Test
+	public void testPerf() throws Exception {
+		Pdef pdef = new Pdef();
+		ClientProxy<App> client = new ClientProxy<App>(App.class, pdef,
+				new InvocationChainHandler() {
+					@Override
+					public Object handle(final List<Pdef.Invocation> invocations) {
+						return 11;
+					}
+				});
+
+		App app = client.proxy();
+
+		int q = 0;
+		for (int i = 0; i < 200 * 1000; i++) {
+			q += app.calc().sum(1, 10);
+		}
+
+		int n = 10 * 1000 * 1000;
+		Stopwatch sw = new Stopwatch().start();
+		for (int i = 0; i < n; i++) {
+			q += app.calc().sum(1, 10);
+		}
+		System.out.println(sw);
+		System.out.println(q);
+	}
+
+	/** Should capture all method invocations with arguments. */
+	@Test
+	public void testInvoke_invocations() throws Exception {
+		Pdef pdef = new Pdef();
+		final AtomicReference<List<Pdef.Invocation>> ref = Atomics.newReference();
+		ClientProxy<App> client = new ClientProxy<App>(App.class, pdef,
+				new InvocationChainHandler() {
+					@Override
+					public Object handle(final List<Pdef.Invocation> invocations) {
+						ref.set(invocations);
+						return 11;
+					}
+				});
+
+		App app = client.proxy();
+		app.calc().sum(1, 10);
+
+		Pdef.InterfaceInfo appInfo = (Pdef.InterfaceInfo) pdef.get(App.class);
+		Pdef.InterfaceInfo calcInfo = (Pdef.InterfaceInfo) pdef.get(Calc.class);
+		assertEquals(ImmutableList.of(
+				new Pdef.Invocation(appInfo.getMethods().get("calc"), null),
+				new Pdef.Invocation(calcInfo.getMethods().get("sum"), new Object[] {1, 10})),
+				ref.get());
+	}
+
+	/** Should invoke a sync invocation chain handler. */
+	@Test
+	public void testInvoke() throws Exception {
+		Pdef pdef = new Pdef();
+		ClientProxy<App> client = new ClientProxy<App>(App.class, pdef,
+				new InvocationChainHandler() {
+					@Override
+					public Object handle(final List<Pdef.Invocation> invocations) {
+						return 11;
+					}
+				});
+
+		App app = client.proxy();
+		Integer result = app.calc().sum(1, 10);
+		assertEquals(11, (int) result);
+	}
+
+	/** Should invoke an async invocation chain handler. */
+	@Test
+	public void testInvoke_future() throws Exception {
+		Pdef pdef = new Pdef();
+		ClientProxy<AsyncApp> client = new ClientProxy<AsyncApp>(AsyncApp.class, pdef,
+				new InvocationChainHandler() {
+					@Override
+					public Object handle(final List<Pdef.Invocation> invocations) {
+						return Futures.immediateFuture(11);
+					}
+				});
+
+		AsyncApp app = client.proxy();
+		ListenableFuture<Integer> future = app.calc().sum(1, 10);
+		Integer result = future.get();
+		assertEquals(11, (int) result);
+	}
 }

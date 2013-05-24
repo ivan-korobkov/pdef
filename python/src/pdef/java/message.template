@@ -107,6 +107,7 @@ public class {{ name }} extends {{ base }} {
 {% if discriminator_field %}
 
         public Builder(final {{ discriminator_field.type }} {{ discriminator_field.name }}) {
+            this();
             this.{{ discriminator_field.name }} = {{ discriminator_field.name }};
         }
 {% endif %}

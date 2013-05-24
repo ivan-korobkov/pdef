@@ -2,7 +2,6 @@ package io.pdef;
 
 import java.util.List;
 
-public interface InvocationsHandler {
-
+public interface InvocationChainHandler {
 	Object handle(List<Pdef.Invocation> invocations);
 }

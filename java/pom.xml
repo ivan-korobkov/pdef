@@ -13,6 +13,9 @@
 
 	<properties>
 		<jackson.version>2.2.1</jackson.version>
+		<jsr305.version>2.0.1</jsr305.version>
+		<guava.version>14.0.1</guava.version>
+		<rxjava.version>0.8.4</rxjava.version>
 
 		<pdef.path>pdefc</pdef.path>
 		<pdef.test.src>${project.basedir}/src/test/pdef/</pdef.test.src>
@@ -38,7 +41,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>14.0.1</version>
+			<version>${guava.version}</version>
 		</dependency>
 
 		<dependency>
@@ -56,13 +59,13 @@
 		<dependency>
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
-			<version>2.0.1</version>
+			<version>${jsr305.version}</version>
 		</dependency>
 
 		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.1</version>
+			<groupId>com.netflix.rxjava</groupId>
+			<artifactId>rxjava-core</artifactId>
+			<version>${rxjava.version}</version>
 		</dependency>
 	</dependencies>
 

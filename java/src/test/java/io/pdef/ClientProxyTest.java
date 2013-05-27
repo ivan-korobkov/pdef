@@ -3,15 +3,17 @@ package io.pdef;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Atomics;
+import io.pdef.fluent.FluentFuture;
+import io.pdef.fluent.FluentFutures;
 import io.pdef.test.interfaces.App;
 import io.pdef.test.interfaces.AsyncApp;
 import io.pdef.test.interfaces.Calc;
-import static org.junit.Assert.assertEquals;
 import org.junit.Test;
-import rx.Observable;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.Assert.assertEquals;
 
 public class ClientProxyTest {
 	@Test
@@ -91,13 +93,13 @@ public class ClientProxyTest {
 				new InvocationChainHandler() {
 					@Override
 					public Object handle(final List<Pdef.Invocation> invocations) {
-						return ObservableValue.immediate(11);
+						return FluentFutures.of(11);
 					}
 				});
 
 		AsyncApp app = client.proxy();
-		Observable<Integer> future = app.calc().sum(1, 10);
-		Integer result = future.single();
+		FluentFuture<Integer> future = app.calc().sum(1, 10);
+		Integer result = future.get();
 		assertEquals(11, (int) result);
 	}
 }

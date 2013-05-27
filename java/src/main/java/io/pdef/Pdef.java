@@ -1,19 +1,17 @@
 package io.pdef;
 
 import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.*;
-import rx.Observable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 public class Pdef {
 	public static enum TypeEnum {
@@ -85,7 +83,6 @@ public class Pdef {
 		if (cls.isEnum()) return new EnumInfo(javaType, this);
 		if (Message.class.isAssignableFrom(cls)) return new MessageInfo(cls, this);
 		if (Future.class.isAssignableFrom(cls)) return new FutureInfo(javaType, this);
-		if (Observable.class.isAssignableFrom(cls)) return new FutureInfo(javaType, this);
 		if (cls.isInterface()) return new InterfaceInfo(cls, this);
 
 		throw new IllegalArgumentException("Unsupported java type " + javaType);

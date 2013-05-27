@@ -1,0 +1,58 @@
+module io.pdef.rpc;
+
+/** Single request. */
+message Request {
+    // Ordered list of invocations with named args.
+    calls   map<string, map<string, object>>;
+}
+
+/** Response. */
+message Response {
+    status  ResponseStatus;
+    result  object; // Application specific result.
+    exc     object; // Application specific exception.
+    rpcExc  RpcException;
+}
+
+/** Response status. */
+enum ResponseStatus {
+    OK, ERROR, RPC_ERROR
+}
+
+/** Async message types. */
+enum AsyncMessageType {
+    REQUEST, RESPONSE
+}
+
+/** Abstract async message. */
+message AsyncMessage {
+    type    AsyncMessageType, discriminator;
+}
+
+/** Async request wraps a normal request and adds a unique id. */
+message AsyncRequest : AsyncMessage(AsyncMessageType.REQUEST) {
+    id      string; // Request id, will be included in a response.
+    request Request;
+}
+
+/** Async response wraps a normal response and adds a request id. */
+message AsyncResponse : AsyncMessage(AsyncMessageType.RESPONSE) {
+    requestId   string; // Copied from a request.
+    response    Response;
+}
+
+/** Rpc exception is raised when the server fails to process an RPC request. */
+exception RpcException {
+    code    RpcExceptionCode;
+    text    string;
+}
+
+/** Rpc exception codes, most can be mapped to HTTP status codes. */
+enum RpcExceptionCode {
+    SERVER_ERROR, // An unhandled server error.
+    SERVICE_UNAVAILABLE, // The service is temporarily unavailable.
+    BAD_REQUEST, // The request could not be understood by the server.
+    METHOD_NOT_FOUND, // A method cannot be found.
+    NOT_FOUND, // A resource or an object cannot be found.
+    WRONG_ARGS // The request contains a wrong number of arguments or wrong argument types.
+}

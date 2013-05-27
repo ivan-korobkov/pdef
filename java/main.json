@@ -1,0 +1,8 @@
+{
+    "path": [
+        "../rpc.pdef"
+    ],
+    "java": {
+        "out": "target/generated-sources/pdef"
+    }
+}

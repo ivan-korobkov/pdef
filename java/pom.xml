@@ -106,12 +106,26 @@
 				<version>1.4</version>
 				<executions>
 					<execution>
+						<id>generate-sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<exec executable="${pdef.path}" failonerror="true">
+									<arg value="--config=main.json" />
+								</exec>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
 						<id>generate-test-sources</id>
 						<phase>generate-test-sources</phase>
 						<configuration>
 							<tasks>
 								<exec executable="${pdef.path}" failonerror="true">
-									<arg value="--config=package.json" />
+									<arg value="--config=test.json" />
 								</exec>
 							</tasks>
 						</configuration>
@@ -127,6 +141,18 @@
 				<artifactId>build-helper-maven-plugin</artifactId>
 				<version>1.5</version>
 				<executions>
+					<execution>
+						<id>add-sources</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>${project.build.directory}/generated-sources/pdef/</source>
+							</sources>
+						</configuration>
+					</execution>
 					<execution>
 						<id>add-test-sources</id>
 						<phase>generate-test-sources</phase>

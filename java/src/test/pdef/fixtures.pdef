@@ -4,6 +4,10 @@ enum ObjectType {
     OBJECT, USER, POST, PHOTO, NOTE, EVENT
 }
 
+message Response {
+    success     bool;
+    result      object;
+}
 
 message GenericObject {
     id          string;

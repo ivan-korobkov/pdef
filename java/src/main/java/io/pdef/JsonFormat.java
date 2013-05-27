@@ -1,6 +1,7 @@
 package io.pdef;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -9,8 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.List;
@@ -28,36 +28,54 @@ public class JsonFormat {
 		stringFormat = new StringFormat(pdef);
 	}
 
-	public Object read(final Type type, final String s) {
+	public Object read(final Type type, final String src) {
+		JsonNode tree;
+		try {
+			tree = mapper.readTree(src);
+		} catch (IOException e) {
+			throw new FormatException(e);
+		}
+
+		return read(type, tree);
+	}
+
+	public Object read(final Type type, final InputStream src) {
+		JsonNode tree;
+		try {
+			tree = mapper.readTree(src);
+		} catch (IOException e) {
+			throw new FormatException(e);
+		}
+
+		return read(type, tree);
+	}
+
+	public Object read(final Type type, final File src) {
+		JsonNode tree;
+		try {
+			tree = mapper.readTree(src);
+		} catch (IOException e) {
+			throw new FormatException(e);
+		}
+
+		return read(type, tree);
+	}
+
+	public Object read(final Type type, final Reader src) {
+		JsonNode tree;
+		try {
+			tree = mapper.readTree(src);
+		} catch (IOException e) {
+			throw new FormatException(e);
+		}
+
+		return read(type, tree);
+	}
+
+	public Object read(final Type type, final JsonNode tree) {
 		try {
 			Pdef.TypeInfo info = pdef.get(type);
-			JsonNode tree = mapper.readTree(s);
 			return read(info, tree);
-		} catch (FormatException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new FormatException(e);
-		}
-	}
-
-	public String write(final Object object) {
-		try {
-			Pdef.TypeInfo info = pdef.get(object.getClass());
-			return write(object, info);
-		} catch (FormatException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new FormatException(e);
-		}
-	}
-
-	public String write(final Object object, final Pdef.TypeInfo info) {
-		try {
-			StringWriter out = new StringWriter();
-			JsonGenerator generator = mapper.getFactory().createGenerator(out);
-			write(info, object, generator);
-			generator.close();
-			return out.toString();
 		} catch (FormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -183,12 +201,37 @@ public class JsonFormat {
 	}
 
 	private Object readObject(final Pdef.TypeInfo info, final JsonNode node) {
-		throw new FormatException("Unsupported operation");
+		return node;
 	}
 
 	// === Writing ===
 
-	private void write(final Pdef.TypeInfo info, final Object object,
+	public String write(final Object object) {
+		try {
+			Pdef.TypeInfo info = pdef.get(object.getClass());
+			return write(object, info);
+		} catch (FormatException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new FormatException(e);
+		}
+	}
+
+	public String write(final Object object, final Pdef.TypeInfo info) {
+		try {
+			StringWriter out = new StringWriter();
+			JsonGenerator generator = mapper.getFactory().createGenerator(out);
+			write(object, info, generator);
+			generator.close();
+			return out.toString();
+		} catch (FormatException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new FormatException(e);
+		}
+	}
+
+	private void write(final Object object, final Pdef.TypeInfo info,
 			final JsonGenerator generator) throws IOException {
 		switch (info.getType()) {
 			case BOOL: generator.writeBoolean(object == null ? false : (Boolean) object); return;
@@ -216,7 +259,7 @@ public class JsonFormat {
 		if (object != null) {
 			Pdef.TypeInfo elementInfo = info.getElement();
 			for (Object element : object) {
-				write(elementInfo, element, generator);
+				write(element, elementInfo, generator);
 			}
 		}
 		generator.writeEndArray();
@@ -228,7 +271,7 @@ public class JsonFormat {
 		if (object != null) {
 			Pdef.TypeInfo elementInfo = info.getElement();
 			for (Object element : object) {
-				write(elementInfo, element, generator);
+				write(element, elementInfo, generator);
 			}
 		}
 		generator.writeEndArray();
@@ -248,7 +291,7 @@ public class JsonFormat {
 		for (Map.Entry<?, ?> entry : object.entrySet()) {
 			String name = stringFormat.write(key, entry.getKey());
 			generator.writeFieldName(name);
-			write(element, entry.getValue(), generator);
+			write(entry.getValue(), element, generator);
 		}
 		generator.writeEndObject();
 	}
@@ -271,7 +314,7 @@ public class JsonFormat {
 			Object value = field.get(message);
 			Pdef.TypeInfo finfo = field.getType();
 			generator.writeFieldName(field.getName());
-			write(finfo, value, generator);
+			write(value, finfo, generator);
 		}
 		generator.writeEndObject();
 	}
@@ -286,7 +329,14 @@ public class JsonFormat {
 	}
 
 	private void writeObject(final Pdef.TypeInfo info, final Object object,
-			final JsonGenerator generator) {
-		throw new FormatException("Unsupported operation");
+			final JsonGenerator generator) throws IOException {
+		if (object == null) {
+			generator.writeNull();
+		} else if (object instanceof TreeNode) {
+			generator.writeObject(object);
+		} else {
+			Pdef.TypeInfo objectInfo = pdef.get(object.getClass());
+			write(object, objectInfo, generator);
+		}
 	}
 }

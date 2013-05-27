@@ -1,5 +1,6 @@
 package io.pdef;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
 import javax.annotation.Nullable;
@@ -12,14 +13,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ClientProxy<T> implements InvocationHandler {
 	private final Class<T> cls;
 	private final Pdef.InterfaceInfo info;
-	private final InvocationChainHandler handler;
+	private final Function<List<Pdef.Invocation>, Object> handler;
 
 	@Nullable private final ClientProxy parent;
 	@Nullable private final Pdef.Invocation invocation;
 
 	private T proxy;
 
-	public ClientProxy(final Class<T> cls, final Pdef pdef, final InvocationChainHandler handler) {
+	public ClientProxy(final Class<T> cls, final Pdef pdef,
+			final Function<List<Pdef.Invocation>, Object> handler) {
 		this.cls = checkNotNull(cls);
 		this.handler = checkNotNull(handler);
 		info = (Pdef.InterfaceInfo) pdef.get(cls);
@@ -29,7 +31,7 @@ public class ClientProxy<T> implements InvocationHandler {
 
 	@SuppressWarnings("unchecked")
 	private ClientProxy(final ClientProxy parent, final Pdef.Invocation invocation,
-			final InvocationChainHandler handler, final Pdef.InterfaceInfo info) {
+			final Function<List<Pdef.Invocation>, Object> handler, final Pdef.InterfaceInfo info) {
 		this.cls = (Class<T>) info.getJavaClass();
 		this.handler = checkNotNull(handler);
 		this.parent = checkNotNull(parent);
@@ -58,7 +60,7 @@ public class ClientProxy<T> implements InvocationHandler {
 		}
 
 		List<Pdef.Invocation> chain = getChain(nextInvocation);
-		return handler.handle(chain);
+		return handler.apply(chain);
 
 	}
 

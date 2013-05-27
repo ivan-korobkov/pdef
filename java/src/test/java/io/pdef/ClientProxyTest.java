@@ -1,5 +1,6 @@
 package io.pdef;
 
+import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Atomics;
@@ -10,6 +11,7 @@ import io.pdef.test.interfaces.AsyncApp;
 import io.pdef.test.interfaces.Calc;
 import org.junit.Test;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -20,9 +22,9 @@ public class ClientProxyTest {
 	public void testPerf() throws Exception {
 		Pdef pdef = new Pdef();
 		ClientProxy<App> client = new ClientProxy<App>(App.class, pdef,
-				new InvocationChainHandler() {
+				new Function<List<Pdef.Invocation>, Object>() {
 					@Override
-					public Object handle(final List<Pdef.Invocation> invocations) {
+					public Object apply(final List<Pdef.Invocation> input) {
 						return 11;
 					}
 				});
@@ -49,10 +51,10 @@ public class ClientProxyTest {
 		Pdef pdef = new Pdef();
 		final AtomicReference<List<Pdef.Invocation>> ref = Atomics.newReference();
 		ClientProxy<App> client = new ClientProxy<App>(App.class, pdef,
-				new InvocationChainHandler() {
+				new Function<List<Pdef.Invocation>, Object>() {
 					@Override
-					public Object handle(final List<Pdef.Invocation> invocations) {
-						ref.set(invocations);
+					public Object apply(@Nullable final List<Pdef.Invocation> input) {
+						ref.set(input);
 						return 11;
 					}
 				});
@@ -73,9 +75,9 @@ public class ClientProxyTest {
 	public void testInvoke() throws Exception {
 		Pdef pdef = new Pdef();
 		ClientProxy<App> client = new ClientProxy<App>(App.class, pdef,
-				new InvocationChainHandler() {
+				new Function<List<Pdef.Invocation>, Object>() {
 					@Override
-					public Object handle(final List<Pdef.Invocation> invocations) {
+					public Object apply(@Nullable final List<Pdef.Invocation> input) {
 						return 11;
 					}
 				});
@@ -90,9 +92,10 @@ public class ClientProxyTest {
 	public void testInvoke_future() throws Exception {
 		Pdef pdef = new Pdef();
 		ClientProxy<AsyncApp> client = new ClientProxy<AsyncApp>(AsyncApp.class, pdef,
-				new InvocationChainHandler() {
+				new Function<List<Pdef.Invocation>, Object>() {
+					@Nullable
 					@Override
-					public Object handle(final List<Pdef.Invocation> invocations) {
+					public Object apply(@Nullable final List<Pdef.Invocation> input) {
 						return FluentFutures.of(11);
 					}
 				});

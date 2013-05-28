@@ -17,13 +17,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class JsonFormat {
 	private final Pdef pdef;
 	private final ObjectMapper mapper;
 	private final StringFormat stringFormat;
 
 	public JsonFormat() {
-		pdef = new Pdef();
+		this(new Pdef());
+	}
+
+	public JsonFormat(final Pdef pdef) {
+		this.pdef = checkNotNull(pdef);
 		mapper = new ObjectMapper();
 		stringFormat = new StringFormat(pdef);
 	}

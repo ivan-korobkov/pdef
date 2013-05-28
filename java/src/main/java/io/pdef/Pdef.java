@@ -60,8 +60,7 @@ public class Pdef {
 			cls = (Class<?>) javaType;
 		} else if (javaType instanceof ParameterizedType) {
 			cls = (Class<?>) ((ParameterizedType) javaType).getRawType();
-		}
-		else {
+		} else {
 			throw new IllegalArgumentException("Unsupported java type " + javaType);
 		}
 
@@ -435,6 +434,20 @@ public class Pdef {
 				throw Throwables.propagate(e);
 			}
 		}
+
+		public Object invoke(final Object o, final Iterable<Object> args) {
+			Object[] argArray = Iterables.toArray(args, Object.class);
+			return invoke(o, argArray);
+		}
+
+		public Object invoke(final Object o, final Map<String, Object> args) {
+			List<Object> argList = Lists.newArrayList();
+			for (Map.Entry<String, Object> entry : args.entrySet()) {
+				Object value = args.get(entry.getKey());
+				argList.add(value);
+			}
+			return invoke(o, argList);
+		}
 	}
 
 	public static class FutureInfo extends TypeInfo {
@@ -498,7 +511,6 @@ public class Pdef {
 	}
 
 	@SuppressWarnings("unchecked")
-
 	static Enum<?>[] enumValues(final Type javaType) {
 		Class<?> cls = (Class<?>) javaType;
 		try {

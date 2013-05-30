@@ -1,4 +1,7 @@
-package io.pdef;
+package io.pdef.formats;
+
+import io.pdef.Pdef;
+import io.pdef.PdefDescriptor;
 
 import javax.annotation.Nonnull;
 
@@ -20,11 +23,11 @@ public class StringFormat {
 	@SuppressWarnings("unchecked")
 	public <T> T read(final Class<T> cls, final String s) {
 		checkNotNull(cls);
-		Pdef.TypeInfo info = pdef.get(cls);
+		PdefDescriptor info = pdef.get(cls);
 		return (T) read(info, s);
 	}
 
-	public Object read(final Pdef.TypeInfo info, final String s) {
+	public Object read(final PdefDescriptor info, final String s) {
 		checkNotNull(info);
 
 		try {
@@ -48,11 +51,11 @@ public class StringFormat {
 	public String write(@Nonnull final Object object) {
 		checkNotNull(object);
 
-		Pdef.TypeInfo info = pdef.get(object.getClass());
+		PdefDescriptor info = pdef.get(object.getClass());
 		return write(info, object);
 	}
 
-	public String write(final Pdef.TypeInfo info, final Object o) {
+	public String write(final PdefDescriptor info, final Object o) {
 		checkNotNull(info);
 
 		try {

@@ -1,5 +1,6 @@
-package io.pdef;
+package io.pdef.formats;
 
+import io.pdef.Pdef;
 import io.pdef.test.ObjectType;
 import org.junit.Before;
 import org.junit.Test;

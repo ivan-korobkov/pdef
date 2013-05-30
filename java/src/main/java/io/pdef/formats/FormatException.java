@@ -1,4 +1,4 @@
-package io.pdef;
+package io.pdef.formats;
 
 public class FormatException extends RuntimeException {
 	public FormatException() {}

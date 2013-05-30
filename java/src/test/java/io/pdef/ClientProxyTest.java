@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Atomics;
 import io.pdef.fluent.FluentFuture;
 import io.pdef.fluent.FluentFutures;
+import io.pdef.PdefProxy;
 import io.pdef.test.interfaces.App;
 import io.pdef.test.interfaces.AsyncApp;
 import io.pdef.test.interfaces.Calc;
@@ -21,7 +22,7 @@ public class ClientProxyTest {
 	@Test
 	public void testPerf() throws Exception {
 		Pdef pdef = new Pdef();
-		ClientProxy<App> client = new ClientProxy<App>(App.class, pdef,
+		PdefProxy<App> client = new PdefProxy<App>(App.class, pdef,
 				new Function<List<Pdef.Invocation>, Object>() {
 					@Override
 					public Object apply(final List<Pdef.Invocation> input) {
@@ -50,7 +51,7 @@ public class ClientProxyTest {
 	public void testInvoke_invocations() throws Exception {
 		Pdef pdef = new Pdef();
 		final AtomicReference<List<Pdef.Invocation>> ref = Atomics.newReference();
-		ClientProxy<App> client = new ClientProxy<App>(App.class, pdef,
+		PdefProxy<App> client = new PdefProxy<App>(App.class, pdef,
 				new Function<List<Pdef.Invocation>, Object>() {
 					@Override
 					public Object apply(@Nullable final List<Pdef.Invocation> input) {
@@ -62,8 +63,8 @@ public class ClientProxyTest {
 		App app = client.proxy();
 		app.calc().sum(1, 10);
 
-		Pdef.InterfaceInfo appInfo = (Pdef.InterfaceInfo) pdef.get(App.class);
-		Pdef.InterfaceInfo calcInfo = (Pdef.InterfaceInfo) pdef.get(Calc.class);
+		PdefInterface appInfo = (PdefInterface) pdef.get(App.class);
+		PdefInterface calcInfo = (PdefInterface) pdef.get(Calc.class);
 		assertEquals(ImmutableList.of(
 				new Pdef.Invocation(appInfo.getMethods().get("calc"), null),
 				new Pdef.Invocation(calcInfo.getMethods().get("sum"), new Object[] {1, 10})),
@@ -74,7 +75,7 @@ public class ClientProxyTest {
 	@Test
 	public void testInvoke() throws Exception {
 		Pdef pdef = new Pdef();
-		ClientProxy<App> client = new ClientProxy<App>(App.class, pdef,
+		PdefProxy<App> client = new PdefProxy<App>(App.class, pdef,
 				new Function<List<Pdef.Invocation>, Object>() {
 					@Override
 					public Object apply(@Nullable final List<Pdef.Invocation> input) {
@@ -91,7 +92,7 @@ public class ClientProxyTest {
 	@Test
 	public void testInvoke_future() throws Exception {
 		Pdef pdef = new Pdef();
-		ClientProxy<AsyncApp> client = new ClientProxy<AsyncApp>(AsyncApp.class, pdef,
+		PdefProxy<AsyncApp> client = new PdefProxy<AsyncApp>(AsyncApp.class, pdef,
 				new Function<List<Pdef.Invocation>, Object>() {
 					@Nullable
 					@Override

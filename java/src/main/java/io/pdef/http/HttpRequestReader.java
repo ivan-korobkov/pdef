@@ -3,9 +3,9 @@ package io.pdef.http;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import io.pdef.FormatException;
-import io.pdef.Pdef;
-import io.pdef.StringFormat;
+import io.pdef.*;
+import io.pdef.formats.FormatException;
+import io.pdef.formats.StringFormat;
 import io.pdef.rpc.MethodCall;
 import io.pdef.rpc.Request;
 import io.pdef.rpc.RpcException;
@@ -20,11 +20,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class HttpRequestReader {
 	private static final Splitter SPLITTER = Splitter.on("/");
 	private final StringFormat format;
-	private final Pdef.InterfaceInfo info;
+	private final PdefInterface info;
 
 	public HttpRequestReader(final Class<?> cls, final Pdef pdef) {
 		format = new StringFormat(pdef);
-		info = (Pdef.InterfaceInfo) pdef.get(cls);
+		info = (PdefInterface) pdef.get(cls);
 	}
 
 	public Request read(final HttpServletRequest request) throws RpcException {
@@ -40,7 +40,7 @@ public class HttpRequestReader {
 		Iterator<String> iterator = parts.iterator();
 
 		StringBuilder path = new StringBuilder();
-		Pdef.InterfaceInfo iface = info;
+		PdefInterface iface = info;
 
 		ImmutableList.Builder<MethodCall> callBuilder = ImmutableList.builder();
 		while (iterator.hasNext()) {
@@ -48,7 +48,7 @@ public class HttpRequestReader {
 			path.append("/");
 			path.append(methodName);
 
-			Pdef.MethodInfo methodInfo = iface == null ? null : iface.getMethods().get(methodName);
+			PdefMethod methodInfo = iface == null ? null : iface.getMethods().get(methodName);
 			if (methodInfo == null) {
 				throw RpcException.builder()
 						.setCode(RpcExceptionCode.BAD_REQUEST)
@@ -57,7 +57,7 @@ public class HttpRequestReader {
 			}
 
 			ImmutableMap.Builder<String, Object> argBuilder = ImmutableMap.builder();
-			for (Map.Entry<String, Pdef.TypeInfo> entry : methodInfo.getArgs().entrySet()) {
+			for (Map.Entry<String, PdefDescriptor> entry : methodInfo.getArgs().entrySet()) {
 				if (!iterator.hasNext()) {
 					throw RpcException.builder()
 							.setCode(RpcExceptionCode.BAD_REQUEST)
@@ -83,9 +83,9 @@ public class HttpRequestReader {
 					.build();
 			callBuilder.add(call);
 
-			Pdef.TypeInfo resultInfo = methodInfo.getResult();
-			if (resultInfo.getType() == Pdef.TypeEnum.INTERFACE) {
-				iface = (Pdef.InterfaceInfo) resultInfo;
+			PdefDescriptor resultInfo = methodInfo.getResult();
+			if (resultInfo.getType() == PdefType.INTERFACE) {
+				iface = (PdefInterface) resultInfo;
 			} else {
 				iface = null;
 			}

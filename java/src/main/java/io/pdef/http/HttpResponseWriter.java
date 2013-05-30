@@ -1,7 +1,7 @@
 package io.pdef.http;
 
 import com.google.common.net.MediaType;
-import io.pdef.JsonFormat;
+import io.pdef.formats.JsonFormat;
 import io.pdef.Pdef;
 import io.pdef.rpc.Response;
 import io.pdef.rpc.ResponseStatus;

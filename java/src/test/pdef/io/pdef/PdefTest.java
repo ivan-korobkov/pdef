@@ -10,7 +10,7 @@ public class PdefTest {
 	@Test
 	public void testMessage() throws Exception {
 		Pdef pdef = new Pdef();
-		Pdef.MessageInfo info = (Pdef.MessageInfo) pdef.get(UserEvent.class);
+		PdefMessage info = (PdefMessage) pdef.get(UserEvent.class);
 		assertNotNull(info);
 	}
 }

@@ -1,4 +1,4 @@
-package io.pdef;
+package io.pdef.formats;
 
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;

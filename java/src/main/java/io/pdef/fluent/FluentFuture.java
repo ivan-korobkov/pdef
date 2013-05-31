@@ -12,6 +12,8 @@ public interface FluentFuture<V> extends ListenableFuture<V> {
 
 	<V1> FluentFuture<V1> then(Function<V, V1> function);
 
+	FluentFuture<V> onErrorReturn(Function<Exception, V> function);
+
 	FluentFuture<V> addCallback(FutureCallback<V> callback);
 
 	V getUnchecked();

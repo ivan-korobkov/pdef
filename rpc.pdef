@@ -46,10 +46,30 @@ exception RpcException {
 
 /** Rpc exception codes, most can be mapped to HTTP status codes. */
 enum RpcExceptionCode {
-    SERVER_ERROR, // An unhandled server error.
-    SERVICE_UNAVAILABLE, // The service is temporarily unavailable.
+    // An unhandled server error.
+    SERVER_ERROR,
+
+    // The service is temporarily unavailable,
+    SERVICE_UNAVAILABLE,
+
+    // Timeout.
     TIMEOUT,
-    BAD_REQUEST // The request could not be understood by the server, more info should be
-                // included in the exception text, possible causes are: a method is not found,
-                // wrong arguments, deserialization failure, etc.
+
+    // The request could not be understood by the server.
+    BAD_REQUEST,
+
+    // A method is not found.
+    METHOD_NOT_FOUND,
+
+    // The method calls are empty.
+    METHOD_CALLS_REQUIRED,
+
+    // The last method is not a data method, more chained methods required.
+    DATA_METHOD_CALL_REQUIRED,
+
+    // Method calls on data types are not supported.
+    METHOD_CALL_NOT_SUPPORTED,
+
+    // Wrong number or type of the method arguments.
+    WRONG_METHOD_ARGUMENTS
 }

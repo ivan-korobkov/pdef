@@ -6,25 +6,23 @@ import com.google.common.collect.ImmutableMap;
 import io.pdef.*;
 import io.pdef.formats.FormatException;
 import io.pdef.formats.StringFormat;
-import io.pdef.rpc.MethodCall;
-import io.pdef.rpc.Request;
-import io.pdef.rpc.RpcException;
-import io.pdef.rpc.RpcExceptionCode;
+import io.pdef.rpc.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Iterator;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static io.pdef.rpc.RpcExceptions.*;
 
 public class HttpRequestReader {
 	private static final Splitter SPLITTER = Splitter.on("/");
 	private final StringFormat format;
-	private final PdefInterface info;
+	private final PdefInterface iface;
 
 	public HttpRequestReader(final Class<?> cls, final Pdef pdef) {
 		format = new StringFormat(pdef);
-		info = (PdefInterface) pdef.get(cls);
+		iface = (PdefInterface) pdef.get(cls);
 	}
 
 	public Request read(final HttpServletRequest request) throws RpcException {
@@ -33,66 +31,55 @@ public class HttpRequestReader {
 
 	public Request read(final String requestPath) {
 		checkNotNull(requestPath);
-
-		String s = requestPath;
-		if (s.startsWith("/")) s = s.substring(1);
-		Iterable<String> parts = SPLITTER.split(s);
-		Iterator<String> iterator = parts.iterator();
-
+		String s = requestPath.startsWith("/") ? requestPath.substring(1) : requestPath;
+		PdefInterface descriptor = iface;
 		StringBuilder path = new StringBuilder();
-		PdefInterface iface = info;
 
-		ImmutableList.Builder<MethodCall> callBuilder = ImmutableList.builder();
+		Iterator<String> iterator = SPLITTER.split(s).iterator();
+		if (!iterator.hasNext()) throw RpcExceptions.methodCallsRequired();
+
+		ImmutableList.Builder<MethodCall> b = ImmutableList.builder();
 		while (iterator.hasNext()) {
-			String methodName = iterator.next();
+			String name = iterator.next();
 			path.append("/");
-			path.append(methodName);
+			path.append(name);
 
-			PdefMethod methodInfo = iface == null ? null : iface.getMethods().get(methodName);
-			if (methodInfo == null) {
-				throw RpcException.builder()
-						.setCode(RpcExceptionCode.BAD_REQUEST)
-						.setText("Method not found: " + path)
-						.build();
-			}
+			PdefMethod method = descriptor.getMethods().get(name);
+			if (method == null) throw methodNotFound(path);
 
-			ImmutableMap.Builder<String, Object> argBuilder = ImmutableMap.builder();
-			for (Map.Entry<String, PdefDescriptor> entry : methodInfo.getArgs().entrySet()) {
-				if (!iterator.hasNext()) {
-					throw RpcException.builder()
-							.setCode(RpcExceptionCode.BAD_REQUEST)
-							.setText("Wrong number of arguments: " + path)
-							.build();
-				}
+			ImmutableMap.Builder<String, Object> ab = ImmutableMap.builder();
+			for (Map.Entry<String, PdefDatatype> entry : method.getArgs().entrySet()) {
+				if (!iterator.hasNext()) throw wrongNumberOfMethodArgs(path, method);
 
 				Object arg;
 				try {
 					arg = format.read(entry.getValue(), iterator.next());
 				} catch (FormatException e) {
-					throw RpcException.builder()
-							.setCode(RpcExceptionCode.BAD_REQUEST)
-							.setText("Failed to parse arguments: " + path)
-							.build();
+					throw wrongMethodArgs(path);
 				}
-				argBuilder.put(entry.getKey(), arg);
+				ab.put(entry.getKey(), arg);
 			}
 
 			MethodCall call = MethodCall.builder()
-					.setMethod(methodName)
-					.setArgs(argBuilder.build())
+					.setMethod(name)
+					.setArgs(ab.build())
 					.build();
-			callBuilder.add(call);
+			b.add(call);
 
-			PdefDescriptor resultInfo = methodInfo.getResult();
-			if (resultInfo.getType() == PdefType.INTERFACE) {
-				iface = (PdefInterface) resultInfo;
-			} else {
-				iface = null;
+			if (method.isInterface()) {
+				// The method returns and interface, there should be more calls.
+				if (!iterator.hasNext()) throw moreMethodCallsRequired(path);
+
+				descriptor = (PdefInterface) method.getResult();
+				continue;
 			}
+
+			// It must be the last data type method.
+			if (iterator.hasNext()) throw methodCallNotSupported(path);
 		}
 
 		return Request.builder()
-				.setCalls(callBuilder.build())
+				.setCalls(b.build())
 				.build();
 	}
 }

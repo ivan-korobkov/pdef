@@ -1,6 +1,7 @@
 package io.pdef.fluent;
 
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -38,6 +39,25 @@ public class ForwardingFluentFuture<V> extends ForwardingListenableFuture<V>
 										   ? Futures.transform(delegate, function)
 										   : Futures.transform(delegate, function, executor);
 		return new ForwardingFluentFuture<V1>(transformed, executor);
+	}
+
+	@Override
+	public FluentFuture<V> onErrorReturn(final Function<Exception, V> function) {
+		final FluentPromise<V> promise = FluentPromise.create();
+		Futures.addCallback(delegate, new FutureCallback<V>() {
+			@Override
+			public void onSuccess(final V result) {
+				promise.set(result);
+			}
+
+			@Override
+			public void onFailure(final Throwable t) {
+				if (!(t instanceof Exception)) throw Throwables.propagate(t);
+				V errorResult = function.apply((Exception) t);
+				promise.set(errorResult);
+			}
+		});
+		return promise;
 	}
 
 	@Override

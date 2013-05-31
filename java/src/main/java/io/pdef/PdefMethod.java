@@ -95,7 +95,7 @@ public class PdefMethod {
 
 		int i = 0;
 		for (Map.Entry<String, PdefDatatype> entry : args.entrySet()) {
-			Object arg = args.get(entry.getKey());
+			Object arg = argMap.get(entry.getKey());
 			array[i++] = arg != null ? arg : entry.getValue().defaultValue();
 		}
 

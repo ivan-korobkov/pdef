@@ -14,33 +14,33 @@ import static com.google.common.base.Preconditions.checkState;
 /** Pdef message descriptor. */
 public class PdefMessage extends PdefDatatype {
 	private final PdefMessage base;
+	private final Class<?> builderClass;
+	private final Method builderMethod;
+	private final Object defaultValue;
+
 	private final ImmutableMap<String, PdefField> fields;
 	private final ImmutableMap<String, PdefField> declaredFields;
 	private final ImmutableMap<String, PdefMessage> subtypes;
 	private final PdefField discriminator;
-
-	private final Class<?> builderClass;
-	private final Method builderMethod;
-	private final Object defaultValue;
 
 	PdefMessage(final Class<?> cls, final Pdef pdef) {
 		super(PdefType.MESSAGE, cls, pdef);
 		Class<?> baseType = cls.getSuperclass();
 		base = baseType == GeneratedMessage.class || baseType == GeneratedException.class
 			   ? null : (PdefMessage) pdef.get(baseType);
-
-		declaredFields = buildDeclaredFields(cls, this);
-		fields = buildFields(base, declaredFields);
-		discriminator = buildDiscriminator(cls, fields);
-		subtypes = buildSubtypes(cls, pdef);
-
 		try {
+			// Must be initialized before the fields.
 			builderClass = Class.forName(cls.getName() + "$Builder");
 			builderMethod = cls.getDeclaredMethod("builder");
 			defaultValue = cls.getDeclaredMethod("getInstance").invoke(null);
 		} catch (Exception e) {
 			throw Throwables.propagate(e);
 		}
+
+		declaredFields = buildDeclaredFields(cls, this);
+		fields = buildFields(base, declaredFields);
+		discriminator = buildDiscriminator(cls, fields);
+		subtypes = buildSubtypes(cls, pdef);
 	}
 
 	public Class<?> getBuilderClass() {

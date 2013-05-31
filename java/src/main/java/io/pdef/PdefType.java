@@ -12,16 +12,11 @@ public enum PdefType {
 	private static final EnumSet<PdefType> DATATYPES;
 
 	static {
-		PRIMITIVES = EnumSet.of(
-				BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL, DATE, DATETIME, STRING, UUID);
+		PRIMITIVES = EnumSet.of(BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL,
+				DATE, DATETIME, STRING, UUID);
 
-		DATATYPES = EnumSet.copyOf(PRIMITIVES);
-		DATATYPES.add(MESSAGE);
-		DATATYPES.add(OBJECT);
-		DATATYPES.add(LIST);
-		DATATYPES.add(SET);
-		DATATYPES.add(MAP);
-		DATATYPES.add(ENUM);
+		DATATYPES = EnumSet.of(MESSAGE, OBJECT, LIST, SET, MAP, ENUM);
+		DATATYPES.addAll(PRIMITIVES);
 	}
 
 	public boolean isInterface() {

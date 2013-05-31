@@ -26,8 +26,7 @@ public class PdefField {
 		descriptor = message.descriptorOf(field.getGenericType());
 		name = getFieldName(field);
 
-		String upperFirst =
-				Character.toUpperCase(field.getName().charAt(0)) + field.getName().substring(1);
+		String upperFirst = upperFirst(field);
 		String get = "get" + upperFirst;
 		String has = "has" + upperFirst;
 		String set = "set" + upperFirst;
@@ -97,5 +96,9 @@ public class PdefField {
 	/** Returns a lower-cased field name. */
 	static String getFieldName(final Field field) {
 		return field.getName().toLowerCase();
+	}
+
+	static String upperFirst(final Field field) {
+		return Character.toUpperCase(field.getName().charAt(0)) + field.getName().substring(1);
 	}
 }

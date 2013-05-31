@@ -1,6 +1,7 @@
 package io.pdef;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.List;
 import static io.pdef.Pdef.actualTypeArgs;
 
 /** Pdef list descriptor. */
-public class PdefList extends PdefDescriptor {
+public class PdefList extends PdefDatatype {
 	private final PdefDescriptor element;
 
 	PdefList(final Type javaType, final Pdef pdef) {
@@ -28,5 +29,10 @@ public class PdefList extends PdefDescriptor {
 
 	public PdefDescriptor getElement() {
 		return element;
+	}
+
+	@Override
+	public ImmutableList<Object> defaultValue() {
+		return ImmutableList.of();
 	}
 }

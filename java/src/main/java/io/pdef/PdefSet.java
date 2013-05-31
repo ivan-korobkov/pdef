@@ -1,12 +1,13 @@
 package io.pdef;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSet;
 
 import java.lang.reflect.Type;
 import java.util.Set;
 
 /** Pdef set descriptor. */
-public class PdefSet extends PdefDescriptor {
+public class PdefSet extends PdefDatatype {
 	private final PdefDescriptor element;
 
 	PdefSet(final Type javaType, final Pdef pdef) {
@@ -28,5 +29,10 @@ public class PdefSet extends PdefDescriptor {
 
 	public PdefDescriptor getElement() {
 		return element;
+	}
+
+	@Override
+	public ImmutableSet<Object> defaultValue() {
+		return ImmutableSet.of();
 	}
 }

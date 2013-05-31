@@ -8,22 +8,31 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 /** Pdef enum descriptor. */
-public class PdefEnum extends PdefDescriptor {
+public class PdefEnum extends PdefDatatype {
 	private final BiMap<String, Enum<?>> values;
+	private final Enum<?> defaultValue;
 
 	PdefEnum(final Type javaType, final Pdef pdef) {
 		super(PdefType.ENUM, javaType, pdef);
 
+		Enum<?> first = null;
 		ImmutableBiMap.Builder<String, Enum<?>> builder = ImmutableBiMap.builder();
-		for (Enum<?> anEnum : enumValues(javaType)) {
-			builder.put(anEnum.name(), anEnum);
+		for (Enum<?> e : enumValues(javaType)) {
+			builder.put(e.name(), e);
+			first = first != null ? first : e;
 		}
 		values = builder.build();
+		defaultValue = first;
 	}
 
 	/** Returns an immutable bidirectional map of enum names and values. */
 	public BiMap<String, Enum<?>> getValues() {
 		return values;
+	}
+
+	@Override
+	public Enum<?> defaultValue() {
+		return defaultValue;
 	}
 
 	@SuppressWarnings("unchecked")

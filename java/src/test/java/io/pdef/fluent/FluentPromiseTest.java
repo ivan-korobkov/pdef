@@ -8,7 +8,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class FluentPromiseTest {
-
 	@Test
 	public void testSet() throws Exception {
 		FluentPromise<String> promise = FluentPromise.create();

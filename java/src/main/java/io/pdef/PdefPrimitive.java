@@ -12,7 +12,7 @@ public class PdefPrimitive extends PdefDatatype {
 	}
 
 	@Override
-	public Object defaultValue() {
+	public Object getDefaultValue() {
 		return defaultValue;
 	}
 }

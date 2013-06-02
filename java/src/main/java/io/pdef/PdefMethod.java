@@ -1,17 +1,21 @@
 package io.pdef;
 
+import static com.google.common.base.Preconditions.*;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.rpc.MethodCall;
+import io.pdef.rpc.RpcException;
+import io.pdef.rpc.RpcExceptions;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Pdef method descriptor. */
 public class PdefMethod {
@@ -20,6 +24,8 @@ public class PdefMethod {
 	private final PdefInterface iface;
 	private final PdefDescriptor result;
 	private final ImmutableMap<String, PdefDatatype> args;
+	private final Map<String, Integer> argPositions;
+	private final List<PdefDatatype> argList;
 
 	PdefMethod(final Method method, final PdefInterface iface) {
 		this.method = checkNotNull(method);
@@ -29,13 +35,15 @@ public class PdefMethod {
 		name = method.getName().toLowerCase();
 		result = pdef.get(method.getGenericReturnType());
 		args = buildArgs(method, pdef);
+		argPositions = buildArgPositions(args);
+		argList = ImmutableList.copyOf(args.values());
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public Method getMethod() {
+	public Method getJavaMethod() {
 		return method;
 	}
 
@@ -49,6 +57,10 @@ public class PdefMethod {
 
 	public Map<String, PdefDatatype> getArgs() {
 		return args;
+	}
+
+	public int getArgNum() {
+		return args.size();
 	}
 
 	/** Returns whether this method result is void. */
@@ -67,17 +79,16 @@ public class PdefMethod {
 	}
 
 	/** Creates a new method call, skips all null values in arguments. */
-	public MethodCall createCall(final Object[] objects) {
+	public MethodCall createCall(final Object[] objects) throws RpcException {
 		Object[] oo = objects == null ? new Object[0] : objects;
-		checkArgument(oo.length == args.size(),
-				"Wrong number of arguments, %s expected, %s provided: %s",
-				args.size(), oo.length, this);
+		if (oo.length != args.size()) {
+			throw RpcExceptions.wrongNumberOfMethodArgs(name, args.size(), oo.length);
+		}
 
 		Iterator<String> iterator = args.keySet().iterator();
 		ImmutableMap.Builder<String, Object> callArgs = ImmutableMap.builder();
 		for (Object o : oo) {
 			if (o == null) continue;
-
 			callArgs.put(iterator.next(), o);
 		}
 
@@ -85,56 +96,74 @@ public class PdefMethod {
 				.setMethod(name)
 				.setArgs(callArgs.build())
 				.build();
-	}
-
-	/** Invokes this method, replaces all null and not present args with the default values. */
-	public Object invoke(final Object o, final Map<String, Object> argMap) {
-		checkNotNull(o);
-		checkNotNull(argMap);
-		Object[] array = new Object[args.size()];
-
-		int i = 0;
-		for (Map.Entry<String, PdefDatatype> entry : args.entrySet()) {
-			Object arg = argMap.get(entry.getKey());
-			array[i++] = arg != null ? arg : entry.getValue().defaultValue();
 		}
 
-		return invoke(o, array);
+	/** Invokes this method; replaces nulls with defaults. */
+	public Object invoke(final Object o, final Object... arguments) throws RpcException {
+		return invoke(o, Arrays.asList(arguments));
 	}
 
-	/** Invokes this method, replaces all null args with the default values. */
-	public Object invoke(final Object o, final Iterable<Object> arguments) {
+	/** Invokes this method; replaces nulls with defaults. */
+	public Object invoke(final Object o, final Iterable<Object> arguments) throws RpcException {
 		checkNotNull(o);
 		checkNotNull(arguments);
 		Object[] array = new Object[args.size()];
 
 		int i = 0;
-		Iterator<Object> iterator0 = arguments.iterator();
-		Iterator<PdefDatatype> iterator1 = args.values().iterator();
+		Iterator<PdefDatatype> required = args.values().iterator();
+		Iterator<Object> actual = arguments.iterator();
 
-		while (iterator0.hasNext() && iterator1.hasNext()) {
-			Object arg = iterator0.next();
-			PdefDatatype descriptor = iterator1.next();
-			array[i++] = arg != null ? arg : descriptor.defaultValue();
+		while (actual.hasNext() && required.hasNext()) {
+			Object arg = actual.next();
+			PdefDatatype descriptor = required.next();
+			array[i++] = arg != null ? arg : descriptor.getDefaultValue();
 		}
 
-		checkArgument(!iterator0.hasNext() && !iterator1.hasNext(),
-				"Wrong number of arguments, %s expected: %s", args.size(), this);
-		return invoke(o, array);
+		if (actual.hasNext() || required.hasNext()) {
+			// Get the total number of provided arguments.
+			while (actual.hasNext()) {
+				actual.next(); i++;
+			}
+
+			throw RpcExceptions.wrongNumberOfMethodArgs(name, args.size(), i);
+		}
+
+		return doInvoke(o, array);
 	}
 
-	private Object invoke(final Object o, final Object[] args) {
+	/** Invokes this method; case-insensitive, replaces nulls with defaults, skips unknown args. */
+	public Object invoke(final Object o, final Map<String, Object> argMap) {
+		checkNotNull(o);
+		checkNotNull(argMap);
+		Object[] array = new Object[args.size()];
+
+		// Fill the array with the args using the positions from argPositions.
+		for (Map.Entry<String, Object> entry : argMap.entrySet()) {
+			String name = entry.getKey().toLowerCase();
+			if (!args.containsKey(name)) continue;
+
+			array[argPositions.get(name)] = entry.getValue();
+		}
+
+		// Replace all nulls with the defaults.
+		for (int i = 0; i < array.length; i++) {
+			array[i] = array[i] != null ? array[i] : argList.get(i).getDefaultValue();
+		}
+
+		return doInvoke(o, array);
+	}
+
+	private Object doInvoke(final Object o, final Object[] args) {
 		try {
 			return method.invoke(o, args);
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
 		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e);
+			throw Throwables.propagate(e.getCause());
 		}
 	}
 
-	static ImmutableMap<String, PdefDatatype> buildArgs(final Method method,
-			final Pdef pdef) {
+	static ImmutableMap<String, PdefDatatype> buildArgs(final Method method, final Pdef pdef) {
 		Type[] params = method.getGenericParameterTypes();
 		Annotation[][] anns = method.getParameterAnnotations();
 
@@ -162,5 +191,14 @@ public class PdefMethod {
 
 		checkArgument(name != null, "All params must be annotated with @Name(param) in " + method);
 		return name;
+	}
+
+	static Map<String, Integer> buildArgPositions(final ImmutableMap<String, PdefDatatype> args) {
+		ImmutableMap.Builder<String, Integer> b = ImmutableMap.builder();
+		int i = 0;
+		for (String name : args.keySet()) {
+			b.put(name, i++);
+		}
+		return b.build();
 	}
 }

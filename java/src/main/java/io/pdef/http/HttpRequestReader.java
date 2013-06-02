@@ -1,19 +1,24 @@
 package io.pdef.http;
 
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import io.pdef.*;
+import io.pdef.Pdef;
+import io.pdef.PdefDatatype;
+import io.pdef.PdefInterface;
+import io.pdef.PdefMethod;
 import io.pdef.formats.FormatException;
 import io.pdef.formats.StringFormat;
-import io.pdef.rpc.*;
+import io.pdef.rpc.MethodCall;
+import io.pdef.rpc.Request;
+import io.pdef.rpc.RpcException;
+import io.pdef.rpc.RpcExceptions;
+import static io.pdef.rpc.RpcExceptions.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Iterator;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static io.pdef.rpc.RpcExceptions.*;
 
 public class HttpRequestReader {
 	private static final Splitter SPLITTER = Splitter.on("/");
@@ -44,12 +49,14 @@ public class HttpRequestReader {
 			path.append("/");
 			path.append(name);
 
-			PdefMethod method = descriptor.getMethods().get(name);
+			PdefMethod method = descriptor.getMethod(name);
 			if (method == null) throw methodNotFound(path);
 
 			ImmutableMap.Builder<String, Object> ab = ImmutableMap.builder();
 			for (Map.Entry<String, PdefDatatype> entry : method.getArgs().entrySet()) {
-				if (!iterator.hasNext()) throw wrongNumberOfMethodArgs(path, method);
+				if (!iterator.hasNext()) {
+					throw wrongNumberOfMethodArgs(path, method.getArgNum(), ab.build().size());
+				}
 
 				Object arg;
 				try {
@@ -68,14 +75,14 @@ public class HttpRequestReader {
 
 			if (method.isInterface()) {
 				// The method returns and interface, there should be more calls.
-				if (!iterator.hasNext()) throw moreMethodCallsRequired(path);
+				if (!iterator.hasNext()) throw dataMethodCallRequired(path);
 
 				descriptor = (PdefInterface) method.getResult();
 				continue;
 			}
 
 			// It must be the last data type method.
-			if (iterator.hasNext()) throw methodCallNotSupported(path);
+			if (iterator.hasNext()) throw dataMethodReachedNoMoCalls(path);
 		}
 
 		return Request.builder()

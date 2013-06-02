@@ -1,12 +1,11 @@
 package io.pdef;
 
 import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Pdef message field descriptor. */
 public class PdefField {
@@ -24,7 +23,7 @@ public class PdefField {
 		this.field = checkNotNull(field);
 		this.message = checkNotNull(message);
 		descriptor = message.descriptorOf(field.getGenericType());
-		name = getFieldName(field);
+		name = field.getName().toLowerCase();
 
 		String upperFirst = upperFirst(field);
 		String get = "get" + upperFirst;
@@ -91,11 +90,6 @@ public class PdefField {
 		} catch (InvocationTargetException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	/** Returns a lower-cased field name. */
-	static String getFieldName(final Field field) {
-		return field.getName().toLowerCase();
 	}
 
 	static String upperFirst(final Field field) {

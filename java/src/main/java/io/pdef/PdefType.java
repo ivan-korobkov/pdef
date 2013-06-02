@@ -5,17 +5,24 @@ import java.util.EnumSet;
 /** Pdef types. */
 public enum PdefType {
 	INTERFACE,
-	FUTURE, VOID, MESSAGE, OBJECT, LIST, SET, MAP, ENUM,
-	BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL, DATE, DATETIME, STRING, UUID;
+
+	// Data types
+	MESSAGE, OBJECT, LIST, SET, MAP,
+
+	// Primitives
+	ENUM, BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL, DATE, DATETIME, STRING, UUID,
+
+	// Special method result types.
+	VOID, FUTURE;
 
 	private static final EnumSet<PdefType> PRIMITIVES;
 	private static final EnumSet<PdefType> DATATYPES;
 
 	static {
 		PRIMITIVES = EnumSet.of(BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL,
-				DATE, DATETIME, STRING, UUID);
+				DATE, DATETIME, STRING, UUID, ENUM);
 
-		DATATYPES = EnumSet.of(FUTURE, VOID, MESSAGE, OBJECT, LIST, SET, MAP, ENUM);
+		DATATYPES = EnumSet.of(FUTURE, VOID, MESSAGE, OBJECT, LIST, SET, MAP);
 		DATATYPES.addAll(PRIMITIVES);
 	}
 

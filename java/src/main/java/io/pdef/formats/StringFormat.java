@@ -1,11 +1,11 @@
 package io.pdef.formats;
 
+import static com.google.common.base.Preconditions.*;
 import io.pdef.Pdef;
 import io.pdef.PdefDescriptor;
+import io.pdef.PdefEnum;
 
 import javax.annotation.Nonnull;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class StringFormat {
 	public static final String TRUE = "true";
@@ -27,25 +27,29 @@ public class StringFormat {
 		return (T) read(info, s);
 	}
 
-	public Object read(final PdefDescriptor info, final String s) {
-		checkNotNull(info);
+	public Object read(final PdefDescriptor descriptor, final String s) {
+		checkNotNull(descriptor);
 
 		try {
-			switch (info.getType()) {
+			switch (descriptor.getType()) {
 				case BOOL: return s != null && TRUE.equals(s);
 				case INT16: return s == null ? (short) 0 : Short.parseShort(s);
 				case INT32: return s == null ? 0 : Integer.parseInt(s);
 				case INT64: return s == null ? 0 : Long.parseLong(s);
 				case FLOAT: return s == null ? 0.0f : Float.parseFloat(s);
 				case DOUBLE: return s == null ? 0.0d : Double.parseDouble(s);
-				case STRING: return s;
-				case ENUM: return s == null ? null : info.asEnum().getValues().get(s.toUpperCase());
+				case STRING: return s == null ? "" : s;
+				case ENUM: {
+					PdefEnum e = descriptor.asEnum();
+					Enum<?> v = s == null ? null : e.getValues().get(s.toUpperCase());
+					return v != null ? v : e.getDefaultValue();
+				}
 			}
 		} catch (Exception e) {
 			throw new FormatException(e);
 		}
 
-		throw new FormatException("Unsupported type " + info);
+		throw new FormatException("Unsupported type " + descriptor);
 	}
 
 	public String write(@Nonnull final Object object) {
@@ -55,11 +59,11 @@ public class StringFormat {
 		return write(info, object);
 	}
 
-	public String write(final PdefDescriptor info, final Object o) {
-		checkNotNull(info);
+	public String write(final PdefDescriptor descriptor, final Object o) {
+		checkNotNull(descriptor);
 
 		try {
-			switch (info.getType()) {
+			switch (descriptor.getType()) {
 				case BOOL: return o == null ? FALSE : ((Boolean) o) ? TRUE : FALSE;
 				case INT16: return o == null ? "0" : Short.toString((Short) o);
 				case INT32: return o == null ? "0" : Integer.toString((Integer) o);
@@ -67,7 +71,10 @@ public class StringFormat {
 				case FLOAT: return o == null ? "0.0" : Float.toString((Float) o);
 				case DOUBLE: return o == null ? "0.0" : Double.toString((Double) o);
 				case STRING: return o == null ? "" : (String) o;
-				case ENUM: return o == null ? "" : ((Enum<?>) o).name().toLowerCase();
+				case ENUM: {
+					Enum<?> e = o != null ? (Enum<?>) o : descriptor.asEnum().getDefaultValue();
+					return e.name().toLowerCase();
+				}
 			}
 		} catch (Exception e) {
 			throw new FormatException(e);

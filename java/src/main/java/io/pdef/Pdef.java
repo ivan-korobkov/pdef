@@ -1,5 +1,6 @@
 package io.pdef;
 
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 
@@ -9,9 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /** Pdef descriptor pool. */
 public class Pdef {
@@ -25,8 +23,8 @@ public class Pdef {
 
 	/** Returns a pdef descriptor for a java type. */
 	public synchronized PdefDescriptor get(final Type javaType) {
-		PdefDescriptor info = descriptors.get(javaType);
-		if (info != null) return info;
+		PdefDescriptor d = descriptors.get(javaType);
+		if (d != null) return d;
 		return createDescriptor(javaType);
 	}
 

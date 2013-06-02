@@ -31,7 +31,7 @@ public class PdefEnum extends PdefDatatype {
 	}
 
 	@Override
-	public Enum<?> defaultValue() {
+	public Enum<?> getDefaultValue() {
 		return defaultValue;
 	}
 

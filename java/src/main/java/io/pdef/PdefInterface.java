@@ -1,48 +1,85 @@
 package io.pdef;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.pdef.fluent.FluentFuture;
 import io.pdef.fluent.FluentFutures;
 import io.pdef.rpc.*;
+import static io.pdef.rpc.RpcExceptions.*;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static io.pdef.rpc.RpcExceptions.*;
-
 /** Pdef interface descriptor. */
 public class PdefInterface extends PdefDescriptor {
 	private final Set<PdefInterface> bases;
-	private final Map<String, PdefMethod> methods;
 	private final Map<String, PdefMethod> declaredMethods;
+
+	/** Methods are computed lazily because we cannot guarantee that the bases are in the
+	 * initialized state. For example, A->B->C, A has method with C result. Start with B and C
+	 * will see it uninitialized. */
+	private Map<String, PdefMethod> methods;
 
 	PdefInterface(final Class<?> cls, final Pdef pdef) {
 		super(PdefType.INTERFACE, cls, pdef);
 
 		bases = buildBases(cls, pdef);
 		declaredMethods = buildDeclaredMethods(cls, this);
-		methods = buildMethods(bases, declaredMethods);
 	}
 
 	public Set<PdefInterface> getBases() {
 		return bases;
 	}
 
-	public Map<String, PdefMethod> getMethods() {
-		return methods;
+	public Collection<PdefMethod> getDeclaredMethods() {
+		return declaredMethods.values();
 	}
 
-	public Map<String, PdefMethod> getDeclaredMethods() {
+	public Collection<PdefMethod> getMethods() {
+		return getMethodMap().values();
+	}
+
+	@VisibleForTesting
+	Map<String, PdefMethod> getDeclaredMethodMap() {
 		return declaredMethods;
 	}
 
-	/** Use invokeRequest, invokeRequestAsync. Invokes a chain of calls, and returns the result. */
+	@VisibleForTesting
+	Map<String, PdefMethod> getMethodMap() {
+		if (methods == null) methods = buildMethods(bases, declaredMethods);
+		return methods;
+	}
+
+	/** Returns a declared method, case-insensitive. */
+	@Nullable
+	public PdefMethod getDeclaredMethod(final String name) {
+		checkNotNull(name);
+		return declaredMethods.get(name.toLowerCase());
+	}
+
+	/** Returns a declared or inherited method, case-insensitive. */
+	@Nullable
+	public PdefMethod getMethod(final String name) {
+		checkNotNull(name);
+		getMethods();
+		return methods.get(name.toLowerCase());
+	}
+
+	/** Invokes a chain of method calls and returns the result. */
+	public Object invoke(final Object object, final MethodCall... calls) throws RpcException {
+		return invoke(object, ImmutableList.copyOf(calls));
+	}
+
+	/** Invokes a chain of method calls and returns the result. */
 	public Object invoke(final Object object, final Iterable<MethodCall> calls)
 			throws RpcException {
 		checkNotNull(object);
@@ -60,20 +97,20 @@ public class PdefInterface extends PdefDescriptor {
 			String name = call.getMethod();
 			path.append(name);
 
-			PdefMethod method = descriptor.getMethods().get(name);
+			PdefMethod method = descriptor.getMethod(name);
 			if (method == null) throw methodNotFound(path);
 
 			o = method.invoke(o, call.getArgs());
 			if (method.isInterface()) {
 				// The method returns an interface, there should be more calls.
-				if (!iterator.hasNext()) throw moreMethodCallsRequired(path);
+				if (!iterator.hasNext()) throw dataMethodCallRequired(path);
 
 				descriptor = (PdefInterface) method.getResult();
 				continue;
 			}
 
 			// It must be the last data type method.
-			if (iterator.hasNext()) throw methodCallNotSupported(path);
+			if (iterator.hasNext()) throw dataMethodReachedNoMoCalls(path);
 		}
 		return o;
 	}
@@ -165,7 +202,7 @@ public class PdefInterface extends PdefDescriptor {
 			final Map<String, PdefMethod> declaredMethods) {
 		ImmutableMap.Builder<String, PdefMethod> b = ImmutableMap.builder();
 		for (PdefInterface base : bases) {
-			b.putAll(base.methods);
+			b.putAll(base.getMethodMap());
 		}
 		b.putAll(declaredMethods);
 		return b.build();

@@ -32,7 +32,7 @@ public class PdefSet extends PdefDatatype {
 	}
 
 	@Override
-	public ImmutableSet<Object> defaultValue() {
+	public ImmutableSet<Object> getDefaultValue() {
 		return ImmutableSet.of();
 	}
 }

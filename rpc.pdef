@@ -68,7 +68,7 @@ enum RpcExceptionCode {
     DATA_METHOD_CALL_REQUIRED,
 
     // Method calls on data types are not supported.
-    METHOD_CALL_NOT_SUPPORTED,
+    DATA_METHOD_REACHED_NO_MORE_CALLS,
 
     // Wrong number or type of the method arguments.
     WRONG_METHOD_ARGUMENTS

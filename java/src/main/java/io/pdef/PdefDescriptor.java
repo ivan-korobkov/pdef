@@ -68,8 +68,8 @@ public class PdefDescriptor {
 		return (PdefDatatype) this;
 	}
 
-	public PdefDatatype asPrimitive() {
-		return (PdefDatatype) this;
+	public PdefPrimitive asPrimitive() {
+		return (PdefPrimitive) this;
 	}
 
 	public PdefMessage asMessage() {

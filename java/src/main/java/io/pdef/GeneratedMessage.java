@@ -1,14 +1,8 @@
 package io.pdef;
 
-import java.io.Serializable;
-
-public abstract class GeneratedMessage implements Message, Serializable {
+public abstract class GeneratedMessage implements Message {
 	private transient int hash;
 	protected GeneratedMessage(final Builder builder) {}
-
-	public abstract Builder toBuilder();
-
-	public abstract Builder newEmptyBuilder();
 
 	@Override
 	public boolean equals(final Object o) {

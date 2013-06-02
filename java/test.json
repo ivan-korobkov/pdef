@@ -1,7 +1,5 @@
 {
-    "path": [
-        "src/test/pdef/fixtures.pdef",
-        "src/test/pdef/interfaces.pdef"],
+    "path": ["../test.pdef"],
     "java": {
         "out": "target/generated-test-sources/pdef"
     }

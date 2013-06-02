@@ -2,11 +2,10 @@ package io.pdef;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import static io.pdef.Pdef.actualTypeArgs;
 
 import java.lang.reflect.Type;
 import java.util.Map;
-
-import static io.pdef.Pdef.actualTypeArgs;
 
 /** Pdef map descriptor. */
 public class PdefMap extends PdefDatatype {
@@ -41,7 +40,7 @@ public class PdefMap extends PdefDatatype {
 	}
 
 	@Override
-	public ImmutableMap<Object, Object> defaultValue() {
+	public ImmutableMap<Object, Object> getDefaultValue() {
 		return ImmutableMap.of();
 	}
 }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -17,8 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class JsonFormat {
 	private final Pdef pdef;
@@ -170,19 +169,18 @@ public class JsonFormat {
 		ObjectNode objectNode = (ObjectNode) node;
 
 		PdefMessage polymorphic = readMessageType(info, objectNode);
-		Map<String, PdefField> fields = polymorphic.getFields();
 		Iterator<Map.Entry<String, JsonNode>> children = objectNode.fields();
 		Message.Builder builder = polymorphic.createBuilder();
 
 		while (children.hasNext()) {
 			Map.Entry<String, JsonNode> child = children.next();
 			String name = child.getKey().toLowerCase();
-			if (!fields.containsKey(name)) continue;
+			PdefField fd = polymorphic.getField(name);
+			if (fd == null) continue;
 
 			JsonNode childNode = child.getValue();
-			PdefField finfo = fields.get(name);
-			Object value = read(finfo.getDescriptor(), childNode);
-			finfo.set(builder, value);
+			Object value = read(fd.getDescriptor(), childNode);
+			fd.set(builder, value);
 		}
 
 		return builder.build();
@@ -191,7 +189,7 @@ public class JsonFormat {
 	private PdefMessage readMessageType(final PdefMessage info, final JsonNode node) {
 		if (!info.isPolymorphic()) return info;
 
-		PdefField discriminator = info.getDiscriminator();
+		PdefField discriminator = info.getDiscriminator(); assert discriminator != null;
 		JsonNode child = node.get(discriminator.getName());
 		if (child == null) return info;
 
@@ -315,7 +313,7 @@ public class JsonFormat {
 				pdef.get(message.getClass());
 
 		generator.writeStartObject();
-		for (PdefField field : polymorphic.getFields().values()) {
+		for (PdefField field : polymorphic.getFields()) {
 			if (!field.isSet(message)) continue;
 
 			Object value = field.get(message);

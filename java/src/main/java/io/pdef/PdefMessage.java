@@ -1,5 +1,7 @@
 package io.pdef;
 
+import com.google.common.annotations.VisibleForTesting;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
@@ -7,9 +9,8 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collection;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /** Pdef message descriptor. */
 public class PdefMessage extends PdefDatatype {
@@ -18,10 +19,14 @@ public class PdefMessage extends PdefDatatype {
 	private final Method builderMethod;
 	private final Object defaultValue;
 
-	private final ImmutableMap<String, PdefField> fields;
 	private final ImmutableMap<String, PdefField> declaredFields;
 	private final ImmutableMap<String, PdefMessage> subtypes;
-	private final PdefField discriminator;
+
+	/** These fields are computed lazily because we cannot guarantee that the base is in the
+	 * initialized state. For example, A->B->C, A has a C field. Start with B and C will see it
+	 * uninitialized. */
+	private ImmutableMap<String, PdefField> fields;
+	private PdefField discriminator;
 
 	PdefMessage(final Class<?> cls, final Pdef pdef) {
 		super(PdefType.MESSAGE, cls, pdef);
@@ -38,8 +43,6 @@ public class PdefMessage extends PdefDatatype {
 		}
 
 		declaredFields = buildDeclaredFields(cls, this);
-		fields = buildFields(base, declaredFields);
-		discriminator = buildDiscriminator(cls, fields);
 		subtypes = buildSubtypes(cls, pdef);
 	}
 
@@ -51,21 +54,39 @@ public class PdefMessage extends PdefDatatype {
 		return base;
 	}
 
-	public Map<String, PdefField> getFields() {
+	public Collection<PdefField> getFields() {
+		return getFieldMap().values();
+	}
+
+	public Collection<PdefField> getDeclaredFields() {
+		return declaredFields.values();
+	}
+
+	@VisibleForTesting
+	Map<String, PdefField> getFieldMap() {
+		if (fields == null) fields = buildFields(base, declaredFields);
 		return fields;
 	}
 
-	public Map<String, PdefField> getDeclaredFields() {
+	@VisibleForTesting
+	Map<String, PdefField> getDeclaredFieldMap() {
 		return declaredFields;
 	}
 
+	@Nullable
+	public PdefField getField(final String name) {
+		checkNotNull(name);
+		return getFieldMap().get(name.toLowerCase());
+	}
+
 	@Override
-	public Object defaultValue() {
+	public Object getDefaultValue() {
 		return defaultValue;
 	}
 
 	@Nullable
 	public PdefField getDiscriminator() {
+		if (discriminator == null) discriminator = buildDiscriminator(getJavaClass(), fields);
 		return discriminator;
 	}
 
@@ -93,8 +114,8 @@ public class PdefMessage extends PdefDatatype {
 			if (Modifier.isStatic(field.getModifiers())) continue;
 			if (Modifier.isTransient(field.getModifiers())) continue;
 
-			PdefField fieldInfo = new PdefField(field, message);
-			builder.put(fieldInfo.getName(), fieldInfo);
+			PdefField fd = new PdefField(field, message);
+			builder.put(fd.getName(), fd);
 		}
 		return builder.build();
 	}
@@ -102,7 +123,7 @@ public class PdefMessage extends PdefDatatype {
 	static ImmutableMap<String, PdefField> buildFields(final PdefMessage base,
 			final ImmutableMap<String, PdefField> declaredFields) {
 		return base == null ? declaredFields : ImmutableMap.<String, PdefField>builder()
-				.putAll(base.getFields())
+				.putAll(base.getFieldMap())
 				.putAll(declaredFields)
 				.build();
 	}
@@ -126,8 +147,8 @@ public class PdefMessage extends PdefDatatype {
 		ImmutableMap.Builder<String, PdefMessage> builder = ImmutableMap.builder();
 		for (Subtype value : ann.value()) {
 			String name = value.type();
-			PdefMessage info = (PdefMessage) pdef.get(value.value());
-			builder.put(name, info);
+			PdefMessage subtype = (PdefMessage) pdef.get(value.value());
+			builder.put(name, subtype);
 		}
 
 		return builder.build();

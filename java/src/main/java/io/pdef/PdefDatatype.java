@@ -1,8 +1,8 @@
 package io.pdef;
 
-import java.lang.reflect.Type;
+import static com.google.common.base.Preconditions.*;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import java.lang.reflect.Type;
 
 /** Abstract pdef datatype. */
 public abstract class PdefDatatype extends PdefDescriptor {
@@ -13,5 +13,5 @@ public abstract class PdefDatatype extends PdefDescriptor {
 	}
 
 	/** Returns the default value for this datatype. */
-	public abstract Object defaultValue();
+	public abstract Object getDefaultValue();
 }

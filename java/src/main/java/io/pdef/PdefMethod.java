@@ -2,7 +2,6 @@ package io.pdef;
 
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.rpc.MethodCall;
 import io.pdef.rpc.RpcException;
@@ -14,7 +13,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 /** Pdef method descriptor. */
@@ -24,19 +22,15 @@ public class PdefMethod {
 	private final PdefInterface iface;
 	private final PdefDescriptor result;
 	private final ImmutableMap<String, PdefDatatype> args;
-	private final Map<String, Integer> argPositions;
-	private final List<PdefDatatype> argList;
 
 	PdefMethod(final Method method, final PdefInterface iface) {
 		this.method = checkNotNull(method);
 		this.iface = checkNotNull(iface);
 
 		Pdef pdef = iface.getPdef();
-		name = method.getName().toLowerCase();
+		name = method.getName();
 		result = pdef.get(method.getGenericReturnType());
 		args = buildArgs(method, pdef);
-		argPositions = buildArgPositions(args);
-		argList = ImmutableList.copyOf(args.values());
 	}
 
 	public String getName() {
@@ -131,23 +125,17 @@ public class PdefMethod {
 		return doInvoke(o, array);
 	}
 
-	/** Invokes this method; case-insensitive, replaces nulls with defaults, skips unknown args. */
+	/** Invokes this method; replaces nulls with defaults, skips unknown args. */
 	public Object invoke(final Object o, final Map<String, Object> argMap) {
 		checkNotNull(o);
 		checkNotNull(argMap);
 		Object[] array = new Object[args.size()];
 
-		// Fill the array with the args using the positions from argPositions.
-		for (Map.Entry<String, Object> entry : argMap.entrySet()) {
-			String name = entry.getKey().toLowerCase();
-			if (!args.containsKey(name)) continue;
-
-			array[argPositions.get(name)] = entry.getValue();
-		}
-
-		// Replace all nulls with the defaults.
-		for (int i = 0; i < array.length; i++) {
-			array[i] = array[i] != null ? array[i] : argList.get(i).getDefaultValue();
+		int i = 0;
+		for (Map.Entry<String, PdefDatatype> entry : args.entrySet()) {
+			String name = entry.getKey();
+			Object value = argMap.get(name);
+			array[i++] = value != null ? value : entry.getValue().getDefaultValue();
 		}
 
 		return doInvoke(o, array);
@@ -184,7 +172,7 @@ public class PdefMethod {
 		String name = null;
 		for (Annotation ann : anns) {
 			if (ann.annotationType() == Name.class) {
-				name = ((Name) ann).value().toLowerCase();
+				name = ((Name) ann).value();
 				break;
 			}
 		}

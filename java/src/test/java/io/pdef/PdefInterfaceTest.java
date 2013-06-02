@@ -40,7 +40,7 @@ public class PdefInterfaceTest {
 		PdefInterface d = new PdefInterface(TestInterface.class, pdef);
 		assertEquals(ImmutableSet.of(
 				"void0",
-				"camelcase",
+				"camelCase",
 				"message0",
 				"sum",
 				"interface0"),

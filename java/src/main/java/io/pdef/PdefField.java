@@ -23,7 +23,7 @@ public class PdefField {
 		this.field = checkNotNull(field);
 		this.message = checkNotNull(message);
 		descriptor = message.descriptorOf(field.getGenericType());
-		name = field.getName().toLowerCase();
+		name = field.getName();
 
 		String upperFirst = upperFirst(field);
 		String get = "get" + upperFirst;

@@ -59,19 +59,19 @@ public class PdefInterface extends PdefDescriptor {
 		return methods;
 	}
 
-	/** Returns a declared method, case-insensitive. */
+	/** Returns a declared method. */
 	@Nullable
 	public PdefMethod getDeclaredMethod(final String name) {
 		checkNotNull(name);
-		return declaredMethods.get(name.toLowerCase());
+		return declaredMethods.get(name);
 	}
 
-	/** Returns a declared or inherited method, case-insensitive. */
+	/** Returns a declared or inherited method. */
 	@Nullable
 	public PdefMethod getMethod(final String name) {
 		checkNotNull(name);
 		getMethods();
-		return methods.get(name.toLowerCase());
+		return methods.get(name);
 	}
 
 	/** Invokes a chain of method calls and returns the result. */

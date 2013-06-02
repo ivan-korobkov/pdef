@@ -76,7 +76,7 @@ public class PdefMessage extends PdefDatatype {
 	@Nullable
 	public PdefField getField(final String name) {
 		checkNotNull(name);
-		return getFieldMap().get(name.toLowerCase());
+		return getFieldMap().get(name);
 	}
 
 	@Override

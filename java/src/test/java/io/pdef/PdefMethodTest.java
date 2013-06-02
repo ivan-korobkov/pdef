@@ -47,13 +47,13 @@ public class PdefMethodTest {
 	}
 
 	@Test
-	public void testConstructor_lowercaseNameArgs() throws Exception {
-		PdefMethod method = getTestMethod("camelcase");
+	public void testConstructor_args() throws Exception {
+		PdefMethod method = getTestMethod("camelCase");
 
-		assertEquals("camelcase", method.getName());
+		assertEquals("camelCase", method.getName());
 		assertEquals(ImmutableMap.<String, PdefDatatype>of(
-				"firstarg", pdef.get(String.class).asDatatype(),
-				"secondarg", pdef.get(String.class).asDatatype()), method.getArgs());
+				"firstArg", pdef.get(String.class).asDatatype(),
+				"secondArg", pdef.get(String.class).asDatatype()), method.getArgs());
 	}
 
 	@Test
@@ -147,16 +147,6 @@ public class PdefMethodTest {
 
 		method.invoke(test, ImmutableMap.<String, Object>of("i0", 1));
 		verify(test).sum(1, 0);
-	}
-
-	@Test
-	public void testInvoke_mapCaseInsensitive() throws Exception {
-		PdefMethod method = getTestMethod("camelCase");
-		TestInterface test = mock(TestInterface.class);
-
-		method.invoke(test,
-				ImmutableMap.<String, Object>of("FIRSTARG", "hello", "secondarg", "world"));
-		verify(test).camelCase("hello", "world");
 	}
 
 	private PdefMethod getTestMethod(final String name) {

@@ -64,7 +64,7 @@ public class PdefProxyTest {
 				MethodCall.builder().setMethod("interface0")
 						.setArgs(ImmutableMap.<String, Object>of()).build(),
 				MethodCall.builder().setMethod("hello").setArgs(
-						ImmutableMap.<String, Object>of("firstname", "John", "lastname", "Doe"))
+						ImmutableMap.<String, Object>of("firstName", "John", "lastName", "Doe"))
 						.build()),
 				ref.get());
 	}

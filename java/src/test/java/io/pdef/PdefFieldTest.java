@@ -15,12 +15,11 @@ public class PdefFieldTest {
 		pdef = new Pdef();
 	}
 
-	/** Should lowercase field name, and initialize its descriptor. */
 	@Test
 	public void testConstructor() throws Exception {
 		PdefField field = getField("firstField");
 
-		assertEquals("firstfield", field.getName());
+		assertEquals("firstField", field.getName());
 		assertEquals(pdef.get(boolean.class), field.getDescriptor());
 	}
 

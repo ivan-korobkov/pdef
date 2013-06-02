@@ -17,7 +17,7 @@ public class PdefMessageTest {
 	@Test
 	public void testFields_declared() throws Exception {
 		PdefMessage msg = new PdefMessage(TestSimpleMessage.class, pdef);
-		assertEquals(ImmutableSet.of("firstfield", "secondfield", "thirdfield"),
+		assertEquals(ImmutableSet.of("firstField", "secondField", "thirdField"),
 				msg.getDeclaredFieldMap().keySet());
 	}
 
@@ -101,11 +101,11 @@ public class PdefMessageTest {
 		assertTrue(TestSimpleMessage.getInstance() == msg.getDefaultValue());
 	}
 
-	/** Should get a field by a lowercase name. */
+	/** Should get a field by its name. */
 	@Test
-	public void testGetField_lowercase() throws Exception {
+	public void testGetField() throws Exception {
 		PdefMessage msg = new PdefMessage(TestSimpleMessage.class, pdef);
-		PdefField field = msg.getField("FIRSTFIELD");
+		PdefField field = msg.getField("firstField");
 		assertNotNull(field);
 	}
 }

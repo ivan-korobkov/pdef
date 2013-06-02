@@ -18,4 +18,9 @@ public abstract class AbstractFluentFunction<In, Out> implements FluentFunction<
 	public <In1, Out1> FluentFunction<In1, Out1> wrap(final Wrapper<In1, Out1, In, Out> wrapper) {
 		return FluentFunctions.wrap(this, wrapper);
 	}
+
+	@Override
+	public FluentFunction<In, Out> decorate(final Wrapper<In, Out, In, Out> decorator) {
+		return FluentFunctions.wrap(this, decorator);
+	}
 }

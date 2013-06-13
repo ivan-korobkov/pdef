@@ -1,6 +1,6 @@
 package io.pdef.io;
 
-public interface InputMessage extends Input {
+public interface InputMessage {
 	boolean getBoolean(String field);
 	short getShort(String field);
 	int getInt(String field);
@@ -8,6 +8,5 @@ public interface InputMessage extends Input {
 	float getFloat(String field);
 	double getDouble(String field);
 	String getString(String field);
-	InputValue getValue(String field);
-	InputList getList(String field);
+	Input get(String field);
 }

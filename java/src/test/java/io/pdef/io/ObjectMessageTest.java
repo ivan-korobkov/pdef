@@ -14,7 +14,7 @@ public class ObjectMessageTest {
 				"firstField", true,
 				"secondField", "hello, world");
 		ObjectMessage input = new ObjectMessage(map);
-		TestSimpleMessage msg = new TestSimpleMessage(input);
+		TestSimpleMessage msg = TestSimpleMessage.readFrom(input);
 		System.out.println(msg);
 	}
 }

@@ -92,13 +92,13 @@ public class PdefMessageTest {
 	public void testCreateBuilder() throws Exception {
 		PdefMessage msg = new PdefMessage(TestSimpleMessage.class, pdef);
 		TestSimpleMessage.Builder builder = (TestSimpleMessage.Builder) msg.createBuilder();
-		assertEquals(TestSimpleMessage.getInstance(), builder.build());
+		assertEquals(TestSimpleMessage.instance(), builder.build());
 	}
 
 	@Test
 	public void testDefaultValue() throws Exception {
 		PdefMessage msg = new PdefMessage(TestSimpleMessage.class, pdef);
-		assertTrue(TestSimpleMessage.getInstance() == msg.getDefaultValue());
+		assertTrue(TestSimpleMessage.instance() == msg.getDefaultValue());
 	}
 
 	/** Should get a field by its name. */

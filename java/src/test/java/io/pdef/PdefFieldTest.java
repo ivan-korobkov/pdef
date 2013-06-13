@@ -37,11 +37,11 @@ public class PdefFieldTest {
 	@Test
 	public void testIsSet() throws Exception {
 		PdefField field = getField("thirdField");
-		TestSimpleMessage msg = TestSimpleMessage.getInstance();
+		TestSimpleMessage msg = TestSimpleMessage.instance();
 		assertFalse(field.isSet(msg));
 
 		msg = TestSimpleMessage.builder()
-				.setThirdField(TestSimpleMessage.getInstance())
+				.setThirdField(TestSimpleMessage.instance())
 				.build();
 		assertTrue(field.isSet(msg));
 	}

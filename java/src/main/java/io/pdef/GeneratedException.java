@@ -7,7 +7,7 @@ public abstract class GeneratedException extends RuntimeException implements Mes
 	protected GeneratedException(final Builder builder) {}
 
 	public abstract Builder toBuilder();
-	public abstract Builder newEmptyBuilder();
+	public abstract Builder builderForType();
 
 	@Override
 	public boolean equals(final Object o) {

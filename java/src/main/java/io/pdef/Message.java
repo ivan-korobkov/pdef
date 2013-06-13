@@ -8,7 +8,7 @@ public interface Message extends Serializable {
 	Builder toBuilder();
 
 	/** Creates a new empty builder. */
-	Builder newEmptyBuilder();
+	Builder builderForType();
 
 	public static interface Builder {
 		Message build();

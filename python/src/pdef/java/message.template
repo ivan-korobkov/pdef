@@ -72,7 +72,7 @@ public class {{ name }} extends {{ base }} {
     }
 
     @Override
-    public Builder newEmptyBuilder() {
+    public Builder builderForType() {
         return builder();
     }
 

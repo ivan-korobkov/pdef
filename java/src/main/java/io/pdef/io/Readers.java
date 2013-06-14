@@ -1,37 +1,54 @@
 package io.pdef.io;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
-import java.util.List;
-
 public class Readers {
 	private Readers() {}
 
-	public static Reader<String> stringReader() {
-		return new Reader<String>() {
-			@Override
-			public String read(final Input input) {
-				return input.asValue().getString();
-			}
-		};
-	}
+	public static Reader<Boolean> boolean0 = new Reader<Boolean>() {
+		@Override
+		public Boolean get(final Input input) {
+			return input.getBoolean();
+		}
+	};
 
-	public static <T> Reader<List<T>> list(final Reader<? extends T> reader) {
-		return new Reader<List<T>>() {
-			@Override
-			public List<T> read(final Input input) {
-				List<T> result = Lists.newArrayList();
+	public static Reader<Short> int16 = new Reader<Short>() {
+		@Override
+		public Short get(final Input input) {
+			return input.getShort();
+		}
+	};
 
-				InputList in = input.asList();
-				for (InputValue v : in) {
-					T element = reader.read(v);
-					if (element == null) continue;
-					result.add(element);
-				}
+	public static Reader<Integer> int32 = new Reader<Integer>() {
+		@Override
+		public Integer get(final Input input) {
+			return input.getInt();
+		}
+	};
 
-				return ImmutableList.copyOf(result);
-			}
-		};
-	}
+	public static Reader<Long> int64 = new Reader<Long>() {
+		@Override
+		public Long get(final Input input) {
+			return input.getLong();
+		}
+	};
+
+	public static Reader<Float> float0 = new Reader<Float>() {
+		@Override
+		public Float get(final Input input) {
+			return input.getFloat();
+		}
+	};
+
+	public static Reader<Double> double0 = new Reader<Double>() {
+		@Override
+		public Double get(final Input input) {
+			return input.getDouble();
+		}
+	};
+
+	public static Reader<String> string = new Reader<String>() {
+		@Override
+		public String get(final Input input) {
+			return input.getString();
+		}
+	};
 }

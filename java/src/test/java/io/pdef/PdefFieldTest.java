@@ -1,11 +1,10 @@
 package io.pdef;
 
 import io.pdef.test.TestSimpleMessage;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class PdefFieldTest {
 	private Pdef pdef;
@@ -37,11 +36,11 @@ public class PdefFieldTest {
 	@Test
 	public void testIsSet() throws Exception {
 		PdefField field = getField("thirdField");
-		TestSimpleMessage msg = TestSimpleMessage.instance();
+		TestSimpleMessage msg = TestSimpleMessage.getInstance();
 		assertFalse(field.isSet(msg));
 
 		msg = TestSimpleMessage.builder()
-				.setThirdField(TestSimpleMessage.instance())
+				.setThirdField(TestSimpleMessage.getInstance())
 				.build();
 		assertTrue(field.isSet(msg));
 	}

@@ -2,9 +2,10 @@ package io.pdef;
 
 import com.google.common.collect.ImmutableSet;
 import io.pdef.test.*;
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class PdefMessageTest {
 	private Pdef pdef;
@@ -92,13 +93,13 @@ public class PdefMessageTest {
 	public void testCreateBuilder() throws Exception {
 		PdefMessage msg = new PdefMessage(TestSimpleMessage.class, pdef);
 		TestSimpleMessage.Builder builder = (TestSimpleMessage.Builder) msg.createBuilder();
-		assertEquals(TestSimpleMessage.instance(), builder.build());
+		assertEquals(TestSimpleMessage.getInstance(), builder.build());
 	}
 
 	@Test
 	public void testDefaultValue() throws Exception {
 		PdefMessage msg = new PdefMessage(TestSimpleMessage.class, pdef);
-		assertTrue(TestSimpleMessage.instance() == msg.getDefaultValue());
+		assertTrue(TestSimpleMessage.getInstance() == msg.getDefaultValue());
 	}
 
 	/** Should get a field by its name. */

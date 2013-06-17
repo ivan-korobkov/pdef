@@ -1,35 +1,20 @@
 module io.pdef.rpc;
 
 
-enum MessageType {
-    REQUEST, RESPONSE
-}
-
-/** Abstract rpc message which can be a request or a response. */
-message Message {
-    type    MessageType, discriminator;
-}
-
-/** Request with chained calls. */
-message Request : Message(MessageType.REQUEST) {
-    id      string; // Async request id.
-
+/** Request. */
+message Request {
     calls   list<MethodCall>;
 }
 
 /** Response. */
-message Response : Message(MessageType.RESPONSE) {
-    requestId   string; // Async request id.
-
-    status      ResponseStatus;
-    result      object; // Application specific result.
-    exc         object; // Application specific exception.
-    rpcExc      RpcException;
+message Response {
+    status  ResponseStatus;
+    result  object;
 }
 
 /** Response status. */
 enum ResponseStatus {
-    OK, ERROR, RPC_ERROR
+    OK, ERROR, EXCEPTION
 }
 
 /** Single method call in a call chain. */
@@ -39,37 +24,32 @@ message MethodCall {
 }
 
 /** Rpc exception is raised when the server fails to process an RPC request. */
-exception RpcException {
-    code    RpcExceptionCode;
+exception Error {
+    code    ErrorCode;
     text    string;
 }
 
 /** Rpc exception codes, most can be mapped to HTTP status codes. */
-enum RpcExceptionCode {
-    // An unhandled server error.
-    SERVER_ERROR,
+enum ErrorCode {
+    SERVER_ERROR,           // An unhandled server error.
+    SERVICE_UNAVAILABLE,    // The service is temporarily unavailable,
+    TIMEOUT,                // Timeout.
+    BAD_REQUEST,            // The request could not be understood by the server.
+    METHOD_NOT_FOUND,       // A method is not found.
+    METHOD_CALLS_REQUIRED,  // The method calls are empty.
+    DATA_METHOD_CALL_REQUIRED, // The last method must be a data method.
+    DATA_METHOD_REACHED_NO_MORE_CALLS, // Method calls on data types are not supported.
+    WRONG_METHOD_ARGUMENTS  // Wrong number or type of the method arguments.
+}
 
-    // The service is temporarily unavailable,
-    SERVICE_UNAVAILABLE,
 
-    // Timeout.
-    TIMEOUT,
+// Asynchronous protocol.
+enum AsyncType {
+    REQUEST, RESPONSE;
+}
 
-    // The request could not be understood by the server.
-    BAD_REQUEST,
-
-    // A method is not found.
-    METHOD_NOT_FOUND,
-
-    // The method calls are empty.
-    METHOD_CALLS_REQUIRED,
-
-    // The last method is not a data method, more chained methods required.
-    DATA_METHOD_CALL_REQUIRED,
-
-    // Method calls on data types are not supported.
-    DATA_METHOD_REACHED_NO_MORE_CALLS,
-
-    // Wrong number or type of the method arguments.
-    WRONG_METHOD_ARGUMENTS
+message AsyncMessage {
+    type    AsyncType;
+    id      string;     // An async request or response id, the response copies its request id.
+    data    object;     // Request or Response messages depending on the message type.
 }

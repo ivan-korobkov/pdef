@@ -1,12 +1,11 @@
 package io.pdef.http;
 
 import com.google.common.net.MediaType;
-import io.pdef.formats.JsonFormat;
 import io.pdef.Pdef;
+import io.pdef.formats.JsonFormat;
+import io.pdef.rpc.ErrorCode;
 import io.pdef.rpc.Response;
 import io.pdef.rpc.ResponseStatus;
-import io.pdef.rpc.RpcException;
-import io.pdef.rpc.RpcExceptionCode;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -30,15 +29,15 @@ public class HttpResponseWriter {
 
 		int httpStatus = HttpServletResponse.SC_OK;
 		ResponseStatus status = response.getStatus();
-		switch (status != null ? status : ResponseStatus.RPC_ERROR) {
+		switch (status != null ? status : ResponseStatus.ERROR) {
 			case OK:
-			case ERROR:
+			case EXCEPTION:
 				httpStatus = HttpServletResponse.SC_OK;
 				break;
-			case RPC_ERROR:
-				RpcException e = response.getRpcExc();
-				RpcExceptionCode code = e.getCode();
-				switch (code != null ? code : RpcExceptionCode.SERVER_ERROR) {
+			case ERROR:
+				io.pdef.rpc.Error e = (io.pdef.rpc.Error) response.getResult();
+				ErrorCode code = e.getCode();
+				switch (code != null ? code : ErrorCode.SERVER_ERROR) {
 					case SERVER_ERROR:
 						httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 						break;

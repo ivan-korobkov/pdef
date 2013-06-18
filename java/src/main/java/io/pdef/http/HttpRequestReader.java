@@ -1,24 +1,21 @@
 package io.pdef.http;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.Pdef;
-import io.pdef.PdefDatatype;
-import io.pdef.PdefInterface;
-import io.pdef.PdefMethod;
 import io.pdef.formats.FormatException;
 import io.pdef.formats.StringFormat;
+import io.pdef.rpc.Errors;
 import io.pdef.rpc.MethodCall;
 import io.pdef.rpc.Request;
-import io.pdef.rpc.RpcException;
-import io.pdef.rpc.RpcExceptions;
-import static io.pdef.rpc.RpcExceptions.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Iterator;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static io.pdef.rpc.Errors.*;
 
 public class HttpRequestReader {
 	private static final Splitter SPLITTER = Splitter.on("/");
@@ -30,7 +27,7 @@ public class HttpRequestReader {
 		iface = (PdefInterface) pdef.get(cls);
 	}
 
-	public Request read(final HttpServletRequest request) throws RpcException {
+	public Request read(final HttpServletRequest request) {
 		return read(request.getPathInfo());
 	}
 
@@ -41,7 +38,7 @@ public class HttpRequestReader {
 		StringBuilder path = new StringBuilder();
 
 		Iterator<String> iterator = SPLITTER.split(s).iterator();
-		if (!iterator.hasNext()) throw RpcExceptions.methodCallsRequired();
+		if (!iterator.hasNext()) throw Errors.methodCallsRequired();
 
 		ImmutableList.Builder<MethodCall> b = ImmutableList.builder();
 		while (iterator.hasNext()) {

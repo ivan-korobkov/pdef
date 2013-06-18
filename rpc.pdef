@@ -45,7 +45,7 @@ enum ErrorCode {
 
 // Asynchronous protocol.
 enum AsyncType {
-    REQUEST, RESPONSE;
+    REQUEST, RESPONSE
 }
 
 message AsyncMessage {

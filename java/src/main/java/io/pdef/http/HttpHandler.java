@@ -1,7 +1,6 @@
 package io.pdef.http;
 
 import io.pdef.Pdef;
-import io.pdef.PdefInterface;
 import io.pdef.rpc.Request;
 import io.pdef.rpc.Response;
 

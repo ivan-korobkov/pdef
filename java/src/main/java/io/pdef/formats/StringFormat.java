@@ -2,8 +2,6 @@ package io.pdef.formats;
 
 import static com.google.common.base.Preconditions.*;
 import io.pdef.Pdef;
-import io.pdef.PdefDescriptor;
-import io.pdef.PdefEnum;
 
 import javax.annotation.Nonnull;
 

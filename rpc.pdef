@@ -3,6 +3,7 @@ module io.pdef.rpc;
 
 /** Request. */
 message Request {
+    type    RequestType;
     calls   list<MethodCall>;
 }
 
@@ -10,6 +11,10 @@ message Request {
 message Response {
     status  ResponseStatus;
     result  object;
+}
+
+enum RequestType {
+    ACCESSOR, MUTATOR;
 }
 
 /** Response status. */

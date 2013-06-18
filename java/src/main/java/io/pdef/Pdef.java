@@ -1,5 +1,9 @@
 package io.pdef;
 
+import io.pdef.io.Reader;
+
+import java.lang.reflect.Type;
+
 /** Pdef descriptor pool. */
 public class Pdef {
 
@@ -24,5 +28,13 @@ public class Pdef {
 //		if (Message.class.isAssignableFrom(cls)) return new PdefMessage(cls, this);
 //		if (Future.class.isAssignableFrom(cls)) return new PdefFuture(type, this);
 //		if (cls.isInterface()) return new PdefInterface(cls, this);
+	}
+
+	public <T> Reader<T> getReader(final Class<T> cls) {
+		return null;
+	}
+
+	public Reader<?> getReader(final Type type) {
+		return null;
 	}
 }

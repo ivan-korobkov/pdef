@@ -1,5 +1,7 @@
 package io.pdef.invocation;
 
-public interface RemoteHandler {
-	<T> T apply(RemoteInvocation invocation);
+import com.google.common.base.Function;
+
+public interface RemoteHandler extends Function<RemoteInvocation, Object> {
+
 }

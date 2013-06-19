@@ -1,4 +1,4 @@
-package io.pdef.io;
+package io.pdef;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -63,7 +63,7 @@ public class ObjectOutput implements Output {
 	}
 
 	@Override
-	public <T> void write(final T message, final Writer.MessageWriter<T> writer) {
+	public <T> void write(final T message, final MessageWriter<T> writer) {
 		MessageOutput output = new MessageOutput();
 		writer.write(message, output);
 		this.value = output.toObject();
@@ -88,7 +88,7 @@ public class ObjectOutput implements Output {
 		}
 	}
 
-	static class MessageOutput implements Output.MessageOutput {
+	static class MessageOutput implements io.pdef.MessageOutput {
 		private Map<String, Object> map = Maps.newLinkedHashMap();
 		private ObjectOutput fieldOut; // Reusable field output.
 

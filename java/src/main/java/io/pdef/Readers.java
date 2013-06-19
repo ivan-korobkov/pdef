@@ -1,4 +1,4 @@
-package io.pdef.io;
+package io.pdef;
 
 public class Readers {
 	private Readers() {}

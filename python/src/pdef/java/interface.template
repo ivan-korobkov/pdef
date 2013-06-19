@@ -48,14 +48,14 @@ import io.pdef.fluent.FluentFuture;
 {% endif %}
 {% if method.args|length <= 1 %}
     {{ method_result(method.result) }} {{ method.name }}({% for arg, argtype in method.args -%}
-                @io.pdef.Name("{{ arg }}") {{ argtype }} {{ arg }}
+                {{ argtype }} {{ arg }}
                 {%- if loop.length > 1 and not loop.last %}, {% endif %}
         {%- endfor %});
 
 {% else %}
     {{ method_result(method.result) }} {{ method.name }}(
 {% for arg, argtype in method.args %}
-            @io.pdef.Name("{{ arg }}") {{ argtype }} {{ arg }}
+            {{ argtype }} {{ arg }}
             {%- if loop.last %}); {% elif loop.length > 1 %}, {% endif %}
 
 {% endfor %}

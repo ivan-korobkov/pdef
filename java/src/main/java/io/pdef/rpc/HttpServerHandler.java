@@ -1,10 +1,9 @@
-package io.pdef.server;
+package io.pdef.rpc;
 
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.MediaType;
-import io.pdef.rpc.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -13,11 +12,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Iterator;
 
-public class HttpServletHandler extends HttpServlet {
+public class HttpServerHandler extends HttpServlet {
 	private static final Splitter SLASH_SPLITTER = Splitter.on("/");
 	private final Function<Request, Response> handler;
 
-	public HttpServletHandler(final Function<Request, Response> handler) {
+	public HttpServerHandler(final Function<Request, Response> handler) {
 		this.handler = handler;
 	}
 

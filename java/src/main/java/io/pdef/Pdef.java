@@ -1,7 +1,5 @@
 package io.pdef;
 
-import io.pdef.io.Reader;
-
 import java.lang.reflect.Type;
 
 /** Pdef descriptor pool. */

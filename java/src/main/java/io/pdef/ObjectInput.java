@@ -1,5 +1,6 @@
-package io.pdef.io;
+package io.pdef;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -50,12 +51,24 @@ public class ObjectInput implements Input {
 	}
 
 	@Override
-	public <T> List<T> getList(final Reader.ListReader<T> reader) {
-		return value == null ? null : reader.get(new ListInput((List<?>) value));
+	public <T> List<T> getList(final Reader<T> elementReader) {
+		if (value == null) return ImmutableList.of();
+
+		List<?> list = (List<?>) value;
+		List<T> result = Lists.newArrayList();
+		ObjectInput in = new ObjectInput(null); // Reusable element input.
+
+		for (Object e : list) {
+			in.value = e;
+			T r = elementReader.get(in);
+			result.add(r);
+		}
+
+		return result;
 	}
 
 	@Override
-	public <T> T getMessage(final Reader.MessageReader<T> reader) {
+	public <T> T getMessage(final MessageReader<T> reader) {
 		return value == null ? null : reader.get(new MessageInput((Map<?, ?>) value));
 	}
 
@@ -64,29 +77,7 @@ public class ObjectInput implements Input {
 		return reader.get(this);
 	}
 
-	static class ListInput implements Input.ListInput {
-		private final List<?> list;
-
-		ListInput(final List<?> list) {
-			this.list = checkNotNull(list);
-		}
-
-		@Override
-		public <T> List<T> get(final Reader<T> elementReader) {
-			ObjectInput in = new ObjectInput(null); // Reusable element input.
-
-			List<T> result = Lists.newArrayList();
-			for (Object e : list) {
-				in.value = e;
-				T r = elementReader.get(in);
-				result.add(r);
-			}
-
-			return result;
-		}
-	}
-
-	static class MessageInput implements Input.MessageInput {
+	static class MessageInput implements io.pdef.MessageInput {
 		private final Map<?, ?> map;
 		private final ObjectInput in; // Reusable field input.
 

@@ -56,7 +56,7 @@ public class HttpServerHandler extends HttpServlet {
 //			//PdefMethod method = descriptor.getMethod(name);
 //			if (method == null) throw methodNotFound(path);
 //
-//			ImmutableMap.Builder<String, Object> ab = ImmutableMap.builder();
+//			ImmutableMap.Builder<String, Object> ab = ImmutableMap.remote();
 //			for (Map.Entry<String, PdefDatatype> entry : method.getArgs().entrySet()) {
 //				if (!iterator.hasNext()) {
 //					throw wrongNumberOfMethodArgs(path, method.getArgNum(), ab.build().size());
@@ -71,7 +71,7 @@ public class HttpServerHandler extends HttpServlet {
 //				ab.put(entry.getKey(), arg);
 //			}
 //
-//			MethodCall call = MethodCall.builder()
+//			MethodCall call = MethodCall.remote()
 //					.setMethod(name)
 //					.setArgs(ab.build())
 //					.build();

@@ -1,6 +1,5 @@
 package io.pdef;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import java.util.List;
@@ -49,6 +48,10 @@ public class ObjectOutput implements Output {
 	}
 
 	@Override
+	public <T> void write(final List<T> list, final Writer<T> elementWriter) {
+	}
+
+	@Override
 	public <T> void write(final T object, final Writer<T> writer) {
 		ObjectOutput output = new ObjectOutput();
 		writer.write(object, output);
@@ -56,39 +59,13 @@ public class ObjectOutput implements Output {
 	}
 
 	@Override
-	public <T> void write(final List<T> list, final Writer.ListWriter<T> writer) {
-		ListOutput output = new ListOutput();
-		writer.write(list, output);
-		this.value = output.toObject();
-	}
-
-	@Override
-	public <T> void write(final T message, final MessageWriter<T> writer) {
+	public <T> void write(final T message, final Message.MessageWriter<T> writer) {
 		MessageOutput output = new MessageOutput();
 		writer.write(message, output);
 		this.value = output.toObject();
 	}
 
-	static class ListOutput implements Output.ListOutput {
-		private List<Object> value = Lists.newArrayList();
-
-		List<Object> toObject() {
-			return value;
-		}
-
-		@Override
-		public <T> void write(final List<T> list, final Writer<T> elementWriter) {
-			ObjectOutput elementOutput = new ObjectOutput();
-
-			for (T element : list) {
-				elementWriter.write(element, elementOutput);
-				value.add(elementOutput.toObject());
-				elementOutput.value = null;
-			}
-		}
-	}
-
-	static class MessageOutput implements io.pdef.MessageOutput {
+	static class MessageOutput implements Message.MessageOutput {
 		private Map<String, Object> map = Maps.newLinkedHashMap();
 		private ObjectOutput fieldOut; // Reusable field output.
 

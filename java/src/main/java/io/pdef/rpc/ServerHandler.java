@@ -1,8 +1,8 @@
 package io.pdef.rpc;
 
 import com.google.common.base.Function;
+import io.pdef.Invocation;
 import io.pdef.fluent.FluentFunctions;
-import io.pdef.invocation.RemoteInvocation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -22,7 +22,7 @@ public class ServerHandler implements Function<Request, Response> {
 	}
 
 	/** Reads a remote invocation from a request. */
-	public static class RequestToInvocation implements Function<Request, RemoteInvocation> {
+	public static class RequestToInvocation implements Function<Request, Invocation> {
 		private final Class<?> iface;
 
 		public RequestToInvocation(final Class<?> iface) {
@@ -30,14 +30,14 @@ public class ServerHandler implements Function<Request, Response> {
 		}
 
 		@Override
-		public RemoteInvocation apply(final Request input) {
+		public Invocation apply(final Request input) {
 			checkNotNull(input);
 			return null;
 		}
 	}
 
 	/** Handles a remote invocation and returns the result. */
-	public static class InvocationToResult implements Function<RemoteInvocation, Object> {
+	public static class InvocationToResult implements Function<Invocation, Object> {
 		private final Object service;
 
 		public InvocationToResult(final Object service) {
@@ -45,7 +45,7 @@ public class ServerHandler implements Function<Request, Response> {
 		}
 
 		@Override
-		public Object apply(final RemoteInvocation input) {
+		public Object apply(final Invocation input) {
 			return null;
 		}
 	}

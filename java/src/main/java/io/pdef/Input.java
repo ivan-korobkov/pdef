@@ -11,6 +11,6 @@ public interface Input {
 	double getDouble();
 	String getString();
 	<T> List<T> getList(Reader<T> elementReader);
-	<T> T getMessage(MessageReader<T> reader);
+	<T> T getMessage(Message.MessageReader<T> reader);
 	<T> T get(Reader<T> reader);
 }

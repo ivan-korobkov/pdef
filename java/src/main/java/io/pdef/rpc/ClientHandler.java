@@ -2,42 +2,35 @@ package io.pdef.rpc;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import io.pdef.Descriptor;
+import io.pdef.Invocation;
 import io.pdef.ObjectInput;
-import io.pdef.Pdef;
 import io.pdef.Reader;
 import io.pdef.fluent.FluentFunctions;
-import io.pdef.invocation.Invocation;
-import io.pdef.invocation.RemoteInvocation;
 
-import java.lang.reflect.Type;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ClientHandler
-		implements Function<RemoteInvocation, Function<RemoteInvocation, Object>> {
-	private final Pdef pdef;
+		implements Function<Invocation, Function<Invocation, Object>> {
 	private final Function<Request, Response> handler;
 
-	public ClientHandler(final Pdef pdef, final Function<Request, Response> handler) {
-		this.pdef = pdef;
+	public ClientHandler(final Function<Request, Response> handler) {
 		this.handler = handler;
 	}
 
 	@Override
-	public Function<RemoteInvocation, Object> apply(final RemoteInvocation invocation) {
-		Type resultType = invocation.getResultType();
-		Type excType = invocation.getExcType();
-
+	public Function<Invocation, Object> apply(final Invocation invocation) {
 		return FluentFunctions
 				.of(new InvocationToRequest())
 				.then(handler)
-				.then(new ResponseToResult(resultType, excType, pdef));
+				.then(new ResponseToResult(null, null));
 	}
 
-	public static class InvocationToRequest implements Function<RemoteInvocation, Request> {
+	public static class InvocationToRequest implements Function<Invocation, Request> {
 		@Override
-		public Request apply(final RemoteInvocation input) {
+		public Request apply(final Invocation input) {
 			List<Invocation> list = input.toList();
 			List<MethodCall> calls = Lists.newArrayList();
 			for (Invocation invocation : list) {
@@ -58,14 +51,12 @@ public class ClientHandler
 	}
 
 	public static class ResponseToResult implements Function<Response, Object> {
-		private final Type resultType;
-		private final Type excType;
-		private final Pdef pdef;
+		private final Descriptor<?> result;
+		private final Descriptor<?> resultExc;
 
-		public ResponseToResult(final Type resultType, final Type excType, final Pdef pdef) {
-			this.pdef = pdef;
-			this.resultType = checkNotNull(resultType);
-			this.excType = excType;
+		public ResponseToResult(final Descriptor<?> result, final Descriptor<?> resultExc) {
+			this.result = checkNotNull(result);
+			this.resultExc = resultExc;
 		}
 
 		@Override
@@ -73,9 +64,9 @@ public class ClientHandler
 			ResponseStatus status = response.getStatus();
 
 			Reader<?> reader;
-			if (status == ResponseStatus.OK) reader = pdef.getReader(resultType);
-			else if (status == ResponseStatus.ERROR) reader = pdef.getReader(io.pdef.rpc.Error.class);
-			else if (status == ResponseStatus.EXCEPTION) reader = pdef.getReader(excType);
+			if (status == ResponseStatus.OK) reader = result;
+			else if (status == ResponseStatus.ERROR) reader = null;
+			else if (status == ResponseStatus.EXCEPTION) reader = resultExc;
 			else throw new IllegalArgumentException("No status in response: " + response);
 
 			ObjectInput input = new ObjectInput(response.getResult());

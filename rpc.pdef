@@ -14,7 +14,7 @@ message Response {
 }
 
 enum RequestType {
-    ACCESSOR, MUTATOR;
+    ACCESSOR, MUTATOR
 }
 
 /** Response status. */

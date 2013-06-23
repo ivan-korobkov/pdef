@@ -11,7 +11,7 @@ public interface Output {
 	void write(double v);
 	void write(String v);
 	<T> void write(List<T> list, Writer<T> elementWriter);
-	<T> void write(T message, MessageWriter<T> writer);
+	<T> void write(T message, Message.MessageWriter<T> writer);
 	<T> void write(T object, Writer<T> writer);
 
 }

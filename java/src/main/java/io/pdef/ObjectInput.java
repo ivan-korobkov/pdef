@@ -68,7 +68,7 @@ public class ObjectInput implements Input {
 	}
 
 	@Override
-	public <T> T getMessage(final MessageReader<T> reader) {
+	public <T> T getMessage(final Message.MessageReader<T> reader) {
 		return value == null ? null : reader.get(new MessageInput((Map<?, ?>) value));
 	}
 
@@ -77,7 +77,7 @@ public class ObjectInput implements Input {
 		return reader.get(this);
 	}
 
-	static class MessageInput implements io.pdef.MessageInput {
+	static class MessageInput implements Message.MessageInput {
 		private final Map<?, ?> map;
 		private final ObjectInput in; // Reusable field input.
 

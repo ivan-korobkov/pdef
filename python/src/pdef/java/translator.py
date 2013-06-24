@@ -108,6 +108,7 @@ class JavaInterface(JavaDefinition):
 
         self.bases = [ref(base) for base in iface.bases]
         self.declared_methods = [JavaMethod(method) for method in iface.declared_methods.values()]
+        self.methods = [JavaMethod(method) for method in iface.methods.values()]
         self.async = False
         self.async_name = 'Async%s' % self.name
 
@@ -242,5 +243,5 @@ NATIVE_MAP = {
     Type.OBJECT: JavaType(Type.OBJECT, 'Object', descriptor='io.pdef.Descriptors.object'),
 
     Type.VOID: JavaType(Type.VOID, 'void', 'Void', is_primitive=True,
-            descriptor='io.pdef.Descriptors.void')
+            descriptor='io.pdef.Descriptors.void0')
 }

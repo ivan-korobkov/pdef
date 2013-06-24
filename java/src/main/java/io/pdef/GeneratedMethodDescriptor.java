@@ -186,13 +186,13 @@ class GeneratedMethodDescriptor implements MethodDescriptor {
 			return this;
 		}
 
-		public Builder resultExc(final Descriptor<?> resultExc) {
-			this.resultExc = checkNotNull(resultExc);
+		public Builder result(final InterfaceDescriptor resultInterface) {
+			this.resultInterface = checkNotNull(resultInterface);
 			return this;
 		}
 
-		public Builder resultInterface(final InterfaceDescriptor resultInterface) {
-			this.resultInterface = checkNotNull(resultInterface);
+		public Builder resultExc(final Descriptor<?> resultExc) {
+			this.resultExc = checkNotNull(resultExc);
 			return this;
 		}
 

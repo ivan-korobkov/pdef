@@ -34,33 +34,48 @@ import io.pdef.fluent.FluentFuture;
 {% endif %}
 {% if not bases -%}
     public interface {{ iface_name(name) }} {
-{%- else -%}
+{% else -%}
     public interface {{ iface_name(name) }} extends {% for base in bases -%}
         {{ iface_base(base) }}
         {%- if loop.length > 1 and not loop.last %}, {% endif %}
 {%- endfor %} {
-
 {% endif %}
 
 {% for method in declared_methods %}
-{% if method.doc %}
+    {% if method.doc -%}
     /** {{ method.doc|indent(4) }} */
-{% endif %}
-{% if method.args|length <= 1 %}
+    {% endif -%}
     {{ method_result(method.result) }} {{ method.name }}({% for arg, argtype in method.args -%}
                 {{ argtype }} {{ arg }}
                 {%- if loop.length > 1 and not loop.last %}, {% endif %}
         {%- endfor %});
 
-{% else %}
-    {{ method_result(method.result) }} {{ method.name }}(
-{% for arg, argtype in method.args %}
-            {{ argtype }} {{ arg }}
-            {%- if loop.last %}); {% elif loop.length > 1 %}, {% endif %}
-
 {% endfor %}
-
-{% endif %}
+    static class Descriptor extends io.pdef.GeneratedInterfaceDescriptor<{{ name }}> {
+{% for method in methods %}
+        private final io.pdef.MethodDescriptor {{ method.name }}Method;
 {% endfor %}
+        private final java.util.Map<String, io.pdef.MethodDescriptor> methods;
+
+        private Descriptor() {
+            super({{ name }}.class);
+{% for method in methods %}
+            {{ method.name }}Method = io.pdef.GeneratedInterfaceDescriptor.method("{{ method.name }}")
+                    .result({{ method.result.descriptor }})
+                    .invocable({{ name }}.class)
+                    .build();
+{% endfor %}
+            methods = io.pdef.GeneratedInterfaceDescriptor.methods(
+                    {% for method in methods %}{{ method.name }}Method
+            {%- if loop.length > 1 and not loop.last %}, {% endif %}{% endfor %});
+        }
+
+		@Override
+		public java.util.Map<String, io.pdef.MethodDescriptor> getMethods() {
+			return methods;
+		}
+    }
+
+	static final Descriptor descriptor = new Descriptor();
 }
 

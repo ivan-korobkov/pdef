@@ -16,42 +16,42 @@ public class ObjectInput implements Input {
 	}
 
 	@Override
-	public boolean getBoolean() {
+	public boolean readBoolean() {
 		return value == null ? false : (Boolean) value;
 	}
 
 	@Override
-	public short getShort() {
+	public short readShort() {
 		return value == null ? 0 : ((Number) value).shortValue();
 	}
 
 	@Override
-	public int getInt() {
+	public int readInt() {
 		return value == null ? 0 : ((Number) value).intValue();
 	}
 
 	@Override
-	public long getLong() {
+	public long readLong() {
 		return value == null ? 0 : ((Number) value).longValue();
 	}
 
 	@Override
-	public float getFloat() {
+	public float readFloat() {
 		return value == null ? 0 : ((Number) value).floatValue();
 	}
 
 	@Override
-	public double getDouble() {
+	public double readDouble() {
 		return value == null ? 0 : ((Number) value).doubleValue();
 	}
 
 	@Override
-	public String getString() {
+	public String readString() {
 		return (String) value;
 	}
 
 	@Override
-	public <T> List<T> getList(final Reader<T> elementReader) {
+	public <T> List<T> readList(final Reader<T> elementReader) {
 		if (value == null) return ImmutableList.of();
 
 		List<?> list = (List<?>) value;
@@ -60,7 +60,7 @@ public class ObjectInput implements Input {
 
 		for (Object e : list) {
 			in.value = e;
-			T r = elementReader.get(in);
+			T r = elementReader.read(in);
 			result.add(r);
 		}
 
@@ -68,16 +68,16 @@ public class ObjectInput implements Input {
 	}
 
 	@Override
-	public <T> T getMessage(final Message.MessageReader<T> reader) {
-		return value == null ? null : reader.get(new MessageInput((Map<?, ?>) value));
+	public <T> T readMessage(final MessageReader<T> reader) {
+		return value == null ? null : reader.read(new MessageInput((Map<?, ?>) value));
 	}
 
 	@Override
-	public <T> T get(final Reader<T> reader) {
-		return reader.get(this);
+	public <T> T read(final Reader<T> reader) {
+		return reader.read(this);
 	}
 
-	static class MessageInput implements Message.MessageInput {
+	static class MessageInput implements io.pdef.MessageInput {
 		private final Map<?, ?> map;
 		private final ObjectInput in; // Reusable field input.
 
@@ -87,9 +87,9 @@ public class ObjectInput implements Input {
 		}
 
 		@Override
-		public <T> T get(final String field, final Reader<T> reader) {
+		public <T> T read(final String field, final Reader<T> reader) {
 			in.value = map.get(field);
-			T result = reader.get(in);
+			T result = reader.read(in);
 			in.value = null;
 			return result;
 		}

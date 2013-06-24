@@ -48,7 +48,7 @@ public class ObjectOutput implements Output {
 	}
 
 	@Override
-	public <T> void write(final List<T> list, final Writer<T> elementWriter) {
+	public <T> void writeList(final List<T> list, final Writer<T> elementWriter) {
 	}
 
 	@Override
@@ -59,13 +59,13 @@ public class ObjectOutput implements Output {
 	}
 
 	@Override
-	public <T> void write(final T message, final Message.MessageWriter<T> writer) {
+	public <T> void writeMessage(final T message, final MessageWriter<T> writer) {
 		MessageOutput output = new MessageOutput();
 		writer.write(message, output);
 		this.value = output.toObject();
 	}
 
-	static class MessageOutput implements Message.MessageOutput {
+	static class MessageOutput implements io.pdef.MessageOutput {
 		private Map<String, Object> map = Maps.newLinkedHashMap();
 		private ObjectOutput fieldOut; // Reusable field output.
 

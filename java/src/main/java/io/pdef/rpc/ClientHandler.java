@@ -70,7 +70,7 @@ public class ClientHandler
 			else throw new IllegalArgumentException("No status in response: " + response);
 
 			ObjectInput input = new ObjectInput(response.getResult());
-			Object result = reader.get(input);
+			Object result = reader.read(input);
 
 			if (status == ResponseStatus.OK) return reader;
 			throw (RuntimeException) result;

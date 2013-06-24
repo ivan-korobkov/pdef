@@ -146,7 +146,7 @@ class GeneratedMethodDescriptor implements MethodDescriptor {
 
 			@SuppressWarnings("unchecked")
 			Descriptor<Object> descriptor = (Descriptor<Object>) entry.getValue();
-			Object value = descriptor.get(input);
+			Object value = descriptor.read(input);
 
 			if (value == null) continue;
 			builder.put(key, value);

@@ -1,5 +1,9 @@
 package io.pdef;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public class Descriptors {
 	private Descriptors() {}
 
@@ -10,8 +14,8 @@ public class Descriptors {
 		}
 
 		@Override
-		public Boolean get(final Input input) {
-			return input.getBoolean();
+		public Boolean read(final Input input) {
+			return input.readBoolean();
 		}
 
 		@Override
@@ -27,8 +31,8 @@ public class Descriptors {
 		}
 
 		@Override
-		public Short get(final Input input) {
-			return input.getShort();
+		public Short read(final Input input) {
+			return input.readShort();
 		}
 
 		@Override
@@ -44,8 +48,8 @@ public class Descriptors {
 		}
 
 		@Override
-		public Integer get(final Input input) {
-			return input.getInt();
+		public Integer read(final Input input) {
+			return input.readInt();
 		}
 
 		@Override
@@ -61,8 +65,8 @@ public class Descriptors {
 		}
 
 		@Override
-		public Long get(final Input input) {
-			return input.getLong();
+		public Long read(final Input input) {
+			return input.readLong();
 		}
 
 		@Override
@@ -78,8 +82,8 @@ public class Descriptors {
 		}
 
 		@Override
-		public Float get(final Input input) {
-			return input.getFloat();
+		public Float read(final Input input) {
+			return input.readFloat();
 		}
 
 		@Override
@@ -95,8 +99,8 @@ public class Descriptors {
 		}
 
 		@Override
-		public Double get(final Input input) {
-			return input.getDouble();
+		public Double read(final Input input) {
+			return input.readDouble();
 		}
 
 		@Override
@@ -112,8 +116,8 @@ public class Descriptors {
 		}
 
 		@Override
-		public String get(final Input input) {
-			return input.getString();
+		public String read(final Input input) {
+			return input.readString();
 		}
 
 		@Override
@@ -129,12 +133,29 @@ public class Descriptors {
 		}
 
 		@Override
-		public Void get(final Input input) {
+		public Void read(final Input input) {
 			return null;
 		}
 
 		@Override
 		public void write(final Void value, final Output output) {}
+	};
+
+	public static Descriptor<Object> object = new Descriptor<Object>() {
+		@Override
+		public Object getDefault() {
+			return null;
+		}
+
+		@Override
+		public Object read(final Input input) {
+			return input.readObject();
+		}
+
+		@Override
+		public void write(final Object value, final Output output) {
+			output.writeObject(value);
+		}
 	};
 
 	public static <T> Descriptor<T> enum0(final T defaultValue) {
@@ -145,7 +166,7 @@ public class Descriptors {
 			}
 
 			@Override
-			public T get(final Input input) {
+			public T read(final Input input) {
 				return null;
 			}
 
@@ -153,5 +174,18 @@ public class Descriptors {
 			public void write(final T value, final Output output) {
 			}
 		};
+	}
+
+	public static <T> Descriptor<List<T>> list(final Descriptor<T> element) {
+		return null;
+	}
+
+	public static <T> Descriptor<Set<T>> set(final Descriptor<T> element) {
+		return null;
+	}
+
+	public static <K, V> Descriptor<Map<K, V>> map(final Descriptor<K> key,
+			final Descriptor<V> value) {
+		return null;
 	}
 }

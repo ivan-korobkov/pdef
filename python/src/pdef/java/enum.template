@@ -9,6 +9,6 @@ public enum {{name}} {
     {%- endfor %};
 
     public static final {{ name }} instance = {{ values[0] }};
-    public static final io.pdef.Descriptor descriptor = io.pdef.Descriptors.enum0(instance);
+    public static final io.pdef.Descriptor<{{name}}> descriptor = io.pdef.Descriptors.enum0(instance);
 }
 

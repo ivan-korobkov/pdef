@@ -4,15 +4,11 @@ package {{ package }};
 /** {{ doc }} */
 {% endif %}
 public class {{ name }} extends {{ base }} {
-    private static final {{ name }} instance = new {{ name }}();
-
 {% for field in declared_fields %}
     protected {{ field.type }} {{ field.name }};
 {% endfor %}
 
-    public {{ name }}() {
-        this(new Builder());
-    }
+    public {{ name }}() {}
 
     public {{ name }}(final Builder builder) {
         super(builder);
@@ -31,6 +27,17 @@ public class {{ name }} extends {{ base }} {
         {%- endif %}
 
 {% endfor %}
+    }
+
+    private {{ name }}(final io.pdef.MessageInput input) {
+        super(input);
+{% for field in declared_fields %}
+        this.{{ field.name }} = input.read("{{ field.name }}", {{ field.type.descriptor }});
+{% endfor %}
+    }
+
+    public static {{ name }} read(final io.pdef.MessageInput input) {
+        return new {{ name }}(input);
     }
 
 {% for field in declared_fields %}
@@ -66,12 +73,11 @@ public class {{ name }} extends {{ base }} {
         return builder();
     }
 
-    public static {{ name }} getInstance() {
-        return instance;
-    }
-
-    public static Builder builder() {
-        return new Builder();
+    public void write(final io.pdef.MessageOutput output) {
+        super.write(output);
+{% for field in declared_fields %}
+        output.write("{{ field.name }}", this.{{ field.name }}, {{ field.type.descriptor }});
+{% endfor %}
     }
 
     public static class Builder extends {{ base_builder }} {
@@ -79,12 +85,13 @@ public class {{ name }} extends {{ base }} {
         protected {{ field.type }} {{ field.name }};
 {% endfor %}
 
+{% if not base_type %}
+        protected Builder() {}
+{% else %}
         protected Builder() {
-            {% if base_type -%}
-                super({{ base_type }});
-            {%- endif %}
-
+            super({{ base_type }});
         }
+{% endif %}
 
         protected Builder(final {{ name }} message) {
             super(message);
@@ -156,7 +163,6 @@ public class {{ name }} extends {{ base }} {
             return new {{ name }}(this);
         }
 
-
         @Override
         public String toString() {
             return com.google.common.base.Objects.toStringHelper(this)
@@ -180,7 +186,8 @@ public class {{ name }} extends {{ base }} {
             {% if field.type.is_primitive -%}
                 if (this.{{ field.name }} != cast.{{ field.name }}) return false;
             {%- else -%}
-                if (this.{{ field.name }} != null ? !this.{{ field.name }}.equals(cast.{{ field.name }})
+                if (this.{{ field.name }} != null
+                    ? !this.{{ field.name }}.equals(cast.{{ field.name }})
                     : cast.{{ field.name }} != null) return false;
             {%- endif %}
 
@@ -230,7 +237,8 @@ public class {{ name }} extends {{ base }} {
         {% if field.type.is_primitive -%}
             if (this.{{ field.name }} != cast.{{ field.name }}) return false;
         {%- else -%}
-            if (this.{{ field.name }} != null ? !this.{{ field.name }}.equals(cast.{{ field.name }})
+            if (this.{{ field.name }} != null
+                ? !this.{{ field.name }}.equals(cast.{{ field.name }})
                 : cast.{{ field.name }} != null) return false;
         {%- endif %}
 
@@ -241,7 +249,7 @@ public class {{ name }} extends {{ base }} {
     }
 
     @Override
-    public int generateHashCode() {
+    protected int generateHashCode() {
         {% if not declared_fields -%}
             return super.generateHashCode();
         {%- else -%}
@@ -254,5 +262,23 @@ public class {{ name }} extends {{ base }} {
         {%- endif %}
 
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final {{ name }} instance = new {{ name }}();
+    public static final io.pdef.Descriptor<{{ name }}> descriptor =
+            new io.pdef.GeneratedMessageDescriptor<{{ name }}>(instance) {
+                @Override
+                public void write(final {{ name }} message, final io.pdef.MessageOutput output) {
+                    message.write(output);
+                }
+
+                @Override
+                public {{ name }} read(final io.pdef.MessageInput input) {
+                    return {{ name }}.read(input);
+                }
+            };
 }
 

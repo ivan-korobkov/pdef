@@ -3,23 +3,25 @@ package io.pdef;
 import java.util.List;
 
 public interface Input {
-	boolean getBoolean();
+	boolean readBoolean();
 
-	short getShort();
+	short readShort();
 
-	int getInt();
+	int readInt();
 
-	long getLong();
+	long readLong();
 
-	float getFloat();
+	float readFloat();
 
-	double getDouble();
+	double readDouble();
 
-	String getString();
+	String readString();
 
-	<T> List<T> getList(Reader<T> elementReader);
+	Object readObject();
 
-	<T> T getMessage(Message.MessageReader<T> reader);
+	<T> List<T> readList(Reader<T> elementReader);
 
-	<T> T get(Reader<T> reader);
+	<T> T readMessage(MessageReader<T> reader);
+
+	<T> T read(Reader<T> reader);
 }

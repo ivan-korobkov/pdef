@@ -4,18 +4,18 @@ import io.pdef.rpc.MethodCall;
 
 import java.util.Map;
 
-public interface MethodDescriptor {
+public interface Method {
 	String getName();
 
 	boolean isRemote();
 
-	Map<String, Descriptor<?>> getArgs();
+	Map<String, Type<?>> getArgs();
 
-	Descriptor<?> getResult();
+	Type<?> getResult();
 
-	Descriptor<?> getResultExc();
+	Type<?> getResultExc();
 
-	InterfaceDescriptor getResultInterface();
+	InterfaceType getResultInterface();
 
 	Invocation capture(Invocation parent, Object... args);
 

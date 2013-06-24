@@ -5,18 +5,17 @@ import com.google.common.collect.ImmutableMap;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public abstract class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
+public abstract class GeneratedInterfaceType<T> implements InterfaceType<T> {
 	private final Class<T> javaClass;
 	private final Class<T> proxyClass;
 
 	@SuppressWarnings("unchecked")
-	protected GeneratedInterfaceDescriptor(final Class<T> javaClass) {
+	protected GeneratedInterfaceType(final Class<T> javaClass) {
 		this.javaClass = checkNotNull(javaClass);
 		proxyClass = (Class<T>) Proxy.getProxyClass(javaClass.getClassLoader(), javaClass);
 	}
@@ -56,24 +55,24 @@ public abstract class GeneratedInterfaceDescriptor<T> implements InterfaceDescri
 		return new Server(this, delegate);
 	}
 
-	protected static GeneratedMethodDescriptor.Builder method(final String name) {
-		return GeneratedMethodDescriptor.builder(name);
+	protected static GeneratedMethod.Builder method(final String name) {
+		return GeneratedMethod.builder(name);
 	}
 
-	protected static ImmutableMap<String, MethodDescriptor> methods(MethodDescriptor... methods) {
-		ImmutableMap.Builder<String, MethodDescriptor> builder = ImmutableMap.builder();
-		for (MethodDescriptor method : methods) {
+	protected static ImmutableMap<String, Method> methods(Method... methods) {
+		ImmutableMap.Builder<String, Method> builder = ImmutableMap.builder();
+		for (Method method : methods) {
 			builder.put(method.getName(), method);
 		}
 		return builder.build();
 	}
 
 	static class ClientProxy implements java.lang.reflect.InvocationHandler {
-		private final InterfaceDescriptor<?> descriptor;
+		private final InterfaceType<?> descriptor;
 		private final InvocationHandler handler;
 		@Nullable private final Invocation parent;
 
-		ClientProxy(final InterfaceDescriptor descriptor, final InvocationHandler handler,
+		ClientProxy(final InterfaceType descriptor, final InvocationHandler handler,
 				@Nullable final Invocation parent) {
 			this.descriptor = checkNotNull(descriptor);
 			this.handler = checkNotNull(handler);
@@ -81,10 +80,10 @@ public abstract class GeneratedInterfaceDescriptor<T> implements InterfaceDescri
 		}
 
 		@Override
-		public Object invoke(final Object o, final Method method, final Object[] objects)
+		public Object invoke(final Object o, final java.lang.reflect.Method method, final Object[] objects)
 				throws Throwable {
 			String name = method.getName();
-			MethodDescriptor m = descriptor.getMethods().get(name);
+			Method m = descriptor.getMethods().get(name);
 			if (m == null) return method.invoke(o, objects); // It must be the equals, etc. method.
 
 			Invocation invocation = m.capture(parent, objects);
@@ -95,10 +94,10 @@ public abstract class GeneratedInterfaceDescriptor<T> implements InterfaceDescri
 	}
 
 	static class Server implements InvocationHandler {
-		private final InterfaceDescriptor descriptor;
+		private final InterfaceType descriptor;
 		private final Object delegate;
 
-		Server(final InterfaceDescriptor descriptor, final Object delegate) {
+		Server(final InterfaceType descriptor, final Object delegate) {
 			this.descriptor = checkNotNull(descriptor);
 			this.delegate = checkNotNull(delegate);
 		}
@@ -108,8 +107,8 @@ public abstract class GeneratedInterfaceDescriptor<T> implements InterfaceDescri
 		public <T> T apply(final Invocation invocation) {
 			checkNotNull(invocation);
 			String name = invocation.getMethod();
-			Map<String, MethodDescriptor> methods = descriptor.getMethods();
-			MethodDescriptor method = methods.get(name);
+			Map<String, Method> methods = descriptor.getMethods();
+			Method method = methods.get(name);
 			return (T) method.invoke(delegate, invocation);
 		}
 	}

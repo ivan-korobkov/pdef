@@ -1,15 +1,21 @@
 package io.pdef;
 
+import com.google.common.collect.Maps;
+
+import java.util.Map;
+
 public abstract class GeneratedMessage implements Message {
 	private transient int hash;
 
 	protected GeneratedMessage() {}
 
+	protected GeneratedMessage(final Map<?, ?> map) {}
+
 	protected GeneratedMessage(final Builder builder) {}
 
-	protected GeneratedMessage(final MessageInput input) {}
-
-	protected void write(final MessageOutput output) {}
+	public Map<String, Object> serialize() {
+		return Maps.newHashMap();
+	}
 
 	@Override
 	public boolean equals(final Object o) {

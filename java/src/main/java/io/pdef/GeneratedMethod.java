@@ -4,6 +4,8 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.rpc.MethodCall;
 
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -11,17 +13,17 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-class GeneratedMethodDescriptor implements MethodDescriptor {
+class GeneratedMethod implements Method {
 	private final String name;
-	private final Map<String, Descriptor<?>> argDescriptors;
+	private final Map<String, Type<?>> argDescriptors;
 	private final Invocable invocable;
 
 	private final boolean remote;
-	private final Descriptor<?> result;
-	private final Descriptor<?> resultExc;
-	private final InterfaceDescriptor resultInterface;
+	private final Type<?> result;
+	private final Type<?> resultExc;
+	private final InterfaceType resultInterface;
 
-	private GeneratedMethodDescriptor(final Builder builder) {
+	private GeneratedMethod(final Builder builder) {
 		name = checkNotNull(builder.name);
 		remote = builder.remote;
 		argDescriptors = ImmutableMap.copyOf(builder.args);
@@ -54,22 +56,22 @@ class GeneratedMethodDescriptor implements MethodDescriptor {
 	}
 
 	@Override
-	public Map<String, Descriptor<?>> getArgs() {
+	public Map<String, Type<?>> getArgs() {
 		return argDescriptors;
 	}
 
 	@Override
-	public Descriptor<?> getResult() {
+	public Type<?> getResult() {
 		return result;
 	}
 
 	@Override
-	public Descriptor<?> getResultExc() {
+	public Type<?> getResultExc() {
 		return resultExc;
 	}
 
 	@Override
-	public InterfaceDescriptor getResultInterface() {
+	public InterfaceType getResultInterface() {
 		return resultInterface;
 	}
 
@@ -94,11 +96,11 @@ class GeneratedMethodDescriptor implements MethodDescriptor {
 		int i = 0;
 		Object[] array = new Object[argDescriptors.size()];
 		Map<String, Object> args = invocation.getArgs();
-		for (Map.Entry<String, Descriptor<?>> entry : argDescriptors.entrySet()) {
+		for (Map.Entry<String, Type<?>> entry : argDescriptors.entrySet()) {
 			String key = entry.getKey();
-			Descriptor<?> descriptor = entry.getValue();
+			Type<?> type = entry.getValue();
 			Object arg = args.get(key);
-			Object value = arg != null ? arg : descriptor.getDefault();
+			Object value = arg != null ? arg : type.getDefault();
 			array[i++] = value;
 		}
 
@@ -111,14 +113,14 @@ class GeneratedMethodDescriptor implements MethodDescriptor {
 		Map<String, Object> args = invocation.getArgs();
 		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
-		for (Map.Entry<String, Descriptor<?>> entry : argDescriptors.entrySet()) {
+		for (Map.Entry<String, Type<?>> entry : argDescriptors.entrySet()) {
 			String key = entry.getKey();
 			Object arg = args.get(key);
 			ObjectOutput output = new ObjectOutput();
 
 			@SuppressWarnings("unchecked")
-			Descriptor<Object> descriptor = (Descriptor<Object>) entry.getValue();
-			descriptor.write(arg, output);
+			Type<Object> type = (Type<Object>) entry.getValue();
+			type.write(arg, output);
 			Object value = output.toObject();
 
 			if (value == null) continue;
@@ -139,14 +141,14 @@ class GeneratedMethodDescriptor implements MethodDescriptor {
 		Map<String, Object> args = call.getArgs();
 		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
-		for (Map.Entry<String, Descriptor<?>> entry : argDescriptors.entrySet()) {
+		for (Map.Entry<String, Type<?>> entry : argDescriptors.entrySet()) {
 			String key = entry.getKey();
 			Object arg = args.get(key);
 			ObjectInput input = new ObjectInput(arg);
 
 			@SuppressWarnings("unchecked")
-			Descriptor<Object> descriptor = (Descriptor<Object>) entry.getValue();
-			Object value = descriptor.read(input);
+			Type<Object> type = (Type<Object>) entry.getValue();
+			Object value = type.read(input);
 
 			if (value == null) continue;
 			builder.put(key, value);
@@ -166,11 +168,11 @@ class GeneratedMethodDescriptor implements MethodDescriptor {
 	public static class Builder {
 		private final String name;
 		private boolean remote;
-		private LinkedHashMap<String, Descriptor<?>> args;
+		private LinkedHashMap<String, Type<?>> args;
 		private Invocable invocable;
-		private Descriptor<?> result;
-		private Descriptor<?> resultExc;
-		private InterfaceDescriptor<?> resultInterface;
+		private Type<?> result;
+		private Type<?> resultExc;
+		private InterfaceType<?> resultInterface;
 
 		private Builder(final String name) {
 			this.name = checkNotNull(name);
@@ -181,24 +183,24 @@ class GeneratedMethodDescriptor implements MethodDescriptor {
 			return this;
 		}
 
-		public Builder result(final Descriptor<?> result) {
+		public Builder result(final Type<?> result) {
 			this.result = checkNotNull(result);
 			return this;
 		}
 
-		public Builder result(final InterfaceDescriptor resultInterface) {
+		public Builder result(final InterfaceType resultInterface) {
 			this.resultInterface = checkNotNull(resultInterface);
 			return this;
 		}
 
-		public Builder resultExc(final Descriptor<?> resultExc) {
+		public Builder resultExc(final Type<?> resultExc) {
 			this.resultExc = checkNotNull(resultExc);
 			return this;
 		}
 
-		public Builder arg(final String name, final Descriptor<?> descriptor) {
+		public Builder arg(final String name, final Type<?> type) {
 			checkArgument(!args.containsKey(name), "duplicate argument %s", name);
-			args.put(name, descriptor);
+			args.put(name, type);
 			return this;
 		}
 
@@ -213,8 +215,8 @@ class GeneratedMethodDescriptor implements MethodDescriptor {
 			return invocable(ReflexInvocable.create(name, iface));
 		}
 
-		public MethodDescriptor build() {
-			return new GeneratedMethodDescriptor(this);
+		public Method build() {
+			return new GeneratedMethod(this);
 		}
 	}
 

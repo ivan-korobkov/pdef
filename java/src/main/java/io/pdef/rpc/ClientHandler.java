@@ -2,10 +2,8 @@ package io.pdef.rpc;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import io.pdef.Descriptor;
+import io.pdef.Type;
 import io.pdef.Invocation;
-import io.pdef.ObjectInput;
-import io.pdef.Reader;
 import io.pdef.fluent.FluentFunctions;
 
 import java.util.List;
@@ -51,10 +49,10 @@ public class ClientHandler
 	}
 
 	public static class ResponseToResult implements Function<Response, Object> {
-		private final Descriptor<?> result;
-		private final Descriptor<?> resultExc;
+		private final Type<?> result;
+		private final Type<?> resultExc;
 
-		public ResponseToResult(final Descriptor<?> result, final Descriptor<?> resultExc) {
+		public ResponseToResult(final Type<?> result, final Type<?> resultExc) {
 			this.result = checkNotNull(result);
 			this.resultExc = resultExc;
 		}
@@ -63,16 +61,16 @@ public class ClientHandler
 		public Object apply(final Response response) {
 			ResponseStatus status = response.getStatus();
 
-			Reader<?> reader;
-			if (status == ResponseStatus.OK) reader = result;
-			else if (status == ResponseStatus.ERROR) reader = null;
-			else if (status == ResponseStatus.EXCEPTION) reader = resultExc;
+			Parser<?> parser;
+			if (status == ResponseStatus.OK) parser = result;
+			else if (status == ResponseStatus.ERROR) parser = null;
+			else if (status == ResponseStatus.EXCEPTION) parser = resultExc;
 			else throw new IllegalArgumentException("No status in response: " + response);
 
 			ObjectInput input = new ObjectInput(response.getResult());
-			Object result = reader.read(input);
+			Object result = parser.read(input);
 
-			if (status == ResponseStatus.OK) return reader;
+			if (status == ResponseStatus.OK) return parser;
 			throw (RuntimeException) result;
 		}
 	}

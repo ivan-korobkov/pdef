@@ -14,7 +14,7 @@ public abstract class GeneratedException extends RuntimeException implements Mes
 	protected void write(final MessageOutput output) {}
 
 	public abstract Builder toBuilder();
-	public abstract Builder builderForType();
+	public abstract Builder builderForClass();
 
 	@Override
 	public boolean equals(final Object o) {

@@ -51,6 +51,11 @@ public class ObjectInput implements Input {
 	}
 
 	@Override
+	public Object readObject() {
+		return value;
+	}
+
+	@Override
 	public <T> List<T> readList(final Reader<T> elementReader) {
 		if (value == null) return ImmutableList.of();
 

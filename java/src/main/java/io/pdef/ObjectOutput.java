@@ -48,6 +48,14 @@ public class ObjectOutput implements Output {
 	}
 
 	@Override
+	public void writeNull() {
+	}
+
+	@Override
+	public void writeObject(final Object value) {
+	}
+
+	@Override
 	public <T> void writeList(final List<T> list, final Writer<T> elementWriter) {
 	}
 

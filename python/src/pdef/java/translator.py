@@ -81,7 +81,9 @@ class JavaMessage(JavaDefinition):
         self.base_builder = '%s.Builder' % self.base
         self.discriminator_field = JavaField(msg.polymorphic_discriminator_field) \
             if msg.polymorphic_discriminator_field else None
-        self.subtypes = tuple((key.name.lower(), ref(val)) for key, val in msg.subtypes.items())
+
+        # Keys are simple enum values so that they can be used in the switch statement.
+        self.subtypes = tuple((key.name, ref(val)) for key, val in msg.subtypes.items())
 
         self.fields = [JavaField(f) for f in msg.fields.values()]
         self.declared_fields = [JavaField(f) for f in msg.declared_fields.values()]

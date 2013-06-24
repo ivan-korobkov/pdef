@@ -29,7 +29,7 @@ public class {{ name }} extends {{ base }} {
 {% endfor %}
     }
 
-    private {{ name }}(final io.pdef.MessageInput input) {
+    protected {{ name }}(final io.pdef.MessageInput input) {
         super(input);
 {% for field in declared_fields %}
         this.{{ field.name }} = input.read("{{ field.name }}", {{ field.type.descriptor }});
@@ -37,6 +37,14 @@ public class {{ name }} extends {{ base }} {
     }
 
     public static {{ name }} read(final io.pdef.MessageInput input) {
+{% if subtypes %}
+        {{ discriminator_field.type }} type = input.read("{{ discriminator_field.name }}", {{ discriminator_field.type.descriptor }});
+        switch (type) {
+{% for type, cls in subtypes %}
+            case {{ type }}: return {{ cls }}.read(input);
+{% endfor %}
+        }
+{% endif %}
         return new {{ name }}(input);
     }
 

@@ -4,7 +4,14 @@ import java.io.Serializable;
 
 public abstract class GeneratedException extends RuntimeException implements Message, Serializable {
 	private transient int hash;
+
+	protected GeneratedException() {}
+
 	protected GeneratedException(final Builder builder) {}
+
+	protected GeneratedException(final MessageInput input) {}
+
+	protected void write(final MessageOutput output) {}
 
 	public abstract Builder toBuilder();
 	public abstract Builder builderForType();

@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -107,7 +108,8 @@ public abstract class GeneratedInterfaceDescriptor<T> implements InterfaceDescri
 		public <T> T apply(final Invocation invocation) {
 			checkNotNull(invocation);
 			String name = invocation.getMethod();
-			MethodDescriptor method = descriptor.getMethods().get(name);
+			Map<String, MethodDescriptor> methods = descriptor.getMethods();
+			MethodDescriptor method = methods.get(name);
 			return (T) method.invoke(delegate, invocation);
 		}
 	}

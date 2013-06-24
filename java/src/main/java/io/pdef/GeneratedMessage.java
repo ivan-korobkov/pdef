@@ -2,9 +2,13 @@ package io.pdef;
 
 public abstract class GeneratedMessage implements Message {
 	private transient int hash;
+
 	protected GeneratedMessage() {}
+
 	protected GeneratedMessage(final Builder builder) {}
+
 	protected GeneratedMessage(final MessageInput input) {}
+
 	protected void write(final MessageOutput output) {}
 
 	@Override

@@ -136,4 +136,22 @@ public class Descriptors {
 		@Override
 		public void write(final Void value, final Output output) {}
 	};
+
+	public static <T> Descriptor<T> enum0(final T defaultValue) {
+		return new Descriptor<T>() {
+			@Override
+			public T getDefault() {
+				return defaultValue;
+			}
+
+			@Override
+			public T get(final Input input) {
+				return null;
+			}
+
+			@Override
+			public void write(final T value, final Output output) {
+			}
+		};
+	}
 }

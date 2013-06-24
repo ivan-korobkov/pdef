@@ -130,46 +130,79 @@ def ref(obj):
     '''Returns a java reference for a pdef type.'''
     t = obj.type
     if t in NATIVE_MAP: return NATIVE_MAP[t]
-
-    elif t == Type.LIST:
-        element = ref(obj.element).boxed
-        return JavaType(Type.LIST,
-            name='java.util.List<%s>' % element,
-            default='com.google.common.collect.ImmutableList.<%s>of()' % element)
-
-    elif t == Type.SET:
-        element = ref(obj.element).boxed
-        return JavaType(Type.SET,
-            name='java.util.Set<%s>' % element,
-            default='com.google.common.collect.ImmutableSet.<%s>of()' % element)
-
-    elif t == Type.MAP:
-        key = ref(obj.key).boxed
-        value = ref(obj.value).boxed
-        return JavaType(Type.MAP,
-            name='java.util.Map<%s, %s>' % (key, value),
-            default='com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key, value))
-
-    elif t == Type.ENUM_VALUE: return JavaType(Type.ENUM_VALUE,
-            name='%s.%s' % (ref(obj.enum), obj.name))
-
-    name = '%s.%s' % (obj.module.name, obj.name) if obj.module else obj.name
-    async_name = name
-    if t == Type.INTERFACE:
-        async_name = '%s.Async%s' % (obj.module.name, obj.name) \
-            if obj.module else 'Async%s' % obj.name
-
-    default = '%s.getInstance()' % name if t == Type.MESSAGE else 'null'
-    return JavaType(t, name, default=default, async_name=async_name)
+    if t == Type.LIST: return JavaType.list(obj)
+    if t == Type.SET: return JavaType.set(obj)
+    if t == Type.MAP: return JavaType.map(obj)
+    if t == Type.ENUM: return JavaType.enum(obj)
+    if t == Type.ENUM_VALUE: return JavaType.enum_value(obj)
+    if t == Type.MESSAGE: return JavaType.message(obj)
+    if t == Type.INTERFACE: return JavaType.interface(obj)
+    raise ValueError('Unsupported type %s' % obj)
 
 
 class JavaType(object):
-    def __init__(self, type, name, boxed=None, default='null', is_primitive=False, async_name=None):
+    @classmethod
+    def list(cls, obj):
+        element = ref(obj.element).boxed
+        return JavaType(Type.LIST, name='java.util.List<%s>' % element,
+            default='com.google.common.collect.ImmutableList.<%s>of()' % element,
+            descriptor='io.pdef.Descriptors.list(%s)' % element.descriptor)
+
+    @classmethod
+    def set(cls, obj):
+        element = ref(obj.element).boxed
+        name = 'java.util.Set<%s>' % element
+        default = 'com.google.common.collect.ImmutableSet.<%s>of()' % element
+        descriptor = 'io.pdef.Descriptors.set(%s)' % element.descriptor
+        return JavaType(Type.SET, name=name, default=default, descriptor=descriptor)
+
+    @classmethod
+    def map(cls, obj):
+        key = ref(obj.key).boxed
+        value = ref(obj.value).boxed
+        name = 'java.util.Map<%s, %s>' % (key, value)
+        default = 'com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key, value)
+        descriptor = 'io.pdef.Descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
+        return JavaType(Type.MAP, name=name, default=default, descriptor=descriptor)
+
+    @classmethod
+    def enum_value(cls, obj):
+        return JavaType(Type.ENUM_VALUE, name='%s.%s' % (ref(obj.enum), obj.name))
+
+    @classmethod
+    def enum(cls, obj):
+        name = cls._default_name(obj)
+        default = '%s.instance' % name
+        descriptor = '%s.descriptor' % name
+        return JavaType(Type.ENUM, name=name, default=default, descriptor=descriptor)
+
+    @classmethod
+    def message(cls, obj):
+        name = cls._default_name(obj)
+        default = '%s.instance' % name
+        descriptor = '%s.descriptor' % name
+        return JavaType(Type.MESSAGE, name, default=default, descriptor=descriptor)
+
+    @classmethod
+    def interface(cls, obj):
+        name = cls._default_name(obj)
+        descriptor = '%s.descriptor' % name
+        async_name = '%s.Async%s' % (obj.module.name, obj.name) \
+            if obj.module else 'Async%s' % obj.name
+        return JavaType(Type.INTERFACE, name, descriptor=descriptor, async_name=async_name)
+
+    @classmethod
+    def _default_name(cls, obj):
+        return '%s.%s' % (obj.module.name, obj.name) if obj.module else obj.name
+
+    def __init__(self, type, name, boxed=None, default='null', is_primitive=False,
+                 descriptor=None, async_name=None):
         self.type = type
         self.name = name
         self.boxed = boxed if boxed else self
         self.default = default
         self.async_name = async_name
+        self.descriptor = descriptor
 
         self.is_primitive = is_primitive
         self.is_nullable = default == 'null'
@@ -184,13 +217,28 @@ class JavaType(object):
 
 
 NATIVE_MAP = {
-    Type.BOOL: JavaType(Type.BOOL, 'boolean', 'Boolean', default='false', is_primitive=True),
-    Type.INT16: JavaType(Type.INT16, 'short', 'Short', default='(short) 0', is_primitive=True),
-    Type.INT32: JavaType(Type.INT32, 'int', 'Integer', default='0', is_primitive=True),
-    Type.INT64: JavaType(Type.INT64, 'long', 'Long', default='0L', is_primitive=True),
-    Type.FLOAT: JavaType(Type.FLOAT, 'float', 'Float', default='0f', is_primitive=True),
-    Type.DOUBLE: JavaType(Type.DOUBLE, 'double', 'Double', default='0.0', is_primitive=True),
-    Type.STRING: JavaType(Type.STRING, 'String'),
-    Type.OBJECT: JavaType(Type.OBJECT, 'Object'),
-    Type.VOID: JavaType(Type.VOID, 'void', 'Void', is_primitive=True)
+    Type.BOOL: JavaType(Type.BOOL, 'boolean', 'Boolean', default='false', is_primitive=True,
+            descriptor='io.pdef.Descriptors.bool'),
+
+    Type.INT16: JavaType(Type.INT16, 'short', 'Short', default='(short) 0', is_primitive=True,
+            descriptor='io.pdef.Descriptors.int16'),
+
+    Type.INT32: JavaType(Type.INT32, 'int', 'Integer', default='0', is_primitive=True,
+            descriptor='io.pdef.Descriptors.int32'),
+
+    Type.INT64: JavaType(Type.INT64, 'long', 'Long', default='0L', is_primitive=True,
+            descriptor='io.pdef.Descriptors.int64'),
+
+    Type.FLOAT: JavaType(Type.FLOAT, 'float', 'Float', default='0f', is_primitive=True,
+            descriptor='io.pdef.Descriptors.float0'),
+
+    Type.DOUBLE: JavaType(Type.DOUBLE, 'double', 'Double', default='0.0', is_primitive=True,
+            descriptor='io.pdef.Descriptors.double0'),
+
+    Type.STRING: JavaType(Type.STRING, 'String', descriptor='io.pdef.Descriptors.string'),
+
+    Type.OBJECT: JavaType(Type.OBJECT, 'Object', descriptor='io.pdef.Descriptors.object'),
+
+    Type.VOID: JavaType(Type.VOID, 'void', 'Void', is_primitive=True,
+            descriptor='io.pdef.Descriptors.void')
 }

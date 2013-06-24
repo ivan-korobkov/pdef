@@ -12,6 +12,7 @@ class TestJavaEnum(unittest.TestCase):
 
         translator = JavaTranslator('/tmp')
         jenum = JavaEnum(enum, translator.enum_template)
+        print jenum.code
         assert jenum.code
 
 

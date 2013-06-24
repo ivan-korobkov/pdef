@@ -6,7 +6,9 @@ package {{package}};
 public enum {{name}} {
     {% for value in values -%}
         {{value}}{% if not loop.last and loop.length > 1 %}, {% endif %}
-    {%- endfor %}
+    {%- endfor %};
 
+    public static final {{ name }} instance = {{ values[0] }};
+    public static final io.pdef.Descriptor descriptor = io.pdef.Descriptors.enum0(instance);
 }
 

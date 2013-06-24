@@ -43,8 +43,7 @@ class Compiler(object):
 
     def java(self, out, async=True):
         translator = JavaTranslator(out, async)
-        for def0 in self.defs:
-            translator.write_definition(def0)
+        translator.translate(self.defs)
 
     def csharp(self, out):
         translator = CsharpTranslator(out)

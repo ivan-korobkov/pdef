@@ -11,8 +11,7 @@ class TestJavaEnum(unittest.TestCase):
         module.add_definition(enum)
 
         translator = JavaTranslator('/tmp')
-        jenum = JavaEnum(enum, translator.enum_template)
-        print jenum.code
+        jenum = JavaEnum(enum, translator)
         assert jenum.code
 
 
@@ -41,13 +40,10 @@ class TestInterface(unittest.TestCase):
         module1.add_definition(iface)
 
         translator = JavaTranslator('/tmp')
-        self.jiface = JavaInterface(iface, translator.interface_template)
+        self.jiface = JavaInterface(iface, translator)
 
     def test(self):
         assert self.jiface.code
-
-    def test_async(self):
-        assert self.jiface.async_code
 
 
 class TestMessage(unittest.TestCase):
@@ -74,33 +70,36 @@ class TestMessage(unittest.TestCase):
         module1.add_definition(msg)
 
         translator = JavaTranslator('/tmp')
-        jmsg = JavaMessage(msg, translator.message_template)
-        jbase = JavaMessage(base, translator.message_template)
+        jmsg = JavaMessage(msg, translator)
+        jbase = JavaMessage(base, translator)
         assert jbase.code
         assert jmsg.code
 
 
 class TestRef(unittest.TestCase):
+    def setUp(self):
+        self.translator = JavaTranslator('/tmp')
+
     def test_list(self):
         obj = List(Types.INT32)
-        jobj = ref(obj)
+        jobj = self.translator.ref(obj)
         assert str(jobj) == 'java.util.List<Integer>'
         assert jobj.is_list
 
     def test_set(self):
         obj = Set(Types.BOOL)
-        jobj = ref(obj)
+        jobj = self.translator.ref(obj)
         assert str(jobj) == 'java.util.Set<Boolean>'
         assert jobj.is_set
 
     def test_map(self):
         obj = Map(Types.STRING, Types.FLOAT)
-        jobj = ref(obj)
+        jobj = self.translator.ref(obj)
         assert str(jobj) == 'java.util.Map<String, Float>'
         assert jobj.is_map
 
     def test_native(self):
-        jobj = ref(Types.INT64)
+        jobj = self.translator.ref(Types.INT64)
         assert jobj.name == 'long'
         assert jobj.boxed == 'Long'
         assert jobj.default == '0L'
@@ -114,7 +113,7 @@ class TestRef(unittest.TestCase):
         module = Module('test.module')
         module.add_definition(enum)
 
-        jone = ref(one)
+        jone = self.translator.ref(one)
         assert str(jone) == 'test.module.Number.ONE'
 
     def test_interface(self):
@@ -122,9 +121,8 @@ class TestRef(unittest.TestCase):
         module = Module('test.module')
         module.add_definition(iface)
 
-        jface = ref(iface)
+        jface = self.translator.ref(iface)
         assert str(jface) == 'test.module.Interface'
-        assert jface.async_name == 'test.module.AsyncInterface'
         assert jface.is_interface
 
     def test_message(self):
@@ -132,6 +130,6 @@ class TestRef(unittest.TestCase):
         module = Module('test.module')
         module.add_definition(msg)
 
-        jmsg = ref(msg)
+        jmsg = self.translator.ref(msg)
         assert str(jmsg) == 'test.module.Message'
-        assert jmsg.default == 'test.module.Message.getInstance()'
+        assert jmsg.default == 'test.module.Message.instance'

@@ -1,20 +1,23 @@
 package io.pdef;
 
+import com.google.common.collect.Maps;
+
 import java.io.Serializable;
+import java.util.Map;
 
 public abstract class GeneratedException extends RuntimeException implements Message, Serializable {
 	private transient int hash;
 
 	protected GeneratedException() {}
 
+	protected GeneratedException(final Map<?, ?> map) {}
+
 	protected GeneratedException(final Builder builder) {}
 
-	protected GeneratedException(final MessageInput input) {}
-
-	protected void write(final MessageOutput output) {}
-
-	public abstract Builder toBuilder();
-	public abstract Builder builderForClass();
+	@Override
+	public Map<String, Object> serialize() {
+		return Maps.newLinkedHashMap();
+	}
 
 	@Override
 	public boolean equals(final Object o) {

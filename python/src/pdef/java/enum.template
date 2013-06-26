@@ -8,7 +8,35 @@ public enum {{name}} {
         {{value}}{% if not loop.last and loop.length > 1 %}, {% endif %}
     {%- endfor %};
 
-    public static final {{ name }} instance = {{ values[0] }};
-    public static final io.pdef.Descriptor<{{name}}> descriptor = io.pdef.Descriptors.enum0(instance);
+    public static {{ name }} parse(final Object object) {
+        return null;
+    }
+
+    public static String serialize(final {{ name }} object) {
+        return null;
+    }
+
+    public static {{ name }} instance() {
+        return INSTANCE;
+    }
+
+    private static final {{ name }} INSTANCE = {{ values[0] }};
+    public static final io.pdef.Descriptor<{{ name }}> DESCRIPTOR =
+            new io.pdef.Descriptor<{{ name }}>() {
+                @Override
+                public {{ name }} getDefault() {
+                    return {{ name }}.instance();
+                }
+
+                @Override
+                public {{ name }} parse(final Object object) {
+                    return {{ name }}.parse(object);
+                }
+
+                @Override
+                public Object serialize(final {{ name }} object) {
+                    return {{ name }}.serialize(object);
+                }
+            };
 }
 

@@ -29,23 +29,30 @@ public class {{ name }} extends {{ base }} {
 {% endfor %}
     }
 
-    protected {{ name }}(final io.pdef.MessageInput input) {
-        super(input);
+    protected {{ name }}(final java.util.Map<?, ?> map) {
+        super(map);
 {% for field in declared_fields %}
-        this.{{ field.name }} = input.read("{{ field.name }}", {{ field.type.descriptor }});
+        this.{{ field.name }} = {{ field.type.parse }}(map.get("{{ field.name }}"));
 {% endfor %}
     }
-
-    public static {{ name }} read(final io.pdef.MessageInput input) {
+    
+    public static {{ name }} parse(final Object object) {
+        if (object == null) return null;
+        return parse((java.util.Map<?, ?>) object);
+    }
+    
+    public static {{ name }} parse(final java.util.Map<?, ?> map) {
 {% if subtypes %}
-        {{ discriminator_field.type }} type = input.read("{{ discriminator_field.name }}", {{ discriminator_field.type.descriptor }});
-        switch (type) {
+        {{ discriminator.type }} type = {{ discriminator.type.parse }}(map.get("{{ discriminator.name }}"));
+        if (type != null) {
+            switch (type) {
 {% for type, cls in subtypes %}
-            case {{ type }}: return {{ cls }}.read(input);
+                case {{ type }}: return {{ cls.parse }}(map);
 {% endfor %}
+            }
         }
 {% endif %}
-        return new {{ name }}(input);
+        return new {{ name }}(map);
     }
 
 {% for field in declared_fields %}
@@ -72,6 +79,15 @@ public class {{ name }} extends {{ base }} {
 
 {% endfor %}
     @Override
+    public java.util.Map<String, Object> serialize() {
+        java.util.Map<String, Object> map = super.serialize();
+{% for field in declared_fields %}
+        map.put("{{ field.name }}", {{ field.type.serialize }}(this.{{ field.name }}));
+{% endfor %}
+        return map;
+    }
+
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -80,12 +96,14 @@ public class {{ name }} extends {{ base }} {
     public Builder builderForType() {
         return builder();
     }
+    
+    @Override
+    public io.pdef.Descriptor<? extends {{ name }}> descriptorForType() {
+        return DESCRIPTOR;
+    }
 
-    public void write(final io.pdef.MessageOutput output) {
-        super.write(output);
-{% for field in declared_fields %}
-        output.write("{{ field.name }}", this.{{ field.name }}, {{ field.type.descriptor }});
-{% endfor %}
+    public static java.util.Map<String, Object> serialize(final {{ name }} object) {
+        return object == null ? null : object.serialize();
     }
 
     public static class Builder extends {{ base }}.Builder {
@@ -108,11 +126,11 @@ public class {{ name }} extends {{ base }} {
             {% endfor %}
 
         }
-{% if discriminator_field %}
+{% if discriminator %}
 
-        protected Builder(final {{ discriminator_field.type }} {{ discriminator_field.name }}) {
+        protected Builder(final {{ discriminator.type }} {{ discriminator.name }}) {
             this();
-            this.{{ discriminator_field.name }} = {{ discriminator_field.name }};
+            this.{{ discriminator.name }} = {{ discriminator.name }};
         }
 {% endif %}
 
@@ -275,17 +293,26 @@ public class {{ name }} extends {{ base }} {
         return new Builder();
     }
 
-    public static final {{ name }} instance = new {{ name }}();
-    public static final io.pdef.Descriptor<{{ name }}> descriptor =
-            new io.pdef.GeneratedMessageDescriptor<{{ name }}>(instance) {
+    public static {{ name }} instance() {
+        return INSTANCE;
+    }
+    
+    private static final {{ name }} INSTANCE = new {{ name }}();
+    public static final io.pdef.Descriptor<{{ name }}> DESCRIPTOR =
+            new io.pdef.Descriptor<{{ name }}>() {
                 @Override
-                public void write(final {{ name }} message, final io.pdef.MessageOutput output) {
-                    message.write(output);
+                public {{ name }} getDefault() {
+                    return {{ name }}.instance();
                 }
 
                 @Override
-                public {{ name }} read(final io.pdef.MessageInput input) {
-                    return {{ name }}.read(input);
+                public {{ name }} parse(final Object object) {
+                    return {{ name }}.parse(object);
+                }
+
+                @Override
+                public Object serialize(final {{ name }} value) {
+                    return {{ name }}.serialize(value);
                 }
             };
 }

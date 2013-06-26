@@ -75,7 +75,7 @@ class JavaMessage(JavaDefinition):
 
         self.base = translator.message_base(msg)
         self.base_type = translator.ref(msg.base_type)
-        self.discriminator_field = translator.field(msg.polymorphic_discriminator_field)
+        self.discriminator = translator.field(msg.polymorphic_discriminator_field)
 
         # Keys are simple enum values so that they can be used in the switch statement.
         self.subtypes = tuple((key.name, translator.ref(val)) for key, val in msg.subtypes.items())
@@ -168,21 +168,21 @@ class JavaType(object):
     @classmethod
     def enum(cls, obj, translator):
         name = cls._default_name(obj)
-        default = '%s.instance' % name
-        descriptor = '%s.descriptor' % name
+        default = '%s.instance()' % name
+        descriptor = '%s.DESCRIPTOR' % name
         return JavaType(Type.ENUM, name=name, default=default, descriptor=descriptor)
 
     @classmethod
     def message(cls, obj, translator):
         name = cls._default_name(obj)
-        default = '%s.instance' % name
-        descriptor = '%s.descriptor' % name
+        default = '%s.instance()' % name
+        descriptor = '%s.DESCRIPTOR' % name
         return JavaType(Type.MESSAGE, name, default=default, descriptor=descriptor)
 
     @classmethod
     def interface(cls, obj, translator):
         name = cls._default_name(obj)
-        descriptor = '%s.descriptor' % name
+        descriptor = '%s.DESCRIPTOR' % name
         return JavaType(Type.INTERFACE, name, descriptor=descriptor)
 
     @classmethod
@@ -207,6 +207,18 @@ class JavaType(object):
 
     def __str__(self):
         return self.name
+
+    @property
+    def parse(self):
+        if self.type == Type.MESSAGE or self.type == Type.ENUM:
+            return '%s.parse' % self
+        return '%s.parse' % self.descriptor
+
+    @property
+    def serialize(self):
+        if self.type == Type.MESSAGE or self.type == Type.ENUM:
+            return '%s.serialize' % self
+        return '%s.serialize' % self.descriptor
 
 
 NATIVE_MAP = {
@@ -235,3 +247,4 @@ NATIVE_MAP = {
     Type.VOID: JavaType(Type.VOID, 'void', 'Void', is_primitive=True,
                         descriptor='io.pdef.Descriptors.void0')
 }
+

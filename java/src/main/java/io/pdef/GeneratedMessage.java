@@ -14,7 +14,7 @@ public abstract class GeneratedMessage implements Message {
 	protected GeneratedMessage(final Builder builder) {}
 
 	public Map<String, Object> serialize() {
-		return Maps.newHashMap();
+		return Maps.newLinkedHashMap();
 	}
 
 	@Override

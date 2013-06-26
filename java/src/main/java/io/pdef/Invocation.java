@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Invocation {
-	private final Method descriptor;
+	private final MethodDescriptor descriptor;
 	private final Invocation parent;
 	private final Map<String, Object> args;
 
@@ -16,7 +16,7 @@ public class Invocation {
 		return new Invocation(null, null, ImmutableMap.<String, Object>of());
 	}
 
-	Invocation(final Method descriptor, final Invocation parent,
+	Invocation(final MethodDescriptor descriptor, final Invocation parent,
 			final Map<String, Object> args) {
 		this.descriptor = descriptor;
 		this.parent = parent;
@@ -27,7 +27,7 @@ public class Invocation {
 		return descriptor.getName();
 	}
 
-	public Method getDescriptor() {
+	public MethodDescriptor getDescriptor() {
 		return descriptor;
 	}
 

@@ -2,12 +2,12 @@ package io.pdef;
 
 import java.util.Map;
 
-public interface InterfaceType<T> {
+public interface InterfaceDescriptor<T> {
 	/** Returns a java class of this descriptor. */
 	Class<T> getJavaClass();
 
 	/** Returns a map of this interface methods. */
-	Map<String, Method> getMethods();
+	Map<String, MethodDescriptor> getMethods();
 
 	/** Creates a new client. */
 	T client(InvocationHandler handler);

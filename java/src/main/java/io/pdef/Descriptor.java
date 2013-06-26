@@ -1,9 +1,9 @@
 package io.pdef;
 
-public interface Type<T> {
+public interface Descriptor<T> {
 	T getDefault();
 
 	T parse(Object object);
 
-	Object serialize(T value);
+	Object serialize(T object);
 }

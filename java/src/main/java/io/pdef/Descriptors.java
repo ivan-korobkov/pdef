@@ -1,9 +1,6 @@
 package io.pdef;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
+import com.google.common.collect.*;
 
 import java.util.List;
 import java.util.Map;
@@ -11,10 +8,10 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class Types {
-	private Types() {}
+public class Descriptors {
+	private Descriptors() {}
 
-	public static Type<Boolean> bool = new Type<Boolean>() {
+	public static Descriptor<Boolean> bool = new Descriptor<Boolean>() {
 		@Override
 		public Boolean getDefault() {
 			return false;
@@ -26,12 +23,12 @@ public class Types {
 		}
 
 		@Override
-		public Boolean serialize(final Boolean value) {
-			return value == null ? false : value;
+		public Boolean serialize(final Boolean object) {
+			return object == null ? false : object;
 		}
 	};
 
-	public static Type<Short> int16 = new Type<Short>() {
+	public static Descriptor<Short> int16 = new Descriptor<Short>() {
 		@Override
 		public Short getDefault() {
 			return (short) 0;
@@ -43,12 +40,12 @@ public class Types {
 		}
 
 		@Override
-		public Short serialize(final Short value) {
-			return value == null ? (short) 0 : value;
+		public Short serialize(final Short object) {
+			return object == null ? (short) 0 : object;
 		}
 	};
 
-	public static Type<Integer> int32 = new Type<Integer>() {
+	public static Descriptor<Integer> int32 = new Descriptor<Integer>() {
 		@Override
 		public Integer getDefault() {
 			return 0;
@@ -60,12 +57,12 @@ public class Types {
 		}
 
 		@Override
-		public Integer serialize(final Integer value) {
-			return value == null ? 0 : value;
+		public Integer serialize(final Integer object) {
+			return object == null ? 0 : object;
 		}
 	};
 
-	public static Type<Long> int64 = new Type<Long>() {
+	public static Descriptor<Long> int64 = new Descriptor<Long>() {
 		@Override
 		public Long getDefault() {
 			return 0L;
@@ -77,12 +74,12 @@ public class Types {
 		}
 
 		@Override
-		public Long serialize(final Long value) {
-			return value == null ? 0L : value;
+		public Long serialize(final Long object) {
+			return object == null ? 0L : object;
 		}
 	};
 
-	public static Type<Float> float0 = new Type<Float>() {
+	public static Descriptor<Float> float0 = new Descriptor<Float>() {
 		@Override
 		public Float getDefault() {
 			return 0f;
@@ -94,12 +91,12 @@ public class Types {
 		}
 
 		@Override
-		public Float serialize(final Float value) {
-			return value == null ? 0f : value;
+		public Float serialize(final Float object) {
+			return object == null ? 0f : object;
 		}
 	};
 
-	public static Type<Double> double0 = new Type<Double>() {
+	public static Descriptor<Double> double0 = new Descriptor<Double>() {
 		@Override
 		public Double getDefault() {
 			return 0d;
@@ -111,12 +108,12 @@ public class Types {
 		}
 
 		@Override
-		public Double serialize(final Double value) {
-			return value == null ? 0d : value;
+		public Double serialize(final Double object) {
+			return object == null ? 0d : object;
 		}
 	};
 
-	public static Type<String> string = new Type<String>() {
+	public static Descriptor<String> string = new Descriptor<String>() {
 		@Override
 		public String getDefault() {
 			return null;
@@ -128,12 +125,12 @@ public class Types {
 		}
 
 		@Override
-		public String serialize(final String value) {
-			return value;
+		public String serialize(final String object) {
+			return object;
 		}
 	};
 
-	public static Type<Void> void0 = new Type<Void>() {
+	public static Descriptor<Void> void0 = new Descriptor<Void>() {
 		@Override
 		public Void getDefault() {
 			return null;
@@ -145,12 +142,12 @@ public class Types {
 		}
 
 		@Override
-		public Void serialize(final Void value) {
+		public Void serialize(final Void object) {
 			return null;
 		}
 	};
 
-	public static Type<Object> object = new Type<Object>() {
+	public static Descriptor<Object> object = new Descriptor<Object>() {
 		@Override
 		public Object getDefault() {
 			return null;
@@ -162,18 +159,18 @@ public class Types {
 		}
 
 		@Override
-		public Object serialize(final Object value) {
-			return object;
+		public Object serialize(final Object object) {
+			return Descriptors.object;
 		}
 	};
 
-	public static <T> Type<T> enum0(final T defaultValue) {
+	public static <T> Descriptor<T> enum0(final T defaultValue) {
 		return null;
 	}
 
-	public static <T> Type<List<T>> list(final Type<T> element) {
+	public static <T> Descriptor<List<T>> list(final Descriptor<T> element) {
 		checkNotNull(element);
-		return new Type<List<T>>() {
+		return new Descriptor<List<T>>() {
 			@Override
 			public List<T> getDefault() {
 				return ImmutableList.of();
@@ -194,15 +191,22 @@ public class Types {
 			}
 
 			@Override
-			public Object serialize(final List<T> value) {
-				return null;
+			public List<Object> serialize(final List<T> object) {
+				if (object == null) return null;
+
+				List<Object> result = Lists.newArrayList();
+				for (T e : object) {
+					result.add(element.serialize(e));
+				}
+
+				return result;
 			}
 		};
 	}
 
-	public static <T> Type<Set<T>> set(final Type<T> element) {
+	public static <T> Descriptor<Set<T>> set(final Descriptor<T> element) {
 		checkNotNull(element);
-		return new Type<Set<T>>() {
+		return new Descriptor<Set<T>>() {
 			@Override
 			public Set<T> getDefault() {
 				return ImmutableSet.of();
@@ -223,17 +227,24 @@ public class Types {
 			}
 
 			@Override
-			public Object serialize(final Set<T> value) {
-				return null;
+			public Set<Object> serialize(final Set<T> object) {
+				if (object == null) return null;
+
+				Set<Object> result = Sets.newHashSet();
+				for (T e : object) {
+					result.add(element.serialize(e));
+				}
+
+				return result;
 			}
 		};
 	}
 
-	public static <K, V> Type<Map<K, V>> map(final Type<K> key,
-			final Type<V> value) {
+	public static <K, V> Descriptor<Map<K, V>> map(final Descriptor<K> key,
+			final Descriptor<V> value) {
 		checkNotNull(key);
 		checkNotNull(value);
-		return new Type<Map<K, V>>() {
+		return new Descriptor<Map<K, V>>() {
 			@Override
 			public Map<K, V> getDefault() {
 				return ImmutableMap.of();
@@ -241,12 +252,31 @@ public class Types {
 
 			@Override
 			public Map<K, V> parse(final Object object) {
-				return null;
+				if (object == null) return ImmutableMap.of();
+
+				Map<?, ?> map = (Map<?, ?>) object;
+				Map<K, V> result = Maps.newHashMap();
+				for (Map.Entry<?, ?> e : map.entrySet()) {
+					K k = key.parse(e.getKey());
+					V v = value.parse(e.getValue());
+					result.put(k, v);
+				}
+
+				return ImmutableMap.copyOf(result);
 			}
 
 			@Override
-			public Object serialize(final Map<K, V> value) {
-				return null;
+			public Map<Object, Object> serialize(final Map<K, V> object) {
+				if (object == null) return null;
+
+				Map<Object, Object> result = Maps.newHashMap();
+				for (Map.Entry<K, V> e : object.entrySet()) {
+					Object k = key.serialize(e.getKey());
+					Object v = value.serialize(e.getValue());
+					result.put(k, v);
+				}
+
+				return result;
 			}
 		};
 	}

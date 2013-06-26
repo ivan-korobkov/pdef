@@ -9,11 +9,20 @@ public enum {{name}} {
     {%- endfor %};
 
     public static {{ name }} parse(final Object object) {
-        return null;
+        return parse((String) object);
+    }
+
+    public static {{ name }} parse(final String object) {
+        if (object == null) return instance();
+        String s = object.toUpperCase();
+{% for value in values %}
+        if ({{ value }}.name().equals(s)) return {{ value }};
+{% endfor %}
+        return instance();
     }
 
     public static String serialize(final {{ name }} object) {
-        return null;
+        return object == null ? null : object.name().toLowerCase();
     }
 
     public static {{ name }} instance() {

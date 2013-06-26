@@ -3,7 +3,6 @@ module io.pdef.rpc;
 
 /** Request. */
 message Request {
-    type    RequestType;
     calls   list<MethodCall>;
 }
 
@@ -11,10 +10,6 @@ message Request {
 message Response {
     status  ResponseStatus;
     result  object;
-}
-
-enum RequestType {
-    ACCESSOR, MUTATOR
 }
 
 /** Response status. */
@@ -29,13 +24,13 @@ message MethodCall {
 }
 
 /** Rpc exception is raised when the server fails to process an RPC request. */
-exception Error {
-    code    ErrorCode;
+exception RpcError {
+    code    RpcErrorCode;
     text    string;
 }
 
 /** Rpc exception codes, most can be mapped to HTTP status codes. */
-enum ErrorCode {
+enum RpcErrorCode {
     SERVER_ERROR,           // An unhandled server error.
     SERVICE_UNAVAILABLE,    // The service is temporarily unavailable,
     TIMEOUT,                // Timeout.

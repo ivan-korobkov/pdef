@@ -13,6 +13,11 @@ public class Descriptors {
 
 	public static Descriptor<Boolean> bool = new Descriptor<Boolean>() {
 		@Override
+		public Class<Boolean> getJavaClass() {
+			return boolean.class;
+		}
+
+		@Override
 		public Boolean getDefault() {
 			return false;
 		}
@@ -29,6 +34,11 @@ public class Descriptors {
 	};
 
 	public static Descriptor<Short> int16 = new Descriptor<Short>() {
+		@Override
+		public Class<Short> getJavaClass() {
+			return short.class;
+		}
+
 		@Override
 		public Short getDefault() {
 			return (short) 0;
@@ -47,6 +57,11 @@ public class Descriptors {
 
 	public static Descriptor<Integer> int32 = new Descriptor<Integer>() {
 		@Override
+		public Class<Integer> getJavaClass() {
+			return int.class;
+		}
+
+		@Override
 		public Integer getDefault() {
 			return 0;
 		}
@@ -63,6 +78,11 @@ public class Descriptors {
 	};
 
 	public static Descriptor<Long> int64 = new Descriptor<Long>() {
+		@Override
+		public Class<Long> getJavaClass() {
+			return long.class;
+		}
+
 		@Override
 		public Long getDefault() {
 			return 0L;
@@ -81,6 +101,11 @@ public class Descriptors {
 
 	public static Descriptor<Float> float0 = new Descriptor<Float>() {
 		@Override
+		public Class<Float> getJavaClass() {
+			return float.class;
+		}
+
+		@Override
 		public Float getDefault() {
 			return 0f;
 		}
@@ -97,6 +122,11 @@ public class Descriptors {
 	};
 
 	public static Descriptor<Double> double0 = new Descriptor<Double>() {
+		@Override
+		public Class<Double> getJavaClass() {
+			return double.class;
+		}
+
 		@Override
 		public Double getDefault() {
 			return 0d;
@@ -115,6 +145,11 @@ public class Descriptors {
 
 	public static Descriptor<String> string = new Descriptor<String>() {
 		@Override
+		public Class<String> getJavaClass() {
+			return String.class;
+		}
+
+		@Override
 		public String getDefault() {
 			return null;
 		}
@@ -132,6 +167,11 @@ public class Descriptors {
 
 	public static Descriptor<Void> void0 = new Descriptor<Void>() {
 		@Override
+		public Class<Void> getJavaClass() {
+			return void.class;
+		}
+
+		@Override
 		public Void getDefault() {
 			return null;
 		}
@@ -148,6 +188,11 @@ public class Descriptors {
 	};
 
 	public static Descriptor<Object> object = new Descriptor<Object>() {
+		@Override
+		public Class<Object> getJavaClass() {
+			return Object.class;
+		}
+
 		@Override
 		public Object getDefault() {
 			return null;
@@ -171,6 +216,12 @@ public class Descriptors {
 	public static <T> Descriptor<List<T>> list(final Descriptor<T> element) {
 		checkNotNull(element);
 		return new Descriptor<List<T>>() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public Class<List<T>> getJavaClass() {
+				return (Class) List.class;
+			}
+
 			@Override
 			public List<T> getDefault() {
 				return ImmutableList.of();
@@ -207,6 +258,12 @@ public class Descriptors {
 	public static <T> Descriptor<Set<T>> set(final Descriptor<T> element) {
 		checkNotNull(element);
 		return new Descriptor<Set<T>>() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public Class<Set<T>> getJavaClass() {
+				return (Class) Set.class;
+			}
+
 			@Override
 			public Set<T> getDefault() {
 				return ImmutableSet.of();
@@ -245,6 +302,12 @@ public class Descriptors {
 		checkNotNull(key);
 		checkNotNull(value);
 		return new Descriptor<Map<K, V>>() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public Class<Map<K, V>> getJavaClass() {
+				return (Class) Map.class;
+			}
+
 			@Override
 			public Map<K, V> getDefault() {
 				return ImmutableMap.of();

@@ -51,21 +51,18 @@ import io.pdef.fluent.FluentFuture;
         {%- endfor %});
 
 {% endfor %}
-    static class Descriptor extends io.pdef.GeneratedInterfaceDescriptor<{{ name }}> {
+    static io.pdef.InterfaceDescriptor<{{ name }}> DESCRIPTOR =
+            new io.pdef.GeneratedInterfaceDescriptor<{{ name }}>({{ name }}.class) {
 {% for method in methods %}
         private final io.pdef.MethodDescriptor {{ method.name }}Method;
 {% endfor %}
         private final java.util.Map<String, io.pdef.MethodDescriptor> methods;
 
-        private Descriptor() {
-            super({{ name }}.class);
+        {
 {% for method in methods %}
-            {{ method.name }}Method = io.pdef.GeneratedInterfaceDescriptor.method("{{ method.name }}")
-                    .result({{ method.result.descriptor }})
-                    .invocable({{ name }}.class)
-                    .build();
+            {{ method.name }}Method = methodBuilder("{{ method.name }}").build();
 {% endfor %}
-            methods = io.pdef.GeneratedInterfaceDescriptor.methods(
+            methods = methodsToMap(
                     {% for method in methods %}{{ method.name }}Method
             {%- if loop.length > 1 and not loop.last %}, {% endif %}{% endfor %});
         }
@@ -74,8 +71,6 @@ import io.pdef.fluent.FluentFuture;
 		public java.util.Map<String, io.pdef.MethodDescriptor> getMethods() {
 			return methods;
 		}
-    }
-
-	static final Descriptor descriptor = new Descriptor();
+    };
 }
 

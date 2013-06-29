@@ -12,8 +12,6 @@ public class Invocation {
 	private final MethodDescriptor descriptor;
 	private final Invocation parent;
 	private final Map<String, Object> args;
-	private Descriptor<Object> exc;
-	private boolean remote;
 
 	public static Invocation root() {
 		return new Invocation(null, null, ImmutableMap.<String, Object>of());
@@ -28,7 +26,7 @@ public class Invocation {
 
 	/** Returns true when this invocation expected result is data or void. */
 	public boolean isRemote() {
-		return remote;
+		return descriptor.isRemote();
 	}
 
 	/** Returns whether this invocation is a root one, i.e. has no method and no arguments. */
@@ -37,36 +35,35 @@ public class Invocation {
 	}
 
 	/** Returns the expected result descriptor. */
-	public Descriptor<Object> getResult() {
-		return null;
+	public Descriptor<?> getResult() {
+		return descriptor.getResult();
 	}
 
 	/** Returns the expected exception descriptor. */
-	public Descriptor<Object> getExc() {
-		return exc;
+	public Descriptor<?> getExc() {
+		return descriptor.getExc();
+	}
+
+	/** Returns the next interface descriptor. */
+	public InterfaceDescriptor<?> getNext() {
+		return descriptor.getNext();
 	}
 
 	/** Returns a list of invocations from the root to this one except for the root. */
 	public List<Invocation> toList() {
 		List<Invocation> result = Lists.newArrayList();
-		Invocation iv = this;
-
-		while (!iv.isRoot()) {
-			result.add(iv);
-			iv = iv.parent;
-		}
-
+		for (Invocation iv = this; !iv.isRoot(); iv = iv.parent) result.add(iv);
 		Collections.reverse(result);
 		return result;
 	}
 
 	/** Executes this invocation on an object. */
 	public Object invoke(final Object object) {
-		return null;
+		return descriptor.invoke(object, args);
 	}
 
 	/** Serializes this invocation to a method call, serializes all arguments to objects. */
 	public MethodCall serialize() {
-		return null;
+		return descriptor.serialize(args);
 	}
 }

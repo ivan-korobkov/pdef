@@ -1,42 +1,15 @@
 package {{ package }};
 import io.pdef.fluent.FluentFuture;
 
-{% macro iface_name(name) -%}
-    {%- if async -%}
-        {{ async_name }}
-    {%- else -%}
-        {{ name }}
-    {%- endif -%}
-{%- endmacro -%}
-
-{% macro method_result(ref) -%}
-    {%- if async -%}
-        {%- if ref.is_interface -%}
-            {{ ref.async_name }}
-        {%- else -%}
-            FluentFuture<{{ ref.boxed }}>
-        {%- endif -%}
-    {%- else -%}
-        {{ ref }}
-    {%- endif -%}
-{%- endmacro -%}
-
-{% macro iface_base(base) -%}
-    {%- if async -%}
-        {{ base.async_name }}
-    {%- else -%}
-        {{ base }}
-    {%- endif -%}
-{%- endmacro -%}
 
 {% if doc %}
 /** {{ doc }} */
 {% endif %}
 {% if not bases -%}
-    public interface {{ iface_name(name) }} {
+    public interface {{ name }} {
 {% else -%}
-    public interface {{ iface_name(name) }} extends {% for base in bases -%}
-        {{ iface_base(base) }}
+    public interface {{ name }} extends {% for base in bases -%}
+        {{ base }}
         {%- if loop.length > 1 and not loop.last %}, {% endif %}
 {%- endfor %} {
 {% endif %}
@@ -45,7 +18,7 @@ import io.pdef.fluent.FluentFuture;
     {% if method.doc -%}
     /** {{ method.doc|indent(4) }} */
     {% endif -%}
-    {{ method_result(method.result) }} {{ method.name }}({% for arg, argtype in method.args -%}
+    {{ method.result }} {{ method.name }}({% for arg, argtype in method.args -%}
                 {{ argtype }} {{ arg }}
                 {%- if loop.length > 1 and not loop.last %}, {% endif %}
         {%- endfor %});
@@ -53,18 +26,27 @@ import io.pdef.fluent.FluentFuture;
 {% endfor %}
     static io.pdef.InterfaceDescriptor<{{ name }}> DESCRIPTOR =
             new io.pdef.GeneratedInterfaceDescriptor<{{ name }}>({{ name }}.class) {
-{% for method in methods %}
-        private final io.pdef.MethodDescriptor {{ method.name }}Method;
-{% endfor %}
         private final java.util.Map<String, io.pdef.MethodDescriptor> methods;
-
         {
+            methods = methods(
 {% for method in methods %}
-            {{ method.name }}Method = methodBuilder("{{ method.name }}").build();
+                    method(this, "{{ method.name }}")
+{% for arg, type in method.args %}
+                            .arg("{{ arg }}", {{ type.descriptor }})
 {% endfor %}
-            methods = methodsToMap(
-                    {% for method in methods %}{{ method.name }}Method
-            {%- if loop.length > 1 and not loop.last %}, {% endif %}{% endfor %});
+                            {%- if method.result.is_interface %}
+                            .next(new Supplier<InterfaceDescriptor<?>>() {
+                                @Override
+                                public InterfaceDescriptor<?> get() {
+                                    return {{ method.result.descriptor }};
+                                }
+                            })
+                            {% else %}
+                            .result({{ method.result.descriptor }})
+                            {% endif -%}
+                            .build(){% if loop.last %});{% elif loop.length > 1 %}, {% endif %}
+
+{% endfor %}
         }
 
 		@Override

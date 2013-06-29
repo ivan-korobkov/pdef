@@ -1,14 +1,12 @@
 package io.pdef;
 
 import com.google.common.base.Function;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import io.pdef.rpc.*;
 
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Server<T> implements Function<Request, Response> {
 	private final InterfaceDescriptor<T> descriptor;
@@ -29,10 +27,10 @@ public class Server<T> implements Function<Request, Response> {
 			try {
 				result = invoke(invocation);
 			} catch (Exception e) {
-				return serializeExceptionOrRethrow(invocation.getExc(), e);
+				return serializeExceptionOrRethrow(invocation, e);
 			}
 
-			return serializeResult(invocation.getResult(), result);
+			return serializeResult(invocation, result);
 		} catch (Exception e) {
 			return serializeError(e);
 		}
@@ -41,22 +39,30 @@ public class Server<T> implements Function<Request, Response> {
 	public Invocation parseInvocation(final Request request) {
 		checkNotNull(request);
 		List<MethodCall> calls = request.getCalls();
+		if (calls.isEmpty()) throw RpcErrors.methodCallsRequired();
 
-		InterfaceDescriptor<?> d = descriptor;
 		StringBuilder path = new StringBuilder();
-
+		InterfaceDescriptor<?> d = descriptor;
 		Invocation invocation = Invocation.root();
-		for (MethodCall call : calls) {
+
+		for (final MethodCall call : calls) {
 			String name = call.getMethod();
 			path.append(path.length() == 0 ? "" : ".").append(name);
+			if (d == null) throw RpcErrors.methodNotFound(path);
 
 			MethodDescriptor method = d.getMethods().get(name);
 			if (method == null) throw RpcErrors.methodNotFound(name);
 
-			invocation = method.parse(invocation, call.getArgs());
-			// TODO: next interface descriptor.
+			try {
+				invocation = method.parse(invocation, call.getArgs());
+			} catch (Exception e) {
+				throw RpcErrors.wrongMethodArgs(path);
+			}
+
+			if (!invocation.isRemote()) d = invocation.getNext();
 		}
 
+		if (!invocation.isRemote()) throw RpcErrors.notRemoteMethod(path);
 		return invocation;
 	}
 
@@ -72,7 +78,9 @@ public class Server<T> implements Function<Request, Response> {
 		return object;
 	}
 
-	public Response serializeResult(final Descriptor<Object> resultDescriptor, final Object result) {
+	@SuppressWarnings("unchecked")
+	public Response serializeResult(final Invocation invocation, final Object result) {
+		Descriptor resultDescriptor = invocation.getResult();
 		Object response = resultDescriptor.serialize(result);
 		return Response.builder()
 				.setResult(response)
@@ -80,8 +88,9 @@ public class Server<T> implements Function<Request, Response> {
 				.build();
 	}
 
-	public Response serializeExceptionOrRethrow(final Descriptor<Object> excDescriptor,
-			final Exception e) {
+	@SuppressWarnings("unchecked")
+	public Response serializeExceptionOrRethrow(final Invocation invocation, final Exception e) {
+		Descriptor excDescriptor = invocation.getExc();
 		if (excDescriptor == null || !excDescriptor.getJavaClass().isInstance(e)) {
 			throw Throwables.propagate(e);
 		}

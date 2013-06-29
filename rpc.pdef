@@ -34,12 +34,7 @@ enum RpcErrorCode {
     SERVER_ERROR,           // An unhandled server error.
     SERVICE_UNAVAILABLE,    // The service is temporarily unavailable,
     TIMEOUT,                // Timeout.
-    BAD_REQUEST,            // The request could not be understood by the server.
-    METHOD_NOT_FOUND,       // A method is not found.
-    METHOD_CALLS_REQUIRED,  // The method calls are empty.
-    DATA_METHOD_CALL_REQUIRED, // The last method must be a data method.
-    DATA_METHOD_REACHED_NO_MORE_CALLS, // Method calls on data types are not supported.
-    WRONG_METHOD_ARGUMENTS  // Wrong number or type of the method arguments.
+    BAD_REQUEST            // The request could not be understood by the server.
 }
 
 

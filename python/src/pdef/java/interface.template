@@ -1,5 +1,4 @@
 package {{ package }};
-import io.pdef.fluent.FluentFuture;
 
 
 {% if doc %}
@@ -37,7 +36,7 @@ import io.pdef.fluent.FluentFuture;
                             {%- if method.result.is_interface %}
                             .next(new com.google.common.base.Supplier<io.pdef.InterfaceDescriptor<?>>() {
                                 @Override
-                                public InterfaceDescriptor<?> get() {
+                                public io.pdef.InterfaceDescriptor<?> get() {
                                     return {{ method.result.descriptor }};
                                 }
                             })

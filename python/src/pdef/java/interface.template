@@ -35,7 +35,7 @@ import io.pdef.fluent.FluentFuture;
                             .arg("{{ arg }}", {{ type.descriptor }})
 {% endfor %}
                             {%- if method.result.is_interface %}
-                            .next(new Supplier<InterfaceDescriptor<?>>() {
+                            .next(new com.google.common.base.Supplier<io.pdef.InterfaceDescriptor<?>>() {
                                 @Override
                                 public InterfaceDescriptor<?> get() {
                                     return {{ method.result.descriptor }};

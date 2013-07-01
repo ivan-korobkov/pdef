@@ -2,6 +2,7 @@ package io.pdef;
 
 import com.google.common.collect.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -205,13 +206,9 @@ public class Descriptors {
 
 		@Override
 		public Object serialize(final Object object) {
-			return Descriptors.object;
+			return object;
 		}
 	};
-
-	public static <T> Descriptor<T> enum0(final T defaultValue) {
-		return null;
-	}
 
 	public static <T> Descriptor<List<T>> list(final Descriptor<T> element) {
 		checkNotNull(element);
@@ -229,11 +226,11 @@ public class Descriptors {
 
 			@Override
 			public List<T> parse(final Object object) {
-				if (object == null) return ImmutableList.of();
+				if (object == null) return null;
 
-				List<?> list = (List<?>) object;
+				Collection<?> collection = (Collection<?>) object;
 				List<T> result = Lists.newArrayList();
-				for (Object e : list) {
+				for (Object e : collection) {
 					T r = element.parse(e);
 					result.add(r);
 				}
@@ -271,11 +268,12 @@ public class Descriptors {
 
 			@Override
 			public Set<T> parse(final Object object) {
-				if (object == null) return ImmutableSet.of();
+				if (object == null) return null;
 
-				List<?> list = (List<?>) object;
+				Collection<?> collection = (Collection<?>) object;
 				List<T> result = Lists.newArrayList();
-				for (Object e : list) {
+				for (Object e : collection) {
+					if (e == null) continue;
 					T r = element.parse(e);
 					result.add(r);
 				}
@@ -289,6 +287,7 @@ public class Descriptors {
 
 				Set<Object> result = Sets.newHashSet();
 				for (T e : object) {
+					if (e == null) continue;
 					result.add(element.serialize(e));
 				}
 
@@ -315,13 +314,14 @@ public class Descriptors {
 
 			@Override
 			public Map<K, V> parse(final Object object) {
-				if (object == null) return ImmutableMap.of();
+				if (object == null) return null;
 
 				Map<?, ?> map = (Map<?, ?>) object;
 				Map<K, V> result = Maps.newHashMap();
 				for (Map.Entry<?, ?> e : map.entrySet()) {
 					K k = key.parse(e.getKey());
 					V v = value.parse(e.getValue());
+					if (k == null) continue;
 					result.put(k, v);
 				}
 

@@ -82,7 +82,7 @@ public class {{ name }} extends {{ base }} {
     public java.util.Map<String, Object> serialize() {
         java.util.Map<String, Object> map = super.serialize();
 {% for field in declared_fields %}
-        map.put("{{ field.name }}", {{ field.type.serialize }}(this.{{ field.name }}));
+        if ({{ field.present }}()) map.put("{{ field.name }}", {{ field.type.serialize }}(this.{{ field.name }}));
 {% endfor %}
         return map;
     }

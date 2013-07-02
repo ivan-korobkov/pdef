@@ -1,16 +1,26 @@
 package io.pdef;
 
 import static com.google.common.base.Preconditions.*;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.Map;
 
 public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 	private final Class<T> javaClass;
+	private final Constructor<T> constructor;
 
+	@SuppressWarnings("unchecked")
 	public GeneratedInterfaceDescriptor(final Class<T> javaClass) {
 		this.javaClass = checkNotNull(javaClass);
+		final Class<T> proxyClass = (Class<T>) Proxy
+				.getProxyClass(javaClass.getClassLoader(), javaClass);
+		try {
+			constructor = proxyClass.getConstructor(InvocationHandler.class);
+		} catch (NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -21,6 +31,19 @@ public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 	@Override
 	public Map<String, MethodDescriptor> getMethods() {
 		return ImmutableMap.of();
+	}
+
+	@Override
+	public T proxy(final InvocationHandler handler) {
+		try {
+			return constructor.newInstance(handler);
+		} catch (InstantiationException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			throw Throwables.propagate(e.getCause());
+		}
 	}
 
 	public static GeneratedMethodDescriptor.Builder method(

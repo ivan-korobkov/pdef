@@ -2,6 +2,7 @@ package io.pdef;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import static org.mockito.Mockito.mock;
@@ -15,12 +16,10 @@ public class InvocationTest {
 	public void testNext() throws Exception {
 		Invocation invocation = Invocation.root();
 		MethodDescriptor method = mock(MethodDescriptor.class);
-		Map<String, Object> args = ImmutableMap.<String, Object>of("key", "value");
-
-		Invocation next = invocation.next(method, args);
-		assertEquals(args, next.getArgs());
+		Invocation next = invocation.next(method, "value");
 		assertEquals(method, next.getMethod());
 		assertEquals(invocation, next.getParent());
+		assertArrayEquals(new Object[]{"value"}, next.getArgs());
 	}
 
 	@Test

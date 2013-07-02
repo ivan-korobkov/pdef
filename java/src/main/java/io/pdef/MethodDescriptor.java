@@ -31,11 +31,11 @@ public interface MethodDescriptor {
 	Invocation capture(Invocation parent, Object... args);
 
 	/** Invokes this method on an object with a given args. */
-	Object invoke(Object object, Map<String, Object> args);
+	Object invoke(Object object, Object... args);
+
+	/** Serializes arguments into a method call. */
+	MethodCall serialize(Object... args);
 
 	/** Parses arguments into an invocation. */
 	Invocation parse(Invocation parent, Map<String, Object> args);
-
-	/** Serializes arguments into a method call. */
-	MethodCall serialize(Map<String, Object> args);
 }

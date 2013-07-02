@@ -1,35 +1,33 @@
 package io.pdef;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import com.google.common.collect.ImmutableMap;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import io.pdef.rpc.MethodCall;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class Invocation {
-	private final MethodDescriptor descriptor;
-	private final Map<String, Object> args;
+	private final Object[] args;
 	private final Invocation parent;
+	private final MethodDescriptor descriptor;
 
 	public static Invocation root() {
-		return new Invocation(null, ImmutableMap.<String, Object>of(), null);
+		return new Invocation(null, null);
 	}
 
-	private Invocation(final MethodDescriptor descriptor, final Map<String, Object> args,
-			final Invocation parent) {
+	private Invocation(final MethodDescriptor descriptor, final Invocation parent,
+			final Object... args) {
 		this.descriptor = descriptor;
-		this.args = ImmutableMap.copyOf(args);
 		this.parent = parent;
+		this.args = args.clone();
 	}
 
 	/** Creates a new invocation with a parent set to this one. */
-	public Invocation next(final MethodDescriptor descriptor, final Map<String, Object> args) {
+	public Invocation next(final MethodDescriptor descriptor, final Object... args) {
 		checkNotNull(descriptor);
 		checkNotNull(args);
-		return new Invocation(descriptor, args, this);
+		return new Invocation(descriptor, this, args);
 	}
 
 	/** Return a method descriptor, or null when a root invocation. */
@@ -37,14 +35,14 @@ public class Invocation {
 		return descriptor;
 	}
 
-	/** Returns a argument map, or an empty map. */
-	public Map<String, Object> getArgs() {
-		return args;
-	}
-
 	/** Returns a parent or null when a root invocation. */
 	public Invocation getParent() {
 		return parent;
+	}
+
+	/** Returns an array of arguments. */
+	public Object[] getArgs() {
+		return args.clone();
 	}
 
 	/** Returns true when this invocation expected result is data or void. */
@@ -89,4 +87,5 @@ public class Invocation {
 	public MethodCall serialize() {
 		return descriptor.serialize(args);
 	}
+
 }

@@ -67,29 +67,19 @@ public class GeneratedMethodDescriptor implements MethodDescriptor {
 	@Override
 	public Invocation capture(final Invocation parent, final Object... args) {
 		checkNotNull(parent);
-		checkArgument(this.args.size() == args.length, "Wrong number of arguments");
-
-		int i = 0;
-		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-		for (String key : this.args.keySet()) {
-			Object arg = args[i++];
-			if (arg == null) continue;
-			builder.put(key, arg);
-		}
-
-		return parent.next(this, builder.build());
+		checkArgument(this.args.size() == args.length, "wrong number of arguments");
+		return parent.next(this, args);
 	}
 
 	@Override
-	public Object invoke(final Object object, final Map<String, Object> args) {
-		int i = 0;
+	public Object invoke(final Object object, final Object... args) {
+		checkArgument(args.length == this.args.size(), "wrong number of arguments");
 		Object[] array = new Object[this.args.size()];
-		for (Map.Entry<String, Descriptor<?>> entry : this.args.entrySet()) {
-			String key = entry.getKey();
-			Descriptor<?> descriptor = entry.getValue();
-			Object arg = args.get(key);
-			if (arg == null) arg = descriptor.getDefault();
-			array[i++] = arg;
+
+		int i = 0;
+		for (Descriptor<?> descriptor : this.args.values()) {
+			Object arg = args[i];
+			array[i++] = arg == null ? descriptor.getDefault() : arg;
 		}
 
 		try {
@@ -101,33 +91,17 @@ public class GeneratedMethodDescriptor implements MethodDescriptor {
 		}
 	}
 
-	@Override
-	public Invocation parse(final Invocation parent, final Map<String, Object> args)
-			throws RpcError {
-		checkNotNull(parent);
-		checkNotNull(args);
-
-		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-		for (Map.Entry<String, Descriptor<?>> entry : this.args.entrySet()) {
-			String key = entry.getKey();
-			Descriptor<?> descriptor = entry.getValue();
-			Object arg = descriptor.parse(args.get(key));
-			if (arg == null) continue;
-			builder.put(key, arg);
-		}
-
-		return parent.next(this, builder.build());
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
-	public MethodCall serialize(final Map<String, Object> args) {
+	public MethodCall serialize(final Object... args) {
+		checkArgument(args.length == this.args.size(), "wrong number of args");
 		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
+		int i = 0;
 		for (Map.Entry<String, Descriptor<?>> entry : this.args.entrySet()) {
 			String key = entry.getKey();
 			Descriptor descriptor = entry.getValue();
-			Object arg = descriptor.serialize(args.get(key));
+			Object arg = descriptor.serialize(args[i++]);
 			if (arg == null) continue;
 			builder.put(key, arg);
 		}
@@ -136,6 +110,23 @@ public class GeneratedMethodDescriptor implements MethodDescriptor {
 				.setMethod(name)
 				.setArgs(builder.build())
 				.build();
+	}
+
+	@Override
+	public Invocation parse(final Invocation parent, final Map<String, Object> args)
+			throws RpcError {
+		checkNotNull(parent);
+		checkNotNull(args);
+		Object[] array = new Object[this.args.size()];
+
+		int i = 0;
+		for (Map.Entry<String, Descriptor<?>> entry : this.args.entrySet()) {
+			String key = entry.getKey();
+			Descriptor<?> descriptor = entry.getValue();
+			array[i++] = descriptor.parse(args.get(key));
+		}
+
+		return parent.next(this, array);
 	}
 
 	public static Builder builder(final InterfaceDescriptor<?> iface, final String name) {

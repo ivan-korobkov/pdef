@@ -30,13 +30,13 @@ public class ClientServerTest {
 			if (result != null) q++;
 		}
 
+		q = 0;
 		long t0 = System.currentTimeMillis();
 		for (int i = 0; i < n; i++) {
 			String result = client.hello("John", "Doe");
 			if (result != null) q++;
 		}
 		long t1 = System.currentTimeMillis();
-		System.out.println("1M calls in " + (t1 - t0) + "ms");
-		System.out.println(q);
+		System.out.println(q + " calls in " + (t1 - t0) + "ms");
 	}
 }

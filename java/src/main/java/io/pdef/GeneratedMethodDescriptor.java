@@ -1,7 +1,5 @@
 package io.pdef;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -12,6 +10,9 @@ import io.pdef.rpc.RpcError;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class GeneratedMethodDescriptor implements MethodDescriptor {
 	private final InterfaceDescriptor<?> iface;
@@ -67,6 +68,7 @@ public class GeneratedMethodDescriptor implements MethodDescriptor {
 	@Override
 	public Invocation capture(final Invocation parent, final Object... args) {
 		checkNotNull(parent);
+		checkNotNull(args);
 		checkArgument(this.args.size() == args.length, "wrong number of arguments");
 		return parent.next(this, args);
 	}

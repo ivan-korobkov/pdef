@@ -45,9 +45,9 @@ public class Client<T> implements Function<Invocation, Object> {
 				case OK:
 					return invocation.getResult().parse(result);
 				case EXCEPTION:
-					return invocation.getExc().parse(result);
+					throw (RuntimeException) invocation.getExc().parse(result);
 				case ERROR:
-					return RpcError.parse(result);
+					throw RpcError.parse(result);
 			}
 		}
 
@@ -82,13 +82,13 @@ public class Client<T> implements Function<Invocation, Object> {
 		}
 
 		@Override
-		public Object invoke(final Object o, final Method method, final Object[] objects)
+		public Object invoke(final Object o, final Method method, final Object[] args)
 				throws Throwable {
 			Map<String, MethodDescriptor> methods = iface.getMethods();
-			if (!methods.containsKey(method.getName())) return method.invoke(this, objects);
+			if (!methods.containsKey(method.getName())) return method.invoke(this, args);
 
 			MethodDescriptor descriptor = methods.get(method.getName());
-			Invocation invocation = descriptor.capture(parent, objects);
+			Invocation invocation = descriptor.capture(parent, args != null ? args : new Object[0]);
 			if (invocation.isRemote()) return handler.apply(invocation);
 
 			return new ProxyHandler(parent, descriptor.getNext(), handler);

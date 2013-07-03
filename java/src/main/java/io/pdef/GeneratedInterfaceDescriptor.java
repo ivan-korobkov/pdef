@@ -1,11 +1,13 @@
 package io.pdef;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.*;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 	private final Class<T> javaClass;
@@ -31,6 +33,12 @@ public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 	@Override
 	public Map<String, MethodDescriptor> getMethods() {
 		return ImmutableMap.of();
+	}
+
+	@Nullable
+	@Override
+	public MethodDescriptor getMethod(final String method) {
+		return getMethods().get(method);
 	}
 
 	@Override

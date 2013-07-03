@@ -1,13 +1,15 @@
 package io.pdef;
 
 import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import io.pdef.rpc.*;
 
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Client<T> implements Function<Invocation, Object> {
 	private final InterfaceDescriptor<T> descriptor;

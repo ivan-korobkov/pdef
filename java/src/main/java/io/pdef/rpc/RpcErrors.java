@@ -20,21 +20,21 @@ public class RpcErrors {
 	public static RpcError methodNotFound(final CharSequence path) {
 		return RpcError.builder()
 				.setCode(RpcErrorCode.BAD_REQUEST)
-				.setText("Method not found: " + path)
+				.setText("Method not found: '" + path + "'")
 				.build();
 	}
 
 	public static RpcError wrongMethodArgs(final CharSequence path) {
 		return RpcError.builder()
 				.setCode(RpcErrorCode.BAD_REQUEST)
-				.setText("Wrong method arguments: " + path)
+				.setText("Wrong method arguments: '" + path + "'")
 				.build();
 	}
 
 	public static RpcError notRemoteMethod(final CharSequence path) {
 		return RpcError.builder()
 				.setCode(RpcErrorCode.BAD_REQUEST)
-				.setText(String.format("Must be a remote method, got %s", path))
+				.setText("Not a remote method: '" + path + "'")
 				.build();
 	}
 }

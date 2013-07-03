@@ -1,20 +1,40 @@
 package io.pdef;
 
 import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import io.pdef.rpc.*;
 
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class Server<T> implements Function<Request, Response> {
 	private final InterfaceDescriptor<T> descriptor;
 	private final Supplier<T> supplier;
 
-	public Server(final InterfaceDescriptor<T> descriptor, final Supplier<T> supplier) {
+	protected Server(final InterfaceDescriptor<T> descriptor, final Supplier<T> supplier) {
 		this.descriptor = checkNotNull(descriptor);
 		this.supplier = checkNotNull(supplier);
+	}
+
+	public static <T> Server<T> create(final InterfaceDescriptor<T> descriptor, final T instance) {
+		return create(descriptor, Suppliers.ofInstance(instance));
+	}
+
+	public static <T> Server<T> create(final InterfaceDescriptor<T> descriptor,
+			final Supplier<T> supplier) {
+		return new Server<T>(descriptor, supplier);
+	}
+
+	public InterfaceDescriptor<T> getDescriptor() {
+		return descriptor;
+	}
+
+	public Supplier<T> getSupplier() {
+		return supplier;
 	}
 
 	@Override
@@ -23,7 +43,7 @@ public class Server<T> implements Function<Request, Response> {
 			if (request == null) throw RpcErrors.badRequest();
 
 			Object result;
-			Invocation invocation = parseInvocation(request);
+			Invocation invocation = parseRequest(request);
 			try {
 				result = invoke(invocation);
 			} catch (Exception e) {
@@ -36,7 +56,7 @@ public class Server<T> implements Function<Request, Response> {
 		}
 	}
 
-	public Invocation parseInvocation(final Request request) {
+	public Invocation parseRequest(final Request request) {
 		checkNotNull(request);
 		List<MethodCall> calls = request.getCalls();
 		if (calls.isEmpty()) throw RpcErrors.methodCallsRequired();

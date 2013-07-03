@@ -14,7 +14,7 @@ public class ClientServerTest {
 			}
 		};
 
-		Server<TestInterface1> server = new Server<TestInterface1>(TestInterface1.DESCRIPTOR,
+		Server<TestInterface1> server = Server.create(TestInterface1.DESCRIPTOR,
 				new Supplier<TestInterface1>() {
 					@Override
 					public TestInterface1 get() {

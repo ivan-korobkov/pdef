@@ -10,6 +10,9 @@ public interface InterfaceDescriptor<T> {
 	/** Returns a map of this interface methods. */
 	Map<String, MethodDescriptor> getMethods();
 
+	/** Returns a method by its name or null. */
+	MethodDescriptor getMethod(String method);
+
 	/** Creates a new proxy. */
 	T proxy(InvocationHandler handler);
 }

@@ -116,4 +116,16 @@ public class MessageTest {
 				.build();
 		assertEquals(expected, tree);
 	}
+
+	@Test
+	public void testJson() throws Exception {
+		TestSimpleMessage msg = TestSimpleMessage.builder()
+				.setFirstField(true)
+				.setSecondField("hello")
+				.setThirdField(null)
+				.build();
+		String s = msg.serializeToJson();
+		TestSimpleMessage msg1 = TestSimpleMessage.parseFromJson(s);
+		assertEquals(msg, msg1);
+	}
 }

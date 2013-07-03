@@ -18,6 +18,12 @@ public abstract class GeneratedMessage implements Message {
 	}
 
 	@Override
+	public String serializeToJson() {
+		Object object = serialize();
+		return Json.serialize(object);
+	}
+
+	@Override
 	public boolean equals(final Object o) {
 		return this == o || !(o == null || getClass() != o.getClass());
 	}

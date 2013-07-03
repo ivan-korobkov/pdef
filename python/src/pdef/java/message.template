@@ -55,6 +55,11 @@ public class {{ name }} extends {{ base }} {
         return new {{ name }}(map);
     }
 
+    public static {{ name }} parseFromJson(final String s) {
+        Object object = io.pdef.Json.parse(s);
+        return parse(object);
+    }
+
 {% for field in declared_fields %}
 {% if field.type.is_nullable%}
     @javax.annotation.Nullable

@@ -7,6 +7,9 @@ public interface Message extends Serializable {
 	/** Serializes this message to a map. */
 	Map<String, Object> serialize();
 
+	/** Serializes this message to a JSON string. */
+	String serializeToJson();
+
 	/** Copies this message to a new empty builder. */
 	Builder toBuilder();
 

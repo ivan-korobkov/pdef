@@ -12,7 +12,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Descriptors {
 	private Descriptors() {}
 
-	public static Descriptor<Boolean> bool = new Descriptor<Boolean>() {
+	public static PrimitiveDescriptor<Boolean> bool = new PrimitiveDescriptor<Boolean>() {
 		@Override
 		public Class<Boolean> getJavaClass() {
 			return boolean.class;
@@ -25,6 +25,7 @@ public class Descriptors {
 
 		@Override
 		public Boolean parse(final Object object) {
+			if (object instanceof String) return parseFromString((String) object);
 			return object == null ? false : (Boolean) object;
 		}
 
@@ -32,9 +33,19 @@ public class Descriptors {
 		public Boolean serialize(final Boolean object) {
 			return object == null ? false : object;
 		}
+
+		@Override
+		public Boolean parseFromString(final String s) {
+			return s != null && Boolean.parseBoolean(s);
+		}
+
+		@Override
+		public String serializeToString(final Boolean object) {
+			return object == null ? "false" : object.toString();
+		}
 	};
 
-	public static Descriptor<Short> int16 = new Descriptor<Short>() {
+	public static PrimitiveDescriptor<Short> int16 = new PrimitiveDescriptor<Short>() {
 		@Override
 		public Class<Short> getJavaClass() {
 			return short.class;
@@ -47,6 +58,7 @@ public class Descriptors {
 
 		@Override
 		public Short parse(final Object object) {
+			if (object instanceof  String ) return parseFromString((String) object);
 			return object == null ? 0 : ((Number) object).shortValue();
 		}
 
@@ -54,9 +66,19 @@ public class Descriptors {
 		public Short serialize(final Short object) {
 			return object == null ? (short) 0 : object;
 		}
+
+		@Override
+		public Short parseFromString(final String s) {
+			return s == null ? (short) 0 : Short.parseShort(s);
+		}
+
+		@Override
+		public String serializeToString(final Short object) {
+			return object == null ? "0" : object.toString();
+		}
 	};
 
-	public static Descriptor<Integer> int32 = new Descriptor<Integer>() {
+	public static PrimitiveDescriptor<Integer> int32 = new PrimitiveDescriptor<Integer>() {
 		@Override
 		public Class<Integer> getJavaClass() {
 			return int.class;
@@ -69,6 +91,7 @@ public class Descriptors {
 
 		@Override
 		public Integer parse(final Object object) {
+			if (object instanceof String) return parseFromString((String) object);
 			return object == null ? 0 : ((Number) object).intValue();
 		}
 
@@ -76,9 +99,19 @@ public class Descriptors {
 		public Integer serialize(final Integer object) {
 			return object == null ? 0 : object;
 		}
+
+		@Override
+		public Integer parseFromString(final String s) {
+			return s == null ? 0 : Integer.parseInt(s);
+		}
+
+		@Override
+		public String serializeToString(final Integer object) {
+			return object == null ? "0" : object.toString();
+		}
 	};
 
-	public static Descriptor<Long> int64 = new Descriptor<Long>() {
+	public static PrimitiveDescriptor<Long> int64 = new PrimitiveDescriptor<Long>() {
 		@Override
 		public Class<Long> getJavaClass() {
 			return long.class;
@@ -91,6 +124,7 @@ public class Descriptors {
 
 		@Override
 		public Long parse(final Object object) {
+			if (object instanceof String) return parseFromString((String) object);
 			return object == null ? 0 : ((Number) object).longValue();
 		}
 
@@ -98,9 +132,19 @@ public class Descriptors {
 		public Long serialize(final Long object) {
 			return object == null ? 0L : object;
 		}
+
+		@Override
+		public Long parseFromString(final String s) {
+			return s == null ? 0 : Long.parseLong(s);
+		}
+
+		@Override
+		public String serializeToString(final Long object) {
+			return object == null ? "0" : object.toString();
+		}
 	};
 
-	public static Descriptor<Float> float0 = new Descriptor<Float>() {
+	public static PrimitiveDescriptor<Float> float0 = new PrimitiveDescriptor<Float>() {
 		@Override
 		public Class<Float> getJavaClass() {
 			return float.class;
@@ -113,6 +157,7 @@ public class Descriptors {
 
 		@Override
 		public Float parse(final Object object) {
+			if (object instanceof String) return parseFromString((String) object);
 			return object == null ? 0 : ((Number) object).floatValue();
 		}
 
@@ -120,9 +165,19 @@ public class Descriptors {
 		public Float serialize(final Float object) {
 			return object == null ? 0f : object;
 		}
+
+		@Override
+		public Float parseFromString(final String s) {
+			return s == null ? 0f : Float.parseFloat(s);
+		}
+
+		@Override
+		public String serializeToString(final Float object) {
+			return object == null ? "0" : object.toString();
+		}
 	};
 
-	public static Descriptor<Double> double0 = new Descriptor<Double>() {
+	public static PrimitiveDescriptor<Double> double0 = new PrimitiveDescriptor<Double>() {
 		@Override
 		public Class<Double> getJavaClass() {
 			return double.class;
@@ -135,6 +190,7 @@ public class Descriptors {
 
 		@Override
 		public Double parse(final Object object) {
+			if (object instanceof String) return parseFromString((String) object);
 			return object == null ? 0 : ((Number) object).doubleValue();
 		}
 
@@ -142,9 +198,19 @@ public class Descriptors {
 		public Double serialize(final Double object) {
 			return object == null ? 0d : object;
 		}
+
+		@Override
+		public Double parseFromString(final String s) {
+			return s == null ? 0d : Double.parseDouble(s);
+		}
+
+		@Override
+		public String serializeToString(final Double object) {
+			return object == null ? "0" : object.toString();
+		}
 	};
 
-	public static Descriptor<String> string = new Descriptor<String>() {
+	public static PrimitiveDescriptor<String> string = new PrimitiveDescriptor<String>() {
 		@Override
 		public Class<String> getJavaClass() {
 			return String.class;
@@ -162,6 +228,16 @@ public class Descriptors {
 
 		@Override
 		public String serialize(final String object) {
+			return object;
+		}
+
+		@Override
+		public String parseFromString(final String s) {
+			return s;
+		}
+
+		@Override
+		public String serializeToString(final String object) {
 			return object;
 		}
 	};

@@ -71,7 +71,7 @@ public class Server<T> implements Function<Request, Response> {
 			if (d == null) throw RpcErrors.methodNotFound(path);
 
 			MethodDescriptor method = d.getMethods().get(name);
-			if (method == null) throw RpcErrors.methodNotFound(name);
+			if (method == null) throw RpcErrors.methodNotFound(path);
 
 			try {
 				invocation = method.parse(invocation, call.getArgs());

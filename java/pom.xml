@@ -18,6 +18,7 @@
 		<jackson.version>2.2.2</jackson.version>
 		<jsr305.version>2.0.1</jsr305.version>
 		<guava.version>14.0.1</guava.version>
+		<servlet.version>2.5</servlet.version>
 
 		<pdef.path>pdefc</pdef.path>
 	</properties>
@@ -49,6 +50,12 @@
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
 			<version>${jsr305.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>${servlet.version}</version>
 		</dependency>
 
 		<!-- Json Jackson -->

@@ -428,6 +428,15 @@ class TestMessage(unittest.TestCase):
         except PdefException, e:
             assert 'duplicate discriminator' in e.message
 
+    def test_add_field_non_data_type(self):
+        '''Should prevent fields which are not data types.'''
+        iface = Interface('Interface')
+        msg = Message('Msg')
+        try:
+            msg.add_field('iface', iface)
+        except PdefException, e:
+            assert 'field must be a data type' in e.message
+
 
 class TestField(unittest.TestCase):
     def test_fullname(self):
@@ -438,6 +447,42 @@ class TestField(unittest.TestCase):
         module.add_definition(message)
 
         assert field.fullname == 'test.Message.field=string'
+
+
+class TestList(unittest.TestCase):
+    def test_element_datatype(self):
+        '''Should prevent list elements which are not data types.'''
+        iface = Interface('Interface')
+        try:
+            List(iface)
+        except PdefException, e:
+            assert 'element must be a data type' in e.message
+
+
+class TestSet(unittest.TestCase):
+    def test_element_datatype(self):
+        '''Should prevent set elements which are not data types.'''
+        iface = Interface('Interface')
+        try:
+            Set(iface)
+        except PdefException, e:
+            assert 'element must be a data type' in e.message
+
+
+class TestMap(unittest.TestCase):
+    def test_key_primitive(self):
+        msg = Message('Message')
+        try:
+            Map(msg, msg)
+        except PdefException, e:
+            assert 'key must be a primitive' in e.message
+
+    def test_value_datatype(self):
+        iface = Interface('Interface')
+        try:
+            Map(Types.STRING, iface)
+        except PdefException, e:
+            assert 'value must be a data type' in e.message
 
 
 class TestInterface(unittest.TestCase):

@@ -23,6 +23,14 @@ class Ref(object):
     def __repr__(self):
         return self.type
 
+    @property
+    def is_primitive(self):
+        return self.type in Type.PRIMITIVES
+
+    @property
+    def is_datatype(self):
+        return self.type in Type.DATATYPES
+
 
 class ListRef(Ref):
     def __init__(self, element):

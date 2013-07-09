@@ -18,22 +18,27 @@ class Type(object):
     STRING = 'string'
     UUID = 'uuid'
 
-    # Special value types.
-    OBJECT = 'object'
-    VOID = 'void'
-
     # Collection types.
     LIST = 'list'
     MAP = 'map'
     SET = 'set'
 
-    # User types.
+    # Special data type.
+    OBJECT = 'object'
+
+    # User defined data types.
     DEFINITION = 'definition' # Abstract definition type, used in references.
     ENUM = 'enum'
     ENUM_VALUE = 'enum_value'
     MESSAGE = 'message'
     EXCEPTION = 'exception'
+
+    # Interface and void.
     INTERFACE = 'interface'
+    VOID = 'void'
+
+    PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, DECIMAL, DATE, DATETIME, STRING, UUID)
+    DATATYPES = PRIMITIVES + (OBJECT, LIST, MAP, SET, DEFINITION, ENUM, MESSAGE, EXCEPTION)
 
 
 class PdefException(Exception):

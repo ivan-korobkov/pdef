@@ -192,6 +192,14 @@ class Definition(object):
         return self.fullname
 
     @property
+    def is_primitive(self):
+        return self.type in Type.PRIMITIVES
+
+    @property
+    def is_datatype(self):
+        return self.type in Type.DATATYPES
+
+    @property
     def fullname(self):
         if self.module:
             return '%s.%s' % (self.module.name, self.name)
@@ -252,6 +260,8 @@ class List(Definition):
         super(List, self).__init__(Type.LIST, 'List')
         self.element = element
         self.module = module
+        check_argument(self.element.is_datatype, '%s: element must be a data type, %s', self,
+                       self.element)
 
     def _link(self):
         self.element = self.module.lookup(self.element)
@@ -263,6 +273,8 @@ class Set(Definition):
         super(Set, self).__init__(Type.SET, 'Set')
         self.element = element
         self.module = module
+        check_argument(self.element.is_datatype, '%s: element must be a data type, %s', self,
+                       self.element)
 
     def _link(self):
         self.element = self.module.lookup(self.element)
@@ -275,6 +287,9 @@ class Map(Definition):
         self.key = key
         self.value = value
         self.module = module
+
+        check_state(self.key.is_primitive, '%s: key must be a primitive, %s', self, self.key)
+        check_state(self.value.is_datatype, '%s: value must be a data type, %s', self, self.value)
 
     def _link(self):
         self.key = self.module.lookup(self.key)
@@ -392,15 +407,17 @@ class Message(Definition):
 
     def add_field(self, name, definition, is_discriminator=False):
         '''Adds a new field to this message and returns the field.'''
+        check_argument(definition.is_datatype, '%s: field must be a data type, "%s", %s', self,
+                       name, definition)
+
         field = Field(self, name, definition, is_discriminator)
         self.declared_fields.add(field)
         self.fields.add(field)
 
         if is_discriminator:
-            check_state(not self.discriminator,
-                        '%s: duplicate discriminator field %s', self, field)
+            check_state(not self.discriminator, '%s: duplicate discriminator field "%s"', self, name)
             check_argument(isinstance(field.type, Enum),
-                           '%s: discriminator field %s must be an enum', self, field)
+                           '%s: discriminator field must be an enum "%s"', self, name)
             check_state(not self.subtypes,
                         '%s: discriminator field must be set before adding subtypes', self)
             self.discriminator = field

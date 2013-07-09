@@ -413,7 +413,8 @@ class Message(Definition):
         check_isinstance(subtype, Message)
         self._check(self.polymorphic_discriminator,
                     '%s: is not polymorphic, no discriminator field', self)
-        self._check(subtype.base_type in self.polymorphic_discriminator.type)
+        self._check(subtype.base_type in self.polymorphic_discriminator.type,
+                    '%s: wrong polymorphic enum value', self)
         self._check(subtype.base_type not in self.subtypes, '%s: duplicate subtype %s',
                     self, subtype.base_type)
 

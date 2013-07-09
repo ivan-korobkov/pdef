@@ -4,13 +4,10 @@ package {{ package }};
 {% if doc %}
 /** {{ doc }} */
 {% endif %}
-{% if not bases -%}
+{% if not base -%}
     public interface {{ name }} {
 {% else -%}
-    public interface {{ name }} extends {% for base in bases -%}
-        {{ base }}
-        {%- if loop.length > 1 and not loop.last %}, {% endif %}
-{%- endfor %} {
+    public interface {{ name }} extends {{ base }} {
 {% endif %}
 
 {% for method in declared_methods %}

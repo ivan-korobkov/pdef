@@ -461,26 +461,25 @@ class Interface(Definition):
     def __init__(self, name, doc=None):
         super(Interface, self).__init__(Type.INTERFACE, name, doc=doc)
 
-        self.bases = []
+        self.base = None
         self.methods = SymbolTable(self, 'methods')
         self.declared_methods = SymbolTable(self, 'declared_methods')
         self.inherited_methods = SymbolTable(self, 'inherited_methods')
 
         self._node = None
 
-    def add_base(self, base):
-        '''Adds a new base to this interface.'''
+    def set_base(self, base):
+        '''Set the base of this interface.'''
         check_isinstance(base, Interface)
         check_argument(base is not self, '%s: self inheritance', self)
-        check_argument(base not in self.bases, '%s: duplicate base %s', self, base)
         check_argument(self not in base._all_bases, '%s: circular inheritance with %s', self, base)
 
-        self.bases.append(base)
+        self.base = base
         for method in base.methods.values():
             self.inherited_methods.add(method)
             self.methods.add(method)
 
-        logging.debug('%s: added a base "%s"', self, base)
+        logging.debug('%s: set a base "%s"', self, base)
 
     def add_method(self, name, result=Types.VOID, *args_tuples):
         '''Adds a new method to this interface and returns the method.'''
@@ -498,9 +497,9 @@ class Interface(Definition):
         module = self.module
         check_state(module, '%: cannot link, module is required', self)
 
-        for base_node in node.bases:
-            base = module.lookup(base_node)
-            self.add_base(base)
+        if node.base:
+            base = module.lookup(node.base)
+            self.set_base(base)
 
         for method_node in node.methods:
             method_name = method_node.name
@@ -520,9 +519,10 @@ class Interface(Definition):
     def _all_bases(self):
         '''Internal, returns all bases including the ones from the inherited interfaces.'''
         bases = []
-        for b in self.bases:
+        b = self.base
+        while b:
             bases.append(b)
-            bases.extend(b._all_bases)
+            b = b.base
         return bases
 
 

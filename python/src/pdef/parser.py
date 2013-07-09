@@ -282,17 +282,17 @@ class GrammarRules(object):
     # Interface definition
     def p_interface(self, t):
         '''
-        interface : INTERFACE IDENTIFIER interface_bases LBRACE methods RBRACE
+        interface : INTERFACE IDENTIFIER interface_base LBRACE methods RBRACE
         '''
         name = t[2]
-        bases = t[3]
+        base = t[3]
         methods = t[5]
-        t[0] = ast.Interface(name, bases=bases, methods=methods)
+        t[0] = ast.Interface(name, base=base, methods=methods)
 
-    def p_interface_bases(self, t):
+    def p_interface_base(self, t):
         '''
-        interface_bases : COLON refs
-                        | empty
+        interface_base : COLON ref
+                       | empty
         '''
         if len(t) == 2:
             t[0] = []

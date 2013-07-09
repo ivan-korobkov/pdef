@@ -103,7 +103,7 @@ class JavaInterface(JavaDefinition):
         super(JavaInterface, self).__init__(iface, translator)
         self.template = translator.interface_template
 
-        self.bases = [translator.ref(base) for base in iface.bases]
+        self.base = translator.ref(iface.base) if iface.base else None
         self.methods = [translator.method(method) for method in iface.methods.values()]
         self.declared_methods = [translator.method(method)
                                  for method in iface.declared_methods.values()]

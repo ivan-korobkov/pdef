@@ -21,8 +21,8 @@ class TestInterface(unittest.TestCase):
         base1 = Interface('Base1')
 
         iface = Interface('Interface')
-        iface.add_base(base0)
-        iface.add_base(base1)
+        iface.set_base(base0)
+        iface.set_base(base1)
         iface.add_method('ping')
         iface.add_method('pong')
         iface.add_method('echo', Types.STRING, ('text', Types.STRING))
@@ -132,4 +132,4 @@ class TestRef(unittest.TestCase):
 
         jmsg = self.translator.ref(msg)
         assert str(jmsg) == 'test.module.Message'
-        assert jmsg.default == 'test.module.Message.instance'
+        assert jmsg.default == 'test.module.Message.instance()'

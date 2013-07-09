@@ -64,13 +64,9 @@ interface Interface {
     echo(text string) string;
 }
 
-/** Another interface. */
-interface Support {
-    /** Calls support. */
-    callSupport() void;
-}
 
-interface SubInterface : Interface, Support {
+/** Sub interface. */
+interface SubInterface : Interface {
     /** Submethod. */
     submethod(msg1 SubMessage1, msg2 SubMessage2) SubMessage3;
 }

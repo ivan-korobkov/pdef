@@ -86,9 +86,7 @@ interface TestInterface1 {
 interface InterfaceTree0 {
     method0() string;
 }
-interface InterfaceTree1 {
+interface InterfaceTree1 : InterfaceTree0 {
     method1() string;
 }
-interface InterfaceTree2 : InterfaceTree0, InterfaceTree1 {
-    method2() string;
-}
+

@@ -5,6 +5,7 @@ import io.pdef.rpc.MethodCall;
 import javax.annotation.Nullable;
 import java.util.Map;
 
+/** Interface method descriptor. */
 public interface MethodDescriptor {
 	/** Returns this method name. */
 	String getName();
@@ -27,7 +28,7 @@ public interface MethodDescriptor {
 	@Nullable
 	InterfaceDescriptor<?> getNext();
 
-	/** Creates a new invocation for this method. */
+	/** Creates a new proxy for this method. */
 	Invocation capture(Invocation parent, Object... args);
 
 	/** Invokes this method on an object with a given args. */
@@ -36,6 +37,6 @@ public interface MethodDescriptor {
 	/** Serializes arguments into a method call. */
 	MethodCall serialize(Object... args);
 
-	/** Parses arguments into an invocation. */
+	/** Parses arguments into an proxy. */
 	Invocation parse(Invocation parent, Map<String, Object> args);
 }

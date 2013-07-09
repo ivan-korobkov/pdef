@@ -1,34 +1,34 @@
 package io.pdef;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import org.junit.Test;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 import java.util.List;
-import java.util.Map;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
 
 public class InvocationTest {
 	@Test
 	public void testNext() throws Exception {
-		Invocation invocation = Invocation.root();
 		MethodDescriptor method = mock(MethodDescriptor.class);
-		Invocation next = invocation.next(method, "value");
-		assertEquals(method, next.getMethod());
-		assertEquals(invocation, next.getParent());
-		assertArrayEquals(new Object[]{"value"}, next.getArgs());
+		Invocation root = Invocation.root();
+		Invocation invocation = root.next(method, "arg");
+
+		assertEquals(method, invocation.getMethod());
+		assertEquals(root, invocation.getParent());
+		assertArrayEquals(new Object[]{"arg"}, invocation.getArgs());
 	}
 
 	@Test
 	public void testToList() throws Exception {
-		Invocation invocation = Invocation.root();
 		MethodDescriptor method0 = mock(MethodDescriptor.class);
 		MethodDescriptor method1 = mock(MethodDescriptor.class);
-		Invocation invocation1 = invocation.next(method0, ImmutableMap.<String, Object>of());
-		Invocation invocation2 = invocation1.next(method1, ImmutableMap.<String, Object>of());
+
+		Invocation invocation = Invocation.root();
+		Invocation invocation1 = invocation.next(method0);
+		Invocation invocation2 = invocation1.next(method1);
 
 		List<Invocation> list = invocation2.toList();
 		assertEquals(ImmutableList.of(invocation1, invocation2), list);
@@ -36,26 +36,41 @@ public class InvocationTest {
 
 	@Test
 	public void testInvoke() throws Exception {
-		Invocation invocation = Invocation.root();
 		MethodDescriptor method = mock(MethodDescriptor.class);
 
-		Map<String, Object> args = ImmutableMap.<String, Object>of("key", "value");
-		Invocation invocation1 = invocation.next(method, args);
+		Invocation invocation = Invocation.root();
+		Invocation invocation1 = invocation.next(method, "key", "value");
 
 		Object object = new Object();
 		invocation1.invoke(object);
-		verify(method).invoke(object, args);
+		verify(method).invoke(object, "key", "value");
+	}
+
+	@Test
+	public void testInvoke_chained() throws Exception {
+		MethodDescriptor method0 = mock(MethodDescriptor.class);
+		MethodDescriptor method1 = mock(MethodDescriptor.class);
+
+		Invocation invocation = Invocation.root()
+				.next(method0, 1, 2, 3)
+				.next(method1, "hello", "world");
+
+		Object service = new Object();
+		Object result0 = new Object();
+		Object result1 = "Hello, World";
+		when(method0.invoke(service, 1, 2, 3)).thenReturn(result0);
+		when(method1.invoke(result0, "hello", "world")).thenReturn(result1);
+
+		Object result = invocation.invokeChainOn(service);
+		assertEquals(result1, result);
 	}
 
 	@Test
 	public void testSerialize() throws Exception {
-		Invocation invocation = Invocation.root();
 		MethodDescriptor method = mock(MethodDescriptor.class);
+		Invocation invocation = Invocation.root().next(method, "key", "value");
+		invocation.serialize();
 
-		Map<String, Object> args = ImmutableMap.<String, Object>of("key", "value");
-		Invocation invocation1 = invocation.next(method, args);
-		invocation1.serialize();
-
-		verify(method).serialize(args);
+		verify(method).serialize("key", "value");
 	}
 }

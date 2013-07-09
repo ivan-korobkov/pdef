@@ -1,6 +1,7 @@
 package io.pdef;
 
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.rpc.*;
@@ -27,25 +28,25 @@ public class ClientTest {
 	}
 
 	@Test
-	public void testApply() throws Exception {
+	public void testProxy() throws Exception {
 		when(handler.apply(any(Request.class))).thenReturn(Response.builder()
 				.setStatus(ResponseStatus.OK)
 				.setResult("good, bye")
 				.build());
 
-		TestInterface client = Client.createFromRpcHandler(TestInterface.DESCRIPTOR, handler);
+		TestInterface client = Client.proxyFromRpcHandler(TestInterface.DESCRIPTOR, handler);
 		String result = client.camelCase("hello", "world");
 		assertEquals("good, bye", result);
 	}
 
 	@Test
-	public void testApply_parseResult() throws Exception {
+	public void testProxy_parseResult() throws Exception {
 		when(handler.apply(any(Request.class))).thenReturn(Response.builder()
 				.setStatus(ResponseStatus.OK)
 				.setResult(ImmutableMap.of("aString", "hello"))
 				.build());
 
-		TestInterface client = Client.createFromRpcHandler(TestInterface.DESCRIPTOR, handler);
+		TestInterface client = Client.proxyFromRpcHandler(TestInterface.DESCRIPTOR, handler);
 		TestMessage msg = client.message0(TestMessage.instance());
 		assertEquals(TestMessage.builder()
 				.setAnEnum(TestEnum.ONE)
@@ -53,7 +54,7 @@ public class ClientTest {
 	}
 
 	@Test
-	public void testApply_parseError() throws Exception {
+	public void testProxy_parseError() throws Exception {
 		when(handler.apply(any(Request.class))).thenReturn(Response.builder()
 				.setStatus(ResponseStatus.ERROR)
 				.setResult(RpcError.builder()
@@ -63,7 +64,7 @@ public class ClientTest {
 						.serialize())
 				.build());
 
-		TestInterface client = Client.createFromRpcHandler(TestInterface.DESCRIPTOR, handler);
+		TestInterface client = Client.proxyFromRpcHandler(TestInterface.DESCRIPTOR, handler);
 		try {
 			client.void0();
 			fail();
@@ -74,13 +75,13 @@ public class ClientTest {
 	}
 
 	@Test
-	public void testSerializeInvocation() throws Exception {
+	public void testRpcSerializeInvocation() throws Exception {
 		Invocation invocation = TestInterface.DESCRIPTOR.getMethod("interface0")
 				.capture(Invocation.root());
 		Invocation invocation1 = TestInterface1.DESCRIPTOR.getMethod("hello")
 				.capture(invocation, "John", "Doe");
 
-		Request request = Client.serializeInvocation(invocation1);
+		Request request = Client.rpcSerializeInvocation(invocation1);
 		assertEquals(Request.builder()
 				.setCalls(ImmutableList.of(
 						MethodCall.builder()
@@ -94,5 +95,40 @@ public class ClientTest {
 								.build()
 				)).build(), request
 		);
+	}
+
+	@Test
+	public void testPerf() throws Exception {
+		final TestInterface1 impl = new TestInterface1() {
+			@Override
+			public String hello(final String firstName, final String lastName) {
+				return "Hello, ";
+			}
+		};
+
+		Function<Request, Response> server = Server
+				.rpc(TestInterface1.DESCRIPTOR, new Supplier<TestInterface1>() {
+					@Override
+					public TestInterface1 get() {
+						return impl;
+					}
+				});
+
+		TestInterface1 client = Client.proxyFromRpcHandler(TestInterface1.DESCRIPTOR, server);
+		int q = 0;
+		int n = 1000 * 1000;
+		for (int i = 0; i < n; i++) {
+			String result = client.hello("John", "Doe");
+			if (result != null) q++;
+		}
+
+		q = 0;
+		long t0 = System.currentTimeMillis();
+		for (int i = 0; i < n; i++) {
+			String result = client.hello("John", "Doe");
+			if (result != null) q++;
+		}
+		long t1 = System.currentTimeMillis();
+		System.out.println(q + " calls in " + (t1 - t0) + "ms");
 	}
 }

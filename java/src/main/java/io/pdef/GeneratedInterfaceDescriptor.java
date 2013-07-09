@@ -9,6 +9,7 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/** Abstract class for a generated interface descriptor. */
 public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 	private final Class<T> javaClass;
 	private final Constructor<T> constructor;

@@ -4,6 +4,7 @@ import com.google.common.collect.Maps;
 
 import java.util.Map;
 
+/** Abstract class for a generated message. */
 public abstract class GeneratedMessage implements Message {
 	private transient int hash;
 

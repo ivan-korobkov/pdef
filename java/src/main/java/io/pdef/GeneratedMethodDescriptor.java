@@ -14,6 +14,7 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/** Abstract class for a generated method descriptor. */
 public class GeneratedMethodDescriptor implements MethodDescriptor {
 	private final InterfaceDescriptor<?> iface;
 	private final String name;

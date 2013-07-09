@@ -9,6 +9,7 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/** Default primitive and collection descriptors. */
 public class Descriptors {
 	private Descriptors() {}
 

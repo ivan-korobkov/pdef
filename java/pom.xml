@@ -18,7 +18,9 @@
 		<jackson.version>2.2.2</jackson.version>
 		<jsr305.version>2.0.1</jsr305.version>
 		<guava.version>14.0.1</guava.version>
+
 		<servlet.version>2.5</servlet.version>
+		<httpclient.version>4.2.5</httpclient.version>
 
 		<pdef.path>pdefc</pdef.path>
 	</properties>
@@ -52,17 +54,24 @@
 			<version>${jsr305.version}</version>
 		</dependency>
 
+		<!-- Json Jackson -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+
+		<!-- Http -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>servlet-api</artifactId>
 			<version>${servlet.version}</version>
 		</dependency>
 
-		<!-- Json Jackson -->
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-core</artifactId>
-			<version>${jackson.version}</version>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>${httpclient.version}</version>
 		</dependency>
 	</dependencies>
 

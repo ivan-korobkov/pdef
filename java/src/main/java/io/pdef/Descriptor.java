@@ -1,5 +1,6 @@
 package io.pdef;
 
+/** Data type descriptor. */
 public interface Descriptor<T> {
 	Class<T> getJavaClass();
 

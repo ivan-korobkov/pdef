@@ -1,12 +1,14 @@
 package io.pdef;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import io.pdef.rpc.MethodCall;
 
 import java.util.Collections;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+/** Immutable chained invocation of an interface method. */
 public class Invocation {
 	private final Object[] args;
 	private final Invocation parent;
@@ -23,19 +25,19 @@ public class Invocation {
 		this.args = args.clone();
 	}
 
-	/** Creates a new invocation with a parent set to this one. */
+	/** Creates a new proxy with a parent set to this one. */
 	public Invocation next(final MethodDescriptor descriptor, final Object... args) {
 		checkNotNull(descriptor);
 		checkNotNull(args);
 		return new Invocation(descriptor, this, args);
 	}
 
-	/** Return a method descriptor, or null when a root invocation. */
+	/** Return a method descriptor, or null when a root proxy. */
 	public MethodDescriptor getMethod() {
 		return descriptor;
 	}
 
-	/** Returns a parent or null when a root invocation. */
+	/** Returns a parent or null when a root proxy. */
 	public Invocation getParent() {
 		return parent;
 	}
@@ -45,12 +47,12 @@ public class Invocation {
 		return args.clone();
 	}
 
-	/** Returns true when this invocation expected result is data or void. */
+	/** Returns true when this proxy expected result is data or void. */
 	public boolean isRemote() {
 		return descriptor.isRemote();
 	}
 
-	/** Returns whether this invocation is a root one, i.e. has no method and no arguments. */
+	/** Returns whether this proxy is a root one, i.e. has no method and no arguments. */
 	public boolean isRoot() {
 		return descriptor == null;
 	}
@@ -78,14 +80,26 @@ public class Invocation {
 		return result;
 	}
 
-	/** Executes this invocation on an object. */
-	public Object invoke(final Object object) {
-		return descriptor.invoke(object, args);
-	}
-
-	/** Serializes this invocation to a method call, serializes all arguments to objects. */
+	/** Serializes this proxy to a method call, serializes all arguments to objects. */
 	public MethodCall serialize() {
 		return descriptor.serialize(args);
 	}
 
+	/** Invokes this invocation on an object, also see #invokeChainOn. */
+	public Object invoke(final Object object) {
+		return descriptor.invoke(object, args);
+	}
+
+	/** Converts this invocation to a list of chained ones and invokes them on a service. */
+	public Object invokeChainOn(final Object service) {
+		checkNotNull(service);
+
+		Object object = service;
+		List<Invocation> invocations = toList();
+		for (Invocation invocation : invocations) {
+			object = invocation.invoke(object);
+		}
+
+		return object;
+	}
 }

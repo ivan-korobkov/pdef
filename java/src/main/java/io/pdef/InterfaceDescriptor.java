@@ -3,6 +3,7 @@ package io.pdef;
 import java.lang.reflect.InvocationHandler;
 import java.util.Map;
 
+/** Interface descriptor. */
 public interface InterfaceDescriptor<T> {
 	/** Returns a java class of this descriptor. */
 	Class<T> getJavaClass();

@@ -11,52 +11,46 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class Server<T> implements Function<Request, Response> {
-	private final InterfaceDescriptor<T> descriptor;
-	private final Supplier<T> supplier;
+public class Server {
+	private Server() {}
 
-	protected Server(final InterfaceDescriptor<T> descriptor, final Supplier<T> supplier) {
-		this.descriptor = checkNotNull(descriptor);
-		this.supplier = checkNotNull(supplier);
+	/** Creates a default server from a descriptor and a service instance. */
+	public static <T> Function<Request, Response> create(final InterfaceDescriptor<T> descriptor,
+			final T service) {
+		checkNotNull(service);
+		return create(descriptor, Suppliers.ofInstance(service));
 	}
 
-	public static <T> Server<T> create(final InterfaceDescriptor<T> descriptor, final T instance) {
-		return create(descriptor, Suppliers.ofInstance(instance));
-	}
-
-	public static <T> Server<T> create(final InterfaceDescriptor<T> descriptor,
+	/** Creates a default server from a descriptor and a service supplier. */
+	public static <T> Function<Request, Response> create(final InterfaceDescriptor<T> descriptor,
 			final Supplier<T> supplier) {
-		return new Server<T>(descriptor, supplier);
-	}
+		checkNotNull(descriptor);
+		checkNotNull(supplier);
+		return new Function<Request, Response>() {
+			@Override
+			public Response apply(final Request request) {
+				try {
+					if (request == null) throw RpcErrors.badRequest();
 
-	public InterfaceDescriptor<T> getDescriptor() {
-		return descriptor;
-	}
+					Object result;
+					Invocation invocation = parseRequest(descriptor, request);
+					try {
+						result = invoke(supplier, invocation);
+					} catch (Exception e) {
+						return serializeExceptionOrRethrow(invocation, e);
+					}
 
-	public Supplier<T> getSupplier() {
-		return supplier;
-	}
-
-	@Override
-	public Response apply(final Request request) {
-		try {
-			if (request == null) throw RpcErrors.badRequest();
-
-			Object result;
-			Invocation invocation = parseRequest(request);
-			try {
-				result = invoke(invocation);
-			} catch (Exception e) {
-				return serializeExceptionOrRethrow(invocation, e);
+					return serializeResult(invocation, result);
+				} catch (Exception e) {
+					return serializeError(e);
+				}
 			}
-
-			return serializeResult(invocation, result);
-		} catch (Exception e) {
-			return serializeError(e);
-		}
+		};
 	}
 
-	public Invocation parseRequest(final Request request) {
+	/** Parses a request into an invocation chain. */
+	public static <T> Invocation parseRequest(final InterfaceDescriptor<T> descriptor,
+			final Request request) {
 		checkNotNull(request);
 		List<MethodCall> calls = request.getCalls();
 		if (calls.isEmpty()) throw RpcErrors.methodCallsRequired();
@@ -86,7 +80,8 @@ public class Server<T> implements Function<Request, Response> {
 		return invocation;
 	}
 
-	public Object invoke(final Invocation remote) {
+	/** Invokes an invocation chain on a service. */
+	public static <T> Object invoke(final Supplier<T> supplier, final Invocation remote) {
 		checkArgument(remote.isRemote(), "must be a remote invocation, got %s", remote);
 		Object object = supplier.get();
 
@@ -98,9 +93,10 @@ public class Server<T> implements Function<Request, Response> {
 		return object;
 	}
 
+	/** Serializes a remote invocation result. */
 	@SuppressWarnings("unchecked")
-	public Response serializeResult(final Invocation invocation, final Object result) {
-		Descriptor resultDescriptor = invocation.getResult();
+	public static Response serializeResult(final Invocation remote, final Object result) {
+		Descriptor resultDescriptor = remote.getResult();
 		Object response = resultDescriptor.serialize(result);
 		return Response.builder()
 				.setResult(response)
@@ -108,8 +104,10 @@ public class Server<T> implements Function<Request, Response> {
 				.build();
 	}
 
+	/** Serializes a remote invocation exception or propagates the exception. */
 	@SuppressWarnings("unchecked")
-	public Response serializeExceptionOrRethrow(final Invocation invocation, final Exception e) {
+	public static Response serializeExceptionOrRethrow(final Invocation invocation,
+			final Exception e) {
 		Descriptor excDescriptor = invocation.getExc();
 		if (excDescriptor == null || !excDescriptor.getJavaClass().isInstance(e)) {
 			throw Throwables.propagate(e);
@@ -123,7 +121,8 @@ public class Server<T> implements Function<Request, Response> {
 				.build();
 	}
 
-	public Response serializeError(final Exception e) {
+	/** Serializes an internal server error. */
+	public static Response serializeError(final Exception e) {
 		RpcError error = e instanceof RpcError ? (RpcError) e : RpcError.builder()
 				.setCode(RpcErrorCode.SERVER_ERROR)
 				.setText("Internal server error")

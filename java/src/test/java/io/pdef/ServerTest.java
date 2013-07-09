@@ -1,5 +1,7 @@
 package io.pdef;
 
+import com.google.common.base.Function;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.rpc.*;
@@ -19,7 +21,7 @@ public class ServerTest {
 	public void testApply() throws Exception {
 		TestInterface impl = mock(TestInterface.class);
 		when(impl.sum(1, 0)).thenReturn(1);
-		Server<TestInterface> server = Server.create(TestInterface.DESCRIPTOR, impl);
+		Function<Request, Response> server = Server.create(TestInterface.DESCRIPTOR, impl);
 
 		Request request = Request.builder()
 				.setCalls(ImmutableList.of(
@@ -40,7 +42,7 @@ public class ServerTest {
 	public void testApply_internalServerError() throws Exception {
 		TestInterface impl = mock(TestInterface.class);
 		when(impl.sum(1, 0)).thenThrow(new RuntimeException());
-		Server<TestInterface> server = Server.create(TestInterface.DESCRIPTOR, impl);
+		Function<Request, Response> server = Server.create(TestInterface.DESCRIPTOR, impl);
 
 		Request request = Request.builder()
 				.setCalls(ImmutableList.of(
@@ -71,11 +73,7 @@ public class ServerTest {
 								.setArgs(ImmutableMap.<String, Object>of("firstName", "John"))
 								.build())
 				).build();
-
-		TestInterface impl = mock(TestInterface.class);
-		Server<TestInterface> server = Server.create(TestInterface.DESCRIPTOR, impl);
-
-		List<Invocation> result = server.parseRequest(request).toList();
+		List<Invocation> result = Server.parseRequest(TestInterface.DESCRIPTOR, request).toList();
 		assertEquals(2, result.size());
 
 		Invocation invocation0 = result.get(0);
@@ -87,9 +85,6 @@ public class ServerTest {
 
 	@Test
 	public void testParseRequest_methodNotFound() throws Exception {
-		TestInterface impl = mock(TestInterface.class);
-		Server<TestInterface> server = Server.create(TestInterface.DESCRIPTOR, impl);
-
 		Request request = Request.builder()
 				.setCalls(ImmutableList.of(
 						MethodCall.builder()
@@ -97,7 +92,7 @@ public class ServerTest {
 								.build()))
 				.build();
 		try {
-			server.parseRequest(request);
+			Server.parseRequest(TestInterface.DESCRIPTOR, request);
 			fail();
 		} catch (RpcError e) {
 			assertEquals(RpcErrorCode.BAD_REQUEST, e.getCode());
@@ -107,9 +102,6 @@ public class ServerTest {
 
 	@Test
 	public void testParseRequest_wrongArgs() throws Exception {
-		TestInterface1 impl = mock(TestInterface1.class);
-		Server<TestInterface1> server = Server.create(TestInterface1.DESCRIPTOR, impl);
-
 		Request request = Request.builder()
 				.setCalls(ImmutableList.of(MethodCall.builder()
 						.setMethod("hello")
@@ -118,7 +110,7 @@ public class ServerTest {
 				.build();
 
 		try {
-			server.parseRequest(request);
+			Server.parseRequest(TestInterface1.DESCRIPTOR, request);
 			fail();
 		} catch (RpcError e) {
 			assertEquals(RpcErrorCode.BAD_REQUEST, e.getCode());
@@ -128,16 +120,13 @@ public class ServerTest {
 
 	@Test
 	public void testParseRequest_notRemoteMethod() throws Exception {
-		TestInterface impl = mock(TestInterface.class);
-		Server<TestInterface> server = Server.create(TestInterface.DESCRIPTOR, impl);
-
 		Request request = Request.builder()
 				.setCalls(ImmutableList.of(MethodCall.builder()
 						.setMethod("interface0")
 						.build()))
 				.build();
 		try {
-			server.parseRequest(request);
+			Server.parseRequest(TestInterface.DESCRIPTOR, request);
 			fail();
 		} catch (RpcError e) {
 			assertEquals(RpcErrorCode.BAD_REQUEST, e.getCode());
@@ -147,14 +136,13 @@ public class ServerTest {
 
 	@Test
 	public void testInvoke() throws Exception {
-		TestInterface impl = mock(TestInterface.class);
-		when(impl.camelCase("hello", "world")).thenReturn("Hello, World");
-		Server<TestInterface> server = Server.create(TestInterface.DESCRIPTOR, impl);
-
-		Invocation invocation = server.getDescriptor().getMethod("camelCase")
+		Invocation invocation = TestInterface.DESCRIPTOR.getMethod("camelCase")
 				.capture(Invocation.root(), "hello", "world");
 
-		Object result = server.invoke(invocation);
+		TestInterface impl = mock(TestInterface.class);
+		when(impl.camelCase("hello", "world")).thenReturn("Hello, World");
+
+		Object result = Server.invoke(Suppliers.ofInstance(impl), invocation);
 		assertEquals("Hello, World", result);
 	}
 
@@ -165,7 +153,6 @@ public class ServerTest {
 		when(iface0.interface0()).thenReturn(iface1);
 		when(iface1.hello("John", "Doe")).thenReturn("Hello, John Doe");
 
-		Server<TestInterface> server = Server.create(TestInterface.DESCRIPTOR, iface0);
 		Request request = Request.builder()
 				.setCalls(ImmutableList.of(
 						MethodCall.builder().setMethod("interface0").build(),
@@ -175,20 +162,17 @@ public class ServerTest {
 										"firstName", "John", "lastName", "Doe"))
 								.build())
 				).build();
-		Invocation invocation = server.parseRequest(request);
-		Object result = server.invoke(invocation);
+		Invocation invocation = Server.parseRequest(TestInterface.DESCRIPTOR, request);
+		Object result = Server.invoke(Suppliers.ofInstance(iface0), invocation);
 		assertEquals("Hello, John Doe", result);
 	}
 
 	@Test
 	public void testSerializeResult() throws Exception {
-		TestInterface iface = mock(TestInterface.class);
 		TestMessage msg = TestMessage.builder().setAString("hello, world").build();
-
-		Server<TestInterface> server = Server.create(TestInterface.DESCRIPTOR, iface);
-		Invocation invocation = server.getDescriptor().getMethod("message0")
+		Invocation invocation = TestInterface.DESCRIPTOR.getMethod("message0")
 				.capture(Invocation.root(), msg);
-		Response response = server.serializeResult(invocation, msg);
+		Response response = Server.serializeResult(invocation, msg);
 		assertEquals(Response.builder()
 				.setStatus(ResponseStatus.OK)
 				.setResult(msg.serialize())
@@ -197,14 +181,11 @@ public class ServerTest {
 
 	@Test
 	public void testSerializeError_rpcException() throws Exception {
-		TestInterface iface = mock(TestInterface.class);
-		Server<TestInterface> server = Server.create(TestInterface.DESCRIPTOR, iface);
-
 		RpcError error = RpcError.builder()
 				.setCode(RpcErrorCode.SERVICE_UNAVAILABLE)
 				.setText("Service unavailable")
 				.build();
-		Response response = server.serializeError(error);
+		Response response = Server.serializeError(error);
 		assertEquals(Response.builder()
 				.setStatus(ResponseStatus.ERROR)
 				.setResult(error.serialize())
@@ -213,11 +194,8 @@ public class ServerTest {
 
 	@Test
 	public void testSerializeError_internalServerError() throws Exception {
-		TestInterface iface = mock(TestInterface.class);
-		Server<TestInterface> server = Server.create(TestInterface.DESCRIPTOR, iface);
-
 		RuntimeException e = new RuntimeException();
-		Response response = server.serializeError(e);
+		Response response = Server.serializeError(e);
 		RpcError error = RpcError.builder()
 				.setCode(RpcErrorCode.SERVER_ERROR)
 				.setText("Internal server error")

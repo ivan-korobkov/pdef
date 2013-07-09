@@ -1,6 +1,9 @@
 package io.pdef;
 
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import io.pdef.rpc.Request;
+import io.pdef.rpc.Response;
 import io.pdef.test.TestInterface1;
 import org.junit.Test;
 
@@ -14,15 +17,15 @@ public class ClientServerTest {
 			}
 		};
 
-		Server<TestInterface1> server = Server.create(TestInterface1.DESCRIPTOR,
-				new Supplier<TestInterface1>() {
+		Function<Request, Response> server = Server
+				.create(TestInterface1.DESCRIPTOR, new Supplier<TestInterface1>() {
 					@Override
 					public TestInterface1 get() {
 						return impl;
 					}
 				});
 
-		TestInterface1 client = Client.create(TestInterface1.DESCRIPTOR, server).proxy();
+		TestInterface1 client = Client.createFromRpcHandler(TestInterface1.DESCRIPTOR, server);
 		int q = 0;
 		int n = 1000 * 1000;
 		for (int i = 0; i < n; i++) {

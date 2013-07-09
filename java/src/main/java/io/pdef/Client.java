@@ -11,31 +11,36 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class Client<T> implements Function<Invocation, Object> {
-	private final InterfaceDescriptor<T> descriptor;
-	private final Function<Request, Response> handler;
+public class Client {
+	private Client() {}
 
-	protected Client(final InterfaceDescriptor<T> descriptor,
+	/** Creates a proxy client from a descriptor and an rpc handler. */
+	public static <T> T createFromRpcHandler(final InterfaceDescriptor<T> descriptor,
 			final Function<Request, Response> handler) {
-		this.descriptor = checkNotNull(descriptor);
-		this.handler = checkNotNull(handler);
+		Function<Invocation, Object> invoker = invoker(handler);
+		return createFromInvocationHandler(descriptor, invoker);
 	}
 
-	public static <T> Client<T> create(final InterfaceDescriptor<T> descriptor,
-			final Function<Request, Response> handler) {
-		return new Client<T>(descriptor, handler);
+	/** Creates a proxy client from a descriptor and an invocation handler. */
+	public static <T> T createFromInvocationHandler(final InterfaceDescriptor<T> descriptor,
+			final Function<Invocation, Object> handler) {
+		return descriptor.proxy(ProxyHandler.root(descriptor, handler));
 	}
 
-	public T proxy() {
-		Invocation root = Invocation.root();
-		ProxyHandler invocationHandler = new ProxyHandler(root, descriptor, this);
-		return descriptor.proxy(invocationHandler);
+	/** Creates a new invoker from a remote handler. */
+	public static Function<Invocation, Object> invoker(final Function<Request, Response> handler) {
+		return new Function<Invocation, Object>() {
+			@Override
+			public Object apply(final Invocation invocation) {
+				return invoke(invocation, handler);
+			}
+		};
 	}
 
-	@Override
-	public Object apply(final Invocation invocation) {
-		checkNotNull(invocation);
-		Request request = serializeInvocation(invocation);
+	/** Invokes a remote invocation using a given handler and returns the result. */
+	public static Object invoke(final Invocation remote, final Function<Request, Response> handler) {
+		checkNotNull(remote);
+		Request request = serializeInvocation(remote);
 		Response response = handler.apply(request);
 		checkNotNull(response);
 
@@ -43,9 +48,9 @@ public class Client<T> implements Function<Invocation, Object> {
 			Object result = response.getResult();
 			switch (response.getStatus()) {
 				case OK:
-					return invocation.getResult().parse(result);
+					return remote.getResult().parse(result);
 				case EXCEPTION:
-					throw (RuntimeException) invocation.getExc().parse(result);
+					throw (RuntimeException) remote.getExc().parse(result);
 				case ERROR:
 					throw RpcError.parse(result);
 			}
@@ -57,7 +62,8 @@ public class Client<T> implements Function<Invocation, Object> {
 				.build();
 	}
 
-	public Request serializeInvocation(final Invocation remote) {
+	/** Serializes a remote invocation into an rpc request. */
+	public static Request serializeInvocation(final Invocation remote) {
 		checkArgument(remote.isRemote(), "must be a remote invocation, got %s", remote);
 		List<Invocation> invocations = remote.toList();
 
@@ -74,7 +80,13 @@ public class Client<T> implements Function<Invocation, Object> {
 		private final InterfaceDescriptor<?> iface;
 		private final Function<Invocation, Object> handler;
 
-		ProxyHandler(final Invocation parent, final InterfaceDescriptor<?> iface,
+		public static ProxyHandler root(final InterfaceDescriptor<?> iface,
+				final Function<Invocation, Object> handler) {
+			Invocation root = Invocation.root();
+			return new ProxyHandler(root, iface, handler);
+		}
+
+		private ProxyHandler(final Invocation parent, final InterfaceDescriptor<?> iface,
 				final Function<Invocation, Object> handler) {
 			this.parent = checkNotNull(parent);
 			this.iface = checkNotNull(iface);

@@ -33,7 +33,7 @@ public class ClientTest {
 				.setResult("good, bye")
 				.build());
 
-		TestInterface client = Client.create(TestInterface.DESCRIPTOR, handler).proxy();
+		TestInterface client = Client.createFromRpcHandler(TestInterface.DESCRIPTOR, handler);
 		String result = client.camelCase("hello", "world");
 		assertEquals("good, bye", result);
 	}
@@ -45,7 +45,7 @@ public class ClientTest {
 				.setResult(ImmutableMap.of("aString", "hello"))
 				.build());
 
-		TestInterface client = Client.create(TestInterface.DESCRIPTOR, handler).proxy();
+		TestInterface client = Client.createFromRpcHandler(TestInterface.DESCRIPTOR, handler);
 		TestMessage msg = client.message0(TestMessage.instance());
 		assertEquals(TestMessage.builder()
 				.setAnEnum(TestEnum.ONE)
@@ -63,7 +63,7 @@ public class ClientTest {
 						.serialize())
 				.build());
 
-		TestInterface client = Client.create(TestInterface.DESCRIPTOR, handler).proxy();
+		TestInterface client = Client.createFromRpcHandler(TestInterface.DESCRIPTOR, handler);
 		try {
 			client.void0();
 			fail();
@@ -80,9 +80,7 @@ public class ClientTest {
 		Invocation invocation1 = TestInterface1.DESCRIPTOR.getMethod("hello")
 				.capture(invocation, "John", "Doe");
 
-		Client<TestInterface> client = Client.create(TestInterface.DESCRIPTOR, handler);
-		Request request = client.serializeInvocation(invocation1);
-
+		Request request = Client.serializeInvocation(invocation1);
 		assertEquals(Request.builder()
 				.setCalls(ImmutableList.of(
 						MethodCall.builder()

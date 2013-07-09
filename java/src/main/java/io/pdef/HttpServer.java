@@ -1,9 +1,11 @@
 package io.pdef;
 
+import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.net.MediaType;
 import io.pdef.rpc.MethodCall;
 import io.pdef.rpc.Request;
 import io.pdef.rpc.Response;
@@ -11,47 +13,52 @@ import io.pdef.rpc.RpcErrors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class HttpServer<T> {
+public abstract class HttpServer {
 	private static final Splitter METHOD_SPLITTER = Splitter.on("/");
-	private final InterfaceDescriptor<T> descriptor;
-	private final Server<T> server;
 
-	protected HttpServer(final InterfaceDescriptor<T> descriptor, final Supplier<T> supplier) {
-		this.descriptor = checkNotNull(descriptor);
-		server = Server.create(descriptor, supplier);
-	}
+	/** Handles an http request. */
+	public abstract void handle(HttpServletRequest request, HttpServletResponse response)
+			throws IOException;
 
-	public static <T> HttpServer<T> create(final InterfaceDescriptor<T> descriptor,
+	/** Creates a default http handler from a descriptor and a service supplier. */
+	public static <T> HttpServer create(final InterfaceDescriptor<T> descriptor,
 			final Supplier<T> supplier) {
-		return new HttpServer<T>(descriptor, supplier);
+		final Function<Request, Response> function = Server.create(descriptor, supplier);
+
+		return new HttpServer() {
+			@Override
+			public void handle(final HttpServletRequest request,
+					final HttpServletResponse response) throws IOException {
+				checkNotNull(request);
+				checkNotNull(response);
+
+				Response resp;
+				try {
+					Request req = parseRequest(descriptor, request);
+					resp = function.apply(req);
+				} catch (Exception e) {
+					resp = Server.serializeError(e);
+				}
+
+				writeResponse(response, resp);
+			}
+		};
 	}
 
-	public void handle(final HttpServletRequest request, final HttpServletResponse response) {
-		checkNotNull(request);
-		checkNotNull(response);
-
-		Response resp;
-		try {
-			String path = request.getPathInfo();
-			Request req = parseRequest(descriptor, request);
-			resp = server.apply(req);
-		} catch (Exception e) {
-			resp = server.serializeError(e);
-		}
-
-		writeResponse(response, resp);
-	}
-
+	/** Parses an rpc request from an http request. */
 	public static Request parseRequest(final InterfaceDescriptor<?> descriptor,
 			final HttpServletRequest request) {
 		checkNotNull(request);
 		String pathInfo = request.getPathInfo();
+		pathInfo = pathInfo.startsWith("/") ? pathInfo.substring(1) : pathInfo;
 
 		StringBuilder path = new StringBuilder();
 		InterfaceDescriptor<?> d = descriptor;
@@ -86,7 +93,15 @@ public class HttpServer<T> {
 				.build();
 	}
 
-	public static void writeResponse(final HttpServletResponse response, final Response resp) {
-
+	/** Writes an rpc response to an http response. */
+	public static void writeResponse(final HttpServletResponse response, final Response resp)
+			throws IOException {
+		String json = resp.serializeToJson();
+		response.setStatus(HttpServletResponse.SC_OK);
+		response.setContentLength(json.length());
+		response.setContentType(MediaType.JSON_UTF_8.toString());
+		PrintWriter writer = response.getWriter();
+		writer.write(json);
+		writer.flush();
 	}
 }

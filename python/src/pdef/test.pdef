@@ -8,6 +8,11 @@ enum Enum {
     FIRST, SECOND, THIRD
 }
 
+// Enum definition with a semi column
+enum Enum2 {
+    A, B, C;
+}
+
 /** Simple message. */
 message Message {
     // Polymorphic discriminator

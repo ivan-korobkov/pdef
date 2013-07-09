@@ -222,8 +222,15 @@ class GrammarRules(object):
 
     def p_enum_values(self, t):
         '''
-        enum_values : enum_values COMMA IDENTIFIER
-                    | IDENTIFIER
+        enum_values : enum_value_list SEMI
+                    | enum_value_list
+        '''
+        t[0] = t[1]
+
+    def p_enum_value_list(self, t):
+        '''
+        enum_value_list : enum_value_list COMMA IDENTIFIER
+                        | IDENTIFIER
         '''
         self._list(t, separated=1)
 

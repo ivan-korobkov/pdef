@@ -11,8 +11,8 @@ setup(
     description='Pdef interface language',
     license='Apache License 2.0',
     package_dir={'': 'src'},
-    packages=['pdef', 'pdef.csharp', 'pdef.java'],
-    package_data={'pdef': ['csharp/*.template', 'java/*.template']},
+    packages=['pdef', 'pdef.java'],
+    package_data={'pdef': ['java/*.template']},
     scripts=['scripts/pdefc'],
     requires=['argparse', 'jinja2', 'ply']
 )

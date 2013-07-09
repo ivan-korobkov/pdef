@@ -91,6 +91,7 @@ class GrammarRules(object):
         imports = t[4]
         definitions = t[5]
         t[0] = ast.File(name, imports=imports, definitions=definitions)
+        t[0].location = self._location(t)
 
     # Empty token to support optional values.
     def p_empty(self, t):
@@ -135,6 +136,7 @@ class GrammarRules(object):
         '''
         d = t[2]
         d.doc = t[1]
+        d.location = self._location(t)
         t[0] = d
 
     def p_doc(self, t):
@@ -362,6 +364,9 @@ class GrammarRules(object):
     def _error(self, msg, *args):
         raise NotImplementedError()
 
+    def _location(self, t):
+        raise NotImplementedError()
+
 
 class Parser(GrammarRules, Tokens):
     def __init__(self, debug=False):
@@ -383,7 +388,10 @@ class Parser(GrammarRules, Tokens):
             self.filepath = 'stream'
 
     def parse(self, s, **kwargs):
-        return self.parser.parse(s, debug=self.debug, **kwargs)
+        return self.parser.parse(s, debug=self.debug, tracking=True, **kwargs)
 
     def _error(self, msg, *args):
         logging.error('%s: %s' % (self.filepath, msg), *args)
+
+    def _location(self, t):
+        return ast.Location(self.filepath, t.lineno(1))

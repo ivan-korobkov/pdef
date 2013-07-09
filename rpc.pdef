@@ -23,10 +23,13 @@ message MethodCall {
     args    map<string, object>;
 }
 
+interface Interface {}
+
 /** Rpc exception is raised when the server fails to process an RPC request. */
 exception RpcError {
     code    RpcErrorCode;
     text    string;
+    qwer    Interface;
 }
 
 /** Rpc exception codes, most can be mapped to HTTP status codes. */

@@ -1,7 +1,6 @@
 # encoding: utf-8
 from distutils.core import setup
 
-
 setup(
     name='pdef',
     version='1.0-alpha7',

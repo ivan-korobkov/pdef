@@ -3,11 +3,22 @@ from pdef.common import Type
 from pdef.preconditions import *
 
 
+class Location(object):
+    def __init__(self, path, line=0):
+        self.path = path
+        self.line = line
+
+    def __str__(self):
+        s = self.path if self.path else 'nofile'
+        return '%s, line %s' % (s, self.line) if self.line else s
+
+
 class File(object):
     def __init__(self, name, imports=None, definitions=None):
         self.name = name
         self.imports = tuple(imports) if imports else ()
         self.definitions = tuple(definitions) if definitions else ()
+        self.location = None
 
 
 class Import(object):
@@ -85,6 +96,7 @@ class Definition(object):
         self.name = name
         self.type = type
         self.doc = doc
+        self.location = None
 
 
 class Message(Definition):

@@ -3,10 +3,23 @@ import logging
 from collections import OrderedDict
 from pdef import ast
 from pdef.common import Type, PdefException
-from pdef.preconditions import *
+from pdef.preconditions import check_isinstance, check_state
 
 
-class Pdef(object):
+class Base(object):
+    '''Abstract base symbol which has a location and error checks.'''
+    location = None
+
+    def _check(self, expression, msg, *args):
+        if expression: return
+
+        msg = msg % args if msg else 'Error'
+        if self.location:
+            msg = '%s: %s' % (self.location, msg)
+        raise PdefException(msg)
+
+
+class Pdef(Base):
     '''Protocol definition.'''
     def __init__(self):
         self.modules = SymbolTable(self, name='modules')
@@ -16,7 +29,7 @@ class Pdef(object):
 
     def add_module(self, module):
         '''Adds a new module to Pdef.'''
-        check_argument(module.pdef is None, '%s is already added to another pdef instance', module)
+        self._check(module.pdef is None, '%s is already added to another pdef instance', module)
         module.pdef = self
         self.modules.add(module)
         logging.debug('%s: added a module "%s"', self, module)
@@ -43,13 +56,14 @@ class Pdef(object):
         return module
 
 
-class Module(object):
+class Module(Base):
     '''Module in a protocol definition.'''
     @classmethod
     def from_ast(cls, node):
         '''Creates a new module from an AST node.'''
         module = Module(node.name)
         module._node = node
+        module.location = node.location
 
         for def_node in node.definitions:
             def0 = Definition.from_ast_polymorphic(def_node)
@@ -80,7 +94,7 @@ class Module(object):
         if not self._node: return
 
         pdef = self.pdef
-        check_state(pdef is not None, '%s: cannot link, pdef is required', self)
+        self._check(pdef is not None, '%s: cannot link, pdef is required', self)
 
         for node in self._node.imports:
             module = pdef.get_module(node.module_name)
@@ -111,9 +125,9 @@ class Module(object):
     def add_definition(self, definition):
         '''Adds a new definition to this module.'''
         check_isinstance(definition, Definition)
-        check_argument(definition.module is None, '%s is already added to another module', definition)
-        check_argument(definition.name not in self.imported_definitions,
-                       '%s: definition %r clashes with an import' % (self, definition.name))
+        self._check(definition.module is None, '%s is already added to another module', definition)
+        self._check(definition.name not in self.imported_definitions,
+                    '%s: definition %r clashes with an import' % (self, definition.name))
 
         definition.module = self
         self.definitions.add(definition)
@@ -164,7 +178,7 @@ class Module(object):
         raise PdefException('%s: type "%s" is not found' % (self, ref))
 
 
-class Definition(object):
+class Definition(Base):
     '''Base definition.'''
     @classmethod
     def from_ast_polymorphic(cls, node):
@@ -260,8 +274,8 @@ class List(Definition):
         super(List, self).__init__(Type.LIST, 'List')
         self.element = element
         self.module = module
-        check_argument(self.element.is_datatype, '%s: element must be a data type, %s', self,
-                       self.element)
+        self._check(self.element.is_datatype, '%s: element must be a data type, %s',
+                    self, self.element)
 
     def _link(self):
         self.element = self.module.lookup(self.element)
@@ -273,8 +287,8 @@ class Set(Definition):
         super(Set, self).__init__(Type.SET, 'Set')
         self.element = element
         self.module = module
-        check_argument(self.element.is_datatype, '%s: element must be a data type, %s', self,
-                       self.element)
+        self._check(self.element.is_datatype, '%s: element must be a data type, %s',
+                    self, self.element)
 
     def _link(self):
         self.element = self.module.lookup(self.element)
@@ -288,8 +302,8 @@ class Map(Definition):
         self.value = value
         self.module = module
 
-        check_state(self.key.is_primitive, '%s: key must be a primitive, %s', self, self.key)
-        check_state(self.value.is_datatype, '%s: value must be a data type, %s', self, self.value)
+        self._check(self.key.is_primitive, '%s: key must be a primitive, %s', self, self.key)
+        self._check(self.value.is_datatype, '%s: value must be a data type, %s', self, self.value)
 
     def _link(self):
         self.key = self.module.lookup(self.key)
@@ -303,6 +317,7 @@ class Enum(Definition):
         check_isinstance(node, ast.Enum)
         enum = Enum(node.name, *node.values)
         enum.doc = node.doc
+        enum.location = node.location
         return enum
 
     def __init__(self, name, *values):
@@ -340,6 +355,7 @@ class Message(Definition):
         check_isinstance(node, ast.Message)
         msg = Message(node.name, is_exception=node.is_exception, doc=node.doc)
         msg._node = node
+        msg.location = node.location
         return msg
 
     def __init__(self, name, is_exception=False, doc=None):
@@ -370,21 +386,21 @@ class Message(Definition):
         (a message with a discriminator field) and vice versa.
         '''
         check_isinstance(base, Message)
-        check_argument(self != base, '%s: cannot inherit itself', self)
-        check_argument(self not in base._bases, '%s: circular inheritance with %s', self, base)
-        check_argument(self.is_exception == base.is_exception, '%s: cannot inherit %s', self,
-                       base.fullname)
+        self._check(self != base, '%s: cannot inherit itself', self)
+        self._check(self not in base._bases, '%s: circular inheritance with %s', self, base)
+        self._check(self.is_exception == base.is_exception, '%s: cannot inherit %s',
+                    self, base.fullname)
 
         self.base = base
         if base_type:
             check_isinstance(base_type, EnumValue)
-            check_argument(base.polymorphic_discriminator,
-                           '%s: polymorphic inheritance of a non-polymorphic base %s', self, base)
+            self._check(base.polymorphic_discriminator,
+                        '%s: polymorphic inheritance of a non-polymorphic base %s', self, base)
             self.base_type = base_type
             self.base._add_subtype(self)
         else:
-            check_argument(not base.polymorphic_discriminator,
-                           '%s: non-polymorphic inheritance of a polymorphic base %s', self, base)
+            self._check(not base.polymorphic_discriminator,
+                        '%s: non-polymorphic inheritance of a polymorphic base %s', self, base)
 
         for field in base.fields.values():
             self.inherited_fields.add(field)
@@ -395,11 +411,11 @@ class Message(Definition):
     def _add_subtype(self, subtype):
         '''Adds a new subtype to this message, checks its base_type.'''
         check_isinstance(subtype, Message)
-        check_state(self.polymorphic_discriminator,
+        self._check(self.polymorphic_discriminator,
                     '%s: is not polymorphic, no discriminator field', self)
-        check_argument(subtype.base_type in self.polymorphic_discriminator.type)
-        check_argument(subtype.base_type not in self.subtypes, '%s: duplicate subtype %s',
-                       self, subtype.base_type)
+        self._check(subtype.base_type in self.polymorphic_discriminator.type)
+        self._check(subtype.base_type not in self.subtypes, '%s: duplicate subtype %s',
+                    self, subtype.base_type)
 
         self.subtypes[subtype.base_type] = subtype
         if self.base and self.base.discriminator == self.polymorphic_discriminator:
@@ -407,18 +423,18 @@ class Message(Definition):
 
     def add_field(self, name, definition, is_discriminator=False):
         '''Adds a new field to this message and returns the field.'''
-        check_argument(definition.is_datatype, '%s: field must be a data type, "%s", %s', self,
-                       name, definition)
+        self._check(definition.is_datatype, '%s: field must be a data type, "%s", %s',
+                    self, name, definition)
 
         field = Field(self, name, definition, is_discriminator)
         self.declared_fields.add(field)
         self.fields.add(field)
 
         if is_discriminator:
-            check_state(not self.discriminator, '%s: duplicate discriminator field "%s"', self, name)
-            check_argument(isinstance(field.type, Enum),
-                           '%s: discriminator field must be an enum "%s"', self, name)
-            check_state(not self.subtypes,
+            self._check(not self.discriminator, '%s: duplicate discriminator field "%s"', self, name)
+            self._check(isinstance(field.type, Enum),
+                        '%s: discriminator field must be an enum "%s"', self, name)
+            self._check(not self.subtypes,
                         '%s: discriminator field must be set before adding subtypes', self)
             self.discriminator = field
 
@@ -431,7 +447,7 @@ class Message(Definition):
         if not node: return
 
         module = self.module
-        check_state(module, '%: cannot link, module is required', self)
+        self._check(module, '%: cannot link, module is required', self)
 
         if node.base:
             base = module.lookup(node.base)
@@ -483,6 +499,7 @@ class Interface(Definition):
         check_isinstance(node, ast.Interface)
         iface = Interface(node.name, doc=node.doc)
         iface._node = node
+        iface.location = node.location
         return iface
 
     def __init__(self, name, doc=None):
@@ -498,8 +515,8 @@ class Interface(Definition):
     def set_base(self, base):
         '''Set the base of this interface.'''
         check_isinstance(base, Interface)
-        check_argument(base is not self, '%s: self inheritance', self)
-        check_argument(self not in base._all_bases, '%s: circular inheritance with %s', self, base)
+        self._check(base is not self, '%s: self inheritance', self)
+        self._check(self not in base._all_bases, '%s: circular inheritance with %s', self, base)
 
         self.base = base
         for method in base.methods.values():
@@ -522,7 +539,7 @@ class Interface(Definition):
         if not node: return
 
         module = self.module
-        check_state(module, '%: cannot link, module is required', self)
+        self._check(module, '%: cannot link, module is required', self)
 
         if node.base:
             base = module.lookup(node.base)

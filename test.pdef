@@ -35,6 +35,11 @@ message TestSimpleMessage {
     thirdField  TestSimpleMessage;
 }
 
+/** Test simple submessage. */
+message TestSimpleSubmessage : TestSimpleMessage {
+    forthField  float;
+}
+
 /** First inheritance tree types. */
 enum TreeType {
     BASE, ONE, TWO

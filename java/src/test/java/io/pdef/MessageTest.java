@@ -4,12 +4,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.pdef.test.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class MessageTest {
 	@Test
@@ -115,6 +114,23 @@ public class MessageTest {
 				.setType1(TreeType1.B)
 				.build();
 		assertEquals(expected, tree);
+	}
+
+	@Test
+	public void testParse_nonpolymorphicSubtype() throws Exception {
+		Map<String, Object> map = ImmutableMap.<String, Object>of(
+				"firstField", true,
+				"secondField", "hello",
+				"forthField", 1.5);
+
+		TestSimpleSubmessage submessage = TestSimpleSubmessage.parse(map);
+		TestSimpleSubmessage expected = TestSimpleSubmessage.builder()
+				.setFirstField(true)
+				.setSecondField("hello")
+				.setForthField(1.5f)
+				.build();
+
+		assertEquals(expected, submessage);
 	}
 
 	@Test

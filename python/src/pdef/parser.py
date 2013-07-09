@@ -157,13 +157,6 @@ class GrammarRules(object):
         '''
         t[0] = t[1]
 
-    def p_refs(self, t):
-        '''
-        refs : refs COMMA ref
-             | ref
-        '''
-        self._list(t, separated=1)
-
     def p_value_ref(self, t):
         '''
         value_ref : BOOL
@@ -257,10 +250,13 @@ class GrammarRules(object):
     def p_message_base(self, t):
         '''
         message_base : COLON ref LPAREN def_ref RPAREN
+                     | COLON ref
                      | empty
         '''
         if len(t) == 2:
             t[0] = None, None
+        elif len(t) == 3:
+            t[0] = t[2], None
         elif len(t) == 6:
             if not isinstance(t[4], ast.EnumValueRef):
                 self._error('Enum value required, got %s, line %s', t[4], t.lexer.lineno)

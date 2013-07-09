@@ -37,8 +37,7 @@ message Message {
 }
 
 /** Multi-line
-* doc comment.
-*/
+* doc comment. */
 message SubMessage1 : Message(Enum.FIRST) {
     sub_field1      Message;
     sub_field2      string;
@@ -55,6 +54,10 @@ message SubMessage3 : SubMessage2(Enum.THIRD) {
 exception Exception {
     code    string;
 }
+
+
+message SuperTree {}
+message SubTree : SuperTree {}
 
 
 /** Base interface. */

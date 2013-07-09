@@ -334,7 +334,7 @@ class Message(Definition):
         self.base = None
         self.base_type = None
         self.subtypes = OrderedDict()
-        self.discriminator_field = None
+        self.discriminator = None
 
         self.fields = SymbolTable(self, 'fields')
         self.declared_fields = SymbolTable(self, 'declared_fields')
@@ -343,23 +343,33 @@ class Message(Definition):
         self._node = None
 
     @property
-    def polymorphic_discriminator_field(self):
+    def polymorphic_discriminator(self):
         '''Returns this message discriminator field, base discriminator field, or None.'''
-        return self.discriminator_field if self.discriminator_field \
-            else self.base.discriminator_field if self.base else None
+        return self.discriminator if self.discriminator \
+            else self.base.discriminator if self.base else None
 
-    def set_base(self, base, base_type):
-        '''Sets this message base and inherits its fields.'''
+    def set_base(self, base, base_type=None):
+        '''Sets this message base and inherits its fields.
+
+        The base_type must be present when a polymorphic base message is inherited
+        (a message with a discriminator field) and vice versa.
+        '''
         check_isinstance(base, Message)
-        check_isinstance(base_type, EnumValue)
         check_argument(self != base, '%s: cannot inherit itself', self)
         check_argument(self not in base._bases, '%s: circular inheritance with %s', self, base)
         check_argument(self.is_exception == base.is_exception, '%s: cannot inherit %s', self,
                        base.fullname)
 
         self.base = base
-        self.base_type = base_type
-        base._add_subtype(self)
+        if base_type:
+            check_isinstance(base_type, EnumValue)
+            check_argument(base.polymorphic_discriminator,
+                           '%s: polymorphic inheritance of a non-polymorphic base %s', self, base)
+            self.base_type = base_type
+            self.base._add_subtype(self)
+        else:
+            check_argument(not base.polymorphic_discriminator,
+                           '%s: non-polymorphic inheritance of a polymorphic base %s', self, base)
 
         for field in base.fields.values():
             self.inherited_fields.add(field)
@@ -370,14 +380,14 @@ class Message(Definition):
     def _add_subtype(self, subtype):
         '''Adds a new subtype to this message, checks its base_type.'''
         check_isinstance(subtype, Message)
-        check_state(self.polymorphic_discriminator_field,
+        check_state(self.polymorphic_discriminator,
                     '%s: is not polymorphic, no discriminator field', self)
-        check_argument(subtype.base_type in self.polymorphic_discriminator_field.type)
+        check_argument(subtype.base_type in self.polymorphic_discriminator.type)
         check_argument(subtype.base_type not in self.subtypes, '%s: duplicate subtype %s',
                        self, subtype.base_type)
 
         self.subtypes[subtype.base_type] = subtype
-        if self.base and self.base.discriminator_field == self.polymorphic_discriminator_field:
+        if self.base and self.base.discriminator == self.polymorphic_discriminator:
             self.base._add_subtype(subtype)
 
     def add_field(self, name, definition, is_discriminator=False):
@@ -387,13 +397,13 @@ class Message(Definition):
         self.fields.add(field)
 
         if is_discriminator:
-            check_state(not self.discriminator_field,
+            check_state(not self.discriminator,
                         '%s: duplicate discriminator field %s', self, field)
             check_argument(isinstance(field.type, Enum),
                            '%s: discriminator field %s must be an enum', self, field)
             check_state(not self.subtypes,
                         '%s: discriminator field must be set before adding subtypes', self)
-            self.discriminator_field = field
+            self.discriminator = field
 
         logging.debug('%s: added a field "%s"', self, field)
         return field

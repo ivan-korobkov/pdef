@@ -333,7 +333,7 @@ class TestMessage(unittest.TestCase):
 
         msg2 = Message('Msg2')
         msg2.set_base(msg1, sub1)
-        assert msg2.polymorphic_discriminator_field is msg1.polymorphic_discriminator_field
+        assert msg2.polymorphic_discriminator is msg1.polymorphic_discriminator
         assert msg1.subtypes == {sub1: msg2}
         assert msg0.subtypes == {sub0: msg1}
 
@@ -357,6 +357,38 @@ class TestMessage(unittest.TestCase):
         assert msg1.inherited_fields == {'type': type_field, 'field0': field0}
         assert msg0.fields == {'type': type_field, 'field0': field0}
         assert msg0.inherited_fields == {'type': type_field}
+
+    def test_set_base_nonpolymorphic(self):
+        '''Should set a non-polymorphic message base.'''
+        base = Message('Base')
+        msg = Message('Msg')
+        msg.set_base(base)
+
+        assert msg.base == base
+
+    def test_set_base_nonpolymorphic_polymorphic(self):
+        '''Should prevent inheriting a polymorphic base by a non-polymorphic message.'''
+        enum = Enum('Type', 'SUBTYPE')
+        base = Message('Base')
+        base.add_field('type', enum, is_discriminator=True)
+
+        msg = Message('Msg')
+        try:
+            msg.set_base(base)
+        except PdefException, e:
+            assert 'non-polymorphic inheritance of a polymorphic base' in e.message
+
+    def test_set_base_polymorphic_nonpolymorphic(self):
+        '''Should prevent inheriting a non-polymorphic base by a polymorphic message.'''
+        base = Message('Base')
+
+        enum = Enum('Type')
+        subtype = enum.add_value('SUBTYPE')
+        msg = Message('Msg')
+        try:
+            msg.set_base(base, subtype)
+        except PdefException, e:
+            assert 'polymorphic inheritance of a non-polymorphic base' in e.message
 
     def test_add_field(self):
         '''Should add a new field to a message.'''
@@ -383,7 +415,7 @@ class TestMessage(unittest.TestCase):
 
         field = msg.add_field('type', enum, is_discriminator=True)
         assert field.is_discriminator
-        assert msg.discriminator_field is field
+        assert msg.discriminator is field
 
     def test_add_field_duplicate_discriminator(self):
         '''Should prevent multiple discriminators in a message'''

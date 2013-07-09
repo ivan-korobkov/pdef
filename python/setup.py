@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name='pdef',
-    version='1.0-alpha6',
+    version='1.0-alpha7',
     url='http://github.com/ivan-korobkov/pdef',
     author='Ivan Korobkov',
     author_email='ivan.korobkov@gmail.com',

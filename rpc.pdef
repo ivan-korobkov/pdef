@@ -29,12 +29,11 @@ exception RpcError {
     text    string;
 }
 
-/** Rpc exception codes, most can be mapped to HTTP status codes. */
+/** Rpc exception codes. */
 enum RpcErrorCode {
-    SERVER_ERROR,           // An unhandled server error.
-    SERVICE_UNAVAILABLE,    // The service is temporarily unavailable,
-    TIMEOUT,                // Timeout.
-    BAD_REQUEST            // The request could not be understood by the server.
+    SERVER_ERROR,   // Internal server error.
+    NETWORK_ERROR,  // Temporary network error (timeouts, etc), the request can be repeated.
+    CLIENT_ERROR    // Error client code/request, the request should not be repeated.
 }
 
 

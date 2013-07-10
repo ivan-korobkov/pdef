@@ -103,7 +103,7 @@ public class ServerRpcProtocolTest {
 			ServerRpcProtocol.parseRequest(TestInterface.DESCRIPTOR, request);
 			fail();
 		} catch (RpcError e) {
-			assertEquals(RpcErrorCode.BAD_REQUEST, e.getCode());
+			assertEquals(RpcErrorCode.CLIENT_ERROR, e.getCode());
 			assertTrue(e.getText().contains("Method not found"));
 		}
 	}
@@ -121,7 +121,7 @@ public class ServerRpcProtocolTest {
 			ServerRpcProtocol.parseRequest(TestInterface1.DESCRIPTOR, request);
 			fail();
 		} catch (RpcError e) {
-			assertEquals(RpcErrorCode.BAD_REQUEST, e.getCode());
+			assertEquals(RpcErrorCode.CLIENT_ERROR, e.getCode());
 			assertTrue(e.getText().contains("Wrong method arguments"));
 		}
 	}
@@ -137,7 +137,7 @@ public class ServerRpcProtocolTest {
 			ServerRpcProtocol.parseRequest(TestInterface.DESCRIPTOR, request);
 			fail();
 		} catch (RpcError e) {
-			assertEquals(RpcErrorCode.BAD_REQUEST, e.getCode());
+			assertEquals(RpcErrorCode.CLIENT_ERROR, e.getCode());
 			assertTrue(e.getText().contains("Not a remote method"));
 		}
 	}
@@ -157,7 +157,7 @@ public class ServerRpcProtocolTest {
 	@Test
 	public void testRpcSerializeError_rpcException() throws Exception {
 		RpcError error = RpcError.builder()
-				.setCode(RpcErrorCode.SERVICE_UNAVAILABLE)
+				.setCode(RpcErrorCode.NETWORK_ERROR)
 				.setText("Service unavailable")
 				.build();
 		Response response = ServerRpcProtocol.serializeError(error);

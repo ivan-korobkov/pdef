@@ -25,24 +25,22 @@ class ClientRpcProtocol implements Function<Invocation, Object> {
 		checkNotNull(remote);
 		Request request = createRequest(remote);
 		Response response = rpcHandler.apply(request);
-		checkNotNull(response);
+		if (response == null) throw RpcError.builder()
+			.setCode(RpcErrorCode.CLIENT_ERROR)
+			.setText("Null response")
+			.build();
 
-		if (response != null) {
-			Object result = response.getResult();
-			switch (response.getStatus()) {
-				case OK:
-					return remote.getResult().parse(result);
-				case EXCEPTION:
-					throw (RuntimeException) remote.getExc().parse(result);
-				case ERROR:
-					throw RpcError.parse(result);
-			}
+		Object result = response.getResult();
+		switch (response.getStatus()) {
+			case OK:
+				return remote.getResult().parse(result);
+			case EXCEPTION:
+				throw (RuntimeException) remote.getExc().parse(result);
+			case ERROR:
+				throw RpcError.parse(result);
 		}
 
-		throw RpcError.builder()
-				.setCode(RpcErrorCode.SERVER_ERROR)
-				.setText("No response status")
-				.build();
+		throw new AssertionError();
 	}
 
 	/** Serializes a remote proxy into an rpc request. */

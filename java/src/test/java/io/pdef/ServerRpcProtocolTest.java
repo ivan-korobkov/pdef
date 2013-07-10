@@ -160,7 +160,7 @@ public class ServerRpcProtocolTest {
 				.setCode(RpcErrorCode.NETWORK_ERROR)
 				.setText("Service unavailable")
 				.build();
-		Response response = ServerRpcProtocol.serializeError(error);
+		Response response = ServerRpcProtocol.errorResponse(error);
 		assertEquals(Response.builder()
 				.setStatus(ResponseStatus.ERROR)
 				.setResult(error.serialize())
@@ -170,7 +170,7 @@ public class ServerRpcProtocolTest {
 	@Test
 	public void testRpcSerializeError_internalServerError() throws Exception {
 		RuntimeException e = new RuntimeException();
-		Response response = ServerRpcProtocol.serializeError(e);
+		Response response = ServerRpcProtocol.errorResponse(e);
 		RpcError error = RpcError.builder()
 				.setCode(RpcErrorCode.SERVER_ERROR)
 				.setText("Internal server error")

@@ -36,12 +36,12 @@ class ServerRpcProtocol<T> implements Function<Request, Response> {
 			try {
 				result = invocationHandler.apply(invocation);
 			} catch (Exception e) {
-				return serializeExcOrPropagate(invocation, e);
+				return exceptionResponseOrPropagate(invocation, e);
 			}
 
 			return serializeResult(invocation, result);
 		} catch (Exception e) {
-			return serializeError(e);
+			return errorResponse(e);
 		}
 	}
 
@@ -93,7 +93,7 @@ class ServerRpcProtocol<T> implements Function<Request, Response> {
 	/** Serializes a remote proxy exception or propagates the exception. */
 	@VisibleForTesting
 	@SuppressWarnings("unchecked")
-	static Response serializeExcOrPropagate(final Invocation invocation, final Exception e) {
+	static Response exceptionResponseOrPropagate(final Invocation invocation, final Exception e) {
 		Descriptor excDescriptor = invocation.getExc();
 		if (excDescriptor == null || !excDescriptor.getJavaClass().isInstance(e)) {
 			throw Throwables.propagate(e);
@@ -109,7 +109,7 @@ class ServerRpcProtocol<T> implements Function<Request, Response> {
 
 	/** Serializes an internal server error. */
 	@VisibleForTesting
-	static Response serializeError(final Exception e) {
+	static Response errorResponse(final Exception e) {
 		RpcError error = RpcErrors.fromException(e);
 		Object result = error.serialize();
 		return Response.builder()

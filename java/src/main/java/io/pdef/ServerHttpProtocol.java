@@ -42,7 +42,7 @@ class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestRespon
 	/** Handles an http request and writes a result to an http response, returns null.
 	 * @throws RuntimeException if fails to write to an http response. */
 	@VisibleForTesting
-	  static void handle(final RequestResponse requestResponse,
+	static void handle(final RequestResponse requestResponse,
 			final InterfaceDescriptor<?> descriptor,
 			final Function<Request, Response> requestHandler) {
 		HttpServletRequest request = requestResponse.getRequest();
@@ -50,14 +50,14 @@ class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestRespon
 
 		Response resp;
 		try {
-			Request req = httpParseResponse(descriptor, request);
+			Request req = parseRequest(descriptor, request);
 			resp = requestHandler.apply(req);
 		} catch (Exception e) {
-			resp = ServerRpcProtocol.serializeError(e);
+			resp = ServerRpcProtocol.errorResponse(e);
 		}
 
 		try {
-			httpWriteResponse(response, resp);
+			writeResponse(response, resp);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -65,7 +65,7 @@ class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestRespon
 
 	/** Parses an rpc request from an http request. */
 	@VisibleForTesting
-	static Request httpParseResponse(final InterfaceDescriptor<?> descriptor,
+	static Request parseRequest(final InterfaceDescriptor<?> descriptor,
 			final HttpServletRequest request) {
 		checkNotNull(request);
 		String pathInfo = request.getPathInfo();
@@ -106,7 +106,7 @@ class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestRespon
 
 	/** Writes an rpc response to an http response. */
 	@VisibleForTesting
-	static void httpWriteResponse(final HttpServletResponse response, final Response resp)
+	static void writeResponse(final HttpServletResponse response, final Response resp)
 			throws IOException {
 		String json = resp.serializeToJson();
 		response.setStatus(HttpServletResponse.SC_OK);

@@ -1,7 +1,6 @@
 package io.pdef;
 
 import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.rpc.*;
@@ -105,14 +104,8 @@ public class ClientTest {
 				return "Hello, ";
 			}
 		};
-
-		Function<Request, Response> server = Server
-				.rpc(TestInterface1.DESCRIPTOR, new Supplier<TestInterface1>() {
-					@Override
-					public TestInterface1 get() {
-						return impl;
-					}
-				});
+		Function<Request, Response> server = ServerRpcProtocol
+				.handler(TestInterface1.DESCRIPTOR, ServerInvocationHandler.create(impl));
 
 		TestInterface1 client = Client.proxyFromRpcHandler(TestInterface1.DESCRIPTOR, server);
 		int q = 0;

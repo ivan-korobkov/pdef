@@ -37,4 +37,11 @@ public class RpcErrors {
 				.setText("Not a remote method: '" + path + "'")
 				.build();
 	}
+
+	public static RpcError fromException(final Exception e) {
+		return e instanceof RpcError ? (RpcError) e : RpcError.builder()
+				.setCode(RpcErrorCode.SERVER_ERROR)
+				.setText("Internal server error")
+				.build();
+	}
 }

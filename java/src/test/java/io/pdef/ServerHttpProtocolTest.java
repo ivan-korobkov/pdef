@@ -28,8 +28,8 @@ public class ServerHttpProtocolTest {
 			}
 		};
 
-		Function<ServerHttpProtocol.RequestResponse, Void> handler = ServerHttpProtocol
-				.handler(TestInterface.DESCRIPTOR, rpcHandler);
+		Function<ServerHttpProtocol.RequestResponse, Void> handler = Server
+				.httpHandler(TestInterface.DESCRIPTOR, rpcHandler);
 
 		HttpServletRequest request = mock(HttpServletRequest.class);
 		HttpServletResponse response = mock(HttpServletResponse.class, RETURNS_DEEP_STUBS);

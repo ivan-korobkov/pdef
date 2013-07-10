@@ -3,7 +3,6 @@ package io.pdef;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.MediaType;
@@ -23,36 +22,15 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestResponse, Void> {
+class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestResponse, Void> {
 	private static final Splitter HTTP_METHOD_SPLITTER = Splitter.on("/");
 	private final InterfaceDescriptor<T> descriptor;
 	private final Function<Request, Response> requestHandler;
 
-	private ServerHttpProtocol(final InterfaceDescriptor<T> descriptor,
+	ServerHttpProtocol(final InterfaceDescriptor<T> descriptor,
 			final Function<Request, Response> requestHandler) {
 		this.descriptor = checkNotNull(descriptor);
 		this.requestHandler = checkNotNull(requestHandler);
-	}
-
-	/** Creates a simple http rpc server as httpFilter.then(rpcFilter).then(create). */
-	public static <T> Function<RequestResponse, Void> server(
-			final InterfaceDescriptor<T> descriptor, final Supplier<T> supplier) {
-		return filter(descriptor)
-				.then(ServerRpcProtocol.filter(descriptor))
-				.then(ServerInvocationHandler.create(supplier));
-	}
-
-	/** Creates an http handler. */
-	public static <T> Function<RequestResponse, Void> handler(
-			final InterfaceDescriptor<T> descriptor,
-			final Function<Request, Response> requestHandler) {
-		return new ServerHttpProtocol<T>(descriptor, requestHandler);
-	}
-
-	/** Creates an http filter. */
-	public static <T> Filter<RequestResponse, Void, Request, Response> filter(
-			final InterfaceDescriptor<T> descriptor) {
-		return new HttpFilter<T>(descriptor);
 	}
 
 	@Override
@@ -159,11 +137,10 @@ public class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.Reques
 		}
 	}
 
-	private static class HttpFilter<T>
-			extends AbstractFilter<RequestResponse, Void, Request, Response> {
+	static class HttpFilter<T> extends AbstractFilter<RequestResponse, Void, Request, Response> {
 		private final InterfaceDescriptor<T> descriptor;
 
-		private HttpFilter(final InterfaceDescriptor<T> descriptor) {
+		HttpFilter(final InterfaceDescriptor<T> descriptor) {
 			this.descriptor = checkNotNull(descriptor);
 		}
 

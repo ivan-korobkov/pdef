@@ -23,8 +23,8 @@ public class ServerRpcProtocolTest {
 			}
 		};
 
-		Function<Request, Response> server = ServerRpcProtocol
-				.handler(TestInterface.DESCRIPTOR, invocationHandler);
+		Function<Request, Response> server = Server
+				.rpcHandler(TestInterface.DESCRIPTOR, invocationHandler);
 		Request request = Request.builder()
 				.setCalls(ImmutableList.of(
 						MethodCall.builder()
@@ -48,8 +48,8 @@ public class ServerRpcProtocolTest {
 				throw new RuntimeException();
 			}
 		};
-		Function<Request, Response> server = ServerRpcProtocol
-				.handler(TestInterface.DESCRIPTOR, invocationHandler);
+		Function<Request, Response> server = Server
+				.rpcHandler(TestInterface.DESCRIPTOR, invocationHandler);
 
 		Request request = Request.builder()
 				.setCalls(ImmutableList.of(

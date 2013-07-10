@@ -9,27 +9,14 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ServerRpcProtocol<T> implements Function<Request, Response> {
+class ServerRpcProtocol<T> implements Function<Request, Response> {
 	private final InterfaceDescriptor<T> descriptor;
 	private final Function<Invocation, Object> invocationHandler;
 
-	private ServerRpcProtocol(final InterfaceDescriptor<T> descriptor,
+	ServerRpcProtocol(final InterfaceDescriptor<T> descriptor,
 			final Function<Invocation, Object> invocationHandler) {
 		this.descriptor = checkNotNull(descriptor);
 		this.invocationHandler = checkNotNull(invocationHandler);
-	}
-
-	/** Creates a request handler. */
-	public static <T> Function<Request, Response> handler(
-			final InterfaceDescriptor<T> descriptor,
-			final Function<Invocation, Object> invocationHandler) {
-		return new ServerRpcProtocol<T>(descriptor, invocationHandler);
-	}
-
-	/** Creates a request filter. */
-	public static <T> Filter<Request, Response, Invocation, Object> filter(
-			final InterfaceDescriptor<T> descriptor) {
-		return new RequestFilter<T>(descriptor);
 	}
 
 	@Override
@@ -131,11 +118,10 @@ public class ServerRpcProtocol<T> implements Function<Request, Response> {
 				.build();
 	}
 
-	private static class RequestFilter<T>
-			extends AbstractFilter<Request, Response, Invocation, Object> {
+	static class RequestFilter<T> extends AbstractFilter<Request, Response, Invocation, Object> {
 		private final InterfaceDescriptor<T> descriptor;
 
-		private RequestFilter(final InterfaceDescriptor<T> descriptor) {
+		RequestFilter(final InterfaceDescriptor<T> descriptor) {
 			this.descriptor = checkNotNull(descriptor);
 		}
 

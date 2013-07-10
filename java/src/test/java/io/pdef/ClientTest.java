@@ -104,8 +104,8 @@ public class ClientTest {
 				return "Hello, ";
 			}
 		};
-		Function<Request, Response> server = ServerRpcProtocol
-				.handler(TestInterface1.DESCRIPTOR, ServerInvocationHandler.create(impl));
+		Function<Request, Response> server = Server
+				.rpcHandler(TestInterface1.DESCRIPTOR, Server.invocationHandler(impl));
 
 		TestInterface1 client = Client.proxyFromRpcHandler(TestInterface1.DESCRIPTOR, server);
 		int q = 0;

@@ -15,7 +15,7 @@ public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 	private final Constructor<T> constructor;
 
 	@SuppressWarnings("unchecked")
-	public GeneratedInterfaceDescriptor(final Class<T> javaClass) {
+	protected GeneratedInterfaceDescriptor(final Class<T> javaClass) {
 		this.javaClass = checkNotNull(javaClass);
 		final Class<T> proxyClass = (Class<T>) Proxy
 				.getProxyClass(javaClass.getClassLoader(), javaClass);

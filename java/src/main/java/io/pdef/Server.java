@@ -8,6 +8,7 @@ import io.pdef.rpc.Response;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/** Server protocols, filters and handlers. */
 public class Server {
 	private Server() {}
 

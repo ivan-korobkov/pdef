@@ -1,5 +1,7 @@
 package io.pdef;
 
+import io.pdef.descriptors.Descriptor;
+
 import java.io.Serializable;
 import java.util.Map;
 

@@ -1,10 +1,11 @@
-package io.pdef;
+package io.pdef.descriptors;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import io.pdef.rpc.MethodCall;
+import io.pdef.Invocation;
+import io.pdef.rpc.RpcCall;
 import io.pdef.rpc.RpcError;
 
 import java.lang.reflect.InvocationTargetException;
@@ -96,7 +97,7 @@ public class GeneratedMethodDescriptor implements MethodDescriptor {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public MethodCall serialize(final Object... args) {
+	public RpcCall serialize(final Object... args) {
 		checkArgument(args.length == this.args.size(), "wrong number of args");
 		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
@@ -109,7 +110,7 @@ public class GeneratedMethodDescriptor implements MethodDescriptor {
 			builder.put(key, arg);
 		}
 
-		return MethodCall.builder()
+		return RpcCall.builder()
 				.setMethod(name)
 				.setArgs(builder.build())
 				.build();

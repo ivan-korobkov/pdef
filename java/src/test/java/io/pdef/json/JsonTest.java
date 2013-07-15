@@ -1,4 +1,4 @@
-package io.pdef;
+package io.pdef.json;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

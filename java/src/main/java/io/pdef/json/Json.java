@@ -1,4 +1,4 @@
-package io.pdef;
+package io.pdef.json;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;

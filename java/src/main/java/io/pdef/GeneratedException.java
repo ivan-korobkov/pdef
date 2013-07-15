@@ -1,6 +1,7 @@
 package io.pdef;
 
 import com.google.common.collect.Maps;
+import io.pdef.json.Json;
 
 import java.io.Serializable;
 import java.util.Map;

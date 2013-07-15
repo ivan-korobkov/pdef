@@ -3,32 +3,27 @@ package io.pdef.rpc;
 public class RpcErrors {
 	private RpcErrors() {}
 
-	public static RpcError badRequest() {
+	public static RpcError clientError(final String text) {
 		return RpcError.builder()
 				.setCode(RpcErrorCode.CLIENT_ERROR)
-				.setText("Failed to parse the request")
+				.setText(text)
 				.build();
+	}
+
+	public static RpcError badRequest() {
+		return clientError("Failed to parse the request");
 	}
 
 	public static RpcError methodCallsRequired() {
-		return RpcError.builder()
-				.setCode(RpcErrorCode.CLIENT_ERROR)
-				.setText("Method calls required.")
-				.build();
+		return clientError("Method calls required.");
 	}
 
 	public static RpcError methodNotFound(final CharSequence path) {
-		return RpcError.builder()
-				.setCode(RpcErrorCode.CLIENT_ERROR)
-				.setText("Method not found: '" + path + "'")
-				.build();
+		return clientError("Method not found: " + path);
 	}
 
 	public static RpcError wrongMethodArgs(final CharSequence path) {
-		return RpcError.builder()
-				.setCode(RpcErrorCode.CLIENT_ERROR)
-				.setText("Wrong method arguments: '" + path + "'")
-				.build();
+		return clientError("Wrong method arguments: " + path);
 	}
 
 	public static RpcError notRemoteMethod(final CharSequence path) {

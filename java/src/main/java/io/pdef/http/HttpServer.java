@@ -1,17 +1,18 @@
-package io.pdef;
+package io.pdef.http;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
+import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.MediaType;
-import io.pdef.rpc.MethodCall;
-import io.pdef.rpc.Request;
-import io.pdef.rpc.Response;
-import io.pdef.rpc.RpcErrors;
+import io.pdef.descriptors.InterfaceDescriptor;
+import io.pdef.descriptors.MethodDescriptor;
+import io.pdef.func.FluentFilter;
+import io.pdef.rpc.*;
 
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -22,42 +23,28 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestResponse, Void> {
+public class HttpServer {
 	private static final Splitter HTTP_METHOD_SPLITTER = Splitter.on("/");
-	private final InterfaceDescriptor<T> descriptor;
-	private final Function<Request, Response> requestHandler;
-
-	ServerHttpProtocol(final InterfaceDescriptor<T> descriptor,
-			final Function<Request, Response> requestHandler) {
-		this.descriptor = checkNotNull(descriptor);
-		this.requestHandler = checkNotNull(requestHandler);
-	}
-
-	@Override
-	public Void apply(@Nullable final RequestResponse requestResponse) {
-		handle(requestResponse, descriptor, requestHandler);
-		return null;
-	}
+	private HttpServer() {}
 
 	/** Handles an http request and writes a result to an http response, returns null.
 	 * @throws RuntimeException if fails to write to an http response. */
-	@VisibleForTesting
-	static void handle(final RequestResponse requestResponse,
+	public static void apply(final HttpRequestResponse requestResponse,
 			final InterfaceDescriptor<?> descriptor,
-			final Function<Request, Response> requestHandler) {
+			final Function<RpcRequest, RpcResponse> rpcHandler) {
 		HttpServletRequest request = requestResponse.getRequest();
 		HttpServletResponse response = requestResponse.getResponse();
 
-		Response resp;
+		RpcResponse resp;
 		try {
-			Request req = parseRequest(descriptor, request);
-			resp = requestHandler.apply(req);
+			RpcRequest req = parse(descriptor, request);
+			resp = rpcHandler.apply(req);
 		} catch (Exception e) {
-			resp = ServerRpcProtocol.errorResponse(e);
+			resp = RpcResponses.error(e);
 		}
 
 		try {
-			writeResponse(response, resp);
+			write(response, resp);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -65,7 +52,7 @@ class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestRespon
 
 	/** Parses an rpc request from an http request. */
 	@VisibleForTesting
-	static Request parseRequest(final InterfaceDescriptor<?> descriptor,
+	static RpcRequest parse(final InterfaceDescriptor<?> descriptor,
 			final HttpServletRequest request) {
 		checkNotNull(request);
 		String pathInfo = request.getPathInfo();
@@ -75,7 +62,7 @@ class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestRespon
 		InterfaceDescriptor<?> d = descriptor;
 		Iterator<String> result = HTTP_METHOD_SPLITTER.split(pathInfo).iterator();
 
-		List<MethodCall> calls = Lists.newArrayList();
+		List<RpcCall> calls = Lists.newArrayList();
 		while (result.hasNext()) {
 			String name = result.next();
 			path.append(path.length() == 0 ? "" : "/").append(name);
@@ -91,7 +78,7 @@ class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestRespon
 				args.put(key, arg);
 			}
 
-			MethodCall call = MethodCall.builder()
+			RpcCall call = RpcCall.builder()
 					.setMethod(name)
 					.setArgs(args)
 					.build();
@@ -99,14 +86,14 @@ class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestRespon
 			if (!method.isRemote()) d = method.getNext();
 		}
 
-		return Request.builder()
+		return RpcRequest.builder()
 				.setCalls(calls)
 				.build();
 	}
 
 	/** Writes an rpc response to an http response. */
 	@VisibleForTesting
-	static void writeResponse(final HttpServletResponse response, final Response resp)
+	static void write(final HttpServletResponse response, final RpcResponse resp)
 			throws IOException {
 		String json = resp.serializeToJson();
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -117,38 +104,57 @@ class ServerHttpProtocol<T> implements Function<ServerHttpProtocol.RequestRespon
 		writer.flush();
 	}
 
-	/** Combines an http request and a response into one function arg. */
-	public static class RequestResponse {
-		private final HttpServletRequest request;
-		private final HttpServletResponse response;
 
-		public RequestResponse(final HttpServletRequest request,
-				final HttpServletResponse response) {
-			this.request = checkNotNull(request);
-			this.response = checkNotNull(response);
-		}
-
-		public HttpServletRequest getRequest() {
-			return request;
-		}
-
-		public HttpServletResponse getResponse() {
-			return response;
-		}
+	/** Creates a simple http rpc server. */
+	public static <T> Function<HttpRequestResponse, Void> create(
+			final InterfaceDescriptor<T> descriptor, final Supplier<T> supplier) {
+		return filter(descriptor)
+				.then(RpcServer.filter(descriptor))
+				.then(RpcInvoker.function(supplier));
 	}
 
-	static class HttpFilter<T> extends AbstractFilter<RequestResponse, Void, Request, Response> {
-		private final InterfaceDescriptor<T> descriptor;
+	/** Creates an http filter. */
+	public static <T> FluentFilter<HttpRequestResponse, Void, RpcRequest, RpcResponse> filter(
+			final InterfaceDescriptor<T> descriptor) {
+		checkNotNull(descriptor);
 
-		HttpFilter(final InterfaceDescriptor<T> descriptor) {
-			this.descriptor = checkNotNull(descriptor);
-		}
+		return new FluentFilter<HttpRequestResponse, Void, RpcRequest, RpcResponse>() {
+			@Override
+			public String toString() {
+				return Objects.toStringHelper(HttpServer.class)
+						.addValue(this)
+						.toString();
+			}
 
-		@Override
-		public Void apply(final RequestResponse input, final Function<Request,
-				Response> next) {
-			handle(input, descriptor, next);
-			return null;
-		}
+			@Override
+			public Void apply(final HttpRequestResponse input,
+					final Function<RpcRequest, RpcResponse> next) {
+				HttpServer.apply(input, descriptor, next);
+				return null;
+			}
+		};
+	}
+
+	/** Creates an http handler. */
+	public static <T> Function<HttpRequestResponse, Void> function(
+			final InterfaceDescriptor<T> descriptor,
+			final Function<RpcRequest, RpcResponse> rpcHandler) {
+		checkNotNull(descriptor);
+		checkNotNull(rpcHandler);
+
+		return new Function<HttpRequestResponse, Void>() {
+			@Override
+			public String toString() {
+				return Objects.toStringHelper(HttpServer.class)
+						.addValue(this)
+						.toString();
+			}
+
+			@Override
+			public Void apply(final HttpRequestResponse input) {
+				HttpServer.apply(input, descriptor, rpcHandler);
+				return null;
+			}
+		};
 	}
 }

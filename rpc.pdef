@@ -2,23 +2,23 @@ module io.pdef.rpc;
 
 
 /** Request. */
-message Request {
-    calls   list<MethodCall>;
+message RpcRequest {
+    calls   list<RpcCall>;  // Chained method calls, i.e. app.users().me().hello("world").
 }
 
 /** Response. */
-message Response {
-    status  ResponseStatus;
+message RpcResponse {
+    status  RpcResponseStatus;
     result  object;
 }
 
 /** Response status. */
-enum ResponseStatus {
+enum RpcResponseStatus {
     OK, ERROR, EXCEPTION
 }
 
 /** Single method call in a call chain. */
-message MethodCall {
+message RpcCall {
     method  string;
     args    map<string, object>;
 }
@@ -36,14 +36,15 @@ enum RpcErrorCode {
     CLIENT_ERROR    // Error client code/request, the request should not be repeated.
 }
 
-
-// Asynchronous protocol.
-enum AsyncType {
-    REQUEST, RESPONSE
-}
-
-message AsyncMessage {
-    type    AsyncType;
-    id      string;     // An async request or response id, the response copies its request id.
-    data    object;     // Request or Response messages depending on the message type.
-}
+//
+//
+//// Asynchronous protocol.
+//enum AsyncType {
+//    REQUEST, RESPONSE
+//}
+//
+//message AsyncMessage {
+//    type    AsyncType;
+//    id      string;     // An async request or response id, the response copies its request id.
+//    data    object;     // Request or Response messages depending on the message type.
+//}

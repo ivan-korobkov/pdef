@@ -1,6 +1,7 @@
 package io.pdef;
 
 import com.google.common.collect.ImmutableList;
+import io.pdef.descriptors.MethodDescriptor;
 import org.junit.Test;
 
 import java.util.List;

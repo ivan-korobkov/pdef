@@ -1,8 +1,9 @@
-package io.pdef;
+package io.pdef.descriptors;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
-import io.pdef.rpc.MethodCall;
+import io.pdef.Invocation;
+import io.pdef.rpc.RpcCall;
 import org.junit.Test;
 
 import java.util.Map;
@@ -91,7 +92,7 @@ public class GeneratedMethodDescriptorTest {
 	public void testSerialize() throws Exception {
 		MethodDescriptor method = createSumMethod();
 
-		MethodCall call = method.serialize(123, null);
+		RpcCall call = method.serialize(123, null);
 		assertEquals("sum", call.getMethod());
 		assertEquals(ImmutableMap.<String, Object>of("i0", 123, "i1", 0), call.getArgs());
 	}

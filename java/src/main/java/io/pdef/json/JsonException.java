@@ -1,4 +1,4 @@
-package io.pdef;
+package io.pdef.json;
 
 public class JsonException extends RuntimeException {
 	public JsonException() {}

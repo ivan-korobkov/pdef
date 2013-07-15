@@ -1,6 +1,7 @@
-package io.pdef;
+package io.pdef.descriptors;
 
-import io.pdef.rpc.MethodCall;
+import io.pdef.Invocation;
+import io.pdef.rpc.RpcCall;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -35,7 +36,7 @@ public interface MethodDescriptor {
 	Object invoke(Object object, Object... args);
 
 	/** Serializes arguments into a method call. */
-	MethodCall serialize(Object... args);
+	RpcCall serialize(Object... args);
 
 	/** Parses arguments into an proxy. */
 	Invocation parse(Invocation parent, Map<String, Object> args);

@@ -1,4 +1,4 @@
-package io.pdef;
+package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

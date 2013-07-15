@@ -1,7 +1,10 @@
 package io.pdef;
 
 import com.google.common.collect.Lists;
-import io.pdef.rpc.MethodCall;
+import io.pdef.descriptors.Descriptor;
+import io.pdef.descriptors.InterfaceDescriptor;
+import io.pdef.descriptors.MethodDescriptor;
+import io.pdef.rpc.RpcCall;
 
 import java.util.Collections;
 import java.util.List;
@@ -81,7 +84,7 @@ public class Invocation {
 	}
 
 	/** Serializes this proxy to a method call, serializes all arguments to objects. */
-	public MethodCall serialize() {
+	public RpcCall serialize() {
 		return descriptor.serialize(args);
 	}
 

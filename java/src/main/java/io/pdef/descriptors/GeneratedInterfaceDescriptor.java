@@ -1,7 +1,9 @@
-package io.pdef;
+package io.pdef.descriptors;
 
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import io.pdef.Invocation;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.*;
@@ -43,9 +45,27 @@ public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 	}
 
 	@Override
-	public T proxy(final InvocationHandler handler) {
+	public boolean hasMethod(final String name) {
+		return getMethods().containsKey(name);
+	}
+
+	@Override
+	public T client(final Function<Invocation, Object> handler) {
+		checkNotNull(handler);
+		return proxy(Invocation.root(), handler);
+	}
+
+	@Override
+	public T client(final Invocation parent, final Function<Invocation, Object> handler) {
+		checkNotNull(parent);
+		checkNotNull(handler);
+		return proxy(parent, handler);
+	}
+
+	private T proxy(final Invocation parent, final Function<Invocation, Object> handler) {
+		InvocationHandler invocationHandler = new ProxyInvocationHandler(parent, handler, this);
 		try {
-			return constructor.newInstance(handler);
+			return constructor.newInstance(invocationHandler);
 		} catch (InstantiationException e) {
 			throw new RuntimeException(e);
 		} catch (IllegalAccessException e) {
@@ -69,5 +89,36 @@ public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 	static Method getMethodByName(final Class<?> cls, final String name) {
 		for (Method method : cls.getMethods()) if (method.getName().equals(name)) return method;
 		throw new IllegalArgumentException("Method not found \"" + name + "\"");
+	}
+
+	static class ProxyInvocationHandler implements InvocationHandler {
+		private final Invocation parent;
+		private final Function<Invocation, Object> handler;
+		private final InterfaceDescriptor<?> descriptor;
+
+		ProxyInvocationHandler(final Invocation parent, final Function<Invocation, Object> handler,
+				final InterfaceDescriptor<?> descriptor) {
+			this.parent = checkNotNull(parent);
+			this.handler = checkNotNull(handler);
+			this.descriptor = checkNotNull(descriptor);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public Object invoke(final Object o, final Method method, final Object[] args)
+				throws Throwable {
+			String name = method.getName();
+			if (!descriptor.hasMethod(name)) return method.invoke(this, args);
+
+			Object[] argArray = args != null ? args : new Object[0];
+			MethodDescriptor m = descriptor.getMethod(name);
+			Invocation invocation = m.capture(parent, argArray);
+			if (invocation.isRemote()) return handler.apply(invocation);
+
+			// It is not a remote invocation so it must have a next interface to call.
+			InterfaceDescriptor<?> next = m.getNext();
+			assert next != null;
+			return next.client(invocation, handler);
+		}
 	}
 }

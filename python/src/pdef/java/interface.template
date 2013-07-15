@@ -20,9 +20,9 @@ package {{ package }};
         {%- endfor %});
 
 {% endfor %}
-    static io.pdef.InterfaceDescriptor<{{ name }}> DESCRIPTOR =
-            new io.pdef.GeneratedInterfaceDescriptor<{{ name }}>({{ name }}.class) {
-        private final java.util.Map<String, io.pdef.MethodDescriptor> methods;
+    static io.pdef.descriptors.InterfaceDescriptor<{{ name }}> DESCRIPTOR =
+            new io.pdef.descriptors.GeneratedInterfaceDescriptor<{{ name }}>({{ name }}.class) {
+        private final java.util.Map<String, io.pdef.descriptors.MethodDescriptor> methods;
         {
             methods = methods(
 {% for method in methods %}
@@ -31,9 +31,9 @@ package {{ package }};
                             .arg("{{ arg }}", {{ type.descriptor }})
 {% endfor %}
                             {%- if method.result.is_interface %}
-                            .next(new com.google.common.base.Supplier<io.pdef.InterfaceDescriptor<?>>() {
+                            .next(new com.google.common.base.Supplier<io.pdef.descriptors.InterfaceDescriptor<?>>() {
                                 @Override
-                                public io.pdef.InterfaceDescriptor<?> get() {
+                                public io.pdef.descriptors.InterfaceDescriptor<?> get() {
                                     return {{ method.result.descriptor }};
                                 }
                             })
@@ -46,7 +46,7 @@ package {{ package }};
         }
 
 		@Override
-		public java.util.Map<String, io.pdef.MethodDescriptor> getMethods() {
+		public java.util.Map<String, io.pdef.descriptors.MethodDescriptor> getMethods() {
 			return methods;
 		}
     };

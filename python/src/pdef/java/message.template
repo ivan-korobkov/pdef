@@ -56,7 +56,7 @@ public class {{ name }} extends {{ base }} {
     }
 
     public static {{ name }} parseFromJson(final String s) {
-        Object object = io.pdef.Json.parse(s);
+        Object object = io.pdef.json.Json.parse(s);
         return parse(object);
     }
 
@@ -103,7 +103,7 @@ public class {{ name }} extends {{ base }} {
     }
     
     @Override
-    public io.pdef.Descriptor<? extends {{ name }}> descriptorForType() {
+    public io.pdef.descriptors.Descriptor<? extends {{ name }}> descriptorForType() {
         return DESCRIPTOR;
     }
 
@@ -303,8 +303,8 @@ public class {{ name }} extends {{ base }} {
     }
     
     private static final {{ name }} INSTANCE = new {{ name }}();
-    public static final io.pdef.Descriptor<{{ name }}> DESCRIPTOR =
-            new io.pdef.Descriptor<{{ name }}>() {
+    public static final io.pdef.descriptors.Descriptor<{{ name }}> DESCRIPTOR =
+            new io.pdef.descriptors.Descriptor<{{ name }}>() {
                 @Override
                 public Class<{{ name }}> getJavaClass() {
                     return {{ name }}.class;

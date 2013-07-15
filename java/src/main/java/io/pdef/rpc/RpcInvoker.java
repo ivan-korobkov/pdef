@@ -15,13 +15,13 @@ public class RpcInvoker<T> implements Function<Invocation, Object> {
 	}
 
 	/** Creates an invoker from a service instance. */
-	public static <T> Function<Invocation, Object> function(final T service) {
+	public static <T> Function<Invocation, Object> from(final T service) {
 		checkNotNull(service);
 		return new RpcInvoker<T>(Suppliers.ofInstance(service));
 	}
 
 	/** Creates an invoker from a service supplier. */
-	public static <T> Function<Invocation, Object> function(final Supplier<T> supplier) {
+	public static <T> Function<Invocation, Object> from(final Supplier<T> supplier) {
 		return new RpcInvoker<T>(supplier);
 	}
 

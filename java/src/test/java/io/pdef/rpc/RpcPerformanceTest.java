@@ -8,7 +8,7 @@ import org.junit.Test;
 
 public class RpcPerformanceTest {
 	private final InterfaceDescriptor<TestInterface1> iface = TestInterface1.DESCRIPTOR;
-	private final TestInterface1 impl = new TestInterface1() {
+	private final TestInterface1 service = new TestInterface1() {
 		@Override
 		public String hello(final String firstName, final String lastName) {
 			return "Hello, " + firstName + " " + lastName;
@@ -19,9 +19,11 @@ public class RpcPerformanceTest {
 	public void testPerf() throws Exception {
 		Function<RpcRequest, RpcResponse> server = RpcServer
 				.filter(iface)
-				.then(RpcInvoker.function(impl));
+				.then(RpcInvoker.from(service));
+		Function<Invocation, Object> handler = RpcClient
+				.filter()
+				.then(server);
 
-		Function<Invocation, Object> handler = RpcClient.function(server);
 		TestInterface1 client = iface.client(handler);
 
 		int q = 0;

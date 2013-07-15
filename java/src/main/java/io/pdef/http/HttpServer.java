@@ -110,7 +110,7 @@ public class HttpServer {
 			final InterfaceDescriptor<T> descriptor, final Supplier<T> supplier) {
 		return filter(descriptor)
 				.then(RpcServer.filter(descriptor))
-				.then(RpcInvoker.function(supplier));
+				.then(RpcInvoker.from(supplier));
 	}
 
 	/** Creates an http filter. */

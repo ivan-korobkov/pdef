@@ -1,5 +1,6 @@
 package io.pdef;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import io.pdef.descriptors.Descriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
@@ -26,6 +27,24 @@ public class Invocation {
 		this.descriptor = descriptor;
 		this.parent = parent;
 		this.args = args.clone();
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		buildPath(sb);
+
+		return Objects.toStringHelper(this)
+				.addValue(sb.toString())
+				.addValue(args)
+				.toString();
+	}
+
+	private void buildPath(final StringBuilder sb) {
+		if (isRoot()) return;
+		if (parent != null) parent.buildPath(sb);
+		if (sb.length() != 0) sb.append(".");
+		sb.append(getMethod().getName());
 	}
 
 	/** Creates a new proxy with a parent set to this one. */

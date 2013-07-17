@@ -3,7 +3,8 @@ module io.pdef.rpc;
 
 /** Request. */
 message RpcRequest {
-    calls   list<RpcCall>;  // Chained method calls, i.e. app.users().me().hello("world").
+    calls   list<RpcCall>;      // Chained method calls, i.e. app.users().me().hello("world").
+    meta    map<string, object>; // Request headers.
 }
 
 /** Response. */

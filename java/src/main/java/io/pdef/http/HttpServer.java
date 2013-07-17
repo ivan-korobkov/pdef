@@ -3,6 +3,7 @@ package io.pdef.http;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
@@ -17,11 +18,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HttpServer {
 	private static final Splitter HTTP_METHOD_SPLITTER = Splitter.on("/");
@@ -86,8 +86,19 @@ public class HttpServer {
 			if (!method.isRemote()) d = method.getNext();
 		}
 
+		Map<String, Object> meta = Maps.newHashMap();
+		Enumeration<String> headers = request.getHeaderNames();
+		if (headers != null) {
+			while (headers.hasMoreElements()) {
+				String key = headers.nextElement();
+				String value = request.getHeader(key);
+				meta.put(key, value);
+			}
+		}
+
 		return RpcRequest.builder()
 				.setCalls(calls)
+				.setMeta(meta)
 				.build();
 	}
 

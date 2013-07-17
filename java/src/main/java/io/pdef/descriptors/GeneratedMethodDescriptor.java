@@ -1,5 +1,7 @@
 package io.pdef.descriptors;
 
+import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -11,9 +13,6 @@ import io.pdef.rpc.RpcError;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Abstract class for a generated method descriptor. */
 public class GeneratedMethodDescriptor implements MethodDescriptor {
@@ -35,6 +34,13 @@ public class GeneratedMethodDescriptor implements MethodDescriptor {
 		method = GeneratedInterfaceDescriptor.getMethodByName(iface.getJavaClass(), name);
 		checkArgument((result != null ? 1 : 0) + (next != null ? 1 : 0) == 1,
 				"either result or next must be defined");
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(iface.getJavaClass().getSimpleName() + "." + name)
+				.toString();
 	}
 
 	@Override
@@ -77,6 +83,7 @@ public class GeneratedMethodDescriptor implements MethodDescriptor {
 
 	@Override
 	public Object invoke(final Object object, final Object... args) {
+		checkNotNull(object, "tried to invoke a method on a null object, %s", this);
 		checkArgument(args.length == this.args.size(), "wrong number of arguments");
 		Object[] array = new Object[this.args.size()];
 

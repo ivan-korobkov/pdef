@@ -4,23 +4,24 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.Invocation;
+import io.pdef.InvocationResult;
+import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.test.TestInterface;
 import io.pdef.test.TestInterface1;
 import io.pdef.test.TestMessage;
 import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-
 public class RpcServerTest {
 	@Test
 	public void testFunction() throws Exception {
-		Function<Invocation, Object> invoker = new Function<Invocation, Object>() {
+		Function<Invocation, InvocationResult> invoker = new Function<Invocation, InvocationResult>() {
 			@Override
-			public Object apply(final Invocation input) {
-				return 1;
+			public InvocationResult apply(final Invocation input) {
+				return InvocationResult.success(1, input.getMethod());
 			}
 		};
 		Function<RpcRequest, RpcResponse> server = RpcServer.function(TestInterface.DESCRIPTOR, invoker);
@@ -42,9 +43,9 @@ public class RpcServerTest {
 
 	@Test
 	public void testFunction_internalServerError() throws Exception {
-		Function<Invocation, Object> invoker = new Function<Invocation, Object>() {
+		Function<Invocation, InvocationResult> invoker = new Function<Invocation, InvocationResult>() {
 			@Override
-			public Object apply(final Invocation input) {
+			public InvocationResult apply(final Invocation input) {
 				throw new RuntimeException();
 			}
 		};
@@ -145,9 +146,9 @@ public class RpcServerTest {
 	@Test
 	public void testSerialize_ok() throws Exception {
 		TestMessage msg = TestMessage.builder().setAString("hello, world").build();
-		Invocation invocation = TestInterface.DESCRIPTOR.getMethod("message0")
-				.capture(Invocation.root(), msg);
-		RpcResponse response = RpcServer.response(invocation, msg);
+		MethodDescriptor method = TestInterface.DESCRIPTOR.getMethod("message0");
+		InvocationResult result = InvocationResult.success(msg, method);
+		RpcResponse response = RpcServer.response(result);
 		assertEquals(RpcResponse.builder()
 				.setStatus(RpcResponseStatus.OK)
 				.setResult(msg.serialize())

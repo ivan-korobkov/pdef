@@ -1,15 +1,15 @@
 package io.pdef.descriptors;
 
 import com.google.common.base.Function;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.Invocation;
+import io.pdef.InvocationResult;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.*;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Abstract class for a generated interface descriptor. */
 public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
@@ -50,19 +50,19 @@ public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 	}
 
 	@Override
-	public T client(final Function<Invocation, Object> handler) {
+	public T client(final Function<Invocation, InvocationResult> handler) {
 		checkNotNull(handler);
 		return proxy(Invocation.root(), handler);
 	}
 
 	@Override
-	public T client(final Invocation parent, final Function<Invocation, Object> handler) {
+	public T client(final Invocation parent, final Function<Invocation, InvocationResult> handler) {
 		checkNotNull(parent);
 		checkNotNull(handler);
 		return proxy(parent, handler);
 	}
 
-	private T proxy(final Invocation parent, final Function<Invocation, Object> handler) {
+	private T proxy(final Invocation parent, final Function<Invocation, InvocationResult> handler) {
 		InvocationHandler invocationHandler = new ProxyInvocationHandler(parent, handler, this);
 		try {
 			return constructor.newInstance(invocationHandler);
@@ -93,10 +93,11 @@ public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 
 	static class ProxyInvocationHandler implements InvocationHandler {
 		private final Invocation parent;
-		private final Function<Invocation, Object> handler;
+		private final Function<Invocation, InvocationResult> handler;
 		private final InterfaceDescriptor<?> descriptor;
 
-		ProxyInvocationHandler(final Invocation parent, final Function<Invocation, Object> handler,
+		ProxyInvocationHandler(final Invocation parent,
+				final Function<Invocation, InvocationResult> handler,
 				final InterfaceDescriptor<?> descriptor) {
 			this.parent = checkNotNull(parent);
 			this.handler = checkNotNull(handler);
@@ -113,7 +114,12 @@ public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 			Object[] argArray = args != null ? args : new Object[0];
 			MethodDescriptor m = descriptor.getMethod(name);
 			Invocation invocation = m.capture(parent, argArray);
-			if (invocation.isRemote()) return handler.apply(invocation);
+			if (invocation.isRemote()) {
+				InvocationResult result = handler.apply(invocation);
+				assert result != null;
+				if (result.isSuccess()) return result.getResult();
+				throw (RuntimeException) result.getResult();
+			}
 
 			// It is not a remote invocation so it must have a next interface to call.
 			InterfaceDescriptor<?> next = m.getNext();

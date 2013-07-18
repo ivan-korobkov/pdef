@@ -4,19 +4,20 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.Invocation;
+import io.pdef.InvocationResult;
 import io.pdef.descriptors.Descriptor;
+import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.test.TestEnum;
 import io.pdef.test.TestInterface;
 import io.pdef.test.TestInterface1;
 import io.pdef.test.TestMessage;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import org.junit.Before;
+import org.junit.Test;
 import static org.mockito.Matchers.any;
+import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -34,11 +35,11 @@ public class RpcClientTest {
 		when(sender.apply(any(RpcRequest.class))).thenReturn(
 				RpcResponses.ok(ImmutableMap.of("aString", "hello")));
 
-		Function<Invocation, Object> protocol = RpcClient.function(sender);
+		Function<Invocation, InvocationResult> protocol = RpcClient.function(sender);
 		Invocation remote = mockInvocation();
-		when(remote.getResult()).thenReturn((Descriptor) TestMessage.DESCRIPTOR);
+		when(remote.getMethod().getResult()).thenReturn((Descriptor) TestMessage.DESCRIPTOR);
 
-		TestMessage result = (TestMessage) protocol.apply(remote);
+		TestMessage result = (TestMessage) protocol.apply(remote).getResult();
 		assertEquals(TestMessage.builder()
 				.setAnEnum(TestEnum.ONE)
 				.setAString("hello").build(), result);
@@ -52,7 +53,7 @@ public class RpcClientTest {
 				.build();
 
 		when(sender.apply(any(RpcRequest.class))).thenReturn(RpcResponses.error(error));
-		Function<Invocation, Object> protocol = RpcClient.function(sender);
+		Function<Invocation, InvocationResult> protocol = RpcClient.function(sender);
 		try {
 			protocol.apply(mockInvocation());
 			fail();
@@ -86,8 +87,10 @@ public class RpcClientTest {
 	}
 
 	private Invocation mockInvocation() {
-		Invocation invocation = Mockito.mock(Invocation.class);
+		Invocation invocation = mock(Invocation.class);
+		MethodDescriptor method = mock(MethodDescriptor.class);
 		when(invocation.isRemote()).thenReturn(true);
+		when(invocation.getMethod()).thenReturn(method);
 		return invocation;
 	}
 }

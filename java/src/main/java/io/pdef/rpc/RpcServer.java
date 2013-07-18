@@ -3,8 +3,9 @@ package io.pdef.rpc;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
+import static com.google.common.base.Preconditions.*;
 import io.pdef.Invocation;
+import io.pdef.InvocationResult;
 import io.pdef.descriptors.Descriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
@@ -12,8 +13,6 @@ import io.pdef.func.FluentFilter;
 
 import javax.annotation.Nullable;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RpcServer {
 	private RpcServer() {}
@@ -23,20 +22,15 @@ public class RpcServer {
 	 * @throws NullPointerException if descriptor or invoker is null. */
 	public static <T> RpcResponse apply(final RpcRequest request,
 			final InterfaceDescriptor<T> descriptor,
-			final Function<Invocation, Object> invoker) {
+			final Function<Invocation, InvocationResult> invoker) {
 		checkNotNull(descriptor);
 		checkNotNull(invoker);
 
 		try {
 			if (request == null) throw RpcErrors.badRequest();
 			Invocation invocation = parse(descriptor, request);
-
-			try {
-				Object result = invoker.apply(invocation);
-				return response(invocation, result);
-			} catch (Exception e) {
-				return exception(invocation, e);
-			}
+			InvocationResult result = invoker.apply(invocation);
+			return response(result);
 		} catch (Exception e) {
 			return RpcResponses.error(e);
 		}
@@ -74,35 +68,20 @@ public class RpcServer {
 		return invocation;
 	}
 
-	/** Serializes a remote proxy result. */
+	/** Serializes an invocation result into an RPC response. */
 	@VisibleForTesting
-	static RpcResponse response(final Invocation invocation, final Object result) {
-		Descriptor descriptor = invocation.getResult();
-
+	static RpcResponse response(final InvocationResult result) {
+		Descriptor descriptor = result.getResultDescriptor();
 		@SuppressWarnings("unchecked")
-		Object object = descriptor.serialize(result);
-		return RpcResponses.ok(object);
+		Object object = descriptor.serialize(result.getResult());
+
+		return result.isSuccess() ? RpcResponses.ok(object) : RpcResponses.exception(object);
 	}
-
-	/** Serializes a remote proxy exception or propagates the exception. */
-	@VisibleForTesting
-	static RpcResponse exception(final Invocation invocation, final Exception e) {
-		Descriptor descriptor = invocation.getExc();
-		if (descriptor == null || !descriptor.getJavaClass().isInstance(e)) {
-			throw Throwables.propagate(e);
-		}
-
-		// It's an application exception.
-		@SuppressWarnings("unchecked")
-		Object result = descriptor.serialize(e);
-		return RpcResponses.exception(result);
-	}
-
 
 	/** Creates an rpc function. */
 	public static <T> Function<RpcRequest, RpcResponse> function(
 			final InterfaceDescriptor<T> descriptor,
-			final Function<Invocation, Object> invoker) {
+			final Function<Invocation, InvocationResult> invoker) {
 		checkNotNull(descriptor);
 		checkNotNull(invoker);
 
@@ -122,11 +101,11 @@ public class RpcServer {
 	}
 
 	/** Creates an rpc filter. */
-	public static <T> FluentFilter<RpcRequest, RpcResponse, Invocation, Object> filter(
+	public static <T> FluentFilter<RpcRequest, RpcResponse, Invocation, InvocationResult> filter(
 			final InterfaceDescriptor<T> descriptor) {
 		checkNotNull(descriptor);
 
-		return new FluentFilter<RpcRequest, RpcResponse, Invocation, Object>() {
+		return new FluentFilter<RpcRequest, RpcResponse, Invocation, InvocationResult>() {
 			@Override
 			public String toString() {
 				return Objects.toStringHelper(RpcServer.class)
@@ -135,7 +114,8 @@ public class RpcServer {
 			}
 
 			@Override
-			public RpcResponse apply(final RpcRequest input, final Function<Invocation, Object> next) {
+			public RpcResponse apply(final RpcRequest input,
+					final Function<Invocation, InvocationResult> next) {
 				return RpcServer.apply(input, descriptor, next);
 			}
 		};

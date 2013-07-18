@@ -2,6 +2,7 @@ package io.pdef.descriptors;
 
 import com.google.common.base.Function;
 import io.pdef.Invocation;
+import io.pdef.InvocationResult;
 
 import java.util.Map;
 
@@ -20,9 +21,9 @@ public interface InterfaceDescriptor<T> {
 	boolean hasMethod(String name);
 
 	/** Creates a new client. */
-	T client(Function<Invocation, Object> handler);
+	T client(Function<Invocation, InvocationResult> handler);
 
 	/** Creates a new client which continues a given invocation. */
-	T client(Invocation parent, Function<Invocation, Object> handler);
+	T client(Invocation parent, Function<Invocation, InvocationResult> handler);
 
 }

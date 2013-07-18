@@ -5,7 +5,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Splitter;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.MediaType;
@@ -132,13 +131,17 @@ public class HttpServer {
 		writer.flush();
 	}
 
+	public static <T> FluentFilter<HttpRequestResponse, Void, RpcRequest, RpcResponse>
+			rpcRequestParser(final InterfaceDescriptor<T> descriptor) {
+		checkNotNull(descriptor);
 
-	/** Creates a simple HTTP RPC server. */
-	public static <T> Function<HttpRequestResponse, Void> create(
-			final InterfaceDescriptor<T> descriptor, final Supplier<T> supplier) {
-		return rpcFilter(descriptor)
-				.then(RpcServer.filter(descriptor))
-				.then(RpcInvoker.from(supplier));
+		return new FluentFilter<HttpRequestResponse, Void, RpcRequest, RpcResponse>() {
+			@Override
+			public Void apply(final HttpRequestResponse input,
+					final Function<RpcRequest, RpcResponse> next) {
+				return null;
+			}
+		};
 	}
 
 	/** Creates an HTTP RPC filter. */

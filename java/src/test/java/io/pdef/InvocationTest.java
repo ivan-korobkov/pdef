@@ -2,13 +2,13 @@ package io.pdef;
 
 import com.google.common.collect.ImmutableList;
 import io.pdef.descriptors.MethodDescriptor;
-import org.junit.Test;
-
-import java.util.List;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 import static org.mockito.Mockito.*;
+
+import java.util.List;
 
 public class InvocationTest {
 	@Test
@@ -62,8 +62,9 @@ public class InvocationTest {
 		when(method0.invoke(service, 1, 2, 3)).thenReturn(result0);
 		when(method1.invoke(result0, "hello", "world")).thenReturn(result1);
 
-		Object result = invocation.invokeChainOn(service);
-		assertEquals(result1, result);
+		InvocationResult result = invocation.invokeChainOn(service);
+		assertTrue(result.isSuccess());
+		assertEquals(result1, result.getResult());
 	}
 
 	@Test

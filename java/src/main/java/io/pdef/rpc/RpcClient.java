@@ -3,14 +3,15 @@ package io.pdef.rpc;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import io.pdef.Invocation;
+import io.pdef.InvocationResult;
+import io.pdef.descriptors.Descriptor;
+import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.func.FluentFilter;
 
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /** {@code RpcClient} converts invocations into rpc requests, passes them to an rpc sender,
  * and returns deserialized results from rpc responses.  */
@@ -19,25 +20,36 @@ public class RpcClient {
 
 	/** Converts an invocation into an rpc request, passes it to a sender,
 	 * and returns a deserialized result from an rpc response. */
-	public static Object apply(final Invocation remote, final Function<RpcRequest, RpcResponse> sender) {
-		checkNotNull(remote);
+	public static InvocationResult apply(final Invocation invocation,
+			final Function<RpcRequest, RpcResponse> sender) {
+		checkNotNull(invocation);
 		checkNotNull(sender);
 
-		RpcRequest request = request(remote);
+		RpcRequest request = request(invocation);
 		RpcResponse response = sender.apply(request);
 		if (response == null) throw RpcErrors.clientError("Null response");
 
-		Object result = response.getResult();
+		boolean success = false;
+		Descriptor<?> descriptor = null;
+		MethodDescriptor method = invocation.getMethod();
 		switch (response.getStatus()) {
 			case OK:
-				return remote.getResult().parse(result);
+				success = true;
+				descriptor = method.getResult();
+				break;
 			case EXCEPTION:
-				throw (RuntimeException) remote.getExc().parse(result);
+				success = false;
+				descriptor = method.getExc();
+				break;
 			case ERROR:
-				throw RpcError.parse(result);
+				throw RpcError.parse(response.getResult());
 		}
 
-		throw new AssertionError();
+		assert descriptor != null;
+		Object parsedResult = descriptor.parse(response.getResult());
+
+		return success ? InvocationResult.success(parsedResult, method)
+		               : InvocationResult.exc(parsedResult, method);
 	}
 
 	/** Serializes a remote proxy into an rpc request. */
@@ -55,8 +67,8 @@ public class RpcClient {
 	}
 
 	/** Creates a fluent filter. */
-	public static FluentFilter<Invocation, Object, RpcRequest, RpcResponse> filter() {
-		return new FluentFilter<Invocation, Object, RpcRequest, RpcResponse>() {
+	public static FluentFilter<Invocation, InvocationResult, RpcRequest, RpcResponse> filter() {
+		return new FluentFilter<Invocation, InvocationResult, RpcRequest, RpcResponse>() {
 			@Override
 			public String toString() {
 				return Objects.toStringHelper(RpcClient.class)
@@ -65,16 +77,18 @@ public class RpcClient {
 			}
 
 			@Override
-			public Object apply(final Invocation remote, final Function<RpcRequest, RpcResponse> next) {
+			public InvocationResult apply(final Invocation remote,
+					final Function<RpcRequest, RpcResponse> next) {
 				return RpcClient.apply(remote, next);
 			}
 		};
 	}
 
 	/** Creates a function with a given sender, imitates currying. */
-	public static Function<Invocation, Object> function(final Function<RpcRequest, RpcResponse> sender) {
+	public static Function<Invocation, InvocationResult> function(
+			final Function<RpcRequest, RpcResponse> sender) {
 		checkNotNull(sender);
-		return new Function<Invocation, Object>() {
+		return new Function<Invocation, InvocationResult>() {
 			@Override
 			public String toString() {
 				return Objects.toStringHelper(RpcClient.class)
@@ -83,7 +97,7 @@ public class RpcClient {
 			}
 
 			@Override
-			public Object apply(final Invocation input) {
+			public InvocationResult apply(final Invocation input) {
 				return RpcClient.apply(input, sender);
 			}
 		};

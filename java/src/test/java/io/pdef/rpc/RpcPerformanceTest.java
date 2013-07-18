@@ -2,6 +2,7 @@ package io.pdef.rpc;
 
 import com.google.common.base.Function;
 import io.pdef.Invocation;
+import io.pdef.InvocationResult;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.test.TestInterface1;
 import org.junit.Test;
@@ -20,7 +21,7 @@ public class RpcPerformanceTest {
 		Function<RpcRequest, RpcResponse> server = RpcServer
 				.filter(iface)
 				.then(RpcInvoker.from(service));
-		Function<Invocation, Object> handler = RpcClient
+		Function<Invocation, InvocationResult> handler = RpcClient
 				.filter()
 				.then(server);
 

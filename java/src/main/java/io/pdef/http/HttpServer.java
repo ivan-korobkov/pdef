@@ -27,13 +27,13 @@ public class HttpServer {
 	private static final Splitter HTTP_METHOD_SPLITTER = Splitter.on("/");
 	private HttpServer() {}
 
-	/** Handles an http request and writes a result to an http response, returns null.
+	/** Handles an HTTP RPC request, writes an RPC response, returns null.
 	 * @throws RuntimeException if fails to write to an http response. */
-	public static void apply(final HttpRequestResponse requestResponse,
+	public static void apply(final HttpRequestResponse input,
 			final InterfaceDescriptor<?> descriptor,
 			final Function<RpcRequest, RpcResponse> rpcHandler) {
-		HttpServletRequest request = requestResponse.getRequest();
-		HttpServletResponse response = requestResponse.getResponse();
+		HttpServletRequest request = input.getRequest();
+		HttpServletResponse response = input.getResponse();
 
 		RpcResponse resp;
 		try {
@@ -45,6 +45,23 @@ public class HttpServer {
 
 		try {
 			write(response, resp);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/** Handles an HTTP request, writes an RPC response, returns null. */
+	public static void apply(final HttpRequestResponse input,
+			final Function<HttpRequestResponse, RpcResponse> handler) {
+		RpcResponse response;
+		try {
+			response = handler.apply(input);
+		} catch (Exception e) {
+			response = RpcResponses.error(e);
+		}
+
+		try {
+			write(input.getResponse(), response);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -116,16 +133,16 @@ public class HttpServer {
 	}
 
 
-	/** Creates a simple http rpc server. */
+	/** Creates a simple HTTP RPC server. */
 	public static <T> Function<HttpRequestResponse, Void> create(
 			final InterfaceDescriptor<T> descriptor, final Supplier<T> supplier) {
-		return filter(descriptor)
+		return rpcFilter(descriptor)
 				.then(RpcServer.filter(descriptor))
 				.then(RpcInvoker.from(supplier));
 	}
 
-	/** Creates an http filter. */
-	public static <T> FluentFilter<HttpRequestResponse, Void, RpcRequest, RpcResponse> filter(
+	/** Creates an HTTP RPC filter. */
+	public static <T> FluentFilter<HttpRequestResponse, Void, RpcRequest, RpcResponse> rpcFilter(
 			final InterfaceDescriptor<T> descriptor) {
 		checkNotNull(descriptor);
 
@@ -141,6 +158,26 @@ public class HttpServer {
 			public Void apply(final HttpRequestResponse input,
 					final Function<RpcRequest, RpcResponse> next) {
 				HttpServer.apply(input, descriptor, next);
+				return null;
+			}
+		};
+	}
+
+	/** Creates an HTTP filter. */
+	public static <T> FluentFilter<HttpRequestResponse, Void, HttpRequestResponse,
+			RpcResponse> httpFilter() {
+		return new FluentFilter<HttpRequestResponse, Void, HttpRequestResponse, RpcResponse>() {
+			@Override
+			public String toString() {
+				return Objects.toStringHelper(HttpServer.class)
+						.addValue(this)
+						.toString();
+			}
+
+			@Override
+			public Void apply(final HttpRequestResponse input,
+					final Function<HttpRequestResponse, RpcResponse> next) {
+				HttpServer.apply(input, next);
 				return null;
 			}
 		};

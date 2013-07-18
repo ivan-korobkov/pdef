@@ -1,6 +1,5 @@
 package io.pdef.rpc;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.Invocation;
@@ -11,66 +10,20 @@ import io.pdef.test.TestEnum;
 import io.pdef.test.TestInterface;
 import io.pdef.test.TestInterface1;
 import io.pdef.test.TestMessage;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import org.junit.Before;
+import static org.junit.Assert.*;
 import org.junit.Test;
-import static org.mockito.Matchers.any;
-import org.mockito.Mock;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 public class RpcClientTest {
-	@Mock private Function<RpcRequest, RpcResponse> sender;
-
-	@Before
-	public void setUp() throws Exception {
-		initMocks(this);
-	}
-
-	@SuppressWarnings("unchecked")
 	@Test
-	public void testProxy_parseResult() throws Exception {
-		when(sender.apply(any(RpcRequest.class))).thenReturn(
-				RpcResponses.ok(ImmutableMap.of("aString", "hello")));
-
-		Function<Invocation, InvocationResult> protocol = RpcClient.function(sender);
-		Invocation remote = mockInvocation();
-		when(remote.getMethod().getResult()).thenReturn((Descriptor) TestMessage.DESCRIPTOR);
-
-		TestMessage result = (TestMessage) protocol.apply(remote).getResult();
-		assertEquals(TestMessage.builder()
-				.setAnEnum(TestEnum.ONE)
-				.setAString("hello").build(), result);
-	}
-
-	@Test
-	public void testProxy_parseError() throws Exception {
-		RpcError error = RpcError.builder()
-				.setCode(RpcErrorCode.SERVER_ERROR)
-				.setText("Internal server error")
-				.build();
-
-		when(sender.apply(any(RpcRequest.class))).thenReturn(RpcResponses.error(error));
-		Function<Invocation, InvocationResult> protocol = RpcClient.function(sender);
-		try {
-			protocol.apply(mockInvocation());
-			fail();
-		} catch (RpcError e) {
-			assertEquals(RpcErrorCode.SERVER_ERROR, e.getCode());
-			assertEquals(error.getText(), e.getText());
-		}
-	}
-
-	@Test
-	public void testSerializeInvocation() throws Exception {
+	public void testWriteRequest() throws Exception {
 		Invocation invocation = TestInterface.DESCRIPTOR.getMethod("interface0")
 				.capture(Invocation.root());
 		Invocation invocation1 = TestInterface1.DESCRIPTOR.getMethod("hello")
 				.capture(invocation, "John", "Doe");
 
-		RpcRequest request = RpcClient.request(invocation1);
+		RpcRequest request = RpcClient.writeRequest(invocation1);
 		assertEquals(RpcRequest.builder()
 				.setCalls(ImmutableList.of(
 						RpcCall.builder()
@@ -86,11 +39,44 @@ public class RpcClientTest {
 		);
 	}
 
-	private Invocation mockInvocation() {
-		Invocation invocation = mock(Invocation.class);
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testReadResponse_ok() throws Exception {
 		MethodDescriptor method = mock(MethodDescriptor.class);
-		when(invocation.isRemote()).thenReturn(true);
-		when(invocation.getMethod()).thenReturn(method);
-		return invocation;
+		when(method.getResult()).thenReturn((Descriptor) TestMessage.DESCRIPTOR);
+
+		RpcResponse response = RpcResponse.builder()
+				.setStatus(RpcResponseStatus.OK)
+				.setResult(ImmutableMap.of("aString", "hello"))
+				.build();
+
+		InvocationResult result = RpcClient.readResponse(response, method);
+		assertTrue(result.isSuccess());
+
+		TestMessage expected = TestMessage.builder()
+				.setAnEnum(TestEnum.ONE)
+				.setAString("hello").build();
+		assertEquals(expected, result.getResult());
+	}
+
+	@Test
+	public void testReadResponse_error() throws Exception {
+		RpcError error = RpcError.builder()
+				.setCode(RpcErrorCode.SERVER_ERROR)
+				.setText("Internal server error")
+				.build();
+
+		MethodDescriptor method = mock(MethodDescriptor.class);
+		RpcResponse response = RpcResponse.builder()
+				.setStatus(RpcResponseStatus.ERROR)
+				.setResult(error.serialize())
+				.build();
+
+		try {
+			RpcClient.readResponse(response, method);
+			fail();
+		} catch (RpcError e) {
+			assertEquals(error, e);
+		}
 	}
 }

@@ -8,14 +8,11 @@ import io.pdef.rpc.RpcResponseStatus;
 import io.pdef.test.TestInterface;
 import org.junit.Test;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.*;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class HttpServerTest {
 	@Test
@@ -31,14 +28,16 @@ public class HttpServerTest {
 			}
 		};
 
-		Function<HttpRequestResponse, Void> handler = HttpServer
-				.function(TestInterface.DESCRIPTOR, rpcHandler);
-
 		HttpServletRequest request = mock(HttpServletRequest.class);
 		HttpServletResponse response = mock(HttpServletResponse.class, Mockito.RETURNS_DEEP_STUBS);
 		when(request.getPathInfo()).thenReturn("/interface0/hello/John/Doe");
 
-		handler.apply(new HttpRequestResponse(request, response));
+		Function<HttpServletRequest, Void> handler = HttpServer
+				.requestReader(TestInterface.DESCRIPTOR)
+				.then(rpcHandler)
+				.then(HttpServer.responseWriter(response));
+
+		handler.apply(request);
 		verify(response).setStatus(HttpServletResponse.SC_OK);
 		verify(response).setContentType(MediaType.JSON_UTF_8.toString());
 		verify(response.getWriter()).write("{\"status\":\"ok\",\"result\":\"hello, world\"}");

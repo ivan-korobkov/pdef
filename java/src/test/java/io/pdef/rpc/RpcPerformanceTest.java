@@ -3,6 +3,7 @@ package io.pdef.rpc;
 import com.google.common.base.Function;
 import io.pdef.Invocation;
 import io.pdef.InvocationResult;
+import io.pdef.Invoker;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.test.TestInterface1;
 import org.junit.Test;
@@ -18,12 +19,21 @@ public class RpcPerformanceTest {
 
 	@Test
 	public void testPerf() throws Exception {
-		Function<RpcRequest, RpcResponse> server = RpcServer
-				.filter(iface)
-				.then(RpcInvoker.from(service));
-		Function<Invocation, InvocationResult> handler = RpcClient
-				.filter()
-				.then(server);
+		final Function<RpcRequest, RpcResponse> server = RpcServer
+				.requestReader(iface)
+				.then(Invoker.from(service))
+				.then(RpcServer.responseWriter())
+				.onError(RpcServer.errorHandler());
+
+		Function<Invocation, InvocationResult> handler = new Function<Invocation, InvocationResult>() {
+			@Override
+			public InvocationResult apply(final Invocation input) {
+				return RpcClient.requestWriter()
+						.then(server)
+						.then(RpcClient.responseReader(input))
+						.apply(input);
+			}
+		};
 
 		TestInterface1 client = iface.client(handler);
 

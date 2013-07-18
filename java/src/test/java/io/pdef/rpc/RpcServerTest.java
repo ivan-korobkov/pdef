@@ -17,15 +17,13 @@ import java.util.List;
 
 public class RpcServerTest {
 	@Test
-	public void testFunction() throws Exception {
+	public void testPipeline() throws Exception {
 		Function<Invocation, InvocationResult> invoker = new Function<Invocation, InvocationResult>() {
 			@Override
 			public InvocationResult apply(final Invocation input) {
 				return InvocationResult.success(1, input.getMethod());
 			}
 		};
-		Function<RpcRequest, RpcResponse> server = RpcServer.function(TestInterface.DESCRIPTOR, invoker);
-
 		RpcRequest request = RpcRequest.builder()
 				.setCalls(ImmutableList.of(
 						RpcCall.builder()
@@ -34,22 +32,31 @@ public class RpcServerTest {
 								.build()))
 				.build();
 
+		Function<RpcRequest, RpcResponse> server = RpcServer
+				.requestReader(TestInterface.DESCRIPTOR)
+				.then(invoker)
+				.then(RpcServer.responseWriter());
 		RpcResponse response = server.apply(request);
-		assertEquals(RpcResponse.builder()
+		RpcResponse expected = RpcResponse.builder()
 				.setStatus(RpcResponseStatus.OK)
 				.setResult(1)
-				.build(), response);
+				.build();
+		assertEquals(expected, response);
 	}
 
 	@Test
-	public void testFunction_internalServerError() throws Exception {
+	public void testPipeline_error() throws Exception {
 		Function<Invocation, InvocationResult> invoker = new Function<Invocation, InvocationResult>() {
 			@Override
 			public InvocationResult apply(final Invocation input) {
 				throw new RuntimeException();
 			}
 		};
-		Function<RpcRequest, RpcResponse> server = RpcServer.function(TestInterface.DESCRIPTOR, invoker);
+		Function<RpcRequest, RpcResponse> server = RpcServer
+				.requestReader(TestInterface.DESCRIPTOR)
+				.then(invoker)
+				.then(RpcServer.responseWriter())
+				.onError(RpcServer.errorHandler());
 
 		RpcRequest request = RpcRequest.builder()
 				.setCalls(ImmutableList.of(
@@ -58,20 +65,20 @@ public class RpcServerTest {
 								.setArgs(ImmutableMap.<String, Object>of("i0", 1))
 								.build()))
 				.build();
-
 		RpcResponse response = server.apply(request);
-		assertEquals(RpcResponse.builder()
+		RpcResponse expected = RpcResponse.builder()
 				.setStatus(RpcResponseStatus.ERROR)
 				.setResult(RpcError.builder()
 						.setCode(RpcErrorCode.SERVER_ERROR)
 						.setText("Internal server error")
 						.build()
 						.serialize())
-				.build(), response);
+				.build();
+		assertEquals(expected, response);
 	}
 
 	@Test
-	public void testParse_ok() throws Exception {
+	public void testReadRequest_ok() throws Exception {
 		RpcRequest request = RpcRequest.builder()
 				.setCalls(ImmutableList.of(
 						RpcCall.builder().setMethod("interface0").build(),
@@ -81,19 +88,18 @@ public class RpcServerTest {
 								.build())
 				).build();
 
-		List<Invocation> result = RpcServer.parse(TestInterface.DESCRIPTOR, request).toList();
+		List<Invocation> result = RpcServer.readRequest(request, TestInterface.DESCRIPTOR).toList();
 		assertEquals(2, result.size());
 
 		Invocation invocation0 = result.get(0);
 		Invocation invocation1 = result.get(1);
-		assertEquals(TestInterface.DESCRIPTOR.getMethod("interface0"),
-				invocation0.getMethod());
+		assertEquals(TestInterface.DESCRIPTOR.getMethod("interface0"), invocation0.getMethod());
 		assertEquals(TestInterface1.DESCRIPTOR.getMethod("hello"), invocation1.getMethod());
 		Assert.assertArrayEquals(new Object[]{"John", null}, invocation1.getArgs());
 	}
 
 	@Test
-	public void testParse_methodNotFound() throws Exception {
+	public void testReadRequest_methodNotFound() throws Exception {
 		RpcRequest request = RpcRequest.builder()
 				.setCalls(ImmutableList.of(
 						RpcCall.builder()
@@ -101,7 +107,7 @@ public class RpcServerTest {
 								.build()))
 				.build();
 		try {
-			RpcServer.parse(TestInterface.DESCRIPTOR, request);
+			RpcServer.readRequest(request, TestInterface.DESCRIPTOR);
 			Assert.fail();
 		} catch (RpcError e) {
 			assertEquals(RpcErrorCode.CLIENT_ERROR, e.getCode());
@@ -110,7 +116,7 @@ public class RpcServerTest {
 	}
 
 	@Test
-	public void testParse_wrongArgs() throws Exception {
+	public void testReadRequest_wrongArgs() throws Exception {
 		RpcRequest request = RpcRequest.builder()
 				.setCalls(ImmutableList.of(RpcCall.builder()
 						.setMethod("hello")
@@ -119,7 +125,7 @@ public class RpcServerTest {
 				.build();
 
 		try {
-			RpcServer.parse(TestInterface1.DESCRIPTOR, request);
+			RpcServer.readRequest(request, TestInterface1.DESCRIPTOR);
 			Assert.fail();
 		} catch (RpcError e) {
 			assertEquals(RpcErrorCode.CLIENT_ERROR, e.getCode());
@@ -128,14 +134,14 @@ public class RpcServerTest {
 	}
 
 	@Test
-	public void testParse_notRemoteMethod() throws Exception {
+	public void testReadRequest_notRemoteMethod() throws Exception {
 		RpcRequest request = RpcRequest.builder()
 				.setCalls(ImmutableList.of(RpcCall.builder()
 						.setMethod("interface0")
 						.build()))
 				.build();
 		try {
-			RpcServer.parse(TestInterface.DESCRIPTOR, request);
+			RpcServer.readRequest(request, TestInterface.DESCRIPTOR);
 			Assert.fail();
 		} catch (RpcError e) {
 			assertEquals(RpcErrorCode.CLIENT_ERROR, e.getCode());
@@ -144,11 +150,12 @@ public class RpcServerTest {
 	}
 
 	@Test
-	public void testSerialize_ok() throws Exception {
+	public void testWriteResponse_ok() throws Exception {
 		TestMessage msg = TestMessage.builder().setAString("hello, world").build();
 		MethodDescriptor method = TestInterface.DESCRIPTOR.getMethod("message0");
 		InvocationResult result = InvocationResult.success(msg, method);
-		RpcResponse response = RpcServer.response(result);
+
+		RpcResponse response = RpcServer.writeResponse(result);
 		assertEquals(RpcResponse.builder()
 				.setStatus(RpcResponseStatus.OK)
 				.setResult(msg.serialize())
@@ -156,30 +163,15 @@ public class RpcServerTest {
 	}
 
 	@Test
-	public void testSerialize_rpcException() throws Exception {
-		RpcError error = RpcError.builder()
-				.setCode(RpcErrorCode.NETWORK_ERROR)
-				.setText("Service unavailable")
-				.build();
-
-		RpcResponse response = RpcResponses.error(error);
-		assertEquals(RpcResponse.builder()
-				.setStatus(RpcResponseStatus.ERROR)
-				.setResult(error.serialize())
-				.build(), response);
-	}
-
-	@Test
-	public void testRpcSerializeError_internalServerError() throws Exception {
+	public void testWriteError() throws Exception {
 		RuntimeException e = new RuntimeException();
-		RpcResponse response = RpcResponses.error(e);
+		RpcResponse response = RpcServer.writeError(e);
+
 		RpcError error = RpcError.builder()
 				.setCode(RpcErrorCode.SERVER_ERROR)
 				.setText("Internal server error")
 				.build();
-		assertEquals(RpcResponse.builder()
-				.setStatus(RpcResponseStatus.ERROR)
-				.setResult(error.serialize())
-				.build(), response);
+		RpcResponse expected = RpcResponses.error(error);
+		assertEquals(expected, response);
 	}
 }

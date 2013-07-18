@@ -1,15 +1,12 @@
 package io.pdef.rpc;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import io.pdef.Invocation;
 import io.pdef.InvocationResult;
 import io.pdef.descriptors.Descriptor;
 import io.pdef.descriptors.MethodDescriptor;
-import io.pdef.func.FluentFilter;
+import io.pdef.func.FluentFunction;
 
 import java.util.List;
 
@@ -18,20 +15,28 @@ import java.util.List;
 public class RpcClient {
 	private RpcClient() {}
 
-	/** Converts an invocation into an rpc request, passes it to a sender,
-	 * and returns a deserialized result from an rpc response. */
-	public static InvocationResult apply(final Invocation invocation,
-			final Function<RpcRequest, RpcResponse> sender) {
-		checkNotNull(invocation);
-		checkNotNull(sender);
+	/** Creates an RPC request from a remote invocation. */
+	public static RpcRequest writeRequest(final Invocation remote) {
+		checkArgument(remote.isRemote(), "must be a remote invocation, got %s", remote);
+		List<Invocation> invocations = remote.toList();
 
-		RpcRequest request = request(invocation);
-		RpcResponse response = sender.apply(request);
+		List<RpcCall> calls = Lists.newArrayList();
+		for (Invocation invocation : invocations) calls.add(invocation.serialize());
+
+		return RpcRequest.builder()
+				.setCalls(calls)
+				.build();
+	}
+
+	/** Parses an RPC response into an invocation result.
+	 *
+	 * @throws RpcError if the response is an error response. */
+	public static InvocationResult readResponse(final RpcResponse response,
+			final MethodDescriptor method) {
 		if (response == null) throw RpcErrors.clientError("Null response");
 
 		boolean success = false;
 		Descriptor<?> descriptor = null;
-		MethodDescriptor method = invocation.getMethod();
 		switch (response.getStatus()) {
 			case OK:
 				success = true;
@@ -52,54 +57,40 @@ public class RpcClient {
 		               : InvocationResult.exc(parsedResult, method);
 	}
 
-	/** Serializes a remote proxy into an rpc request. */
-	@VisibleForTesting
-	static RpcRequest request(final Invocation remote) {
-		checkArgument(remote.isRemote(), "must be a remote invocation, got %s", remote);
-		List<Invocation> invocations = remote.toList();
-
-		List<RpcCall> calls = Lists.newArrayList();
-		for (Invocation invocation : invocations) calls.add(invocation.serialize());
-
-		return RpcRequest.builder()
-				.setCalls(calls)
-				.build();
+	/** Returns a RPC request writer. */
+	public static FluentFunction<Invocation, RpcRequest> requestWriter() {
+		return new RequestWriter();
 	}
 
-	/** Creates a fluent filter. */
-	public static FluentFilter<Invocation, InvocationResult, RpcRequest, RpcResponse> filter() {
-		return new FluentFilter<Invocation, InvocationResult, RpcRequest, RpcResponse>() {
-			@Override
-			public String toString() {
-				return Objects.toStringHelper(RpcClient.class)
-						.addValue(this)
-						.toString();
-			}
-
-			@Override
-			public InvocationResult apply(final Invocation remote,
-					final Function<RpcRequest, RpcResponse> next) {
-				return RpcClient.apply(remote, next);
-			}
-		};
+	/** Returns an invocation RPC response reader. */
+	public static FluentFunction<RpcResponse, InvocationResult> responseReader(
+			final Invocation invocation) {
+		return responseReader(invocation.getMethod());
 	}
 
-	/** Creates a function with a given sender, imitates currying. */
-	public static Function<Invocation, InvocationResult> function(
-			final Function<RpcRequest, RpcResponse> sender) {
-		checkNotNull(sender);
-		return new Function<Invocation, InvocationResult>() {
-			@Override
-			public String toString() {
-				return Objects.toStringHelper(RpcClient.class)
-						.addValue(this)
-						.toString();
-			}
+	/** Returns a method RPC response reader. */
+	public static FluentFunction<RpcResponse, InvocationResult> responseReader(
+			final MethodDescriptor method) {
+		return new ResponseReader(method);
+	}
 
-			@Override
-			public InvocationResult apply(final Invocation input) {
-				return RpcClient.apply(input, sender);
-			}
-		};
+	private static class RequestWriter extends FluentFunction<Invocation, RpcRequest> {
+		@Override
+		public RpcRequest apply(final Invocation input) {
+			return writeRequest(input);
+		}
+	}
+
+	private static class ResponseReader extends FluentFunction<RpcResponse, InvocationResult> {
+		private final MethodDescriptor method;
+
+		private ResponseReader(final MethodDescriptor method) {
+			this.method = checkNotNull(method);
+		}
+
+		@Override
+		public InvocationResult apply(final RpcResponse input) {
+			return readResponse(input, method);
+		}
 	}
 }

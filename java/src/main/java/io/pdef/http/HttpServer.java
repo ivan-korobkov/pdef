@@ -1,8 +1,5 @@
 package io.pdef.http;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -10,8 +7,11 @@ import com.google.common.collect.Maps;
 import com.google.common.net.MediaType;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
-import io.pdef.func.FluentFilter;
-import io.pdef.rpc.*;
+import io.pdef.func.FluentFunction;
+import io.pdef.rpc.RpcCall;
+import io.pdef.rpc.RpcErrors;
+import io.pdef.rpc.RpcRequest;
+import io.pdef.rpc.RpcResponse;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,50 +26,9 @@ public class HttpServer {
 	private static final Splitter HTTP_METHOD_SPLITTER = Splitter.on("/");
 	private HttpServer() {}
 
-	/** Handles an HTTP RPC request, writes an RPC response, returns null.
-	 * @throws RuntimeException if fails to write to an http response. */
-	public static void apply(final HttpRequestResponse input,
-			final InterfaceDescriptor<?> descriptor,
-			final Function<RpcRequest, RpcResponse> rpcHandler) {
-		HttpServletRequest request = input.getRequest();
-		HttpServletResponse response = input.getResponse();
-
-		RpcResponse resp;
-		try {
-			RpcRequest req = parse(descriptor, request);
-			resp = rpcHandler.apply(req);
-		} catch (Exception e) {
-			resp = RpcResponses.error(e);
-		}
-
-		try {
-			write(response, resp);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/** Handles an HTTP request, writes an RPC response, returns null. */
-	public static void apply(final HttpRequestResponse input,
-			final Function<HttpRequestResponse, RpcResponse> handler) {
-		RpcResponse response;
-		try {
-			response = handler.apply(input);
-		} catch (Exception e) {
-			response = RpcResponses.error(e);
-		}
-
-		try {
-			write(input.getResponse(), response);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/** Parses an rpc request from an http request. */
-	@VisibleForTesting
-	static RpcRequest parse(final InterfaceDescriptor<?> descriptor,
-			final HttpServletRequest request) {
+	/** Parses an RPC request from an HTTP request. */
+	public static RpcRequest readRequest(final HttpServletRequest request,
+			final InterfaceDescriptor<?> descriptor) {
 		checkNotNull(request);
 		String pathInfo = request.getPathInfo();
 		pathInfo = pathInfo.startsWith("/") ? pathInfo.substring(1) : pathInfo;
@@ -119,93 +78,60 @@ public class HttpServer {
 	}
 
 	/** Writes an rpc response to an http response. */
-	@VisibleForTesting
-	static void write(final HttpServletResponse response, final RpcResponse resp)
-			throws IOException {
-		String json = resp.serializeToJson();
+	public static void writeResponse(final HttpServletResponse response,
+			final RpcResponse rpcResponse) {
+		String json = rpcResponse.serializeToJson();
 		response.setStatus(HttpServletResponse.SC_OK);
 		response.setContentLength(json.length());
 		response.setContentType(MediaType.JSON_UTF_8.toString());
-		PrintWriter writer = response.getWriter();
+
+		PrintWriter writer;
+		try {
+			writer = response.getWriter();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
 		writer.write(json);
 		writer.flush();
 	}
 
-	public static <T> FluentFilter<HttpRequestResponse, Void, RpcRequest, RpcResponse>
-			rpcRequestParser(final InterfaceDescriptor<T> descriptor) {
-		checkNotNull(descriptor);
-
-		return new FluentFilter<HttpRequestResponse, Void, RpcRequest, RpcResponse>() {
-			@Override
-			public Void apply(final HttpRequestResponse input,
-					final Function<RpcRequest, RpcResponse> next) {
-				return null;
-			}
-		};
+	/** Creates an HTTP request reader for an interface. */
+	public static FluentFunction<HttpServletRequest, RpcRequest> requestReader(
+			final InterfaceDescriptor<?> descriptor) {
+		return new HttpRequestReader(descriptor);
 	}
 
-	/** Creates an HTTP RPC filter. */
-	public static <T> FluentFilter<HttpRequestResponse, Void, RpcRequest, RpcResponse> rpcFilter(
-			final InterfaceDescriptor<T> descriptor) {
-		checkNotNull(descriptor);
-
-		return new FluentFilter<HttpRequestResponse, Void, RpcRequest, RpcResponse>() {
-			@Override
-			public String toString() {
-				return Objects.toStringHelper(HttpServer.class)
-						.addValue(this)
-						.toString();
-			}
-
-			@Override
-			public Void apply(final HttpRequestResponse input,
-					final Function<RpcRequest, RpcResponse> next) {
-				HttpServer.apply(input, descriptor, next);
-				return null;
-			}
-		};
+	/** Creates a response writer for a given HTTP response. */
+	public static FluentFunction<RpcResponse, Void> responseWriter(
+			final HttpServletResponse response) {
+		return new HttpResponseWriter(response);
 	}
 
-	/** Creates an HTTP filter. */
-	public static <T> FluentFilter<HttpRequestResponse, Void, HttpRequestResponse,
-			RpcResponse> httpFilter() {
-		return new FluentFilter<HttpRequestResponse, Void, HttpRequestResponse, RpcResponse>() {
-			@Override
-			public String toString() {
-				return Objects.toStringHelper(HttpServer.class)
-						.addValue(this)
-						.toString();
-			}
+	private static class HttpRequestReader extends FluentFunction<HttpServletRequest, RpcRequest> {
+		private final InterfaceDescriptor<?> descriptor;
 
-			@Override
-			public Void apply(final HttpRequestResponse input,
-					final Function<HttpRequestResponse, RpcResponse> next) {
-				HttpServer.apply(input, next);
-				return null;
-			}
-		};
+		private HttpRequestReader(final InterfaceDescriptor<?> descriptor) {
+			this.descriptor = checkNotNull(descriptor);
+		}
+
+		@Override
+		public RpcRequest apply(final HttpServletRequest input) {
+			return readRequest(input, descriptor);
+		}
 	}
 
-	/** Creates an http handler. */
-	public static <T> Function<HttpRequestResponse, Void> function(
-			final InterfaceDescriptor<T> descriptor,
-			final Function<RpcRequest, RpcResponse> rpcHandler) {
-		checkNotNull(descriptor);
-		checkNotNull(rpcHandler);
+	private static class HttpResponseWriter extends FluentFunction<RpcResponse, Void> {
+		private final HttpServletResponse response;
 
-		return new Function<HttpRequestResponse, Void>() {
-			@Override
-			public String toString() {
-				return Objects.toStringHelper(HttpServer.class)
-						.addValue(this)
-						.toString();
-			}
+		private HttpResponseWriter(final HttpServletResponse response) {
+			this.response = checkNotNull(response);
+		}
 
-			@Override
-			public Void apply(final HttpRequestResponse input) {
-				HttpServer.apply(input, descriptor, rpcHandler);
-				return null;
-			}
-		};
+		@Override
+		public Void apply(final RpcResponse input) {
+			writeResponse(response, input);
+			return null;
+		}
 	}
 }

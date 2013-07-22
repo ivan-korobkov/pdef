@@ -23,15 +23,15 @@ class TestInterface(unittest.TestCase):
         iface = Interface('Interface')
         iface.set_base(base0)
         iface.set_base(base1)
-        iface.add_method('ping')
-        iface.add_method('pong')
-        iface.add_method('echo', Types.STRING, ('text', Types.STRING))
-        iface.add_method('sum', Types.INT32, ('z', Types.INT32), ('a', Types.INT32))
-        iface.add_method('abc', Types.STRING, ('a', Types.STRING), ('b', Types.STRING),
-                         ('c', Types.STRING))
+        iface.create_method('ping')
+        iface.create_method('pong')
+        iface.create_method('echo', NativeTypes.STRING, ('text', NativeTypes.STRING))
+        iface.create_method('sum', NativeTypes.INT32, ('z', NativeTypes.INT32), ('a', NativeTypes.INT32))
+        iface.create_method('abc', NativeTypes.STRING, ('a', NativeTypes.STRING), ('b', NativeTypes.STRING),
+                         ('c', NativeTypes.STRING))
 
-        iface.add_method('base0', base0)
-        iface.add_method('base1', base1)
+        iface.create_method('base0', base0)
+        iface.create_method('base1', base1)
 
         module0 = Module('test.module0')
         module0.add_definitions(base0, base1)
@@ -50,18 +50,18 @@ class TestMessage(unittest.TestCase):
     def test(self):
         enum = Enum('Type', 'MSG')
         base = Message('Base')
-        base.add_field('type', enum, is_discriminator=True)
-        base.add_field('field0', Types.BOOL)
-        base.add_field('field1', Types.INT16)
+        base.create_field('type', enum, is_discriminator=True)
+        base.create_field('field0', NativeTypes.BOOL)
+        base.create_field('field1', NativeTypes.INT16)
         msg0 = Message('Message0')
 
         msg = Message('Message')
         msg.set_base(base, enum.values['MSG'])
-        msg.add_field('field2', Types.INT32)
-        msg.add_field('field3', Types.STRING)
-        msg.add_field('field4', msg0)
-        msg.add_field('field5', base)
-        msg.add_field('field6', List(msg))
+        msg.create_field('field2', NativeTypes.INT32)
+        msg.create_field('field3', NativeTypes.STRING)
+        msg.create_field('field4', msg0)
+        msg.create_field('field5', base)
+        msg.create_field('field6', List(msg))
 
         module0 = Module('test.module0')
         module0.add_definitions(enum, base, msg0)
@@ -81,25 +81,25 @@ class TestRef(unittest.TestCase):
         self.translator = JavaTranslator('/tmp')
 
     def test_list(self):
-        obj = List(Types.INT32)
+        obj = List(NativeTypes.INT32)
         jobj = self.translator.ref(obj)
         assert str(jobj) == 'java.util.List<Integer>'
         assert jobj.is_list
 
     def test_set(self):
-        obj = Set(Types.BOOL)
+        obj = Set(NativeTypes.BOOL)
         jobj = self.translator.ref(obj)
         assert str(jobj) == 'java.util.Set<Boolean>'
         assert jobj.is_set
 
     def test_map(self):
-        obj = Map(Types.STRING, Types.FLOAT)
+        obj = Map(NativeTypes.STRING, NativeTypes.FLOAT)
         jobj = self.translator.ref(obj)
         assert str(jobj) == 'java.util.Map<String, Float>'
         assert jobj.is_map
 
     def test_native(self):
-        jobj = self.translator.ref(Types.INT64)
+        jobj = self.translator.ref(NativeTypes.INT64)
         assert jobj.name == 'long'
         assert jobj.boxed == 'Long'
         assert jobj.default == '0L'

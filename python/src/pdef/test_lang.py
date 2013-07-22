@@ -10,7 +10,7 @@ class TestPdef(unittest.TestCase):
         '''Should create a module from an AST node, link its imports and definitions.'''
         enum = Enum('Type', 'MESSAGE')
         base = Message('Base')
-        base.add_field('type', enum, is_discriminator=True)
+        base.create_field('type', enum, is_discriminator=True)
         module0 = Module('module0')
         module0.add_definition(enum)
         module0.add_definition(base)
@@ -23,7 +23,7 @@ class TestPdef(unittest.TestCase):
         file_node = ast.File('module1', imports=[import_node], definitions=[def_node])
         module1 = Module.from_ast(file_node)
 
-        pdef = Pdef()
+        pdef = Package()
         pdef.add_module(module0)
         pdef.add_module(module1)
 
@@ -48,7 +48,7 @@ class TestModule(unittest.TestCase):
         node = ast.File('module1', imports=(ast.Import('module0', 'def0', 'def1'), ))
         module1 = Module.from_ast(node)
 
-        pdef = Pdef()
+        pdef = Package()
         pdef.add_module(module0)
         pdef.add_module(module1)
 
@@ -59,29 +59,29 @@ class TestModule(unittest.TestCase):
         '''Should lookup a value by its ref.'''
         module = Module('test')
         int64 = module.lookup(ast.Ref(Type.INT64))
-        assert int64 is Types.INT64
+        assert int64 is NativeTypes.INT64
 
     def test_lookup_list(self):
         '''Should create and link a list by its ref.'''
         module = Module('test')
         list0 = module.lookup(ast.ListRef(ast.Ref(Type.STRING)))
         assert isinstance(list0, List)
-        assert list0.element is Types.STRING
+        assert list0.element is NativeTypes.STRING
 
     def test_lookup_set(self):
         '''Should create and link a set by its ref.'''
         module = Module('test')
         set0 = module.lookup(ast.SetRef(ast.Ref(Type.FLOAT)))
         assert isinstance(set0, Set)
-        assert set0.element is Types.FLOAT
+        assert set0.element is NativeTypes.FLOAT
 
     def test_lookup_map(self):
         '''Should create and link a map by its ref.'''
         module = Module('test')
         map0 = module.lookup(ast.MapRef(ast.Ref(Type.STRING), ast.Ref(Type.INT32)))
         assert isinstance(map0, Map)
-        assert map0.key is Types.STRING
-        assert map0.value is Types.INT32
+        assert map0.key is NativeTypes.STRING
+        assert map0.value is NativeTypes.INT32
 
     def test_lookup_enum_value(self):
         '''Should look up an enum value.'''
@@ -209,7 +209,7 @@ class TestMessage(unittest.TestCase):
         enum = Enum('Type')
         enum.add_value('ONE')
         base = Message('Base')
-        base.add_field('type', enum, is_discriminator=True)
+        base.create_field('type', enum, is_discriminator=True)
         node = ast.Message('Msg', base=ast.DefinitionRef('Base'),
                            base_type=ast.EnumValueRef(ast.DefinitionRef('Type'), 'ONE'),
                            fields=[ast.Field('field', ast.Ref(Type.INT32))])
@@ -225,7 +225,7 @@ class TestMessage(unittest.TestCase):
         assert msg.base_type is enum.values['ONE']
         field = msg.declared_fields['field']
         assert field.name == 'field'
-        assert field.type is Types.INT32
+        assert field.type is NativeTypes.INT32
 
     def test_set_base(self):
         '''Should set a message base.'''
@@ -233,7 +233,7 @@ class TestMessage(unittest.TestCase):
         subtype = enum.add_value('SUBTYPE')
 
         base = Message('Base')
-        base.add_field('type', enum, is_discriminator=True)
+        base.create_field('type', enum, is_discriminator=True)
 
         msg = Message('Msg')
         msg.set_base(base, subtype)
@@ -259,7 +259,7 @@ class TestMessage(unittest.TestCase):
         two = enum.add_value('TWO')
 
         msg0 = Message('Msg0')
-        msg0.add_field('type', enum, is_discriminator=True)
+        msg0.create_field('type', enum, is_discriminator=True)
         msg1 = Message('Msg1')
         msg1.set_base(msg0, two)
 
@@ -289,7 +289,7 @@ class TestMessage(unittest.TestCase):
         subtype = enum.add_value('SUBTYPE')
 
         base = Message('Base')
-        base.add_field('type', enum, is_discriminator=True)
+        base.create_field('type', enum, is_discriminator=True)
         msg = Message('Msg')
         msg.set_base(base, subtype)
 
@@ -305,7 +305,7 @@ class TestMessage(unittest.TestCase):
         type1 = enum.add_value('Type1')
 
         base = Message('Base')
-        base.add_field('type', enum, is_discriminator=True)
+        base.create_field('type', enum, is_discriminator=True)
 
         msg0 = Message('Msg0')
         msg0.set_base(base, type0)
@@ -325,15 +325,15 @@ class TestMessage(unittest.TestCase):
         sub1 = enum1.add_value('SUB1')
 
         msg0 = Message('Msg0')
-        msg0.add_field('type0', enum0, is_discriminator=True)
+        msg0.create_field('type0', enum0, is_discriminator=True)
 
         msg1 = Message('Msg1')
-        msg1.add_field('type1', enum1, is_discriminator=True)
+        msg1.create_field('type1', enum1, is_discriminator=True)
         msg1.set_base(msg0, sub0)
 
         msg2 = Message('Msg2')
         msg2.set_base(msg1, sub1)
-        assert msg2.polymorphic_discriminator is msg1.polymorphic_discriminator
+        assert msg2.discriminator is msg1.discriminator
         assert msg1.subtypes == {sub1: msg2}
         assert msg0.subtypes == {sub0: msg1}
 
@@ -344,13 +344,13 @@ class TestMessage(unittest.TestCase):
         type1 = enum.add_value('Type1')
 
         base = Message('Base')
-        type_field = base.add_field('type', enum, is_discriminator=True)
+        type_field = base.create_field('type', enum, is_discriminator=True)
         msg0 = Message('Msg0')
-        field0 = msg0.add_field('field0', Types.INT32)
+        field0 = msg0.create_field('field0', NativeTypes.INT32)
         msg0.set_base(base, type0)
 
         msg1 = Message('Msg1')
-        field1 = msg1.add_field('field1', Types.STRING)
+        field1 = msg1.create_field('field1', NativeTypes.STRING)
         msg1.set_base(msg0, type1)
 
         assert msg1.fields == {'type': type_field, 'field0': field0, 'field1': field1}
@@ -370,7 +370,7 @@ class TestMessage(unittest.TestCase):
         '''Should prevent inheriting a polymorphic base by a non-polymorphic message.'''
         enum = Enum('Type', 'SUBTYPE')
         base = Message('Base')
-        base.add_field('type', enum, is_discriminator=True)
+        base.create_field('type', enum, is_discriminator=True)
 
         msg = Message('Msg')
         try:
@@ -393,18 +393,18 @@ class TestMessage(unittest.TestCase):
     def test_add_field(self):
         '''Should add a new field to a message.'''
         msg = Message('Msg')
-        msg.add_field('field', Types.INT32)
+        msg.create_field('field', NativeTypes.INT32)
 
         field = msg.declared_fields['field']
         assert field.name == 'field'
-        assert field.type == Types.INT32
+        assert field.type == NativeTypes.INT32
 
     def test_add_field_duplicate(self):
         '''Should prevent duplicate message fields.'''
         msg = Message('Msg')
-        msg.add_field('field', Types.INT32)
+        msg.create_field('field', NativeTypes.INT32)
         try:
-            msg.add_field('field', Types.INT32)
+            msg.create_field('field', NativeTypes.INT32)
         except PdefException, e:
             assert 'duplicate' in e.message
 
@@ -413,7 +413,7 @@ class TestMessage(unittest.TestCase):
         enum = Enum('Type')
         msg = Message('Msg')
 
-        field = msg.add_field('type', enum, is_discriminator=True)
+        field = msg.create_field('type', enum, is_discriminator=True)
         assert field.is_discriminator
         assert msg.discriminator is field
 
@@ -421,9 +421,9 @@ class TestMessage(unittest.TestCase):
         '''Should prevent multiple discriminators in a message'''
         enum = Enum('Type')
         msg = Message('Msg')
-        msg.add_field('type0', enum, is_discriminator=True)
+        msg.create_field('type0', enum, is_discriminator=True)
         try:
-            msg.add_field('type1', enum, is_discriminator=True)
+            msg.create_field('type1', enum, is_discriminator=True)
             self.fail()
         except PdefException, e:
             assert 'duplicate discriminator' in e.message
@@ -433,7 +433,7 @@ class TestMessage(unittest.TestCase):
         iface = Interface('Interface')
         msg = Message('Msg')
         try:
-            msg.add_field('iface', iface)
+            msg.create_field('iface', iface)
         except PdefException, e:
             assert 'field must be a data type' in e.message
 
@@ -441,7 +441,7 @@ class TestMessage(unittest.TestCase):
 class TestField(unittest.TestCase):
     def test_fullname(self):
         message = Message('Message')
-        field = message.add_field('field', Types.STRING)
+        field = message.create_field('field', NativeTypes.STRING)
 
         module = Module('test')
         module.add_definition(message)
@@ -480,7 +480,7 @@ class TestMap(unittest.TestCase):
     def test_value_datatype(self):
         iface = Interface('Interface')
         try:
-            Map(Types.STRING, iface)
+            Map(NativeTypes.STRING, iface)
         except PdefException, e:
             assert 'value must be a data type' in e.message
 
@@ -512,11 +512,11 @@ class TestInterface(unittest.TestCase):
 
         method = iface.declared_methods['echo']
         assert method.name == 'echo'
-        assert method.result is Types.STRING
+        assert method.result is NativeTypes.STRING
 
         arg = method.args['text']
         assert arg.name == 'text'
-        assert arg.type is Types.STRING
+        assert arg.type is NativeTypes.STRING
 
     def test_set_base(self):
         '''Should set a base in an interface.'''
@@ -552,15 +552,15 @@ class TestInterface(unittest.TestCase):
     def test_set_base_inherit_methods(self):
         '''Should set a base in an interface and inherit its methods.'''
         iface0 = Interface('Iface0')
-        method0 = iface0.add_method('method0')
+        method0 = iface0.create_method('method0')
 
         iface1 = Interface('Iface1')
         iface1.set_base(iface0)
-        method1 = iface1.add_method('method1')
+        method1 = iface1.create_method('method1')
 
         iface2 = Interface('Iface2')
         iface2.set_base(iface1)
-        method2 = iface2.add_method('method2')
+        method2 = iface2.create_method('method2')
 
         assert iface1.inherited_methods == {'method0': method0}
         assert iface1.methods == {'method0': method0, 'method1': method1}
@@ -570,25 +570,25 @@ class TestInterface(unittest.TestCase):
     def test_add_method(self):
         '''Should add a new method to this interface.'''
         iface = Interface('Calc')
-        method = iface.add_method('sum', Types.INT32, ('i0', Types.INT32), ('i1', Types.INT32))
+        method = iface.create_method('sum', NativeTypes.INT32, ('i0', NativeTypes.INT32), ('i1', NativeTypes.INT32))
 
         assert 'sum' in iface.declared_methods
         assert method.name == 'sum'
-        assert method.result is Types.INT32
+        assert method.result is NativeTypes.INT32
 
         i0 = method.args['i0']
         i1 = method.args['i1']
         assert i0.name == 'i0'
         assert i1.name == 'i1'
-        assert i0.type is Types.INT32
-        assert i1.type is Types.INT32
+        assert i0.type is NativeTypes.INT32
+        assert i1.type is NativeTypes.INT32
 
     def test_add_method_duplicate(self):
         '''Should prevent duplicate methods in interfaces.'''
         iface = Interface('Iface')
-        iface.add_method('doNothing')
+        iface.create_method('doNothing')
         try:
-            iface.add_method('doNothing')
+            iface.create_method('doNothing')
             self.fail()
         except PdefException, e:
             assert 'duplicate' in e.message
@@ -597,7 +597,7 @@ class TestInterface(unittest.TestCase):
 class TestMethod(unittest.TestCase):
     def test_fullname(self):
         iface = Interface('Interface')
-        method = iface.add_method('method', Types.INT32, ('i0', Types.INT32), ('i1', Types.INT32))
+        method = iface.create_method('method', NativeTypes.INT32, ('i0', NativeTypes.INT32), ('i1', NativeTypes.INT32))
 
         module = Module('test')
         module.add_definition(iface)

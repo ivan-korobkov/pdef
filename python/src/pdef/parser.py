@@ -5,21 +5,24 @@ import ply.lex as lex
 import ply.yacc as yacc
 
 from pdef import ast
+from pdef.common import PdefException
 
 
 class Tokens(object):
     # Simple reserved words.
-    reserved = ('DISCRIMINATOR', 'MODULE', 'FROM', 'IMPORT',
-                'BOOL', 'INT16', 'INT32', 'INT64', 'FLOAT', 'DOUBLE', 'DECIMAL',
-                'DATE', 'DATETIME', 'STRING', 'UUID', 'OBJECT', 'VOID',
-                'LIST', 'SET', 'MAP', 'ENUM', 'MESSAGE', 'EXCEPTION', 'INTERFACE')
+    types = (
+        'BOOL', 'INT16', 'INT32', 'INT64', 'FLOAT', 'DOUBLE',
+        'STRING', 'OBJECT', 'VOID', 'LIST', 'SET', 'MAP', 'ENUM',
+        'MESSAGE', 'EXCEPTION', 'INTERFACE')
+
+    reserved = types + ('MODULE', 'FROM', 'IMPORT', 'DISCRIMINATOR')
 
     tokens = reserved + (
         'COLON', 'COMMA', 'SEMI',
         'LESS', 'GREATER',
         'LBRACE', 'RBRACE',
         'LPAREN', 'RPAREN',
-        'IDENTIFIER', 'DOC')
+        'IDENTIFIER', 'DOC', 'THROWS')
 
     # Regular expressions for simple rules
     t_COLON = r'\:'
@@ -100,6 +103,16 @@ class GrammarRules(object):
         '''
         pass
 
+    def p_doc(self, t):
+        '''
+        doc : DOC
+            | empty
+        '''
+        if len(t) == 2:
+            t[0] = t[1]
+        else:
+            t[0] = ''
+
     def p_imports(self, t):
         '''
         imports : imports import
@@ -139,76 +152,6 @@ class GrammarRules(object):
         d.location = self._location(t)
         t[0] = d
 
-    def p_doc(self, t):
-        '''
-        doc : DOC
-            | empty
-        '''
-        if len(t) == 2:
-            t[0] = t[1]
-        else:
-            t[0] = ''
-
-    def p_ref(self, t):
-        '''
-        ref : value_ref
-            | list_ref
-            | set_ref
-            | map_ref
-            | def_ref
-        '''
-        t[0] = t[1]
-
-    def p_value_ref(self, t):
-        '''
-        value_ref : BOOL
-                  | INT16
-                  | INT32
-                  | INT64
-                  | FLOAT
-                  | DOUBLE
-                  | DECIMAL
-                  | DATE
-                  | DATETIME
-                  | STRING
-                  | UUID
-                  | OBJECT
-                  | VOID
-        '''
-        t[0] = ast.Ref(t[1].lower())
-
-    def p_list_ref(self, t):
-        '''
-        list_ref : LIST LESS ref GREATER
-        '''
-        t[0] = ast.ListRef(t[3])
-
-    def p_set_ref(self, t):
-        '''
-        set_ref : SET LESS ref GREATER
-        '''
-        t[0] = ast.SetRef(t[3])
-
-    def p_map_ref(self, t):
-        '''
-        map_ref : MAP LESS ref COMMA ref GREATER
-        '''
-        t[0] = ast.MapRef(t[3], t[5])
-
-    def p_def_ref(self, t):
-        '''
-        def_ref : IDENTIFIER
-        '''
-        if '.' in t[1]:
-            if t[1].count('.') != 1:
-                self._error('Wrong identifier %s, line %s', t[1], t.lexer.lineno)
-                raise SyntaxError
-            else:
-                enum, value = t[1].split('.')
-                t[0] = ast.EnumValueRef(ast.DefinitionRef(enum), value)
-        else:
-            t[0] = ast.DefinitionRef(t[1])
-
     def p_enum(self, t):
         '''
         enum : ENUM IDENTIFIER LBRACE enum_values RBRACE
@@ -224,15 +167,21 @@ class GrammarRules(object):
 
     def p_enum_value_list(self, t):
         '''
-        enum_value_list : enum_value_list COMMA IDENTIFIER
-                        | IDENTIFIER
+        enum_value_list : enum_value_list COMMA enum_value
+                        | enum_value
         '''
         self._list(t, separated=1)
+
+    def p_enum_value(self, t):
+        '''
+        enum_value : doc IDENTIFIER
+        '''
+        t[0] = t[1]
 
     # Message definition
     def p_message(self, t):
         '''
-        message : message_or_exc IDENTIFIER message_base LBRACE fields RBRACE
+        message : message_or_exc IDENTIFIER message_base LBRACE field_list RBRACE
         '''
         name = t[2]
         base, base_type = t[3]
@@ -251,8 +200,8 @@ class GrammarRules(object):
 
     def p_message_base(self, t):
         '''
-        message_base : COLON ref LPAREN def_ref RPAREN
-                     | COLON ref
+        message_base : COLON type LPAREN def_type RPAREN
+                     | COLON type
                      | empty
         '''
         if len(t) == 2:
@@ -267,42 +216,67 @@ class GrammarRules(object):
         else:
             raise SyntaxError
 
+    def p_field_list(self, t):
+        '''
+        field_list : fields SEMI
+                   | fields
+        '''
+        t[0] = t[1]
+
     # List of message fields
     def p_fields(self, t):
         '''
-        fields : fields field
+        fields : fields SEMI field
                | field
                | empty
         '''
-        self._list(t)
+        self._list(t, separated=True)
 
     # Single message field
     def p_field(self, t):
         '''
-        field : IDENTIFIER ref COMMA DISCRIMINATOR SEMI
-              | IDENTIFIER ref SEMI
+        field : doc IDENTIFIER type field_options
         '''
         t[0] = ast.Field(t[1], type=t[2], is_discriminator=len(t) == 6)
+
+    def p_field_options(self, t):
+        '''
+        field_options : COMMA DISCRIMINATOR
+                      | empty
+        '''
+        if (len(t) == 2):
+            t[0] = [t[1]]
+        else:
+            t[0] = []
 
     # Interface definition
     def p_interface(self, t):
         '''
-        interface : INTERFACE IDENTIFIER interface_base LBRACE methods RBRACE
+        interface : INTERFACE IDENTIFIER interface_options LBRACE methods RBRACE
         '''
         name = t[2]
         base = t[3]
         methods = t[5]
         t[0] = ast.Interface(name, base=base, methods=methods)
 
-    def p_interface_base(self, t):
+    def p_interface_options(self, t):
         '''
-        interface_base : COLON ref
-                       | empty
+        interface_options : COLON type COMMA THROWS type
+                          | COLON THROWS type
+                          | COLON type
+                          | empty
         '''
-        if len(t) == 2:
-            t[0] = []
-        else:
-            t[0] = t[2]
+        base = None
+        exc = None
+        if len(t) == 6:
+            base = t[2]
+            exc = t[5]
+        elif len(t) == 4:
+            exc = t[3]
+        elif len(t) == 3:
+            base = t[2]
+
+        t[0] = ast.InterfaceOptions(base=base, exc=exc)
 
     def p_methods(self, t):
         '''
@@ -314,7 +288,7 @@ class GrammarRules(object):
 
     def p_method(self, t):
         '''
-        method : doc IDENTIFIER LPAREN method_args RPAREN ref SEMI
+        method : doc IDENTIFIER LPAREN fields RPAREN type method_options SEMI
         '''
         doc = t[1]
         name = t[2]
@@ -322,19 +296,67 @@ class GrammarRules(object):
         result = t[6]
         t[0] = ast.Method(name, args=args, result=result, doc=doc)
 
-    def p_method_args(self, t):
+    def p_method_options(self, t):
         '''
-        method_args : method_args COMMA method_arg
-                    | method_arg
-                    | empty
+        method_options : empty
         '''
-        self._list(t, separated=1)
+        t[0] = []
 
-    def p_method_arg(self, t):
+    def p_type(self, t):
         '''
-        method_arg : IDENTIFIER ref
+        type : value_type
+            | list_type
+            | set_type
+            | map_type
+            | def_type
         '''
-        t[0] = ast.MethodArg(t[1], t[2])
+        t[0] = t[1]
+
+    def p_value_type(self, t):
+        '''
+        value_type : BOOL
+                   | INT16
+                   | INT32
+                   | INT64
+                   | FLOAT
+                   | DOUBLE
+                   | STRING
+                   | OBJECT
+                   | VOID
+        '''
+        t[0] = ast.TypeRef(t[1].lower())
+
+    def p_list_type(self, t):
+        '''
+        list_type : LIST LESS type GREATER
+        '''
+        t[0] = ast.ListRef(t[3])
+
+    def p_set_type(self, t):
+        '''
+        set_type : SET LESS type GREATER
+        '''
+        t[0] = ast.SetRef(t[3])
+
+    def p_map_type(self, t):
+        '''
+        map_type : MAP LESS type COMMA type GREATER
+        '''
+        t[0] = ast.MapRef(t[3], t[5])
+
+    def p_def_type(self, t):
+        '''
+        def_type : IDENTIFIER
+        '''
+        if '.' in t[1]:
+            if t[1].count('.') != 1:
+                self._error('Wrong identifier %s, line %s', t[1], t.lexer.lineno)
+                raise SyntaxError
+            else:
+                enum, value = t[1].split('.')
+                t[0] = ast.EnumValueRef(ast.DefType(enum), value)
+        else:
+            t[0] = ast.DefType(t[1])
 
     def p_error(self, t):
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)
@@ -387,11 +409,16 @@ class Parser(GrammarRules, Tokens):
         finally:
             self.filepath = 'stream'
 
-    def parse(self, s, **kwargs):
-        return self.parser.parse(s, debug=self.debug, tracking=True, **kwargs)
+    def parse(self, s):
+        result = self.parser.parse(s, debug=self.debug, tracking=True, lexer=self.lexer)
+        if self.errors:
+            raise PdefException('Syntax errors')
+        return result
 
     def _error(self, msg, *args):
-        logging.error('%s: %s' % (self.filepath, msg), *args)
+        msg = '%s: %s' % (self.filepath, msg)
+        logging.error(msg, *args)
+        self.errors.append(msg)
 
     def _location(self, t):
         return ast.Location(self.filepath, t.lineno(1))

@@ -17,8 +17,8 @@ class TestPdef(unittest.TestCase):
 
         import_node = ast.Import('module0', 'Type', 'Base')
         def_node = ast.Message('Message',
-                               base=ast.DefinitionRef('Base'),
-                               base_type=ast.EnumValueRef(ast.DefinitionRef('Type'), 'MESSAGE'),
+                               base=ast.DefType('Base'),
+                               base_type=ast.EnumValueRef(ast.DefType('Type'), 'MESSAGE'),
                                fields=[ast.Field('field', ast.Ref(Type.INT32))])
         file_node = ast.File('module1', imports=[import_node], definitions=[def_node])
         module1 = Module.from_ast(file_node)
@@ -90,7 +90,7 @@ class TestModule(unittest.TestCase):
 
         module = Module('test')
         module.add_definition(enum)
-        one = module.lookup(ast.EnumValueRef(ast.DefinitionRef('Number'), 'ONE'))
+        one = module.lookup(ast.EnumValueRef(ast.DefType('Number'), 'ONE'))
         assert one is enum.values['ONE']
 
     def test_lookup_enum_value_not_present(self):
@@ -100,7 +100,7 @@ class TestModule(unittest.TestCase):
         module.add_definition(enum)
 
         try:
-            module.lookup(ast.EnumValueRef(ast.DefinitionRef('Number'), 'ONE'))
+            module.lookup(ast.EnumValueRef(ast.DefType('Number'), 'ONE'))
             self.fail()
         except PdefException, e:
             assert 'not found' in e.message
@@ -112,7 +112,7 @@ class TestModule(unittest.TestCase):
         module = Module('test')
         module.add_definition(def0)
 
-        ref = ast.DefinitionRef('Test')
+        ref = ast.DefType('Test')
         result = module.lookup(ref)
         assert def0 is result
 
@@ -122,7 +122,7 @@ class TestModule(unittest.TestCase):
         module0 = Module('module0')
         module0.add_import(def0)
 
-        ref = ast.DefinitionRef('def0')
+        ref = ast.DefType('def0')
         result = module0.lookup(ref)
         assert def0 is result
 
@@ -133,7 +133,7 @@ class TestModule(unittest.TestCase):
         module = Module('test')
         module.add_definition(def0)
 
-        ref = ast.DefinitionRef('Test')
+        ref = ast.DefType('Test')
         result = module.lookup(ref)
         assert result._linked
 
@@ -198,7 +198,7 @@ class TestEnum(unittest.TestCase):
 class TestMessage(unittest.TestCase):
     def test_from_ast(self):
         '''Should create a message from an AST node.'''
-        node = ast.Message('Msg', base=ast.DefinitionRef('Base'),
+        node = ast.Message('Msg', base=ast.DefType('Base'),
                            fields=[ast.Field('field', ast.Ref(Type.INT32))])
         msg = Message.from_ast(node)
         assert msg.name == node.name
@@ -210,8 +210,8 @@ class TestMessage(unittest.TestCase):
         enum.add_value('ONE')
         base = Message('Base')
         base.add_field('type', enum, is_discriminator=True)
-        node = ast.Message('Msg', base=ast.DefinitionRef('Base'),
-                           base_type=ast.EnumValueRef(ast.DefinitionRef('Type'), 'ONE'),
+        node = ast.Message('Msg', base=ast.DefType('Base'),
+                           base_type=ast.EnumValueRef(ast.DefType('Type'), 'ONE'),
                            fields=[ast.Field('field', ast.Ref(Type.INT32))])
         msg = Message.from_ast(node)
 
@@ -488,7 +488,7 @@ class TestMap(unittest.TestCase):
 class TestInterface(unittest.TestCase):
     def test_from_ast(self):
         '''Should create an interface from an AST node.'''
-        node = ast.Interface('Iface', base=ast.DefinitionRef('Base'),
+        node = ast.Interface('Iface', base=ast.DefType('Base'),
             methods=[ast.Method('echo', args=[ast.MethodArg('text', ast.Ref(Type.STRING))],
                                 result=ast.Ref(Type.STRING))])
         iface = Interface.from_ast(node)
@@ -498,7 +498,7 @@ class TestInterface(unittest.TestCase):
     def test_link(self):
         '''Should init and link an interface from an AST node if present.'''
         base = Interface('Base')
-        node = ast.Interface('Iface', base=ast.DefinitionRef('Base'),
+        node = ast.Interface('Iface', base=ast.DefType('Base'),
             methods=[ast.Method('echo', args=[ast.MethodArg('text', ast.Ref(Type.STRING))],
                                 result=ast.Ref(Type.STRING))])
         iface = Interface.from_ast(node)

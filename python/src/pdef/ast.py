@@ -27,70 +27,6 @@ class Import(object):
         self.names = names
 
 
-class Ref(object):
-    def __init__(self, type):
-        self.type = type
-
-    def __repr__(self):
-        return self.type
-
-    @property
-    def is_primitive(self):
-        return self.type in Type.PRIMITIVES
-
-    @property
-    def is_datatype(self):
-        return self.type in Type.DATATYPES
-
-
-class ListRef(Ref):
-    def __init__(self, element):
-        Ref.__init__(self, Type.LIST)
-        self.element = element
-
-    def __repr__(self):
-        return 'list<%s>' % self.element
-
-
-class SetRef(Ref):
-    def __init__(self, element):
-        Ref.__init__(self, Type.SET)
-        self.element = element
-
-    def __repr__(self):
-        return 'set<%s>' % self.element
-
-
-class MapRef(Ref):
-    def __init__(self, key, value):
-        Ref.__init__(self, Type.MAP)
-        self.key = key
-        self.value = value
-
-    def __repr__(self):
-        return 'map<%s, %s>' % (self.key, self.value)
-
-
-class EnumValueRef(Ref):
-    def __init__(self, enum, value):
-        super(EnumValueRef, self).__init__(Type.ENUM_VALUE)
-        check_isinstance(enum, DefinitionRef)
-        self.enum = enum
-        self.value = value
-
-    def __repr__(self):
-        return '%s.%s' % (self.enum, self.value)
-
-
-class DefinitionRef(Ref):
-    def __init__(self, name):
-        Ref.__init__(self, Type.DEFINITION)
-        self.name = name
-
-    def __repr__(self):
-        return self.name
-
-
 class Definition(object):
     def __init__(self, name, type, doc=None):
         self.name = name
@@ -131,6 +67,17 @@ class Interface(Definition):
         self.methods = tuple(methods) if methods else ()
 
 
+class InterfaceOptions(object):
+    def __init__(self, base=None, exc=None):
+        self.base = base
+        self.exc = exc
+
+
+class InterfaceBase(object):
+    def __init__(self, type):
+        self.type = type
+
+
 class Method(object):
     def __init__(self, name, args=None, result=None, doc=None):
         self.name = name
@@ -139,7 +86,65 @@ class Method(object):
         self.doc = doc
 
 
-class MethodArg(object):
-    def __init__(self, name, type):
-        self.name = name
+class TypeRef(object):
+    def __init__(self, type):
         self.type = type
+
+    def __repr__(self):
+        return self.type
+
+    @property
+    def is_primitive(self):
+        return self.type in Type.PRIMITIVES
+
+    @property
+    def is_datatype(self):
+        return self.type in Type.DATATYPES
+
+
+class ListRef(TypeRef):
+    def __init__(self, element):
+        super(ListRef, self).__init__(Type.LIST)
+        self.element = element
+
+    def __repr__(self):
+        return 'list<%s>' % self.element
+
+
+class SetRef(TypeRef):
+    def __init__(self, element):
+        super(SetRef, self).__init__(Type.SET)
+        self.element = element
+
+    def __repr__(self):
+        return 'set<%s>' % self.element
+
+
+class MapRef(TypeRef):
+    def __init__(self, key, value):
+        super(MapRef, self).__init__(Type.MAP)
+        self.key = key
+        self.value = value
+
+    def __repr__(self):
+        return 'map<%s, %s>' % (self.key, self.value)
+
+
+class EnumValueRef(TypeRef):
+    def __init__(self, enum, value):
+        super(EnumValueRef, self).__init__(Type.ENUM_VALUE)
+        check_isinstance(enum, DefType)
+        self.enum = enum
+        self.value = value
+
+    def __repr__(self):
+        return '%s.%s' % (self.enum, self.value)
+
+
+class DefType(TypeRef):
+    def __init__(self, name):
+        super(DefType, self).__init__(Type.DEFINITION)
+        self.name = name
+
+    def __repr__(self):
+        return self.name

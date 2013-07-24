@@ -2,7 +2,7 @@ module io.pdef.test;
 
 /** Test enum. */
 enum TestEnum {
-    ONE, TWO, THREE
+    ONE, TWO, THREE;
 }
 
 /** Test message with fields of all data types. */
@@ -14,11 +14,7 @@ message TestMessage {
     anInt64     int64;
     aFloat      float;
     aDouble     double;
-    //aDecimal    decimal;
-    //aDate       date;
-    //aDatetime   datetime;
     aString     string;
-    //aUuid       uuid;
 
     aList       list<string>;
     aSet        set<string>;
@@ -70,13 +66,13 @@ interface TestInterface {
     void0() void;
 
     /** Camel-case method w/o args with a string result. */
-    camelCase(firstArg string, secondArg string) string;
+    camelCase(firstArg string; secondArg string) string;
 
     /** Method which accepts and returns a message. */
     message0(msg TestMessage) TestMessage;
 
     /** Method which accepts and returns primitives. */
-    sum(i0 int32, i1 int32) int32;
+    sum(i0 int32; i1 int32) int32;
 
     /** Interface method. */
     interface0() TestInterface1;
@@ -84,7 +80,7 @@ interface TestInterface {
 
 /** An interface returned as a sub interface in TestInterface. */
 interface TestInterface1 {
-    hello(firstName string, lastName string) string;
+    hello(firstName string; lastName string) string;
 }
 
 /** Interface inheritance tree. */

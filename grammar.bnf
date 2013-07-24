@@ -15,12 +15,22 @@
 <EnumValues>    :: = EnumValue (',' EnumValue)* ';'?
 <EnumValue>     :: = Doc? Identifier
 
-<Message>       ::= ('message' | 'exception') Identifier (':' Modifiers)? '{' Fields? '}'
-<Fields>        ::= Field (';' Field)* ';'?
-<Field>         ::= Doc? Identifier Type (',' Modifiers)?
+<Message>       ::= ('message' | 'exception') Identifier (':' MessageBase)? '{' Fields? '}'
+<MessageBase>   ::= DefType | (DefType '(' DefType ')')
 
-<Interface>     ::= 'interface' Identifier (':' Modifiers)? '{' Method* '}'
-<Method>        ::= Doc? Identifier '(' Fields? ')' Type (',' Modifiers) ';'
+<Fields>        ::= Field (';' Field)* ';'?
+<Field>         ::= Doc? Identifier Type (',' FieldOptions)?
+<FieldOptions>  ::= FieldOption (',' FieldOption)*
+<FieldOption>   ::= 'discriminator' | 'deprecated'
+
+<Interface>     ::= 'interface' Identifier (':' InterfaceOptions)? '{' Method* '}'
+<InterfaceOptions>  := (InterfaceBase (',' InterfaceExc)?) | InterfaceExc?
+<InterfaceBase>     := DefType
+<InterfaceExc>      := 'throws' DefType
+
+<Method>        ::= Doc? Identifier '(' Fields? ')' Type (',' MethodOptions)? ';'
+<MethodOptions> ::= MethodOption (',' MethodOption)*
+<MethodOption>  ::= 'mutator' | 'deprecated' | 'index'
 
 <Type>          ::= ValueType | ListType | SetType | MapType | DefType
 <ValueType>     ::= 'bool'
@@ -36,11 +46,6 @@
 <SetType>       ::= 'set' '<' Type '>'
 <MapType>       ::= 'map' '<' Type ',' Type '>'
 <DefType>       ::= Identifier
-
-<Modifiers>     ::= Modifier (',' Modifier)*
-<Modifier>      ::= Base | Throws | 'mutator' | 'obsolete' | 'discriminator'
-<Base>          ::= DefType '(' DefType ')'
-<Throws>        ::= 'throws' '(' DefType ')'
 
 <Identifier>    ::= ( Letter | '_' ) ( Letter | Digit | '.' | '_' )*
 <Letter>        ::= ['A'-'Z'] | ['a'-'z']

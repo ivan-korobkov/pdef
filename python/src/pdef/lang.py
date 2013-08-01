@@ -7,9 +7,8 @@ from pdef.preconditions import check_isinstance, check_state
 
 
 class Symbol(object):
-    '''Abstract base symbol which has a location and error checks.'''
+    '''Abstract base symbol.'''
     name = None
-    location = None
     doc = None
 
     @property
@@ -20,8 +19,6 @@ class Symbol(object):
         if expression: return
 
         msg = msg % args if msg else 'Error'
-        if self.location:
-            msg = '%s: %s' % (self.location, msg)
         raise PdefException(msg)
 
 
@@ -30,7 +27,9 @@ class Package(Symbol):
     @classmethod
     def parse_nodes(cls, name, nodes):
         package = Package(name)
-        map(package.parse_module, nodes)
+        for n in nodes:
+            package.parse_module(n)
+
         package.link()
         return package
 
@@ -74,7 +73,6 @@ class Module(Symbol):
     def parse_node(cls, node, package):
         '''Creates a module from an AST node.'''
         module = Module(node.name, package)
-        module.location = node.location
 
         map(module.parse_import, node.imports)
         map(module.parse_definition, node.definitions)
@@ -107,7 +105,7 @@ class Module(Symbol):
         '''Adds a new definition to this module.'''
         check_isinstance(definition, Definition)
         self._check(definition.name not in self.imports,
-                    '%s: definition %r clashes with an import' % (self, definition.name))
+                    '%s: definition clashes with an import, %r' % (self, definition.name))
 
         self.definitions.add(definition)
         logging.debug('%s: added a definition "%s"', self, definition)
@@ -120,7 +118,8 @@ class Module(Symbol):
     def get_definition(self, name):
         '''Returns a definition by its name, or raises an exception.'''
         def0 = self.definitions.get(name)
-        if not def0: raise PdefException('%s: definitions %r is not found' % (self, name))
+        if not def0:
+            raise PdefException('%s: definition is not found, %r' % (self, name))
         return def0
 
     def lookup(self, ref):
@@ -165,16 +164,21 @@ class Definition(Symbol):
     @classmethod
     def parse_node(cls, node, module, lookup):
         '''Creates a definition from an AST node.'''
-        if node.type == Type.ENUM: return Enum.parse_node(node, module, lookup)
-        elif node.type == Type.MESSAGE: return Message.parse_node(node, module, lookup)
-        elif node.type == Type.INTERFACE: return Interface.parse_node(node, module, lookup)
+        if node.type == Type.ENUM:
+            return Enum.parse_node(node, module, lookup)
+
+        elif node.type == Type.MESSAGE:
+            return Message.parse_node(node, module, lookup)
+
+        elif node.type == Type.INTERFACE:
+            return Interface.parse_node(node, module, lookup)
 
         raise ValueError('Unsupported definition node %s' % node)
 
-    def __init__(self, type, name, doc=None):
+    def __init__(self, type, name, module=None, doc=None):
         self.type = type
         self.name = name
-        self.module = None
+        self.module = module
         self.doc = doc
         self._linked = False
 
@@ -196,14 +200,69 @@ class Definition(Symbol):
     def is_datatype(self):
         return self.type in Type.DATATYPES
 
+    @property
+    def is_interface(self):
+        return self.type == Type.INTERFACE
+
+    @property
+    def is_message(self):
+        return self.type == Type.MESSAGE
+
+    @property
+    def is_enum(self):
+        return self.type == Type.ENUM
+
+    @property
+    def is_enum_value(self):
+        return self.type == Type.ENUM_VALUE
+
     def link(self):
-        if self._linked: return
+        if self._linked:
+            return
 
         self._linked = True
         self._link()
 
     def _link(self):
         pass
+
+
+class NativeType(Definition):
+    '''Native type definition, i.e. it defines a native language type such as string, int, etc.'''
+    def __init__(self, type):
+        super(NativeType, self).__init__(type, type)
+        self.type = type
+
+
+class NativeTypes(object):
+    '''Native types.'''
+    BOOL = NativeType(Type.BOOL)
+    INT16 = NativeType(Type.INT16)
+    INT32 = NativeType(Type.INT32)
+    INT64 = NativeType(Type.INT64)
+    FLOAT = NativeType(Type.FLOAT)
+    DOUBLE = NativeType(Type.DOUBLE)
+    DECIMAL = NativeType(Type.DECIMAL)
+    DATE = NativeType(Type.DATE)
+    DATETIME = NativeType(Type.DATETIME)
+    STRING = NativeType(Type.STRING)
+    UUID = NativeType(Type.UUID)
+
+    OBJECT = NativeType(Type.OBJECT)
+    VOID = NativeType(Type.VOID)
+
+    _BY_TYPE = None
+
+    @classmethod
+    def get_by_type(cls, t):
+        '''Returns a value by its type or none.'''
+        if cls._BY_TYPE is None:
+            cls._BY_TYPE = {}
+            for k, v in cls.__dict__.items():
+                if not isinstance(v, NativeType): continue
+                cls._BY_TYPE[v.type] = v
+
+        return cls._BY_TYPE.get(t)
 
 
 class Enum(Definition):
@@ -255,8 +314,8 @@ class Message(Definition):
         message.base = lookup(node.base) if node.base else None
         message.base_type = lookup(node.base_type) if node.base_type else None
 
-        for fn in node.fields:
-            message.parse_field(fn, lookup)
+        for n in node.fields:
+            message.parse_field(n, lookup)
         return message
 
     def __init__(self, name, is_exception=False, doc=None):
@@ -272,18 +331,31 @@ class Message(Definition):
 
     @property
     def fields(self):
-        return self.declared_fields + self.base.fields if self.base else self.declared_fields
+        if not self.base:
+            return self.declared_fields
+
+        return self.declared_fields + self.base.fields
 
     @property
     def inherited_fields(self):
-        return self.base.fields if self.base else SymbolTable(self, 'inherited_fields')
+        if not self.base:
+            return SymbolTable('fields')
+
+        return self.base.fields
 
     @property
     def discriminator(self):
         '''Returns this message discriminator field, base discriminator field, or None.'''
         if self._discriminator:
             return self._discriminator
+
         return self.base.discriminator if self.base else None
+
+    def set_base(self, base, base_type=None):
+        '''Sets this message base and polymorphic base type.'''
+        self.base = base
+        self.base_type = base_type
+        logging.debug('%s: set base to %s, base_type=%s', self, base, base_type)
 
     def add_field(self, field):
         '''Adds a new field to this message and returns the field.'''
@@ -304,37 +376,8 @@ class Message(Definition):
 
     def parse_field(self, node, lookup):
         '''Creates a new field from an AST node and adds it to this message.'''
-        field = Field.parse_from(node, self, lookup=lookup)
+        field = Field.parse_node(node, message=self, lookup=lookup)
         return self.add_field(field)
-
-    def _link(self):
-        '''Initializes this message from its AST node if present.'''
-        self._link_base()
-        self._link_fields()
-        logging.debug('%s: linked', self)
-
-    def _link_base(self):
-        self.base = self.base() if callable(self.base) else self.base
-        self.base_type = self.base_type() if callable(self.base_type) else self.base_type
-
-        base = self.base
-        base_type = self.base_type
-        if base:
-            check_isinstance(base, Message)
-            self._check(self != base, '%s: cannot inherit itself', self)
-            self._check(self not in base._bases, '%s: circular inheritance with %s', self, base)
-            self._check(self.is_exception == base.is_exception, '%s: cannot inherit %s',
-                        self, base.fullname)
-
-        if base_type:
-            check_isinstance(base_type, EnumValue)
-            self._check(base.discriminator,
-                        '%s: polymorphic inheritance of a non-polymorphic base %s', self, base)
-            self.base_type = base_type
-            self.base._add_subtype(self)
-        else:
-            self._check(not base.discriminator,
-                        '%s: non-polymorphic inheritance of a polymorphic base %s', self, base)
 
     def _add_subtype(self, subtype):
         '''Adds a new subtype to this message, checks its base_type.'''
@@ -349,32 +392,59 @@ class Message(Definition):
         if self.base and self.base.discriminator == self.discriminator:
             self.base._add_subtype(subtype)
 
+    def _link(self):
+        '''Initializes this message from its AST node if present.'''
+        self._link_base()
+        self._link_fields()
+        logging.debug('%s: linked', self)
+
+    def _link_base(self):
+        self.base = self.base() if callable(self.base) else self.base
+        self.base_type = self.base_type() if callable(self.base_type) else self.base_type
+
+        base = self.base
+        base_type = self.base_type
+        if base:
+            self._check(base.is_message, '%s: base must be a message, %s', self, base)
+            self._check(self != base, '%s: cannot inherit itself', self)
+            self._check(self.is_exception == base.is_exception, '%s: cannot inherit %s',
+                        self, base)
+            self._check_circular_inheritance()
+            base.link()
+
+        if base_type:
+            self._check(base_type.is_enum_value, '%s: base type must be an enum value, %s',
+                        self, base_type)
+            self._check(base.discriminator,
+                        '%s: polymorphic inheritance of a non-polymorphic base %s', self, base)
+            self.base._add_subtype(self)
+        else:
+            self._check(not base or not base.discriminator,
+                        '%s: non-polymorphic inheritance of a polymorphic base %s', self, base)
+
     def _link_fields(self):
-        for field in self.fields:
+        for field in self.declared_fields.values():
             field.link()
-        # TODO: duplicate fields in inherited fields.
 
-    @property
-    def _bases(self):
-        '''Internal, returns all this message bases.'''
-        bases = []
+        inherited_fields = self.inherited_fields
+        for field in self.declared_fields.values():
+            self._check(field.name not in inherited_fields, '%s: duplicate field %s', self, field)
 
-        b = self
-        while b.base:
-            bases.append(b.base)
+    def _check_circular_inheritance(self):
+        b = self.base
+        while b:
+            self._check(b is not self, '%s: circular inheritance with %s', self, b)
             b = b.base
 
-        return bases
 
-
-class Field(object):
+class Field(Symbol):
     '''Single message field.'''
     @classmethod
-    def parse_from(cls, node, message, lookup):
+    def parse_node(cls, node, message, lookup):
         '''Creates a field from an AST node.'''
         check_isinstance(node, ast.Field)
-        return Field(node.name, type=lookup(node.type), message=message,
-                     is_discriminator=node.is_discriminator)
+        type0 = lookup(node.type)
+        return Field(node.name, type=type0, message=message, is_discriminator=node.is_discriminator)
 
     def __init__(self, name, type, message, is_discriminator=False):
         self.name = name
@@ -433,12 +503,14 @@ class Interface(Definition):
     def add_method(self, method):
         '''Adds a method to this interface.'''
         self.declared_methods.add(method)
-        self.methods.add(method)
         logging.debug('%s: added a method "%s"', self, method)
 
     def create_method(self, name, result=NativeTypes.VOID, *args_tuples):
         '''Adds a new method to this interface and returns the method.'''
-        method = Method(name, result, self, args_tuples)
+        method = Method(name, result, self)
+        for arg_tuple in args_tuples:
+            method.create_arg(*arg_tuple)
+
         self.add_method(method)
         return method
 
@@ -455,30 +527,34 @@ class Interface(Definition):
 
     def _link_base(self):
         self.base = self.base() if callable(self.base) else self.base
+        if not self.base:
+            return
+
         base = self.base
-        if base:
-            check_isinstance(base, Interface)
-            self._check(base is not self, '%s: self inheritance', self)
-            self._check(self not in base._all_bases, '%s: circular inheritance with %s', self, base)
+        base.link()
+        self._check(base.is_interface, '%s: base must be an interface, %s', self, base)
+        self._check(base is not self, '%s: self inheritance', self)
+        self._check_circular_inheritance()
 
     def _link_methods(self):
-        # TODO: check inherited methods duplicates
-        for method in self.methods:
+        for method in self.declared_methods.values():
             method.link()
-        pass
 
-    @property
-    def _all_bases(self):
-        '''Internal, returns all bases including the ones from the inherited interfaces.'''
-        bases = []
+        if not self.base:
+            return
+
+        base_methods = self.base.methods
+        for m in self.declared_methods.values():
+            self._check(m.name not in base_methods, '%s: duplicate base method %s', self, m)
+
+    def _check_circular_inheritance(self):
         b = self.base
         while b:
-            bases.append(b)
+            self._check(b is not self, '%s: circular inheritance with %s', self, b)
             b = b.base
-        return bases
 
 
-class Method(object):
+class Method(Symbol):
     '''Interface method.'''
     @classmethod
     def parse_from(cls, node, interface, lookup):
@@ -507,27 +583,33 @@ class Method(object):
         self.args.add(arg)
         logging.debug('%s: added an arg %s', self, arg)
 
+    def create_arg(self, name, definition):
+        '''Creates a new arg and adds it to this method.'''
+        arg = MethodArg(name, definition)
+        self.add_arg(arg)
+        return arg
+
     def parse_arg(self, node, lookup):
         '''Creates a new argument and adds it to this method.'''
-        arg = MethodArg.parse_from(node, self, lookup)
+        arg = MethodArg.parse_from(node, lookup)
         self.add_arg(arg)
 
     def link(self):
         self.result = self.result() if callable(self.result) else self.result
-        for arg in self.args: arg.link()
+        for arg in self.args.values():
+            arg.link()
         logging.debug('%s: linked', self)
 
 
-class MethodArg(object):
+class MethodArg(Symbol):
     '''Single method argument.'''
     @classmethod
-    def parse_from(cls, node, method, lookup):
+    def parse_from(cls, node, lookup):
         return MethodArg(node.name, lookup(node.type))
 
     def __init__(self, name, definition):
         self.name = name
         self.type = definition
-        check_isinstance(definition, Definition)
 
     def __repr__(self):
         return '%s %s' % (self.name, self.type)
@@ -535,44 +617,6 @@ class MethodArg(object):
     def link(self):
         self.type = self.type() if callable(self.type) else self.type
         self._check(self.type.is_datatype, '%s: must be a data type', self)
-
-
-class NativeType(Definition):
-    '''Native type definition, i.e. it defines a native language type such as string, int, etc.'''
-    def __init__(self, type):
-        super(NativeType, self).__init__(type, type)
-        self.type = type
-
-
-class NativeTypes(object):
-    '''Native types.'''
-    BOOL = NativeType(Type.BOOL)
-    INT16 = NativeType(Type.INT16)
-    INT32 = NativeType(Type.INT32)
-    INT64 = NativeType(Type.INT64)
-    FLOAT = NativeType(Type.FLOAT)
-    DOUBLE = NativeType(Type.DOUBLE)
-    DECIMAL = NativeType(Type.DECIMAL)
-    DATE = NativeType(Type.DATE)
-    DATETIME = NativeType(Type.DATETIME)
-    STRING = NativeType(Type.STRING)
-    UUID = NativeType(Type.UUID)
-
-    OBJECT = NativeType(Type.OBJECT)
-    VOID = NativeType(Type.VOID)
-
-    _BY_TYPE = None
-
-    @classmethod
-    def get_by_type(cls, t):
-        '''Returns a value by its type or none.'''
-        if cls._BY_TYPE is None:
-            cls._BY_TYPE = {}
-            for k, v in cls.__dict__.items():
-                if not isinstance(v, NativeType): continue
-                cls._BY_TYPE[v.type] = v
-
-        return cls._BY_TYPE.get(t)
 
 
 class List(Definition):
@@ -629,7 +673,7 @@ class SymbolTable(OrderedDict):
         '''Adds an item by with item.name as the key.'''
         self[item.name] = item
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value, PREV=0, NEXT=1, dict_setitem=dict.__setitem__):
         check_state(key not in self, '%s.%s: duplicate %s', self.parent, self.name, key)
         super(SymbolTable, self).__setitem__(key, value)
 

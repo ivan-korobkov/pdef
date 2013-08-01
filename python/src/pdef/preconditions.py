@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef.common import PdefException
+from pdef.types import PdefException
 
 
 def check_not_none(argument, msg=None, *args):

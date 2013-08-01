@@ -2,7 +2,7 @@
 import logging
 from collections import OrderedDict
 from pdef import ast
-from pdef.common import Type, PdefException
+from pdef.types import Type, PdefException
 from pdef.preconditions import check_isinstance, check_state
 
 

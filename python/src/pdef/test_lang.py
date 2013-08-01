@@ -2,11 +2,11 @@
 import mock
 import unittest
 from pdef import ast
-from pdef.common import Type
+from pdef.types import Type
 from pdef.lang import *
 
 
-class TestPdef(unittest.TestCase):
+class TestPackage(unittest.TestCase):
     def test(self):
         '''Should create a module from an AST node, link its imports and definitions.'''
         enum = Enum('Type', 'MESSAGE')

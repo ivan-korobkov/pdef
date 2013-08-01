@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef.common import Type
+from pdef.types import Type
 from pdef.preconditions import *
 
 

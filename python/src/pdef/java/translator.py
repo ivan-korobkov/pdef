@@ -1,6 +1,6 @@
 # encoding: utf-8
-from pdef.common import Type, upper_first
-from pdef.translator import AbstractTranslator
+from pdef.types import Type
+from pdef.translator import AbstractTranslator, upper_first
 
 
 class JavaTranslator(AbstractTranslator):

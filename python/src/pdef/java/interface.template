@@ -44,6 +44,13 @@ package {{ package }};
 
 {% endfor %}
         }
+{% if exc %}
+        @Nullable
+        @Override
+        public Descriptor<?> getExc() {
+            return {{ exc }};
+        }
+{% endif %}
 
 		@Override
 		public java.util.Map<String, io.pdef.descriptors.MethodDescriptor> getMethods() {

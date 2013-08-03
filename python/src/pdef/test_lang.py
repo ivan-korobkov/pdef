@@ -539,17 +539,21 @@ class TestInterface(unittest.TestCase):
     def test_parse_node(self):
         '''Should create an interface from an AST node.'''
         base_ref = ast.DefRef('Base')
-        node = ast.Interface('Iface', base=base_ref,
-                             methods=[ast.Method('echo',
-                                                 args=[ast.Field('text', ast.TypeRef(Type.STRING))],
-                             result=ast.TypeRef(Type.STRING))])
+        exc_ref = ast.DefRef('Exc')
+
+        node = ast.Interface('Iface', base=base_ref, exc=exc_ref,
+                methods=[ast.Method('echo', args=[ast.Field('text', ast.TypeRef(Type.STRING))],
+                result=ast.TypeRef(Type.STRING))])
 
         module = mock.Mock()
         lookup = mock.Mock()
 
         iface = Interface.parse_node(node, module, lookup)
         assert iface.name == node.name
+        assert iface.base
+        assert iface.exc
         assert 'echo' in iface.declared_methods
+        assert len(lookup.call_args_list) == 4
 
     def test_link(self):
         '''Should init and link interface base and declared methods.'''
@@ -562,7 +566,7 @@ class TestInterface(unittest.TestCase):
         assert iface.base is base
         assert iface.declared_methods['method'].result is NativeTypes.INT32
 
-    def test_link__base_self_inheritance(self):
+    def test_link_base__self_inheritance(self):
         '''Should prevent interface self-inheritance.'''
         iface = Interface('Iface')
         iface.set_base(iface)
@@ -573,7 +577,7 @@ class TestInterface(unittest.TestCase):
         except PdefException, e:
             assert 'self inheritance' in e.message
 
-    def test_link__base_circular_inheritance(self):
+    def test_link_base__circular_inheritance(self):
         '''Should prevent circular interface inheritance.'''
         iface0 = Interface('Iface0')
         iface1 = Interface('Iface1')
@@ -589,7 +593,7 @@ class TestInterface(unittest.TestCase):
         except PdefException, e:
             assert 'circular' in e.message
 
-    def test_link__base_must_be_interface(self):
+    def test_link_base__must_be_interface(self):
         '''Should prevent interface bases which are not interfaces.'''
         iface = Interface('Iface0')
         iface.set_base(NativeTypes.INT32)
@@ -598,6 +602,27 @@ class TestInterface(unittest.TestCase):
             self.fail()
         except PdefException, e:
             assert 'base must be an interface' in e.message
+
+    def test_link_exc(self):
+        '''Should link interface exception.'''
+        exc = Message('Exception', is_exception=True)
+        iface = Interface('Interface')
+        iface.exc = lambda: exc
+
+        iface.link()
+        assert iface.exc is exc
+
+    def test_link_exc__tries_to_throw_non_exception(self):
+        '''Should prevent setting interface exception to a non-exception type.'''
+        nonexc = Message('Message')
+        iface = Interface('Interface')
+        iface.exc = nonexc
+
+        try:
+            iface.link()
+            self.fail()
+        except PdefException, e:
+            assert 'tries to throw a non-exception' in e.message
 
     def test_methods(self):
         '''Should combine the inherited and declared methods.'''

@@ -2,7 +2,7 @@
 import logging
 from collections import OrderedDict
 from pdef import ast
-from pdef.parser import Parser
+from pdef.parser import _Parser
 from pdef.types import Type, PdefException
 from pdef.preconditions import check_isinstance, check_state
 
@@ -74,7 +74,7 @@ class Module(Symbol):
     @classmethod
     def parse_file(cls, path, package):
         '''Parses a module from a file.'''
-        parser = Parser(path)
+        parser = _Parser(path)
         node = parser.parse_file(path)
         return cls.parse_node(node, package)
 
@@ -299,6 +299,8 @@ class Definition(Symbol):
             return Interface.parse_node(node, module, lookup)
 
         raise ValueError('Unsupported definition node %s' % node)
+
+    is_exception = False # The flag is set in a message constructor.
 
     def __init__(self, type0, name, module=None, doc=None):
         self.type = type0
@@ -604,17 +606,19 @@ class Interface(Definition):
     @classmethod
     def parse_node(cls, node, module, lookup):
         check_isinstance(node, ast.Interface)
-        iface = Interface(node.name, doc=node.doc)
+        iface = Interface(node.name, module=module, doc=node.doc)
         iface.base = lookup(node.base) if node.base else None
+        iface.exc = lookup(node.exc) if node.exc else None
 
         for mnode in node.methods:
             iface.parse_method(mnode, lookup)
 
         return iface
 
-    def __init__(self, name, doc=None):
-        super(Interface, self).__init__(Type.INTERFACE, name, doc=doc)
-        self.base = None
+    def __init__(self, name, base=None, exc=None, module=None, doc=None):
+        super(Interface, self).__init__(Type.INTERFACE, name, module=module, doc=doc)
+        self.base = base
+        self.exc = exc
         self.declared_methods = SymbolTable(self, 'declared_methods')
 
     @property
@@ -654,6 +658,7 @@ class Interface(Definition):
     def _link(self):
         '''Initializes this interface from its AST node if present.'''
         self._link_base()
+        self._link_exc()
         self._link_methods()
         logging.debug("%s: linked", self)
 
@@ -667,6 +672,13 @@ class Interface(Definition):
         self._check(base.is_interface, '%s: base must be an interface, %s', self, base)
         self._check(base is not self, '%s: self inheritance', self)
         self._check_circular_inheritance()
+
+    def _link_exc(self):
+        if not self.exc:
+            return
+
+        self.exc = self.exc() if callable(self.exc) else self.exc
+        self._check(self.exc.is_exception, '%s: tries to throw a non-exception, %s', self, self.exc)
 
     def _link_methods(self):
         for method in self.declared_methods.values():

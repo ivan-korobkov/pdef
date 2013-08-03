@@ -12,31 +12,31 @@ __all__ = ('parse', 'parse_string')
 
 def parse_file(path):
     '''Parses a module file.'''
-    parser = Parser(path)
+    parser = _Parser(path)
     return parser.parse_file(path)
 
 
 def parse_string(s):
     '''Parses a module string.'''
-    parser = Parser('stream')
+    parser = _Parser('stream')
     return parser.parse_string(s)
 
 
-class Tokens(object):
+class _Tokens(object):
     # Simple reserved words.
     types = (
         'BOOL', 'INT16', 'INT32', 'INT64', 'FLOAT', 'DOUBLE',
         'STRING', 'OBJECT', 'VOID', 'LIST', 'SET', 'MAP', 'ENUM',
         'MESSAGE', 'EXCEPTION', 'INTERFACE')
 
-    reserved = types + ('MODULE', 'FROM', 'IMPORT', 'DISCRIMINATOR')
+    reserved = types + ('MODULE', 'FROM', 'IMPORT', 'DISCRIMINATOR', 'THROWS')
 
     tokens = reserved + (
         'COLON', 'COMMA', 'SEMI',
         'LESS', 'GREATER',
         'LBRACE', 'RBRACE',
         'LPAREN', 'RPAREN',
-        'IDENTIFIER', 'DOC', 'THROWS')
+        'IDENTIFIER', 'DOC')
 
     # Regular expressions for simple rules
     t_COLON = r'\:'
@@ -98,7 +98,7 @@ class Tokens(object):
         raise NotImplementedError()
 
 
-class GrammarRules(object):
+class _GrammarRules(object):
     # Starting point.
     def p_file(self, t):
         '''
@@ -282,9 +282,13 @@ class GrammarRules(object):
         interface : INTERFACE IDENTIFIER interface_options LBRACE methods RBRACE
         '''
         name = t[2]
-        base = t[3]
+        options = t[3]
         methods = t[5]
-        t[0] = ast.Interface(name, base=base, methods=methods)
+
+        base = options.base if options else None
+        exc = options.exc if options else None
+
+        t[0] = ast.Interface(name, base=base, exc=exc, methods=methods)
 
     def p_interface_options(self, t):
         '''
@@ -417,9 +421,9 @@ class GrammarRules(object):
         raise NotImplementedError()
 
 
-class Parser(GrammarRules, Tokens):
+class _Parser(_GrammarRules, _Tokens):
     def __init__(self, path, debug=False):
-        super(Parser, self).__init__()
+        super(_Parser, self).__init__()
         self.debug = debug
         self.lexer = lex.lex(module=self, debug=debug)
         self.parser = yacc.yacc(module=self, debug=debug, tabmodule='pdef.parsetab', start='file')

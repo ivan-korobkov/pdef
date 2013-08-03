@@ -1,7 +1,7 @@
 # encoding: utf-8
 import json
 from pdef.lang import Package
-from pdef.parser import Parser
+from pdef.parser import _Parser
 from pdef.java import JavaTranslator
 from pdef.csharp import CsharpTranslator
 
@@ -9,7 +9,7 @@ from pdef.csharp import CsharpTranslator
 class Compiler(object):
     def __init__(self):
         self.pdef = Package()
-        self.parser = Parser()
+        self.parser = _Parser()
         self.paths = []
         self.deps = []
 

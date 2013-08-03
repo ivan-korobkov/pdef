@@ -4,12 +4,17 @@ import com.google.common.base.Function;
 import io.pdef.Invocation;
 import io.pdef.InvocationResult;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /** Interface descriptor. */
 public interface InterfaceDescriptor<T> {
 	/** Returns this descriptor interface java class. */
 	Class<T> getJavaClass();
+
+	/** Returns an exception descriptor or null. */
+	@Nullable
+	Descriptor<?> getExc();
 
 	/** Returns a map of this interface methods. */
 	Map<String, MethodDescriptor> getMethods();

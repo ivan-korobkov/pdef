@@ -110,6 +110,7 @@ class JavaInterface(JavaDefinition):
         self.template = translator.interface_template
 
         self.base = translator.ref(iface.base) if iface.base else None
+        self.exc = translator.ref(iface.exc) if iface.exc else None
         self.methods = [translator.method(method) for method in iface.methods.values()]
         self.declared_methods = [translator.method(method)
                                  for method in iface.declared_methods.values()]

@@ -33,6 +33,12 @@ public class GeneratedInterfaceDescriptor<T> implements InterfaceDescriptor<T> {
 		return javaClass;
 	}
 
+	@Nullable
+	@Override
+	public Descriptor<?> getExc() {
+		return null;
+	}
+
 	@Override
 	public Map<String, MethodDescriptor> getMethods() {
 		return ImmutableMap.of();

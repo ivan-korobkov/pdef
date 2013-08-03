@@ -69,10 +69,11 @@ class Enum(Definition):
 
 
 class Interface(Definition):
-    def __init__(self, name, base=None, methods=None):
+    def __init__(self, name, base=None, exc=None, methods=None):
         super(Interface, self).__init__(name, Type.INTERFACE)
 
         self.base = base
+        self.exc = exc
         self.methods = tuple(methods) if methods else ()
 
 

@@ -1,6 +1,6 @@
 # encoding: utf-8
-from pdef.common import Type, upper_first
-from pdef.translator import AbstractTranslator
+from pdef.types import Type
+from pdef.translator import AbstractTranslator, upper_first
 
 
 class JavaTranslator(AbstractTranslator):
@@ -75,7 +75,7 @@ class JavaMessage(JavaDefinition):
 
         self.base = translator.message_base(msg)
         self.base_type = translator.ref(msg.base_type)
-        self.discriminator = translator.field(msg.polymorphic_discriminator)
+        self.discriminator = translator.field(msg.discriminator)
 
         # Keys are simple enum values so that they can be used in the switch statement.
         self.subtypes = tuple((key.name, translator.ref(val)) for key, val in msg.subtypes.items())

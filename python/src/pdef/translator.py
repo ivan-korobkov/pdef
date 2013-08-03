@@ -1,9 +1,9 @@
 # encoding: utf-8
 import inspect
 import logging
+import os
 import os.path
 from jinja2 import Environment
-from pdef.common import mkdir_p
 
 
 class AbstractTranslator(object):
@@ -32,3 +32,17 @@ class AbstractTranslator(object):
         with open(path, 'r') as f:
             text = f.read()
         return self.env.from_string(text)
+
+
+def upper_first(s):
+    '''Uppercase the first letter in a string.'''
+    if not s:
+        return s
+    return s[0].upper() + s[1:]
+
+
+
+def mkdir_p(dirname):
+    if os.path.exists(dirname):
+        return
+    os.makedirs(dirname)

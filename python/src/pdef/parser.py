@@ -237,14 +237,14 @@ class GrammarRules(object):
         '''
         field : doc IDENTIFIER type field_options
         '''
-        t[0] = ast.Field(t[1], type=t[2], is_discriminator=len(t) == 6)
+        t[0] = ast.Field(t[1], t[2], is_discriminator=len(t) == 6)
 
     def p_field_options(self, t):
         '''
         field_options : COMMA DISCRIMINATOR
                       | empty
         '''
-        if (len(t) == 2):
+        if len(t) == 2:
             t[0] = [t[1]]
         else:
             t[0] = []
@@ -354,9 +354,9 @@ class GrammarRules(object):
                 raise SyntaxError
             else:
                 enum, value = t[1].split('.')
-                t[0] = ast.EnumValueRef(ast.DefType(enum), value)
+                t[0] = ast.EnumValueRef(ast.DefRef(enum), value)
         else:
-            t[0] = ast.DefType(t[1])
+            t[0] = ast.DefRef(t[1])
 
     def p_error(self, t):
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)
@@ -399,13 +399,13 @@ class Parser(GrammarRules, Tokens):
         self.errors = []
         self.filepath = 'stream'
 
-    def parse_file(self, filepath, **kwargs):
+    def parse_file(self, filepath):
         self.filepath = filepath
         try:
             with open(filepath, 'r') as f:
                 s = f.read()
 
-            return self.parse(s, **kwargs)
+            return self.parse(s)
         finally:
             self.filepath = 'stream'
 

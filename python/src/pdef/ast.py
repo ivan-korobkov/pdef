@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef.common import Type
+from pdef.types import Type
 from pdef.preconditions import *
 
 
@@ -28,9 +28,9 @@ class Import(object):
 
 
 class Definition(object):
-    def __init__(self, name, type, doc=None):
+    def __init__(self, name, type0, doc=None):
         self.name = name
-        self.type = type
+        self.type = type0
         self.doc = doc
         self.location = None
 
@@ -47,9 +47,9 @@ class Message(Definition):
 
 
 class Field(object):
-    def __init__(self, name, type, is_discriminator=False):
+    def __init__(self, name, type0, is_discriminator=False):
         self.name = name
-        self.type = type
+        self.type = type0
         self.is_discriminator = is_discriminator
 
 
@@ -74,8 +74,8 @@ class InterfaceOptions(object):
 
 
 class InterfaceBase(object):
-    def __init__(self, type):
-        self.type = type
+    def __init__(self, type0):
+        self.type = type0
 
 
 class Method(object):
@@ -87,8 +87,8 @@ class Method(object):
 
 
 class TypeRef(object):
-    def __init__(self, type):
-        self.type = type
+    def __init__(self, type0):
+        self.type = type0
 
     def __repr__(self):
         return self.type
@@ -133,7 +133,7 @@ class MapRef(TypeRef):
 class EnumValueRef(TypeRef):
     def __init__(self, enum, value):
         super(EnumValueRef, self).__init__(Type.ENUM_VALUE)
-        check_isinstance(enum, DefType)
+        check_isinstance(enum, DefRef)
         self.enum = enum
         self.value = value
 
@@ -141,9 +141,9 @@ class EnumValueRef(TypeRef):
         return '%s.%s' % (self.enum, self.value)
 
 
-class DefType(TypeRef):
+class DefRef(TypeRef):
     def __init__(self, name):
-        super(DefType, self).__init__(Type.DEFINITION)
+        super(DefRef, self).__init__(Type.DEFINITION)
         self.name = name
 
     def __repr__(self):

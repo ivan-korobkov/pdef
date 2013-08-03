@@ -7,112 +7,82 @@ from pdef.lang import *
 
 
 class TestPackage(unittest.TestCase):
-    def test(self):
-        '''Should create a module from an AST node, link its imports and definitions.'''
-        enum = Enum('Type', 'MESSAGE')
-        base = Message('Base')
-        base.create_field('type', enum, is_discriminator=True)
-        module0 = Module('module0')
-        module0.add_definition(enum)
-        module0.add_definition(base)
+    def test_parse_module_node(self):
+        '''Should parse a module from an AST node and add it to this package.'''
+        module_node = ast.File('module', definitions=[
+            ast.Enum('Enum', values=['One', 'Two'])
+        ])
 
-        import_node = ast.Import('module0', 'Type', 'Base')
-        def_node = ast.Message('Message',
-                               base=ast.DefinitionRef('Base'),
-                               base_type=ast.EnumValueRef(ast.DefinitionRef('Type'), 'MESSAGE'),
-                               fields=[ast.Field('field', ast.Ref(Type.INT32))])
-        file_node = ast.File('module1', imports=[import_node], definitions=[def_node])
-        module1 = Module.from_ast(file_node)
+        package = Package('test')
+        package.parse_module_node(module_node)
 
-        pdef = Package()
-        pdef.add_module(module0)
-        pdef.add_module(module1)
+        assert 'module' in package.modules
 
-        module1.link_imports()
-        module1.link_definitions()
+    def test_link(self):
+        '''Should link modules in a package.'''
+        package = Package('test')
+        package.add_module(Module('module', package))
+        package.link()
 
-        message = module1.definitions['Message']
-        assert message.name == 'Message'
-        assert message.base is base
-        assert message.base_type is enum.values['MESSAGE']
+        assert package.get_module('module').linked
 
 
 class TestModule(unittest.TestCase):
     def test_add_definition(self):
         '''Should add a new definition to a module.'''
         def0 = Definition(Type.DEFINITION, 'Test')
+
         module = Module('test')
         module.add_definition(def0)
-
         assert 'Test' in module.definitions
 
-    def test_add_definition_duplicate(self):
+    def test_add_definition__duplicate(self):
         '''Should prevent adding a duplicate definition to a module.'''
         def0 = Definition(Type.DEFINITION, 'Test')
         def1 = Definition(Type.DEFINITION, 'Test')
 
         module = Module('test')
         module.add_definition(def0)
-
         try:
             module.add_definition(def1)
             self.fail()
         except PdefException, e:
             assert 'duplicate' in e.message
 
-    def test_add_definition_import_clash(self):
+    def test_add_definition__import_clash(self):
         '''Should prevent adding a definition to a module when its name clashes with an import.'''
+        self.fail('Imports are not implemented')
+
+    def test_get_definition(self):
+        '''Should return a definition by its name.'''
         def0 = Definition(Type.DEFINITION, 'Test')
-        def1 = Definition(Type.DEFINITION, 'Test')
 
         module = Module('test')
-        module.add_import(def0)
+        module.add_definition(def0)
 
-        try:
-            module.add_definition(def1)
-            self.fail()
-        except PdefException, e:
-            assert 'clashes with an import' in e.message
+        assert def0 is module.get_definition('Test')
 
-    def test_link_imports(self):
-        '''Should link all imports from an AST node in a module.'''
-        def0 = Definition(Type.DEFINITION, 'def0')
-        def1 = Definition(Type.DEFINITION, 'def1')
-        module0 = Module('module0')
-        module0.add_definition(def0)
-        module0.add_definition(def1)
-
-        node = ast.File('module1', imports=(ast.Import('module0', 'def0', 'def1'), ))
-        module1 = Module.from_ast(node)
-
-        pdef = Package()
-        pdef.add_module(module0)
-        pdef.add_module(module1)
-
-        module1.link_imports()
-        assert module1.imported_definitions == {'def0': def0, 'def1': def1}
-
-    def test_lookup_value(self):
-        '''Should lookup a value by its ref.'''
+    def test_lookup__native(self):
+        '''Should lookup a native type by its ref.'''
         module = Module('test')
         int64 = module.lookup(ast.Ref(Type.INT64))
         assert int64 is NativeTypes.INT64
 
-    def test_lookup_list(self):
+    def test_lookup__list(self):
         '''Should create and link a list by its ref.'''
         module = Module('test')
         list0 = module.lookup(ast.ListRef(ast.Ref(Type.STRING)))
         assert isinstance(list0, List)
         assert list0.element is NativeTypes.STRING
 
-    def test_lookup_set(self):
+    def test_lookup__set(self):
         '''Should create and link a set by its ref.'''
         module = Module('test')
         set0 = module.lookup(ast.SetRef(ast.Ref(Type.FLOAT)))
         assert isinstance(set0, Set)
         assert set0.element is NativeTypes.FLOAT
 
-    def test_lookup_map(self):
+    def test_lookup__map(self):
         '''Should create and link a map by its ref.'''
         module = Module('test')
         map0 = module.lookup(ast.MapRef(ast.Ref(Type.STRING), ast.Ref(Type.INT32)))
@@ -120,7 +90,7 @@ class TestModule(unittest.TestCase):
         assert map0.key is NativeTypes.STRING
         assert map0.value is NativeTypes.INT32
 
-    def test_lookup_enum_value(self):
+    def test_lookup__enum_value(self):
         '''Should look up an enum value.'''
         enum = Enum('Number')
         enum.add_value('ONE')
@@ -130,7 +100,7 @@ class TestModule(unittest.TestCase):
         one = module.lookup(ast.EnumValueRef(ast.DefinitionRef('Number'), 'ONE'))
         assert one is enum.values['ONE']
 
-    def test_lookup_enum_value_not_present(self):
+    def test_lookup__enum_value_not_present(self):
         '''Should raise an error when an enum does not have a specified value.'''
         enum = Enum('Number')
         module = Module('test')
@@ -142,7 +112,7 @@ class TestModule(unittest.TestCase):
         except PdefException, e:
             assert 'not found' in e.message
 
-    def test_lookup_user_defined(self):
+    def test_lookup__user_defined(self):
         '''Should look up a user-defined definition by its reference.'''
         def0 = Definition(Type.DEFINITION, 'Test')
 
@@ -153,17 +123,7 @@ class TestModule(unittest.TestCase):
         result = module.lookup(ref)
         assert def0 is result
 
-    def test_lookup_import(self):
-        '''Should look up an imported definition.'''
-        def0 = Definition(Type.DEFINITION, 'def0')
-        module0 = Module('module0')
-        module0.add_import(def0)
-
-        ref = ast.DefinitionRef('def0')
-        result = module0.lookup(ref)
-        assert def0 is result
-
-    def test_lookup_and_link(self):
+    def test_lookup___link(self):
         '''Should look up a definition by its reference and link the definition.'''
         def0 = Definition(Type.DEFINITION, 'Test')
 
@@ -172,7 +132,15 @@ class TestModule(unittest.TestCase):
 
         ref = ast.DefinitionRef('Test')
         result = module.lookup(ref)
-        assert result._linked
+        assert result.linked
+
+    def test_lookup__import(self):
+        '''Should look up an imported definition.'''
+        self.fail('Imports are not implemented')
+
+    def test_link_imports(self):
+        '''Should link all imports from an AST node in a module.'''
+        self.fail('Imports are not implemented')
 
 
 class TestEnum(unittest.TestCase):

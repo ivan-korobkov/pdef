@@ -2,6 +2,7 @@
 import logging
 from collections import OrderedDict
 from pdef import ast
+from pdef.parser import Parser
 from pdef.types import Type, PdefException
 from pdef.preconditions import check_isinstance, check_state
 
@@ -24,15 +25,6 @@ class Symbol(object):
 
 class Package(Symbol):
     '''Protocol definition.'''
-    @classmethod
-    def parse_nodes(cls, name, nodes):
-        package = Package(name)
-        for n in nodes:
-            package.parse_module(n)
-
-        package.link()
-        return package
-
     def __init__(self, name):
         self.name = name
         self.modules = SymbolTable(self, name='modules')
@@ -45,9 +37,14 @@ class Package(Symbol):
         self.modules.add(module)
         logging.debug('%s: added a module "%s"', self, module)
 
-    def parse_module(self, node):
+    def parse_module_node(self, node):
         '''Parses a module from an AST node and adds it to this package.'''
         module = Module.parse_node(node, self)
+        self.add_module(module)
+
+    def parse_module_file(self, path):
+        '''Parses a module from a file and adds it to this package.'''
+        module = Module.parse_file(path, self)
         self.add_module(module)
 
     def get_module(self, name):
@@ -68,29 +65,45 @@ class Package(Symbol):
 
 
 class Module(Symbol):
-    '''Module in a protocol definition.'''
+    '''Module in a pdef package, usually, a module is parsed from one file.'''
     @classmethod
-    def parse_node(cls, node, package):
-        '''Creates a module from an AST node.'''
+    def parse_file(cls, path, package=None):
+        '''Parses a module from a file.'''
+        parser = Parser()
+        node = parser.parse_file(path)
+        return cls.parse_node(node, package)
+
+    @classmethod
+    def parse_node(cls, node, package=None):
+        '''Parses a module from an AST node.'''
         module = Module(node.name, package)
 
-        map(module.parse_import, node.imports)
-        map(module.parse_definition, node.definitions)
+        for import0 in node.imports:
+            module.parse_import(import0)
+
+        for def0 in node.definitions:
+            module.parse_definition(def0)
 
         return module
 
-    def __init__(self, name, package):
+    def __init__(self, name, package=None):
         self.name = name
         self.package = package
 
         self.imports = SymbolTable(self, 'imports')
         self.definitions = SymbolTable(self, 'definitions')
+        self.imports_linked = False
+        self.definitions_linked = False
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.name)
 
     def __str__(self):
         return self.name
+
+    @property
+    def linked(self):
+        return self.imports_linked and self.definitions_linked
 
     def add_import(self, definition):
         '''Adds an imported definition to this module.'''
@@ -112,7 +125,7 @@ class Module(Symbol):
 
     def parse_definition(self, node):
         '''Parses a definition and adds it to this module.'''
-        definition = Definition.parse_node(node, module=self, lookup=self.lookup)
+        definition = Definition.parse_node(node, module=self, lookup=self.lazy_lookup)
         self.add_definition(definition)
 
     def get_definition(self, name):
@@ -123,9 +136,11 @@ class Module(Symbol):
         return def0
 
     def lookup(self, ref):
-        '''Returns a lazy definition lookup.'''
+        '''Looks up a definition by an AST reference node and link it.'''
         check_isinstance(ref, ast.Ref)
-        return lambda: self._lookup(ref)
+        def0 = self._lookup(ref)
+        def0.link()
+        return def0
 
     def _lookup(self, ref):
         def0 = NativeTypes.get_by_type(ref.type)
@@ -133,12 +148,23 @@ class Module(Symbol):
             return def0  # It's a simple value.
 
         t = ref.type
-        if t == Type.LIST: return List(ref.element, module=self)
-        elif t == Type.SET: return Set(ref.element, module=self)
-        elif t == Type.MAP: return Map(ref.key, ref.value, module=self)
+        if t == Type.LIST:
+            element = self.lookup(ref.element)
+            return List(element, module=self)
+
+        elif t == Type.SET:
+            element = self.lookup(ref.element)
+            return Set(element, module=self)
+
+        elif t == Type.MAP:
+            key = self.lookup(ref.key)
+            value = self.lookup(ref.value)
+            return Map(key, value, module=self)
+
         elif t == Type.ENUM_VALUE:
-            enum = self._lookup(ref.enum)
-            return enum.get_value(ref.value)
+            enum = self.lookup(ref.enum)
+            value = enum.get_value(ref.value)
+            return value
 
         # It must be an import or a user defined type.
         name = ref.name
@@ -146,16 +172,30 @@ class Module(Symbol):
             return self.definitions[name]
         raise PdefException('%s: type is not found, "%s"' % (self, ref))
 
+    def lazy_lookup(self, ref):
+        '''Returns a lambda for a lazy definition lookup.'''
+        check_isinstance(ref, ast.Ref)
+        return lambda: self.lookup(ref)
+
     def link_imports(self):
         '''Links this method imports, must be called before link_definitions().'''
+        self._check(not self.imports_linked, '%s: imports are already linked', self)
+
         for import0 in self.imports:
             import0.link()
+
+        self.imports_linked = True
         logging.debug('%s: linked imports', self)
 
     def link_definitions(self):
         '''Links this module definitions, must be called after link_imports().'''
+        self._check(self.imports_linked, '%s: imports must be linked', self)
+        self._check(not self.definitions_linked, '%s: definitions are already linked', self)
+
         for def0 in self.definitions.values():
             def0.link()
+
+        self.definitions_linked = True
         logging.debug('%s: linked definitions', self)
 
 
@@ -175,12 +215,12 @@ class Definition(Symbol):
 
         raise ValueError('Unsupported definition node %s' % node)
 
-    def __init__(self, type, name, module=None, doc=None):
-        self.type = type
+    def __init__(self, type0, name, module=None, doc=None):
+        self.type = type0
         self.name = name
         self.module = module
         self.doc = doc
-        self._linked = False
+        self.linked = False
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.fullname)
@@ -217,10 +257,10 @@ class Definition(Symbol):
         return self.type == Type.ENUM_VALUE
 
     def link(self):
-        if self._linked:
+        if self.linked:
             return
 
-        self._linked = True
+        self.linked = True
         self._link()
 
     def _link(self):
@@ -229,9 +269,9 @@ class Definition(Symbol):
 
 class NativeType(Definition):
     '''Native type definition, i.e. it defines a native language type such as string, int, etc.'''
-    def __init__(self, type):
-        super(NativeType, self).__init__(type, type)
-        self.type = type
+    def __init__(self, type0):
+        super(NativeType, self).__init__(type0, type0)
+        self.type = type0
 
 
 class NativeTypes(object):
@@ -279,17 +319,18 @@ class Enum(Definition):
         super(Enum, self).__init__(Type.ENUM, name)
         self.values = SymbolTable(self, 'values')
 
-    def add_value(self, value_name):
+    def add_value(self, name):
         '''Creates a new enum value by its name, adds it to this enum, and returns it.'''
-        value = EnumValue(self, value_name)
+        value = EnumValue(self, name)
         self.values.add(value)
         return value
 
     def get_value(self, name):
         '''Gets a value by its name or raises an exception.'''
         value = self.values.get(name)
-        if not value: raise PdefException('%s: value is not found, "%s"' % (self, name))
-        return name
+        if not value:
+            raise PdefException('%s: value is not found, "%s"' % (self, name))
+        return value
 
     def __contains__(self, item):
         return item in self.values.values()
@@ -444,11 +485,11 @@ class Field(Symbol):
         '''Creates a field from an AST node.'''
         check_isinstance(node, ast.Field)
         type0 = lookup(node.type)
-        return Field(node.name, type=type0, message=message, is_discriminator=node.is_discriminator)
+        return Field(node.name, type0, message=message, is_discriminator=node.is_discriminator)
 
-    def __init__(self, name, type, message, is_discriminator=False):
+    def __init__(self, name, type0, message, is_discriminator=False):
         self.name = name
-        self.type = type
+        self.type = type0
         self.message = message
         self.is_discriminator = is_discriminator
 

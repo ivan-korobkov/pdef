@@ -377,13 +377,13 @@ class Parser(GrammarRules, Tokens):
         self.errors = []
         self.filepath = 'stream'
 
-    def parse_file(self, filepath, **kwargs):
+    def parse_file(self, filepath):
         self.filepath = filepath
         try:
             with open(filepath, 'r') as f:
                 s = f.read()
 
-            return self.parse(s, **kwargs)
+            return self.parse(s)
         finally:
             self.filepath = 'stream'
 

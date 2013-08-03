@@ -24,7 +24,7 @@ class TestPackage(unittest.TestCase):
         package.add_module(Module('module', package))
         package.link()
 
-        assert package.get_module('module').linked
+        assert package.lookup_module('module').linked
 
 
 class TestModule(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestModule(unittest.TestCase):
         import0 = Import('imported', Module('imported'))
         module = Module('module')
         module.add_import(import0)
-        
+
         assert 'imported' in module.imports
 
     def test_add_definition(self):
@@ -59,7 +59,14 @@ class TestModule(unittest.TestCase):
 
     def test_add_definition__import_clash(self):
         '''Should prevent adding a definition to a module when its name clashes with an import.'''
-        self.fail('Imports are not implemented')
+        module = Module('test')
+        module.create_import('clash.name', mock.Mock())
+
+        def0 = Definition(Type.DEFINITION, 'clash')
+        try:
+            module.add_definition(def0)
+        except PdefException, e:
+            assert 'definition clashes with an import' in e.message
 
     def test_get_definition(self):
         '''Should return a definition by its name.'''
@@ -69,6 +76,17 @@ class TestModule(unittest.TestCase):
         module.add_definition(def0)
 
         assert def0 is module.get_definition('Test')
+
+    def test_get_definition__enum_value(self):
+        '''Should return an enum value by its name.'''
+        enum = Enum('Number')
+        one = enum.add_value('One')
+
+        module = Module('test')
+        module.add_definition(enum)
+
+        def0 = module.get_definition('Number.One')
+        assert def0 is one
 
     def test_lookup__native(self):
         '''Should lookup a native type by its ref.'''
@@ -101,12 +119,12 @@ class TestModule(unittest.TestCase):
     def test_lookup__enum_value(self):
         '''Should look up an enum value.'''
         enum = Enum('Number')
-        enum.add_value('ONE')
+        enum.add_value('One')
 
         module = Module('test')
         module.add_definition(enum)
-        one = module.lookup(ast.EnumValueRef(ast.DefRef('Number'), 'ONE'))
-        assert one is enum.values['ONE']
+        one = module.lookup(ast.EnumValueRef(ast.DefRef('Number'), 'One'))
+        assert one is enum.get_value('One')
 
     def test_lookup__enum_value_not_present(self):
         '''Should raise an error when an enum does not have a specified value.'''
@@ -115,7 +133,7 @@ class TestModule(unittest.TestCase):
         module.add_definition(enum)
 
         try:
-            module.lookup(ast.EnumValueRef(ast.DefRef('Number'), 'ONE'))
+            module.lookup(ast.EnumValueRef(ast.DefRef('Number'), 'One'))
             self.fail()
         except PdefException, e:
             assert 'not found' in e.message
@@ -142,13 +160,45 @@ class TestModule(unittest.TestCase):
         result = module.lookup(ref)
         assert result.linked
 
-    def test_lookup__import(self):
-        '''Should look up an imported definition.'''
-        self.fail('Imports are not implemented')
+    def test_lookup__imported_type(self):
+        '''Should lookup an imported definition.'''
+        def0 = Definition(Type.DEFINITION, 'Test')
+
+        module0 = Module('test.module0')
+        module0.add_definition(def0)
+
+        module1 = Module('module1')
+        module1.create_import('test.module0', module0)
+
+        ref = ast.DefRef('test.module0.Test')
+        result = module1.lookup(ref)
+        assert result is def0
+
+    def test_lookup__imported_enum_value(self):
+        '''Should lookup an imported enum value.'''
+        enum = Enum('Number')
+        one = enum.add_value('One')
+
+        module0 = Module('test.module0')
+        module0.add_definition(enum)
+
+        module1 = Module('module1')
+        module1.create_import('module0', module0)
+
+        ref = ast.DefRef('module0.Number.One')
+        result = module1.lookup(ref)
+        assert result is one
 
     def test_link_imports(self):
-        '''Should link all imports from an AST node in a module.'''
-        self.fail('Imports are not implemented')
+        '''Should link module imports.'''
+        module0 = Module('module0')
+
+        module1 = Module('module1')
+        module1.add_import(Import('module0', lambda: module0))
+        module1.link_imports()
+
+        assert module1.imports_linked
+        assert module1.imports['module0'].module is module0
 
 
 class TestImport(unittest.TestCase):

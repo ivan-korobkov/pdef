@@ -150,14 +150,14 @@ class GrammarRules(object):
 
     def p_relative_import(self, t):
         '''
-        import : FROM IDENTIFIER IMPORT relative_import_names SEMI
+        relative_import : FROM IDENTIFIER IMPORT relative_import_names SEMI
         '''
         t[0] = ast.RelativeImport(t[2], *t[4])
 
     def p_relative_import_names(self, t):
         '''
-        import_names : relative_import_names COMMA IDENTIFIER
-                     | IDENTIFIER
+        relative_import_names : relative_import_names COMMA IDENTIFIER
+                              | IDENTIFIER
         '''
         self._list(t, separated=True)
 

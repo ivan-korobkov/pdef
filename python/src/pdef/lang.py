@@ -48,12 +48,16 @@ class Package(Symbol):
         module = Module.parse_file(path, self)
         self.add_module(module)
 
-    def get_module(self, name):
+    def lookup_module(self, name):
         '''Returns a module by its name, or raises and exception.'''
         module = self.modules.get(name)
         if not module:
             raise PdefException('%s: module %r is not found' % (self, name))
         return module
+
+    def lookup_module_lazy(self, name):
+        '''Returns a lambda which lookups a module by name.'''
+        return lambda: self.lookup_module(name)
 
     def link(self):
         '''Links the package.'''
@@ -68,19 +72,19 @@ class Package(Symbol):
 class Module(Symbol):
     '''Module in a pdef package, usually, a module is parsed from one file.'''
     @classmethod
-    def parse_file(cls, path, package=None):
+    def parse_file(cls, path, package):
         '''Parses a module from a file.'''
-        parser = Parser()
+        parser = Parser(path)
         node = parser.parse_file(path)
         return cls.parse_node(node, package)
 
     @classmethod
-    def parse_node(cls, node, package=None):
+    def parse_node(cls, node, package):
         '''Parses a module from an AST node.'''
         module = Module(node.name, package)
 
         for import0 in node.imports:
-            module.parse_import(import0)
+            module.parse_import(import0, module_lookup=package.lookup_module_lazy)
 
         for def0 in node.definitions:
             module.parse_definition(def0)
@@ -111,40 +115,61 @@ class Module(Symbol):
         check_isinstance(import0, Import)
         self.imports.add(import0)
 
-    def parse_import(self, node):
+    def parse_import(self, node, module_lookup):
         '''Parses an import and adds it to this module.'''
-        imports = Import.parse_list_from_node(node)
+        imports = Import.parse_list_from_node(node, module_lookup=module_lookup)
         for import0 in imports:
             self.add_import(import0)
+
+    def create_import(self, name, module):
+        '''Creates an import and adds it to this module.'''
+        import0 = Import(name, module)
+        self.add_import(import0)
+        return import0
+
+    def add_definition(self, def0):
+        '''Adds a new definition to this module.'''
+        check_isinstance(def0, Definition)
+        self._check(def0.module is self or def0.module is None,
+                    '%s: cannot add a definition from another module, %r in %s',
+                    self, def0.name, def0.module)
+
+        name = def0.name
+        for imp_name in self.imports:
+            self._check(imp_name != name and imp_name.startswith(name + '.'),
+                        '%s: definition clashes with an import, %r, %r', self, name, imp_name)
+
+        self.definitions.add(def0)
+        def0.module = self
+        logging.debug('%s: added a definition "%s"', self, def0)
 
     def add_definitions(self, *defs):
         '''Adds definitions to this module.'''
         for def0 in defs:
             self.add_definition(def0)
 
-    def add_definition(self, def0):
-        '''Adds a new definition to this module.'''
-        check_isinstance(def0, Definition)
-        self._check(def0.name not in self.imports,
-                    '%s: definition clashes with an import, %r', self, def0.name)
-        self._check(def0.module is self or def0.module is None,
-                    '%s: cannot add a definition from another module, %r in %s',
-                    self, def0.name, def0.module)
-
-        self.definitions.add(def0)
-        def0.module = self
-        logging.debug('%s: added a definition "%s"', self, def0)
-
     def parse_definition(self, node):
         '''Parses a definition and adds it to this module.'''
-        definition = Definition.parse_node(node, module=self, lookup=self.lazy_lookup)
+        definition = Definition.parse_node(node, module=self, lookup=self.lookup_lazy)
         self.add_definition(definition)
 
     def get_definition(self, name):
-        '''Returns a definition by its name, or raises an exception.'''
-        def0 = self.definitions.get(name)
+        '''Returns a definition or an enum value by its name, or raises an exception.'''
+        def0 = None
+
+        if '.' not in name:
+            def0 = self.definitions.get(name)
+        else:
+            # It must be an enum value
+            left, right = name.split('.', 1)
+
+            enum = self.get_definition(left)
+            if enum.is_enum:
+                return enum.get_value(right)
+
         if not def0:
-            raise PdefException('%s: definition is not found, %r' % (self, name))
+            raise PdefException('%s: type is not found, %r' % (self, name))
+
         return def0
 
     def lookup(self, ref):
@@ -180,11 +205,30 @@ class Module(Symbol):
 
         # It must be an import or a user defined type.
         name = ref.name
-        if name in self.definitions:
+        if '.' not in name:
+            if name not in self.definitions:
+                raise PdefException('%s: type is not found, "%s"' % (self, ref))
             return self.definitions[name]
+
+        # It can be an enum value or an imported type (i.e. import.module.Enum.Value).
+        left = []
+        right = name.split('.')
+        while right:
+            left.append(right.pop(0))
+            lname = '.'.join(left)
+            rname = '.'.join(right)
+
+            if lname in self.imports:
+                import0 = self.imports[lname]
+                return import0.module.get_definition(rname)
+
+            if lname in self.definitions:
+                return self.get_definition(name)
+
         raise PdefException('%s: type is not found, "%s"' % (self, ref))
 
-    def lazy_lookup(self, ref):
+
+    def lookup_lazy(self, ref):
         '''Returns a lambda for a lazy definition lookup.'''
         check_isinstance(ref, ast.TypeRef)
         return lambda: self.lookup(ref)
@@ -193,7 +237,7 @@ class Module(Symbol):
         '''Links this method imports, must be called before link_definitions().'''
         self._check(not self.imports_linked, '%s: imports are already linked', self)
 
-        for import0 in self.imports:
+        for import0 in self.imports.values():
             import0.link()
 
         self.imports_linked = True
@@ -226,18 +270,18 @@ class Import(Symbol):
         else:
             raise ValueError('Unsupported import node %s' % node)
 
-    def __init__(self, name, imported):
+    def __init__(self, name, module):
         self.name = name
-        self.imported = imported
+        self.module = module
         self.linked = False
 
     def link(self):
         if self.linked:
             return
 
-        self.imported = self.imported() if callable(self.imported) else self.imported
-        self._check(isinstance(self.imported, Module), '%s: must be a module, %s',
-                    self, self.imported)
+        self.module = self.module() if callable(self.module) else self.module
+        self._check(isinstance(self.module, Module), '%s: must be a module, %s',
+                    self, self.module)
 
 
 class Definition(Symbol):

@@ -22,8 +22,17 @@ class File(object):
 
 
 class Import(object):
-    def __init__(self, module_name, *names):
-        self.module_name = module_name
+    pass
+
+
+class AbsoluteImport(Import):
+    def __init__(self, name):
+        self.name = name
+
+
+class RelativeImport(Import):
+    def __init__(self, prefix, *names):
+        self.prefix = prefix
         self.names = names
 
 

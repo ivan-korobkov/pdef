@@ -1,13 +1,11 @@
 // Protocol definition grammar in BNF.
 <File>          ::= Doc? 'module' Identifier ';' Import* Definition*
 
-// Doc string.
 <Doc>           ::= '/**' '...text...' '*/'
 
-// Imports can be absolute and relative to an absolute module.
-<Import>        ::= AbsImport | RelImport
-<AbsImport>     ::= 'import' Identifier ';'
-<RelImport>     ::= 'from' Identifier 'import' Identifier (',' Identifier)* ';'
+<Import>        ::= AbsoluteImport | RelativeImport
+<AbsoluteImport>    ::= 'import' Identifier ';'
+<RelativeImport>    ::= 'from' Identifier 'import' Identifier (',' Identifier)* ';'
 
 <Definition>    ::= Doc? (Enum | Message | Interface)
 
@@ -34,14 +32,14 @@
 
 <Type>          ::= ValueType | ListType | SetType | MapType | DefType
 <ValueType>     ::= 'bool'
-                    | 'int16'
-                    | 'int32
-                    | 'int64'
-                    | 'float'
-                    | 'double'
-                    | 'string'
-                    | 'object'
-                    | 'void'
+                  | 'int16'
+                  | 'int32
+                  | 'int64'
+                  | 'float'
+                  | 'double'
+                  | 'string'
+                  | 'object'
+                  | 'void'
 <ListType>      ::= 'list' '<' Type '>'
 <SetType>       ::= 'set' '<' Type '>'
 <MapType>       ::= 'map' '<' Type ',' Type '>'

@@ -137,13 +137,26 @@ class GrammarRules(object):
 
     def p_import(self, t):
         '''
-        import : FROM IDENTIFIER IMPORT import_names SEMI
+        import : absolute_import
+               | relative_import
         '''
-        t[0] = ast.Import(t[2], *t[4])
+        t[0] = t[1]
 
-    def p_import_names(self, t):
+    def p_absolute_import(self, t):
         '''
-        import_names : import_names COMMA IDENTIFIER
+        absolute_import : IMPORT IDENTIFIER SEMI
+        '''
+        t[0] = ast.AbsoluteImport(t[2])
+
+    def p_relative_import(self, t):
+        '''
+        import : FROM IDENTIFIER IMPORT relative_import_names SEMI
+        '''
+        t[0] = ast.RelativeImport(t[2], *t[4])
+
+    def p_relative_import_names(self, t):
+        '''
+        import_names : relative_import_names COMMA IDENTIFIER
                      | IDENTIFIER
         '''
         self._list(t, separated=True)

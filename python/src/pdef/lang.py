@@ -106,14 +106,16 @@ class Module(Symbol):
     def linked(self):
         return self.imports_linked and self.definitions_linked
 
-    def add_import(self, definition):
-        '''Adds an imported definition to this module.'''
-        check_isinstance(definition, Definition)
-        self.imports.add(definition)
+    def add_import(self, import0):
+        '''Adds a module import to this module.'''
+        check_isinstance(import0, Import)
+        self.imports.add(import0)
 
     def parse_import(self, node):
         '''Parses an import and adds it to this module.'''
-        pass
+        imports = Import.parse_list_from_node(node)
+        for import0 in imports:
+            self.add_import(import0)
 
     def add_definitions(self, *defs):
         '''Adds definitions to this module.'''
@@ -207,6 +209,35 @@ class Module(Symbol):
 
         self.definitions_linked = True
         logging.debug('%s: linked definitions', self)
+
+
+class Import(Symbol):
+    @classmethod
+    def parse_list_from_node(cls, node, module_lookup):
+        '''Parse a node and return a list of imports.'''
+        check_isinstance(node, ast.Import)
+        if isinstance(node, ast.AbsoluteImport):
+            return [Import(node.name, module_lookup(node.name))]
+
+        elif isinstance(node, ast.RelativeImport):
+            prefix = node.prefix
+            return [Import(name, module_lookup(prefix + '.' + name)) for name in node.names]
+
+        else:
+            raise ValueError('Unsupported import node %s' % node)
+
+    def __init__(self, name, imported):
+        self.name = name
+        self.imported = imported
+        self.linked = False
+
+    def link(self):
+        if self.linked:
+            return
+
+        self.imported = self.imported() if callable(self.imported) else self.imported
+        self._check(isinstance(self.imported, Module), '%s: must be a module, %s',
+                    self, self.imported)
 
 
 class Definition(Symbol):

@@ -45,10 +45,11 @@ package {{ package }};
 {% endfor %}
         }
 {% if exc %}
-        @Nullable
+
+        @javax.annotation.Nullable
         @Override
-        public Descriptor<?> getExc() {
-            return {{ exc }};
+        public io.pdef.descriptors.Descriptor<?> getExc() {
+            return {{ exc.descriptor }};
         }
 {% endif %}
 

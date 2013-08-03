@@ -60,12 +60,12 @@ message TreeA : Tree2(TreeType1.A) {}
 message TreeB : Tree2(TreeType1.B) {}
 
 
-exception Exception {
+exception TestException {
     text string;
 }
 
 /** Test interface with method of all types. */
-interface TestInterface : throws Exception {
+interface TestInterface : throws TestException {
     /** Void method w/o args. */
     void0() void;
 
@@ -92,6 +92,6 @@ interface InterfaceTree0 {
     method0() string;
 }
 
-interface InterfaceTree1 : InterfaceTree0, throws Exception {
+interface InterfaceTree1 : InterfaceTree0, throws TestException {
     method1() string;
 }

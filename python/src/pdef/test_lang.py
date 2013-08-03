@@ -13,14 +13,14 @@ class TestPackage(unittest.TestCase):
             ast.Enum('Enum', values=['One', 'Two'])
         ])
 
-        package = Package('test')
+        package = Package()
         package.parse_module_node(module_node)
 
         assert 'module' in package.modules
 
     def test_link(self):
         '''Should link modules in a package.'''
-        package = Package('test')
+        package = Package()
         package.add_module(Module('module', package))
         package.link()
 
@@ -381,7 +381,7 @@ class TestMessage(unittest.TestCase):
         assert msg1.subtypes == {sub1: msg2}
         assert msg0.subtypes == {sub0: msg1}
 
-    def test_link_base__nonpolymorphic_polymorphic(self):
+    def test_link_base__no_enum_value_for_discriminator(self):
         '''Should prevent inheriting a polymorphic base by a non-polymorphic message.'''
         enum = Enum('Type')
         enum.add_value('Subtype')
@@ -394,9 +394,9 @@ class TestMessage(unittest.TestCase):
         try:
             msg.link()
         except PdefException, e:
-            assert 'non-polymorphic inheritance of a polymorphic base' in e.message
+            assert 'no enum value for a base discriminator' in e.message
 
-    def test_link_base__polymorphic_nonpolymorphic(self):
+    def test_link_base__base_does_not_have_discriminator(self):
         '''Should prevent inheriting a non-polymorphic base by a polymorphic message.'''
         base = Message('Base')
         enum = Enum('Type')
@@ -407,7 +407,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg.link()
         except PdefException, e:
-            assert 'polymorphic inheritance of a non-polymorphic base' in e.message
+            assert 'base does not have a discriminator' in e.message
 
     def test_create_field(self):
         '''Should create and add a field to a message.'''
@@ -700,7 +700,7 @@ class TestMethod(unittest.TestCase):
         method.create_arg('i0', NativeTypes.INT32)
         method.create_arg('i1', NativeTypes.INT32)
 
-        assert method.fullname == 'Interface.method(i0 int32, i1 int32)=>int32'
+        assert method.fullname == 'Interface.method'
 
 
 class TestMethodArg(unittest.TestCase):

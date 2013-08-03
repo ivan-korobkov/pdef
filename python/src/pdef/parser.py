@@ -203,7 +203,7 @@ class _GrammarRules(object):
         '''
         enum_value : doc IDENTIFIER
         '''
-        t[0] = t[1]
+        t[0] = t[2]
 
     # Message definition
     def p_message(self, t):
@@ -264,15 +264,17 @@ class _GrammarRules(object):
         '''
         field : doc IDENTIFIER type field_options
         '''
-        t[0] = ast.Field(t[1], t[2], is_discriminator=len(t) == 6)
+        options = t[4]
+        is_discriminator = 'discriminator' in options
+        t[0] = ast.Field(t[2], t[3], is_discriminator=is_discriminator)
 
     def p_field_options(self, t):
         '''
         field_options : COMMA DISCRIMINATOR
                       | empty
         '''
-        if len(t) == 2:
-            t[0] = [t[1]]
+        if len(t) == 3:
+            t[0] = [t[2]]
         else:
             t[0] = []
 

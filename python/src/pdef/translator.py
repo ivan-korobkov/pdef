@@ -23,7 +23,7 @@ class AbstractTranslator(object):
         with open(fullpath, 'wt') as f:
             f.write(code)
 
-        logging.info('Created %s', fullpath)
+        logging.debug('  Created %s', fullpath)
 
     def read_template(self, name):
         '''Reads and returns a template by name.'''

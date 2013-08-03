@@ -11,14 +11,15 @@ class JavaTranslator(AbstractTranslator):
         self.message_template = self.read_template('message.template')
         self.interface_template = self.read_template('interface.template')
 
-    def translate(self, defs):
-        '''Translates definitions and writes them to files.'''
-        for def0 in defs:
-            jdef = self.definition(def0)
-            self.write(jdef.package, '%s.java' % jdef.name, jdef.code)
+    def translate(self, package):
+        '''Translate package definitions and write them to files.'''
+        for module in package.modules.values():
+            for def0 in module.definitions.values():
+                jdef = self.definition(def0)
+                self.write(jdef.package, '%s.java' % jdef.name, jdef.code)
 
     def definition(self, def0):
-        '''Returns a java definition from a pdef definition.'''
+        '''Return a java definition for a pdef definition.'''
         t = def0.type
         if t == Type.ENUM:
             return JavaEnum(def0, self)
@@ -29,19 +30,19 @@ class JavaTranslator(AbstractTranslator):
         raise ValueError('Unsupported definition %s' % def0)
 
     def ref(self, obj_or_none):
-        '''Returns a java reference for a pdef type.'''
+        '''Return a java reference for a pdef type.'''
         if not obj_or_none:
             return None
         return JavaType.create(obj_or_none, self)
 
     def field(self, field_or_none):
-        '''Returns a java field for a pdef field.'''
+        '''Return a java field for a pdef field.'''
         if not field_or_none:
             return None
         return JavaField(field_or_none, self)
 
     def method(self, method_or_none):
-        '''Returns a java method for a pdef method.'''
+        '''Return a java method for a pdef method.'''
         if not method_or_none:
             return None
         return JavaMethod(method_or_none, self)

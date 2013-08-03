@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os.path
 import unittest
-from pdef.parser import Parser
+import pdef.parser
 
 
 class TestParser(unittest.TestCase):
@@ -17,20 +17,6 @@ class TestParser(unittest.TestCase):
     def test_parse(self):
         '''Should parse a test pdef file.'''
         s = self._filepath('test.pdef')
-        parser = Parser()
-        module = parser.parse_file(s)
+        module = pdef.parser.parse_file(s)
 
         assert module.name == 'io.pdef.test';
-
-        # imports = module.imports
-        # assert len(imports) == 2
-        # assert imports[0].module_name == 'another_module'
-        # assert imports[1].module_name == 'pdef.test.imports'
-        # assert imports[0].names == ('Message0',)
-        # assert imports[1].names == ('Exc0', 'Exc1', 'Interface0')
-        #
-        # defs = dict((d.name, d) for d in module.definitions)
-        # assert module.name == 'pdef.test'
-        # assert 'Message' in defs
-        # assert 'Enum' in defs
-        # assert 'Interface' in defs

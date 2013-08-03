@@ -7,6 +7,20 @@ import ply.yacc as yacc
 from pdef import ast
 from pdef.common import PdefException
 
+__all__ = ('parse', 'parse_string')
+
+
+def parse_file(path):
+    '''Parses a module file.'''
+    parser = Parser(path)
+    return parser.parse_file(path)
+
+
+def parse_string(s):
+    '''Parses a module string.'''
+    parser = Parser('stream')
+    return parser.parse_string(s)
+
 
 class Tokens(object):
     # Simple reserved words.
@@ -391,34 +405,30 @@ class GrammarRules(object):
 
 
 class Parser(GrammarRules, Tokens):
-    def __init__(self, debug=False):
+    def __init__(self, path, debug=False):
         super(Parser, self).__init__()
         self.debug = debug
         self.lexer = lex.lex(module=self, debug=debug)
         self.parser = yacc.yacc(module=self, debug=debug, tabmodule='pdef.parsetab', start='file')
         self.errors = []
-        self.filepath = 'stream'
+        self.path = path
 
-    def parse_file(self, filepath):
-        self.filepath = filepath
-        try:
-            with open(filepath, 'r') as f:
-                s = f.read()
+    def parse_file(self, path):
+        with open(path, 'r') as f:
+            s = f.read()
 
-            return self.parse(s)
-        finally:
-            self.filepath = 'stream'
+        return self.parse_string(s)
 
-    def parse(self, s):
+    def parse_string(self, s):
         result = self.parser.parse(s, debug=self.debug, tracking=True, lexer=self.lexer)
         if self.errors:
             raise PdefException('Syntax errors')
         return result
 
     def _error(self, msg, *args):
-        msg = '%s: %s' % (self.filepath, msg)
+        msg = '%s: %s' % (self.path, msg)
         logging.error(msg, *args)
         self.errors.append(msg)
 
     def _location(self, t):
-        return ast.Location(self.filepath, t.lineno(1))
+        return ast.Location(self.path, t.lineno(1))

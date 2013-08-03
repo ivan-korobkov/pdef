@@ -6,7 +6,9 @@ from pdef.java.translator import *
 
 class TestJavaEnum(unittest.TestCase):
     def test(self):
-        enum = Enum('Number', 'ONE', 'TWO')
+        enum = Enum('Number')
+        enum.add_value('ONE')
+        enum.add_value('TWO')
         module = Module('test.module')
         module.add_definition(enum)
 
@@ -26,15 +28,17 @@ class TestInterface(unittest.TestCase):
         iface.create_method('ping')
         iface.create_method('pong')
         iface.create_method('echo', NativeTypes.STRING, ('text', NativeTypes.STRING))
-        iface.create_method('sum', NativeTypes.INT32, ('z', NativeTypes.INT32), ('a', NativeTypes.INT32))
-        iface.create_method('abc', NativeTypes.STRING, ('a', NativeTypes.STRING), ('b', NativeTypes.STRING),
-                         ('c', NativeTypes.STRING))
+        iface.create_method('sum', NativeTypes.INT32, ('z', NativeTypes.INT32),
+                            ('a', NativeTypes.INT32))
+        iface.create_method('abc', NativeTypes.STRING, ('a', NativeTypes.STRING),
+                            ('b', NativeTypes.STRING), ('c', NativeTypes.STRING))
 
         iface.create_method('base0', base0)
         iface.create_method('base1', base1)
 
         module0 = Module('test.module0')
-        module0.add_definitions(base0, base1)
+        module0.add_definition(base0)
+        module0.add_definition(base1)
 
         module1 = Module('test.module1')
         module1.add_definition(iface)
@@ -48,7 +52,9 @@ class TestInterface(unittest.TestCase):
 
 class TestMessage(unittest.TestCase):
     def test(self):
-        enum = Enum('Type', 'MSG')
+        enum = Enum('Type')
+        enum.add_value('MSG')
+
         base = Message('Base')
         base.create_field('type', enum, is_discriminator=True)
         base.create_field('field0', NativeTypes.BOOL)

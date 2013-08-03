@@ -115,14 +115,23 @@ class Module(Symbol):
         '''Parses an import and adds it to this module.'''
         pass
 
-    def add_definition(self, definition):
-        '''Adds a new definition to this module.'''
-        check_isinstance(definition, Definition)
-        self._check(definition.name not in self.imports,
-                    '%s: definition clashes with an import, %r' % (self, definition.name))
+    def add_definitions(self, *defs):
+        '''Adds definitions to this module.'''
+        for def0 in defs:
+            self.add_definition(def0)
 
-        self.definitions.add(definition)
-        logging.debug('%s: added a definition "%s"', self, definition)
+    def add_definition(self, def0):
+        '''Adds a new definition to this module.'''
+        check_isinstance(def0, Definition)
+        self._check(def0.name not in self.imports,
+                    '%s: definition clashes with an import, %r', self, def0.name)
+        self._check(def0.module is self or def0.module is None,
+                    '%s: cannot add a definition from another module, %r in %s',
+                    self, def0.name, def0.module)
+
+        self.definitions.add(def0)
+        def0.module = self
+        logging.debug('%s: added a definition "%s"', self, def0)
 
     def parse_definition(self, node):
         '''Parses a definition and adds it to this module.'''
@@ -403,7 +412,12 @@ class Message(Definition):
     def add_field(self, field):
         '''Adds a new field to this message and returns the field.'''
         check_isinstance(field, Field)
+        self._check(field.message is self or field.message is None,
+                    '%s: cannot add a field from another message, %r from %s',
+                    self, field.name, field.message)
+
         self.declared_fields.add(field)
+        field.message = self
 
         if field.is_discriminator:
             self._check(not self.discriminator, '%s: duplicate discriminator', self)

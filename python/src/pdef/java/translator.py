@@ -4,7 +4,7 @@ from pdef.translator import AbstractTranslator, upper_first
 
 
 class JavaTranslator(AbstractTranslator):
-    def __init__(self, out, *args, **kwargs):
+    def __init__(self, out):
         super(JavaTranslator, self).__init__(out)
 
         self.enum_template = self.read_template('enum.template')
@@ -20,30 +20,36 @@ class JavaTranslator(AbstractTranslator):
     def definition(self, def0):
         '''Returns a java definition from a pdef definition.'''
         t = def0.type
-        if t == Type.ENUM: return JavaEnum(def0, self)
-        if t == Type.MESSAGE: return JavaMessage(def0, self)
-        if t == Type.INTERFACE: return JavaInterface(def0, self)
+        if t == Type.ENUM:
+            return JavaEnum(def0, self)
+        if t == Type.MESSAGE:
+            return JavaMessage(def0, self)
+        if t == Type.INTERFACE:
+            return JavaInterface(def0, self)
         raise ValueError('Unsupported definition %s' % def0)
 
     def ref(self, obj_or_none):
         '''Returns a java reference for a pdef type.'''
-        if not obj_or_none: return None
+        if not obj_or_none:
+            return None
         return JavaType.create(obj_or_none, self)
 
     def field(self, field_or_none):
         '''Returns a java field for a pdef field.'''
-        if not field_or_none: return None
+        if not field_or_none:
+            return None
         return JavaField(field_or_none, self)
 
     def method(self, method_or_none):
         '''Returns a java method for a pdef method.'''
-        if not method_or_none: return None
+        if not method_or_none:
+            return None
         return JavaMethod(method_or_none, self)
 
     def message_base(self, msg):
-        return self.ref(msg.base)\
-        if msg.base else 'io.pdef.GeneratedException'\
-        if msg.is_exception else 'io.pdef.GeneratedMessage'
+        return self.ref(msg.base) \
+            if msg.base else 'io.pdef.GeneratedException' \
+            if msg.is_exception else 'io.pdef.GeneratedMessage'
 
 
 class JavaDefinition(object):
@@ -121,18 +127,20 @@ class JavaType(object):
     @classmethod
     def create(cls, obj, translator):
         '''Returns a java reference for a pdef type.'''
-        if obj.type in NATIVE_MAP: return NATIVE_MAP[obj.type]
+        if obj.type in NATIVE_MAP:
+            return NATIVE_MAP[obj.type]
         javatype = {
-            Type.LIST : JavaType.list,
-            Type.SET : JavaType.set,
-            Type.MAP : JavaType.map,
-            Type.ENUM : JavaType.enum,
-            Type.ENUM_VALUE : JavaType.enum_value,
-            Type.MESSAGE : JavaType.message,
-            Type.INTERFACE : JavaType.interface
+            Type.LIST: JavaType.list,
+            Type.SET: JavaType.set,
+            Type.MAP: JavaType.map,
+            Type.ENUM: JavaType.enum,
+            Type.ENUM_VALUE: JavaType.enum_value,
+            Type.MESSAGE: JavaType.message,
+            Type.INTERFACE: JavaType.interface
         }.get(obj.type)
 
-        if javatype: return javatype(obj, translator)
+        if javatype:
+            return javatype(obj, translator)
         raise ValueError('Unsupported type %s' % obj)
 
     @classmethod
@@ -189,8 +197,7 @@ class JavaType(object):
     def _default_name(cls, obj):
         return '%s.%s' % (obj.module.name, obj.name) if obj.module else obj.name
 
-    def __init__(self, type, name, boxed=None, default='null', is_primitive=False,
-                 descriptor=None, async_name=None):
+    def __init__(self, type, name, boxed=None, default='null', is_primitive=False, descriptor=None):
         self.type = type
         self.name = name
         self.boxed = boxed if boxed else self
@@ -247,4 +254,3 @@ NATIVE_MAP = {
     Type.VOID: JavaType(Type.VOID, 'void', 'Void', is_primitive=True,
                         descriptor='io.pdef.descriptors.Descriptors.void0')
 }
-

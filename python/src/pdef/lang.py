@@ -1,10 +1,14 @@
 # encoding: utf-8
+import os
 import logging
 from collections import OrderedDict
+
 from pdef import ast
 from pdef import parser
 from pdef.types import Type, PdefException
 from pdef.preconditions import check_isinstance, check_state
+
+EXT = 'pdef'
 
 
 class Symbol(object):
@@ -33,34 +37,57 @@ class Package(Symbol):
         self.modules = SymbolTable(self, name='modules')
 
     def add_module(self, module):
-        '''Adds a module to this package.'''
+        '''Add a module to this package.'''
         self.modules.add(module)
         self._debug('Added a module "%s"', module.name)
 
-    def parse_module_node(self, node):
-        '''Parses a module from an AST node and adds it to this package.'''
+    def parse_module(self, node):
+        '''Parse a module from an AST node, add it to this package, and return the module.'''
         module = Module.parse_node(node, self)
         self.add_module(module)
+        return module
 
-    def parse_module_file(self, path):
-        '''Parses a module from a file and adds it to this package.'''
-        logging.info('Parsing %s...', path)
+    def parse_file(self, path):
+        '''Parse a module from a file, add it to this package, and return the module.'''
+        logging.info('Parsing %s', path)
         module = Module.parse_file(path, self)
-        self.add_module(module)
+        return self.add_module(module)
+
+    def parse_directory(self, path):
+        '''Recursively parse modules from a directory, and return a list of modules.'''
+        logging.info('Walking %s' % path)
+        modules = []
+        for root, dirs, files in os.walk(path):
+            for file0 in files:
+                ext = os.path.splitext(file0)[1]
+                if ext.lower() != '.' + EXT:
+                    continue
+
+                filepath = os.path.join(root, file0)
+                module = self.parse_file(filepath)
+                modules.append(module)
+
+        return modules
+
+    def parse_path(self, path):
+        '''Parse modules from a file or a directory.'''
+        if os.path.isdir(path):
+            return self.parse_directory(path)
+        return self.parse_file(path)
 
     def lookup_module(self, name):
-        '''Returns a module by its name, or raises and exception.'''
+        '''Return a module by its name, or raise an exception.'''
         module = self.modules.get(name)
         if not module:
             raise PdefException('Module "%s" is not found' % name)
         return module
 
     def lookup_module_lazy(self, name):
-        '''Returns a lambda which lookups a module by name.'''
+        '''Return a lambda which lookups a module by name.'''
         return lambda: self.lookup_module(name)
 
     def link(self):
-        '''Links the package.'''
+        '''Link the package.'''
         for module in self.modules.values():
             module.link_imports()
 
@@ -79,7 +106,7 @@ class Module(Symbol):
 
     @classmethod
     def parse_node(cls, node, package):
-        '''Parses a module from an AST node.'''
+        '''Parse a module from an AST node.'''
         module = Module(node.name, package)
 
         for import0 in node.imports:
@@ -110,24 +137,24 @@ class Module(Symbol):
         return self.imports_linked and self.definitions_linked
 
     def add_import(self, import0):
-        '''Adds a module import to this module.'''
+        '''Add a module import to this module.'''
         check_isinstance(import0, Import)
         self.imports.add(import0)
 
     def parse_import(self, node, module_lookup):
-        '''Parses an import and adds it to this module.'''
+        '''Parse an import and add it to this module.'''
         imports = Import.parse_list_from_node(node, module_lookup=module_lookup)
         for import0 in imports:
             self.add_import(import0)
 
     def create_import(self, name, module):
-        '''Creates an import and adds it to this module.'''
+        '''Create an import and add it to this module.'''
         import0 = Import(name, module)
         self.add_import(import0)
         return import0
 
     def add_definition(self, def0):
-        '''Adds a new definition to this module.'''
+        '''Add a new definition to this module.'''
         check_isinstance(def0, Definition)
         self._check(def0.module is self or def0.module is None,
                     '%s: cannot add a definition from another module, "%s" in %s',
@@ -143,17 +170,17 @@ class Module(Symbol):
         self._debug('%s: added a definition "%s"', self, def0)
 
     def add_definitions(self, *defs):
-        '''Adds definitions to this module.'''
+        '''Add definitions to this module.'''
         for def0 in defs:
             self.add_definition(def0)
 
     def parse_definition(self, node):
-        '''Parses a definition and adds it to this module.'''
+        '''Parse a definition and add it to this module.'''
         definition = Definition.parse_node(node, module=self, lookup=self.lookup_lazy)
         self.add_definition(definition)
 
     def get_definition(self, name):
-        '''Returns a definition or an enum value by its name, or raises an exception.'''
+        '''Return a definition or an enum value by its name, or raise an exception.'''
         def0 = None
 
         if '.' not in name:
@@ -172,7 +199,7 @@ class Module(Symbol):
         return def0
 
     def lookup(self, ref):
-        '''Looks up a definition by an AST reference node and link it.'''
+        '''Look up a definition by an AST reference node and link it.'''
         check_isinstance(ref, ast.TypeRef)
         def0 = self._lookup(ref)
         def0.link()
@@ -228,12 +255,12 @@ class Module(Symbol):
 
 
     def lookup_lazy(self, ref):
-        '''Returns a lambda for a lazy definition lookup.'''
+        '''Return a lambda for a lazy definition lookup.'''
         check_isinstance(ref, ast.TypeRef)
         return lambda: self.lookup(ref)
 
     def link_imports(self):
-        '''Links this method imports, must be called before link_definitions().'''
+        '''Link this method imports, must be called before link_definitions().'''
         self._check(not self.imports_linked, '%s: imports are already linked', self)
 
         for import0 in self.imports.values():
@@ -243,7 +270,7 @@ class Module(Symbol):
         self._debug('%s: linked imports', self)
 
     def link_definitions(self):
-        '''Links this module definitions, must be called after link_imports().'''
+        '''Link this module definitions, must be called after link_imports().'''
         self._check(self.imports_linked, '%s: imports must be linked', self)
         self._check(not self.definitions_linked, '%s: definitions are already linked', self)
 
@@ -287,7 +314,7 @@ class Definition(Symbol):
     '''Base definition.'''
     @classmethod
     def parse_node(cls, node, module, lookup):
-        '''Creates a definition from an AST node.'''
+        '''Create a definition from an AST node.'''
         if node.type == Type.ENUM:
             return Enum.parse_node(node, module, lookup)
 
@@ -408,13 +435,13 @@ class Enum(Definition):
         self.values = SymbolTable(self, 'values')
 
     def add_value(self, name):
-        '''Creates a new enum value by its name, adds it to this enum, and returns it.'''
+        '''Create a new enum value by its name, add it to this enum, and return it.'''
         value = EnumValue(self, name)
         self.values.add(value)
         return value
 
     def get_value(self, name):
-        '''Gets a value by its name or raises an exception.'''
+        '''Get a value by its name or raise an exception.'''
         value = self.values.get(name)
         if not value:
             raise PdefException('%s: value is not found, "%s"' % (self, name))
@@ -436,7 +463,7 @@ class Message(Definition):
     '''User-defined message.'''
     @classmethod
     def parse_node(cls, node, module, lookup):
-        '''Creates a message from an AST node.'''
+        '''Create a message from an AST node.'''
         check_isinstance(node, ast.Message)
 
         message = Message(node.name, is_exception=node.is_exception, module=module, doc=node.doc)
@@ -474,20 +501,20 @@ class Message(Definition):
 
     @property
     def discriminator(self):
-        '''Returns this message discriminator field, base discriminator field, or None.'''
+        '''Return this message discriminator field, base discriminator field, or None.'''
         if self._discriminator:
             return self._discriminator
 
         return self.base.discriminator if self.base else None
 
     def set_base(self, base, base_type=None):
-        '''Sets this message base and polymorphic base type.'''
+        '''Set this message base and polymorphic base type.'''
         self.base = base
         self.base_type = base_type
         self._debug('%s: set base to %s, base_type=%s', self, base, base_type)
 
     def add_field(self, field):
-        '''Adds a new field to this message and returns the field.'''
+        '''Add a new field to this message and return the field.'''
         check_isinstance(field, Field)
         self._check(field.message is self or field.message is None,
                     '%s: cannot add a field from another message, "%s" from %s',
@@ -504,17 +531,17 @@ class Message(Definition):
         return field
 
     def create_field(self, name, definition, is_discriminator=False):
-        '''Adds a new field to this message and returns the field.'''
+        '''Create a new field, add it to this message and return the field.'''
         field = Field(name, definition, self, is_discriminator)
         return self.add_field(field)
 
     def parse_field(self, node, lookup):
-        '''Creates a new field from an AST node and adds it to this message.'''
+        '''Parse an AST node, add a new field to this message, and return the field.'''
         field = Field.parse_node(node, message=self, lookup=lookup)
         return self.add_field(field)
 
     def _add_subtype(self, subtype):
-        '''Adds a new subtype to this message, checks its base_type.'''
+        '''Add a new subtype to this message, check its base_type.'''
         check_isinstance(subtype, Message)
         self._check(self.discriminator, '%s: is not polymorphic, no discriminator field', self)
         self._check(subtype.base_type in self.discriminator.type,
@@ -527,7 +554,7 @@ class Message(Definition):
             self.base._add_subtype(subtype)
 
     def _link(self):
-        '''Initializes this message from its AST node if present.'''
+        '''Link the base and the fields.'''
         self._link_base()
         self._link_fields()
         self._debug('%s: linked', self)
@@ -575,7 +602,7 @@ class Field(Symbol):
     '''Single message field.'''
     @classmethod
     def parse_node(cls, node, message, lookup):
-        '''Creates a field from an AST node.'''
+        '''Create a field from an AST node.'''
         check_isinstance(node, ast.Field)
         type0 = lookup(node.type)
         return Field(node.name, type0, message=message, is_discriminator=node.is_discriminator)
@@ -637,12 +664,12 @@ class Interface(Definition):
         self._debug('%s: set a base "%s"', self, base)
 
     def add_method(self, method):
-        '''Adds a method to this interface.'''
+        '''Add a method to this interface.'''
         self.declared_methods.add(method)
         self._debug('%s: added a method "%s"', self, method.name)
 
     def create_method(self, name, result=NativeTypes.VOID, *args_tuples):
-        '''Adds a new method to this interface and returns the method.'''
+        '''Add a new method to this interface and return the method.'''
         method = Method(name, result, self)
         for arg_tuple in args_tuples:
             method.create_arg(*arg_tuple)
@@ -651,12 +678,12 @@ class Interface(Definition):
         return method
 
     def parse_method(self, node, lookup):
-        '''Creates a new method and adds it to this interface.'''
+        '''Create a new method and add it to this interface.'''
         method = Method.parse_from(node, self, lookup)
         self.add_method(method)
 
     def _link(self):
-        '''Initializes this interface from its AST node if present.'''
+        '''Link the base, the exception and the methods.'''
         self._link_base()
         self._link_exc()
         self._link_methods()
@@ -723,19 +750,19 @@ class Method(Symbol):
         return '%s.%s' % (self.interface.fullname, self.name)
 
     def add_arg(self, arg):
-        '''Appends an argument to this method.'''
+        '''Append an argument to this method.'''
         self.args.add(arg)
 
     def create_arg(self, name, definition):
-        '''Creates a new arg and adds it to this method.'''
+        '''Create a new arg and add it to this method.'''
         arg = MethodArg(name, definition)
         self.add_arg(arg)
         return arg
 
     def parse_arg(self, node, lookup):
-        '''Creates a new argument and adds it to this method.'''
+        '''Create a new argument and add it to this method.'''
         arg = MethodArg.parse_from(node, lookup)
-        self.add_arg(arg)
+        return self.add_arg(arg)
 
     def link(self):
         self.result = self.result() if callable(self.result) else self.result
@@ -813,7 +840,7 @@ class SymbolTable(OrderedDict):
         self.name = name
 
     def add(self, item):
-        '''Adds an item by with item.name as the key.'''
+        '''Add an item with item.name as a key.'''
         self[item.name] = item
 
     def __setitem__(self, key, value, PREV=0, NEXT=1, dict_setitem=dict.__setitem__):

@@ -45,7 +45,7 @@ def _parse(paths):
     t0 = time.time()
     package = Package()
     for path in paths:
-        package.parse_module_file(path)
+        package.parse_path(path)
 
     package.link()
 

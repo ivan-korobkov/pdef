@@ -14,7 +14,7 @@ class TestPackage(unittest.TestCase):
         ])
 
         package = Package()
-        package.parse_module_node(module_node)
+        package.parse_module(module_node)
 
         assert 'module' in package.modules
 

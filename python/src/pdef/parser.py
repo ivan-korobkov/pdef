@@ -5,7 +5,7 @@ import ply.lex as lex
 import ply.yacc as yacc
 
 from pdef import ast
-from pdef.common import PdefException
+from pdef.types import PdefException
 
 __all__ = ('parse', 'parse_string')
 

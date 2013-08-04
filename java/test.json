@@ -1,6 +1,0 @@
-{
-    "path": ["../test.pdef"],
-    "java": {
-        "out": "target/generated-test-sources/pdef"
-    }
-}

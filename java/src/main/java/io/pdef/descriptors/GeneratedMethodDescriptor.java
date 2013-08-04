@@ -29,7 +29,7 @@ public class GeneratedMethodDescriptor implements MethodDescriptor {
 		name = checkNotNull(builder.name);
 		args = ImmutableMap.copyOf(builder.args);
 		result = builder.result;
-		exc = builder.exc;
+		exc = iface.getExc();
 		next = builder.next;
 		method = GeneratedInterfaceDescriptor.getMethodByName(iface.getJavaClass(), name);
 		checkArgument((result != null ? 1 : 0) + (next != null ? 1 : 0) == 1,
@@ -166,11 +166,6 @@ public class GeneratedMethodDescriptor implements MethodDescriptor {
 
 		public Builder result(final Descriptor<?> result) {
 			this.result = checkNotNull(result);
-			return this;
-		}
-
-		public Builder exc(final Descriptor<?> exc) {
-			this.exc = checkNotNull(exc);
 			return this;
 		}
 

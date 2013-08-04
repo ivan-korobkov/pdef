@@ -16,6 +16,7 @@ import java.util.List;
 public class Invocation {
 	private final Object[] args;
 	private final Invocation parent;
+	private final Descriptor<?> exc;
 	private final MethodDescriptor method;
 
 	public static Invocation root() {
@@ -26,6 +27,8 @@ public class Invocation {
 			final Object... args) {
 		this.method = method;
 		this.parent = parent;
+		this.exc =
+				method == null ? null : method.getExc() != null ? method.getExc() : parent.getExc();
 		this.args = args.clone();
 	}
 
@@ -62,6 +65,10 @@ public class Invocation {
 	/** Returns a parent or null when a root proxy. */
 	public Invocation getParent() {
 		return parent;
+	}
+
+	public Descriptor<?> getExc() {
+		return exc;
 	}
 
 	/** Returns an array of arguments. */
@@ -112,7 +119,6 @@ public class Invocation {
 			for (Invocation invocation : invocations) object = invocation.invoke(object);
 			return InvocationResult.success(object, method);
 		} catch (Exception e) {
-			Descriptor<?> exc = method.getExc();
 			if (exc == null) throw Throwables.propagate(e);
 
 			Class<?> excClass = exc.getJavaClass();

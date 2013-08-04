@@ -18,13 +18,7 @@ def cli(argv=None):
                         help='path to pdef files and directories')
     args = parser.parse_args(argv)
 
-    level = logging.WARN
-    if args.verbose:
-        level = logging.INFO
-
-    if args.debug:
-        level = logging.DEBUG
-
+    level = logging.DEBUG if args.debug else logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(level=level, format='%(message)s')
 
     try:

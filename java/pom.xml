@@ -106,7 +106,8 @@
 						<configuration>
 							<tasks>
 								<exec executable="${pdef.path}" failonerror="true">
-									<arg value="--config=main.json" />
+									<arg value="--java=target/generated-sources/pdef" />
+									<arg value="../rpc.pdef" />
 								</exec>
 							</tasks>
 						</configuration>
@@ -120,7 +121,8 @@
 						<configuration>
 							<tasks>
 								<exec executable="${pdef.path}" failonerror="true">
-									<arg value="--config=test.json" />
+									<arg value="--java=target/generated-test-sources/pdef" />
+									<arg value="../test.pdef" />
 								</exec>
 							</tasks>
 						</configuration>

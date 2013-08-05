@@ -1,10 +1,10 @@
 package io.pdef;
 
 import com.google.common.collect.ImmutableList;
+import io.pdef.descriptors.Descriptor;
 import io.pdef.descriptors.MethodDescriptor;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import io.pdef.test.TestException;
+import static org.junit.Assert.*;
 import org.junit.Test;
 import static org.mockito.Mockito.*;
 
@@ -38,13 +38,41 @@ public class InvocationTest {
 	@Test
 	public void testInvoke() throws Exception {
 		MethodDescriptor method = mock(MethodDescriptor.class);
+		Invocation invocation1 = Invocation.root().next(method, "key", "value");
 
-		Invocation invocation = Invocation.root();
-		Invocation invocation1 = invocation.next(method, "key", "value");
+		Object service = new Object();
+		invocation1.invoke(service);
+		verify(method).invoke(service, "key", "value");
+	}
 
-		Object object = new Object();
-		invocation1.invoke(object);
-		verify(method).invoke(object, "key", "value");
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testInvoke_exception() throws Exception {
+		Object service = new Object();
+		TestException exc = TestException.builder().setText("hello, world").build();
+
+		MethodDescriptor method = mock(MethodDescriptor.class);
+		when(method.invoke(service)).thenThrow(exc);
+		when(method.getExc()).thenReturn((Descriptor) TestException.DESCRIPTOR);
+
+		Invocation invocation = Invocation.root().next(method);
+		InvocationResult result = invocation.invokeChainOn(service);
+		assertFalse(result.isSuccess());
+		assertTrue(result.isExc());
+		assertEquals(exc, result.getResult());
+		assertEquals(TestException.DESCRIPTOR, result.getResultDescriptor());
+	}
+
+	@Test(expected = TestException.class)
+	public void testInvoke_unhandledException() throws Exception {
+		Object service = new Object();
+		TestException exc = TestException.builder().setText("hello, world").build();
+
+		MethodDescriptor method = mock(MethodDescriptor.class);
+		when(method.invoke(service)).thenThrow(exc);
+
+		Invocation invocation = Invocation.root().next(method);
+		invocation.invoke(service);
 	}
 
 	@Test

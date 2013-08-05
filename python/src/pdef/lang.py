@@ -3,10 +3,9 @@ import os
 import logging
 from collections import OrderedDict
 
-from pdef import ast
-from pdef import parser
+from pdef.compiler import ast, parser
 from pdef.types import Type, PdefException
-from pdef.preconditions import check_isinstance, check_state
+from pdef.compiler.preconditions import check_isinstance, check_state
 
 EXT = 'pdef'
 

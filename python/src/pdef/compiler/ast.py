@@ -1,6 +1,6 @@
 # encoding: utf-8
 from pdef.types import Type
-from pdef.preconditions import *
+from pdef.compiler.preconditions import *
 
 
 class Location(object):

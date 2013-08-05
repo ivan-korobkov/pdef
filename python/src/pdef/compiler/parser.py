@@ -4,7 +4,7 @@ import re
 import ply.lex as lex
 import ply.yacc as yacc
 
-from pdef import ast
+from pdef.compiler import ast
 from pdef.types import PdefException
 
 __all__ = ('parse', 'parse_string')
@@ -428,7 +428,8 @@ class _Parser(_GrammarRules, _Tokens):
         super(_Parser, self).__init__()
         self.debug = debug
         self.lexer = lex.lex(module=self, debug=debug)
-        self.parser = yacc.yacc(module=self, debug=debug, tabmodule='pdef.parsetab', start='file')
+        self.parser = yacc.yacc(module=self, debug=debug, tabmodule='pdef.compiler.parsetab',
+                                start='file')
         self.errors = []
         self.path = path
 

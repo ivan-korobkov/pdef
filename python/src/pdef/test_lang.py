@@ -1,7 +1,9 @@
 # encoding: utf-8
-import mock
 import unittest
-from pdef import ast
+
+import mock
+
+from pdef.compiler import ast
 from pdef.types import Type
 from pdef.lang import *
 

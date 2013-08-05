@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
-from pdef import compiler
+from pdef.compiler import compiler
 
 
 if __name__ == '__main__':

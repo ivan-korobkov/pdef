@@ -1,0 +1,8 @@
+
+class {{ name }}(pdef.types.Enum):
+{% for value in values %}
+    {{ value }} = '{{ value }}'
+{% endfor %}
+
+    __descriptor__ = pdef.descriptors.enum(lambda: {{ name }},
+        {% for value in values -%}{{ value }}, {% endfor %})

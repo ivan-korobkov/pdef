@@ -1,0 +1,13 @@
+# encoding: utf-8
+import pdef.types
+import pdef.descriptors
+{% if imports %}
+{% for import0 in imports %}
+import {{ import0 }}
+{% endfor %}
+
+{% endif %}
+{% for def0 in definitions %}
+{{ def0 }}
+
+{% endfor %}

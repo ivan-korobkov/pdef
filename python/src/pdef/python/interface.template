@@ -1,0 +1,22 @@
+
+class {{ name }}(pdef.types.Interface):
+    __descriptor__ = pdef.descriptors.interface(lambda: {{ name }},
+{% if base %}
+        base={{ base.name }},
+{% endif %}
+        methods=(
+{% for method in methods %}
+            pdef.descriptors.method('{{ method.name }}', lambda: {{ method.result.descriptor}}, args=(
+
+                {%- for arg in method.args.values() %}
+
+                ('{{ arg.name }}', lambda: {{ arg.descriptor }}),
+                {%- endfor -%})),
+{% endfor %}
+            ))
+
+{% for method in methods %}
+    def {{ method.name }}(self,{% for arg in method.args %} {{ arg }}=None,{% endfor %}):
+        raise NotImplementedError
+
+{% endfor %}

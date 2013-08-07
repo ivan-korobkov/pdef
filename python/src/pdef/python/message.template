@@ -1,0 +1,26 @@
+
+class {{ name }}(pdef.types.Message):
+    __descriptor__ = pdef.descriptors.message(lambda: {{ name }},
+{% if subtypes %}
+        subtypes={
+{% for key, value in subtypes.items() %}
+            {{ key }}: {{ value }},
+{% endfor %}
+    }
+{% endif %}
+{% if fields %}
+        fields=(
+{% for field in fields %}
+            pdef.descriptors.field('{{ field.name }}', lambda: {{ field.type.descriptor }}),
+{% endfor %}
+        )
+{% endif %}
+
+{% if fields %}
+    def __init__(self,{% for field in fields %} {{ field.name }}=None,{% endfor %}):
+{% else %}
+    def __init__(self):
+{% endif %}
+{% for field in fields %}
+        self.{{ field.name }} = {{ field.name }}
+{% endfor %}

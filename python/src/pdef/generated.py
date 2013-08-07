@@ -1,17 +1,21 @@
 # encoding: utf-8
 from pdef import descriptors
-from pdef.types import Message, Type
+from pdef.types import Message, Type, Enum
 
 
 class TestMessage(Message):
     __descriptor__ = descriptors.message(lambda: TestMessage,
+         base=Message,
+         base_type=Type.MESSAGE,
+         discriminator_name='field0',
          subtypes={
-             Type.ENUM: lambda: descriptors.enum,
+             Type.ENUM: lambda: Enum,
          },
          fields=(
-             descriptors.field('name', lambda: descriptors.int16),
-             descriptors.field('name', lambda: descriptors.int32),
-             descriptors.field('name', lambda: descriptors.bool0),
+             descriptors.field('field0', lambda: descriptors.string),
+             descriptors.field('field1', lambda: descriptors.string),
+             descriptors.field('field2', lambda: descriptors.string),
+             descriptors.field('field3', lambda: descriptors.list0(descriptors.string)),
          ))
 
     def __init__(self, field0=None, field1=None, field2=None, field3=None):
@@ -33,9 +37,11 @@ class TestMessage2(TestMessage):
         self.field4 = field4
 
 
-class TestEnum(object):
+class TestEnum(Enum):
     ONE = 'one'
     TWO = 'two'
     THREE = 'three'
 
-    __descriptor__ = descriptors.enum(lambda: TestEnum, ONE, TWO, THREE)
+    __descriptor__ = descriptors.enum(lambda: TestEnum,
+        ONE, TWO, THREE)
+

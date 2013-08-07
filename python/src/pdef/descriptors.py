@@ -1,15 +1,17 @@
 # encoding: utf-8
+from collections import OrderedDict
 from pdef.types import Type
 
 
 class Descriptor(object):
     '''Base data type descriptor.'''
-    def __init__(self, type0):
+    def __init__(self, type0, pyclass_supplier):
         self.type = type
+        self.pyclass_supplier = pyclass_supplier
 
-    def default(self):
-        '''Return the default value.'''
-        raise NotImplementedError
+    @property
+    def pyclass(self):
+        return self.pyclass_supplier()
 
     def parse(self, obj):
         '''Parse an object and return a value.'''
@@ -22,24 +24,29 @@ class Descriptor(object):
 
 class PrimitiveDescriptor(Descriptor):
     '''Primitive descriptors must support serializing to/parsing from strings.'''
+    def __init__(self, type0, pyclass):
+        super(PrimitiveDescriptor, self).__init__(type0, lambda: pyclass)
+
+    def parse(self, obj):
+        return None if obj is None else self.pyclass(obj)
+
     def parse_string(self, s):
         '''Parse a primitive from a string.'''
-        raise NotImplementedError
+        return None if s is None else self.pyclass(s)
 
+    def serialize(self, obj):
+        return None if obj is None else self.pyclass(obj)
+    
     def serialize_to_string(self, obj):
         '''Serialize a primitive to a string, or return None when the primitive is None.'''
-        raise NotImplementedError
+        return None if obj is None else str(self.serialize(obj))
 
 
 class EnumDescriptor(PrimitiveDescriptor):
     '''Enum descriptor.'''
-    def __init__(self, pyclass, *values):
-        super(EnumDescriptor, self).__init__(Type.ENUM)
-        self.pyclass = pyclass
+    def __init__(self, pyclass_supplier, *values):
+        super(EnumDescriptor, self).__init__(Type.ENUM, pyclass_supplier)
         self.values = tuple(values)
-
-    def default(self):
-        return self.values[0] if self.values else None
 
     def parse(self, obj):
         s = str(obj).lower()
@@ -57,14 +64,25 @@ class EnumDescriptor(PrimitiveDescriptor):
 
 class MessageDescriptor(Descriptor):
     '''Message descriptor.'''
-    def __init__(self, pyclass, type0, discriminator=None, subtypes=None, fields=None):
-        super(MessageDescriptor, self).__init__(Type.MESSAGE)
-        self.pyclass = pyclass
+    def __init__(self, pyclass_supplier,
+                 base=None,
+                 base_type=None,
+                 discriminator_name=None,
+                 subtypes=None,
+                 fields=None):
+        super(MessageDescriptor, self).__init__(Type.MESSAGE, pyclass_supplier)
+        self.base = base
+        self.base_type = base_type
+
         self.subtypes = dict(subtypes) if subtypes else {}
         self.fields = tuple(fields) if fields else ()
 
-    def default(self):
-        return self.instance()
+        self.discriminator = None
+        if discriminator_name:
+            for field in self.fields:
+                if field.name == discriminator_name:
+                    self.discriminator = field
+                    break
 
     def instance(self):
         '''Create a new instance.'''
@@ -80,10 +98,7 @@ class MessageDescriptor(Descriptor):
         if d is None:
             return None
 
-        instance = self.pyclass()
-        instance.merge_dict(d)
-        return instance
-
+        return self.pyclass.parse_dict(d)
 
     def serialize(self, obj):
         '''Serialize a message to a dictionary.'''
@@ -95,15 +110,14 @@ class MessageDescriptor(Descriptor):
 
 class FieldDescriptor(object):
     '''Message field descriptor.'''
-    def __init__(self, name, type0):
+    def __init__(self, name, type_supplier):
         self.name = name
-        self._type = type0
+        self.type_supplier = type_supplier
 
     @property
     def type(self):
         '''Return field type descriptor.'''
-        t = self._type
-        return t() if callable(t) else t
+        return self.type_supplier()
 
     def is_set(self, obj):
         return getattr(obj, self.name) is not None
@@ -118,31 +132,37 @@ class FieldDescriptor(object):
         return setattr(obj, self.name, None)
 
 
-class _SimplePrimitiveDescriptor(PrimitiveDescriptor):
-    '''Internal primitive descriptor.'''
-    def __init__(self, type0, pyclass, default):
-        super(_SimplePrimitiveDescriptor, self).__init__(type0)
-        self.pyclass = pyclass
-        self._default = default
+class InterfaceDescriptor(Descriptor):
+    '''Interface descriptor.'''
 
-    def default(self):
-        return self._default
+    def __init__(self, pyclass_supplier, base=None, exc_supplier=None, methods=None):
+        super(InterfaceDescriptor, self).__init__(Type.INTERFACE, pyclass_supplier)
+        self.base = base
+        self.exc_supplier = exc_supplier
+        self.methods = tuple(methods) if methods else ()
 
-    def parse(self, obj):
-        return self.default() if obj is None else self.pyclass(obj)
+    @property
+    def exc(self):
+        return self.exc_supplier() if self.exc_supplier else None
 
-    def serialize_to_string(self, obj):
-        return None if obj is None else str(obj)
+
+class MethodDescriptor(object):
+    '''Interface method descriptor.'''
+    def __init__(self, name, result_supplier, args=None):
+        self.name = name
+        self.result_supplier = result_supplier
+        self.args = OrderedDict(args) if args else OrderedDict()
+
+    @property
+    def result(self):
+        return self.result_supplier() if self.result_supplier else None
 
 
 class _ListDescriptor(Descriptor):
     '''Internal list descriptor.'''
     def __init__(self, element):
-        super(_ListDescriptor, self).__init__(Type.LIST)
+        super(_ListDescriptor, self).__init__(Type.LIST, lambda: list)
         self.element = element
-
-    def default(self):
-        return []
 
     def parse(self, obj):
         if obj is None:
@@ -158,11 +178,8 @@ class _ListDescriptor(Descriptor):
 class _SetDescriptor(Descriptor):
     '''Internal set descriptor.'''
     def __init__(self, element):
-        super(_SetDescriptor, self).__init__(Type.SET)
+        super(_SetDescriptor, self).__init__(Type.SET, set)
         self.element = element
-
-    def default(self):
-        return set()
 
     def parse(self, obj):
         if obj is None:
@@ -178,12 +195,9 @@ class _SetDescriptor(Descriptor):
 class _MapDescriptor(Descriptor):
     '''Internal map/dict descriptor.'''
     def __init__(self, key, value):
-        super(_MapDescriptor, self).__init__(Type.MAP)
+        super(_MapDescriptor, self).__init__(Type.MAP, dict)
         self.key = key
         self.value = value
-
-    def default(self):
-        return {}
 
     def parse(self, obj):
         if obj is None:
@@ -197,8 +211,8 @@ class _MapDescriptor(Descriptor):
 
 
 class _ObjectDescriptor(Descriptor):
-    def default(self):
-        return None
+    def __init__(self):
+        super(_ObjectDescriptor, self).__init__(Type.OBJECT, lambda: object)
 
     def parse(self, obj):
         return obj
@@ -207,15 +221,26 @@ class _ObjectDescriptor(Descriptor):
         return obj
 
 
-bool0 = _SimplePrimitiveDescriptor(Type.BOOL, bool, False)
-int16 = _SimplePrimitiveDescriptor(Type.INT16, int, 0)
-int32 = _SimplePrimitiveDescriptor(Type.INT32, int, 0)
-int64 = _SimplePrimitiveDescriptor(Type.INT64, int, 0)
-float0 = _SimplePrimitiveDescriptor(Type.FLOAT, float, 0.0)
-double0 = _SimplePrimitiveDescriptor(Type.DOUBLE, float, 0.0)
-string = _SimplePrimitiveDescriptor(Type.STRING, unicode, '')
-object0 = _ObjectDescriptor(Type.OBJECT)
-void = _ObjectDescriptor(Type.VOID)
+class _VoidDescriptor(Descriptor):
+    def __init__(self):
+        super(_VoidDescriptor, self).__init__(Type.VOID, lambda: object)
+
+    def parse(self, obj):
+        return None
+
+    def serialize(self, obj):
+        return None
+
+
+bool0 = PrimitiveDescriptor(Type.BOOL, bool)
+int16 = PrimitiveDescriptor(Type.INT16, int)
+int32 = PrimitiveDescriptor(Type.INT32, int)
+int64 = PrimitiveDescriptor(Type.INT64, int16)
+float0 = PrimitiveDescriptor(Type.FLOAT, float)
+double0 = PrimitiveDescriptor(Type.DOUBLE, float)
+string = PrimitiveDescriptor(Type.STRING, unicode)
+object0 = _ObjectDescriptor()
+void = _VoidDescriptor()
 
 
 def list0(element):
@@ -233,9 +258,19 @@ def map0(key, value):
     return _MapDescriptor(key, value)
 
 
-def message(pyclass, subtypes=None, fields=None):
+def message(pyclass_supplier,
+            base=None,
+            base_type=None,
+            discriminator_name=None,
+            subtypes=None,
+            fields=None):
     '''Create a message descriptor.'''
-    return MessageDescriptor(pyclass, subtypes=subtypes, fields=fields)
+    return MessageDescriptor(pyclass_supplier,
+                             base=base,
+                             base_type=base_type,
+                             discriminator_name=discriminator_name,
+                             subtypes=subtypes,
+                             fields=fields)
 
 
 def field(name, type0):
@@ -246,3 +281,16 @@ def field(name, type0):
 def enum(pyclass, *values):
     '''Create an enum descriptor.'''
     return EnumDescriptor(pyclass, *values)
+
+
+def interface(pyclass_supplier, base=None, exc_supplier=None, methods=None):
+    '''Create an interface descriptor.'''
+    return InterfaceDescriptor(pyclass_supplier,
+                               base=base,
+                               exc_supplier=exc_supplier,
+                               methods=methods)
+
+
+def method(name, result_supplier, args=None):
+    '''Create an interface method descriptor.'''
+    return MethodDescriptor(name, result_supplier=result_supplier, args=args)

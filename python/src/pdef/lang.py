@@ -334,6 +334,18 @@ class Definition(Symbol):
         self.doc = doc
         self.linked = False
 
+        self.is_primitive = self.type in Type.PRIMITIVES
+        self.is_datatype = self.type in Type.DATATYPES
+        self.is_interface = self.type == Type.INTERFACE
+        self.is_message = self.type == Type.MESSAGE
+
+        self.is_enum = self.type == Type.ENUM
+        self.is_enum_value = self.type == Type.ENUM_VALUE
+
+        self.is_list = self.type == Type.LIST
+        self.is_set = self.type == Type.SET
+        self.is_map = self.type == Type.MAP
+
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.fullname)
 
@@ -343,30 +355,6 @@ class Definition(Symbol):
     @property
     def fullname(self):
         return '%s.%s' % (self.module.name, self.name) if self.module else self.name
-
-    @property
-    def is_primitive(self):
-        return self.type in Type.PRIMITIVES
-
-    @property
-    def is_datatype(self):
-        return self.type in Type.DATATYPES
-
-    @property
-    def is_interface(self):
-        return self.type == Type.INTERFACE
-
-    @property
-    def is_message(self):
-        return self.type == Type.MESSAGE
-
-    @property
-    def is_enum(self):
-        return self.type == Type.ENUM
-
-    @property
-    def is_enum_value(self):
-        return self.type == Type.ENUM_VALUE
 
     def link(self):
         if self.linked:
@@ -394,11 +382,7 @@ class NativeTypes(object):
     INT64 = NativeType(Type.INT64)
     FLOAT = NativeType(Type.FLOAT)
     DOUBLE = NativeType(Type.DOUBLE)
-    DECIMAL = NativeType(Type.DECIMAL)
-    DATE = NativeType(Type.DATE)
-    DATETIME = NativeType(Type.DATETIME)
     STRING = NativeType(Type.STRING)
-    UUID = NativeType(Type.UUID)
 
     OBJECT = NativeType(Type.OBJECT)
     VOID = NativeType(Type.VOID)

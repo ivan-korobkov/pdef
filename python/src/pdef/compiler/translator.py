@@ -13,6 +13,9 @@ class AbstractTranslator(object):
         self.out = out
         self.env = Environment(trim_blocks=True)
 
+    def translate(self, package):
+        raise NotImplementedError
+
     def write(self, module_name, file_name, code):
         '''Writes a code to a file in a module directory.'''
         dirs = module_name.split('.')

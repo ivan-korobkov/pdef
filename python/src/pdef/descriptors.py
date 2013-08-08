@@ -22,46 +22,6 @@ class Descriptor(object):
         raise NotImplementedError
 
 
-class PrimitiveDescriptor(Descriptor):
-    '''Primitive descriptors must support serializing to/parsing from strings.'''
-    def __init__(self, type0, pyclass):
-        super(PrimitiveDescriptor, self).__init__(type0, lambda: pyclass)
-
-    def parse(self, obj):
-        return None if obj is None else self.pyclass(obj)
-
-    def parse_string(self, s):
-        '''Parse a primitive from a string.'''
-        return None if s is None else self.pyclass(s)
-
-    def serialize(self, obj):
-        return None if obj is None else self.pyclass(obj)
-    
-    def serialize_to_string(self, obj):
-        '''Serialize a primitive to a string, or return None when the primitive is None.'''
-        return None if obj is None else str(self.serialize(obj))
-
-
-class EnumDescriptor(PrimitiveDescriptor):
-    '''Enum descriptor.'''
-    def __init__(self, pyclass_supplier, *values):
-        super(EnumDescriptor, self).__init__(Type.ENUM, pyclass_supplier)
-        self.values = tuple(values)
-
-    def parse(self, obj):
-        s = str(obj).lower()
-        return s if s in self.values else None
-
-    def parse_string(self, s):
-        return self.parse(s)
-
-    def serialize(self, obj):
-        return str(obj)
-
-    def serialize_to_string(self, obj):
-        return self.serialize(obj)
-
-
 class MessageDescriptor(Descriptor):
     '''Message descriptor.'''
     def __init__(self, pyclass_supplier,
@@ -164,7 +124,57 @@ class MethodDescriptor(object):
 
     @property
     def result(self):
-        return self.result_supplier() if self.result_supplier else None
+        '''Return result descriptor.'''
+        return self.result_supplier()
+
+    @property
+    def is_remote(self):
+        '''Method is remote when its result is not an interface.'''
+        return not self.result.is_interface
+
+    def invoke(self, obj, **kwargs):
+        '''Invoke this method on an object with a given arguments, return the result'''
+        return getattr(obj, self.name)(**kwargs)
+
+
+class PrimitiveDescriptor(Descriptor):
+    '''Primitive descriptors must support serializing to/parsing from strings.'''
+    def __init__(self, type0, pyclass):
+        super(PrimitiveDescriptor, self).__init__(type0, lambda: pyclass)
+
+    def parse(self, obj):
+        return None if obj is None else self.pyclass(obj)
+
+    def parse_string(self, s):
+        '''Parse a primitive from a string.'''
+        return None if s is None else self.pyclass(s)
+
+    def serialize(self, obj):
+        return None if obj is None else self.pyclass(obj)
+
+    def serialize_to_string(self, obj):
+        '''Serialize a primitive to a string, or return None when the primitive is None.'''
+        return None if obj is None else str(self.serialize(obj))
+
+
+class EnumDescriptor(PrimitiveDescriptor):
+    '''Enum descriptor.'''
+    def __init__(self, pyclass_supplier, *values):
+        super(EnumDescriptor, self).__init__(Type.ENUM, pyclass_supplier)
+        self.values = tuple(values)
+
+    def parse(self, obj):
+        s = str(obj).lower()
+        return s if s in self.values else None
+
+    def parse_string(self, s):
+        return self.parse(s)
+
+    def serialize(self, obj):
+        return str(obj)
+
+    def serialize_to_string(self, obj):
+        return self.serialize(obj)
 
 
 class _ListDescriptor(Descriptor):

@@ -473,7 +473,7 @@ class Message(Definition):
         if not self.base:
             return self.declared_fields
 
-        return self.declared_fields + self.base.fields
+        return self.base.fields + self.declared_fields
 
     @property
     def inherited_fields(self):

@@ -5,4 +5,4 @@ class {{ name }}(pdef.types.Enum):
 {% endfor %}
 
     __descriptor__ = pdef.descriptors.enum(lambda: {{ name }},
-        {% for value in values -%}{{ value }}, {% endfor %})
+        {% for value in values -%}{{ value }}{% if not loop.last %}, {% endif %}{% endfor %})

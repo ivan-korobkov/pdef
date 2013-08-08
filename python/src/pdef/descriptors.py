@@ -69,13 +69,15 @@ class MessageDescriptor(Descriptor):
                  base_type=None,
                  discriminator_name=None,
                  subtypes=None,
-                 fields=None):
+                 declared_fields=None):
         super(MessageDescriptor, self).__init__(Type.MESSAGE, pyclass_supplier)
         self.base = base
         self.base_type = base_type
-
         self.subtypes = dict(subtypes) if subtypes else {}
-        self.fields = tuple(fields) if fields else ()
+
+        self.declared_fields = tuple(declared_fields) if declared_fields else ()
+        self.inherited_fields = base.fields if base else ()
+        self.fields = self.inherited_fields + self.declared_fields
 
         self.discriminator = None
         if discriminator_name:
@@ -135,11 +137,14 @@ class FieldDescriptor(object):
 class InterfaceDescriptor(Descriptor):
     '''Interface descriptor.'''
 
-    def __init__(self, pyclass_supplier, base=None, exc_supplier=None, methods=None):
+    def __init__(self, pyclass_supplier, base=None, exc_supplier=None, declared_methods=None):
         super(InterfaceDescriptor, self).__init__(Type.INTERFACE, pyclass_supplier)
         self.base = base
         self.exc_supplier = exc_supplier
-        self.methods = tuple(methods) if methods else ()
+
+        self.declared_methods = tuple(declared_methods) if declared_methods else ()
+        self.inherited_methods = base.methods if base else ()
+        self.methods = self.inherited_methods + self.declared_methods
 
     @property
     def exc(self):
@@ -263,19 +268,19 @@ def message(pyclass_supplier,
             base_type=None,
             discriminator_name=None,
             subtypes=None,
-            fields=None):
+            declared_fields=None):
     '''Create a message descriptor.'''
     return MessageDescriptor(pyclass_supplier,
                              base=base,
                              base_type=base_type,
                              discriminator_name=discriminator_name,
                              subtypes=subtypes,
-                             fields=fields)
+                             declared_fields=declared_fields)
 
 
-def field(name, type0):
+def field(name, type_supplier):
     '''Create a field descriptor.'''
-    return FieldDescriptor(name, type0)
+    return FieldDescriptor(name, type_supplier)
 
 
 def enum(pyclass, *values):
@@ -283,12 +288,12 @@ def enum(pyclass, *values):
     return EnumDescriptor(pyclass, *values)
 
 
-def interface(pyclass_supplier, base=None, exc_supplier=None, methods=None):
+def interface(pyclass_supplier, base=None, exc_supplier=None, declared_methods=None):
     '''Create an interface descriptor.'''
     return InterfaceDescriptor(pyclass_supplier,
                                base=base,
                                exc_supplier=exc_supplier,
-                               methods=methods)
+                               declared_methods=declared_methods)
 
 
 def method(name, result_supplier, args=None):

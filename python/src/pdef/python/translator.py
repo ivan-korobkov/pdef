@@ -4,6 +4,11 @@ from pdef.types import Type
 from pdef.compiler.translator import AbstractTranslator
 
 
+def translate(out, package):
+    '''Translates a package into python code.'''
+    return PythonTranslator(out).translate(package)
+
+
 class PythonTranslator(AbstractTranslator):
     def __init__(self, out):
         super(PythonTranslator, self).__init__(out)
@@ -57,9 +62,13 @@ class PythonMessage(object):
 
         self.base = pyref(msg.base) if msg.base else None
         self.base_type = pyref(msg.base_type) if msg.base_type else None
+        self.subtypes = [(pyref(subtype), pyref(submessage))
+                         for subtype, submessage in msg.subtypes.items()]
         self.discriminator_name = msg.discriminator.name if msg.discriminator else None
 
         self.fields = [PythonField(field) for field in msg.fields.values()]
+        self.inherited_fields = [PythonField(field) for field in msg.inherited_fields.values()]
+        self.declared_fields = [PythonField(field) for field in msg.declared_fields.values()]
 
     def render(self, translator):
         return translator.message_template.render(**self.__dict__)
@@ -72,10 +81,12 @@ class PythonField(object):
 
 
 class PythonInterface(object):
-    def __init__(self, interface):
-        self.name = interface.name
-        self.base = pyref(interface.base) if interface.base else None
-        self.methods = [PythonMethod(method) for method in interface.methods.values()]
+    def __init__(self, iface):
+        self.name = iface.name
+        self.base = pyref(iface.base) if iface.base else None
+        self.methods = [PythonMethod(m) for m in iface.methods.values()]
+        self.declared_methods = [PythonMethod(m) for m in iface.declared_methods.values()]
+        self.inherited_methods = [PythonMethod(m)for m in iface.inherited_methods.values()]
 
     def render(self, translator):
         return translator.interface_template.render(**self.__dict__)
@@ -85,7 +96,7 @@ class PythonMethod(object):
     def __init__(self, method):
         self.name = method.name
         self.result = pyref(method.result)
-        self.args = OrderedDict((arg.name, pyref(arg.type)) for arg in method.args.values())
+        self.args = [(arg.name, pyref(arg.type)) for arg in method.args.values()]
 
 
 class PythonRef(object):

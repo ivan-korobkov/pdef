@@ -124,3 +124,15 @@ class Enum(object):
 class PdefException(Exception):
     '''General pdef exception.'''
     pass
+
+
+class Interface(object):
+    __descriptor__ = None
+
+    @classmethod
+    def rpc_client(cls, handler):
+        return RpcClient(cls.__descriptor__, handler)
+
+    @classmethod
+    def http_client(cls, url):
+        pass

@@ -1,7 +1,6 @@
 package io.pdef;
 
 import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import io.pdef.descriptors.Descriptor;
@@ -11,6 +10,8 @@ import io.pdef.rpc.RpcCall;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Immutable chained invocation of an interface method. */
 public class Invocation {
@@ -50,7 +51,7 @@ public class Invocation {
 		sb.append(getMethod().getName());
 	}
 
-	/** Creates a new proxy with a parent set to this one. */
+	/** Creates a new invocation with a parent set to this one. */
 	public Invocation next(final MethodDescriptor descriptor, final Object... args) {
 		checkNotNull(descriptor);
 		checkNotNull(args);

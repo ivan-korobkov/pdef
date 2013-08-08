@@ -17,10 +17,10 @@ class {{ name }}(pdef.types.Interface):
 
                 {%- endfor -%})),
 {% endfor %}
-            )
         )
+    )
 {% for method in declared_methods %}
 
     def {{ method.name }}(self,{% for arg, _ in method.args %} {{ arg }}=None,{% endfor %}):
-        raise NotImplementedError
+        pass
 {% endfor %}

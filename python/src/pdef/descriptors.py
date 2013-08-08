@@ -150,6 +150,10 @@ class InterfaceDescriptor(Descriptor):
     def exc(self):
         return self.exc_supplier() if self.exc_supplier else None
 
+    def create_client(self, invocation_handler):
+        '''Creates a client for an interface.'''
+        self.pyclass.create_client(invocation_handler)
+
 
 class MethodDescriptor(object):
     '''Interface method descriptor.'''

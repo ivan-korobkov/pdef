@@ -36,7 +36,7 @@ class TestInterface(unittest.TestCase):
 
 
 class TestMessage(unittest.TestCase):
-    def _test(self):
+    def test(self):
         enum = Enum('Type')
         enum.add_value('MSG')
         enum.add_value('TWO')

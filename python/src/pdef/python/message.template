@@ -1,6 +1,8 @@
 
 {% if base %}
 class {{ name }}({{ base.name }}):
+{% elif is_exception %}
+class {{ name }}(pdef.types.BaseException):
 {% else %}
 class {{ name }}(pdef.types.Message):
 {% endif %}

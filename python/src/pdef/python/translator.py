@@ -1,5 +1,4 @@
 # encoding: utf-8
-from collections import OrderedDict
 from pdef.types import Type
 from pdef.compiler.translator import AbstractTranslator
 

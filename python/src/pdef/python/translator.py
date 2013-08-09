@@ -1,6 +1,8 @@
 # encoding: utf-8
+import logging
+import os.path
 from pdef.types import Type
-from pdef.compiler.translator import AbstractTranslator
+from pdef.compiler.translator import AbstractTranslator, mkdir_p
 
 
 def translate(out, package):
@@ -18,20 +20,60 @@ class PythonTranslator(AbstractTranslator):
         self.interface_template = self.read_template('interface.template')
 
     def translate(self, package):
-        for module in package.modules.values():
-            self.translate_module(module)
+        pymodules = [PythonModule(module) for module in package.modules.values()]
+        root = self._build_directory_tree(pymodules)
+        root.write()
 
-    def translate_module(self, module):
-        pymodule = PythonModule(module)
-        code = pymodule.render(self)
-        print code
+    def _build_directory_tree(self, pymodules):
+        root = Dir(self.out, None)
 
+        for pymodule in pymodules:
+            name = pymodule.name
+            directory = root
+            for part in name.split('.'):
+                directory = root.child(part)
+            directory.code = pymodule.render(self)
+
+        return root
+
+
+class Dir(object):
+    def __init__(self, path, name):
+        self.path = path
+        self.name = name
+
+        self.code = None
+        self.dirs = {}
+
+    def child(self, name):
+        if name not in self.dirs:
+            self.dirs[name] = Dir(os.path.join(self.path, name), name)
+        return self.dirs[name]
+
+    def write(self):
+        filepath = None
+        if self.code:
+            filepath = os.path.join(self.path, '__init__.py') if self.dirs else self.path + '.py'
+
+        if self.dirs:
+            mkdir_p(self.path)
+
+        if filepath:
+            mkdir_p(os.path.dirname(filepath))
+
+            with open(filepath, 'wt') as f:
+                f.write(self.code)
+                logging.info('Created %s', filepath)
+
+        for d in self.dirs.values():
+            d.write()
 
 class PythonModule(object):
     def __init__(self, module):
         self.name = module.name
         self.imports = [import0.module.name for import0 in module.imports.values()]
         self.definitions = [pydef(def0) for def0 in module.definitions.values()]
+        self.modules = []
 
     def render(self, translator):
         defs = []

@@ -120,6 +120,7 @@ class Module(Symbol):
         self.name = name
         self.package = package
 
+        self.modules = SymbolTable(self, 'modules')
         self.imports = SymbolTable(self, 'imports')
         self.definitions = SymbolTable(self, 'definitions')
         self.imports_linked = False

@@ -22,7 +22,9 @@ class Symbol(object):
     def _check(self, expression, msg, *args):
         if expression:
             return
+        self._error(msg, *args)
 
+    def _error(self, msg, *args):
         msg = msg % args if msg else 'Error'
         raise PdefException(msg)
 
@@ -162,8 +164,9 @@ class Module(Symbol):
 
         name = def0.name
         for imp_name in self.imports:
-            self._check(imp_name != name and imp_name.startswith(name + '.'),
-                        '%s: definition clashes with an import, "%s", "%s"', self, name, imp_name)
+            if imp_name == name or imp_name.startswith(name + '.'):
+                self._error('%s: definition clashes with an import, "%s", "%s"',
+                            self, name, imp_name)
 
         self.definitions.add(def0)
         def0.module = self

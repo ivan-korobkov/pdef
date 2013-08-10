@@ -236,9 +236,6 @@ class _GrammarRules(object):
         elif len(t) == 3:
             t[0] = t[2], None
         elif len(t) == 6:
-            if not isinstance(t[4], ast.EnumValueRef):
-                self._error('Enum value required, got %s, line %s', t[4], t.lexer.lineno)
-                raise SyntaxError
             t[0] = t[2], t[4]
         else:
             raise SyntaxError
@@ -381,15 +378,7 @@ class _GrammarRules(object):
         '''
         def_type : IDENTIFIER
         '''
-        if '.' in t[1]:
-            if t[1].count('.') != 1:
-                self._error('Wrong identifier %s, line %s', t[1], t.lexer.lineno)
-                raise SyntaxError
-            else:
-                enum, value = t[1].split('.')
-                t[0] = ast.EnumValueRef(ast.DefRef(enum), value)
-        else:
-            t[0] = ast.DefRef(t[1])
+        t[0] = ast.DefRef(t[1])
 
     def p_error(self, t):
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)

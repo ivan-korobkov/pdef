@@ -99,4 +99,3 @@ class HttpClient(object):
 
                 s = type0.to_string(param)
                 path += s + '/'
-

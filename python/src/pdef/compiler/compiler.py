@@ -24,10 +24,15 @@ def cli(argv=None):
     level = logging.DEBUG if args.debug else logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(level=level, format='%(message)s')
 
-    try:
-        compile_translate(args.paths, args.java, args.python)
-    except PdefException, e:
-        logging.error('error: %s' % e)  # To get rid of a traceback
+    run = lambda: compile_translate(args.paths, args.java, args.python)
+    if args.debug:
+        run()
+    else:
+        try:
+            run()
+        except PdefException, e:
+            # Get rid of the traceback.
+            logging.error('error: %s' % e)
 
 
 def compile_translate(paths, java=None, python=None):

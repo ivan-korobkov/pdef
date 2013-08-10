@@ -21,14 +21,11 @@ class PythonTranslator(AbstractTranslator):
         self.interface_template = self.read_template('interface.template')
 
     def translate(self, package):
-        pymodules = [PythonModule(module, self.pymodule_suffix, ref=self._ref)
+        pymodules = [PythonModule(module, self.pymodule_suffix)
                      for module in package.modules.values()]
 
         for pm in pymodules:
             self._write(pm)
-
-    def _ref(self, def0):
-        return pyref(def0, self.pymodule_suffix)
 
     def _write(self, pymodule):
         name = pymodule.name + self.pymodule_suffix
@@ -43,7 +40,9 @@ class PythonTranslator(AbstractTranslator):
 
 
 class PythonModule(object):
-    def __init__(self, module, pymodule_suffix, ref):
+    def __init__(self, module, pymodule_suffix):
+        ref = lambda def0: pyref(def0, module, pymodule_suffix)
+
         self.name = module.name
         self.imports = [pyimport(import0, pymodule_suffix) for import0 in module.imports.values()]
         self.definitions = [pydef(def0, ref) for def0 in module.definitions.values()]
@@ -136,34 +135,42 @@ def pyimport(import0, pymodule_suffix):
     return '%s%s' % (import0.module.name, pymodule_suffix)
 
 
-def pyref(def0, pymodule_suffix):
-    '''Create a python reference.'''
+def pyref(def0, module, pymodule_suffix):
+    '''Create a python reference.
+
+    @param def0:    pdef definition.
+    @param module:  pdef module in which the definition is referenced.
+    @param pymodule_suffix: suffix which is used for all python modules.
+    '''
     type0 = def0.type
     if type0 in NATIVE:
         return NATIVE[type0]
 
     if def0.is_list:
-        element = pyref(def0.element, pymodule_suffix)
-        descriptor = 'pdef.descriptors.list(%s)' % element.descriptor
+        element = pyref(def0.element, module, pymodule_suffix)
+        descriptor = 'pdef.descriptors.list0(%s)' % element.descriptor
         return PythonRef('list', descriptor)
 
     elif def0.is_set:
-        element = pyref(def0.element, pymodule_suffix)
-        descriptor = 'pdef.descriptors.set(%s)' % element.descriptor
+        element = pyref(def0.element, module, pymodule_suffix)
+        descriptor = 'pdef.descriptors.set0(%s)' % element.descriptor
         return PythonRef('set', descriptor)
 
     elif def0.is_map:
-        key = pyref(def0.key, pymodule_suffix)
-        value = pyref(def0.value, pymodule_suffix)
-        descriptor = 'pdef.descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
+        key = pyref(def0.key, module, pymodule_suffix)
+        value = pyref(def0.value, module, pymodule_suffix)
+        descriptor = 'pdef.descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
         return PythonRef('dict', descriptor)
 
     elif def0.is_enum_value:
-        enum = pyref(def0.enum, pymodule_suffix)
+        enum = pyref(def0.enum, module, pymodule_suffix)
         name = '%s.%s' % (enum.name, def0.name)
         return PythonRef(name, None)
 
-    name = '%s%s.%s' % (def0.module.name, pymodule_suffix, def0.name)
+    if def0.module == module:
+        name = def0.name
+    else:
+        name = '%s%s.%s' % (def0.module.name, pymodule_suffix, def0.name)
     descriptor = '%s.__descriptor__' % name
     return PythonRef(name, descriptor)
 

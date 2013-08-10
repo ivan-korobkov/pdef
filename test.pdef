@@ -1,4 +1,4 @@
-module io.pdef.test;
+module pdef.test;
 
 /** Test enum. */
 enum TestEnum {

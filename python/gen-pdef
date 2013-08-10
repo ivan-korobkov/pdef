@@ -1,0 +1,3 @@
+#!/bin/bash
+pdefc -v --python src/ pdef/
+

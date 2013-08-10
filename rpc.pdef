@@ -1,4 +1,4 @@
-module io.pdef.rpc;
+module pdef.rpc;
 
 
 /** Request. */

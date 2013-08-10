@@ -1,5 +1,5 @@
 # encoding: utf-8
-import json
+from pdef import _json as json
 
 
 class Type(object):
@@ -55,10 +55,9 @@ class Message(object):
         discriminator = desc.discriminator
         if discriminator:
             type0 = discriminator.type.parse(d.get(discriminator.name))
-            subtypes = desc.subtypes
-
-            if type0 in subtypes:
-                return subtypes[type0].parse_dict(d)
+            subtype_supplier = desc.subtypes.get(type0)
+            if subtype_supplier:
+                return subtype_supplier().parse_dict(d)
 
         instance = cls()
         instance.merge_dict(d)
@@ -118,11 +117,11 @@ class Enum(object):
     def parse_string(cls, s):
         if s is None:
             return None
-        return cls.__descriptor__.get_value(s)
+        return cls.__descriptor__.parse_string(s)
 
 
-class PdefException(Exception):
-    '''General pdef exception.'''
+class BaseException(Exception, Message):
+    '''Base generated pdef exception.'''
     pass
 
 
@@ -131,7 +130,7 @@ class Interface(object):
 
     @classmethod
     def rpc_client(cls, handler):
-        return RpcClient(cls.__descriptor__, handler)
+        pass
 
     @classmethod
     def http_client(cls, url):

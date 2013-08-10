@@ -8,26 +8,29 @@ class {{ name }}(pdef.types.Message):
 {% endif %}
     __descriptor__ = pdef.descriptors.message(lambda: {{ name }},
 {% if base %}
-        base={{ base.descriptor }},
+        base={{ base.name }},
         base_type={{ base_type.name if base_type else None }},
+{% endif %}
+{% if discriminator_name %}
+        discriminator_name="{{ discriminator_name }}",
 {% endif %}
 
 {%- if subtypes %}
         subtypes={
 {% for subtype, submessage in subtypes %}
-            {{ subtype.name }}: lambda: {{ submessage.descriptor }},
+            {{ subtype.name }}: lambda: {{ submessage.name }},
 {% endfor %}
         },
 {% endif %}
 
 {%- if declared_fields %}
-        declared_fields=(
+        declared_fields=[
 {% for field in declared_fields %}
             pdef.descriptors.field('{{ field.name }}', lambda: {{ field.type.descriptor }})
             {%- if not loop.last %}, {% endif %}
 
 {% endfor %}
-        )
+        ]
 {% endif %}
     )
 

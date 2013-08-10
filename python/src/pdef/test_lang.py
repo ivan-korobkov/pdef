@@ -56,7 +56,7 @@ class TestModule(unittest.TestCase):
         try:
             module.add_definition(def1)
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'duplicate' in e.message
 
     def test_add_definition__import_clash(self):
@@ -67,7 +67,7 @@ class TestModule(unittest.TestCase):
         def0 = Definition(Type.DEFINITION, 'clash')
         try:
             module.add_definition(def0)
-        except PdefException, e:
+        except BaseException, e:
             assert 'definition clashes with an import' in e.message
 
     def test_get_definition(self):
@@ -137,7 +137,7 @@ class TestModule(unittest.TestCase):
         try:
             module.lookup(ast.EnumValueRef(ast.DefRef('Number'), 'One'))
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'not found' in e.message
 
     def test_lookup__user_defined(self):
@@ -297,7 +297,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg.link()
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'cannot inherit itself' in e.message
 
     def test_link_base__circular_inheritance(self):
@@ -310,7 +310,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg0.link()
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'circular inheritance' in e.message
 
     def test_link_base__message_exception_clash(self):
@@ -322,7 +322,7 @@ class TestMessage(unittest.TestCase):
         try:
             exc.link()
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'cannot inherit' in e.message
 
     def test_link_base__add_subtypes(self):
@@ -395,7 +395,7 @@ class TestMessage(unittest.TestCase):
         msg.set_base(base)
         try:
             msg.link()
-        except PdefException, e:
+        except BaseException, e:
             assert 'no enum value for a base discriminator' in e.message
 
     def test_link_base__base_does_not_have_discriminator(self):
@@ -408,7 +408,7 @@ class TestMessage(unittest.TestCase):
         msg.set_base(base, subtype)
         try:
             msg.link()
-        except PdefException, e:
+        except BaseException, e:
             assert 'base does not have a discriminator' in e.message
 
     def test_create_field(self):
@@ -426,7 +426,7 @@ class TestMessage(unittest.TestCase):
         msg.create_field('field', NativeTypes.INT32)
         try:
             msg.create_field('field', NativeTypes.INT32)
-        except PdefException, e:
+        except BaseException, e:
             assert 'duplicate' in e.message
 
     def test_create_field__set_discriminator(self):
@@ -446,7 +446,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg.create_field('type1', enum, is_discriminator=True)
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'duplicate discriminator' in e.message
 
     def test_inherited_fields(self):
@@ -482,7 +482,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg1.link()
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'duplicate field' in e.message
 
 
@@ -512,7 +512,7 @@ class TestField(unittest.TestCase):
         try:
             field.link()
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'field must be a data type' in e.message
 
     def test_link__discriminator_must_be_enum(self):
@@ -527,7 +527,7 @@ class TestField(unittest.TestCase):
         try:
             field1.link()
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'discriminator must be an enum' in e.message
 
     def test_fullname(self):
@@ -576,7 +576,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.link()
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'self inheritance' in e.message
 
     def test_link_base__circular_inheritance(self):
@@ -592,7 +592,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface2.link()
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'circular' in e.message
 
     def test_link_base__must_be_interface(self):
@@ -602,7 +602,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.link()
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'base must be an interface' in e.message
 
     def test_link_exc(self):
@@ -623,7 +623,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.link()
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'tries to throw a non-exception' in e.message
 
     def test_methods(self):
@@ -657,7 +657,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.create_method('doNothing')
             self.fail()
-        except PdefException, e:
+        except BaseException, e:
             assert 'duplicate' in e.message
 
     def test_link_methods__prevent_base_method_duplicates(self):
@@ -670,7 +670,7 @@ class TestInterface(unittest.TestCase):
 
         try:
             iface1.link()
-        except PdefException, e:
+        except BaseException, e:
             assert 'duplicate base method' in e.message
 
 
@@ -730,7 +730,7 @@ class TestList(unittest.TestCase):
         iface = Interface('Interface')
         try:
             List(iface)
-        except PdefException, e:
+        except BaseException, e:
             assert 'element must be a data type' in e.message
 
 
@@ -740,7 +740,7 @@ class TestSet(unittest.TestCase):
         iface = Interface('Interface')
         try:
             Set(iface)
-        except PdefException, e:
+        except BaseException, e:
             assert 'element must be a data type' in e.message
 
 
@@ -749,12 +749,12 @@ class TestMap(unittest.TestCase):
         msg = Message('Message')
         try:
             Map(msg, msg)
-        except PdefException, e:
+        except BaseException, e:
             assert 'key must be a primitive' in e.message
 
     def test_value_datatype(self):
         iface = Interface('Interface')
         try:
             Map(NativeTypes.STRING, iface)
-        except PdefException, e:
+        except BaseException, e:
             assert 'value must be a data type' in e.message

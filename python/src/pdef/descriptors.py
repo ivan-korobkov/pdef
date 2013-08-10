@@ -36,7 +36,7 @@ class MessageDescriptor(Descriptor):
         self.subtypes = dict(subtypes) if subtypes else {}
 
         self.declared_fields = tuple(declared_fields) if declared_fields else ()
-        self.inherited_fields = base.fields if base else ()
+        self.inherited_fields = base.__descriptor__.fields if base else ()
         self.fields = self.inherited_fields + self.declared_fields
 
         self.discriminator = None
@@ -103,7 +103,7 @@ class InterfaceDescriptor(Descriptor):
         self.exc_supplier = exc_supplier
 
         self.declared_methods = tuple(declared_methods) if declared_methods else ()
-        self.inherited_methods = base.methods if base else ()
+        self.inherited_methods = base.__descriptor__.methods if base else ()
         self.methods = self.inherited_methods + self.declared_methods
 
     @property
@@ -159,19 +159,23 @@ class PrimitiveDescriptor(Descriptor):
 
 class EnumDescriptor(PrimitiveDescriptor):
     '''Enum descriptor.'''
-    def __init__(self, pyclass_supplier, *values):
+    def __init__(self, pyclass_supplier, values):
         super(EnumDescriptor, self).__init__(Type.ENUM, pyclass_supplier)
         self.values = tuple(values)
 
     def parse(self, obj):
-        s = str(obj).lower()
+        if obj is None:
+            return None
+        s = str(obj).upper()
         return s if s in self.values else None
 
     def parse_string(self, s):
         return self.parse(s)
 
     def serialize(self, obj):
-        return str(obj)
+        if obj is None:
+            return None
+        return str(obj).lower()
 
     def serialize_to_string(self, obj):
         return self.serialize(obj)
@@ -221,12 +225,12 @@ class _MapDescriptor(Descriptor):
     def parse(self, obj):
         if obj is None:
             return None
-        return {self.key.parse(k): self.value.parse(v) for k, v in obj.values()}
+        return {self.key.parse(k): self.value.parse(v) for k, v in obj.items()}
 
     def serialize(self, obj):
         if obj is None:
             return None
-        return {self.key.serialize(k): self.value.serialize(v) for k, v in obj.values()}
+        return {self.key.serialize(k): self.value.serialize(v) for k, v in obj.items()}
 
 
 class _ObjectDescriptor(Descriptor):
@@ -254,7 +258,7 @@ class _VoidDescriptor(Descriptor):
 bool0 = PrimitiveDescriptor(Type.BOOL, bool)
 int16 = PrimitiveDescriptor(Type.INT16, int)
 int32 = PrimitiveDescriptor(Type.INT32, int)
-int64 = PrimitiveDescriptor(Type.INT64, int16)
+int64 = PrimitiveDescriptor(Type.INT64, int)
 float0 = PrimitiveDescriptor(Type.FLOAT, float)
 double0 = PrimitiveDescriptor(Type.DOUBLE, float)
 string = PrimitiveDescriptor(Type.STRING, unicode)
@@ -297,9 +301,9 @@ def field(name, type_supplier):
     return FieldDescriptor(name, type_supplier)
 
 
-def enum(pyclass, *values):
+def enum(pyclass, values):
     '''Create an enum descriptor.'''
-    return EnumDescriptor(pyclass, *values)
+    return EnumDescriptor(pyclass, values)
 
 
 def interface(pyclass_supplier, base=None, exc_supplier=None, declared_methods=None):

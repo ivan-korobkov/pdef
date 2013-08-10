@@ -7,17 +7,17 @@ class {{ name }}(pdef.types.Interface):
 {% if base %}
         base={{ base.name }},
 {% endif %}
-        declared_methods=(
+        declared_methods=[
 {% for method in declared_methods %}
-            pdef.descriptors.method('{{ method.name }}', lambda: {{ method.result.descriptor}}, args=(
+            pdef.descriptors.method('{{ method.name }}', lambda: {{ method.result.descriptor}}, args=[
 
                 {%- for name, arg in method.args %}
 
                 ('{{ name }}', lambda: {{ arg.descriptor }}){% if not loop.last %}, {% endif %}
 
-                {%- endfor -%})),
+                {%- endfor -%}]),
 {% endfor %}
-        )
+        ]
     )
 {% for method in declared_methods %}
 

@@ -6,8 +6,19 @@ from pdef.types import Type
 class Descriptor(object):
     '''Base data type descriptor.'''
     def __init__(self, type0, pyclass_supplier):
-        self.type = type
+        self.type = type0
         self.pyclass_supplier = pyclass_supplier
+
+        self.is_primitive = self.type in Type.PRIMITIVES
+        self.is_datatype = self.type in Type.DATATYPES
+        self.is_interface = self.type == Type.INTERFACE
+        self.is_message = self.type == Type.MESSAGE
+
+        self.is_enum = self.type == Type.ENUM
+
+        self.is_list = self.type == Type.LIST
+        self.is_set = self.type == Type.SET
+        self.is_map = self.type == Type.MAP
 
     @property
     def pyclass(self):
@@ -128,9 +139,9 @@ class MethodDescriptor(object):
         '''Method is remote when its result is not an interface.'''
         return not self.result.is_interface
 
-    def invoke(self, obj, **kwargs):
+    def invoke(self, obj, *args, **kwargs):
         '''Invoke this method on an object with a given arguments, return the result'''
-        return getattr(obj, self.name)(**kwargs)
+        return getattr(obj, self.name)(*args, **kwargs)
 
 
 class PrimitiveDescriptor(Descriptor):

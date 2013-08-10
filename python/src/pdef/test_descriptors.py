@@ -1,6 +1,7 @@
 # encoding: utf-8
 import unittest
-from pdef import test_pd
+from mock import Mock
+from pdef import descriptors, test_pd
 
 
 class TestMessageDescriptor(unittest.TestCase):
@@ -80,36 +81,128 @@ class TestInterfaceDescriptor(unittest.TestCase):
 
 class TestMethodDescriptor(unittest.TestCase):
     def test_result(self):
-        pass
+        method = descriptors.method('method', lambda: descriptors.void)
+        assert method.result is descriptors.void
 
     def test_is_remote__datatype(self):
-        pass
+        method = descriptors.method('method', lambda: descriptors.string)
+        assert method.is_remote
 
     def test_is_remote__void(self):
-        pass
+        method = descriptors.method('method', lambda: descriptors.void)
+        assert method.is_remote
 
     def test_is_remote__interface(self):
-        pass
+        method = descriptors.method('method', lambda: descriptors.interface(object))
+        assert method.is_remote is False
 
     def test_invoke(self):
-        pass
+        service = Mock()
+        method = descriptors.method('method', lambda: descriptors.void)
+        method.invoke(service)
+        service.method.assert_called_with()
 
 
 class TestPrimitiveDescriptor(unittest.TestCase):
-    pass
+    descriptor = descriptors.bool0
+
+    def parse(self):
+        assert self.descriptor.parse(True) is True
+
+    def parse__none(self):
+        assert self.descriptor.parse(None) is None
+
+    def parse__string(self):
+        assert self.descriptor.parse('TrUe') is True
+
+    def parse_string__none(self):
+        assert self.descriptor.parse_string(None) is None
+
+    def serialize(self):
+        assert self.descriptor.serialize(True) is True
+
+    def serialize__none(self):
+        assert self.descriptor.serialize(None) is None
+
+    def serialize_to_string(self):
+        assert self.descriptor.serialize_to_string(True) == 'True'
+
+    def serialize_to_string__none(self):
+        assert self.descriptor.serialize_to_string(None) is None
 
 
 class TestEnumDescriptor(unittest.TestCase):
-    pass
+    descriptor = test_pd.TestEnum.__descriptor__
+
+    def test_parse(self):
+        enum = self.descriptor.parse('one')
+        assert enum == test_pd.TestEnum.ONE
+
+    def test_parse__none(self):
+        assert self.descriptor.parse(None) is None
+
+    def test_parse_string(self):
+        assert self.descriptor.parse_string('TwO') == test_pd.TestEnum.TWO
+
+    def test_parse_string__none(self):
+        assert self.descriptor.parse_string(None) is None
+
+    def test_serialize(self):
+        assert self.descriptor.serialize(test_pd.TestEnum.THREE) == 'three'
+
+    def test_serialize__none(self):
+        assert self.descriptor.serialize(None) is None
+
+    def test_serialize_to_string(self):
+        assert self.descriptor.serialize_to_string(test_pd.TestEnum.THREE) == 'three'
+
+    def test_serialize_to_string__none(self):
+        assert self.descriptor.serialize_to_string(None) is None
 
 
 class TestListDescriptor(unittest.TestCase):
-    pass
+    descriptor = descriptors.list0(descriptors.int32)
+
+    def test_parse(self):
+        assert self.descriptor.parse(['1', 2]) == [1, 2]
+
+    def test_parse__none(self):
+        assert self.descriptor.parse(None) is None
+
+    def test_serialize(self):
+        assert self.descriptor.serialize([1, 2]) == [1, 2]
+
+    def test_serialize__none(self):
+        assert self.descriptor.serialize(None) is None
 
 
 class TestSetDescriptor(unittest.TestCase):
-    pass
+    descriptor = descriptors.set0(descriptors.int32)
+
+    def test_parse(self):
+        assert self.descriptor.parse(['1', 2, '2']) == {1, 2}
+
+    def test_parse__none(self):
+        assert self.descriptor.parse(None) is None
+
+    def test_serialize(self):
+        assert self.descriptor.serialize({1, 2}) == {1, 2}
+
+    def test_serialize__none(self):
+        assert self.descriptor.serialize(None) is None
 
 
 class TestMapDescriptor(unittest.TestCase):
-    pass
+    descriptor = descriptors.map0(descriptors.int32, descriptors.int32)
+
+    def test_parse(self):
+        assert self.descriptor.parse({'1': '2'}) == {1: 2}
+
+    def test_parse__none(self):
+        assert self.descriptor.parse(None) is None
+
+    def test_serialize(self):
+        assert self.descriptor.serialize({1: 2}) == {1: 2}
+
+    def test_serialize__none(self):
+        assert self.descriptor.serialize(None) is None

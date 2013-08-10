@@ -54,7 +54,7 @@ class Message(object):
 
         discriminator = desc.discriminator
         if discriminator:
-            type0 = discriminator.type.parse(d.get(discriminator.name))
+            type0 = discriminator.descriptor.parse(d.get(discriminator.name))
             subtype_supplier = desc.subtypes.get(type0)
             if subtype_supplier:
                 return subtype_supplier().parse_dict(d)

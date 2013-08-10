@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef.types import Type
+from pdef import Type
 from pdef.compiler.translator import AbstractTranslator, upper_first
 
 

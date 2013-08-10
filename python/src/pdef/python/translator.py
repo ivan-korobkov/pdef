@@ -1,7 +1,7 @@
 # encoding: utf-8
 import logging
 import os.path
-from pdef.types import Type
+from pdef import Type
 from pdef.compiler.translator import AbstractTranslator, mkdir_p
 
 

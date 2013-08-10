@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdef.lang import *
+from pdef.compiler.lang import *
 from pdef.java.translator import *
 
 

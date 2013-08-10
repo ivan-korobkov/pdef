@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef.types import GeneratedException
+from pdef.compiler.exc import PdefCompilerException
 
 
 def check_not_none(argument, msg=None, *args):
@@ -8,7 +8,7 @@ def check_not_none(argument, msg=None, *args):
         return argument
 
     msg = msg % args if msg else "Cannot be none"
-    raise GeneratedException(msg)
+    raise PdefCompilerException(msg)
 
 
 def check_argument(expr, msg=None, *args):
@@ -17,7 +17,7 @@ def check_argument(expr, msg=None, *args):
        return True
 
     msg = msg % args if msg else 'Wrong argument'
-    raise GeneratedException(msg)
+    raise PdefCompilerException(msg)
 
 
 def check_state(expr, msg=None, *args):
@@ -26,7 +26,7 @@ def check_state(expr, msg=None, *args):
         return True
 
     msg = msg % args if msg else 'Illegal state exception'
-    raise GeneratedException(msg)
+    raise PdefCompilerException(msg)
 
 
 def check_isinstance(argument, class_or_type_or_typle, msg=None, *args):

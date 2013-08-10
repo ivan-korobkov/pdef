@@ -1,6 +1,5 @@
 # encoding: utf-8
-from pdef.types import Type
-from pdef.compiler.preconditions import *
+from pdef import Type
 
 
 class Location(object):
@@ -143,7 +142,6 @@ class MapRef(TypeRef):
 class EnumValueRef(TypeRef):
     def __init__(self, enum, value):
         super(EnumValueRef, self).__init__(Type.ENUM_VALUE)
-        check_isinstance(enum, DefRef)
         self.enum = enum
         self.value = value
 

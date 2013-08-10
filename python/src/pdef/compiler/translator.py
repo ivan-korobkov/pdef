@@ -2,7 +2,6 @@
 import inspect
 import logging
 import os
-import os.path
 from jinja2 import Environment
 
 

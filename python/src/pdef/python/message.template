@@ -2,9 +2,9 @@
 {% if base %}
 class {{ name }}({{ base.name }}):
 {% elif is_exception %}
-class {{ name }}(pdef.types.BaseException):
+class {{ name }}(pdef.GeneratedException):
 {% else %}
-class {{ name }}(pdef.types.Message):
+class {{ name }}(pdef.Message):
 {% endif %}
     __descriptor__ = pdef.descriptors.message(lambda: {{ name }},
 {% if base %}

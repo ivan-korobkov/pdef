@@ -1,5 +1,5 @@
 
-class {{ name }}(pdef.types.Enum):
+class {{ name }}(pdef.Enum):
 {% for value in values %}
     {{ value }} = '{{ value }}'
 {% endfor %}

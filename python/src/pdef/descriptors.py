@@ -1,7 +1,6 @@
 # encoding: utf-8
 from collections import OrderedDict
-from pdef import _json as json
-from pdef.types import Type
+from pdef import Type, _json as json
 
 
 class Descriptor(object):

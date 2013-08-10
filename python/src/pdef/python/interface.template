@@ -1,7 +1,7 @@
 {% if base %}
 class {{ name }}({{ base.name }}):
 {% else %}
-class {{ name }}(pdef.types.Interface):
+class {{ name }}(pdef.Interface):
 {% endif %}
     __descriptor__ = pdef.descriptors.interface(lambda: {{ name }},
 {% if base %}

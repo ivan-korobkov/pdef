@@ -1,5 +1,5 @@
 # encoding: utf-8
-import pdef.types
+import pdef
 import pdef.descriptors
 {% if imports %}
 

@@ -6,7 +6,7 @@ import time
 from pdef.lang import Package
 from pdef.java import JavaTranslator
 from pdef.python.translator import PythonTranslator
-from pdef.types import BaseException
+from pdef.types import GeneratedException
 
 
 def cli(argv=None):
@@ -30,7 +30,7 @@ def cli(argv=None):
     else:
         try:
             run()
-        except BaseException, e:
+        except GeneratedException, e:
             # Get rid of the traceback.
             logging.error('error: %s' % e)
 

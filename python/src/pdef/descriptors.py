@@ -1,5 +1,6 @@
 # encoding: utf-8
 from collections import OrderedDict
+from pdef import _json as json
 from pdef.types import Type
 
 
@@ -31,6 +32,19 @@ class Descriptor(object):
     def serialize(self, obj):
         '''Serialize an object into a primitive or a collection.'''
         raise NotImplementedError
+
+    def parse_json(self, s):
+        '''Parse an object from a json string.'''
+        if s is None:
+            return None
+
+        value = json.loads(s)
+        return self.parse(value)
+
+    def serialize_to_json(self, obj, indent=None):
+        '''Serialize an object into a json string.'''
+        value = self.serialize(obj)
+        return json.dumps(value, indent=indent)
 
 
 class MessageDescriptor(Descriptor):
@@ -71,14 +85,45 @@ class MessageDescriptor(Descriptor):
         if d is None:
             return None
 
-        return self.pyclass.parse_dict(d)
+        discriminator = self.discriminator
+        if discriminator:
+            type0 = discriminator.descriptor.parse(d.get(discriminator.name))
+            subtype_supplier = self.subtypes.get(type0)
+            if subtype_supplier:
+                return subtype_supplier().parse_dict(d)
+
+        return self.merge_dict(self.instance(), d)
 
     def serialize(self, obj):
         '''Serialize a message to a dictionary.'''
         if obj is None:
             return None
 
-        return obj.to_dict()
+        return self.serialize_to_dict(obj)
+
+    def serialize_to_dict(self, message):
+        if message is None:
+            return None
+
+        d = {}
+        for field in self.fields:
+            if not field.is_set(message):
+                continue
+
+            value = field.get(message)
+            data = field.descriptor.serialize(value)
+            d[field.name] = data
+        return d
+
+    def merge_dict(self, message, d):
+        for field in self.fields:
+            if field.name not in d:
+                continue
+
+            data = d[field.name]
+            value = field.descriptor.parse(data)
+            field.set(message, value)
+        return message
 
 
 class FieldDescriptor(object):
@@ -107,7 +152,6 @@ class FieldDescriptor(object):
 
 class InterfaceDescriptor(Descriptor):
     '''Interface descriptor.'''
-
     def __init__(self, pyclass_supplier, base=None, exc_supplier=None, declared_methods=None):
         super(InterfaceDescriptor, self).__init__(Type.INTERFACE, pyclass_supplier)
         self.base = base
@@ -148,16 +192,17 @@ class PrimitiveDescriptor(Descriptor):
     '''Primitive descriptors must support serializing to/parsing from strings.'''
     def __init__(self, type0, pyclass):
         super(PrimitiveDescriptor, self).__init__(type0, lambda: pyclass)
+        self._native = pyclass  # Just an optimization to get rid of lambda in self.pyclass.
 
     def parse(self, obj):
-        return None if obj is None else self.pyclass(obj)
+        return None if obj is None else self._native(obj)
 
     def parse_string(self, s):
         '''Parse a primitive from a string.'''
-        return None if s is None else self.pyclass(s)
+        return None if s is None else self._native(s)
 
     def serialize(self, obj):
-        return None if obj is None else self.pyclass(obj)
+        return None if obj is None else self._native(obj)
 
     def serialize_to_string(self, obj):
         '''Serialize a primitive to a string, or return None when the primitive is None.'''

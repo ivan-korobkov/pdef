@@ -42,55 +42,25 @@ class Message(object):
 
     @classmethod
     def parse_json(cls, s):
-        if s is None:
-            return None
-
-        d = json.loads(s)
-        return cls.parse_dict(d)
+        '''Parse a message from a json string.'''
+        return cls.__descriptor__.parse_json(s)
 
     @classmethod
     def parse_dict(cls, d):
-        desc = cls.__descriptor__
-
-        discriminator = desc.discriminator
-        if discriminator:
-            type0 = discriminator.descriptor.parse(d.get(discriminator.name))
-            subtype_supplier = desc.subtypes.get(type0)
-            if subtype_supplier:
-                return subtype_supplier().parse_dict(d)
-
-        instance = cls()
-        instance.merge_dict(d)
-        return instance
+        '''Parse a message from a dictionary.'''
+        return cls.__descriptor__.parse(d)
 
     def to_json(self, indent=None):
-        d = self.to_dict()
-        return json.dumps(d, indent=indent)
+        '''Convert this message to a json string.'''
+        return self.__descriptor__.serialize_to_json(self, indent)
 
     def to_dict(self):
         '''Convert this message to a dictionary (serialize each field).'''
-        d = {}
-
-        fields = self.__descriptor__.fields
-        for field in fields:
-            if not field.is_set(self):
-                continue
-
-            value = field.get(self)
-            data = field.descriptor.serialize(value)
-            d[field.name] = data
-        return d
+        return self.__descriptor__.serialize_to_dict(self)
 
     def merge_dict(self, d):
         '''Merge this message with a dictionary (parse each field).'''
-        fields = self.__descriptor__.fields
-        for field in fields:
-            if field.name not in d:
-                continue
-
-            data = d[field.name]
-            value = field.descriptor.parse(data)
-            field.set(self, value)
+        self.__descriptor__.merge_dict(self, d)
         return self
 
     def __eq__(self, other):
@@ -102,36 +72,22 @@ class Message(object):
         return not self == other
 
 
+class GeneratedException(Exception, Message):
+    '''Base generated pdef exception.'''
+    pass
+
+
 class Enum(object):
     __descriptor__ = None
 
     @classmethod
     def parse_json(cls, s):
-        if s is None:
-            return None
-
-        value = json.loads(s)
-        return cls.parse_string(value)
+        return cls.__descriptor__.parse_json(s)
 
     @classmethod
     def parse_string(cls, s):
-        if s is None:
-            return None
         return cls.__descriptor__.parse_string(s)
-
-
-class BaseException(Exception, Message):
-    '''Base generated pdef exception.'''
-    pass
 
 
 class Interface(object):
     __descriptor__ = None
-
-    @classmethod
-    def rpc_client(cls, handler):
-        pass
-
-    @classmethod
-    def http_client(cls, url):
-        pass

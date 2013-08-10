@@ -4,7 +4,7 @@ import logging
 from collections import OrderedDict
 
 from pdef.compiler import ast, parser
-from pdef.types import Type, BaseException
+from pdef.types import Type, GeneratedException
 from pdef.compiler.preconditions import check_isinstance, check_state
 
 EXT = 'pdef'
@@ -26,7 +26,7 @@ class Symbol(object):
 
     def _error(self, msg, *args):
         msg = msg % args if msg else 'Error'
-        raise BaseException(msg)
+        raise GeneratedException(msg)
 
     def _debug(self, msg, *args):
         logging.debug('  ' + msg, *args)
@@ -80,7 +80,7 @@ class Package(Symbol):
         '''Return a module by its name, or raise an exception.'''
         module = self.modules.get(name)
         if not module:
-            raise BaseException('Module "%s" is not found' % name)
+            raise GeneratedException('Module "%s" is not found' % name)
         return module
 
     def lookup_module_lazy(self, name):
@@ -197,7 +197,7 @@ class Module(Symbol):
                 return enum.get_value(right)
 
         if not def0:
-            raise BaseException('%s: type is not found, "%s"' % (self, name))
+            raise GeneratedException('%s: type is not found, "%s"' % (self, name))
 
         return def0
 
@@ -236,7 +236,7 @@ class Module(Symbol):
         name = ref.name
         if '.' not in name:
             if name not in self.definitions:
-                raise BaseException('%s: type is not found, "%s"' % (self, ref))
+                raise GeneratedException('%s: type is not found, "%s"' % (self, ref))
             return self.definitions[name]
 
         # It can be an enum value or an imported type (i.e. import.module.Enum.Value).
@@ -254,7 +254,7 @@ class Module(Symbol):
             if lname in self.definitions:
                 return self.get_definition(name)
 
-        raise BaseException('%s: type is not found, "%s"' % (self, ref))
+        raise GeneratedException('%s: type is not found, "%s"' % (self, ref))
 
 
     def lookup_lazy(self, ref):
@@ -431,7 +431,7 @@ class Enum(Definition):
         '''Get a value by its name or raise an exception.'''
         value = self.values.get(name)
         if not value:
-            raise BaseException('%s: value is not found, "%s"' % (self, name))
+            raise GeneratedException('%s: value is not found, "%s"' % (self, name))
         return value
 
     def __contains__(self, item):

@@ -5,7 +5,7 @@ import ply.lex as lex
 import ply.yacc as yacc
 
 from pdef.compiler import ast
-from pdef.types import BaseException
+from pdef.types import GeneratedException
 
 __all__ = ('parse', 'parse_string')
 
@@ -431,7 +431,7 @@ class _Parser(_GrammarRules, _Tokens):
     def parse_string(self, s):
         result = self.parser.parse(s, debug=self.debug, tracking=True, lexer=self.lexer)
         if self.errors:
-            raise BaseException('Syntax errors')
+            raise GeneratedException('Syntax errors')
         return result
 
     def _error(self, msg, *args):

@@ -64,6 +64,10 @@ exception TestException {
     text string;
 }
 
+exception TestException1 {
+    code int32;
+}
+
 /** Test interface with method of all types. */
 interface TestInterface : throws TestException {
     /** Void method w/o args. */
@@ -88,10 +92,10 @@ interface TestInterface1 {
 }
 
 /** Interface inheritance tree. */
-interface InterfaceTree0 {
+interface InterfaceTree0 : throws TestException {
     method0() string;
 }
 
-interface InterfaceTree1 : InterfaceTree0, throws TestException {
+interface InterfaceTree1 : InterfaceTree0, throws TestException1 {
     method1() string;
 }

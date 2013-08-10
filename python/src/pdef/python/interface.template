@@ -7,6 +7,9 @@ class {{ name }}(pdef.types.Interface):
 {% if base %}
         base={{ base.name }},
 {% endif %}
+{% if exc %}
+        exc_supplier=lambda: {{ exc.name }},
+{% endif %}
         declared_methods=[
 {% for method in declared_methods %}
             pdef.descriptors.method('{{ method.name }}', lambda: {{ method.result.descriptor}}, args=[

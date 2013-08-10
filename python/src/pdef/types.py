@@ -77,7 +77,7 @@ class Message(object):
                 continue
 
             value = field.get(self)
-            data = field.type.serialize(value)
+            data = field.descriptor.serialize(value)
             d[field.name] = data
         return d
 
@@ -89,7 +89,7 @@ class Message(object):
                 continue
 
             data = d[field.name]
-            value = field.type.parse(data)
+            value = field.descriptor.parse(data)
             field.set(self, value)
         return self
 

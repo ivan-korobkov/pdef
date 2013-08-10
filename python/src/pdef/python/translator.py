@@ -98,6 +98,7 @@ class PythonInterface(object):
     def __init__(self, iface, ref):
         self.name = iface.name
         self.base = ref(iface.base) if iface.base else None
+        self.exc = ref(iface.exc) if iface.exc else None
         self.methods = [PythonMethod(m, ref) for m in iface.methods.values()]
         self.declared_methods = [PythonMethod(m, ref) for m in iface.declared_methods.values()]
         self.inherited_methods = [PythonMethod(m, ref)for m in iface.inherited_methods.values()]

@@ -72,14 +72,14 @@ class MessageDescriptor(Descriptor):
 
 class FieldDescriptor(object):
     '''Message field descriptor.'''
-    def __init__(self, name, type_supplier):
+    def __init__(self, name, descriptor_supplier):
         self.name = name
-        self.type_supplier = type_supplier
+        self.descriptor_supplier = descriptor_supplier
 
     @property
-    def type(self):
+    def descriptor(self):
         '''Return field type descriptor.'''
-        return self.type_supplier()
+        return self.descriptor_supplier()
 
     def is_set(self, obj):
         return getattr(obj, self.name) is not None
@@ -109,10 +109,6 @@ class InterfaceDescriptor(Descriptor):
     @property
     def exc(self):
         return self.exc_supplier() if self.exc_supplier else None
-
-    def create_client(self, invocation_handler):
-        '''Creates a client for an interface.'''
-        self.pyclass.create_client(invocation_handler)
 
 
 class MethodDescriptor(object):

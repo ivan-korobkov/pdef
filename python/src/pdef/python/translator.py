@@ -46,7 +46,6 @@ class PythonModule(object):
         self.name = module.name
         self.imports = [pyimport(import0, pymodule_suffix) for import0 in module.imports.values()]
         self.definitions = [pydef(def0, ref) for def0 in module.definitions.values()]
-        self.modules = []
 
     def render(self, translator):
         defs = []
@@ -131,12 +130,12 @@ def pydef(def0, ref):
     raise ValueError('Unsupported definition %s' % def0)
 
 
-def pyimport(import0, pymodule_suffix):
+def pyimport(import0, pymodule_suffix=''):
     '''Create a python import string.'''
     return '%s%s' % (import0.module.name, pymodule_suffix)
 
 
-def pyref(def0, module, pymodule_suffix):
+def pyref(def0, module=None, pymodule_suffix=''):
     '''Create a python reference.
 
     @param def0:    pdef definition.

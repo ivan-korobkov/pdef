@@ -107,9 +107,6 @@ class TestMessageInheritance(unittest.TestCase):
         d = {'type': 'one'}
         msg = test_pd.Tree0.parse_dict(d)
         expected = test_pd.Tree1(type=test_pd.TreeType.ONE)
-
-        print msg.to_dict(), type(msg)
-        print expected.to_dict(), type(expected)
         assert msg == expected
 
     def test_parse__submessage_type_tree(self):

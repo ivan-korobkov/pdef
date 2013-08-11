@@ -1,66 +1,222 @@
 # encoding: utf-8
 import unittest
 from pdef.compiler.lang import *
-from pdef.python.translator import PythonTranslator
+from pdef.python.translator import *
 
 
-class TestInterface(unittest.TestCase):
-    def setUp(self):
-        base0 = Interface('Base0')
-        base0.create_method('ping')
-        base1 = Interface('Base1')
-        base1.create_method('pong')
-
+class TestPythonModule(unittest.TestCase):
+    def create(self):
+        msg = Message('Message')
         iface = Interface('Interface')
-        iface.set_base(base0)
-        iface.set_base(base1)
-        iface.create_method('echo', NativeTypes.STRING, ('text', NativeTypes.STRING))
-        iface.create_method('sum', NativeTypes.INT32, ('z', NativeTypes.INT32),
-                            ('a', NativeTypes.INT32))
-        iface.create_method('abc', NativeTypes.STRING, ('a', NativeTypes.STRING),
-                            ('b', NativeTypes.STRING), ('c', NativeTypes.STRING))
+        enum = Enum('Enum')
 
-        iface.create_method('base0', base0)
-        iface.create_method('base1', base1)
+        imported = Module('imported.module')
 
-        module0 = Module('test.module0')
-        module0.add_definition(base0)
-        module0.add_definition(base1)
-        module0.add_definition(iface)
+        module = Module('test')
+        module.add_definitions(msg, iface, enum)
+        module.create_import('module', imported)
+        module.link_imports()
+        module.link_definitions()
 
-        self.translator = PythonTranslator('/tmp')
-        self.module0 = module0
+        return PythonModule(module, pymodule_suffix='_pd')
 
-    def test(self):
-        self.translator.translate_module(self.module0)
+    def test_constructor(self):
+        pymodule = self.create()
+
+        assert pymodule.name == 'test'
+        assert len(pymodule.imports) == 1
+        assert len(pymodule.definitions) == 3
+
+    def test_code(self):
+        translator = PythonTranslator('/dev/null')
+        pymodule = self.create()
+        code = pymodule.render(translator)
+        assert code
 
 
-class TestMessage(unittest.TestCase):
-    def test(self):
-        enum = Enum('Type')
-        enum.add_value('MSG')
+class TestPythonEnum(unittest.TestCase):
+    def create(self):
+        enum = Enum('Number')
+        enum.add_value('ONE')
         enum.add_value('TWO')
-        enum.add_value('MALE')
+        enum.add_value('THREE')
+
+        return pydef(enum, None)
+
+    def test_constructor(self):
+        pyenum = self.create()
+        assert pyenum.name == 'Number'
+        assert pyenum.values == ['ONE', 'TWO', 'THREE']
+
+    def test_render(self):
+        translator = PythonTranslator('/dev/null')
+        pyenum = self.create()
+        code = pyenum.render(translator)
+        assert code
+
+
+class TestPythonMessage(unittest.TestCase):
+    def create(self):
+        enum = Enum('Type')
+        type0 = enum.add_value('MESSAGE')
 
         base = Message('Base')
         base.create_field('type', enum, is_discriminator=True)
-        base.create_field('field0', NativeTypes.BOOL)
-        base.create_field('field1', NativeTypes.INT16)
-        msg0 = Message('Message0')
 
         msg = Message('Message')
-        msg.set_base(base, enum.values['MSG'])
-        msg.create_field('field2', NativeTypes.INT32)
-        msg.create_field('field3', NativeTypes.STRING)
-        msg.create_field('field4', msg0)
-        msg.create_field('field5', base)
-        msg.create_field('field6', List(msg))
+        msg.set_base(base, type0)
+        msg.create_field('field', NativeTypes.BOOL)
 
-        module0 = Module('test.module0')
-        module0.add_definitions(enum, base, msg0, msg)
-        module0.link_imports()
-        module0.link_definitions()
+        module = Module('test')
+        module.add_definitions(enum, base, msg)
+        module.link_imports()
+        module.link_definitions()
 
-        translator = PythonTranslator('/tmp')
-        translator.translate_module(module0)
+        return pydef(msg, ref=lambda x: pyref(x, module))
 
+    def test_constructor(self):
+        pymsg = self.create()
+        assert pymsg.name == 'Message'
+        assert pymsg.is_exception is False
+        assert pymsg.base.name == 'Base'
+        assert pymsg.base_type.name == 'Type.MESSAGE'
+        assert pymsg.subtypes == []
+        assert pymsg.discriminator_name == 'type'
+        assert len(pymsg.declared_fields) == 1
+        assert len(pymsg.inherited_fields) == 1
+        assert len(pymsg.fields) == 2
+
+    def test_render(self):
+        translator = PythonTranslator('/dev/null')
+        pymsg = self.create()
+        code = pymsg.render(translator)
+        assert code
+
+
+class TestPythonInterface(unittest.TestCase):
+    def create(self):
+        base = Interface('Base')
+        base.create_method('method0', NativeTypes.INT32, ('arg', NativeTypes.INT32))
+        exc = Message('Exception', is_exception=True)
+
+        iface = Interface('Interface', base=base, exc=exc)
+        iface.create_method('method1', NativeTypes.STRING, ('name', NativeTypes.STRING))
+
+        module = Module('test')
+        module.add_definitions(base, exc, iface)
+        module.link_imports()
+        module.link_definitions()
+
+        return pydef(iface, ref=lambda x: pyref(x, module))
+
+    def test_constructor(self):
+        pyiface = self.create()
+        assert pyiface.name == 'Interface'
+        assert pyiface.base.name == 'Base'
+        assert pyiface.exc.name == 'Exception'
+        assert len(pyiface.methods) == 2
+        assert len(pyiface.declared_methods) == 1
+        assert len(pyiface.inherited_methods) == 1
+
+    def test_render(self):
+        translator = PythonTranslator('/dev/null')
+        pyiface = self.create()
+        code = pyiface.render(translator)
+        assert code
+
+
+class TestPyImport(unittest.TestCase):
+    def test(self):
+        module = Module('my.test')
+        import0 = Import('alias', module)
+        s = pyimport(import0)
+        assert s == 'my.test'
+
+    def test_pymodule_suffix(self):
+        module = Module('my.test')
+        import0 = Import('alias', module)
+        s = pyimport(import0, pymodule_suffix='_pd')
+        assert s == 'my.test_pd'
+
+
+class TestPyRef(unittest.TestCase):
+    def test_native(self):
+        def0 = NativeTypes.INT32
+        ref = pyref(def0)
+        assert ref is NATIVE[Type.INT32]
+
+    def test_list(self):
+        def0 = List(NativeTypes.INT32)
+        ref = pyref(def0)
+        assert ref.name == 'list'
+        assert ref.descriptor == 'pdef.descriptors.list0(pdef.descriptors.int32)'
+
+    def test_set(self):
+        def0 = Set(NativeTypes.INT32)
+        ref = pyref(def0)
+        assert ref.name == 'set'
+        assert ref.descriptor == 'pdef.descriptors.set0(pdef.descriptors.int32)'
+
+    def test_map(self):
+        def0 = Map(NativeTypes.INT32, NativeTypes.INT64)
+        ref = pyref(def0)
+        assert ref.name == 'dict'
+        assert ref.descriptor == 'pdef.descriptors.map0(pdef.descriptors.int32, ' \
+                                 'pdef.descriptors.int64)'
+
+    def test_enum_value(self):
+        def0 = Enum('Number')
+        def0.add_value('ONE')
+        two = def0.add_value('TWO')
+
+        module = Module('test')
+        module.add_definition(def0)
+
+        ref = pyref(two)
+        assert ref.name == 'test.Number.TWO'
+        assert ref.descriptor is None
+
+    def test_enum(self):
+        def0 = Enum('Number')
+        module = Module('test')
+        module.add_definition(def0)
+
+        ref = pyref(def0)
+        assert ref.name == 'test.Number'
+        assert ref.descriptor == 'test.Number.__descriptor__'
+
+    def test_message(self):
+        def0 = Message('Message')
+        module = Module('test')
+        module.add_definition(def0)
+
+        ref = pyref(def0)
+        assert ref.name == 'test.Message'
+        assert ref.descriptor == 'test.Message.__descriptor__'
+
+    def test_interface(self):
+        def0 = Interface('Interface')
+        module = Module('test')
+        module.add_definition(def0)
+
+        ref = pyref(def0)
+        assert ref.name == 'test.Interface'
+        assert ref.descriptor == 'test.Interface.__descriptor__'
+
+    def test_relative(self):
+        def0 = Message('Message')
+        module = Module('test')
+        module.add_definition(def0)
+
+        ref = pyref(def0, module)
+        assert ref.name == 'Message'
+        assert ref.descriptor == 'Message.__descriptor__'
+
+    def test_pymodule_suffix(self):
+        def0 = Message('Message')
+        module = Module('my.test')
+        module.add_definition(def0)
+
+        ref = pyref(def0, pymodule_suffix='_pd')
+        assert ref.name == 'my.test_pd.Message'
+        assert ref.descriptor == 'my.test_pd.Message.__descriptor__'

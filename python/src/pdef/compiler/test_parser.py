@@ -19,4 +19,4 @@ class TestParser(unittest.TestCase):
         s = self._filepath('test.pdef')
         module = pdef.compiler.parser.parse_file(s)
 
-        assert module.name == 'io.pdef.test';
+        assert module.name == 'pdef.test';

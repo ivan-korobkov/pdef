@@ -4,7 +4,7 @@ from pdef import Type, _json as json
 
 
 class Descriptor(object):
-    '''Base data type descriptor.'''
+    '''Base type descriptor.'''
     def __init__(self, type0, pyclass_supplier):
         self.type = type0
         self.pyclass_supplier = pyclass_supplier

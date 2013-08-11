@@ -1,6 +1,9 @@
 # encoding: utf-8
+import logging
+import os.path
+
 from pdef import Type
-from pdef.compiler.translator import AbstractTranslator, upper_first
+from pdef.compiler.translator import AbstractTranslator, upper_first, mkdir_p
 
 
 class JavaTranslator(AbstractTranslator):
@@ -51,6 +54,18 @@ class JavaTranslator(AbstractTranslator):
         return self.ref(msg.base) \
             if msg.base else 'io.pdef.GeneratedException' \
             if msg.is_exception else 'io.pdef.GeneratedMessage'
+
+    def write(self, module_name, file_name, code):
+        '''Writes a code to a file in a module directory.'''
+        dirs = module_name.split('.')
+        fulldir = os.path.join(self.out, os.path.join(*dirs))
+        mkdir_p(fulldir)
+
+        fullpath = os.path.join(fulldir, file_name)
+        with open(fullpath, 'wt') as f:
+            f.write(code)
+
+        logging.debug('  Created %s', fullpath)
 
 
 class JavaDefinition(object):

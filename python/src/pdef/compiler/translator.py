@@ -15,18 +15,6 @@ class AbstractTranslator(object):
     def translate(self, package):
         raise NotImplementedError
 
-    def write(self, module_name, file_name, code):
-        '''Writes a code to a file in a module directory.'''
-        dirs = module_name.split('.')
-        fulldir = os.path.join(self.out, os.path.join(*dirs))
-        mkdir_p(fulldir)
-
-        fullpath = os.path.join(fulldir, file_name)
-        with open(fullpath, 'wt') as f:
-            f.write(code)
-
-        logging.debug('  Created %s', fullpath)
-
     def read_template(self, name):
         '''Reads and returns a template by name.'''
         f = inspect.getfile(self.__class__)

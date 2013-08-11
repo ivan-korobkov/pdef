@@ -2,24 +2,6 @@
 from pdef.compiler.exc import PdefCompilerException
 
 
-def check_not_none(argument, msg=None, *args):
-    '''Checks that argument is not none or raises PdefException.'''
-    if argument:
-        return argument
-
-    msg = msg % args if msg else "Cannot be none"
-    raise PdefCompilerException(msg)
-
-
-def check_argument(expr, msg=None, *args):
-    '''Checks the expression or raises PdefException.'''
-    if expr:
-       return True
-
-    msg = msg % args if msg else 'Wrong argument'
-    raise PdefCompilerException(msg)
-
-
 def check_state(expr, msg=None, *args):
     '''Checks the expression or raises PdefException.'''
     if expr:

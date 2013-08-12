@@ -264,17 +264,32 @@ class _GrammarRules(object):
         '''
         options = t[4]
         is_discriminator = 'discriminator' in options
-        t[0] = ast.Field(t[2], t[3], is_discriminator=is_discriminator)
+        is_query = 'query' in options
+        t[0] = ast.Field(t[2], t[3], is_discriminator=is_discriminator, is_query=is_query)
 
     def p_field_options(self, t):
         '''
-        field_options : COMMA DISCRIMINATOR
+        field_options : COMMA field_option_list
                       | empty
         '''
         if len(t) == 3:
-            t[0] = [t[2]]
+            t[0] = t[2]
         else:
             t[0] = []
+
+    def p_field_option_list(self, t):
+        '''
+        field_option_list : field_option_list COMMA field_option
+                          | field_option
+        '''
+        self._list(t, separated=True)
+
+    def p_field_option(self, t):
+        '''
+        field_option : DISCRIMINATOR
+                     | QUERY
+        '''
+        t[0] = t[1]
 
     # Interface definition
     def p_interface(self, t):
@@ -325,13 +340,35 @@ class _GrammarRules(object):
         name = t[2]
         args = t[4]
         result = t[6]
-        t[0] = ast.Method(name, args=args, result=result, doc=doc)
+        options = t[7]
+        is_index = 'index' in options
+        is_post = 'post' in options
+        t[0] = ast.Method(name, args=args, result=result, doc=doc, is_index=is_index,
+                          is_post=is_post)
 
     def p_method_options(self, t):
         '''
-        method_options : empty
+        method_options : COMMA method_option_list
+                       | empty
         '''
-        t[0] = []
+        if len(t) == 3:
+            t[0] = t[2]
+        else:
+            t[0] = []
+
+    def p_method_option_list(self, t):
+        '''
+        method_option_list : method_option_list COMMA method_option
+                           | method_option
+        '''
+        self._list(t, separated=True)
+
+    def p_method_option(self, t):
+        '''
+        method_option : INDEX
+                      | POST
+        '''
+        t[0] = t[1]
 
     def p_type(self, t):
         '''

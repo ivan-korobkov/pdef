@@ -82,14 +82,14 @@ MethodOption  ::= index | post
 
 Type          ::= ValueType | ListType | SetType | MapType | id
 ValueType     ::= bool
-                  | int16
-                  | int32
-                  | int64
-                  | float
-                  | double
-                  | string
-                  | object
-                  | void
+                | int16
+                | int32
+                | int64
+                | float
+                | double
+                | string
+                | object
+                | void
 ListType      ::= list '<' Type '>'
 SetType       ::= set '<' Type '>'
 MapType       ::= map '<' Type ',' Type '>'

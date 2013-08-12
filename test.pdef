@@ -84,6 +84,8 @@ interface TestInterface : throws TestException {
 
     /** Interface method. */
     interface0() TestInterface1;
+
+    simple(msg TestSimpleMessage, query) TestSimpleMessage, post;
 }
 
 /** An interface returned as a sub interface in TestInterface. */

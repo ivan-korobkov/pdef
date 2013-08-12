@@ -21,6 +21,7 @@ class File(object):
 
 
 class Import(object):
+    '''Abstract import class.'''
     pass
 
 
@@ -55,10 +56,11 @@ class Message(Definition):
 
 
 class Field(object):
-    def __init__(self, name, type0, is_discriminator=False):
+    def __init__(self, name, type0, is_discriminator=False, is_query=False):
         self.name = name
         self.type = type0
         self.is_discriminator = is_discriminator
+        self.is_query = is_query
 
 
 class Enum(Definition):
@@ -88,11 +90,15 @@ class InterfaceBase(object):
 
 
 class Method(object):
-    def __init__(self, name, args=None, result=None, doc=None):
+    def __init__(self, name, args=None, result=None, doc=None,
+                 is_index=False, is_post=False):
         self.name = name
         self.args = tuple(args) if args else ()
         self.result = result
         self.doc = doc
+
+        self.is_index = is_index
+        self.is_post = is_post
 
 
 class TypeRef(object):

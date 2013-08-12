@@ -111,6 +111,8 @@ class PythonMethod(object):
         self.name = method.name
         self.result = ref(method.result)
         self.args = [(arg.name, ref(arg.type)) for arg in method.args.values()]
+        self.is_index = method.is_index
+        self.is_post = method.is_post
 
 
 class PythonRef(object):

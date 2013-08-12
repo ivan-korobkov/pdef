@@ -127,9 +127,11 @@ class MessageDescriptor(Descriptor):
 
 class FieldDescriptor(object):
     '''Message field descriptor.'''
-    def __init__(self, name, descriptor_supplier):
+    def __init__(self, name, descriptor_supplier, is_discriminator=False, is_query=False):
         self.name = name
         self.descriptor_supplier = descriptor_supplier
+        self.is_discriminator = is_discriminator
+        self.is_query = is_query
 
     @property
     def descriptor(self):
@@ -167,9 +169,12 @@ class InterfaceDescriptor(Descriptor):
 
 class MethodDescriptor(object):
     '''Interface method descriptor.'''
-    def __init__(self, name, result_supplier, args=None):
+    def __init__(self, name, result_supplier, args=None, is_index=False, is_post=False):
         self.name = name
         self.result_supplier = result_supplier
+        self.is_index = is_index
+        self.is_post = is_post
+
         self.args = OrderedDict(args) if args else OrderedDict()
 
     @property
@@ -365,6 +370,7 @@ def interface(pyclass_supplier, base=None, exc_supplier=None, declared_methods=N
                                declared_methods=declared_methods)
 
 
-def method(name, result_supplier, args=None):
+def method(name, result_supplier, args=None, is_index=False, is_post=False):
     '''Create an interface method descriptor.'''
-    return MethodDescriptor(name, result_supplier=result_supplier, args=args)
+    return MethodDescriptor(name, result_supplier=result_supplier, args=args,
+                            is_index=is_index, is_post=is_post)

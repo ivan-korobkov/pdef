@@ -593,13 +593,15 @@ class Field(Symbol):
         '''Create a field from an AST node.'''
         check_isinstance(node, ast.Field)
         type0 = lookup(node.type)
-        return Field(node.name, type0, message=message, is_discriminator=node.is_discriminator)
+        return Field(node.name, type0, message=message, is_discriminator=node.is_discriminator,
+                     is_query=node.is_query)
 
-    def __init__(self, name, type0, message, is_discriminator=False):
+    def __init__(self, name, type0, message, is_discriminator=False, is_query=False):
         self.name = name
         self.type = type0
         self.message = message
         self.is_discriminator = is_discriminator
+        self.is_query = is_query
 
     def __repr__(self):
         return '%s %s' % (self.name, self.type)
@@ -718,16 +720,20 @@ class Method(Symbol):
     @classmethod
     def parse_from(cls, node, interface, lookup):
         check_isinstance(node, ast.Method)
-        method = Method(node.name, result=lookup(node.result), interface=interface, doc=node.doc)
+        method = Method(node.name, result=lookup(node.result), interface=interface, doc=node.doc,
+                        is_index=node.is_index, is_post=node.is_post)
         for n in node.args:
             method.parse_arg(n, lookup)
         return method
 
-    def __init__(self, name, result, interface, doc=None):
+    def __init__(self, name, result, interface, doc=None, is_index=False, is_post=False):
         self.name = name
         self.result = result
         self.interface = interface
         self.doc = doc
+        self.is_index = is_index
+        self.is_post = is_post
+
         self.args = SymbolTable(self, 'args')
 
     def __str__(self):

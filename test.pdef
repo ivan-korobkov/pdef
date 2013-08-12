@@ -90,14 +90,14 @@ interface TestInterface : throws TestException {
 
 /** An interface returned as a sub interface in TestInterface. */
 interface TestInterface1 {
-    hello(firstName string; lastName string) string;
+    hello(firstName string; lastName string) string, post;
 }
 
 /** Interface inheritance tree. */
 interface InterfaceTree0 : throws TestException {
-    method0() string;
+    method0() string, index;
 }
 
 interface InterfaceTree1 : InterfaceTree0, throws TestException1 {
-    method1() string;
+    method1() string, index, post;
 }

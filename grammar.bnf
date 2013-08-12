@@ -1,50 +1,95 @@
-// Protocol definition grammar in BNF.
-<File>          ::= Doc? 'module' Identifier ';' Import* Definition*
+// Pdef grammar in BNF with JetBrains GrammarKit support.
+{
+    tokens=[
+        // Punctuation
+        colon=':'
+        comma=','
+        semi=';'
+        less='<'
+        greater='>'
+        lbrace='{'
+        rbrace='}'
+        lparent='('
+        rparent=')'
 
-<Doc>           ::= '/**' '...text...' '*/'
+        // Module and imports
+        module='module'
+        from='from'
+        import='import'
 
-<Import>        ::= AbsoluteImport | RelativeImport
-<AbsoluteImport>    ::= 'import' Identifier ';'
-<RelativeImport>    ::= 'from' Identifier 'import' Identifier (',' Identifier)* ';'
+        // Native types
+        bool='bool'
+        int16='int16'
+        int32='int32'
+        int64='int64'
+        float='float'
+        double='double'
+        string='string'
+        object='object'
+        void='void'
+        list='list'
+        set='set'
+        map='map'
 
-<Definition>    ::= Doc? (Enum | Message | Interface)
+        // Definition types
+        message_token='message'
+        interface_token='interface'
+        exception_token='exception'
+        enum_token='enum'
 
-<Enum>          ::= 'enum' Identifier '{' EnumValues '}'
-<EnumValues>    :: = EnumValue (',' EnumValue)* ';'?
-<EnumValue>     :: = Doc? Identifier
+        // Options
+        throws='throws'
+        discriminator='discriminator'
+        query='query'
+        index='index'
+        post='post'
 
-<Message>       ::= ('message' | 'exception') Identifier (':' MessageBase)? '{' Fields? '}'
-<MessageBase>   ::= DefType | (DefType '(' DefType ')')
+        id='regexp:[a-zA-Z]{1}[a-zA-Z_0-9\.]*'
+        doc='regexp:/\*\*(.|\n|\r)*?\*/'
+        comment='regexp://.*'
+    ]
+}
+// Single quotes (') are used to enclose tokens in GrammarKit when they clash with the rules,
+// i.e. the message rule and the message_token "message".
 
-<Fields>        ::= Field (';' Field)* ';'?
-<Field>         ::= Doc? Identifier Type (',' FieldOptions)?
-<FieldOptions>  ::= FieldOption (',' FieldOption)*
-<FieldOption>   ::= 'discriminator' | 'deprecated'
+File          ::= doc? module id ';' Import * Definition *
 
-<Interface>     ::= 'interface' Identifier (':' InterfaceOptions)? '{' Method* '}'
-<InterfaceOptions>  := (InterfaceBase (',' InterfaceExc)?) | InterfaceExc?
-<InterfaceBase>     := DefType
-<InterfaceExc>      := 'throws' DefType
+Import        ::= AbsoluteImport | RelativeImport
+AbsoluteImport    ::= import id ';'
+RelativeImport    ::= from id import id (',' id)* ';'
 
-<Method>        ::= Doc? Identifier '(' Fields? ')' Type (',' MethodOptions)? ';'
-<MethodOptions> ::= MethodOption (',' MethodOption)*
-<MethodOption>  ::= 'mutator' | 'deprecated' | 'index'
+Definition    ::= doc? (Enum | Message | Interface)
 
-<Type>          ::= ValueType | ListType | SetType | MapType | DefType
-<ValueType>     ::= 'bool'
-                  | 'int16'
-                  | 'int32
-                  | 'int64'
-                  | 'float'
-                  | 'double'
-                  | 'string'
-                  | 'object'
-                  | 'void'
-<ListType>      ::= 'list' '<' Type '>'
-<SetType>       ::= 'set' '<' Type '>'
-<MapType>       ::= 'map' '<' Type ',' Type '>'
-<DefType>       ::= Identifier
+Enum          ::= 'enum' id '{' EnumValues '}'
+EnumValues    ::= EnumValue (',' EnumValue)* ';'?
+EnumValue     ::= doc? id
 
-<Identifier>    ::= ( Letter | '_' ) ( Letter | Digit | '.' | '_' )*
-<Letter>        ::= ['A'-'Z'] | ['a'-'z']
-<Digit>         ::= ['0'-'9']
+Message       ::= ('message' | 'exception') id (':' MessageBase)? '{' Fields? '}'
+MessageBase   ::= (id '(' id ')') | id
+
+Fields        ::= Field (';' Field)* ';'?
+Field         ::= doc? id Type (',' FieldOptions)?
+FieldOptions  ::= FieldOption (',' FieldOption)*
+FieldOption   ::= discriminator | query
+
+Interface     ::= 'interface' id (':' InterfaceOptions)? '{' Method* '}'
+InterfaceOptions  ::= InterfaceExc | id (',' InterfaceExc)?
+InterfaceExc      ::= throws id
+
+Method        ::= doc? id '(' Fields? ')' Type (',' MethodOptions)? ';'
+MethodOptions ::= MethodOption (',' MethodOption)*
+MethodOption  ::= index | post
+
+Type          ::= ValueType | ListType | SetType | MapType | id
+ValueType     ::= bool
+                  | int16
+                  | int32
+                  | int64
+                  | float
+                  | double
+                  | string
+                  | object
+                  | void
+ListType      ::= list '<' Type '>'
+SetType       ::= set '<' Type '>'
+MapType       ::= map '<' Type ',' Type '>'

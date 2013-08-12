@@ -29,7 +29,8 @@ class _Tokens(object):
         'STRING', 'OBJECT', 'VOID', 'LIST', 'SET', 'MAP', 'ENUM',
         'MESSAGE', 'EXCEPTION', 'INTERFACE')
 
-    reserved = types + ('MODULE', 'FROM', 'IMPORT', 'DISCRIMINATOR', 'THROWS')
+    reserved = types + ('MODULE', 'FROM', 'IMPORT') \
+               + ('THROWS', 'DISCRIMINATOR', 'QUERY', 'INDEX', 'POST')
 
     tokens = reserved + (
         'COLON', 'COMMA', 'SEMI',

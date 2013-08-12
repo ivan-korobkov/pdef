@@ -38,7 +38,7 @@ class TestFieldDescriptor(unittest.TestCase):
     field = test_pd.TestMessage.__descriptor__.fields[0]
 
     def test_type(self):
-        assert self.field.descriptor is test_pd.TestEnum.__descriptor__
+        assert self.field.type is test_pd.TestEnum.__descriptor__
 
     def test_is_set(self):
         msg = test_pd.TestMessage()

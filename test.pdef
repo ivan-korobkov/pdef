@@ -52,7 +52,7 @@ message Tree0 {
 }
 message Tree1 : Tree0(TreeType.ONE) {}
 message Tree2 : Tree1(TreeType.TWO) {
-    type1   TreeType1, discriminator;
+    type1 TreeType1, discriminator;
 }
 
 /** Second inheritance tree. */

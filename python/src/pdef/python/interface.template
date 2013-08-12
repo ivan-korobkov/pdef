@@ -12,17 +12,22 @@ class {{ name }}(pdef.Interface):
 {% endif %}
         declared_methods=[
 {% for method in declared_methods %}
-            pdef.descriptors.method('{{ method.name }}', lambda: {{ method.result.descriptor}}, args=[
+            pdef.descriptors.method('{{ method.name }}', lambda: {{ method.result.descriptor}},
+{% if method.args %}
+                args=[
+{% for arg in method.args %}
+                    pdef.descriptors.arg('{{ arg.name }}', lambda: {{ arg.type.descriptor }}
+                            {%- if arg.is_query %}, is_query=True{% endif -%})
+                            {%- if not loop.last %}, {% endif %}
 
-                {%- for name, arg in method.args %}
-
-                ('{{ name }}', lambda: {{ arg.descriptor }}){% if not loop.last %}, {% endif %}
-                {%- endfor -%}],
+{% endfor %}
+                ],
+{% endif %}
 {% if method.is_index %}
                 is_index=True,
 {% endif %}
 {% if method.is_post %}
-                is_post=True
+                is_post=True,
 {% endif %}
             ),
 {% endfor %}
@@ -30,6 +35,6 @@ class {{ name }}(pdef.Interface):
     )
 {% for method in declared_methods %}
 
-    def {{ method.name }}(self,{% for arg, _ in method.args %} {{ arg }}=None,{% endfor %}):
+    def {{ method.name }}(self,{% for arg in method.args %} {{ arg.name }}=None,{% endfor %}):
         pass
 {% endfor %}

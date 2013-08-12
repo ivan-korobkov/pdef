@@ -110,9 +110,16 @@ class PythonMethod(object):
     def __init__(self, method, ref):
         self.name = method.name
         self.result = ref(method.result)
-        self.args = [(arg.name, ref(arg.type)) for arg in method.args.values()]
+        self.args = [PythonArg(arg, ref) for arg in method.args.values()]
         self.is_index = method.is_index
         self.is_post = method.is_post
+
+
+class PythonArg(object):
+    def __init__(self, arg, ref):
+        self.name = arg.name
+        self.type = ref(arg.type)
+        self.is_query = arg.is_query
 
 
 class PythonRef(object):

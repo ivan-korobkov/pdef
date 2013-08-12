@@ -86,7 +86,7 @@ class MessageDescriptor(Descriptor):
 
         discriminator = self.discriminator
         if discriminator:
-            type0 = discriminator.descriptor.parse(d.get(discriminator.name))
+            type0 = discriminator.type.parse(d.get(discriminator.name))
             subtype_supplier = self.subtypes.get(type0)
             if subtype_supplier:
                 return subtype_supplier().parse_dict(d)
@@ -110,7 +110,7 @@ class MessageDescriptor(Descriptor):
                 continue
 
             value = field.get(message)
-            data = field.descriptor.serialize(value)
+            data = field.type.serialize(value)
             d[field.name] = data
         return d
 
@@ -120,23 +120,22 @@ class MessageDescriptor(Descriptor):
                 continue
 
             data = d[field.name]
-            value = field.descriptor.parse(data)
+            value = field.type.parse(data)
             field.set(message, value)
         return message
 
 
 class FieldDescriptor(object):
     '''Message field descriptor.'''
-    def __init__(self, name, descriptor_supplier, is_discriminator=False, is_query=False):
+    def __init__(self, name, type_supplier, is_discriminator=False):
         self.name = name
-        self.descriptor_supplier = descriptor_supplier
+        self.type_supplier = type_supplier
         self.is_discriminator = is_discriminator
-        self.is_query = is_query
 
     @property
-    def descriptor(self):
+    def type(self):
         '''Return field type descriptor.'''
-        return self.descriptor_supplier()
+        return self.type_supplier()
 
     def is_set(self, obj):
         return getattr(obj, self.name) is not None
@@ -175,7 +174,7 @@ class MethodDescriptor(object):
         self.is_index = is_index
         self.is_post = is_post
 
-        self.args = OrderedDict(args) if args else OrderedDict()
+        self.args = tuple(args) if args else ()
 
     @property
     def result(self):
@@ -190,6 +189,19 @@ class MethodDescriptor(object):
     def invoke(self, obj, *args, **kwargs):
         '''Invoke this method on an object with a given arguments, return the result'''
         return getattr(obj, self.name)(*args, **kwargs)
+
+
+class ArgDescriptor(object):
+    '''Method argument descriptor.'''
+    def __init__(self, name, type_supplier, is_query=False):
+        self.name = name
+        self.type_supplier = type_supplier
+        self.is_query = is_query
+
+    @property
+    def type(self):
+        '''Return argument type descriptor.'''
+        return self.type_supplier()
 
 
 class PrimitiveDescriptor(Descriptor):
@@ -352,9 +364,9 @@ def message(pyclass_supplier,
                              declared_fields=declared_fields)
 
 
-def field(name, type_supplier):
+def field(name, descriptor_supplier, is_discriminator=False):
     '''Create a field descriptor.'''
-    return FieldDescriptor(name, type_supplier)
+    return FieldDescriptor(name, descriptor_supplier, is_discriminator=is_discriminator)
 
 
 def enum(pyclass, values):
@@ -374,3 +386,8 @@ def method(name, result_supplier, args=None, is_index=False, is_post=False):
     '''Create an interface method descriptor.'''
     return MethodDescriptor(name, result_supplier=result_supplier, args=args,
                             is_index=is_index, is_post=is_post)
+
+
+def arg(name, descriptor_supplier, is_query=False):
+    '''Create a method argument descriptor.'''
+    return ArgDescriptor(name, descriptor_supplier, is_query=is_query)

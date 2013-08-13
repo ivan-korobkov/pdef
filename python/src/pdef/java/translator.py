@@ -165,7 +165,7 @@ class JavaType(object):
         element = translator.ref(obj.element)
         name = 'java.util.List<%s>' % element.boxed
         default = 'com.google.common.collect.ImmutableList.<%s>of()' % element.boxed
-        descriptor = 'io.pdef.descriptors.Descriptors.list(%s)' % element.descriptor
+        descriptor = 'pdef.descriptors.Descriptors.list(%s)' % element.descriptor
         return JavaType(Type.LIST, name=name, default=default, descriptor=descriptor)
 
     @classmethod
@@ -173,7 +173,7 @@ class JavaType(object):
         element = translator.ref(obj.element)
         name = 'java.util.Set<%s>' % element.boxed
         default = 'com.google.common.collect.ImmutableSet.<%s>of()' % element.boxed
-        descriptor = 'io.pdef.descriptors.Descriptors.set(%s)' % element.descriptor
+        descriptor = 'pdef.descriptors.Descriptors.set(%s)' % element.descriptor
         return JavaType(Type.SET, name=name, default=default, descriptor=descriptor)
 
     @classmethod
@@ -182,7 +182,7 @@ class JavaType(object):
         value = translator.ref(obj.value)
         name = 'java.util.Map<%s, %s>' % (key.boxed, value.boxed)
         default = 'com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key.boxed, value.boxed)
-        descriptor = 'io.pdef.descriptors.Descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
+        descriptor = 'pdef.descriptors.Descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
         return JavaType(Type.MAP, name=name, default=default, descriptor=descriptor)
 
     @classmethod
@@ -247,27 +247,27 @@ class JavaType(object):
 
 NATIVE_MAP = {
     Type.BOOL: JavaType(Type.BOOL, 'boolean', 'Boolean', default='false', is_primitive=True,
-                        descriptor='io.pdef.descriptors.Descriptors.bool'),
+                        descriptor='pdef.descriptors.Descriptors.bool'),
 
     Type.INT16: JavaType(Type.INT16, 'short', 'Short', default='(short) 0', is_primitive=True,
-                         descriptor='io.pdef.descriptors.Descriptors.int16'),
+                         descriptor='pdef.descriptors.Descriptors.int16'),
 
     Type.INT32: JavaType(Type.INT32, 'int', 'Integer', default='0', is_primitive=True,
-                         descriptor='io.pdef.descriptors.Descriptors.int32'),
+                         descriptor='pdef.descriptors.Descriptors.int32'),
 
     Type.INT64: JavaType(Type.INT64, 'long', 'Long', default='0L', is_primitive=True,
-                         descriptor='io.pdef.descriptors.Descriptors.int64'),
+                         descriptor='pdef.descriptors.Descriptors.int64'),
 
     Type.FLOAT: JavaType(Type.FLOAT, 'float', 'Float', default='0f', is_primitive=True,
-                         descriptor='io.pdef.descriptors.Descriptors.float0'),
+                         descriptor='pdef.descriptors.Descriptors.float0'),
 
     Type.DOUBLE: JavaType(Type.DOUBLE, 'double', 'Double', default='0.0', is_primitive=True,
-                          descriptor='io.pdef.descriptors.Descriptors.double0'),
+                          descriptor='pdef.descriptors.Descriptors.double0'),
 
-    Type.STRING: JavaType(Type.STRING, 'String', descriptor='io.pdef.descriptors.Descriptors.string'),
+    Type.STRING: JavaType(Type.STRING, 'String', descriptor='pdef.descriptors.Descriptors.string'),
 
-    Type.OBJECT: JavaType(Type.OBJECT, 'Object', descriptor='io.pdef.descriptors.Descriptors.object'),
+    Type.OBJECT: JavaType(Type.OBJECT, 'Object', descriptor='pdef.descriptors.Descriptors.object'),
 
     Type.VOID: JavaType(Type.VOID, 'void', 'Void', is_primitive=True,
-                        descriptor='io.pdef.descriptors.Descriptors.void0')
+                        descriptor='pdef.descriptors.Descriptors.void0')
 }

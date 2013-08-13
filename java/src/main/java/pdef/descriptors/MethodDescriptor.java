@@ -1,43 +1,101 @@
 package pdef.descriptors;
 
-import pdef.Invocation;
-import pdef.rpc.RpcCall;
+import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
-import javax.annotation.Nullable;
-import java.util.Map;
+import java.util.List;
 
-/** Interface method descriptor. */
-public interface MethodDescriptor {
-	/** Returns this method name. */
-	String getName();
+import static com.google.common.base.Preconditions.checkNotNull;
 
-	/** Returns a map of method arg descriptors. */
-	Map<String, Descriptor<?>> getArgs();
+public class MethodDescriptor {
+	private final String name;
+	private final Supplier<Descriptor> result;
+	private final boolean index;
+	private final boolean post;
+	private final List<ArgDescriptor> args;
+	private final InterfaceDescriptor anInterface;
 
-	/** Returns true when a method result is a data type. */
-	boolean isRemote();
+	private MethodDescriptor(final Builder builder, final InterfaceDescriptor anInterface) {
+		this.anInterface = checkNotNull(anInterface);
+		name = checkNotNull(builder.name);
+		result = checkNotNull(builder.result);
+		index = builder.index;
+		post = builder.post;
 
-	/** Returns a method result descriptor when remote or null. */
-	@Nullable
-	Descriptor<?> getResult();
+		ImmutableList.Builder<ArgDescriptor> temp = ImmutableList.builder();
+		for (ArgDescriptor.Builder ab : builder.args) {
+			temp.add(ab.build(this));
+		}
+		args = temp.build();
+	}
 
-	/** Returns an exception descriptor. */
-	@Nullable
-	Descriptor<?> getExc();
+	public String getName() {
+		return name;
+	}
 
-	/** Returns an interface descriptor (method result) when is not remote or null. */
-	@Nullable
-	InterfaceDescriptor<?> getNext();
+	public Descriptor getResult() {
+		return result.get();
+	}
 
-	/** Creates a new proxy for this method. */
-	Invocation capture(Invocation parent, Object... args);
+	public boolean isIndex() {
+		return index;
+	}
 
-	/** Invokes this method on an object with a given args. */
-	Object invoke(Object object, Object... args);
+	public boolean isPost() {
+		return post;
+	}
 
-	/** Serializes arguments into a method call. */
-	RpcCall serialize(Object... args);
+	public List<ArgDescriptor> getArgs() {
+		return args;
+	}
 
-	/** Parses arguments into an proxy. */
-	Invocation parse(Invocation parent, Map<String, Object> args);
+	public InterfaceDescriptor getInterface() {
+		return anInterface;
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+		private String name;
+		private Supplier<Descriptor> result;
+		private boolean index;
+		private boolean post;
+		private final List<ArgDescriptor.Builder> args;
+
+		public Builder() {
+			args = Lists.newArrayList();
+		}
+
+		public Builder setName(final String name) {
+			this.name = name;
+			return this;
+		}
+
+		public Builder setResult(final Supplier<Descriptor> result) {
+			this.result = result;
+			return this;
+		}
+
+		public Builder setIndex(final boolean index) {
+			this.index = index;
+			return this;
+		}
+
+		public Builder setPost(final boolean post) {
+			this.post = post;
+			return this;
+		}
+
+		public Builder addArg(final ArgDescriptor.Builder arg) {
+			args.add(arg);
+			return this;
+		}
+
+		public MethodDescriptor build(final InterfaceDescriptor anInterface) {
+			return new MethodDescriptor(this, anInterface);
+		}
+	}
 }

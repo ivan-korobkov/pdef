@@ -1,29 +1,26 @@
 package pdef;
 
-import com.google.common.collect.Maps;
-import pdef.json.Json;
+import pdef.descriptors.MessageDescriptor;
 
 import java.io.Serializable;
 import java.util.Map;
 
 public abstract class GeneratedException extends RuntimeException implements Message, Serializable {
-	private transient int hash;
+	private transient int cachedHash;
 
 	protected GeneratedException() {}
-
-	protected GeneratedException(final Map<?, ?> map) {}
-
 	protected GeneratedException(final Builder builder) {}
 
 	@Override
-	public Map<String, Object> serialize() {
-		return Maps.newLinkedHashMap();
+	public Map<String, Object> toMap() {
+		MessageDescriptor descriptor = descriptorForType();
+		return descriptor.toObject(this);
 	}
 
 	@Override
-	public String serializeToJson() {
-		Object object = serialize();
-		return Json.serialize(object);
+	public String toJson() {
+		MessageDescriptor descriptor = descriptorForType();
+		return descriptor.toJson(this);
 	}
 
 	@Override
@@ -33,8 +30,8 @@ public abstract class GeneratedException extends RuntimeException implements Mes
 
 	@Override
 	public int hashCode() {
-		if (hash == 0) hash = generateHashCode();
-		return hash;
+		if (cachedHash == 0) cachedHash = generateHashCode();
+		return cachedHash;
 	}
 
 	protected int generateHashCode() {

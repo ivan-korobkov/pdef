@@ -1,12 +1,6 @@
 module pdef.rpc;
 
 
-/** Request. */
-message RpcRequest {
-    calls   list<RpcCall>;      // Chained method calls, i.e. app.users().me().hello("world").
-    meta    map<string, object>; // Request headers.
-}
-
 /** Response. */
 message RpcResponse {
     status  RpcResponseStatus;
@@ -16,12 +10,6 @@ message RpcResponse {
 /** Response status. */
 enum RpcResponseStatus {
     OK, ERROR, EXCEPTION
-}
-
-/** Single method call in a call chain. */
-message RpcCall {
-    method  string;
-    args    map<string, object>;
 }
 
 /** Rpc exception is raised when the server fails to process an RPC request. */
@@ -36,16 +24,3 @@ enum RpcErrorCode {
     NETWORK_ERROR,  // Temporary network error (timeouts, etc), the request can be repeated.
     CLIENT_ERROR    // Error client code/request, the request should not be repeated.
 }
-
-//
-//
-//// Asynchronous protocol.
-//enum AsyncType {
-//    REQUEST, RESPONSE
-//}
-//
-//message AsyncMessage {
-//    type    AsyncType;
-//    id      string;     // An async request or response id, the response copies its request id.
-//    data    object;     // Request or Response messages depending on the message type.
-//}

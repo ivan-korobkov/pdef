@@ -1,28 +1,26 @@
 package pdef;
 
-import com.google.common.collect.Maps;
-import pdef.json.Json;
+import pdef.descriptors.MessageDescriptor;
 
 import java.util.Map;
 
 /** Abstract class for a generated message. */
 public abstract class GeneratedMessage implements Message {
-	private transient int hash;
+	private transient int cachedHash;
 
 	protected GeneratedMessage() {}
-
-	protected GeneratedMessage(final Map<?, ?> map) {}
-
 	protected GeneratedMessage(final Builder builder) {}
 
-	public Map<String, Object> serialize() {
-		return Maps.newLinkedHashMap();
+	@Override
+	public Map<String, Object> toMap() {
+		MessageDescriptor descriptor = descriptorForType();
+		return descriptor.toObject(this);
 	}
 
 	@Override
-	public String serializeToJson() {
-		Object object = serialize();
-		return Json.serialize(object);
+	public String toJson() {
+		MessageDescriptor descriptor = descriptorForType();
+		return descriptor.toJson(this);
 	}
 
 	@Override
@@ -32,8 +30,8 @@ public abstract class GeneratedMessage implements Message {
 
 	@Override
 	public int hashCode() {
-		if (hash == 0) hash = generateHashCode();
-		return hash;
+		if (cachedHash == 0) cachedHash = generateHashCode();
+		return cachedHash;
 	}
 
 	protected int generateHashCode() {

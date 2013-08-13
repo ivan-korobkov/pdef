@@ -32,7 +32,7 @@ public enum {{name}} {
     public static final pdef.descriptors.Descriptor<{{ name }}> DESCRIPTOR =
             new pdef.descriptors.Descriptor<{{ name }}>() {
                 @Override
-                public Class<{{ name }}> getJavaClass() {
+                public Class<{{ name }}> getCls() {
                     return {{ name }}.class;
                 }
 

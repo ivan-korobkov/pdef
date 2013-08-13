@@ -1,6 +1,7 @@
 package pdef.descriptors;
 
 import com.google.common.collect.*;
+import pdef.TypeEnum;
 
 import java.util.Collection;
 import java.util.List;
@@ -13,302 +14,166 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Descriptors {
 	private Descriptors() {}
 
-	public static PrimitiveDescriptor<Boolean> bool = new PrimitiveDescriptor<Boolean>() {
+	public static PrimitiveDescriptor bool = new PrimitiveDescriptor(TypeEnum.BOOL) {
 		@Override
-		public Class<Boolean> getJavaClass() {
-			return boolean.class;
+		public Boolean parseObject(final Object object) {
+			if (object instanceof String) return parseString((String) object);
+			return (Boolean) object;
 		}
 
 		@Override
-		public Boolean getDefault() {
-			return false;
+		public Boolean toObject(final Object object) {
+			return (Boolean) object;
 		}
 
 		@Override
-		public Boolean parse(final Object object) {
-			if (object instanceof String) return parseFromString((String) object);
-			return object == null ? false : (Boolean) object;
-		}
-
-		@Override
-		public Boolean serialize(final Boolean object) {
-			return object == null ? false : object;
-		}
-
-		@Override
-		public Boolean parseFromString(final String s) {
+		public Boolean parseString(final String s) {
 			return s != null && Boolean.parseBoolean(s);
 		}
+	};
+
+	public static PrimitiveDescriptor int16 = new PrimitiveDescriptor(TypeEnum.INT16) {
+		@Override
+		public Short parseObject(final Object object) {
+			if (object instanceof  String ) return parseString((String) object);
+			return ((Number) object).shortValue();
+		}
 
 		@Override
-		public String serializeToString(final Boolean object) {
-			return object == null ? "false" : object.toString();
+		public Short toObject(final Object object) {
+			return (Short) object;
+		}
+
+		@Override
+		public Short parseString(final String s) {
+			return s == null ? null : Short.parseShort(s);
 		}
 	};
 
-	public static PrimitiveDescriptor<Short> int16 = new PrimitiveDescriptor<Short>() {
+	public static PrimitiveDescriptor int32 = new PrimitiveDescriptor(TypeEnum.INT32) {
 		@Override
-		public Class<Short> getJavaClass() {
-			return short.class;
+		public Integer parseObject(final Object object) {
+			if (object instanceof String) return parseString((String) object);
+			return ((Number) object).intValue();
 		}
 
 		@Override
-		public Short getDefault() {
-			return (short) 0;
+		public Integer toObject(final Object object) {
+			return (Integer) object;
 		}
 
 		@Override
-		public Short parse(final Object object) {
-			if (object instanceof  String ) return parseFromString((String) object);
-			return object == null ? 0 : ((Number) object).shortValue();
-		}
-
-		@Override
-		public Short serialize(final Short object) {
-			return object == null ? (short) 0 : object;
-		}
-
-		@Override
-		public Short parseFromString(final String s) {
-			return s == null ? (short) 0 : Short.parseShort(s);
-		}
-
-		@Override
-		public String serializeToString(final Short object) {
-			return object == null ? "0" : object.toString();
+		public Integer parseString(final String s) {
+			return s == null ? null : Integer.parseInt(s);
 		}
 	};
 
-	public static PrimitiveDescriptor<Integer> int32 = new PrimitiveDescriptor<Integer>() {
+	public static PrimitiveDescriptor int64 = new PrimitiveDescriptor(TypeEnum.INT64) {
 		@Override
-		public Class<Integer> getJavaClass() {
-			return int.class;
+		public Long parseObject(final Object object) {
+			if (object instanceof String) return parseString((String) object);
+			return ((Number) object).longValue();
 		}
 
 		@Override
-		public Integer getDefault() {
-			return 0;
+		public Long toObject(final Object object) {
+			return object == null ? null : (Long) object;
 		}
 
 		@Override
-		public Integer parse(final Object object) {
-			if (object instanceof String) return parseFromString((String) object);
-			return object == null ? 0 : ((Number) object).intValue();
-		}
-
-		@Override
-		public Integer serialize(final Integer object) {
-			return object == null ? 0 : object;
-		}
-
-		@Override
-		public Integer parseFromString(final String s) {
-			return s == null ? 0 : Integer.parseInt(s);
-		}
-
-		@Override
-		public String serializeToString(final Integer object) {
-			return object == null ? "0" : object.toString();
+		public Long parseString(final String s) {
+			return s == null ? null : Long.parseLong(s);
 		}
 	};
 
-	public static PrimitiveDescriptor<Long> int64 = new PrimitiveDescriptor<Long>() {
+	public static PrimitiveDescriptor float0 = new PrimitiveDescriptor(TypeEnum.FLOAT) {
 		@Override
-		public Class<Long> getJavaClass() {
-			return long.class;
+		public Float parseObject(final Object object) {
+			if (object instanceof String) return parseString((String) object);
+			return ((Number) object).floatValue();
 		}
 
 		@Override
-		public Long getDefault() {
-			return 0L;
+		public Float toObject(final Object object) {
+			return (Float) object;
 		}
 
 		@Override
-		public Long parse(final Object object) {
-			if (object instanceof String) return parseFromString((String) object);
-			return object == null ? 0 : ((Number) object).longValue();
-		}
-
-		@Override
-		public Long serialize(final Long object) {
-			return object == null ? 0L : object;
-		}
-
-		@Override
-		public Long parseFromString(final String s) {
-			return s == null ? 0 : Long.parseLong(s);
-		}
-
-		@Override
-		public String serializeToString(final Long object) {
-			return object == null ? "0" : object.toString();
+		public Float parseString(final String s) {
+			return s == null ? null : Float.parseFloat(s);
 		}
 	};
 
-	public static PrimitiveDescriptor<Float> float0 = new PrimitiveDescriptor<Float>() {
+	public static PrimitiveDescriptor double0 = new PrimitiveDescriptor(TypeEnum.DOUBLE) {
 		@Override
-		public Class<Float> getJavaClass() {
-			return float.class;
+		public Double parseObject(final Object object) {
+			if (object instanceof String) return parseString((String) object);
+			return ((Number) object).doubleValue();
 		}
 
 		@Override
-		public Float getDefault() {
-			return 0f;
+		public Double toObject(final Object object) {
+			return (Double) object;
 		}
 
 		@Override
-		public Float parse(final Object object) {
-			if (object instanceof String) return parseFromString((String) object);
-			return object == null ? 0 : ((Number) object).floatValue();
-		}
-
-		@Override
-		public Float serialize(final Float object) {
-			return object == null ? 0f : object;
-		}
-
-		@Override
-		public Float parseFromString(final String s) {
-			return s == null ? 0f : Float.parseFloat(s);
-		}
-
-		@Override
-		public String serializeToString(final Float object) {
-			return object == null ? "0" : object.toString();
+		public Double parseString(final String s) {
+			return s == null ? null : Double.parseDouble(s);
 		}
 	};
 
-	public static PrimitiveDescriptor<Double> double0 = new PrimitiveDescriptor<Double>() {
+	public static PrimitiveDescriptor string = new PrimitiveDescriptor(TypeEnum.STRING) {
 		@Override
-		public Class<Double> getJavaClass() {
-			return double.class;
-		}
-
-		@Override
-		public Double getDefault() {
-			return 0d;
-		}
-
-		@Override
-		public Double parse(final Object object) {
-			if (object instanceof String) return parseFromString((String) object);
-			return object == null ? 0 : ((Number) object).doubleValue();
-		}
-
-		@Override
-		public Double serialize(final Double object) {
-			return object == null ? 0d : object;
-		}
-
-		@Override
-		public Double parseFromString(final String s) {
-			return s == null ? 0d : Double.parseDouble(s);
-		}
-
-		@Override
-		public String serializeToString(final Double object) {
-			return object == null ? "0" : object.toString();
-		}
-	};
-
-	public static PrimitiveDescriptor<String> string = new PrimitiveDescriptor<String>() {
-		@Override
-		public Class<String> getJavaClass() {
-			return String.class;
-		}
-
-		@Override
-		public String getDefault() {
-			return null;
-		}
-
-		@Override
-		public String parse(final Object object) {
+		public String parseObject(final Object object) {
 			return (String) object;
 		}
 
 		@Override
-		public String serialize(final String object) {
-			return object;
+		public String toObject(final Object object) {
+			return (String) object;
 		}
 
 		@Override
-		public String parseFromString(final String s) {
+		public String parseString(final String s) {
 			return s;
 		}
-
-		@Override
-		public String serializeToString(final String object) {
-			return object;
-		}
 	};
 
-	public static Descriptor<Void> void0 = new Descriptor<Void>() {
+	public static DataDescriptor void0 = new DataDescriptor(TypeEnum.VOID) {
 		@Override
-		public Class<Void> getJavaClass() {
-			return void.class;
-		}
-
-		@Override
-		public Void getDefault() {
+		public Void parseObject(final Object object) {
 			return null;
 		}
 
 		@Override
-		public Void parse(final Object object) {
-			return null;
-		}
-
-		@Override
-		public Void serialize(final Void object) {
+		public Void toObject(final Object object) {
 			return null;
 		}
 	};
 
-	public static Descriptor<Object> object = new Descriptor<Object>() {
+	public static DataDescriptor object = new DataDescriptor(TypeEnum.OBJECT) {
 		@Override
-		public Class<Object> getJavaClass() {
-			return Object.class;
-		}
-
-		@Override
-		public Object getDefault() {
-			return null;
-		}
-
-		@Override
-		public Object parse(final Object object) {
+		public Object parseObject(final Object object) {
 			return object;
 		}
 
 		@Override
-		public Object serialize(final Object object) {
+		public Object toObject(final Object object) {
 			return object;
 		}
 	};
 
-	public static <T> Descriptor<List<T>> list(final Descriptor<T> element) {
+	public static DataDescriptor list(final DataDescriptor element) {
 		checkNotNull(element);
-		return new Descriptor<List<T>>() {
-			@SuppressWarnings("unchecked")
+		return new DataDescriptor(TypeEnum.LIST) {
 			@Override
-			public Class<List<T>> getJavaClass() {
-				return (Class) List.class;
-			}
-
-			@Override
-			public List<T> getDefault() {
-				return ImmutableList.of();
-			}
-
-			@Override
-			public List<T> parse(final Object object) {
+			public List<?> parseObject(final Object object) {
 				if (object == null) return null;
 
 				Collection<?> collection = (Collection<?>) object;
-				List<T> result = Lists.newArrayList();
+				List<Object> result = Lists.newArrayList();
 				for (Object e : collection) {
-					T r = element.parse(e);
+					Object r = element.parseObject(e);
 					result.add(r);
 				}
 
@@ -316,12 +181,13 @@ public class Descriptors {
 			}
 
 			@Override
-			public List<Object> serialize(final List<T> object) {
+			public List<Object> toObject(final Object object) {
 				if (object == null) return null;
 
+				List<?> list = (List<?>) object;
 				List<Object> result = Lists.newArrayList();
-				for (T e : object) {
-					result.add(element.serialize(e));
+				for (Object e : list) {
+					result.add(element.toObject(e));
 				}
 
 				return result;
@@ -329,29 +195,18 @@ public class Descriptors {
 		};
 	}
 
-	public static <T> Descriptor<Set<T>> set(final Descriptor<T> element) {
+	public static DataDescriptor set(final DataDescriptor element) {
 		checkNotNull(element);
-		return new Descriptor<Set<T>>() {
-			@SuppressWarnings("unchecked")
+		return new DataDescriptor(TypeEnum.SET) {
 			@Override
-			public Class<Set<T>> getJavaClass() {
-				return (Class) Set.class;
-			}
-
-			@Override
-			public Set<T> getDefault() {
-				return ImmutableSet.of();
-			}
-
-			@Override
-			public Set<T> parse(final Object object) {
+			public Set<?> parseObject(final Object object) {
 				if (object == null) return null;
 
 				Collection<?> collection = (Collection<?>) object;
-				List<T> result = Lists.newArrayList();
+				List<Object> result = Lists.newArrayList();
 				for (Object e : collection) {
 					if (e == null) continue;
-					T r = element.parse(e);
+					Object r = element.parseObject(e);
 					result.add(r);
 				}
 
@@ -359,13 +214,14 @@ public class Descriptors {
 			}
 
 			@Override
-			public Set<Object> serialize(final Set<T> object) {
+			public Set<Object> toObject(final Object object) {
 				if (object == null) return null;
 
+				Set<?> set = (Set<?>) object;
 				Set<Object> result = Sets.newHashSet();
-				for (T e : object) {
+				for (Object e : set) {
 					if (e == null) continue;
-					result.add(element.serialize(e));
+					result.add(element.toObject(e));
 				}
 
 				return result;
@@ -373,31 +229,19 @@ public class Descriptors {
 		};
 	}
 
-	public static <K, V> Descriptor<Map<K, V>> map(final Descriptor<K> key,
-			final Descriptor<V> value) {
+	public static DataDescriptor map(final DataDescriptor key, final DataDescriptor value) {
 		checkNotNull(key);
 		checkNotNull(value);
-		return new Descriptor<Map<K, V>>() {
-			@SuppressWarnings("unchecked")
+		return new DataDescriptor(TypeEnum.MAP) {
 			@Override
-			public Class<Map<K, V>> getJavaClass() {
-				return (Class) Map.class;
-			}
-
-			@Override
-			public Map<K, V> getDefault() {
-				return ImmutableMap.of();
-			}
-
-			@Override
-			public Map<K, V> parse(final Object object) {
+			public Map<?, ?> parseObject(final Object object) {
 				if (object == null) return null;
 
 				Map<?, ?> map = (Map<?, ?>) object;
-				Map<K, V> result = Maps.newHashMap();
+				Map<Object, Object> result = Maps.newHashMap();
 				for (Map.Entry<?, ?> e : map.entrySet()) {
-					K k = key.parse(e.getKey());
-					V v = value.parse(e.getValue());
+					Object k = key.parseObject(e.getKey());
+					Object v = value.parseObject(e.getValue());
 					if (k == null) continue;
 					result.put(k, v);
 				}
@@ -406,13 +250,14 @@ public class Descriptors {
 			}
 
 			@Override
-			public Map<Object, Object> serialize(final Map<K, V> object) {
+			public Map<Object, Object> toObject(final Object object) {
 				if (object == null) return null;
 
+				Map<?, ?> map = (Map<?, ?>) object;
 				Map<Object, Object> result = Maps.newHashMap();
-				for (Map.Entry<K, V> e : object.entrySet()) {
-					Object k = key.serialize(e.getKey());
-					Object v = value.serialize(e.getValue());
+				for (Map.Entry<?, ?> e : map.entrySet()) {
+					Object k = key.toObject(e.getKey());
+					Object v = value.toObject(e.getValue());
 					result.put(k, v);
 				}
 

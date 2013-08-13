@@ -27,7 +27,7 @@ public class MessageTest {
 	@Test
 	public void testSerialize() throws Exception {
 		Message msg = createTestMessage();
-		Map<String, Object> map = msg.serialize();
+		Map<String, Object> map = msg.toMap();
 		Map<String, Object> expected = createTestMessageMap();
 		assertEquals(expected, map);
 	}
@@ -140,7 +140,7 @@ public class MessageTest {
 				.setSecondField("hello")
 				.setThirdField(null)
 				.build();
-		String s = msg.serializeToJson();
+		String s = msg.toJson();
 		TestSimpleMessage msg1 = TestSimpleMessage.parseFromJson(s);
 		assertEquals(msg, msg1);
 	}

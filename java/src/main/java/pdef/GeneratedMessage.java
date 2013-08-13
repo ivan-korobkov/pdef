@@ -1,5 +1,7 @@
 package pdef;
 
+import com.google.common.base.Objects;
+import pdef.descriptors.FieldDescriptor;
 import pdef.descriptors.MessageDescriptor;
 
 import java.util.Map;
@@ -18,29 +20,63 @@ public abstract class GeneratedMessage implements Message {
 	}
 
 	@Override
+	public Message.Builder toBuilder() {
+		MessageDescriptor descriptor = descriptorForType();
+		return descriptor.toBuilder(this);
+	}
+
+	@Override
 	public String toJson() {
 		MessageDescriptor descriptor = descriptorForType();
 		return descriptor.toJson(this);
 	}
 
 	@Override
+	public String toString() {
+		Objects.ToStringHelper helper = Objects.toStringHelper(this);
+		for (FieldDescriptor field : descriptorForType().getFields()) {
+			helper.add(field.getName(), field.get(this));
+		}
+		return helper.omitNullValues().toString();
+	}
+
+	@Override
 	public boolean equals(final Object o) {
-		return this == o || !(o == null || getClass() != o.getClass());
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		GeneratedMessage cast = (GeneratedMessage) o;
+		for (FieldDescriptor field : descriptorForType().getFields()) {
+			Object value0 = field.get(this);
+			Object value1 = field.get(cast);
+			if (value0 != null ? !value0.equals(value1) : value1 != null) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	@Override
 	public int hashCode() {
-		if (cachedHash == 0) cachedHash = generateHashCode();
-		return cachedHash;
-	}
+		if (cachedHash != 0) return cachedHash;
 
-	protected int generateHashCode() {
-		return 31;
+		int result = 0;
+		for (FieldDescriptor field : descriptorForType().getFields()) {
+			Object value = field.get(this);
+			result = 31 * result + (value != null ? value.hashCode() : 0);
+		}
+
+		return cachedHash = result;
 	}
 
 	public static abstract class Builder implements Message.Builder {
 		protected Builder() {}
 		protected Builder(final GeneratedMessage message) {}
+
+		public Message.Builder merge(final Message message) {
+			return this;
+		}
 
 		@Override
 		public boolean equals(final Object o) {

@@ -22,6 +22,10 @@ public class MessageDescriptor extends DataDescriptor {
 	private final FieldDescriptor discriminator;
 	private final Map<Enum<?>, Supplier<MessageDescriptor>> subtypes;
 
+	public static Builder builder() {
+		return new Builder();
+	}
+
 	private MessageDescriptor(final Builder builder) {
 		super(TypeEnum.MESSAGE);
 		base = builder.base;
@@ -66,6 +70,33 @@ public class MessageDescriptor extends DataDescriptor {
 		return builderSupplier.get();
 	}
 
+	public Message.Builder toBuilder(final Message message) {
+		if (message == null) return null;
+
+		Message.Builder builder = createBuilder();
+		for (FieldDescriptor field : fields) {
+			Object value = field.get(message);
+			field.set(builder, value);
+		}
+
+		return builder;
+	}
+
+	@Override
+	public Map<String, Object> toObject(final Object object) {
+		if (object == null) return null;
+		Message message = (Message) object;
+
+		Map<String, Object> map = Maps.newLinkedHashMap();
+		for (FieldDescriptor field : fields) {
+			Object value = field.get(message);
+			Object serialized = field.getType().toObject(value);
+			map.put(field.getName(), serialized);
+		}
+
+		return map;
+	}
+
 	@Override
 	public Message parseObject(final Object object) {
 		if (object == null) return null;
@@ -88,25 +119,6 @@ public class MessageDescriptor extends DataDescriptor {
 		}
 
 		return builder.build();
-	}
-
-	@Override
-	public Map<String, Object> toObject(final Object object) {
-		if (object == null) return null;
-		Message message = (Message) object;
-
-		Map<String, Object> map = Maps.newLinkedHashMap();
-		for (FieldDescriptor field : fields) {
-			Object value = field.get(message);
-			Object serialized = field.getType().toObject(value);
-			map.put(field.getName(), serialized);
-		}
-
-		return map;
-	}
-
-	public static Builder builder() {
-		return new Builder();
 	}
 
 	public static class Builder {

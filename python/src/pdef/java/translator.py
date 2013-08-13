@@ -52,8 +52,8 @@ class JavaTranslator(AbstractTranslator):
 
     def message_base(self, msg):
         return self.ref(msg.base) \
-            if msg.base else 'io.pdef.GeneratedException' \
-            if msg.is_exception else 'io.pdef.GeneratedMessage'
+            if msg.base else 'pdef.GeneratedException' \
+            if msg.is_exception else 'pdef.GeneratedMessage'
 
     def write(self, module_name, file_name, code):
         '''Writes a code to a file in a module directory.'''
@@ -97,6 +97,7 @@ class JavaMessage(JavaDefinition):
 
         self.base = translator.message_base(msg)
         self.base_type = translator.ref(msg.base_type)
+        self.base_discriminator = translator.field(msg.base.discriminator) if msg.base else None;
         self.discriminator = translator.field(msg.discriminator)
 
         # Keys are simple enum values so that they can be used in the switch statement.
@@ -116,7 +117,6 @@ class JavaField(object):
 
         self.get = 'get%s' % upper_first(self.name)
         self.set = 'set%s' % upper_first(self.name)
-        self.clear = 'clear%s' % upper_first(self.name)
         self.present = 'has%s' % upper_first(self.name)
 
 
@@ -163,16 +163,16 @@ class JavaType(object):
     @classmethod
     def list(cls, obj, translator):
         element = translator.ref(obj.element)
-        name = 'java.util.List<%s>' % element.boxed
-        default = 'com.google.common.collect.ImmutableList.<%s>of()' % element.boxed
+        name = 'java.util.List<%s>' % element
+        default = 'com.google.common.collect.ImmutableList.<%s>of()' % element
         descriptor = 'pdef.descriptors.Descriptors.list(%s)' % element.descriptor
         return JavaType(Type.LIST, name=name, default=default, descriptor=descriptor)
 
     @classmethod
     def set(cls, obj, translator):
         element = translator.ref(obj.element)
-        name = 'java.util.Set<%s>' % element.boxed
-        default = 'com.google.common.collect.ImmutableSet.<%s>of()' % element.boxed
+        name = 'java.util.Set<%s>' % element
+        default = 'com.google.common.collect.ImmutableSet.<%s>of()' % element
         descriptor = 'pdef.descriptors.Descriptors.set(%s)' % element.descriptor
         return JavaType(Type.SET, name=name, default=default, descriptor=descriptor)
 
@@ -180,8 +180,8 @@ class JavaType(object):
     def map(cls, obj, translator):
         key = translator.ref(obj.key)
         value = translator.ref(obj.value)
-        name = 'java.util.Map<%s, %s>' % (key.boxed, value.boxed)
-        default = 'com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key.boxed, value.boxed)
+        name = 'java.util.Map<%s, %s>' % (key, value)
+        default = 'com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key, value)
         descriptor = 'pdef.descriptors.Descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
         return JavaType(Type.MAP, name=name, default=default, descriptor=descriptor)
 
@@ -214,10 +214,10 @@ class JavaType(object):
     def _default_name(cls, obj):
         return '%s.%s' % (obj.module.name, obj.name) if obj.module else obj.name
 
-    def __init__(self, type, name, boxed=None, default='null', is_primitive=False, descriptor=None):
+    def __init__(self, type, name, unboxed=None, default='null', is_primitive=False, descriptor=None):
         self.type = type
         self.name = name
-        self.boxed = boxed if boxed else self
+        self.unboxed = unboxed if unboxed else self
         self.default = default
         self.descriptor = descriptor
 
@@ -246,28 +246,28 @@ class JavaType(object):
 
 
 NATIVE_MAP = {
-    Type.BOOL: JavaType(Type.BOOL, 'boolean', 'Boolean', default='false', is_primitive=True,
+    Type.BOOL: JavaType(Type.BOOL, 'Boolean', 'boolean', default='false', is_primitive=True,
                         descriptor='pdef.descriptors.Descriptors.bool'),
 
-    Type.INT16: JavaType(Type.INT16, 'short', 'Short', default='(short) 0', is_primitive=True,
+    Type.INT16: JavaType(Type.INT16, 'Short', 'short', default='(short) 0', is_primitive=True,
                          descriptor='pdef.descriptors.Descriptors.int16'),
 
-    Type.INT32: JavaType(Type.INT32, 'int', 'Integer', default='0', is_primitive=True,
+    Type.INT32: JavaType(Type.INT32, 'Integer', 'int', default='0', is_primitive=True,
                          descriptor='pdef.descriptors.Descriptors.int32'),
 
-    Type.INT64: JavaType(Type.INT64, 'long', 'Long', default='0L', is_primitive=True,
+    Type.INT64: JavaType(Type.INT64, 'Long', 'long', default='0L', is_primitive=True,
                          descriptor='pdef.descriptors.Descriptors.int64'),
 
-    Type.FLOAT: JavaType(Type.FLOAT, 'float', 'Float', default='0f', is_primitive=True,
+    Type.FLOAT: JavaType(Type.FLOAT, 'Float', 'float', default='0f', is_primitive=True,
                          descriptor='pdef.descriptors.Descriptors.float0'),
 
-    Type.DOUBLE: JavaType(Type.DOUBLE, 'double', 'Double', default='0.0', is_primitive=True,
+    Type.DOUBLE: JavaType(Type.DOUBLE, 'Double', 'double', default='0.0', is_primitive=True,
                           descriptor='pdef.descriptors.Descriptors.double0'),
 
     Type.STRING: JavaType(Type.STRING, 'String', descriptor='pdef.descriptors.Descriptors.string'),
 
     Type.OBJECT: JavaType(Type.OBJECT, 'Object', descriptor='pdef.descriptors.Descriptors.object'),
 
-    Type.VOID: JavaType(Type.VOID, 'void', 'Void', is_primitive=True,
+    Type.VOID: JavaType(Type.VOID, 'Void', 'void', is_primitive=True,
                         descriptor='pdef.descriptors.Descriptors.void0')
 }

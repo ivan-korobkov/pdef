@@ -8,9 +8,12 @@ public class {{ name }} extends {{ base }} {
     protected {{ field.type }} {{ field.name }};
 {% endfor %}
 
-    public {{ name }}() {}
+    public {{ name }}() {
+        this(builder()); {# To correctly set base type fields. #}
 
-    public {{ name }}(final Builder builder) {
+    }
+
+    protected {{ name }}(final Builder builder) {
         super(builder);
 {% for field in declared_fields %}
         {% if field.type.is_list -%}
@@ -28,87 +31,41 @@ public class {{ name }} extends {{ base }} {
 
 {% endfor %}
     }
-
-    protected {{ name }}(final java.util.Map<?, ?> map) {
-        super(map);
-{% for field in declared_fields %}
-        this.{{ field.name }} = {{ field.type.parse }}(map.get("{{ field.name }}"));
-{% endfor %}
-    }
     
-    public static {{ name }} parse(final Object object) {
-        if (object == null) return null;
-        return parse((java.util.Map<?, ?>) object);
-    }
-    
-    public static {{ name }} parse(final java.util.Map<?, ?> map) {
-{% if subtypes %}
-        {{ discriminator.type }} type = {{ discriminator.type.parse }}(map.get("{{ discriminator.name }}"));
-        if (type != null) {
-            switch (type) {
-{% for type, cls in subtypes %}
-                case {{ type }}: return {{ cls.parse }}(map);
-{% endfor %}
-            }
-        }
-{% endif %}
-        return new {{ name }}(map);
+    public static {{ name }} parseMap(final java.util.Map<String, Object> map) {
+        return ({{ name }}) descriptor().parseObject(map);
     }
 
-    public static {{ name }} parseFromJson(final String s) {
-        Object object = pdef.json.Json.parse(s);
-        return parse(object);
+    public static {{ name }} parseJson(final String s) {
+        return ({{ name }}) descriptor().parseJson(s);
     }
 
 {% for field in declared_fields %}
 {% if field.type.is_nullable%}
     @javax.annotation.Nullable
 {% endif %}
-    public {{ field.type }} {{ field.get }}() {
-        {% if field.type.is_primitive -%}
-            return {{ field.name }};
-        {%- else -%}
-            return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
-        {%- endif %}
-
+    public {{ field.type.unboxed }} {{ field.get }}() {
+        return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
     }
 
     public boolean {{ field.present }}() {
-        {% if field.type.is_primitive -%}
-            return true;
-        {%- else -%}
-            return {{ field.name }} != null;
-        {%- endif %}
-
+        return {{ field.name }} != null;
     }
 
 {% endfor %}
-    @Override
-    public java.util.Map<String, Object> serialize() {
-        java.util.Map<String, Object> map = super.serialize();
-{% for field in declared_fields %}
-        if ({{ field.present }}()) map.put("{{ field.name }}", {{ field.type.serialize }}(this.{{ field.name }}));
-{% endfor %}
-        return map;
-    }
-
     @Override
     public Builder toBuilder() {
-        return new Builder(this);
+        return builder().merge(this);
     }
 
     @Override
     public Builder builderForType() {
         return builder();
     }
-    
-    @Override
-    public pdef.descriptors.Descriptor<? extends {{ name }}> descriptorForType() {
-        return DESCRIPTOR;
-    }
 
-    public static java.util.Map<String, Object> serialize(final {{ name }} object) {
-        return object == null ? null : object.serialize();
+    @Override
+    public pdef.descriptors.MessageDescriptor descriptorForType() {
+        return descriptor();
     }
 
     public static class Builder extends {{ base }}.Builder {
@@ -117,37 +74,32 @@ public class {{ name }} extends {{ base }} {
 {% endfor %}
 
 {% if not base_type %}
-        protected Builder() {}
+        protected Builder() {
 {% else %}
         protected Builder() {
-            super({{ base_type }});
-        }
+            super();
+{% endif %}
+{% if base_type %}
+            this.{{ base_discriminator.name }} = {{ base_type }};
 {% endif %}
 
-        protected Builder(final {{ name }} message) {
-            super(message);
-            {% for field in declared_fields -%}
-                this.{{ field.name }} = message.{{ field.name }};
-            {% endfor %}
-
         }
-{% if discriminator %}
 
-        protected Builder(final {{ discriminator.type }} {{ discriminator.name }}) {
-            this();
-            this.{{ discriminator.name }} = {{ discriminator.name }};
-        }
+        public Builder merge(final pdef.Message message) {
+            super.merge(message);
+            {{ name }} msg = ({{ name }}) message;
+{% for field in declared_fields %}
+{% if not field.is_discriminator %}
+            if (msg.{{ field.name }} != null) this.{{ field.name }} = msg.{{ field.name }};
 {% endif %}
+{% endfor %}
+            return this;
+        }
 
 {% for field in declared_fields %}
         {% if field.type.nullable -%} @javax.annotation.Nullable {%- endif -%}
-        public {{ field.type }} {{ field.get }}() {
-            {% if field.type.is_primitive -%}
-                return {{ field.name }};
-            {%- else -%}
-                return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
-            {%- endif %}
-
+        public {{ field.type.unboxed }} {{ field.get }}() {
+            return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
         }
 
         public Builder {{ field.set }}(final {{ field.type }} value) {
@@ -155,23 +107,8 @@ public class {{ name }} extends {{ base }} {
             return this;
         }
 
-        public Builder {{ field.clear }}() {
-            {% if field.type.is_primitive -%}
-                this.{{ field.name }} = {{ field.type.default }};
-            {%- else -%}
-                this.{{ field.name }} = null;
-            {%- endif %}
-
-            return this;
-        }
-
         public boolean {{ field.present }}() {
-            {% if field.type.is_primitive -%}
-                return true;
-            {%- else -%}
-                return {{ field.name }} != null;
-            {%- endif %}
-
+            return {{ field.name }} != null;
         }
 
 {% endfor %}
@@ -182,116 +119,11 @@ public class {{ name }} extends {{ base }} {
             return this;
         }
 
-        @Override
-        public Builder {{ field.clear }}() {
-            super.{{ field.clear }}();
-            return this;
-        }
-
 {% endfor %}
         @Override
         public {{ name }} build() {
             return new {{ name }}(this);
         }
-
-        @Override
-        public String toString() {
-            return com.google.common.base.Objects.toStringHelper(this)
-{% for field in fields %}
-                    .add("{{ field.name }}", {{ field.name }})
-{% endfor %}
-                    .toString();
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            {% if not declared_fields -%}
-                return super.equals(o);
-            {% else %}
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
-            {{ name }} cast = ({{ name }}) o;
-
-            {% for field in declared_fields -%}
-            {% if field.type.is_primitive -%}
-                if (this.{{ field.name }} != cast.{{ field.name }}) return false;
-            {%- else -%}
-                if (this.{{ field.name }} != null
-                    ? !this.{{ field.name }}.equals(cast.{{ field.name }})
-                    : cast.{{ field.name }} != null) return false;
-            {%- endif %}
-
-            {% endfor %}
-
-            return true;
-            {% endif %}
-
-        }
-
-        @Override
-        public int hashCode() {
-            {% if not declared_fields -%}
-                return super.hashCode();
-            {%- else -%}
-            int result = super.hashCode();
-            return com.google.common.base.Objects.hashCode(result,
-                    {% for field in declared_fields -%}this.{{ field.name }}
-                    {%- if loop.length > 1 and not loop.last -%}, {% elif loop.last %}); {% endif %}
-
-                    {% endfor %}
-            {%- endif %}
-
-        }
-    }
-
-    @Override
-    public String toString() {
-        return com.google.common.base.Objects.toStringHelper(this)
-{% for field in fields %}
-                .add("{{ field.name }}", {{ field.name }})
-{% endfor %}
-                .toString();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-{% if not declared_fields %}
-        return super.equals(o);
-{% else %}
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        {{ name }} cast = ({{ name }}) o;
-
-{% for field in declared_fields %}
-        {% if field.type.is_primitive -%}
-            if (this.{{ field.name }} != cast.{{ field.name }}) return false;
-        {%- else -%}
-            if (this.{{ field.name }} != null
-                ? !this.{{ field.name }}.equals(cast.{{ field.name }})
-                : cast.{{ field.name }} != null) return false;
-        {%- endif %}
-
-{% endfor %}
-
-        return true;
-{% endif %}
-    }
-
-    @Override
-    protected int generateHashCode() {
-        {% if not declared_fields -%}
-            return super.generateHashCode();
-        {%- else -%}
-        int result = super.generateHashCode();
-        return com.google.common.base.Objects.hashCode(result,
-                {% for field in declared_fields -%}this.{{ field.name }}
-                {%- if loop.length > 1 and not loop.last -%}, {% elif loop.last %}); {% endif %}
-
-                {% endfor %}
-        {%- endif %}
-
     }
 
     public static Builder builder() {
@@ -301,29 +133,12 @@ public class {{ name }} extends {{ base }} {
     public static {{ name }} instance() {
         return INSTANCE;
     }
+
+    public static pdef.descriptors.MessageDescriptor descriptor() {
+        return DESCRIPTOR;
+    }
     
     private static final {{ name }} INSTANCE = new {{ name }}();
-    public static final pdef.descriptors.Descriptor<{{ name }}> DESCRIPTOR =
-            new pdef.descriptors.Descriptor<{{ name }}>() {
-                @Override
-                public Class<{{ name }}> getCls() {
-                    return {{ name }}.class;
-                }
-
-                @Override
-                public {{ name }} getDefault() {
-                    return {{ name }}.instance();
-                }
-
-                @Override
-                public {{ name }} parse(final Object object) {
-                    return {{ name }}.parse(object);
-                }
-
-                @Override
-                public Object serialize(final {{ name }} value) {
-                    return {{ name }}.serialize(value);
-                }
-            };
+    private static final pdef.descriptors.MessageDescriptor DESCRIPTOR = null;
 }
 

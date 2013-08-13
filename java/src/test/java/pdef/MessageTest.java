@@ -3,12 +3,13 @@ package pdef;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import pdef.test.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.Test;
+import pdef.test.*;
 
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MessageTest {
 	@Test
@@ -35,7 +36,7 @@ public class MessageTest {
 	@Test
 	public void testParse() throws Exception {
 		Map<String, Object> map = createTestMessageMap();
-		Message msg = TestMessage.parse(map);
+		Message msg = TestMessage.parseMap(map);
 		Message expected = createTestMessage();
 		assertEquals(expected, msg);
 	}
@@ -78,7 +79,7 @@ public class MessageTest {
 	@Test
 	public void testParse_polymorphicRootType() throws Exception {
 		Map<String, Object> map = ImmutableMap.<String, Object>of("type", "base");
-		Tree0 tree = Tree0.parse(map);
+		Tree0 tree = Tree0.parseMap(map);
 		Tree0 expected = Tree0.builder()
 				.setType(TreeType.BASE)
 				.build();
@@ -88,7 +89,7 @@ public class MessageTest {
 	@Test
 	public void testParse_polymorphicNoType() throws Exception {
 		Map<String, Object> map = ImmutableMap.of();
-		Tree0 tree = Tree0.parse(map);
+		Tree0 tree = Tree0.parseMap(map);
 		Tree0 expected = Tree0.builder()
 				.setType(TreeType.BASE)
 				.build();
@@ -98,7 +99,7 @@ public class MessageTest {
 	@Test
 	public void testParse_polymorphicSubtype() throws Exception {
 		Map<String, Object> map = ImmutableMap.<String, Object>of("type", "one");
-		Tree0 tree = Tree0.parse(map);
+		Tree0 tree = Tree0.parseMap(map);
 		Tree1 expected = Tree1.builder()
 				.setType(TreeType.ONE)
 				.build();
@@ -108,7 +109,7 @@ public class MessageTest {
 	@Test
 	public void testParse_polymorphicSubtypeSubtype() throws Exception {
 		Map<String, Object> map = ImmutableMap.<String, Object>of("type", "two", "type1", "b");
-		Tree0 tree = Tree0.parse(map);
+		Tree0 tree = Tree0.parseMap(map);
 		TreeB expected = TreeB.builder()
 				.setType(TreeType.TWO)
 				.setType1(TreeType1.B)
@@ -123,7 +124,7 @@ public class MessageTest {
 				"secondField", "hello",
 				"forthField", 1.5);
 
-		TestSimpleSubmessage submessage = TestSimpleSubmessage.parse(map);
+		TestSimpleSubmessage submessage = TestSimpleSubmessage.parseMap(map);
 		TestSimpleSubmessage expected = TestSimpleSubmessage.builder()
 				.setFirstField(true)
 				.setSecondField("hello")
@@ -141,7 +142,7 @@ public class MessageTest {
 				.setThirdField(null)
 				.build();
 		String s = msg.toJson();
-		TestSimpleMessage msg1 = TestSimpleMessage.parseFromJson(s);
+		TestSimpleMessage msg1 = TestSimpleMessage.parseJson(s);
 		assertEquals(msg, msg1);
 	}
 }

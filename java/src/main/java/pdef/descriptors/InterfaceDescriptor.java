@@ -103,23 +103,4 @@ public class InterfaceDescriptor implements Descriptor {
 			return new InterfaceDescriptor(this);
 		}
 	}
-
-	public static void main(String[] args) {
-		InterfaceDescriptor descriptor = builder()
-				.setCls(Object.class)
-				.setBase(null)
-				.setExc(null)
-				.addMethod(MethodDescriptor.builder()
-						.setResult(new Supplier<Descriptor>() { public Descriptor get() { return null; }})
-						.setIndex(true)
-						.setPost(true)
-						.addArg(ArgDescriptor.builder()
-								.setName("arg0")
-								.setQuery(true)
-								.setType(new Supplier<Descriptor>() { public Descriptor get() { return null; } })))
-				.addMethod(MethodDescriptor.builder()
-						.setResult(null)
-						.setIndex(true))
-				.build();
-	}
 }

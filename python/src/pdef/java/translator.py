@@ -136,6 +136,7 @@ class JavaMethod(object):
         self.args = [JavaArg(arg, translator) for arg in method.args.values()]
         self.result = translator.ref(method.result)
         self.is_post = method.is_post
+        self.is_index = method.is_index
         self.doc = method.doc
 
 

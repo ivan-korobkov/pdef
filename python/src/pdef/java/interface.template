@@ -1,5 +1,12 @@
 package {{ package }};
 
+import pdef.descriptors.ArgDescriptor;
+import pdef.descriptors.Descriptor;
+import pdef.descriptors.Descriptors;
+import pdef.descriptors.DescriptorSupplier;
+import pdef.descriptors.InterfaceDescriptor;
+import pdef.descriptors.MethodDescriptor;
+
 
 {% if doc %}
 /** {{ doc }} */
@@ -14,49 +21,32 @@ package {{ package }};
     {% if method.doc -%}
     /** {{ method.doc|indent(4) }} */
     {% endif -%}
-    {{ method.result }} {{ method.name }}({% for arg, argtype in method.args -%}
-                {{ argtype }} {{ arg }}
+    {{ method.result }} {{ method.name }}(
+        {%- for arg in method.args -%}
+                {{ arg.type }} {{ arg.name }}
                 {%- if loop.length > 1 and not loop.last %}, {% endif %}
         {%- endfor %});
 
 {% endfor %}
-    static pdef.descriptors.InterfaceDescriptor<{{ name }}> DESCRIPTOR =
-            new pdef.descriptors.GeneratedInterfaceDescriptor<{{ name }}>({{ name }}.class) {
-        private final java.util.Map<String, pdef.descriptors.MethodDescriptor> methods;
-        {
-            methods = methods(
-{% for method in methods %}
-                    method(this, "{{ method.name }}")
-{% for arg, type in method.args %}
-                            .arg("{{ arg }}", {{ type.descriptor }})
-{% endfor %}
-                            {%- if method.result.is_interface %}
-                            .next(new com.google.common.base.Supplier<pdef.descriptors.InterfaceDescriptor<?>>() {
-                                @Override
-                                public pdef.descriptors.InterfaceDescriptor<?> get() {
-                                    return {{ method.result.descriptor }};
-                                }
-                            })
-                            {% else %}
-                            .result({{ method.result.descriptor }})
-                            {% endif -%}
-                            .build(){% if loop.last %});{% elif loop.length > 1 %}, {% endif %}
-
-{% endfor %}
-        }
+    static InterfaceDescriptor DESCRIPTOR = InterfaceDescriptor.builder()
+            .setCls({{ name }}.class)
 {% if exc %}
-
-        @javax.annotation.Nullable
-        @Override
-        public pdef.descriptors.Descriptor<?> getExc() {
-            return {{ exc.descriptor }};
-        }
+            .setExc(new DescriptorSupplier() { public Descriptor get() { return {{ exc.descriptor }}; } })
 {% endif %}
-
-		@Override
-		public java.util.Map<String, pdef.descriptors.MethodDescriptor> getMethods() {
-			return methods;
-		}
-    };
+{% for method in declared_methods %}
+            .addMethod(MethodDescriptor.builder()
+                    .setName("{{ method.name }}")
+                    .setResult(new DescriptorSupplier() { public Descriptor get() { return {{ method.result.descriptor }}; } })
+{% for arg in method.args %}
+                    .addArg(ArgDescriptor.builder()
+{% if arg.is_query %}
+                            .setQuery(true)
+{% endif %}
+                            .setName("{{ arg.name }}")
+                            .setType(new DescriptorSupplier() { public Descriptor get() { return {{ arg.type.descriptor }}; } }))
+{% endfor %}
+            )
+{% endfor %}
+            .build();
 }
 

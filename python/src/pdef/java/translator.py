@@ -135,9 +135,16 @@ class JavaInterface(JavaDefinition):
 class JavaMethod(object):
     def __init__(self, method, translator):
         self.name = method.name
-        self.args = [(arg.name, translator.ref(arg.type)) for arg in method.args.values()]
+        self.args = [JavaArg(arg, translator) for arg in method.args.values()]
         self.result = translator.ref(method.result)
         self.doc = method.doc
+
+
+class JavaArg(object):
+    def __init__(self, arg, translator):
+        self.name = arg.name
+        self.is_query = arg.is_query
+        self.type = translator.ref(arg.type)
 
 
 class JavaType(object):
@@ -165,7 +172,7 @@ class JavaType(object):
         element = translator.ref(obj.element)
         name = 'java.util.List<%s>' % element
         default = 'com.google.common.collect.ImmutableList.<%s>of()' % element
-        descriptor = 'pdef.descriptors.Descriptors.list(%s)' % element.descriptor
+        descriptor = 'Descriptors.list(%s)' % element.descriptor
         return JavaType(Type.LIST, name=name, default=default, descriptor=descriptor)
 
     @classmethod
@@ -173,7 +180,7 @@ class JavaType(object):
         element = translator.ref(obj.element)
         name = 'java.util.Set<%s>' % element
         default = 'com.google.common.collect.ImmutableSet.<%s>of()' % element
-        descriptor = 'pdef.descriptors.Descriptors.set(%s)' % element.descriptor
+        descriptor = 'Descriptors.set(%s)' % element.descriptor
         return JavaType(Type.SET, name=name, default=default, descriptor=descriptor)
 
     @classmethod
@@ -182,7 +189,7 @@ class JavaType(object):
         value = translator.ref(obj.value)
         name = 'java.util.Map<%s, %s>' % (key, value)
         default = 'com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key, value)
-        descriptor = 'pdef.descriptors.Descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
+        descriptor = 'Descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
         return JavaType(Type.MAP, name=name, default=default, descriptor=descriptor)
 
     @classmethod
@@ -194,14 +201,14 @@ class JavaType(object):
     def enum(cls, obj, translator):
         name = cls._default_name(obj)
         default = '%s.instance()' % name
-        descriptor = '%s.DESCRIPTOR' % name
+        descriptor = '%s.descriptor()' % name
         return JavaType(Type.ENUM, name=name, default=default, descriptor=descriptor)
 
     @classmethod
     def message(cls, obj, translator):
         name = cls._default_name(obj)
         default = '%s.instance()' % name
-        descriptor = '%s.DESCRIPTOR' % name
+        descriptor = '%s.descriptor()' % name
         return JavaType(Type.MESSAGE, name, default=default, descriptor=descriptor)
 
     @classmethod
@@ -247,27 +254,27 @@ class JavaType(object):
 
 NATIVE_MAP = {
     Type.BOOL: JavaType(Type.BOOL, 'Boolean', 'boolean', default='false', is_primitive=True,
-                        descriptor='pdef.descriptors.Descriptors.bool'),
+                        descriptor='Descriptors.bool'),
 
     Type.INT16: JavaType(Type.INT16, 'Short', 'short', default='(short) 0', is_primitive=True,
-                         descriptor='pdef.descriptors.Descriptors.int16'),
+                         descriptor='Descriptors.int16'),
 
     Type.INT32: JavaType(Type.INT32, 'Integer', 'int', default='0', is_primitive=True,
-                         descriptor='pdef.descriptors.Descriptors.int32'),
+                         descriptor='Descriptors.int32'),
 
     Type.INT64: JavaType(Type.INT64, 'Long', 'long', default='0L', is_primitive=True,
-                         descriptor='pdef.descriptors.Descriptors.int64'),
+                         descriptor='Descriptors.int64'),
 
     Type.FLOAT: JavaType(Type.FLOAT, 'Float', 'float', default='0f', is_primitive=True,
-                         descriptor='pdef.descriptors.Descriptors.float0'),
+                         descriptor='Descriptors.float0'),
 
     Type.DOUBLE: JavaType(Type.DOUBLE, 'Double', 'double', default='0.0', is_primitive=True,
-                          descriptor='pdef.descriptors.Descriptors.double0'),
+                          descriptor='Descriptors.double0'),
 
-    Type.STRING: JavaType(Type.STRING, 'String', descriptor='pdef.descriptors.Descriptors.string'),
+    Type.STRING: JavaType(Type.STRING, 'String', descriptor='Descriptors.string'),
 
-    Type.OBJECT: JavaType(Type.OBJECT, 'Object', descriptor='pdef.descriptors.Descriptors.object'),
+    Type.OBJECT: JavaType(Type.OBJECT, 'Object', descriptor='Descriptors.object'),
 
     Type.VOID: JavaType(Type.VOID, 'Void', 'void', is_primitive=True,
-                        descriptor='pdef.descriptors.Descriptors.void0')
+                        descriptor='Descriptors.void0')
 }

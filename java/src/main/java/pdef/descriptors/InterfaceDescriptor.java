@@ -1,6 +1,6 @@
 package pdef.descriptors;
 
-import com.google.common.base.Supplier;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import pdef.TypeEnum;
@@ -8,12 +8,10 @@ import pdef.TypeEnum;
 import javax.annotation.Nullable;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class InterfaceDescriptor implements Descriptor {
 	private final Class<?> cls;
 	private final InterfaceDescriptor base;
-	private final Supplier<Descriptor> exc;
+	private final DescriptorSupplier exc;
 	private final List<MethodDescriptor> declaredMethods;
 	private List<MethodDescriptor> cachedMethods;
 
@@ -73,7 +71,7 @@ public class InterfaceDescriptor implements Descriptor {
 	public static class Builder {
 		private Class<?> cls;
 		private InterfaceDescriptor base;
-		private Supplier<Descriptor> exc;
+		private DescriptorSupplier exc;
 		private final List<MethodDescriptor.Builder> declaredMethods;
 
 		private Builder() {
@@ -90,7 +88,7 @@ public class InterfaceDescriptor implements Descriptor {
 			return this;
 		}
 
-		public Builder setExc(final Supplier<Descriptor> exc) {
+		public Builder setExc(final DescriptorSupplier exc) {
 			this.exc = exc;
 			return this;
 		}
@@ -111,13 +109,13 @@ public class InterfaceDescriptor implements Descriptor {
 				.setBase(null)
 				.setExc(null)
 				.addMethod(MethodDescriptor.builder()
-						.setResult(new Supplier<Descriptor>() { public Descriptor get() { return null; }})
+						.setResult(new DescriptorSupplier() { public Descriptor get() { return null; }})
 						.setIndex(true)
 						.setPost(true)
 						.addArg(ArgDescriptor.builder()
 								.setName("arg0")
 								.setQuery(true)
-								.setType(new Supplier<Descriptor>() { public Descriptor get() { return null; } })))
+								.setType(new DescriptorSupplier() { public Descriptor get() { return null; } })))
 				.addMethod(MethodDescriptor.builder()
 						.setResult(null)
 						.setIndex(true))

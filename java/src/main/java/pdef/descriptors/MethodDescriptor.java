@@ -1,16 +1,14 @@
 package pdef.descriptors;
 
-import com.google.common.base.Supplier;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class MethodDescriptor {
 	private final String name;
-	private final Supplier<Descriptor> result;
+	private final DescriptorSupplier result;
 	private final boolean index;
 	private final boolean post;
 	private final List<ArgDescriptor> args;
@@ -60,7 +58,7 @@ public class MethodDescriptor {
 
 	public static class Builder {
 		private String name;
-		private Supplier<Descriptor> result;
+		private DescriptorSupplier result;
 		private boolean index;
 		private boolean post;
 		private final List<ArgDescriptor.Builder> args;
@@ -74,7 +72,7 @@ public class MethodDescriptor {
 			return this;
 		}
 
-		public Builder setResult(final Supplier<Descriptor> result) {
+		public Builder setResult(final DescriptorSupplier result) {
 			this.result = result;
 			return this;
 		}

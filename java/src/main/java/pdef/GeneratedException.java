@@ -75,6 +75,7 @@ public abstract class GeneratedException extends RuntimeException implements Mes
 		protected Builder() {}
 		protected Builder(final GeneratedMessage message) {}
 
+		@Override
 		public Message.Builder merge(final Message message) {
 			return this;
 		}

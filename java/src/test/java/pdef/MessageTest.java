@@ -3,13 +3,12 @@ package pdef;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import pdef.test.*;
 
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class MessageTest {
 	@Test
@@ -26,7 +25,7 @@ public class MessageTest {
 	}
 
 	@Test
-	public void testSerialize() throws Exception {
+	public void  testSerialize() throws Exception {
 		Message msg = createTestMessage();
 		Map<String, Object> map = msg.toMap();
 		Map<String, Object> expected = createTestMessageMap();
@@ -39,6 +38,63 @@ public class MessageTest {
 		Message msg = TestMessage.parseMap(map);
 		Message expected = createTestMessage();
 		assertEquals(expected, msg);
+	}
+
+	@Test
+	public void testParse_polymorphicRootType() throws Exception {
+		Map<String, Object> map = ImmutableMap.<String, Object>of("type", "base");
+		Tree0 tree = Tree0.parseMap(map);
+		Tree0 expected = Tree0.builder()
+				.setType(TreeType.BASE)
+				.build();
+		assertEquals(expected, tree);
+	}
+
+	@Test
+	public void testParse_polymorphicNoType() throws Exception {
+		Map<String, Object> map = ImmutableMap.of();
+		Tree0 tree = Tree0.parseMap(map);
+		Tree0 expected = Tree0.builder().build();
+		assertEquals(expected, tree);
+	}
+
+	@Test
+	public void testParse_polymorphicSubtype() throws Exception {
+		Map<String, Object> map = ImmutableMap.<String, Object>of("type", "one");
+		Tree0 tree = Tree0.parseMap(map);
+		Tree1 expected = Tree1.builder()
+				.setType(TreeType.ONE)
+				.build();
+		assertEquals(expected, tree);
+	}
+
+	@Test
+	public void testParse_nonpolymorphicSubtype() throws Exception {
+		Map<String, Object> map = ImmutableMap.<String, Object>of(
+				"firstField", true,
+				"secondField", "hello",
+				"forthField", 1.5);
+
+		TestSimpleSubmessage submessage = TestSimpleSubmessage.parseMap(map);
+		TestSimpleSubmessage expected = TestSimpleSubmessage.builder()
+				.setFirstField(true)
+				.setSecondField("hello")
+				.setForthField(1.5f)
+				.build();
+
+		assertEquals(expected, submessage);
+	}
+
+	@Test
+	public void testJson() throws Exception {
+		TestSimpleMessage msg = TestSimpleMessage.builder()
+				.setFirstField(true)
+				.setSecondField("hello")
+				.setThirdField(null)
+				.build();
+		String s = msg.toJson();
+		TestSimpleMessage msg1 = TestSimpleMessage.parseJson(s);
+		assertEquals(msg, msg1);
 	}
 
 	private TestMessage createTestMessage() {
@@ -74,75 +130,5 @@ public class MessageTest {
 				.put("aMap", ImmutableMap.of("a", "1"))
 				.put("anObject", "object")
 				.build();
-	}
-
-	@Test
-	public void testParse_polymorphicRootType() throws Exception {
-		Map<String, Object> map = ImmutableMap.<String, Object>of("type", "base");
-		Tree0 tree = Tree0.parseMap(map);
-		Tree0 expected = Tree0.builder()
-				.setType(TreeType.BASE)
-				.build();
-		assertEquals(expected, tree);
-	}
-
-	@Test
-	public void testParse_polymorphicNoType() throws Exception {
-		Map<String, Object> map = ImmutableMap.of();
-		Tree0 tree = Tree0.parseMap(map);
-		Tree0 expected = Tree0.builder()
-				.setType(TreeType.BASE)
-				.build();
-		assertEquals(expected, tree);
-	}
-
-	@Test
-	public void testParse_polymorphicSubtype() throws Exception {
-		Map<String, Object> map = ImmutableMap.<String, Object>of("type", "one");
-		Tree0 tree = Tree0.parseMap(map);
-		Tree1 expected = Tree1.builder()
-				.setType(TreeType.ONE)
-				.build();
-		assertEquals(expected, tree);
-	}
-
-	@Test
-	public void testParse_polymorphicSubtypeSubtype() throws Exception {
-		Map<String, Object> map = ImmutableMap.<String, Object>of("type", "two", "type1", "b");
-		Tree0 tree = Tree0.parseMap(map);
-		TreeB expected = TreeB.builder()
-				.setType(TreeType.TWO)
-				.setType1(TreeType1.B)
-				.build();
-		assertEquals(expected, tree);
-	}
-
-	@Test
-	public void testParse_nonpolymorphicSubtype() throws Exception {
-		Map<String, Object> map = ImmutableMap.<String, Object>of(
-				"firstField", true,
-				"secondField", "hello",
-				"forthField", 1.5);
-
-		TestSimpleSubmessage submessage = TestSimpleSubmessage.parseMap(map);
-		TestSimpleSubmessage expected = TestSimpleSubmessage.builder()
-				.setFirstField(true)
-				.setSecondField("hello")
-				.setForthField(1.5f)
-				.build();
-
-		assertEquals(expected, submessage);
-	}
-
-	@Test
-	public void testJson() throws Exception {
-		TestSimpleMessage msg = TestSimpleMessage.builder()
-				.setFirstField(true)
-				.setSecondField("hello")
-				.setThirdField(null)
-				.build();
-		String s = msg.toJson();
-		TestSimpleMessage msg1 = TestSimpleMessage.parseJson(s);
-		assertEquals(msg, msg1);
 	}
 }

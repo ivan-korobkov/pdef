@@ -1,11 +1,12 @@
 package pdef.descriptors;
 
 import static com.google.common.base.Preconditions.*;
+import com.google.common.base.Supplier;
 
 public class ArgDescriptor {
 	private final String name;
 	private final boolean query;
-	private final DescriptorSupplier type;
+	private final Supplier<Descriptor> type;
 	private final MethodDescriptor method;
 
 	private ArgDescriptor(final Builder builder, final MethodDescriptor method) {
@@ -38,7 +39,7 @@ public class ArgDescriptor {
 	public static class Builder {
 		private String name;
 		private boolean query;
-		private DescriptorSupplier type;
+		private Supplier<Descriptor> type;
 
 		private Builder() {}
 
@@ -52,7 +53,7 @@ public class ArgDescriptor {
 			return this;
 		}
 
-		public Builder setType(final DescriptorSupplier type) {
+		public Builder setType(final Supplier<Descriptor> type) {
 			this.type = type;
 			return this;
 		}

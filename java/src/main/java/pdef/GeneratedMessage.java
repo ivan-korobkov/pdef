@@ -74,6 +74,7 @@ public abstract class GeneratedMessage implements Message {
 		protected Builder() {}
 		protected Builder(final GeneratedMessage message) {}
 
+		@Override
 		public Message.Builder merge(final Message message) {
 			return this;
 		}

@@ -1,21 +1,13 @@
 package {{ package }};
 
-{% if doc %}
-/** {{ doc }} */
-{% endif %}
-public class {{ name }} extends {{ base }} {
-{% for field in declared_fields %}
-    protected {{ field.type }} {{ field.name }};
-{% endfor %}
+import com.google.common.base.Supplier;
 
-    public {{ name }}() {
-        this(builder()); {# To correctly set base type fields. #}
+import pdef.descriptors.Descriptor;
+import pdef.descriptors.Descriptors;
+import pdef.descriptors.FieldDescriptor;
+import pdef.descriptors.MessageDescriptor;
 
-    }
-
-    protected {{ name }}(final Builder builder) {
-        super(builder);
-{% for field in declared_fields %}
+{% macro message_field_from_builder(field) -%}
         {% if field.type.is_list -%}
             this.{{ field.name }} = builder.{{ field.name }} == null ? null
                 : com.google.common.collect.ImmutableList.copyOf(builder.{{ field.name }});
@@ -28,22 +20,29 @@ public class {{ name }} extends {{ base }} {
         {%- else -%}
             this.{{ field.name }} = builder.{{ field.name }};
         {%- endif %}
+{%- endmacro %}
 
+{% if doc %}
+/** {{ doc }} */
+{% endif %}
+public class {{ name }} extends {{ base_or_root }} {
+{% for field in declared_fields %}
+    protected {{ field.type }} {{ field.name }};
 {% endfor %}
-    }
-    
-    public static {{ name }} parseMap(final java.util.Map<String, Object> map) {
-        return ({{ name }}) descriptor().parseObject(map);
+
+    public {{ name }}() {
+        this(builder()); {# To correctly set base type fields. #}
+
     }
 
-    public static {{ name }} parseJson(final String s) {
-        return ({{ name }}) descriptor().parseJson(s);
+    protected {{ name }}(final Builder builder) {
+        super(builder);
+{% for field in declared_fields %}
+        {{ message_field_from_builder(field) }}
+{% endfor %}
     }
 
 {% for field in declared_fields %}
-{% if field.type.is_nullable%}
-    @javax.annotation.Nullable
-{% endif %}
     public {{ field.type.unboxed }} {{ field.get }}() {
         return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
     }
@@ -64,11 +63,19 @@ public class {{ name }} extends {{ base }} {
     }
 
     @Override
-    public pdef.descriptors.MessageDescriptor descriptorForType() {
+    public MessageDescriptor descriptorForType() {
         return descriptor();
     }
 
-    public static class Builder extends {{ base }}.Builder {
+    public static {{ name }} parseMap(final java.util.Map<String, Object> map) {
+        return ({{ name }}) descriptor().parseObject(map);
+    }
+
+    public static {{ name }} parseJson(final String s) {
+        return ({{ name }}) descriptor().parseJson(s);
+    }
+
+    public static class Builder extends {{ base_or_root }}.Builder {
 {% for field in declared_fields %}
         protected {{ field.type }} {{ field.name }};
 {% endfor %}
@@ -97,7 +104,6 @@ public class {{ name }} extends {{ base }} {
         }
 
 {% for field in declared_fields %}
-        {% if field.type.nullable -%} @javax.annotation.Nullable {%- endif -%}
         public {{ field.type.unboxed }} {{ field.get }}() {
             return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
         }
@@ -134,11 +140,39 @@ public class {{ name }} extends {{ base }} {
         return INSTANCE;
     }
 
-    public static pdef.descriptors.MessageDescriptor descriptor() {
+    public static MessageDescriptor descriptor() {
         return DESCRIPTOR;
     }
     
     private static final {{ name }} INSTANCE = new {{ name }}();
-    private static final pdef.descriptors.MessageDescriptor DESCRIPTOR = null;
+    private static final MessageDescriptor DESCRIPTOR = MessageDescriptor.builder()
+{% if base %}
+            .setBase({{ base.descriptor }})
+{% endif %}
+{% if base_type %}
+            .setBaseType({{ base_type }})
+{% endif %}
+{% for enum_value, subtype in subtypes %}
+            .addSubtype({{ enum_value }}, new Supplier<MessageDescriptor>() { public MessageDescriptor get() { return {{ subtype.descriptor }}; } })
+{% endfor %}
+{% for field in declared_fields %}
+            .addField(FieldDescriptor.builder()
+                    .setName("{{ field.name }}")
+{% if field.is_discriminator %}
+                    .setDiscriminator(true)
+{% endif %}
+                    .setType(new Supplier<Descriptor>() { public Descriptor get() { return {{ field.type.descriptor }}; } })
+                    .setAccessor(new FieldDescriptor.Accessor() {
+                        public Object get(final Object message) {
+                            return (({{ name }}) message).{{ field.name }};
+                        }
+                        @SuppressWarnings("unchecked")
+                        public void set(final Object builder, final Object value) {
+                            ((Builder) builder).{{ field.name }} = ({{ field.type }}) value;
+                        }
+                    }))
+{% endfor %}
+            .setBuilder(new Supplier<Builder>() { public Builder get() { return builder(); } })
+            .build();
 }
 

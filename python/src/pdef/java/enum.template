@@ -1,30 +1,32 @@
 package {{package}};
 
+import pdef.descriptors.Descriptor;
+import pdef.descriptors.EnumDescriptor;
+
 {% if doc %}
 /** {{ doc }} */
 {% endif %}
 public enum {{name}} {
     {% for value in values -%}
-        {{value}}{% if not loop.last and loop.length > 1 %}, {% endif %}
+        {{ value }}{% if not loop.last and loop.length > 1 %}, {% endif %}
     {%- endfor %};
 
-    public static {{ name }} parseString(final String object) {
-        if (object == null) return instance();
-        String s = object.toUpperCase();
-{% for value in values %}
-        if ({{ value }}.name().equals(s)) return {{ value }};
-{% endfor %}
-        return instance();
-    }
-
-    public static String serialize(final {{ name }} object) {
-        return object == null ? null : object.name().toLowerCase();
+    public static {{ name }} parseString(final String s) {
+        return ({{ name }}) descriptor().parseString(s);
     }
 
     public static {{ name }} instance() {
         return {{ values[0] }};
     }
 
-    public static final pdef.descriptors.DataDescriptor DESCRIPTOR = null;
+    public static EnumDescriptor descriptor() {
+        return DESCRIPTOR;
+    }
+
+    private static final EnumDescriptor DESCRIPTOR = EnumDescriptor.builder()
+{% for value in values %}
+            .addValue({{ value }})
+{% endfor %}
+            .build();
 }
 

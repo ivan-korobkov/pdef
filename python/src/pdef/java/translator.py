@@ -50,11 +50,6 @@ class JavaTranslator(AbstractTranslator):
             return None
         return JavaMethod(method_or_none, self)
 
-    def message_base(self, msg):
-        return self.ref(msg.base) \
-            if msg.base else 'pdef.GeneratedException' \
-            if msg.is_exception else 'pdef.GeneratedMessage'
-
     def write(self, module_name, file_name, code):
         '''Writes a code to a file in a module directory.'''
         dirs = module_name.split('.')
@@ -95,18 +90,21 @@ class JavaMessage(JavaDefinition):
         super(JavaMessage, self).__init__(msg, translator)
         self.template = translator.message_template
 
-        self.base = translator.message_base(msg)
+        self.base = translator.ref(msg.base) if msg.base else None
         self.base_type = translator.ref(msg.base_type)
-        self.base_discriminator = translator.field(msg.base.discriminator) if msg.base else None;
+        self.base_discriminator = translator.field(msg.base.discriminator) if msg.base else None
         self.discriminator = translator.field(msg.discriminator)
 
-        # Keys are simple enum values so that they can be used in the switch statement.
-        self.subtypes = tuple((key.name, translator.ref(val)) for key, val in msg.subtypes.items())
+        self.subtypes = tuple((translator.ref(key), translator.ref(val))
+                              for key, val in msg.subtypes.items())
 
         self.fields = [translator.field(f) for f in msg.fields.values()]
         self.declared_fields = [translator.field(f) for f in msg.declared_fields.values()]
         self.inherited_fields = [translator.field(f) for f in msg.inherited_fields.values()]
         self.is_exception = msg.is_exception
+
+        self.base_or_root = self.base if self.base \
+            else 'pdef.GeneratedException' if msg.is_exception else 'pdef.GeneratedMessage'
 
 
 class JavaField(object):
@@ -114,6 +112,7 @@ class JavaField(object):
         self.translator = translator
         self.name = field.name
         self.type = translator.ref(field.type)
+        self.is_discriminator = field.is_discriminator
 
         self.get = 'get%s' % upper_first(self.name)
         self.set = 'set%s' % upper_first(self.name)
@@ -137,6 +136,7 @@ class JavaMethod(object):
         self.name = method.name
         self.args = [JavaArg(arg, translator) for arg in method.args.values()]
         self.result = translator.ref(method.result)
+        self.is_post = method.is_post
         self.doc = method.doc
 
 
@@ -229,8 +229,6 @@ class JavaType(object):
         self.descriptor = descriptor
 
         self.is_primitive = is_primitive
-        self.is_nullable = default == 'null'
-
         self.is_interface = type == Type.INTERFACE
         self.is_list = type == Type.LIST
         self.is_set = type == Type.SET
@@ -271,7 +269,7 @@ NATIVE_MAP = {
     Type.DOUBLE: JavaType(Type.DOUBLE, 'Double', 'double', default='0.0', is_primitive=True,
                           descriptor='Descriptors.double0'),
 
-    Type.STRING: JavaType(Type.STRING, 'String', descriptor='Descriptors.string'),
+    Type.STRING: JavaType(Type.STRING, 'String', default='""', descriptor='Descriptors.string'),
 
     Type.OBJECT: JavaType(Type.OBJECT, 'Object', descriptor='Descriptors.object'),
 

@@ -1,6 +1,7 @@
 package pdef.descriptors;
 
 import static com.google.common.base.Preconditions.*;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import pdef.TypeEnum;
@@ -11,7 +12,7 @@ import java.util.List;
 public class InterfaceDescriptor implements Descriptor {
 	private final Class<?> cls;
 	private final InterfaceDescriptor base;
-	private final DescriptorSupplier exc;
+	private final Supplier<Descriptor> exc;
 	private final List<MethodDescriptor> declaredMethods;
 	private List<MethodDescriptor> cachedMethods;
 
@@ -71,7 +72,7 @@ public class InterfaceDescriptor implements Descriptor {
 	public static class Builder {
 		private Class<?> cls;
 		private InterfaceDescriptor base;
-		private DescriptorSupplier exc;
+		private Supplier<Descriptor> exc;
 		private final List<MethodDescriptor.Builder> declaredMethods;
 
 		private Builder() {
@@ -88,7 +89,7 @@ public class InterfaceDescriptor implements Descriptor {
 			return this;
 		}
 
-		public Builder setExc(final DescriptorSupplier exc) {
+		public Builder setExc(final Supplier<Descriptor> exc) {
 			this.exc = exc;
 			return this;
 		}
@@ -109,13 +110,13 @@ public class InterfaceDescriptor implements Descriptor {
 				.setBase(null)
 				.setExc(null)
 				.addMethod(MethodDescriptor.builder()
-						.setResult(new DescriptorSupplier() { public Descriptor get() { return null; }})
+						.setResult(new Supplier<Descriptor>() { public Descriptor get() { return null; }})
 						.setIndex(true)
 						.setPost(true)
 						.addArg(ArgDescriptor.builder()
 								.setName("arg0")
 								.setQuery(true)
-								.setType(new DescriptorSupplier() { public Descriptor get() { return null; } })))
+								.setType(new Supplier<Descriptor>() { public Descriptor get() { return null; } })))
 				.addMethod(MethodDescriptor.builder()
 						.setResult(null)
 						.setIndex(true))

@@ -1,12 +1,30 @@
 package {{ package }};
 
+import com.google.common.base.Supplier;
+
 import pdef.descriptors.ArgDescriptor;
 import pdef.descriptors.Descriptor;
 import pdef.descriptors.Descriptors;
-import pdef.descriptors.DescriptorSupplier;
 import pdef.descriptors.InterfaceDescriptor;
 import pdef.descriptors.MethodDescriptor;
 
+{% macro render_method(method) %}
+            .addMethod(MethodDescriptor.builder()
+                    .setName("{{ method.name }}")
+{% if method.is_post %}
+                    .setPost(true)
+{% endif %}
+                    .setResult(new Supplier<Descriptor>() { public Descriptor get() { return {{ method.result.descriptor }}; } })
+{% for arg in method.args %}
+                    .addArg(ArgDescriptor.builder()
+{% if arg.is_query %}
+                            .setQuery(true)
+{% endif %}
+                            .setName("{{ arg.name }}")
+                            .setType(new Supplier<Descriptor>() { public Descriptor get() { return {{ arg.type.descriptor }}; } }))
+{% endfor %}
+            )
+{% endmacro %}
 
 {% if doc %}
 /** {{ doc }} */
@@ -31,21 +49,10 @@ import pdef.descriptors.MethodDescriptor;
     static InterfaceDescriptor DESCRIPTOR = InterfaceDescriptor.builder()
             .setCls({{ name }}.class)
 {% if exc %}
-            .setExc(new DescriptorSupplier() { public Descriptor get() { return {{ exc.descriptor }}; } })
+            .setExc(new Supplier<Descriptor>() { public Descriptor get() { return {{ exc.descriptor }}; } })
 {% endif %}
 {% for method in declared_methods %}
-            .addMethod(MethodDescriptor.builder()
-                    .setName("{{ method.name }}")
-                    .setResult(new DescriptorSupplier() { public Descriptor get() { return {{ method.result.descriptor }}; } })
-{% for arg in method.args %}
-                    .addArg(ArgDescriptor.builder()
-{% if arg.is_query %}
-                            .setQuery(true)
-{% endif %}
-                            .setName("{{ arg.name }}")
-                            .setType(new DescriptorSupplier() { public Descriptor get() { return {{ arg.type.descriptor }}; } }))
-{% endfor %}
-            )
+{{ render_method(method) }}
 {% endfor %}
             .build();
 }

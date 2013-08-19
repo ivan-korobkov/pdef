@@ -12,7 +12,7 @@ public interface Message extends Serializable {
 	/** Serializes this message to a json string. */
 	String toJson();
 
-	/** Copies this message to a new builder. */
+	/** Creates a builder and merges this message into it. */
 	Builder toBuilder();
 
 	/** Creates a new empty builder. */
@@ -22,6 +22,11 @@ public interface Message extends Serializable {
 	MessageDescriptor descriptorForType();
 
 	public static interface Builder {
+		/** Merges non-null fields from a message into this builder.
+		 * This method is code-generated in subclasses for speed. */
+		Builder merge(Message message);
+
+		/** Builds an immutable message. */
 		Message build();
 	}
 }

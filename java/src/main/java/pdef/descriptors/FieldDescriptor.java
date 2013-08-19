@@ -1,13 +1,12 @@
 package pdef.descriptors;
 
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class FieldDescriptor {
 	private final MessageDescriptor message;
 	private final String name;
-	private final Supplier<DataDescriptor> type;
+	private final Supplier<Descriptor> type;
 	private final boolean discriminator;
 	private final Accessor accessor;
 
@@ -28,15 +27,11 @@ public class FieldDescriptor {
 	}
 
 	public DataDescriptor getType() {
-		return type.get();
+		return (DataDescriptor) type.get();
 	}
 
 	public boolean isDiscriminator() {
 		return discriminator;
-	}
-
-	public Accessor getAccessor() {
-		return accessor;
 	}
 
 	public Object get(final Object message) {
@@ -53,7 +48,7 @@ public class FieldDescriptor {
 
 	public static class Builder {
 		private String name;
-		private Supplier<DataDescriptor> type;
+		private Supplier<Descriptor> type;
 		private boolean discriminator;
 		private Accessor accessor;
 
@@ -64,7 +59,7 @@ public class FieldDescriptor {
 			return this;
 		}
 
-		public Builder setType(final Supplier<DataDescriptor> type) {
+		public Builder setType(final Supplier<Descriptor> type) {
 			this.type = type;
 			return this;
 		}

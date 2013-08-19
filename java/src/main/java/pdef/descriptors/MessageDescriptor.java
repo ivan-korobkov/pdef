@@ -1,5 +1,6 @@
 package pdef.descriptors;
 
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -11,12 +12,10 @@ import pdef.TypeEnum;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class MessageDescriptor extends DataDescriptor {
 	private final MessageDescriptor base;
 	private final Enum<?> baseType;
-	private final Supplier<Message.Builder> builderSupplier;
+	private final Supplier<? extends Message.Builder> builderSupplier;
 	private final List<FieldDescriptor> declaredFields;
 	private final List<FieldDescriptor> fields;
 	private final FieldDescriptor discriminator;
@@ -35,7 +34,7 @@ public class MessageDescriptor extends DataDescriptor {
 		declaredFields = buildDeclaredFields(builder.declaredFields, this);
 		fields = buildFields(declaredFields, base);
 		subtypes = ImmutableMap.copyOf(builder.subtypes);
-		discriminator = getFieldByName(fields, builder.discriminator);
+		discriminator = getDiscriminator(fields);
 	}
 
 	public MessageDescriptor getBase() {
@@ -72,14 +71,7 @@ public class MessageDescriptor extends DataDescriptor {
 
 	public Message.Builder toBuilder(final Message message) {
 		if (message == null) return null;
-
-		Message.Builder builder = createBuilder();
-		for (FieldDescriptor field : fields) {
-			Object value = field.get(message);
-			field.set(builder, value);
-		}
-
-		return builder;
+		return createBuilder().merge(message);
 	}
 
 	@Override
@@ -91,6 +83,10 @@ public class MessageDescriptor extends DataDescriptor {
 		for (FieldDescriptor field : fields) {
 			Object value = field.get(message);
 			Object serialized = field.getType().toObject(value);
+			if (serialized == null) {
+				continue;
+			}
+
 			map.put(field.getName(), serialized);
 		}
 
@@ -106,8 +102,9 @@ public class MessageDescriptor extends DataDescriptor {
 			Object value = map.get(discriminator.getName());
 			Object subtype = discriminator.getType().parseObject(value);
 			Supplier<MessageDescriptor> supplier = subtypes.get(subtype);
-			if (supplier != null) {
-				return supplier.get().parseObject(object);
+			MessageDescriptor subtypeDescriptor = supplier == null ? null : supplier.get();
+			if (subtypeDescriptor != null && subtypeDescriptor != this) {
+				return subtypeDescriptor.parseObject(object);
 			}
 		}
 
@@ -115,6 +112,10 @@ public class MessageDescriptor extends DataDescriptor {
 		for (FieldDescriptor field : getFields()) {
 			Object value = map.get(field.getName());
 			Object parsed = field.getType().parseObject(value);
+			if (parsed == null) {
+				continue;
+			}
+
 			field.set(builder, parsed);
 		}
 
@@ -124,8 +125,7 @@ public class MessageDescriptor extends DataDescriptor {
 	public static class Builder {
 		private MessageDescriptor base;
 		private Enum<?> baseType;
-		private String discriminator;
-		private Supplier<Message.Builder> builder;
+		private Supplier<? extends Message.Builder> builder;
 		private final List<FieldDescriptor.Builder> declaredFields;
 		private final Map<Enum<?>, Supplier<MessageDescriptor>> subtypes;
 
@@ -144,13 +144,8 @@ public class MessageDescriptor extends DataDescriptor {
 			return this;
 		}
 
-		public Builder setBuilder(final Supplier<Message.Builder> builder) {
+		public Builder setBuilder(final Supplier<? extends Message.Builder> builder) {
 			this.builder = builder;
-			return this;
-		}
-
-		public Builder setDiscriminator(final String discriminator) {
-			this.discriminator = discriminator;
 			return this;
 		}
 
@@ -187,33 +182,12 @@ public class MessageDescriptor extends DataDescriptor {
 				.build();
 	}
 
-	private static FieldDescriptor getFieldByName(final Iterable<FieldDescriptor> fields,
-			final String name) {
+	private static FieldDescriptor getDiscriminator(final Iterable<FieldDescriptor> fields) {
 		for (FieldDescriptor field : fields) {
-			if (field.getName().equals(name)) {
+			if (field.isDiscriminator()) {
 				return field;
 			}
 		}
 		return null;
-	}
-
-	public static void main(String[] args) {
-		MessageDescriptor msg = MessageDescriptor.builder()
-				.setBase(null)
-				.setBaseType(null)
-				.addField(FieldDescriptor.builder()
-						.setName("field0")
-						.setDiscriminator(false)
-						.setType(new Supplier<DataDescriptor>() { public DataDescriptor get() { return null; } })
-						.setAccessor(new FieldDescriptor.Accessor() {
-							public Object get(final Object message) {
-								return null;
-							}
-
-							public void set(final Object message, final Object value) {
-							}
-						}))
-				.addField(FieldDescriptor.builder())
-				.build();
 	}
 }

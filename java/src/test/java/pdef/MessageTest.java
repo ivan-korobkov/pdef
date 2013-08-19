@@ -42,11 +42,9 @@ public class MessageTest {
 
 	@Test
 	public void testParse_polymorphicRootType() throws Exception {
-		Map<String, Object> map = ImmutableMap.<String, Object>of("type", "base");
+		Map<String, Object> map = ImmutableMap.<String, Object>of();
 		Tree0 tree = Tree0.parseMap(map);
-		Tree0 expected = Tree0.builder()
-				.setType(TreeType.BASE)
-				.build();
+		Tree0 expected = Tree0.builder().build();
 		assertEquals(expected, tree);
 	}
 

@@ -360,13 +360,11 @@ class TestMessage(unittest.TestCase):
         assert msg0.subtypes == {type1: msg1}
         assert base.subtypes == {type0: msg0, type1: msg1}
 
-    def test_link_base__multiple_tree_discriminators(self):
-        '''Should set a message base when another discriminator is present.'''
+    def test_link_base__forbid_multiple_discriminators(self):
+        '''Should forbid multiple discriminators in messages.'''
         enum0 = Enum('Type0')
         enum1 = Enum('Type1')
-
         sub0 = enum0.add_value('SUB0')
-        sub1 = enum1.add_value('SUB1')
 
         msg0 = Message('Msg0')
         msg0.create_field('type0', enum0, is_discriminator=True)
@@ -374,13 +372,11 @@ class TestMessage(unittest.TestCase):
         msg1 = Message('Msg1')
         msg1.create_field('type1', enum1, is_discriminator=True)
         msg1.set_base(msg0, sub0)
-
-        msg2 = Message('Msg2')
-        msg2.set_base(msg1, sub1)
-        msg2.link()
-        assert msg2.discriminator is msg1.discriminator
-        assert msg1.subtypes == {sub1: msg2}
-        assert msg0.subtypes == {sub0: msg1}
+        try:
+            msg1.link()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'duplicate discriminator' in e.message
 
     def test_link_base__no_enum_value_for_discriminator(self):
         '''Should prevent inheriting a polymorphic base by a non-polymorphic message.'''
@@ -434,6 +430,7 @@ class TestMessage(unittest.TestCase):
         msg = Message('Msg')
 
         field = msg.create_field('type', enum, is_discriminator=True)
+        msg.link()
         assert field.is_discriminator
         assert msg.discriminator is field
 
@@ -442,8 +439,9 @@ class TestMessage(unittest.TestCase):
         enum = Enum('Type')
         msg = Message('Msg')
         msg.create_field('type0', enum, is_discriminator=True)
+        msg.create_field('type1', enum, is_discriminator=True)
         try:
-            msg.create_field('type1', enum, is_discriminator=True)
+            msg.link()
             self.fail()
         except PdefCompilerException, e:
             assert 'duplicate discriminator' in e.message

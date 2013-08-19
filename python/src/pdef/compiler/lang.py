@@ -511,10 +511,6 @@ class Message(Definition):
         self.declared_fields.add(field)
         field.message = self
 
-        if field.is_discriminator:
-            self._check(not self._discriminator, '%s: duplicate discriminator', self)
-            self._discriminator = field
-
         self._debug('%s: added a field "%s"', self, field.name)
         return field
 
@@ -578,6 +574,11 @@ class Message(Definition):
         inherited_fields = self.inherited_fields
         for field in self.declared_fields.values():
             self._check(field.name not in inherited_fields, '%s: duplicate field %s', self, field)
+
+        for field in self.declared_fields.values():
+            if field.is_discriminator:
+                self._check(not self.discriminator, '%s: duplicate discriminator', self)
+                self._discriminator = field
 
     def _check_circular_inheritance(self):
         b = self.base

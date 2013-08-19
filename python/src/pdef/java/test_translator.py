@@ -106,11 +106,10 @@ class TestRef(unittest.TestCase):
 
     def test_native(self):
         jobj = self.translator.ref(NativeTypes.INT64)
-        assert jobj.name == 'long'
-        assert jobj.boxed == 'Long'
+        assert jobj.name == 'Long'
+        assert jobj.unboxed == 'long'
         assert jobj.default == '0L'
         assert jobj.is_primitive
-        assert not jobj.is_nullable
 
     def test_enum_value(self):
         enum = Enum('Number')

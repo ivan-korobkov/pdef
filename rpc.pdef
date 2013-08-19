@@ -14,13 +14,22 @@ enum RpcResponseStatus {
 
 /** Rpc exception is raised when the server fails to process an RPC request. */
 exception RpcError {
-    code    RpcErrorCode;
+    code    RpcErrorCode, discriminator;
     text    string;
 }
 
-/** Rpc exception codes. */
+/** Rpc error codes. */
 enum RpcErrorCode {
-    SERVER_ERROR,   // Internal server error.
-    NETWORK_ERROR,  // Temporary network error (timeouts, etc), the request can be repeated.
-    CLIENT_ERROR    // Error client code/request, the request should not be repeated.
+    SERVER_ERROR,
+    NETWORK_ERROR,
+    CLIENT_ERROR
 }
+
+/** Internal server error. */
+exception ServerError : RpcError(RpcErrorCode.SERVER_ERROR) {}
+
+/** Temporary network error (timeout, etc), the request can be repeated. */
+exception NetworkError : RpcError(RpcErrorCode.NETWORK_ERROR) {}
+
+/** Client error (bad request, etc), the request should not be repeated. */
+exception ClientError : RpcError(RpcErrorCode.CLIENT_ERROR) {}

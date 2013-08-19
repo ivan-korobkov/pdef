@@ -77,11 +77,14 @@ class PythonMessage(object):
         self.base_type = ref(msg.base_type) if msg.base_type else None
         self.subtypes = [(ref(subtype), ref(submessage))
                          for subtype, submessage in msg.subtypes.items()]
-        self.discriminator_name = msg.discriminator.name if msg.discriminator else None
+        self.discriminator = PythonField(msg.discriminator, ref) if msg.discriminator else None
 
         self.fields = [PythonField(field, ref) for field in msg.fields.values()]
         self.inherited_fields = [PythonField(field, ref) for field in msg.inherited_fields.values()]
         self.declared_fields = [PythonField(field, ref) for field in msg.declared_fields.values()]
+
+        self.root_or_base = self.base if self.base else \
+            'pdef.Exc' if self.is_exception else 'pdef.Message'
 
     def render(self, translator):
         return translator.message_template.render(**self.__dict__)
@@ -91,6 +94,7 @@ class PythonField(object):
     def __init__(self, field, ref):
         self.name = field.name
         self.type = ref(field.type)
+        self.is_discriminator = field.is_discriminator
 
 
 class PythonInterface(object):
@@ -101,6 +105,8 @@ class PythonInterface(object):
         self.methods = [PythonMethod(m, ref) for m in iface.methods.values()]
         self.declared_methods = [PythonMethod(m, ref) for m in iface.declared_methods.values()]
         self.inherited_methods = [PythonMethod(m, ref)for m in iface.inherited_methods.values()]
+
+        self.root_or_base = self.base if self.base else 'pdef.Interface'
 
     def render(self, translator):
         return translator.interface_template.render(**self.__dict__)
@@ -126,6 +132,9 @@ class PythonRef(object):
     def __init__(self, name, descriptor):
         self.name = name
         self.descriptor = descriptor
+
+    def __str__(self):
+        return str(self.name)
 
 
 def pydef(def0, ref):
@@ -157,18 +166,18 @@ def pyref(def0, module=None, pymodule_suffix=''):
 
     if def0.is_list:
         element = pyref(def0.element, module, pymodule_suffix)
-        descriptor = 'pdef.descriptors.list0(%s)' % element.descriptor
+        descriptor = 'descriptors.list0(%s)' % element.descriptor
         return PythonRef('list', descriptor)
 
     elif def0.is_set:
         element = pyref(def0.element, module, pymodule_suffix)
-        descriptor = 'pdef.descriptors.set0(%s)' % element.descriptor
+        descriptor = 'descriptors.set0(%s)' % element.descriptor
         return PythonRef('set', descriptor)
 
     elif def0.is_map:
         key = pyref(def0.key, module, pymodule_suffix)
         value = pyref(def0.value, module, pymodule_suffix)
-        descriptor = 'pdef.descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
+        descriptor = 'descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
         return PythonRef('dict', descriptor)
 
     elif def0.is_enum_value:
@@ -185,13 +194,13 @@ def pyref(def0, module=None, pymodule_suffix=''):
 
 
 NATIVE = {
-    Type.BOOL: PythonRef('bool', 'pdef.descriptors.bool0'),
-    Type.INT16: PythonRef('int', 'pdef.descriptors.int16'),
-    Type.INT32: PythonRef('int', 'pdef.descriptors.int32'),
-    Type.INT64: PythonRef('int', 'pdef.descriptors.int64'),
-    Type.FLOAT: PythonRef('float', 'pdef.descriptors.float0'),
-    Type.DOUBLE: PythonRef('float', 'pdef.descriptors.double0'),
-    Type.STRING: PythonRef('unicode', 'pdef.descriptors.string'),
-    Type.OBJECT: PythonRef('object', 'pdef.descriptors.object0'),
-    Type.VOID: PythonRef('object', 'pdef.descriptors.void'),
+    Type.BOOL: PythonRef('bool', 'descriptors.bool0'),
+    Type.INT16: PythonRef('int', 'descriptors.int16'),
+    Type.INT32: PythonRef('int', 'descriptors.int32'),
+    Type.INT64: PythonRef('int', 'descriptors.int64'),
+    Type.FLOAT: PythonRef('float', 'descriptors.float0'),
+    Type.DOUBLE: PythonRef('float', 'descriptors.double0'),
+    Type.STRING: PythonRef('unicode', 'descriptors.string'),
+    Type.OBJECT: PythonRef('object', 'descriptors.object0'),
+    Type.VOID: PythonRef('object', 'descriptors.void'),
 }

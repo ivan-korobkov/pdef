@@ -71,7 +71,7 @@ class Message(object):
         return not self == other
 
 
-class GeneratedException(Exception, Message):
+class Exc(Exception, Message):
     '''Base generated pdef exception.'''
     pass
 

@@ -51,7 +51,6 @@ class MessageDescriptor(Descriptor):
     def __init__(self, pyclass_supplier,
                  base=None,
                  base_type=None,
-                 discriminator_name=None,
                  subtypes=None,
                  declared_fields=None):
         super(MessageDescriptor, self).__init__(Type.MESSAGE, pyclass_supplier)
@@ -64,11 +63,10 @@ class MessageDescriptor(Descriptor):
         self.fields = self.inherited_fields + self.declared_fields
 
         self.discriminator = None
-        if discriminator_name:
-            for field in self.fields:
-                if field.name == discriminator_name:
-                    self.discriminator = field
-                    break
+        for field in self.fields:
+            if field.is_discriminator:
+                self.discriminator = field
+                break
 
     def instance(self):
         '''Create a new instance.'''
@@ -168,13 +166,13 @@ class InterfaceDescriptor(Descriptor):
 
 class MethodDescriptor(object):
     '''Interface method descriptor.'''
-    def __init__(self, name, result_supplier, args=None, is_index=False, is_post=False):
+    def __init__(self, name, result_supplier, is_index=False, is_post=False):
         self.name = name
         self.result_supplier = result_supplier
         self.is_index = is_index
         self.is_post = is_post
 
-        self.args = tuple(args) if args else ()
+        self.args = []
 
     @property
     def result(self):
@@ -185,6 +183,12 @@ class MethodDescriptor(object):
     def is_remote(self):
         '''Method is remote when its result is not an interface.'''
         return not self.result.is_interface
+
+    def add_arg(self, name, type_supplier, is_query=False):
+        '''Create and add an argument to this method, return the method.'''
+        arg = ArgDescriptor(name, type_supplier, is_query=is_query)
+        self.args.append(arg)
+        return self
 
     def invoke(self, obj, *args, **kwargs):
         '''Invoke this method on an object with a given arguments, return the result'''
@@ -352,14 +356,12 @@ def map0(key, value):
 def message(pyclass_supplier,
             base=None,
             base_type=None,
-            discriminator_name=None,
             subtypes=None,
             declared_fields=None):
     '''Create a message descriptor.'''
     return MessageDescriptor(pyclass_supplier,
                              base=base,
                              base_type=base_type,
-                             discriminator_name=discriminator_name,
                              subtypes=subtypes,
                              declared_fields=declared_fields)
 
@@ -382,10 +384,10 @@ def interface(pyclass_supplier, base=None, exc_supplier=None, declared_methods=N
                                declared_methods=declared_methods)
 
 
-def method(name, result_supplier, args=None, is_index=False, is_post=False):
+def method(name, result_supplier, is_index=False, is_post=False):
     '''Create an interface method descriptor.'''
-    return MethodDescriptor(name, result_supplier=result_supplier, args=args,
-                            is_index=is_index, is_post=is_post)
+    return MethodDescriptor(name, result_supplier=result_supplier, is_index=is_index,
+                            is_post=is_post)
 
 
 def arg(name, descriptor_supplier, is_query=False):

@@ -1,52 +1,76 @@
 
-{% if base %}
-class {{ name }}({{ base.name }}):
-{% elif is_exception %}
-class {{ name }}(pdef.GeneratedException):
-{% else %}
-class {{ name }}(pdef.Message):
-{% endif %}
-    __descriptor__ = pdef.descriptors.message(lambda: {{ name }},
-{% if base %}
+{%- macro render_descriptor_base() %}
         base={{ base.name }},
         base_type={{ base_type.name if base_type else None }},
-{% endif %}
-{% if discriminator_name %}
-        discriminator_name="{{ discriminator_name }}",
-{% endif %}
+{% endmacro %}
 
-{%- if subtypes %}
+{%- macro render_descriptor_subtypes() %}
         subtypes={
-{% for subtype, submessage in subtypes %}
+        {% for subtype, submessage in subtypes %}
             {{ subtype.name }}: lambda: {{ submessage.name }},
-{% endfor %}
+        {% endfor %}
         },
-{% endif %}
+{% endmacro %}
 
-{%- if declared_fields %}
+{%- macro render_descriptor_fields() %}
         declared_fields=[
-{% for field in declared_fields %}
-            pdef.descriptors.field('{{ field.name }}', lambda: {{ field.type.descriptor }})
+        {% for field in declared_fields %}
+            descriptors.field('{{ field.name }}', lambda: {{ field.type.descriptor }}
+            {%- if field.is_discriminator -%}
+                , is_discriminator=True
+            {%- endif %})
             {%- if not loop.last %}, {% endif %}
 
-{% endfor %}
-        ]
-{% endif %}
+        {% endfor %}
+        ],
+{% endmacro -%}
+
+
+class {{ name }}({{ root_or_base }}):
+    __descriptor__ = descriptors.message(lambda: {{ name }},
+    {% if base -%}
+        {{ render_descriptor_base() }}
+    {%- endif %}
+    {% if declared_fields -%}
+        {{ render_descriptor_fields() }}
+    {%- endif %}
+    {% if subtypes -%}
+        {{ render_descriptor_subtypes() }}
+    {%- endif %}
     )
 
-{% if fields %}
-    def __init__(self,{% for field in fields %} {{ field.name }}=None,{% endfor %}):
-{% else %}
+{% if not fields %}
     def __init__(self):
+{% elif fields|length < 5 %}
+    def __init__(self, {% for field in fields -%}
+        {{ field.name }}=None
+        {%- if loop.last %}): {% else %}, {% endif %}
+    {% endfor %}
+
+{% else %}
+    def __init__(self,
+    {% for field in fields %}
+                 {{ field.name }}=None
+                 {%- if loop.last %}): {% else %}, {% endif %}
+
+    {% endfor %}
 {% endif %}
 
-{%- if inherited_fields %}
-        super({{ name }}, self).__init__({% for field in inherited_fields -%}
-            {{ field.name }}={{ field.name }}, {% endfor %})
-{% elif not declared_fields %}
-        pass
-{% endif -%}
+    {%- if inherited_fields %}
+        super({{ name }}, self).__init__(
+        {% for field in inherited_fields %}
+            {{ field.name }}={{ field.name }}
+            {%- if loop.last %}) {% else %}, {% endif %}
 
-{% for field in declared_fields %}
+        {% endfor %}
+    {% endif %}
+
+    {%- if not declared_fields and not base_type %}
+        pass
+    {% endif %}
+    {% for field in declared_fields %}
         self.{{ field.name }} = {{ field.name }}
-{% endfor %}
+    {% endfor %}
+    {% if base_type %}
+        self.{{ discriminator.name }} = {{ base_type }}
+    {% endif %}

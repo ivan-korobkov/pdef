@@ -1,6 +1,6 @@
 # encoding: utf-8
 import pdef
-import pdef.descriptors
+from pdef import descriptors
 {% if imports %}
 
 {% for import0 in imports %}
@@ -8,6 +8,7 @@ import {{ import0 }}
 {% endfor %}
 
 {% endif %}
+
 
 {% for def0 in definitions %}
 {{ def0 }}

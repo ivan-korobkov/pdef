@@ -109,12 +109,6 @@ class TestMessageInheritance(unittest.TestCase):
         expected = test_pd.Tree1(type=test_pd.TreeType.ONE)
         assert msg == expected
 
-    def test_parse__submessage_type_tree(self):
-        d = {'type': 'two', 'type1': 'b'}
-        msg = test_pd.Tree0.parse_dict(d)
-        expected = test_pd.TreeB(type=test_pd.TreeType.TWO, type1=test_pd.TreeType1.B)
-        assert msg == expected
-
 
 class TestEnum(unittest.TestCase):
     def test_parse_json(self):

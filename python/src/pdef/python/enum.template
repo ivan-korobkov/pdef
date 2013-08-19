@@ -1,8 +1,11 @@
-
 class {{ name }}(pdef.Enum):
-{% for value in values %}
+    {% for value in values %}
     {{ value }} = '{{ value }}'
-{% endfor %}
+    {% endfor %}
 
     __descriptor__ = pdef.descriptors.enum(lambda: {{ name }},
-        values=[{% for value in values -%}{{ value }}{% if not loop.last %}, {% endif %}{% endfor %}])
+        values=[{% for value in values -%}
+            {{ value }}
+            {%- if not loop.last %}, {% endif %}
+        {%- endfor %}])
+

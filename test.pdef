@@ -38,12 +38,7 @@ message TestSimpleSubmessage : TestSimpleMessage {
 
 /** First inheritance tree types. */
 enum TreeType {
-    BASE, ONE, TWO
-}
-
-/** Second inheritance tree types. */
-enum TreeType1 {
-    BASE, A, B
+    ONE, TWO
 }
 
 /** First inheritance tree. */
@@ -51,13 +46,7 @@ message Tree0 {
     type TreeType, discriminator;
 }
 message Tree1 : Tree0(TreeType.ONE) {}
-message Tree2 : Tree1(TreeType.TWO) {
-    type1 TreeType1, discriminator;
-}
-
-/** Second inheritance tree. */
-message TreeA : Tree2(TreeType1.A) {}
-message TreeB : Tree2(TreeType1.B) {}
+message Tree2 : Tree1(TreeType.TWO) {}
 
 
 exception TestException {

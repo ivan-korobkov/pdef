@@ -10,7 +10,7 @@ class AbstractTranslator(object):
 
     def __init__(self, out):
         self.out = out
-        self.env = Environment(trim_blocks=True)
+        self.env = Environment(trim_blocks=True, lstrip_blocks=True)
 
     def translate(self, package):
         raise NotImplementedError

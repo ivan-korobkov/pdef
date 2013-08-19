@@ -92,8 +92,7 @@ class JavaMessage(JavaDefinition):
 
         self.base = translator.ref(msg.base) if msg.base else None
         self.base_type = translator.ref(msg.base_type)
-        self.base_discriminator = translator.field(msg.base.discriminator) if msg.base else None
-        self.discriminator = translator.field(msg.discriminator)
+        self.discriminator = translator.field(msg.discriminator) if msg.discriminator else None
 
         self.subtypes = tuple((translator.ref(key), translator.ref(val))
                               for key, val in msg.subtypes.items())

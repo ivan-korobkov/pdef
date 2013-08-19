@@ -7,12 +7,16 @@ import pdef.descriptors.EnumDescriptor;
 /** {{ doc }} */
 {% endif %}
 public enum {{name}} {
-    {% for value in values -%}
-        {{ value }}{% if not loop.last and loop.length > 1 %}, {% endif %}
+{{ "    " }}{% for value in values -%}
+    {{ value }}{% if not loop.last and loop.length > 1 %}, {% endif %}
     {%- endfor %};
 
     public static {{ name }} parseString(final String s) {
         return ({{ name }}) descriptor().parseString(s);
+    }
+
+    public static {{ name }} parseJson(final String s) {
+        return ({{ name }}) descriptor().parseJson(s);
     }
 
     public static {{ name }} instance() {
@@ -24,9 +28,9 @@ public enum {{name}} {
     }
 
     private static final EnumDescriptor DESCRIPTOR = EnumDescriptor.builder()
-{% for value in values %}
+            {% for value in values %}
             .addValue({{ value }})
-{% endfor %}
+            {% endfor %}
             .build();
 }
 

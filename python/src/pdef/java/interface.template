@@ -11,18 +11,21 @@ import pdef.descriptors.MethodDescriptor;
 {% macro render_method(method) %}
             .addMethod(MethodDescriptor.builder()
                     .setName("{{ method.name }}")
-{% if method.is_post %}
+                    {% if method.is_index %}
+                    .setIndex(true)
+                    {% endif %}
+                    {% if method.is_post %}
                     .setPost(true)
-{% endif %}
+                    {% endif %}
                     .setResult(new Supplier<Descriptor>() { public Descriptor get() { return {{ method.result.descriptor }}; } })
-{% for arg in method.args %}
+                    {% for arg in method.args %}
                     .addArg(ArgDescriptor.builder()
-{% if arg.is_query %}
+                        {% if arg.is_query %}
                             .setQuery(true)
-{% endif %}
+                        {% endif %}
                             .setName("{{ arg.name }}")
                             .setType(new Supplier<Descriptor>() { public Descriptor get() { return {{ arg.type.descriptor }}; } }))
-{% endfor %}
+                    {% endfor %}
             )
 {% endmacro %}
 
@@ -36,9 +39,9 @@ import pdef.descriptors.MethodDescriptor;
 {% endif %}
 
 {% for method in declared_methods %}
-    {% if method.doc -%}
+    {% if method.doc %}
     /** {{ method.doc|indent(4) }} */
-    {% endif -%}
+    {% endif %}
     {{ method.result }} {{ method.name }}(
         {%- for arg in method.args -%}
                 {{ arg.type }} {{ arg.name }}
@@ -48,12 +51,12 @@ import pdef.descriptors.MethodDescriptor;
 {% endfor %}
     static InterfaceDescriptor DESCRIPTOR = InterfaceDescriptor.builder()
             .setCls({{ name }}.class)
-{% if exc %}
+            {% if exc %}
             .setExc(new Supplier<Descriptor>() { public Descriptor get() { return {{ exc.descriptor }}; } })
-{% endif %}
-{% for method in declared_methods %}
-{{ render_method(method) }}
-{% endfor %}
+            {% endif %}
+            {% for method in declared_methods -%}
+            {{ render_method(method) }}
+            {% endfor %}
             .build();
 }
 

@@ -20,17 +20,17 @@ class TestMessageDescriptor(unittest.TestCase):
     def test_parse(self):
         d = self.descriptor
         msg = test_pd.TestMessage()
-        msg1 = d.parse(msg.to_dict())
+        msg1 = d.parse_object(msg.to_dict())
         assert msg == msg1
 
     def test_parse__none(self):
         d = self.descriptor
-        assert d.parse(None) is None
+        assert d.parse_object(None) is None
 
     def test_serialize(self):
         descriptor = self.descriptor
         msg = test_pd.TestMessage()
-        d = descriptor.serialize(msg)
+        d = descriptor.to_object(msg)
         assert d == {}
 
 
@@ -40,24 +40,10 @@ class TestFieldDescriptor(unittest.TestCase):
     def test_type(self):
         assert self.field.type is test_pd.TestEnum.__descriptor__
 
-    def test_is_set(self):
-        msg = test_pd.TestMessage()
-        assert not self.field.is_set(msg)
-
-        msg.anEnum = test_pd.TestEnum.TWO
-        assert self.field.is_set(msg)
-
-    def test_set(self):
+    def test_get_set(self):
         msg = test_pd.TestMessage()
         self.field.set(msg, test_pd.TestEnum.THREE)
         assert msg.anEnum == test_pd.TestEnum.THREE
-
-    def test_clear(self):
-        msg = test_pd.TestMessage()
-        msg.anEnum = test_pd.TestEnum.THREE
-        self.field.clear(msg)
-
-        assert msg.anEnum is None
 
 
 class TestInterfaceDescriptor(unittest.TestCase):
@@ -107,22 +93,22 @@ class TestPrimitiveDescriptor(unittest.TestCase):
     descriptor = descriptors.bool0
 
     def parse(self):
-        assert self.descriptor.parse(True) is True
+        assert self.descriptor.parse_object(True) is True
 
     def parse__none(self):
-        assert self.descriptor.parse(None) is None
+        assert self.descriptor.parse_object(None) is None
 
     def parse__string(self):
-        assert self.descriptor.parse('TrUe') is True
+        assert self.descriptor.parse_object('TrUe') is True
 
     def parse_string__none(self):
         assert self.descriptor.parse_string(None) is None
 
     def serialize(self):
-        assert self.descriptor.serialize(True) is True
+        assert self.descriptor.to_object(True) is True
 
     def serialize__none(self):
-        assert self.descriptor.serialize(None) is None
+        assert self.descriptor.to_object(None) is None
 
     def serialize_to_string(self):
         assert self.descriptor.serialize_to_string(True) == 'True'
@@ -135,11 +121,11 @@ class TestEnumDescriptor(unittest.TestCase):
     descriptor = test_pd.TestEnum.__descriptor__
 
     def test_parse(self):
-        enum = self.descriptor.parse('one')
+        enum = self.descriptor.parse_object('one')
         assert enum == test_pd.TestEnum.ONE
 
     def test_parse__none(self):
-        assert self.descriptor.parse(None) is None
+        assert self.descriptor.parse_object(None) is None
 
     def test_parse_string(self):
         assert self.descriptor.parse_string('TwO') == test_pd.TestEnum.TWO
@@ -148,10 +134,10 @@ class TestEnumDescriptor(unittest.TestCase):
         assert self.descriptor.parse_string(None) is None
 
     def test_serialize(self):
-        assert self.descriptor.serialize(test_pd.TestEnum.THREE) == 'three'
+        assert self.descriptor.to_object(test_pd.TestEnum.THREE) == 'three'
 
     def test_serialize__none(self):
-        assert self.descriptor.serialize(None) is None
+        assert self.descriptor.to_object(None) is None
 
     def test_serialize_to_string(self):
         assert self.descriptor.serialize_to_string(test_pd.TestEnum.THREE) == 'three'
@@ -164,45 +150,45 @@ class TestListDescriptor(unittest.TestCase):
     descriptor = descriptors.list0(descriptors.int32)
 
     def test_parse(self):
-        assert self.descriptor.parse(['1', 2]) == [1, 2]
+        assert self.descriptor.parse_object(['1', 2]) == [1, 2]
 
     def test_parse__none(self):
-        assert self.descriptor.parse(None) is None
+        assert self.descriptor.parse_object(None) is None
 
     def test_serialize(self):
-        assert self.descriptor.serialize([1, 2]) == [1, 2]
+        assert self.descriptor.to_object([1, 2]) == [1, 2]
 
     def test_serialize__none(self):
-        assert self.descriptor.serialize(None) is None
+        assert self.descriptor.to_object(None) is None
 
 
 class TestSetDescriptor(unittest.TestCase):
     descriptor = descriptors.set0(descriptors.int32)
 
     def test_parse(self):
-        assert self.descriptor.parse(['1', 2, '2']) == {1, 2}
+        assert self.descriptor.parse_object(['1', 2, '2']) == {1, 2}
 
     def test_parse__none(self):
-        assert self.descriptor.parse(None) is None
+        assert self.descriptor.parse_object(None) is None
 
     def test_serialize(self):
-        assert self.descriptor.serialize({1, 2}) == {1, 2}
+        assert self.descriptor.to_object({1, 2}) == {1, 2}
 
     def test_serialize__none(self):
-        assert self.descriptor.serialize(None) is None
+        assert self.descriptor.to_object(None) is None
 
 
 class TestMapDescriptor(unittest.TestCase):
     descriptor = descriptors.map0(descriptors.int32, descriptors.int32)
 
     def test_parse(self):
-        assert self.descriptor.parse({'1': '2'}) == {1: 2}
+        assert self.descriptor.parse_object({'1': '2'}) == {1: 2}
 
     def test_parse__none(self):
-        assert self.descriptor.parse(None) is None
+        assert self.descriptor.parse_object(None) is None
 
     def test_serialize(self):
-        assert self.descriptor.serialize({1: 2}) == {1: 2}
+        assert self.descriptor.to_object({1: 2}) == {1: 2}
 
     def test_serialize__none(self):
-        assert self.descriptor.serialize(None) is None
+        assert self.descriptor.to_object(None) is None

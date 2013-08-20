@@ -63,13 +63,16 @@ interface TestInterface : throws TestException {
     void0() void;
 
     /** Camel-case method w/o args with a string result. */
-    camelCase(firstArg string; secondArg string) string;
+    camelCase(
+        firstArg string;
+        secondArg string) string;
 
     /** Method which accepts and returns a message. */
     message0(msg TestMessage) TestMessage;
 
     /** Method which accepts and returns primitives. */
-    sum(i0 int32; i1 int32) int32;
+    sum(i0 int32;
+        i1 int32) int32;
 
     /** Interface method. */
     interface0() TestInterface1;

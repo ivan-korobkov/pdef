@@ -13,6 +13,7 @@ class Descriptor(object):
         self.is_datatype = self.type in Type.DATATYPES
         self.is_interface = self.type == Type.INTERFACE
         self.is_message = self.type == Type.MESSAGE
+        self.is_void = self.type == Type.VOID
 
         self.is_enum = self.type == Type.ENUM
 
@@ -24,12 +25,8 @@ class Descriptor(object):
     def pyclass(self):
         return self.pyclass_supplier()
 
-    def parse(self, obj):
+    def parse_object(self, obj):
         '''Parse an object and return a value.'''
-        raise NotImplementedError
-
-    def serialize(self, obj):
-        '''Serialize an object into a primitive or a collection.'''
         raise NotImplementedError
 
     def parse_json(self, s):
@@ -38,11 +35,15 @@ class Descriptor(object):
             return None
 
         value = json.loads(s)
-        return self.parse(value)
+        return self.parse_object(value)
 
-    def serialize_to_json(self, obj, indent=None):
+    def to_object(self, obj):
+        '''Serialize an object into a primitive or a collection.'''
+        raise NotImplementedError
+
+    def to_json(self, obj, indent=None):
         '''Serialize an object into a json string.'''
-        value = self.serialize(obj)
+        value = self.to_object(obj)
         return json.dumps(value, indent=indent)
 
 
@@ -77,48 +78,50 @@ class MessageDescriptor(Descriptor):
         subtype = self.subtypes.get(type0)
         return subtype() if callable(subtype) else subtype
 
-    def parse(self, d):
+    def parse_object(self, d):
         '''Parse a message from a dictionary.'''
         if d is None:
             return None
 
         discriminator = self.discriminator
         if discriminator:
-            type0 = discriminator.type.parse(d.get(discriminator.name))
+            type0 = discriminator.type.parse_object(d.get(discriminator.name))
             subtype_supplier = self.subtypes.get(type0)
             if subtype_supplier:
                 return subtype_supplier().parse_dict(d)
 
         return self.merge_dict(self.instance(), d)
 
-    def serialize(self, obj):
-        '''Serialize a message to a dictionary.'''
+    def to_object(self, obj):
+        '''Serialize a message into a dict.'''
         if obj is None:
             return None
 
-        return self.serialize_to_dict(obj)
+        return self.to_dict(obj)
 
-    def serialize_to_dict(self, message):
+    def to_dict(self, message):
+        '''Serialize a message into a dict.'''
         if message is None:
             return None
 
         d = {}
         for field in self.fields:
-            if not field.is_set(message):
+            value = field.get(message)
+            data = field.type.to_object(value)
+            if data is None:
                 continue
 
-            value = field.get(message)
-            data = field.type.serialize(value)
             d[field.name] = data
         return d
 
     def merge_dict(self, message, d):
+        '''Merge a message with a dict. '''
         for field in self.fields:
             if field.name not in d:
                 continue
 
             data = d[field.name]
-            value = field.type.parse(data)
+            value = field.type.parse_object(data)
             field.set(message, value)
         return message
 
@@ -135,17 +138,11 @@ class FieldDescriptor(object):
         '''Return field type descriptor.'''
         return self.type_supplier()
 
-    def is_set(self, obj):
-        return getattr(obj, self.name) is not None
-
     def set(self, obj, value):
         setattr(obj, self.name, value)
 
     def get(self, obj):
         return getattr(obj, self.name)
-
-    def clear(self, obj):
-        return setattr(obj, self.name, None)
 
 
 class InterfaceDescriptor(Descriptor):
@@ -197,10 +194,12 @@ class MethodDescriptor(object):
 
 class ArgDescriptor(object):
     '''Method argument descriptor.'''
-    def __init__(self, name, type_supplier, is_query=False):
+    def __init__(self, name, type_supplier, is_query=False, is_post=False):
         self.name = name
         self.type_supplier = type_supplier
         self.is_query = is_query
+        self.is_post = is_post
+        self.is_expand = False
 
     @property
     def type(self):
@@ -214,19 +213,19 @@ class PrimitiveDescriptor(Descriptor):
         super(PrimitiveDescriptor, self).__init__(type0, lambda: pyclass)
         self._native = pyclass  # Just an optimization to get rid of lambda in self.pyclass.
 
-    def parse(self, obj):
+    def parse_object(self, obj):
         return None if obj is None else self._native(obj)
 
     def parse_string(self, s):
         '''Parse a primitive from a string.'''
         return None if s is None else self._native(s)
 
-    def serialize(self, obj):
+    def to_object(self, obj):
         return None if obj is None else self._native(obj)
 
     def serialize_to_string(self, obj):
         '''Serialize a primitive to a string, or return None when the primitive is None.'''
-        return None if obj is None else str(self.serialize(obj))
+        return None if obj is None else str(self.to_object(obj))
 
 
 class EnumDescriptor(PrimitiveDescriptor):
@@ -235,22 +234,22 @@ class EnumDescriptor(PrimitiveDescriptor):
         super(EnumDescriptor, self).__init__(Type.ENUM, pyclass_supplier)
         self.values = tuple(values)
 
-    def parse(self, obj):
+    def parse_object(self, obj):
         if obj is None:
             return None
         s = str(obj).upper()
         return s if s in self.values else None
 
     def parse_string(self, s):
-        return self.parse(s)
+        return self.parse_object(s)
 
-    def serialize(self, obj):
+    def to_object(self, obj):
         if obj is None:
             return None
         return str(obj).lower()
 
     def serialize_to_string(self, obj):
-        return self.serialize(obj)
+        return self.to_object(obj)
 
 
 class _ListDescriptor(Descriptor):
@@ -259,15 +258,15 @@ class _ListDescriptor(Descriptor):
         super(_ListDescriptor, self).__init__(Type.LIST, lambda: list)
         self.element = element
 
-    def parse(self, obj):
+    def parse_object(self, obj):
         if obj is None:
             return obj
-        return [self.element.parse(e) for e in obj]
+        return [self.element.parse_object(e) for e in obj]
 
-    def serialize(self, obj):
+    def to_object(self, obj):
         if obj is None:
             return obj
-        return [self.element.serialize(e) for e in obj]
+        return [self.element.to_object(e) for e in obj]
 
 
 class _SetDescriptor(Descriptor):
@@ -276,15 +275,15 @@ class _SetDescriptor(Descriptor):
         super(_SetDescriptor, self).__init__(Type.SET, set)
         self.element = element
 
-    def parse(self, obj):
+    def parse_object(self, obj):
         if obj is None:
             return None
-        return set(self.element.parse(e) for e in obj)
+        return set(self.element.parse_object(e) for e in obj)
 
-    def serialize(self, obj):
+    def to_object(self, obj):
         if obj is None:
             return None
-        return set(self.element.serialize(e) for e in obj)
+        return set(self.element.to_object(e) for e in obj)
 
 
 class _MapDescriptor(Descriptor):
@@ -294,25 +293,25 @@ class _MapDescriptor(Descriptor):
         self.key = key
         self.value = value
 
-    def parse(self, obj):
+    def parse_object(self, obj):
         if obj is None:
             return None
-        return {self.key.parse(k): self.value.parse(v) for k, v in obj.items()}
+        return {self.key.parse_object(k): self.value.parse_object(v) for k, v in obj.items()}
 
-    def serialize(self, obj):
+    def to_object(self, obj):
         if obj is None:
             return None
-        return {self.key.serialize(k): self.value.serialize(v) for k, v in obj.items()}
+        return {self.key.to_object(k): self.value.to_object(v) for k, v in obj.items()}
 
 
 class _ObjectDescriptor(Descriptor):
     def __init__(self):
         super(_ObjectDescriptor, self).__init__(Type.OBJECT, lambda: object)
 
-    def parse(self, obj):
+    def parse_object(self, obj):
         return obj
 
-    def serialize(self, obj):
+    def to_object(self, obj):
         return obj
 
 
@@ -320,10 +319,10 @@ class _VoidDescriptor(Descriptor):
     def __init__(self):
         super(_VoidDescriptor, self).__init__(Type.VOID, lambda: object)
 
-    def parse(self, obj):
+    def parse_object(self, obj):
         return None
 
-    def serialize(self, obj):
+    def to_object(self, obj):
         return None
 
 

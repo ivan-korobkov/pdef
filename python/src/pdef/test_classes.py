@@ -35,13 +35,6 @@ class TestMessage(unittest.TestCase):
 
         assert d == self._fixture_dict()
 
-    def test_merge_dict(self):
-        msg = self._fixture()
-        msg1 = test_pd.TestMessage()
-        msg1.merge_dict(self._fixture_dict())
-
-        assert msg == msg1
-
     def test_eq(self):
         msg0 = self._fixture()
         msg1 = self._fixture()

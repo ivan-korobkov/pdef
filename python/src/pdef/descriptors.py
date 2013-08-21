@@ -68,10 +68,6 @@ class MessageDescriptor(Descriptor):
                 self.discriminator = field
                 break
 
-    def instance(self):
-        '''Create a new instance.'''
-        return self.pyclass()
-
     def subtype(self, type0):
         '''Returns a subtype descriptor by a type enum value.'''
         subtype = self.subtypes.get(type0)
@@ -91,16 +87,17 @@ class MessageDescriptor(Descriptor):
             if subtype_supplier:
                 return subtype_supplier().parse_dict(d)
 
-        return self.merge_dict(self.instance(), d)
+        message = self.pyclass()
+        for field in self.fields:
+            if field.name not in d:
+                continue
 
-    def to_object(self, obj):
-        '''Serialize a message into a dict.'''
-        if obj is None:
-            return None
+            data = d[field.name]
+            value = field.type.parse_object(data)
+            field.set(message, value)
+        return message
 
-        return self.to_dict(obj)
-
-    def to_dict(self, message):
+    def to_object(self, message):
         '''Serialize a message into a dict.'''
         if message is None:
             return None
@@ -114,17 +111,6 @@ class MessageDescriptor(Descriptor):
 
             d[field.name] = data
         return d
-
-    def merge_dict(self, message, d):
-        '''Merge a message with a dict. '''
-        for field in self.fields:
-            if field.name not in d:
-                continue
-
-            data = d[field.name]
-            value = field.type.parse_object(data)
-            field.set(message, value)
-        return message
 
 
 class FieldDescriptor(object):
@@ -226,7 +212,7 @@ class PrimitiveDescriptor(Descriptor):
 
     def to_string(self, obj):
         '''Serialize a primitive to a string, or return None when the primitive is None.'''
-        return None if obj is None else str(self.to_object(obj))
+        return None if obj is None else unicode(self.to_object(obj))
 
 
 class EnumDescriptor(PrimitiveDescriptor):
@@ -238,7 +224,7 @@ class EnumDescriptor(PrimitiveDescriptor):
     def parse_object(self, obj):
         if obj is None:
             return None
-        s = str(obj).upper()
+        s = unicode(obj).upper()
         return s if s in self.values else None
 
     def parse_string(self, s):
@@ -247,7 +233,7 @@ class EnumDescriptor(PrimitiveDescriptor):
     def to_object(self, obj):
         if obj is None:
             return None
-        return str(obj).lower()
+        return unicode(obj).lower()
 
     def to_string(self, obj):
         return self.to_object(obj)

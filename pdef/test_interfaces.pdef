@@ -11,15 +11,15 @@ exception TestException {
 /** Test interface with method of all types. */
 interface TestInterface : throws TestException {
     /** Index remote method. */
-    indexMethod(a int32; b string) string, index;
+    indexMethod(a int32; b int32) string, index;
 
     /** Remote method. */
-    remoteMethod(a int32; b string) string;
+    remoteMethod(a int32; b int32) string;
 
     /** Post remote method. */
     postMethod(aList list<int32>; aMap map<int32, int32>) string, post;
 
-    /** Remote method with a query arg, returns the same query arg. */
+    /** Remote method with a message query arg, returns the same message. */
     queryMethod(msg messages.SimpleMessage, query) messages.SimpleMessage;
 
     /** Void method which returns null. */
@@ -29,7 +29,7 @@ interface TestInterface : throws TestException {
     excMethod() void;
 
     /** Interface (not remote) method which returns a next interface. */
-    interfaceMethod(a int32; b string) NextTestInterface;
+    interfaceMethod(a int32; b int32) NextTestInterface;
 }
 
 /** Next test interface. */
@@ -37,6 +37,9 @@ interface NextTestInterface {
     /** Index method. */
     indexMethod() string;
 
-    /** Post remote method. */
-    postMethod() messages.SimpleMessage;
+    /** Remote method. */
+    remoteMethod() messages.SimpleMessage;
+
+    /** Remote string method. */
+    stringMethod(text string) string;
 }

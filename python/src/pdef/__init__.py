@@ -55,12 +55,7 @@ class Message(object):
 
     def to_dict(self):
         '''Convert this message to a dictionary (serialize each field).'''
-        return self.__descriptor__.to_dict(self)
-
-    def merge_dict(self, d):
-        '''Merge this message with a dictionary (parse each field).'''
-        self.__descriptor__.merge_dict(self, d)
-        return self
+        return self.__descriptor__.to_object(self)
 
     def __eq__(self, other):
         if other is None or self.__class__ is not other.__class__:
@@ -105,13 +100,31 @@ class Enum(object):
 class Interface(object):
     __descriptor__ = None
 
+    @classmethod
+    def create_proxy_client(cls, protocol):
+        '''Create a client with a given protocol.'''
+        return Proxy(cls.__descriptor__, protocol)
 
-class ClientProxy(object):
-    '''Proxy for interface invocations. '''
-    def __init__(self, interface, handler, parent_invocation=None):
-        self.__interface = interface.__descriptor__
-        self.__handler = handler
-        self.__parent_invocation = parent_invocation or Invocation.root()
+    @classmethod
+    def create_rest_client(cls, url, session=None):
+        '''Create a rest client.'''
+        from pdef.rest import RestClient
+        protocol = RestClient(url, session)
+        return cls.create_proxy_client(protocol)
+
+    def to_rest_server(self):
+        pass
+
+    def to_wsgi_server(self):
+        pass
+
+
+class Proxy(object):
+    '''Reflective client proxy.'''
+    def __init__(self, descriptor, client, parent_invocation=None):
+        self._descriptor = descriptor
+        self._client = client
+        self._invocation = parent_invocation or Invocation.root()
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.__interface)
@@ -120,7 +133,7 @@ class ClientProxy(object):
         '''Get a method by name and return a callable which collects the arguments
         and handles remote invocations or creates intermediate chained clients.'''
         method = None
-        for m in self.__interface.methods:
+        for m in self._descriptor.methods:
             if m.name == name:
                 method = m
                 break
@@ -128,23 +141,34 @@ class ClientProxy(object):
         if not method:
             raise AttributeError(name)
 
-        return lambda *args, **kwargs: self.__handle(method, *args, **kwargs)
+        return lambda *args, **kwargs: self._handle(method, *args, **kwargs)
 
-    def __handle(self, method, *args, **kwargs):
+    def _handle(self, method, *args, **kwargs):
         '''Capture a method invocation with the given arguments and return a new client
         if the method result is an interface or pass the invocation to the handler.
         '''
-        invocation = self.__parent_invocation.next(method, *args, **kwargs)
+        invocation = self._invocation.next(method, *args, **kwargs)
         if method.is_remote:
             # The method result is a data type or void.
-            return self.__handler(invocation)
+            return self._client(invocation)
 
         # The method result is an interface, so create a new client for it.
-        return ClientProxy(method.result, self.__handler, invocation)
+        return Proxy(method.result, self._client, invocation)
+
+
+class ClientProtocol(object):
+    '''Client protocol interface.'''
+    def __call__(self, invocation):
+        '''Handle an invocation and return a result or raise an exception.'''
+        return self.handle(invocation)
+
+    def handle(self, invocation):
+        '''Handle an invocation and return a result or raise an exception.'''
+        raise NotImplemented
 
 
 class Invocation(object):
-    '''Immutable chained RPC invocation.'''
+    '''Immutable chained method invocation.'''
     @classmethod
     def root(cls):
         '''Create an empty root invocation.'''
@@ -161,19 +185,12 @@ class Invocation(object):
         self.args = dict(args) if args else {}
         self.parent = parent
 
-    @property
-    def exc(self):
-        return self.method.exc
-
-    @property
-    def result(self):
-        return self.method.result
-
-    @property
-    def is_root(self):
-        return self.method is None
+        self.exc = None #method.exc if method else None
+        self.result = method.result if method else None
+        self.is_root = method is None
 
     def next(self, method, *args, **kwargs):
+        '''Create a child invocation.'''
         params = self._build_param_dict(method, args, kwargs)
         return Invocation(method, params, parent=self)
 
@@ -182,6 +199,7 @@ class Invocation(object):
         return self.method.invoke(obj, **self.args)
 
     def to_chain(self):
+        '''Return a list of invocations.'''
         chain = [] if not self.parent else self.parent.to_chain()
         if not self.is_root:
             chain.append(self)

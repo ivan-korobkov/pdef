@@ -6,23 +6,7 @@ enum RpcStatus {
     OK,
 
     /** Successful response, expected application exception. */
-    EXCEPTION,
-
-    /** Internal server error. */
-    SERVER_ERROR,
-
-    /** Connection timeout, request timeout, gateway timeout, etc. */
-    NETWORK_ERROR,
-
-    /** Bad request. */
-    CLIENT_ERROR,
-
-    /** Special client error which indicates that the method is not found. */
-    METHOD_NOT_FOUND,
-
-    /** Special client error which indicates that the method arguments are invalid
-    (the number of method args, or their types). */
-    WRONG_METHOD_ARGS
+    EXCEPTION
 }
 
 message RpcResponse {

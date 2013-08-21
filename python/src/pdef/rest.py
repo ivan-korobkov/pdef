@@ -5,7 +5,7 @@ import urlparse
 import requests
 from requests.status_codes import codes
 
-from pdef import Invocation
+from pdef import Invocation, ClientProtocol
 from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, NetworkError, \
     ClientError, MethodNotFoundError, WrongMethodArgsError
 
@@ -14,7 +14,7 @@ REQUEST_CONTENT_TYPE = 'application/x-www-form-urlencoded'
 RESPONSE_CONTENT_TYPE = 'application/json; charset=utf-8'
 
 
-class HttpClient(object):
+class RestClient(ClientProtocol):
     def __init__(self, url, session=None):
         '''Create an http client.
         @param url Base url.
@@ -35,18 +35,25 @@ class HttpClient(object):
 
     def _create_request(self, invocation):
         '''Convert an invocation into a requests.Request.'''
+
+        # Convert invocation chain into path, query and post params.
         path, query, post = '', {}, {}
         for inv in invocation.to_chain():
-            path = self._serialize_invocation(inv, path, query, post)
+            path, query, post = self._serialize_invocation(inv, path, query, post)
 
+        # Calc the method and the complete url.
         method = 'POST' if invocation.method.is_post else 'GET'
-        url = self.url + path
+        url = self._join_url_and_path(self.url, path)
+
+        # Create a request.
         return requests.Request(method, url=url, data=post, params=query)
 
-    def _serialize_invocation(self, invocation, path, query, post):
+    def _serialize_invocation(self, invocation, path='', query=None, post=None):
         '''Add an invocation to a path, query dict, and post dict.'''
         method = invocation.method
         path += '/' if method.is_index else '/' + urllib.quote(method.name)
+        query = dict(query) if query else {}
+        post = dict(post) if post else {}
 
         args = invocation.args
         if method.is_remote and method.is_post:
@@ -69,18 +76,42 @@ class HttpClient(object):
             assert not method.is_post, 'Post methods must be remote, %s' % method
             for arg in method.args:
                 value = args.get(arg.name)
-                if value is None:
-                    serialized = ''
-                else:
-                    serialized = self._serialize_arg(arg, value)
+                serialized = self._serialize_positional_arg(arg, value)
                 path += '/' + urllib.quote(serialized)
 
-        return path
+        return path, query, post
+
+    def _serialize_positional_arg(self, arg, value):
+        '''Serialize a positional argument and percent-encode it.'''
+        type0 = arg.type
+        if value is None:
+            return ''
+
+        if type0.is_primitive or type0.is_enum:
+            s = type0.to_string(value)
+        else:
+            s = type0.to_json(value)
+
+        return urllib.quote(s.encode('utf-8'), safe='[],{}')
 
     def _serialize_arg(self, arg, value):
-        if arg.type.is_primitive or arg.type.is_enum:
-            return arg.type.to_string(value)
-        return arg.type.to_json(value)
+        '''Serialize a query/post argument, but do not percent-encode it.'''
+        type0 = arg.type
+
+        if type0.is_primitive or type0.is_enum:
+            return type0.to_string(value)
+
+        return type0.to_json(value)
+
+    def _join_url_and_path(self, url, path):
+        '''Join url and path, correctly handle slashes /.'''
+        if not url.endswith('/'):
+            url += '/'
+
+        if path.startswith('/'):
+            path = path[1:]
+
+        return url + path
 
     def _send_request(self, request):
         '''Send a requests.Request.'''
@@ -90,53 +121,55 @@ class HttpClient(object):
 
     def _parse_response(self, http_response, invocation):
         '''Parse a requests.Response into a result or raise an exception.'''
-        response = None
-        if http_response.headers.get('Content-Type', '').lower().startswith(RESPONSE_CONTENT_TYPE):
-            # If the content type is json, then there should be a valid RpcResponse.
-            try:
-                response = RpcResponse.parse_json(http_response.text)
-            except Exception, e:
-                raise ServerError('Failed to parse a server response: %s' % e)
 
-        if not response:
+        # If it is not a json response, raise an rpc exception
+        # based on the status code.
+        http_status = http_response.status_code
+
+        if http_status != 200:
             # The server has not replied with a valid rpc response.
-            http_status = http_response.status_code
             if http_status == 400:
                 raise ClientError(http_response.text)
+
             elif http_status == 404:
                 raise MethodNotFoundError(http_response.text)
+
             elif http_status in (502, 503):
                 raise NetworkError(http_response.text)
+
             elif http_status == 500:
                 raise ServerError(http_response.text)
 
             raise ServerError('Status code: %s, text=%s' % (http_status, http_response.text))
 
+
+        # Try to parse a json rpc response.
+        try:
+            response = RpcResponse.parse_json(http_response.text)
+        except Exception, e:
+            raise ClientError('Failed to parse a server response: %s' % e)
+
+
         status = response.status
         result = response.result
-
-        # Successful and expected exception responses.
         if status == RpcStatus.OK:
+            # It's a successful result.
+            # Parse it using the invocation method result descriptor.
             return invocation.result.parse_object(result)
+
         elif status == RpcStatus.EXCEPTION:
-            raise invocation.exc.parse_object(result)
+            # It's an excepcted exception.
+            # Parse it using the invocation exception descriptor.
 
-        # Rpc errors.
-        if status == RpcStatus.SERVER_ERROR:
-            raise ServerError(str(result))
-        elif status == RpcStatus.NETWORK_ERROR:
-            raise NetworkError(str(result))
-        elif status == RpcStatus.CLIENT_ERROR:
-            raise ClientError(str(result))
-        elif status == RpcStatus.METHOD_NOT_FOUND:
-            raise MethodNotFoundError(str(result))
-        elif status == RpcStatus.WRONG_METHOD_ARGS:
-            raise WrongMethodArgsError(str(result))
+            exc = invocation.exc
+            if not exc:
+                raise ClientError('Unsupported application exception: %s' % result)
+            raise exc.parse_object(result)
 
-        raise ServerError(text='Unknown rpc response status: %s, result=%s' % (status, result))
+        raise ClientError('Unsupported rpc response status: response=%s' % response)
 
 
-class HttpServer(object):
+class RestServer(object):
     def __init__(self, interface, service_or_callable, on_invocation=None, on_exception=None,
                  on_error=None):
         '''Create a WSGI server.
@@ -268,37 +301,30 @@ class HttpServer(object):
         '''Write an rpc response and return an http server response.'''
         status = 200
         json = response.to_json()
-        return HttpServerResponse(status, body=json)
+        return RestServerResponse(status, body=json)
 
     def _error_response(self, e):
         '''Handle an unhandled error and return an RpcResponse.'''
         if isinstance(e, WrongMethodArgsError):
-            status = RpcStatus.WRONG_METHOD_ARGS
             http_status = 400
             result = e.text
         elif isinstance(e, MethodNotFoundError):
-            status = RpcStatus.METHOD_NOT_FOUND
             http_status = 404
             result = e.text
         elif isinstance(e, ClientError):
-            status = RpcStatus.CLIENT_ERROR
             http_status = 400
             result = e.text
         elif isinstance(e, NetworkError):
-            status = RpcStatus.NETWORK_ERROR
             http_status = 503
             result = e.text
         else:
-            status = RpcStatus.SERVER_ERROR
             http_status = 500
             result = 'Internal server error'
 
-        response = RpcResponse(status=status, result=result)
-        http_body = response.to_json()
-        return HttpServerResponse(http_status, body=http_body)
+        return RestServerResponse(http_status, body=result)
 
 
-class HttpServerRequest(object):
+class RestServerRequest(object):
     '''Simple gateway-agnostic server request.'''
     @classmethod
     def from_wsgi(cls, environ):
@@ -314,7 +340,7 @@ class HttpServerRequest(object):
         path = environ['SCRIPT_NAME'] + environ['PATH_INFO']
         query = urlparse.parse_qs(environ['QUERY_STRING']) if environ['QUERY_STRING'] else {}
         post = urlparse.parse_qs(body) if body else {}
-        return HttpServerRequest(method, path, query=query, post=post)
+        return RestServerRequest(method, path, query=query, post=post)
 
 
     def __init__(self, method, path, query=None, post=None):
@@ -331,7 +357,7 @@ class HttpServerRequest(object):
         self.post = post
 
 
-class HttpServerResponse(object):
+class RestServerResponse(object):
     '''Simple gateway-agnostic server response.
 
     @field status           Http status code as an int.
@@ -349,16 +375,16 @@ class HttpServerResponse(object):
         return len(self.body)
 
 
-class WsgiServer(object):
-    def __init__(self, http_server):
-        self.http_server = http_server
+class WsgiRestServer(object):
+    def __init__(self, rest_server):
+        self.rest_server = rest_server
 
     def __call__(self, environ, start_response):
         return self.handle(environ, start_response)
 
     def handle(self, environ, start_response):
-        request = HttpServerRequest.from_wsgi(environ)
-        response = self.http_server.handle(request)
+        request = RestServerRequest.from_wsgi(environ)
+        response = self.rest_server.handle(request)
 
         status = '%s %s' % (response.status,  codes[response.status])
         headers = [('Content-Type', response.content_type),
@@ -369,8 +395,8 @@ class WsgiServer(object):
 
 
 def wsgi_server(interface, service_or_supplier):
-    http_server = HttpServer(interface, service_or_supplier)
-    return WsgiServer(http_server)
+    http_server = RestServer(interface, service_or_supplier)
+    return WsgiRestServer(http_server)
 
 
 if __name__ == '__main__':

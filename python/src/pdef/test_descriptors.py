@@ -18,10 +18,6 @@ class TestMessageDescriptor(unittest.TestCase):
     def _fixture_json(self):
         return '{"aString": "hello", "aBool": true, "anInt16": 123}'
 
-    def test_instance(self):
-        msg = self.descriptor.instance()
-        assert isinstance(msg, self.cls)
-
     def test_subtype(self):
         subtype = self.descriptor.subtype(None)
         assert subtype is self.cls

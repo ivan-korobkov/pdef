@@ -2,6 +2,6 @@ module pdef.test;
 
 
 message TestMessage {
-    hello   string;
-    world   string;
+    a   string;
+    b   string;
 }

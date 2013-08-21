@@ -14,9 +14,18 @@ class TestParser(unittest.TestCase):
     def _filepath(self, filename):
         return os.path.join(os.path.dirname(__file__), filename)
 
-    def test_parse(self):
-        '''Should parse a test pdef file.'''
-        s = self._filepath('../../../pdef/test.pdef')
-        module = pdef.compiler.parser.parse_file(s)
+    def _parse(self, filename):
+        path = self._filepath(filename)
+        return pdef.compiler.parser.parse_file(path)
 
-        assert module.name == 'pdef.test';
+    def test_parse__messages(self):
+        module = self._parse('sources/test_messages.pdef')
+        assert module.name == 'pdef.test.messages';
+
+    def test_parse__polymorphic_messages(self):
+        module = self._parse('sources/test_polimorphic.pdef')
+        assert module.name == 'pdef.test.polymorphic';
+
+    def test_parse_interfaces(self):
+        module = self._parse('sources/test_interfaces.pdef')
+        assert module.name == 'pdef.test.interfaces';

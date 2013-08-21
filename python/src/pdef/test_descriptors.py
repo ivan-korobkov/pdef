@@ -1,68 +1,88 @@
 # encoding: utf-8
 import unittest
 from mock import Mock
-from pdef import descriptors, test_pd
+from pdef import descriptors
+from pdef.test import messages_pd, polymorphic_pd, interfaces_pd
 
 
 class TestMessageDescriptor(unittest.TestCase):
-    descriptor = test_pd.TestMessage.__descriptor__
+    cls = messages_pd.SimpleMessage
+    descriptor = cls.__descriptor__
+
+    def _fixture(self):
+        return self.cls(aString='hello', aBool=True, anInt16=123)
+
+    def _fixture_dict(self):
+        return {'aString': 'hello', 'aBool': True, 'anInt16': 123}
+
+    def _fixture_json(self):
+        return '{"aString": "hello", "aBool": true, "anInt16": 123}'
 
     def test_instance(self):
-        d = self.descriptor
-        msg = d.instance()
-        assert isinstance(msg, test_pd.TestMessage)
+        msg = self.descriptor.instance()
+        assert isinstance(msg, self.cls)
 
-    def test_subtype__no_subtypes(self):
-        d = test_pd.Tree0.__descriptor__
-        subtype = d.subtype(test_pd.TreeType.ONE)
-        assert subtype is test_pd.Tree1
+    def test_subtype(self):
+        subtype = self.descriptor.subtype(None)
+        assert subtype is self.cls
 
-    def test_parse(self):
-        d = self.descriptor
-        msg = test_pd.TestMessage()
-        msg1 = d.parse_object(msg.to_dict())
+    def test_to_object(self):
+        msg = self._fixture()
+        d = self.descriptor.to_object(msg)
+        assert d == self._fixture_dict()
+
+    def test_to_object__none(self):
+        assert self.descriptor.to_object(None) is None
+
+    def test_parse_object(self):
+        d = self._fixture_dict()
+        msg = self.descriptor.parse_object(d)
+        assert msg == self._fixture()
+
+    def test_parse_object__none(self):
+        assert self.descriptor.parse_object(None) is None
+
+    def test_parse_json(self):
+        s = self._fixture_json()
+        msg = self.descriptor.parse_json(s)
+        assert msg == self._fixture()
+
+    def test_to_json(self):
+        msg = self._fixture()
+        s = self.descriptor.to_json(msg)
+        msg1 = self.descriptor.parse_json(s)
         assert msg == msg1
 
-    def test_parse__none(self):
+
+class TestPolymorphicMessageDescriptor(unittest.TestCase):
+    descriptor = polymorphic_pd.Base.__descriptor__
+    def test_subtype(self):
         d = self.descriptor
-        assert d.parse_object(None) is None
 
-    def test_serialize(self):
-        descriptor = self.descriptor
-        msg = test_pd.TestMessage()
-        d = descriptor.to_object(msg)
-        assert d == {}
+        assert d.subtype(polymorphic_pd.PolymorphicType.SUBTYPE) is polymorphic_pd.Subtype
+        assert d.subtype(polymorphic_pd.PolymorphicType.SUBTYPE2) is polymorphic_pd.Subtype2
+        assert d.subtype(polymorphic_pd.PolymorphicType.MULTILEVEL_SUBTYPE) \
+            is polymorphic_pd.MultiLevelSubtype
 
+    def test_parse_object(self):
+        subtype_d = {'type': 'subtype', 'subfield': 'hello'}
+        subtype2_d = {'type': 'subtype2', 'subfield2': 'hello'}
+        mlevel_subtype_d = {'type': 'multilevel_subtype', 'mfield': 'hello'}
 
-class TestFieldDescriptor(unittest.TestCase):
-    field = test_pd.TestMessage.__descriptor__.fields[0]
-
-    def test_type(self):
-        assert self.field.type is test_pd.TestEnum.__descriptor__
-
-    def test_get_set(self):
-        msg = test_pd.TestMessage()
-        self.field.set(msg, test_pd.TestEnum.THREE)
-        assert msg.anEnum == test_pd.TestEnum.THREE
+        d = self.descriptor
+        assert d.parse_object(subtype_d) == polymorphic_pd.Subtype(subfield='hello')
+        assert d.parse_object(subtype2_d) == polymorphic_pd.Subtype2(subfield2='hello')
+        assert d.parse_object(mlevel_subtype_d) == polymorphic_pd.MultiLevelSubtype(mfield='hello')
 
 
 class TestInterfaceDescriptor(unittest.TestCase):
-    descriptor = test_pd.InterfaceTree1.__descriptor__
-
-    def test_base(self):
-        assert self.descriptor.base is test_pd.InterfaceTree0
+    descriptor = interfaces_pd.TestInterface.__descriptor__
 
     def test_exc(self):
-        assert self.descriptor.exc is test_pd.TestException1
-
-    def test_declared_methods(self):
-        assert len(self.descriptor.declared_methods) == 1
-
-    def test_inherited_methods(self):
-        assert len(self.descriptor.inherited_methods) == 1
+        assert self.descriptor.exc is interfaces_pd.TestException
 
     def test_methods(self):
-        assert  len(self.descriptor.methods) == 2
+        assert  len(self.descriptor.methods) == 7
 
 
 class TestMethodDescriptor(unittest.TestCase):
@@ -118,29 +138,30 @@ class TestPrimitiveDescriptor(unittest.TestCase):
 
 
 class TestEnumDescriptor(unittest.TestCase):
-    descriptor = test_pd.TestEnum.__descriptor__
+    cls = messages_pd.TestEnum
+    descriptor = cls.__descriptor__
 
     def test_parse(self):
         enum = self.descriptor.parse_object('one')
-        assert enum == test_pd.TestEnum.ONE
+        assert enum == self.cls.ONE
 
     def test_parse__none(self):
         assert self.descriptor.parse_object(None) is None
 
     def test_parse_string(self):
-        assert self.descriptor.parse_string('TwO') == test_pd.TestEnum.TWO
+        assert self.descriptor.parse_string('TwO') == self.cls.TWO
 
     def test_parse_string__none(self):
         assert self.descriptor.parse_string(None) is None
 
     def test_serialize(self):
-        assert self.descriptor.to_object(test_pd.TestEnum.THREE) == 'three'
+        assert self.descriptor.to_object(self.cls.THREE) == 'three'
 
     def test_serialize__none(self):
         assert self.descriptor.to_object(None) is None
 
     def test_serialize_to_string(self):
-        assert self.descriptor.to_string(test_pd.TestEnum.THREE) == 'three'
+        assert self.descriptor.to_string(self.cls.THREE) == 'three'
 
     def test_serialize_to_string__none(self):
         assert self.descriptor.to_string(None) is None

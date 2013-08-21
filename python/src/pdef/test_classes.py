@@ -4,54 +4,13 @@ from pdef import test_pd
 
 
 class TestMessage(unittest.TestCase):
-    JSON = '''{
-        "anEnum": "one",
-        "aBool": true,
-        "anInt16": 1,
-        "anInt32": 2,
-        "anInt64": 3,
-        "aFloat": 1.5,
-        "aDouble": 2.5,
-        "aString": "hello",
-        "aList": ["a", "b"],
-        "aSet": ["a", "a", "b"],
-        "aMap": {"key": "value"},
-        "aMessage": {},
-        "anObject": [1, 2, 3]
-    }'''
+    JSON = '''{"a": "one", "b": "two"}'''
 
     def _fixture(self):
-        return test_pd.TestMessage(
-            anEnum=test_pd.TestEnum.ONE,
-            aBool=True,
-            anInt16=1,
-            anInt32=2,
-            anInt64=3,
-            aFloat=1.5,
-            aDouble=2.5,
-            aString='hello',
-            aList=['a', 'b'],
-            aSet={'a', 'b'},
-            aMap={'key': 'value'},
-            aMessage=test_pd.TestMessage(),
-            anObject=[1, 2, 3])
+        return test_pd.TestMessage(a="one", b="two")
 
     def _fixture_dict(self):
-        return {
-            'anEnum': 'one',
-            'aBool': True,
-            'anInt16': 1,
-            'anInt32': 2,
-            'anInt64': 3,
-            'aFloat': 1.5,
-            'aDouble': 2.5,
-            'aString': 'hello',
-            'aList': ['a', 'b'],
-            'aSet': {'a', 'b'},
-            'aMap': {'key': 'value'},
-            'aMessage': {},
-            'anObject': [1, 2, 3]
-        }
+        return {'a': 'one', 'b': 'two'}
 
     def test_parse_json(self):
         msg = test_pd.TestMessage.parse_json(TestMessage.JSON)
@@ -88,39 +47,5 @@ class TestMessage(unittest.TestCase):
         msg1 = self._fixture()
         assert msg0 == msg1
 
-        msg1.anEnum = test_pd.TestEnum.THREE
+        msg1.a = 'qwer'
         assert msg0 != msg1
-
-
-class TestMessageInheritance(unittest.TestCase):
-    def test_parse__submessage_wo_base_type(self):
-        d = {'firstField': True, 'secondField': 'hello', 'forthField': 1.5}
-        msg = test_pd.TestSimpleSubmessage.parse_dict(d)
-        expected = test_pd.TestSimpleSubmessage(
-            firstField=True,
-            secondField='hello',
-            forthField=1.5)
-
-        assert msg == expected
-
-    def test_parse__submessage_with_base_type(self):
-        d = {'type': 'one'}
-        msg = test_pd.Tree0.parse_dict(d)
-        expected = test_pd.Tree1(type=test_pd.TreeType.ONE)
-        assert msg == expected
-
-
-class TestEnum(unittest.TestCase):
-    def test_parse_json(self):
-        s = '"thREE"'
-        enum = test_pd.TestEnum.parse_json(s)
-        assert enum == test_pd.TestEnum.THREE
-
-    def test_parse_string(self):
-        s = 'TWO'
-        enum = test_pd.TestEnum.parse_string(s)
-        assert enum == test_pd.TestEnum.TWO
-
-    def test_parse_string__none(self):
-        enum = test_pd.TestEnum.parse_string(None)
-        assert enum is None

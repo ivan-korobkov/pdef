@@ -6,17 +6,17 @@ enum PolymorphicType {
 }
 
 message Base {
-    type PolymorphicType, discriminator;
+    type        PolymorphicType, discriminator;
 }
 
 message Subtype : Base(PolymorphicType.SUBTYPE) {
-    subtype     string;
+    subfield    string;
 }
 
 message Subtype2 : Base(PolymorphicType.SUBTYPE2) {
-    subtype2    string;
+    subfield2   string;
 }
 
 message MultiLevelSubtype : Subtype(PolymorphicType.MULTILEVEL_SUBTYPE) {
-    multilevel  string;
+    mfield      string;
 }

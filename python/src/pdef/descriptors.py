@@ -75,6 +75,8 @@ class MessageDescriptor(Descriptor):
     def subtype(self, type0):
         '''Returns a subtype descriptor by a type enum value.'''
         subtype = self.subtypes.get(type0)
+        if subtype is None:
+            return self.pyclass
         return subtype() if callable(subtype) else subtype
 
     def parse_object(self, d):

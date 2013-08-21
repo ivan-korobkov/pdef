@@ -1,0 +1,42 @@
+module pdef.test.interfaces;
+from pdef.test import messages;
+
+
+/** Test exception. */
+exception TestException {
+    text    string;
+}
+
+
+/** Test interface with method of all types. */
+interface TestInterface : throws TestException {
+    /** Index remote method. */
+    indexMethod(a int32; b string) string, index;
+
+    /** Remote method. */
+    remoteMethod(a int32; b string) string;
+
+    /** Post remote method. */
+    postMethod(aList list<int32>; aMap map<int32, int32>) string, post;
+
+    /** Remote method with a query arg, returns the same query arg. */
+    queryMethod(msg messages.SimpleMessage, query) messages.SimpleMessage;
+
+    /** Void method which returns null. */
+    voidMethod() void;
+
+    /** Exception method which raises a test exception. */
+    excMethod() void;
+
+    /** Interface (not remote) method which returns a next interface. */
+    interfaceMethod(a int32; b string) NextTestInterface;
+}
+
+/** Next test interface. */
+interface NextTestInterface {
+    /** Index method. */
+    indexMethod() string;
+
+    /** Post remote method. */
+    postMethod() messages.SimpleMessage;
+}

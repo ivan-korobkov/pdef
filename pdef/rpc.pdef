@@ -1,0 +1,52 @@
+module pdef.rpc;
+
+
+enum RpcStatus {
+    /** Successful response. */
+    OK,
+
+    /** Successful response, expected application exception. */
+    EXCEPTION,
+
+    /** Internal server error. */
+    SERVER_ERROR,
+
+    /** Connection timeout, request timeout, gateway timeout, etc. */
+    NETWORK_ERROR,
+
+    /** Bad request. */
+    CLIENT_ERROR,
+
+    /** Special client error which indicates that the method is not found. */
+    METHOD_NOT_FOUND,
+
+    /** Special client error which indicates that the method arguments are invalid
+    (the number of method args, or their types). */
+    WRONG_METHOD_ARGS
+}
+
+message RpcResponse {
+    status  RpcStatus;
+    result  object;
+}
+
+
+/** Internal exceptions which can be used in clients and servers.
+They should be mapped to corresponding rpc statuses in responses. */
+exception RpcError {
+    text    string;
+}
+
+/** Internal server error. */
+exception ServerError : RpcError {}
+
+/** Temporary network error (timeout, etc), the request can be repeated. */
+exception NetworkError : RpcError {}
+
+/** Client error (bad request), the request should not be repeated. */
+exception ClientError : RpcError {}
+
+/** Client error subclass which states that a method is not found. */
+exception MethodNotFoundError : ClientError {}
+
+exception WrongMethodArgsError : ClientError {}

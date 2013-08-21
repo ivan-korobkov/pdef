@@ -1,0 +1,31 @@
+module pdef.test.messages;
+
+
+/** Enum. */
+enum TestEnum {
+    ONE, TWO, THREE;
+}
+
+
+/** Simple message . */
+message SimpleMessage {
+    aString     string;
+    anEnum      TestEnum;
+    aBool       bool;
+    anInt16     int16;
+}
+
+/** Message with fields of all data types. */
+message ComplexMessage : SimpleMessage {
+    anInt32     int32;
+    anInt64     int64;
+    aFloat      float;
+    aDouble     double;
+
+    aList       list<int32>;
+    aSet        set<int32>;
+    aMap        map<int32, float>;
+
+    aMessage    ComplexMessage;
+    anObject    object;
+}

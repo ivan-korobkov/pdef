@@ -1,5 +1,4 @@
 # encoding: utf-8
-from collections import OrderedDict
 from pdef import Type, _json as json
 
 
@@ -223,7 +222,7 @@ class PrimitiveDescriptor(Descriptor):
     def to_object(self, obj):
         return None if obj is None else self._native(obj)
 
-    def serialize_to_string(self, obj):
+    def to_string(self, obj):
         '''Serialize a primitive to a string, or return None when the primitive is None.'''
         return None if obj is None else str(self.to_object(obj))
 
@@ -248,7 +247,7 @@ class EnumDescriptor(PrimitiveDescriptor):
             return None
         return str(obj).lower()
 
-    def serialize_to_string(self, obj):
+    def to_string(self, obj):
         return self.to_object(obj)
 
 

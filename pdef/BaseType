@@ -1,0 +1,22 @@
+module pdef.test.polymorphic;
+
+
+enum PolymorphicType {
+    SUBTYPE, SUBTYPE2, MULTILEVEL_SUBTYPE
+}
+
+message Base {
+    type PolymorphicType, discriminator;
+}
+
+message Subtype : Base(PolymorphicType.SUBTYPE) {
+    subtype     string;
+}
+
+message Subtype2 : Base(PolymorphicType.SUBTYPE2) {
+    subtype2    string;
+}
+
+message MultiLevelSubtype : Subtype(PolymorphicType.MULTILEVEL_SUBTYPE) {
+    multilevel  string;
+}

@@ -111,10 +111,10 @@ class TestPrimitiveDescriptor(unittest.TestCase):
         assert self.descriptor.to_object(None) is None
 
     def serialize_to_string(self):
-        assert self.descriptor.serialize_to_string(True) == 'True'
+        assert self.descriptor.to_string(True) == 'True'
 
     def serialize_to_string__none(self):
-        assert self.descriptor.serialize_to_string(None) is None
+        assert self.descriptor.to_string(None) is None
 
 
 class TestEnumDescriptor(unittest.TestCase):
@@ -140,10 +140,10 @@ class TestEnumDescriptor(unittest.TestCase):
         assert self.descriptor.to_object(None) is None
 
     def test_serialize_to_string(self):
-        assert self.descriptor.serialize_to_string(test_pd.TestEnum.THREE) == 'three'
+        assert self.descriptor.to_string(test_pd.TestEnum.THREE) == 'three'
 
     def test_serialize_to_string__none(self):
-        assert self.descriptor.serialize_to_string(None) is None
+        assert self.descriptor.to_string(None) is None
 
 
 class TestListDescriptor(unittest.TestCase):

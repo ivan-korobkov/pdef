@@ -1,0 +1,7 @@
+module pdef.test;
+
+
+message TestMessage {
+    hello   string;
+    world   string;
+}

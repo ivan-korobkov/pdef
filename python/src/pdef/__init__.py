@@ -70,6 +70,20 @@ class Message(object):
     def __ne__(self, other):
         return not self == other
 
+    def __str__(self):
+        s = ['<', self.__class__.__name__, ' ']
+        for field in self.__descriptor__.fields:
+            value = field.get(self)
+            if value is None:
+                continue
+            s.append(' ')
+            s.append(field.name)
+            s.append('=')
+            s.append(str(value))
+            s.append(',')
+        s.append('>')
+        return ''.join(s)
+
 
 class Exc(Exception, Message):
     '''Base generated pdef exception.'''
@@ -95,7 +109,7 @@ class Interface(object):
 class ClientProxy(object):
     '''Proxy for interface invocations. '''
     def __init__(self, interface, handler, parent_invocation=None):
-        self.__interface = interface
+        self.__interface = interface.__descriptor__
         self.__handler = handler
         self.__parent_invocation = parent_invocation or Invocation.root()
 
@@ -105,7 +119,12 @@ class ClientProxy(object):
     def __getattr__(self, name):
         '''Get a method by name and return a callable which collects the arguments
         and handles remote invocations or creates intermediate chained clients.'''
-        method = self.__interface.get_method(name)
+        method = None
+        for m in self.__interface.methods:
+            if m.name == name:
+                method = m
+                break
+
         if not method:
             raise AttributeError(name)
 
@@ -131,15 +150,15 @@ class Invocation(object):
         '''Create an empty root invocation.'''
         return Invocation(None, None, None)
 
-    def __init__(self, method, params, parent=None):
+    def __init__(self, method, args, parent=None):
         '''Create an rpc invocation.
 
         @param method: The method descriptor this invocation has been invoked on.
-        @param params: {} of arguments.
+        @param args: {} of arguments.
         @param parent: a parent invocation, nullable.
         '''
         self.method = method
-        self.params = dict(params) if params else {}
+        self.args = dict(args) if args else {}
         self.parent = parent
 
     @property
@@ -156,11 +175,17 @@ class Invocation(object):
 
     def next(self, method, *args, **kwargs):
         params = self._build_param_dict(method, args, kwargs)
-        return Invocation(self, method, params)
+        return Invocation(method, params, parent=self)
 
     def invoke(self, obj):
         '''Invoke this invocation on a given object and return the result.'''
-        return self.method.invoke(obj, **self.params)
+        return self.method.invoke(obj, **self.args)
+
+    def to_chain(self):
+        chain = [] if not self.parent else self.parent.to_chain()
+        if not self.is_root:
+            chain.append(self)
+        return chain
 
     @staticmethod
     def _build_param_dict(method, args, kwargs):
@@ -168,10 +193,8 @@ class Invocation(object):
         params = {}
 
         # First, consume all positional arguments.
-        args_iter = iter(args)
-        param_iter = iter(method.args)
-        for arg, name, type0 in zip(args_iter, param_iter):
-            params[name] = arg
+        for arg, value in zip(method.args, args):
+            params[arg.name] = value
 
         # Then, add keyword arguments.
         for key, arg in kwargs.items():

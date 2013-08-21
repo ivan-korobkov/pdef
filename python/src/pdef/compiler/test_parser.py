@@ -16,7 +16,7 @@ class TestParser(unittest.TestCase):
 
     def test_parse(self):
         '''Should parse a test pdef file.'''
-        s = self._filepath('test.pdef')
+        s = self._filepath('../../../pdef/test.pdef')
         module = pdef.compiler.parser.parse_file(s)
 
         assert module.name == 'pdef.test';

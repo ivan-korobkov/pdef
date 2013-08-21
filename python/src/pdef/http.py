@@ -3,9 +3,11 @@ import urllib
 import urlparse
 
 import requests
+from requests.status_codes import codes
+
 from pdef import Invocation
-from rpc_pd import RpcResponse, RpcResponseStatus, RpcError, ServerError, ClientError, \
-    NetworkError, RpcErrorCode
+from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, NetworkError, \
+    ClientError, MethodNotFoundError, WrongMethodArgsError
 
 
 REQUEST_CONTENT_TYPE = 'application/x-www-form-urlencoded'
@@ -26,12 +28,12 @@ class HttpClient(object):
 
     def handle(self, invocation):
         '''Serialize an invocation, send a request, parse a response and return the result.'''
-        request = self._build_request(invocation)
+        request = self._create_request(invocation)
         response = self._send_request(request)
         result = self._parse_response(response, invocation)
         return result
 
-    def _build_request(self, invocation):
+    def _create_request(self, invocation):
         '''Convert an invocation into a requests.Request.'''
         path, query, post = '', {}, {}
         for inv in invocation.to_chain():
@@ -40,52 +42,6 @@ class HttpClient(object):
         method = 'POST' if invocation.method.is_post else 'GET'
         url = self.url + path
         return requests.Request(method, url=url, data=post, params=query)
-
-    def _send_request(self, request):
-        '''Send a requests.Request.'''
-        session = self.session if self.session else requests.session()
-        return session.send(request)
-
-    def _parse_response(self, response, invocation):
-        '''Parse a requests.Response into a result or raise an exception.'''
-        resp = None
-        if response.headers['Content-Type'] == RESPONSE_CONTENT_TYPE:
-            # If the content type is json, then there should be a valid RpcResponse.
-            try:
-                resp = RpcResponse.parse_json(response.text)
-            except Exception, e:
-                raise ServerError(text='Failed to parse a server response: %s' % e)
-
-        if not resp:
-            # The server has not replied with a valid response.
-            # Try to raise
-            status_code = response.status_code
-            if status_code == 400:
-                raise ClientError(text=response.text)
-            elif status_code == 502 or status_code == 503:
-                raise NetworkError(text=response.text)
-            elif status_code == 500:
-                raise ServerError(text=response.text)
-
-            raise ServerError(text='Status code: %s, text=%s' % (status_code, response.text))
-
-        status = response.status
-        result = response.result
-        if status == RpcResponseStatus.OK:
-            # Successful invocation result.
-            return invocation.result.parse_object(result)
-
-        elif status == RpcResponseStatus.EXCEPTION:
-            # Application exception.
-            raise invocation.exc.parse_object(result)
-
-        elif status == RpcResponseStatus.ERROR:
-            # Rpc error.
-            raise RpcError.parse_dict(result)
-
-        else:
-            # Unknown rpc response status.
-            raise ServerError(text='Unknown rpc response status: %s, result=%s' % (status, result))
 
     def _serialize_invocation(self, invocation, path, query, post):
         '''Add an invocation to a path, query dict, and post dict.'''
@@ -97,32 +53,87 @@ class HttpClient(object):
             # Add arguments as post params, serialize messages and collections into json.
             for arg in method.args:
                 value = args.get(arg.name)
-                if arg.type.is_primitive:
-                    serialized = arg.type.to_string(value)
-                else:
-                    serialized = arg.type.to_json(value)
-                post[arg.name] = serialized
+                if value is None:
+                    continue
+                post[arg.name] = self._serialize_arg(arg, value)
 
         elif method.is_remote:
             # Add arguments as query params.
             for arg in method.args:
                 value = args.get(arg.name)
-                if arg.type.is_primitive:
-                    serialized = arg.type.to_string(value)
-                else:
-                    serialized = arg.type.to_json(value)
-                query[arg.name] = serialized
+                if value is None:
+                    continue
+                query[arg.name] = self._serialize_arg(arg, value)
         else:
             # Positionally prepend all arguments to the path.
+            assert not method.is_post, 'Post methods must be remote, %s' % method
             for arg in method.args:
                 value = args.get(arg.name)
-                if arg.type.is_primitive:
-                    serialized = arg.type.to_string(value)
+                if value is None:
+                    serialized = ''
                 else:
-                    serialized = arg.type.to_json(value)
+                    serialized = self._serialize_arg(arg, value)
                 path += '/' + urllib.quote(serialized)
 
         return path
+
+    def _serialize_arg(self, arg, value):
+        if arg.type.is_primitive or arg.type.is_enum:
+            return arg.type.to_string(value)
+        return arg.type.to_json(value)
+
+    def _send_request(self, request):
+        '''Send a requests.Request.'''
+        session = self.session if self.session else requests.session()
+        prepared = request.prepare()
+        return session.send(prepared)
+
+    def _parse_response(self, http_response, invocation):
+        '''Parse a requests.Response into a result or raise an exception.'''
+        response = None
+        if http_response.headers.get('Content-Type', '').lower().startswith(RESPONSE_CONTENT_TYPE):
+            # If the content type is json, then there should be a valid RpcResponse.
+            try:
+                response = RpcResponse.parse_json(http_response.text)
+            except Exception, e:
+                raise ServerError('Failed to parse a server response: %s' % e)
+
+        if not response:
+            # The server has not replied with a valid rpc response.
+            http_status = http_response.status_code
+            if http_status == 400:
+                raise ClientError(http_response.text)
+            elif http_status == 404:
+                raise MethodNotFoundError(http_response.text)
+            elif http_status in (502, 503):
+                raise NetworkError(http_response.text)
+            elif http_status == 500:
+                raise ServerError(http_response.text)
+
+            raise ServerError('Status code: %s, text=%s' % (http_status, http_response.text))
+
+        status = response.status
+        result = response.result
+
+        # Successful and expected exception responses.
+        if status == RpcStatus.OK:
+            return invocation.result.parse_object(result)
+        elif status == RpcStatus.EXCEPTION:
+            raise invocation.exc.parse_object(result)
+
+        # Rpc errors.
+        if status == RpcStatus.SERVER_ERROR:
+            raise ServerError(str(result))
+        elif status == RpcStatus.NETWORK_ERROR:
+            raise NetworkError(str(result))
+        elif status == RpcStatus.CLIENT_ERROR:
+            raise ClientError(str(result))
+        elif status == RpcStatus.METHOD_NOT_FOUND:
+            raise MethodNotFoundError(str(result))
+        elif status == RpcStatus.WRONG_METHOD_ARGS:
+            raise WrongMethodArgsError(str(result))
+
+        raise ServerError(text='Unknown rpc response status: %s, result=%s' % (status, result))
 
 
 class HttpServer(object):
@@ -138,7 +149,7 @@ class HttpServer(object):
                                     defined in the interface throws clause.
         @param on_error             Callback for unhandled exceptions.
         '''
-        self.interface = interface
+        self.interface = interface.__descriptor__
         self.supplier = service_or_callable if callable(service_or_callable) \
             else lambda: service_or_callable
 
@@ -150,27 +161,30 @@ class HttpServer(object):
         return self.handle(request)
 
     def handle(self, request):
-        response = None
         try:
             invocation = self._parse_request(request)
             try:
                 result = self._invoke(invocation)
-                response = self._serialize_result(result, invocation)
+                serialized = self._serialize_result(result, invocation)
+                response = RpcResponse(status=RpcStatus.OK, result=serialized)
             except Exception, e:
-                response = self._handle_exception(e, invocation)
+                response = self._handle_app_exception(e, invocation)
                 if not response:
+                    # It's not an application exception, reraise it.
                     raise
+            return self._successful_response(response)
         except Exception, e:
-            response = self._handle_error(e)
-
-        return self._write_response(response)
+            return self._error_response(e)
 
     def _parse_request(self, request):
-        '''Parse a request and return an invocation.'''
+        '''Parse a request and return a chained invocation.'''
         path = request.path
         query = request.query
         post = request.post
-        parts = path.split('/').lstrip('/')
+
+        if path.startswith('/'):
+            path = path[1:]
+        parts = path.split('/')
 
         interface = self.interface
         invocation = Invocation.root()
@@ -178,7 +192,7 @@ class HttpServer(object):
             part = parts.pop(0)
             # Find a method by a name or an index method.
             if not interface:
-                raise ClientError(text='Method not found: %s' % path)
+                raise MethodNotFoundError('Method not found')
 
             method = None
             for m in interface.methods:
@@ -189,7 +203,7 @@ class HttpServer(object):
                     method = m
 
             if not method:
-                raise ClientError(text='Method not found: %s' % path)
+                raise MethodNotFoundError('Method not found')
 
             if method.is_index:
                 parts.insert(0, part)
@@ -198,44 +212,40 @@ class HttpServer(object):
             args = {}
             if method.is_remote and method.is_post:
                 if request.method.upper() != 'POST':
-                    raise ClientError(text='Method not allowed, POST required: %s' % path)
+                    raise ClientError('Method not allowed, POST required')
 
                 # Parse arguments as post params.
                 for arg in method.args:
                     value = post.get(arg.name)
-                    if arg.type.is_primitive:
-                        parsed = arg.type.parse_string(value)
-                    else:
-                        parsed = arg.type.parse_json(value)
-                    args[arg.name] = parsed
+                    args[arg.name] = self._parse_arg(arg, value)
 
             elif method.is_remote:
                 # Parse arguments as query params.
                 for arg in method.args:
                     value = query.get(arg.name)
-                    if arg.type.is_primitive:
-                        parsed = arg.type.parse_string(value)
-                    else:
-                        parsed = arg.type.parse_json(value)
-                    args[arg.name] = parsed
+                    args[arg.name] = self._parse_arg(arg, value)
 
             else:
                 # Parse arguments as positional params.
                 for arg in method.args:
-                    value = urllib.unquote(parts.pop(0)) if parts else None
-                    if arg.type.is_primitive:
-                        parsed = arg.type.parse_string(value)
-                    else:
-                        parsed = arg.type.parse_json(value)
-                    args[arg.name] = parsed
+                    if not parts:
+                        raise WrongMethodArgsError('Wrong number of method args')
+
+                    value = urllib.unquote(parts.pop(0))
+                    args[arg.name] = self._parse_arg(arg, value)
 
             invocation = invocation.next(method, **args)
             interface = None if method.is_remote else method.result
 
         if not invocation.method.is_remote:
-            raise ClientError(text='Method not found: %s' % path)
+            raise MethodNotFoundError('Method not found')
 
         return invocation
+
+    def _parse_arg(self, arg, value):
+        if arg.type.is_primitive or arg.type.is_enum:
+            return arg.type.parse_string(value)
+        return arg.type.parse_json(value)
 
     def _invoke(self, invocation):
         '''Invoke an invocation on a service.'''
@@ -247,28 +257,45 @@ class HttpServer(object):
         method = invocation.method
         return method.result.to_object(result)
 
-    def _handle_exception(self, e, invocation):
+    def _handle_app_exception(self, e, invocation):
         '''Handle an application exception and return an RpcResponse or return None.'''
         if invocation.exc and isinstance(e, invocation.exc.pyclass):
             result = invocation.exc.to_object(e)
-            return RpcResponse(status=RpcResponseStatus.EXCEPTION, result=result)
+            return RpcResponse(status=RpcStatus.EXCEPTION, result=result)
         return None
 
-    def _handle_error(self, e):
-        '''Handle an unhandled error and return an RpcResponse.'''
-        result = e if isinstance(e, RpcError) else ServerError(text='Internal server error')
-        return RpcResponse(status=RpcResponseStatus.ERROR, result=result)
-
-    def _write_response(self, response):
+    def _successful_response(self, response):
         '''Write an rpc response and return an http server response.'''
-        if response.status == RpcResponseStatus.OK \
-                or response.status == RpcResponseStatus.EXCEPTION:
-            status = 200
-        else:
-            status = 400 if response.result['code'] == RpcErrorCode.CLIENT_ERROR else 500
-
+        status = 200
         json = response.to_json()
         return HttpServerResponse(status, body=json)
+
+    def _error_response(self, e):
+        '''Handle an unhandled error and return an RpcResponse.'''
+        if isinstance(e, WrongMethodArgsError):
+            status = RpcStatus.WRONG_METHOD_ARGS
+            http_status = 400
+            result = e.text
+        elif isinstance(e, MethodNotFoundError):
+            status = RpcStatus.METHOD_NOT_FOUND
+            http_status = 404
+            result = e.text
+        elif isinstance(e, ClientError):
+            status = RpcStatus.CLIENT_ERROR
+            http_status = 400
+            result = e.text
+        elif isinstance(e, NetworkError):
+            status = RpcStatus.NETWORK_ERROR
+            http_status = 503
+            result = e.text
+        else:
+            status = RpcStatus.SERVER_ERROR
+            http_status = 500
+            result = 'Internal server error'
+
+        response = RpcResponse(status=status, result=result)
+        http_body = response.to_json()
+        return HttpServerResponse(http_status, body=http_body)
 
 
 class HttpServerRequest(object):
@@ -333,9 +360,9 @@ class WsgiServer(object):
         request = HttpServerRequest.from_wsgi(environ)
         response = self.http_server.handle(request)
 
-        status = '%s %s' % (response.status,  requests.codes[response.status])
+        status = '%s %s' % (response.status,  codes[response.status])
         headers = [('Content-Type', response.content_type),
-                   ('Content-Length', response.content_length)]
+                   ('Content-Length', str(response.content_length))]
         start_response(status, headers)
         content = response.body.encode('utf-8')
         yield content
@@ -344,3 +371,15 @@ class WsgiServer(object):
 def wsgi_server(interface, service_or_supplier):
     http_server = HttpServer(interface, service_or_supplier)
     return WsgiServer(http_server)
+
+
+if __name__ == '__main__':
+    from test_pd import TestInterface
+    from wsgiref.simple_server import make_server
+
+    app = wsgi_server(TestInterface, TestInterface())
+    httpd = make_server('', 8000, app)
+    print "Serving on port 8000..."
+
+    # Serve until process is killed
+    httpd.serve_forever()

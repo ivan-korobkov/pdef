@@ -67,18 +67,27 @@ class Message(object):
         return not self == other
 
     def __str__(self):
+        return unicode(self).encode('utf-8', errors='replace')
+
+    def __unicode__(self):
         s = ['<', self.__class__.__name__, ' ']
+
+        first = True
         for field in self.__descriptor__.fields:
             value = field.get(self)
             if value is None:
                 continue
-            s.append(' ')
+
+            if first:
+                first = False
+            else:
+                s.append(', ')
+
             s.append(field.name)
             s.append('=')
-            s.append(str(value))
-            s.append(',')
+            s.append(unicode(value))
         s.append('>')
-        return ''.join(s)
+        return u''.join(s)
 
 
 class Exc(Exception, Message):
@@ -113,13 +122,15 @@ class Interface(object):
         client = RestClient(url, session)
         return cls.create_proxy(client)
 
-    def create_rest_server(self):
+    def to_rest_server(self):
         '''Create a rest server.'''
         from pdef.rest import RestServer
         return RestServer(self.__descriptor__, self)
 
-    def create_wsgi_server(self):
-        pass
+    def to_wsgi_server(self):
+        '''Create a WSGI server.'''
+        from pdef.rest import WsgiRestServer
+        return WsgiRestServer(self.to_rest_server())
 
 
 class Proxy(object):
@@ -200,7 +211,14 @@ class Invocation(object):
         return chain
 
     def invoke(self, obj):
-        '''Invoke this invocation on a given object and return the result.'''
+        '''Invoke this invocation chain on an object.'''
+        chain = self.to_chain()
+        for inv in chain:
+            obj = inv.invoke_single(obj)
+        return obj
+
+    def invoke_single(self, obj):
+        '''Invoke only this invocation (not a chain) on an object.'''
         return self.method.invoke(obj, **self.args)
 
     @staticmethod

@@ -1,11 +1,13 @@
 # encoding: utf-8
 import unittest
 import urllib
+from mock import Mock
 import requests
+from StringIO import StringIO
 
 from pdef import descriptors
 from pdef.rest import RestClient, RESPONSE_CONTENT_TYPE, RestServerRequest, \
-    ERROR_RESPONSE_CONTENT_TYPE
+    ERROR_RESPONSE_CONTENT_TYPE, WsgiRestServer, RestServerResponse
 from pdef.test.messages_pd import SimpleMessage
 from pdef.test.interfaces_pd import TestInterface, TestException
 
@@ -56,7 +58,6 @@ class TestRestClient(unittest.TestCase):
         invocation = self.proxy().interfaceMethod(1, 2).stringMethod('hello')
         request = self.client()._create_request(invocation)
 
-        print request.url
         assert request.method == 'GET'
         assert request.url == 'http://example.com/interfaceMethod/1/2/stringMethod'
         assert request.params == {'text': 'hello'}
@@ -175,7 +176,7 @@ class TestRestClient(unittest.TestCase):
 class TestRestServer(unittest.TestCase):
     def server(self):
         service = TestInterface()
-        return service.create_rest_server()
+        return service.to_rest_server()
 
     def proxy(self):
         return TestInterface.create_proxy(lambda invocation: invocation)
@@ -305,8 +306,8 @@ class TestRestServer(unittest.TestCase):
 
         assert resp.status == 200
         assert resp.content_type == RESPONSE_CONTENT_TYPE
-        assert resp.body == response.to_json()
-        assert resp.content_length == len(resp.body)
+        assert resp.content == response.to_json()
+        assert resp.content_length == len(resp.content)
 
     def test_rest_response_exception(self):
         response = RpcResponse(status=RpcStatus.OK, result=TestException().to_dict())
@@ -314,15 +315,15 @@ class TestRestServer(unittest.TestCase):
 
         assert resp.status == 200
         assert resp.content_type == RESPONSE_CONTENT_TYPE
-        assert resp.body == response.to_json()
-        assert resp.content_length == len(resp.body)
+        assert resp.content == response.to_json()
+        assert resp.content_length == len(resp.content)
 
     def test_error_response__wrong_method_args(self):
         e = WrongMethodArgsError(u'Неправильные аргументы')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 400
-        assert resp.body == e.text.encode('utf-8')
+        assert resp.content == e.text.encode('utf-8')
         assert resp.content_type == ERROR_RESPONSE_CONTENT_TYPE
 
     def test_error_response__method_not_found(self):
@@ -330,40 +331,85 @@ class TestRestServer(unittest.TestCase):
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 404
-        assert resp.body == e.text.encode('utf-8')
+        assert resp.content == e.text.encode('utf-8')
 
     def test_error_response__method_not_allowed(self):
         e = MethodNotAllowedError(u'HTTP метод запрещен')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 405
-        assert resp.body == e.text.encode('utf-8')
+        assert resp.content == e.text.encode('utf-8')
 
     def test_error_response__client_error(self):
         e = ClientError(u'Ошибка клиента')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 400
-        assert resp.body == e.text.encode('utf-8')
+        assert resp.content == e.text.encode('utf-8')
 
     def test_error_response__network_error(self):
         e = NetworkError(u'Сетевая ошибка')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 503
-        assert resp.body == e.text.encode('utf-8')
+        assert resp.content == e.text.encode('utf-8')
 
     def test_error_response__server_error(self):
         e = ServerError(u'Ошибка сервера')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 500
-        assert resp.body == e.text.encode('utf-8')
+        assert resp.content == e.text.encode('utf-8')
 
     def test_error_response__internal_server_error(self):
         e = ValueError('Unhandled exception')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 500
-        assert resp.body == 'Internal server error'
+        assert resp.content == 'Internal server error'
+
+
+class TestRestServerRequest(unittest.TestCase):
+    def test_from_wsgi(self):
+        query = urllib.quote(u'привет=мир'.encode('utf-8'), '=')
+        body = urllib.quote(u'пока=мир'.encode('utf-8'), '=')
+        env = {
+            'REQUEST_METHOD': 'POST',
+            'CONTENT_TYPE': 'application/x-www-form-urlencoded',
+            'CONTENT_LENGTH': len(body),
+            'SCRIPT_NAME': '/myapp',
+            'PATH_INFO': '/method0/method1',
+            'QUERY_STRING': query,
+            'wsgi.input': StringIO(body),
+        }
+
+        request = RestServerRequest.from_wsgi(env)
+
+        assert request.method == 'POST'
+        assert request.path == '/myapp/method0/method1'
+        assert request.query == {u'привет': u'мир'}
+        assert request.post == {u'пока': u'мир'}
+
+
+class TestWsgiRestServer(unittest.TestCase):
+    def env(self):
+        return {
+            'REQUEST_METHOD': 'GET',
+            'CONTENT_TYPE': 'application/x-www-form-urlencoded',
+            'CONTENT_LENGTH': 0,
+            'SCRIPT_NAME': '/myapp',
+            'PATH_INFO': '/method0/method1'
+        }
+
+    def test_handle(self):
+        hello = u'Привет, мир'
+        response = RestServerResponse(status=200, content=hello, content_type='text/plain')
+        start_response = Mock()
+
+        wsgi_server = WsgiRestServer(lambda x: response)
+        content = ''.join(wsgi_server.handle(self.env(), start_response))
+
+        assert content.decode('utf-8') == hello
+        start_response.assert_called_with('200 OK',
+            [('Content-Type', 'text/plain'), ('Content-Length', '%s' % len(content))])
 

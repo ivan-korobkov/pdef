@@ -1,6 +1,7 @@
 # encoding: utf-8
 import urllib
 import urlparse
+import httplib
 
 import requests
 from requests.status_codes import codes
@@ -10,7 +11,8 @@ from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, NetworkError, \
     ClientError, MethodNotFoundError, WrongMethodArgsError, MethodNotAllowedError
 
 
-REQUEST_CONTENT_TYPE = 'application/x-www-form-urlencoded'
+FORM_URLENCODED_CONTENT_TYPE = 'application/x-www-form-urlencoded'
+REQUEST_CONTENT_TYPE = FORM_URLENCODED_CONTENT_TYPE
 RESPONSE_CONTENT_TYPE = 'application/json; charset=utf-8'
 ERROR_RESPONSE_CONTENT_TYPE = 'text/plain; charset=utf-8'
 
@@ -134,6 +136,9 @@ class RestClient(object):
 
             elif http_status == 404:
                 raise MethodNotFoundError(http_response.text)
+
+            elif http_status == 405:
+                raise MethodNotAllowedError(http_response.text)
 
             elif http_status in (502, 503):
                 raise NetworkError(http_response.text)
@@ -280,7 +285,6 @@ class RestServer(object):
             return type0.parse_string(s)
         return type0.parse_json(s)
 
-
     def _parse_arg(self, arg, value):
         if arg.type.is_primitive or arg.type.is_enum:
             return arg.type.parse_string(value)
@@ -308,7 +312,7 @@ class RestServer(object):
         '''Write an rpc response and return an http server response.'''
         status = 200
         json = rpc_response.to_json()
-        return RestServerResponse(status, body=json)
+        return RestServerResponse(status, content=json)
 
     def _error_rest_response(self, e):
         '''Handle an unhandled error and return an RpcResponse.'''
@@ -334,37 +338,56 @@ class RestServer(object):
             http_status = 500
             result = 'Internal server error'
 
-        result = result.encode('utf-8', errors='replace')
-        return RestServerResponse(http_status, body=result,
+        return RestServerResponse(http_status, content=result,
                                   content_type=ERROR_RESPONSE_CONTENT_TYPE)
 
 
 class RestServerRequest(object):
-    '''Simple gateway-agnostic server request.'''
-    @classmethod
-    def from_wsgi(cls, environ):
-        '''Create an http server request from a wsgi request.'''
-        ctype = environ.get('CONTENT_TYPE')
-        clength = environ.get('CONTENT_LENGTH', 0)
-        if ctype == REQUEST_CONTENT_TYPE:
-            body = environ['wsgi.input'].read(clength)
-        else:
-            body = None
+    '''Simple gateway-agnostic server request, all fields must be unicode.'''
 
-        method = environ['REQUEST_METHOD']
-        path = environ['SCRIPT_NAME'] + environ['PATH_INFO']
-        query = urlparse.parse_qs(environ['QUERY_STRING']) if environ['QUERY_STRING'] else {}
-        post = urlparse.parse_qs(body) if body else {}
+    @classmethod
+    def from_wsgi(cls, env):
+        '''Create an http server request from a wsgi request.'''
+        method = env['REQUEST_METHOD']
+        path = env['SCRIPT_NAME'] + env['PATH_INFO']
+        query = cls._read_wsgi_query(env)
+        post = cls._read_wsgi_post(env)
+
+        decode = lambda s: s.decode('utf-8')
+        query = {decode(k): decode(vv[0]) for k, vv in query.items()}
+        post = {decode(k): decode(vv[0]) for k, vv in post.items()}
         return RestServerRequest(method, path, query=query, post=post)
 
+    @classmethod
+    def _read_wsgi_clength(cls, env):
+        clength = env.get('CONTENT_LENGTH') or 0
+        try:
+            return int(clength)
+        except:
+            return 0
+
+    @classmethod
+    def _read_wsgi_query(cls, env):
+        return urlparse.parse_qs(env['QUERY_STRING']) if 'QUERY_STRING' in env else {}
+
+    @classmethod
+    def _read_wsgi_post(cls, env):
+        ctype = env.get('CONTENT_TYPE', '')
+        clength = cls._read_wsgi_clength(env)
+
+        body = None
+        if clength > 0 and ctype.lower() == FORM_URLENCODED_CONTENT_TYPE:
+            body = env['wsgi.input'].read(clength)
+
+        return urlparse.parse_qs(body) if body else {}
 
     def __init__(self, method, path, query=None, post=None):
         '''Create an http server request.
 
         @param method   Http method string.
         @param path     Request path.
-        @param query    Dict, unquoted query params.
-        @param body     Dict, unquoted post params.
+        @param query    Dict, unquoted query params, only single values.
+        @param body     Dict, unquoted post params, only single values.
         '''
         self.method = method
         self.path = path
@@ -373,54 +396,39 @@ class RestServerRequest(object):
 
 
 class RestServerResponse(object):
-    '''Simple gateway-agnostic server response.
+    '''Simple gateway-agnostic server response. Should be created with a unicode content.
+    Internally, converts it into a UTF-8 string.
 
     @field status           Http status code as an int.
-    @field body             Response body as a string.
+    @field content          Unicode content.
     @field content_type     Content type of the body.
     @field content_length   Length of the body.
     '''
-    def __init__(self, status=200, body=None, content_type=RESPONSE_CONTENT_TYPE):
+    def __init__(self, status=200, content=None, content_type=RESPONSE_CONTENT_TYPE):
         self.status = status
-        self.body = body or u''
+        self.content = content.encode('utf-8') if content else ''
         self.content_type = content_type
+        self.unicode_content = content
 
     @property
     def content_length(self):
-        return len(self.body)
+        return len(self.content)
 
 
 class WsgiRestServer(object):
-    def __init__(self, rest_server):
-        self.rest_server = rest_server
+    def __init__(self, callable_rest_server):
+        self.rest_server = callable_rest_server
 
     def __call__(self, environ, start_response):
         return self.handle(environ, start_response)
 
     def handle(self, environ, start_response):
         request = RestServerRequest.from_wsgi(environ)
-        response = self.rest_server.handle(request)
+        response = self.rest_server(request)
 
-        status = '%s %s' % (response.status,  codes[response.status])
+        reason = httplib.responses.get(response.status)
+        status = '%s %s' % (response.status,  reason)
         headers = [('Content-Type', response.content_type),
                    ('Content-Length', str(response.content_length))]
         start_response(status, headers)
-        content = response.body.encode('utf-8')
-        yield content
-
-
-def wsgi_server(interface, service_or_supplier):
-    http_server = RestServer(interface, service_or_supplier)
-    return WsgiRestServer(http_server)
-
-
-if __name__ == '__main__':
-    from test_pd import TestInterface
-    from wsgiref.simple_server import make_server
-
-    app = wsgi_server(TestInterface, TestInterface())
-    httpd = make_server('', 8000, app)
-    print "Serving on port 8000..."
-
-    # Serve until process is killed
-    httpd.serve_forever()
+        yield response.content

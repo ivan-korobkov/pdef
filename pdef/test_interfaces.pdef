@@ -11,7 +11,7 @@ exception TestException {
 /** Test interface with method of all types. */
 interface TestInterface : throws TestException {
     /** Index remote method. */
-    indexMethod(a int32; b int32) string, index;
+    indexMethod(a int32; b int32) int32, index;
 
     /** Remote method. */
     remoteMethod(a int32; b int32) string;

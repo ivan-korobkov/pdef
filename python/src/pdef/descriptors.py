@@ -71,6 +71,9 @@ class MessageDescriptor(Descriptor):
         for field in self.declared_fields:
             field.message = self
 
+    def __str__(self):
+        return self.pyclass.__class__.__name__
+
     def subtype(self, type0):
         '''Returns a subtype descriptor by a type enum value.'''
         subtype = self.subtypes.get(type0)
@@ -124,6 +127,9 @@ class FieldDescriptor(object):
         self.is_discriminator = is_discriminator
         self.message = None  # Set in the declaring message.
 
+    def __str__(self):
+        return self.name + ' ' + self.type
+
     @property
     def type(self):
         '''Return field type descriptor.'''
@@ -153,9 +159,23 @@ class InterfaceDescriptor(Descriptor):
         for method in self.declared_methods:
             method.interface = self
 
+        self.index_method = None
+        for method in self.methods:
+            if method.is_index:
+                self.index_method = method
+
+    def __str__(self):
+        return self.pyclass.__class__.__name__
+
     @property
     def exc(self):
         return self.exc_supplier() if self.exc_supplier else None
+
+    def find_method(self, name):
+        '''Find a method by its name.'''
+        for method in self.methods:
+            if method.name == name:
+                return method
 
 
 class MethodDescriptor(object):
@@ -194,6 +214,24 @@ class MethodDescriptor(object):
         '''Invoke this method on an object with a given arguments, return the result'''
         return getattr(obj, self.name)(*args, **kwargs)
 
+    def __str__(self):
+        '''Return a method signature as a string.'''
+        s = [self.name, '(']
+
+        aa = []
+        for arg in self.args:
+            if aa:
+                aa.append(', ')
+            aa.append(arg.name)
+            aa.append(' ')
+            aa.append(str(arg.type))
+
+        s += aa
+        s.append(')=')
+        s.append(str(self.result))
+
+        return ''.join(s)
+
 
 class ArgDescriptor(object):
     '''Method argument descriptor.'''
@@ -216,6 +254,9 @@ class PrimitiveDescriptor(Descriptor):
         super(PrimitiveDescriptor, self).__init__(type0, lambda: pyclass)
         self._native = pyclass  # Just an optimization to get rid of lambda in self.pyclass.
 
+    def __str__(self):
+        return self.type
+
     def parse_object(self, obj):
         return None if obj is None else self._native(obj)
 
@@ -236,6 +277,9 @@ class EnumDescriptor(PrimitiveDescriptor):
     def __init__(self, pyclass_supplier, values):
         super(EnumDescriptor, self).__init__(Type.ENUM, pyclass_supplier)
         self.values = tuple(values)
+
+    def __str__(self):
+        return self.pyclass.__class__.__name__
 
     def parse_object(self, obj):
         if obj is None:
@@ -261,6 +305,9 @@ class _ListDescriptor(Descriptor):
         super(_ListDescriptor, self).__init__(Type.LIST, lambda: list)
         self.element = element
 
+    def __str__(self):
+        return 'list<%s>' % (self.element)
+
     def parse_object(self, obj):
         if obj is None:
             return obj
@@ -277,6 +324,9 @@ class _SetDescriptor(Descriptor):
     def __init__(self, element):
         super(_SetDescriptor, self).__init__(Type.SET, set)
         self.element = element
+
+    def __str__(self):
+        return 'set<%s>' % (self.element)
 
     def parse_object(self, obj):
         if obj is None:
@@ -296,6 +346,9 @@ class _MapDescriptor(Descriptor):
         self.key = key
         self.value = value
 
+    def __str__(self):
+        return 'map<%s, %s>' % (self.key, self.value)
+
     def parse_object(self, obj):
         if obj is None:
             return None
@@ -311,6 +364,9 @@ class _ObjectDescriptor(Descriptor):
     def __init__(self):
         super(_ObjectDescriptor, self).__init__(Type.OBJECT, lambda: object)
 
+    def __str__(self):
+        return 'object'
+
     def parse_object(self, obj):
         return obj
 
@@ -321,6 +377,9 @@ class _ObjectDescriptor(Descriptor):
 class _VoidDescriptor(Descriptor):
     def __init__(self):
         super(_VoidDescriptor, self).__init__(Type.VOID, lambda: object)
+
+    def __str__(self):
+        return 'void'
 
     def parse_object(self, obj):
         return None

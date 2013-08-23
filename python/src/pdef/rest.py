@@ -227,17 +227,12 @@ class RestServer(object):
             if not descriptor:
                 raise MethodNotFoundError('Method not found')
 
-            method = None
-            for m in descriptor.methods:
-                if m.name == part:
-                    method = m
-                    break
-                if m.is_index:
-                    method = m
-
+            method = descriptor.find_method(part) or descriptor.index_method
             if not method:
                 raise MethodNotFoundError('Method not found')
 
+            # If an index method, prepend the part back,
+            # because index methods do not have names.
             if method.is_index and part != '':
                 parts.insert(0, part)
 

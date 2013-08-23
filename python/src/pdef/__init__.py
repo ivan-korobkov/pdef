@@ -1,4 +1,5 @@
 # encoding: utf-8
+from collections import deque
 
 
 class Type(object):
@@ -165,7 +166,7 @@ class Invocation(object):
         '''Create an empty root invocation.'''
         return Invocation(None, None, None)
 
-    def __init__(self, method, args, parent=None):
+    def __init__(self, method, parent, args=None, kwargs=None):
         '''Create an rpc invocation.
 
         @param method: The method descriptor this invocation has been invoked on.
@@ -173,22 +174,23 @@ class Invocation(object):
         @param parent: a parent invocation, nullable.
         '''
         self.method = method
-        self.args = dict(args) if args else {}
         self.parent = parent
+        self.args = self._build_args(method, args, kwargs) if method else {}
 
         self.result = method.result if method else None
         self.exc = method.exc if method else (parent.exc if parent else None)
 
         self.is_root = method is None
 
+    def __str__(self):
+        return '<Invocation method=%r, args=%s>' % (self.method.name, self.args)
+
     def next(self, method, *args, **kwargs):
         '''Create a child invocation.'''
-        params = self._build_param_dict(method, args, kwargs)
-        return Invocation(method, params, parent=self)
-
-    def invoke(self, obj):
-        '''Invoke this invocation on a given object and return the result.'''
-        return self.method.invoke(obj, **self.args)
+        if self.method and self.method.is_remote:
+            raise TypeError('Cannot create next invocation for a remote method invocation: %s'
+                            % self)
+        return Invocation(method, parent=self, args=args, kwargs=kwargs)
 
     def to_chain(self):
         '''Return a list of invocations.'''
@@ -197,17 +199,44 @@ class Invocation(object):
             chain.append(self)
         return chain
 
-    @staticmethod
-    def _build_param_dict(method, args, kwargs):
-        '''Convert args and kwargs into a param dictionary.'''
-        params = {}
+    def invoke(self, obj):
+        '''Invoke this invocation on a given object and return the result.'''
+        return self.method.invoke(obj, **self.args)
 
-        # First, consume all positional arguments.
-        for arg, value in zip(method.args, args):
+    @staticmethod
+    def _build_args(method, args=None, kwargs=None):
+        '''Convert args and kwargs into a param dictionary, check their number and types.'''
+        def wrong_args():
+            return TypeError('Wrong method arguments, %s, got args=%s, kwargs=%s' %
+                             (method, args, kwargs))
+        params = {}
+        args = args if args else ()
+        kwargs = kwargs if kwargs else {}
+        method_args = deque(method.args)
+
+        # Check that the number of args and kwargs is less or equal to the method args number.
+        if len(method_args) < (len(args) + len(kwargs)):
+            raise wrong_args()
+
+        # Consume all positional arguments.
+        for value in args:
+            arg = method_args.popleft()
             params[arg.name] = value
 
-        # Then, add keyword arguments.
-        for key, arg in kwargs.items():
-            params[key] = arg
+
+        # Add keyword arguments using the remaining method args.
+        consumed_kargs = {}
+        for arg in method_args:
+            if arg.name not in kwargs:
+                params[arg.name] = None
+                continue
+
+            value = kwargs.get(arg.name)
+            params[arg.name] = value
+            consumed_kargs[arg.name] = value
+
+        # Check that all kwargs have been consumed.
+        if consumed_kargs.keys() != kwargs.keys():
+            raise wrong_args()
 
         return params

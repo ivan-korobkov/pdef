@@ -4,7 +4,6 @@ import urlparse
 import httplib
 
 import requests
-from requests.status_codes import codes
 
 from pdef import Invocation
 from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, NetworkError, \
@@ -345,42 +344,6 @@ class RestServer(object):
 class RestServerRequest(object):
     '''Simple gateway-agnostic server request, all fields must be unicode.'''
 
-    @classmethod
-    def from_wsgi(cls, env):
-        '''Create an http server request from a wsgi request.'''
-        method = env['REQUEST_METHOD']
-        path = env['SCRIPT_NAME'] + env['PATH_INFO']
-        query = cls._read_wsgi_query(env)
-        post = cls._read_wsgi_post(env)
-
-        decode = lambda s: s.decode('utf-8')
-        query = {decode(k): decode(vv[0]) for k, vv in query.items()}
-        post = {decode(k): decode(vv[0]) for k, vv in post.items()}
-        return RestServerRequest(method, path, query=query, post=post)
-
-    @classmethod
-    def _read_wsgi_clength(cls, env):
-        clength = env.get('CONTENT_LENGTH') or 0
-        try:
-            return int(clength)
-        except:
-            return 0
-
-    @classmethod
-    def _read_wsgi_query(cls, env):
-        return urlparse.parse_qs(env['QUERY_STRING']) if 'QUERY_STRING' in env else {}
-
-    @classmethod
-    def _read_wsgi_post(cls, env):
-        ctype = env.get('CONTENT_TYPE', '')
-        clength = cls._read_wsgi_clength(env)
-
-        body = None
-        if clength > 0 and ctype.lower() == FORM_URLENCODED_CONTENT_TYPE:
-            body = env['wsgi.input'].read(clength)
-
-        return urlparse.parse_qs(body) if body else {}
-
     def __init__(self, method, path, query=None, post=None):
         '''Create an http server request.
 
@@ -423,7 +386,7 @@ class WsgiRestServer(object):
         return self.handle(environ, start_response)
 
     def handle(self, environ, start_response):
-        request = RestServerRequest.from_wsgi(environ)
+        request = self._parse_request(environ)
         response = self.rest_server(request)
 
         reason = httplib.responses.get(response.status)
@@ -432,3 +395,35 @@ class WsgiRestServer(object):
                    ('Content-Length', str(response.content_length))]
         start_response(status, headers)
         yield response.content
+
+    def _parse_request(self, env):
+        '''Create an http server request from a wsgi request.'''
+        method = env['REQUEST_METHOD']
+        path = env['SCRIPT_NAME'] + env['PATH_INFO']
+        query = self._read_wsgi_query(env)
+        post = self._read_wsgi_post(env)
+
+        decode = lambda s: s.decode('utf-8')
+        query = {decode(k): decode(vv[0]) for k, vv in query.items()}
+        post = {decode(k): decode(vv[0]) for k, vv in post.items()}
+        return RestServerRequest(method, path, query=query, post=post)
+
+    def _read_wsgi_clength(self, env):
+        clength = env.get('CONTENT_LENGTH') or 0
+        try:
+            return int(clength)
+        except:
+            return 0
+
+    def _read_wsgi_query(self, env):
+        return urlparse.parse_qs(env['QUERY_STRING']) if 'QUERY_STRING' in env else {}
+
+    def _read_wsgi_post(self, env):
+        ctype = env.get('CONTENT_TYPE', '')
+        clength = self._read_wsgi_clength(env)
+
+        body = None
+        if clength > 0 and ctype.lower() == FORM_URLENCODED_CONTENT_TYPE:
+            body = env['wsgi.input'].read(clength)
+
+        return urlparse.parse_qs(body) if body else {}

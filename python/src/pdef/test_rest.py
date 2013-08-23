@@ -1,4 +1,5 @@
 # encoding: utf-8
+from threading import Thread
 import unittest
 import urllib
 from mock import Mock
@@ -9,7 +10,7 @@ from pdef import descriptors
 from pdef.rest import RestClient, RESPONSE_CONTENT_TYPE, RestServerRequest, \
     ERROR_RESPONSE_CONTENT_TYPE, WsgiRestServer, RestServerResponse
 from pdef.test.messages_pd import SimpleMessage
-from pdef.test.interfaces_pd import TestInterface, TestException
+from pdef.test.interfaces_pd import TestInterface, TestException, NextTestInterface
 
 from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, NetworkError, \
     ClientError, MethodNotFoundError, WrongMethodArgsError, MethodNotAllowedError
@@ -368,29 +369,6 @@ class TestRestServer(unittest.TestCase):
         assert resp.status == 500
         assert resp.content == 'Internal server error'
 
-
-class TestRestServerRequest(unittest.TestCase):
-    def test_from_wsgi(self):
-        query = urllib.quote(u'привет=мир'.encode('utf-8'), '=')
-        body = urllib.quote(u'пока=мир'.encode('utf-8'), '=')
-        env = {
-            'REQUEST_METHOD': 'POST',
-            'CONTENT_TYPE': 'application/x-www-form-urlencoded',
-            'CONTENT_LENGTH': len(body),
-            'SCRIPT_NAME': '/myapp',
-            'PATH_INFO': '/method0/method1',
-            'QUERY_STRING': query,
-            'wsgi.input': StringIO(body),
-        }
-
-        request = RestServerRequest.from_wsgi(env)
-
-        assert request.method == 'POST'
-        assert request.path == '/myapp/method0/method1'
-        assert request.query == {u'привет': u'мир'}
-        assert request.post == {u'пока': u'мир'}
-
-
 class TestWsgiRestServer(unittest.TestCase):
     def env(self):
         return {
@@ -406,10 +384,91 @@ class TestWsgiRestServer(unittest.TestCase):
         response = RestServerResponse(status=200, content=hello, content_type='text/plain')
         start_response = Mock()
 
-        wsgi_server = WsgiRestServer(lambda x: response)
-        content = ''.join(wsgi_server.handle(self.env(), start_response))
+        server = WsgiRestServer(lambda x: response)
+        content = ''.join(server.handle(self.env(), start_response))
 
         assert content.decode('utf-8') == hello
         start_response.assert_called_with('200 OK',
             [('Content-Type', 'text/plain'), ('Content-Length', '%s' % len(content))])
 
+    def test_parse_request(self):
+        query = urllib.quote(u'привет=мир'.encode('utf-8'), '=')
+        body = urllib.quote(u'пока=мир'.encode('utf-8'), '=')
+        env = {
+            'REQUEST_METHOD': 'POST',
+            'CONTENT_TYPE': 'application/x-www-form-urlencoded',
+            'CONTENT_LENGTH': len(body),
+            'SCRIPT_NAME': '/myapp',
+            'PATH_INFO': '/method0/method1',
+            'QUERY_STRING': query,
+            'wsgi.input': StringIO(body),
+            }
+
+        server = WsgiRestServer(None)
+        request = server._parse_request(env)
+
+        assert request.method == 'POST'
+        assert request.path == '/myapp/method0/method1'
+        assert request.query == {u'привет': u'мир'}
+        assert request.post == {u'пока': u'мир'}
+
+
+class TestIntegration(unittest.TestCase):
+    def setUp(self):
+        from wsgiref.simple_server import make_server
+        service = IntegrationService()
+        app = service.to_wsgi_server()
+
+        self.server = make_server('localhost', 0, app)
+        self.server_thread = Thread(target=self.server.serve_forever)
+        self.server_thread.start()
+
+    def tearDown(self):
+        self.server.shutdown()
+
+    def client(self):
+        url = 'http://localhost:%s/' % self.server.server_port
+        return TestInterface.create_rest_client(url)
+
+    def test(self):
+        client = self.client()
+        msg = SimpleMessage(u'Привет', True, 0)
+
+        assert client.indexMethod(1, 2) == 3
+        assert client.remoteMethod(10, 2) == '5'
+        assert client.postMethod([1, 2, 3], {4: 5}) == [1, 2, 3, 4, 5]
+        assert client.queryMethod(msg) == msg
+        assert client.voidMethod() is None
+        assert client.stringMethod(u'Как дела?') == u'Как дела?'
+        assert client.interfaceMethod(1, 2).indexMethod() == 'chained call 1 2'
+        self.assertRaises(TestException, client.excMethod)
+
+
+class IntegrationService(TestInterface):
+    def indexMethod(self, a=None, b=None):
+        return a + b
+
+    def remoteMethod(self, a=None, b=None):
+        return a / b
+
+    def postMethod(self, aList=None, aMap=None):
+        return list(aList) + aMap.keys() + aMap.values()
+
+    def queryMethod(self, msg=None):
+        return msg
+
+    def voidMethod(self):
+        return 'void?' # But should send None.
+
+    def excMethod(self):
+        raise TestException('Application Exception!')
+
+    def stringMethod(self, text=None):
+        return text
+
+    def interfaceMethod(self, a=None, b=None):
+        class Next(NextTestInterface):
+            def indexMethod(self):
+                return 'chained call %s %s' % (a, b)
+
+        return Next()

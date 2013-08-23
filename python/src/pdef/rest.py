@@ -5,16 +5,17 @@ import urlparse
 import requests
 from requests.status_codes import codes
 
-from pdef import Invocation, ClientProtocol
+from pdef import Invocation
 from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, NetworkError, \
-    ClientError, MethodNotFoundError, WrongMethodArgsError
+    ClientError, MethodNotFoundError, WrongMethodArgsError, MethodNotAllowedError
 
 
 REQUEST_CONTENT_TYPE = 'application/x-www-form-urlencoded'
 RESPONSE_CONTENT_TYPE = 'application/json; charset=utf-8'
+ERROR_RESPONSE_CONTENT_TYPE = 'text/plain; charset=utf-8'
 
 
-class RestClient(ClientProtocol):
+class RestClient(object):
     def __init__(self, url, session=None):
         '''Create an http client.
         @param url Base url.
@@ -170,7 +171,7 @@ class RestClient(ClientProtocol):
 
 
 class RestServer(object):
-    def __init__(self, interface, service_or_callable, on_invocation=None, on_exception=None,
+    def __init__(self, descriptor, service_or_callable, on_invocation=None, on_exception=None,
                  on_error=None):
         '''Create a WSGI server.
 
@@ -182,7 +183,7 @@ class RestServer(object):
                                     defined in the interface throws clause.
         @param on_error             Callback for unhandled exceptions.
         '''
-        self.interface = interface.__descriptor__
+        self.descriptor = descriptor
         self.supplier = service_or_callable if callable(service_or_callable) \
             else lambda: service_or_callable
 
@@ -198,16 +199,15 @@ class RestServer(object):
             invocation = self._parse_request(request)
             try:
                 result = self._invoke(invocation)
-                serialized = self._serialize_result(result, invocation)
-                response = RpcResponse(status=RpcStatus.OK, result=serialized)
+                response = self._result_to_response(result, invocation)
             except Exception, e:
-                response = self._handle_app_exception(e, invocation)
+                response = self._app_exc_to_response(e, invocation)
                 if not response:
                     # It's not an application exception, reraise it.
                     raise
-            return self._successful_response(response)
+            return self._rest_response(response)
         except Exception, e:
-            return self._error_response(e)
+            return self._error_rest_response(e)
 
     def _parse_request(self, request):
         '''Parse a request and return a chained invocation.'''
@@ -219,16 +219,16 @@ class RestServer(object):
             path = path[1:]
         parts = path.split('/')
 
-        interface = self.interface
+        descriptor = self.descriptor
         invocation = Invocation.root()
         while parts:
             part = parts.pop(0)
             # Find a method by a name or an index method.
-            if not interface:
+            if not descriptor:
                 raise MethodNotFoundError('Method not found')
 
             method = None
-            for m in interface.methods:
+            for m in descriptor.methods:
                 if m.name == part:
                     method = m
                     break
@@ -238,14 +238,14 @@ class RestServer(object):
             if not method:
                 raise MethodNotFoundError('Method not found')
 
-            if method.is_index:
+            if method.is_index and part != '':
                 parts.insert(0, part)
 
             # Parse method arguments.
             args = {}
             if method.is_remote and method.is_post:
                 if request.method.upper() != 'POST':
-                    raise ClientError('Method not allowed, POST required')
+                    raise MethodNotAllowedError('Method not allowed, POST required')
 
                 # Parse arguments as post params.
                 for arg in method.args:
@@ -268,12 +268,23 @@ class RestServer(object):
                     args[arg.name] = self._parse_arg(arg, value)
 
             invocation = invocation.next(method, **args)
-            interface = None if method.is_remote else method.result
+            descriptor = None if method.is_remote else method.result
 
         if not invocation.method.is_remote:
             raise MethodNotFoundError('Method not found')
 
         return invocation
+
+    def _parse_positional_arg(self, arg, value):
+        type0 = arg.type
+        if value == '':
+            return '' if type0.is_string else None
+
+        s = urllib.unquote(value).decode('utf-8')
+        if type0.is_primitive:
+            return type0.parse_string(s)
+        return type0.parse_json(s)
+
 
     def _parse_arg(self, arg, value):
         if arg.type.is_primitive or arg.type.is_enum:
@@ -285,25 +296,26 @@ class RestServer(object):
         service = self.supplier()
         return invocation.invoke(service)
 
-    def _serialize_result(self, result, invocation):
+    def _result_to_response(self, result, invocation):
         '''Serialize an invocation result and return an instance of RpcResponse.'''
         method = invocation.method
-        return method.result.to_object(result)
+        result = method.result.to_object(result)
+        return RpcResponse(status=RpcStatus.OK, result=result)
 
-    def _handle_app_exception(self, e, invocation):
+    def _app_exc_to_response(self, e, invocation):
         '''Handle an application exception and return an RpcResponse or return None.'''
         if invocation.exc and isinstance(e, invocation.exc.pyclass):
             result = invocation.exc.to_object(e)
             return RpcResponse(status=RpcStatus.EXCEPTION, result=result)
         return None
 
-    def _successful_response(self, response):
+    def _rest_response(self, rpc_response):
         '''Write an rpc response and return an http server response.'''
         status = 200
-        json = response.to_json()
+        json = rpc_response.to_json()
         return RestServerResponse(status, body=json)
 
-    def _error_response(self, e):
+    def _error_rest_response(self, e):
         '''Handle an unhandled error and return an RpcResponse.'''
         if isinstance(e, WrongMethodArgsError):
             http_status = 400
@@ -311,17 +323,25 @@ class RestServer(object):
         elif isinstance(e, MethodNotFoundError):
             http_status = 404
             result = e.text
+        elif isinstance(e, MethodNotAllowedError):
+            http_status = 405
+            result = e.text
         elif isinstance(e, ClientError):
             http_status = 400
             result = e.text
         elif isinstance(e, NetworkError):
             http_status = 503
             result = e.text
+        elif isinstance(e, ServerError):
+            http_status = 500
+            result = e.text
         else:
             http_status = 500
             result = 'Internal server error'
 
-        return RestServerResponse(http_status, body=result)
+        result = result.encode('utf-8', errors='replace')
+        return RestServerResponse(http_status, body=result,
+                                  content_type=ERROR_RESPONSE_CONTENT_TYPE)
 
 
 class RestServerRequest(object):

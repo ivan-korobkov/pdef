@@ -28,6 +28,9 @@ interface TestInterface : throws TestException {
     /** Exception method which raises a test exception. */
     excMethod() void;
 
+    /** Remote string method to set quoting/unquoting. */
+    stringMethod(text string) string;
+
     /** Interface (not remote) method which returns a next interface. */
     interfaceMethod(a int32; b int32) NextTestInterface;
 }
@@ -35,7 +38,7 @@ interface TestInterface : throws TestException {
 /** Next test interface. */
 interface NextTestInterface {
     /** Index method. */
-    indexMethod() string;
+    indexMethod() string, index;
 
     /** Remote method. */
     remoteMethod() messages.SimpleMessage;

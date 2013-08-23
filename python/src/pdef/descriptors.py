@@ -9,7 +9,7 @@ class Descriptor(object):
         self.pyclass_supplier = pyclass_supplier
 
         self.is_primitive = self.type in Type.PRIMITIVES
-        self.is_datatype = self.type in Type.DATATYPES
+        self.is_datatype = self.type in Type.DATA_TYPES
         self.is_interface = self.type == Type.INTERFACE
         self.is_message = self.type == Type.MESSAGE
         self.is_void = self.type == Type.VOID

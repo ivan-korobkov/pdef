@@ -1,22 +1,23 @@
 # encoding: utf-8
 import unittest
+import urllib
 import requests
-from StringIO import StringIO
 
 from pdef import descriptors
-from pdef.rest import RestClient, RESPONSE_CONTENT_TYPE
+from pdef.rest import RestClient, RESPONSE_CONTENT_TYPE, RestServerRequest, \
+    ERROR_RESPONSE_CONTENT_TYPE
 from pdef.test.messages_pd import SimpleMessage
 from pdef.test.interfaces_pd import TestInterface, TestException
 
 from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, NetworkError, \
-    ClientError, MethodNotFoundError, WrongMethodArgsError
+    ClientError, MethodNotFoundError, WrongMethodArgsError, MethodNotAllowedError
 
 
 class TestRestClient(unittest.TestCase):
     # Fixture methods.
 
     def proxy(self):
-        return TestInterface.create_proxy_client(lambda invocation: invocation)
+        return TestInterface.create_proxy(lambda invocation: invocation)
 
     def client(self):
         return RestClient('http://example.com/')
@@ -171,3 +172,190 @@ class TestRestClient(unittest.TestCase):
             self.fail('TestException is not raised')
         except TestException, e:
             assert e == exc
+
+
+class TestRestServer(unittest.TestCase):
+    def server(self):
+        service = TestInterface()
+        return service.create_rest_server()
+
+    def proxy(self):
+        return TestInterface.create_proxy(lambda invocation: invocation)
+
+    def get_request(self, path, query=None, post=None):
+        return RestServerRequest('GET', path, query=query, post=post)
+
+    def post_request(self, path, query=None, post=None):
+        return RestServerRequest('POST', path, query=query, post=post)
+
+    def test_handle(self):
+        pass
+
+    def test_parse_request__index_method(self):
+        request = self.get_request('/', query={'a': '123', 'b': '456'})
+
+        invocation = self.server()._parse_request(request)
+        assert invocation.method.name == 'indexMethod'
+        assert invocation.args == {'a': 123, 'b': 456}
+
+    def test_parse_request__post_method(self):
+        request = self.post_request('/postMethod', post={'aList': '[1, 2, 3]', 'aMap': '{"1":2}'},)
+
+        invocation = self.server()._parse_request(request)
+        assert invocation.method.name == 'postMethod'
+        assert invocation.args == {'aList': [1, 2, 3], 'aMap': {1: 2}}
+
+    def test_parse_request__post_method_not_allowed(self):
+        request = self.get_request('/postMethod', post={})
+
+        self.assertRaises(MethodNotAllowedError, self.server()._parse_request, request)
+
+    def test_parse_request__remote_method(self):
+        request = self.get_request('/remoteMethod', query={'a': '1', 'b': '2'})
+
+        invocation = self.server()._parse_request(request)
+        assert invocation.method.name == 'remoteMethod'
+        assert invocation.args == {'a': 1, 'b': 2}
+
+    def test_parse_request__chained_method_index(self):
+        request = self.get_request('/interfaceMethod/1/2/')
+
+        chain = self.server()._parse_request(request).to_chain()
+        invocation0 = chain[0]
+        invocation1 = chain[1]
+
+        assert len(chain) == 2
+        assert invocation0.method.name == 'interfaceMethod'
+        assert invocation0.args == {'a': 1, 'b': 2}
+        assert invocation1.method.name == 'indexMethod'
+        assert invocation1.args == {}
+
+    def test_parse_request__chained_method_remote(self):
+        request = self.get_request('/interfaceMethod/1/2/stringMethod', query={'text': u'привет'})
+
+        chain = self.server()._parse_request(request).to_chain()
+        invocation0 = chain[0]
+        invocation1 = chain[1]
+
+        assert len(chain) == 2
+        assert invocation0.method.name == 'interfaceMethod'
+        assert invocation0.args == {'a': 1, 'b': 2}
+        assert invocation1.method.name == 'stringMethod'
+        assert invocation1.args == {'text': u'привет'}
+
+    def test_parse_request__interface_method_not_remote(self):
+        request = self.get_request('/interfaceMethod/1/2')
+
+        self.assertRaises(MethodNotFoundError, self.server()._parse_request, request)
+
+    def test_parse_positional_arg__primitive(self):
+        arg = descriptors.arg('arg', lambda: descriptors.string)
+
+        s = self.server()._parse_positional_arg(arg, urllib.quote(u'привет, мир?'.encode('utf-8')))
+        assert s == u'привет, мир?'
+
+    def test_parse_positionsl_arg__message(self):
+        arg = descriptors.arg('arg', lambda: SimpleMessage.__descriptor__)
+
+        msg = SimpleMessage(aString=u'привет', aBool=True, anInt16=123)
+        value = urllib.quote(msg.to_json().encode('utf-8'))
+
+        msg0 = self.server()._parse_positional_arg(arg, value)
+        assert msg0 == msg
+
+    def test_parse_arg__primitive(self):
+        arg = descriptors.arg('arg', lambda: descriptors.int32)
+
+        assert self.server()._parse_arg(arg, '123') == 123
+
+    def test_parse_arg__message(self):
+        arg = descriptors.arg('arg', lambda: SimpleMessage.__descriptor__)
+
+        msg = SimpleMessage(aString=u'привет', aBool=True, anInt16=7)
+        s = msg.to_json()
+
+        msg0 = self.server()._parse_arg(arg, s)
+        assert msg0 == msg
+
+    def test_result_to_response(self):
+        invocation = self.proxy().queryMethod()
+
+        msg = SimpleMessage(aString=u'привет', aBool=False, anInt16=0)
+        response = self.server()._result_to_response(msg, invocation)
+
+        assert response == RpcResponse(status=RpcStatus.OK, result=msg.to_dict())
+
+    def test_app_exc_to_response__expected(self):
+        self.fail('Not implemented')
+
+    def test_app_exc_to_response__unexpected(self):
+        self.fail('Not implemented')
+
+    def test_rest_response__ok(self):
+        response = RpcResponse(status=RpcStatus.OK, result='Hello, world!')
+        resp = self.server()._rest_response(response)
+
+        assert resp.status == 200
+        assert resp.content_type == RESPONSE_CONTENT_TYPE
+        assert resp.body == response.to_json()
+        assert resp.content_length == len(resp.body)
+
+    def test_rest_response_exception(self):
+        response = RpcResponse(status=RpcStatus.OK, result=TestException().to_dict())
+        resp = self.server()._rest_response(response)
+
+        assert resp.status == 200
+        assert resp.content_type == RESPONSE_CONTENT_TYPE
+        assert resp.body == response.to_json()
+        assert resp.content_length == len(resp.body)
+
+    def test_error_response__wrong_method_args(self):
+        e = WrongMethodArgsError(u'Неправильные аргументы')
+        resp = self.server()._error_rest_response(e)
+
+        assert resp.status == 400
+        assert resp.body == e.text.encode('utf-8')
+        assert resp.content_type == ERROR_RESPONSE_CONTENT_TYPE
+
+    def test_error_response__method_not_found(self):
+        e = MethodNotFoundError(u'Метод не найден')
+        resp = self.server()._error_rest_response(e)
+
+        assert resp.status == 404
+        assert resp.body == e.text.encode('utf-8')
+
+    def test_error_response__method_not_allowed(self):
+        e = MethodNotAllowedError(u'HTTP метод запрещен')
+        resp = self.server()._error_rest_response(e)
+
+        assert resp.status == 405
+        assert resp.body == e.text.encode('utf-8')
+
+    def test_error_response__client_error(self):
+        e = ClientError(u'Ошибка клиента')
+        resp = self.server()._error_rest_response(e)
+
+        assert resp.status == 400
+        assert resp.body == e.text.encode('utf-8')
+
+    def test_error_response__network_error(self):
+        e = NetworkError(u'Сетевая ошибка')
+        resp = self.server()._error_rest_response(e)
+
+        assert resp.status == 503
+        assert resp.body == e.text.encode('utf-8')
+
+    def test_error_response__server_error(self):
+        e = ServerError(u'Ошибка сервера')
+        resp = self.server()._error_rest_response(e)
+
+        assert resp.status == 500
+        assert resp.body == e.text.encode('utf-8')
+
+    def test_error_response__internal_server_error(self):
+        e = ValueError('Unhandled exception')
+        resp = self.server()._error_rest_response(e)
+
+        assert resp.status == 500
+        assert resp.body == 'Internal server error'
+

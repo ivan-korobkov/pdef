@@ -114,7 +114,7 @@ class TypeRef(object):
 
     @property
     def is_datatype(self):
-        return self.type in Type.DATATYPES
+        return self.type in Type.DATA_TYPES
 
 
 class ListRef(TypeRef):

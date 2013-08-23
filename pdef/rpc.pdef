@@ -24,13 +24,17 @@ exception RpcError {
 /** Internal server error. */
 exception ServerError : RpcError {}
 
-/** Temporary network error (timeout, etc), the request can be repeated. */
+/** Temporary network error, service unavailable, the request can be repeated. */
 exception NetworkError : RpcError {}
 
 /** Client error (bad request), the request should not be repeated. */
 exception ClientError : RpcError {}
 
-/** Client error subclass which states that a method is not found. */
+/** Method not found. */
 exception MethodNotFoundError : ClientError {}
 
+/** Wrong method arguments. */
 exception WrongMethodArgsError : ClientError {}
+
+/** HTTP method is not allowed, for example, a get request to a post method. */
+exception MethodNotAllowedError : ClientError {}

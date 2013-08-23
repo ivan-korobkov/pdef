@@ -33,7 +33,7 @@ class Type(object):
     VOID = 'void'
 
     PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
-    DATATYPES = PRIMITIVES + (OBJECT, LIST, MAP, SET, DEFINITION, ENUM, MESSAGE, EXCEPTION)
+    DATA_TYPES = PRIMITIVES + (OBJECT, LIST, MAP, SET, DEFINITION, ENUM, MESSAGE, EXCEPTION)
 
 
 class Message(object):
@@ -101,29 +101,31 @@ class Interface(object):
     __descriptor__ = None
 
     @classmethod
-    def create_proxy_client(cls, protocol):
+    def create_proxy(cls, callable_client):
         '''Create a client with a given protocol.'''
-        return Proxy(cls.__descriptor__, protocol)
+        return Proxy(cls.__descriptor__, callable_client)
 
     @classmethod
     def create_rest_client(cls, url, session=None):
         '''Create a rest client.'''
         from pdef.rest import RestClient
-        protocol = RestClient(url, session)
-        return cls.create_proxy_client(protocol)
+        client = RestClient(url, session)
+        return cls.create_proxy(client)
 
-    def to_rest_server(self):
-        pass
+    def create_rest_server(self):
+        '''Create a rest server.'''
+        from pdef.rest import RestServer
+        return RestServer(self.__descriptor__, self)
 
-    def to_wsgi_server(self):
+    def create_wsgi_server(self):
         pass
 
 
 class Proxy(object):
     '''Reflective client proxy.'''
-    def __init__(self, descriptor, client, parent_invocation=None):
+    def __init__(self, descriptor, callable_client, parent_invocation=None):
         self._descriptor = descriptor
-        self._client = client
+        self._client = callable_client
         self._invocation = parent_invocation or Invocation.root()
 
     def __repr__(self):
@@ -154,17 +156,6 @@ class Proxy(object):
 
         # The method result is an interface, so create a new client for it.
         return Proxy(method.result, self._client, invocation)
-
-
-class ClientProtocol(object):
-    '''Client protocol interface.'''
-    def __call__(self, invocation):
-        '''Handle an invocation and return a result or raise an exception.'''
-        return self.handle(invocation)
-
-    def handle(self, invocation):
-        '''Handle an invocation and return a result or raise an exception.'''
-        raise NotImplemented
 
 
 class Invocation(object):

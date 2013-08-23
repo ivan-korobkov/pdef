@@ -152,21 +152,19 @@ class TestRestClient(unittest.TestCase):
 
     def test_parse_response__ok(self):
         msg = SimpleMessage(aString='hello', aBool=False, anInt16=127)
-        invocation = self.proxy().queryMethod(msg)
-
         text = RpcResponse(status=RpcStatus.OK, result=msg).to_json()
         response = self.response(200, text)
 
+        invocation = self.proxy().queryMethod(msg)
         result = self.client()._parse_response(response, invocation)
         assert result == msg
 
     def test_parse_response__exception(self):
         exc = TestException(text='Application exception!')
-        invocation = self.proxy().excMethod()
-
         text = RpcResponse(status=RpcStatus.EXCEPTION, result=exc).to_json()
         response = self.response(200, text)
 
+        invocation = self.proxy().excMethod()
         try:
             self.client()._parse_response(response, invocation)
             self.fail('TestException is not raised')
@@ -286,10 +284,20 @@ class TestRestServer(unittest.TestCase):
         assert response == RpcResponse(status=RpcStatus.OK, result=msg.to_dict())
 
     def test_app_exc_to_response__expected(self):
-        self.fail('Not implemented')
+        invocation = self.proxy().excMethod()
+
+        exc = TestException(u'Привет, мир')
+        response = self.server()._app_exc_to_response(exc, invocation)
+
+        assert response == RpcResponse(status=RpcStatus.EXCEPTION, result=exc.to_dict())
 
     def test_app_exc_to_response__unexpected(self):
-        self.fail('Not implemented')
+        invocation = self.proxy().excMethod()
+
+        exc = TestException()
+        response = self.server()._app_exc_to_response(ValueError(), invocation)
+
+        assert response is None
 
     def test_rest_response__ok(self):
         response = RpcResponse(status=RpcStatus.OK, result='Hello, world!')

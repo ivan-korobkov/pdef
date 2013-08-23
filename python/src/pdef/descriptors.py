@@ -59,7 +59,7 @@ class MessageDescriptor(Descriptor):
         self.subtypes = dict(subtypes) if subtypes else {}
 
         self.declared_fields = tuple(declared_fields) if declared_fields else ()
-        self.inherited_fields = base.__descriptor__.fields if base else ()
+        self.inherited_fields = base.fields if base else ()
         self.fields = self.inherited_fields + self.declared_fields
 
         self.discriminator = None
@@ -67,6 +67,9 @@ class MessageDescriptor(Descriptor):
             if field.is_discriminator:
                 self.discriminator = field
                 break
+
+        for field in self.declared_fields:
+            field.message = self
 
     def subtype(self, type0):
         '''Returns a subtype descriptor by a type enum value.'''
@@ -119,6 +122,7 @@ class FieldDescriptor(object):
         self.name = name
         self.type_supplier = type_supplier
         self.is_discriminator = is_discriminator
+        self.message = None  # Set in the declaring message.
 
     @property
     def type(self):
@@ -134,14 +138,20 @@ class FieldDescriptor(object):
 
 class InterfaceDescriptor(Descriptor):
     '''Interface descriptor.'''
-    def __init__(self, pyclass_supplier, base=None, exc_supplier=None, declared_methods=None):
+    def __init__(self, pyclass_supplier,
+                 base=None,
+                 exc_supplier=None,
+                 declared_methods=None):
         super(InterfaceDescriptor, self).__init__(Type.INTERFACE, pyclass_supplier)
         self.base = base
         self.exc_supplier = exc_supplier
 
         self.declared_methods = tuple(declared_methods) if declared_methods else ()
-        self.inherited_methods = base.__descriptor__.methods if base else ()
+        self.inherited_methods = base.methods if base else ()
         self.methods = self.inherited_methods + self.declared_methods
+
+        for method in self.declared_methods:
+            method.interface = self
 
     @property
     def exc(self):
@@ -155,13 +165,19 @@ class MethodDescriptor(object):
         self.result_supplier = result_supplier
         self.is_index = is_index
         self.is_post = is_post
+        self.interface = None  # Set in the declaring interface.
 
         self.args = []
 
     @property
     def result(self):
-        '''Return result descriptor.'''
+        '''Return a result descriptor.'''
         return self.result_supplier()
+
+    @property
+    def exc(self):
+        '''Return a expected interface exception.'''
+        return self.interface.exc if self.interface else None
 
     @property
     def is_remote(self):

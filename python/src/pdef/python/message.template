@@ -1,6 +1,6 @@
 
 {%- macro render_descriptor_base() %}
-        base={{ base.name }},
+        base={{ base.descriptor }},
         base_type={{ base_type.name if base_type else None }},
 {% endmacro %}
 

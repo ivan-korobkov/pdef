@@ -23,10 +23,10 @@
 class {{ name }}({{ root_or_base }}):
     __descriptor__ = descriptors.interface(lambda: {{ name }},
     {% if base %}
-        base={{ base.name }},
+        base={{ base.descriptor }},
     {% endif %}
     {% if exc %}
-        exc_supplier=lambda: {{ exc.name }},
+        exc_supplier=lambda: {{ exc.descriptor }},
     {% endif %}
     {% if declared_methods %}
         declared_methods=[

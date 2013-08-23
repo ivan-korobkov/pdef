@@ -176,8 +176,9 @@ class Invocation(object):
         self.args = dict(args) if args else {}
         self.parent = parent
 
-        self.exc = None #method.exc if method else None
         self.result = method.result if method else None
+        self.exc = method.exc if method else (parent.exc if parent else None)
+
         self.is_root = method is None
 
     def next(self, method, *args, **kwargs):

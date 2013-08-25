@@ -8,6 +8,7 @@ enum TestEnum {
 
 
 /** Simple message . */
+@form
 message SimpleMessage {
     aString     string;
     aBool       bool;

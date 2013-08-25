@@ -770,12 +770,12 @@ class MethodArg(Symbol):
     '''Single method argument.'''
     @classmethod
     def parse_from(cls, node, lookup):
-        return MethodArg(node.name, lookup(node.type), is_query=node.is_query)
+        return MethodArg(node.name, lookup(node.type))
 
-    def __init__(self, name, definition, is_query=False):
+    def __init__(self, name, definition):
         self.name = name
         self.type = definition
-        self.is_query = is_query
+        self.is_query = False
 
     def __repr__(self):
         return self.name

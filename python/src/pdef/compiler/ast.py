@@ -45,7 +45,8 @@ class Definition(object):
 
 
 class Message(Definition):
-    def __init__(self, name, base=None, base_type=None, fields=None, is_exception=False):
+    def __init__(self, name, base=None, base_type=None, fields=None, is_exception=False,
+                 is_form=False):
         super(Message, self).__init__(name, Type.MESSAGE)
 
         self.base = base
@@ -53,14 +54,15 @@ class Message(Definition):
 
         self.fields = tuple(fields) if fields else ()
         self.is_exception = is_exception
+        self.is_form = is_form
 
 
 class Field(object):
-    def __init__(self, name, type0, is_discriminator=False, is_query=False):
+    def __init__(self, name, type0, is_discriminator=False):
         self.name = name
         self.type = type0
         self.is_discriminator = is_discriminator
-        self.is_query = is_query
+        self.is_query = False
 
 
 class Enum(Definition):
@@ -78,12 +80,6 @@ class Interface(Definition):
         self.methods = tuple(methods) if methods else ()
 
 
-class InterfaceOptions(object):
-    def __init__(self, base=None, exc=None):
-        self.base = base
-        self.exc = exc
-
-
 class InterfaceBase(object):
     def __init__(self, type0):
         self.type = type0
@@ -99,6 +95,12 @@ class Method(object):
 
         self.is_index = is_index
         self.is_post = is_post
+
+
+class MethodArg(object):
+    def __init__(self, name, type0):
+        self.name = name
+        self.type = type0
 
 
 class TypeRef(object):

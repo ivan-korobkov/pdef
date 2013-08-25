@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os.path
 import unittest
-import pdef.compiler.parser
+from pdef.compiler import parser
 
 
 class TestParser(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestParser(unittest.TestCase):
 
     def _parse(self, filename):
         path = self._filepath(filename)
-        return pdef.compiler.parser.parse_file(path)
+        return parser.parse_file(path)
 
     def test_parse__messages(self):
         module = self._parse('sources/test_messages.pdef')

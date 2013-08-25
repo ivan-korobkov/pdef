@@ -29,26 +29,31 @@ class _Tokens(object):
         'STRING', 'OBJECT', 'VOID', 'LIST', 'SET', 'MAP', 'ENUM',
         'MESSAGE', 'EXCEPTION', 'INTERFACE')
 
-    reserved = types + ('MODULE', 'FROM', 'IMPORT') \
-               + ('THROWS', 'DISCRIMINATOR', 'QUERY', 'INDEX', 'POST')
+    reserved = types + ('MODULE', 'FROM', 'IMPORT', 'THROWS')
 
-    tokens = reserved + (
-        'COLON', 'COMMA', 'SEMI',
-        'LESS', 'GREATER',
-        'LBRACE', 'RBRACE',
-        'LPAREN', 'RPAREN',
-        'IDENTIFIER', 'DOC')
+    tokens = reserved + \
+        ('COLON', 'COMMA', 'SEMI',
+         'LESS', 'GREATER', 'LBRACE', 'RBRACE',
+         'LPAREN', 'RPAREN',
+         'IDENTIFIER', 'DOC') \
+        + ('DISCRIMINATOR', 'FORM', 'INDEX', 'POST')
 
-    # Regular expressions for simple rules
+    # Regexp for simple rules.
     t_COLON = r'\:'
     t_COMMA = r'\,'
     t_SEMI = r'\;'
     t_LESS = r'\<'
     t_GREATER = r'\>'
-    t_LBRACE  = r'\{'
-    t_RBRACE  = r'\}'
+    t_LBRACE = r'\{'
+    t_RBRACE = r'\}'
     t_LPAREN = r'\('
     t_RPAREN = r'\)'
+
+    # Regexp for options.
+    t_DISCRIMINATOR = r'@discriminator'
+    t_FORM = r'@form'
+    t_INDEX = r'@index'
+    t_POST = r'@post'
 
     # Ignored characters
     t_ignore = " \t"
@@ -60,12 +65,8 @@ class _Tokens(object):
         reserved_map[r.lower()] = r
 
     def t_IDENTIFIER(self, t):
-        r'~?[a-zA-Z_]{1}[a-zA-Z0-9_]*(\.[a-zA-Z_]{1}[a-zA-Z0-9_]*)*'
-        if t.value.startswith('~'): # Allows to use reserved words.
-            t.value = t.value[1:]
-        else:
-            t.type = self.reserved_map.get(t.value, "IDENTIFIER")
-
+        r'[a-zA-Z_]{1}[a-zA-Z0-9_]*(\.[a-zA-Z_]{1}[a-zA-Z0-9_]*)*'
+        t.type = self.reserved_map.get(t.value, 'IDENTIFIER')
         return t
 
     def t_comment(self, t):
@@ -209,15 +210,23 @@ class _GrammarRules(object):
     # Message definition
     def p_message(self, t):
         '''
-        message : message_or_exc IDENTIFIER message_base LBRACE field_list RBRACE
+        message : message_options message_or_exc IDENTIFIER message_base LBRACE fields RBRACE
         '''
-        name = t[2]
-        base, base_type = t[3]
-        fields = t[5]
-        is_exception = t[1].lower() == 'exception'
+        is_form = '@form' in t[1]
+        is_exception = t[2].lower() == 'exception'
+        name = t[3]
+        base, base_type = t[4]
+        fields = t[6]
 
         t[0] = ast.Message(name, base=base, base_type=base_type, fields=fields,
                            is_exception=is_exception)
+
+    def p_message_options(self, t):
+        '''
+        message_options : FORM
+                        | empty
+        '''
+        t[0] = [t[1]] if t[1] else []
 
     def p_message_or_exception(self, t):
         '''
@@ -241,76 +250,50 @@ class _GrammarRules(object):
         else:
             raise SyntaxError
 
-    def p_field_list(self, t):
-        '''
-        field_list : fields SEMI
-                   | fields
-        '''
-        t[0] = t[1]
-
     # List of message fields
     def p_fields(self, t):
         '''
-        fields : fields SEMI field
+        fields : fields field
                | field
                | empty
         '''
-        self._list(t, separated=True)
+        self._list(t)
 
     # Single message field
     def p_field(self, t):
         '''
-        field : doc IDENTIFIER type field_options
+        field : doc IDENTIFIER type field_options SEMI
         '''
-        options = t[4]
-        is_discriminator = 'discriminator' in options
-        is_query = 'query' in options
-        t[0] = ast.Field(t[2], t[3], is_discriminator=is_discriminator, is_query=is_query)
+        doc = t[1]
+        name = t[2]
+        type0 = t[3]
+        is_discriminator = '@discriminator' in t[4]
+        t[0] = ast.Field(name, type0, is_discriminator=is_discriminator)
 
     def p_field_options(self, t):
         '''
-        field_options : COMMA field_option_list
+        field_options : DISCRIMINATOR
                       | empty
         '''
-        if len(t) == 3:
-            t[0] = t[2]
-        else:
-            t[0] = []
-
-    def p_field_option_list(self, t):
-        '''
-        field_option_list : field_option_list COMMA field_option
-                          | field_option
-        '''
-        self._list(t, separated=True)
-
-    def p_field_option(self, t):
-        '''
-        field_option : DISCRIMINATOR
-                     | QUERY
-        '''
-        t[0] = t[1]
+        t[0] = [t[1]] if t[1] else []
 
     # Interface definition
     def p_interface(self, t):
         '''
-        interface : INTERFACE IDENTIFIER interface_options LBRACE methods RBRACE
+        interface : INTERFACE IDENTIFIER interface_base_exc LBRACE methods RBRACE
         '''
         name = t[2]
-        options = t[3]
+        base, exc = t[3]
         methods = t[5]
-
-        base = options.base if options else None
-        exc = options.exc if options else None
 
         t[0] = ast.Interface(name, base=base, exc=exc, methods=methods)
 
-    def p_interface_options(self, t):
+    def p_interface_base_exc(self, t):
         '''
-        interface_options : COLON type COMMA THROWS type
-                          | COLON THROWS type
-                          | COLON type
-                          | empty
+        interface_base_exc : COLON type COMMA THROWS type
+                           | COLON THROWS type
+                           | COLON type
+                           | empty
         '''
         base = None
         exc = None
@@ -322,7 +305,7 @@ class _GrammarRules(object):
         elif len(t) == 3:
             base = t[2]
 
-        t[0] = ast.InterfaceOptions(base=base, exc=exc)
+        t[0] = base, exc
 
     def p_methods(self, t):
         '''
@@ -334,32 +317,37 @@ class _GrammarRules(object):
 
     def p_method(self, t):
         '''
-        method : doc IDENTIFIER LPAREN fields RPAREN type method_options SEMI
+        method : doc method_options IDENTIFIER LPAREN method_args RPAREN type SEMI
         '''
         doc = t[1]
-        name = t[2]
-        args = t[4]
-        result = t[6]
-        options = t[7]
-        is_index = 'index' in options
-        is_post = 'post' in options
+        options = t[2]
+        name = t[3]
+        args = t[5]
+        result = t[7]
+        is_index = '@index' in options
+        is_post = '@post' in options
         t[0] = ast.Method(name, args=args, result=result, doc=doc, is_index=is_index,
                           is_post=is_post)
 
+    def p_method_args(self, t):
+        '''
+        method_args : method_args COMMA method_arg
+                    | method_arg
+                    | empty
+        '''
+        self._list(t, separated=True)
+
+    def p_method_arg(self, t):
+        '''
+        method_arg : doc IDENTIFIER type
+        '''
+        t[0] = ast.MethodArg(t[2], t[3])
+
     def p_method_options(self, t):
         '''
-        method_options : COMMA method_option_list
+        method_options : method_options method_option
+                       | method_option
                        | empty
-        '''
-        if len(t) == 3:
-            t[0] = t[2]
-        else:
-            t[0] = []
-
-    def p_method_option_list(self, t):
-        '''
-        method_option_list : method_option_list COMMA method_option
-                           | method_option
         '''
         self._list(t, separated=True)
 

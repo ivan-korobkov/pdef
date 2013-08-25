@@ -6,7 +6,7 @@ enum PolymorphicType {
 }
 
 message Base {
-    type        PolymorphicType, discriminator;
+    type    PolymorphicType     @discriminator;
 }
 
 message Subtype : Base(PolymorphicType.SUBTYPE) {

@@ -37,26 +37,29 @@
         exception_token='exception'
         enum_token='enum'
 
-        // Options
         throws='throws'
-        discriminator='discriminator'
-        query='query'
-        index='index'
-        post='post'
 
-        id='regexp:[a-zA-Z]{1}[a-zA-Z_0-9\.]*'
+        // Options
+        discriminator='@discriminator'
+        form='@form'
+        index='@index'
+        post='@post'
+
+        // Idd, docs and comments.
+        // Dots cannot be used in definition, method, enum value, and field names.
+        id='regexp:[a-zA-Z]{1}[a-zA-Z0-9_]*(\.[a-zA-Z]{1}[a-zA-Z0-9_]*)*'
         doc='regexp:/\*\*(.|\n|\r)*?\*/'
         comment='regexp://.*'
     ]
 }
 // Single quotes (') are used to enclose tokens in GrammarKit when they clash with the rules,
-// i.e. the message rule and the message_token "message".
+// i.e. the message rule and the message_token 'message'.
 
-File          ::= doc? module id ';' Import * Definition *
+File          ::= doc? module id ';' ImportBlock* Definition*
 
-Import        ::= AbsoluteImport | RelativeImport
-AbsoluteImport    ::= import id ';'
-RelativeImport    ::= from id import id (',' id)* ';'
+ImportBlock     ::= AbsoluteImport | RelativeImport
+AbsoluteImport  ::= import id ';'
+RelativeImport  ::= from id import id (',' id)* ';'
 
 Definition    ::= doc? (Enum | Message | Interface)
 
@@ -64,21 +67,21 @@ Enum          ::= 'enum' id '{' EnumValues '}'
 EnumValues    ::= EnumValue (',' EnumValue)* ';'?
 EnumValue     ::= doc? id
 
-Message       ::= ('message' | 'exception') id (':' MessageBase)? '{' Fields? '}'
-MessageBase   ::= (id '(' id ')') | id
+Message       ::= MessageOption* ('message' | 'exception') id (':' MessageBase)? '{' Field* '}'
+MessageBase   ::= id ('(' id ')')?  // Base with an optional polymorphic type.
+MessageOption ::= '@form'
 
-Fields        ::= Field (';' Field)* ';'?
-Field         ::= doc? id Type (',' FieldOptions)?
-FieldOptions  ::= FieldOption (',' FieldOption)*
-FieldOption   ::= discriminator | query
+Field         ::= doc? id Type FieldOption* ';'
+FieldOption   ::= '@discriminator'
 
-Interface     ::= 'interface' id (':' InterfaceOptions)? '{' Method* '}'
-InterfaceOptions  ::= InterfaceExc | id (',' InterfaceExc)?
-InterfaceExc      ::= throws id
+Interface     ::= 'interface' id (':' InterfaceBase? InterfaceExc?)? '{' Method* '}'
+InterfaceBase ::= id
+InterfaceExc  ::= throws id
 
-Method        ::= doc? id '(' Fields? ')' Type (',' MethodOptions)? ';'
-MethodOptions ::= MethodOption (',' MethodOption)*
-MethodOption  ::= index | post
+Method        ::= doc? MethodOption* id '(' MethodArgs? ')' Type ';'
+MethodArg     ::= doc? id Type
+MethodArgs    ::= MethodArg (',' MethodArg)*
+MethodOption  ::= '@index' | '@post'
 
 Type          ::= ValueType | ListType | SetType | MapType | id
 ValueType     ::= bool

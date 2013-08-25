@@ -157,7 +157,7 @@ class TestRestClient(unittest.TestCase):
         text = RpcResponse(status=RpcStatus.OK, result=msg).to_json()
         response = self.response(200, text)
 
-        invocation = self.proxy().queryMethod(msg)
+        invocation = self.proxy().formMethod(msg)
         status, result = self.client()._parse_response(response, invocation)
 
         assert status == RpcStatus.OK
@@ -279,7 +279,7 @@ class TestRestServer(unittest.TestCase):
         assert msg0 == msg
 
     def test_result_to_response(self):
-        invocation = self.proxy().queryMethod()
+        invocation = self.proxy().formMethod()
 
         msg = SimpleMessage(aString=u'привет', aBool=False, anInt16=0)
         response = self.server()._result_to_response(msg, invocation)
@@ -442,7 +442,7 @@ class TestIntegration(unittest.TestCase):
         assert client.indexMethod(1, 2) == 3
         assert client.remoteMethod(10, 2) == '5'
         assert client.postMethod([1, 2, 3], {4: 5}) == [1, 2, 3, 4, 5]
-        assert client.queryMethod(msg) == msg
+        assert client.formMethod(msg) == msg
         assert client.voidMethod() is None
         assert client.stringMethod(u'Как дела?') == u'Как дела?'
         assert client.interfaceMethod(1, 2).indexMethod() == 'chained call 1 2'
@@ -459,7 +459,7 @@ class IntegrationService(TestInterface):
     def postMethod(self, aList=None, aMap=None):
         return list(aList) + aMap.keys() + aMap.values()
 
-    def queryMethod(self, msg=None):
+    def formMethod(self, msg=None):
         return msg
 
     def voidMethod(self):

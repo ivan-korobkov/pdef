@@ -1,7 +1,8 @@
 # encoding: utf-8
+import httplib
+import logging
 import urllib
 import urlparse
-import httplib
 
 import requests
 
@@ -16,24 +17,79 @@ RESPONSE_CONTENT_TYPE = 'application/json; charset=utf-8'
 ERROR_RESPONSE_CONTENT_TYPE = 'text/plain; charset=utf-8'
 
 
+class RestClientListener(object):
+    '''RestClient listener with event callbacks.'''
+    def on_invocation(self, invocation):
+        '''Called on an invocation.'''
+        pass
+
+    def on_request(self, request, invocation):
+        '''Called on creating a request from an invocation.'''
+        pass
+
+    def on_response(self, response, invocation):
+        '''Called on receiving a response.'''
+        pass
+
+    def on_result(self, result, invocation):
+        '''Called on parsing a successful response.'''
+        pass
+
+    def on_exc(self, exc, invocation):
+        '''Called on parsing an expected application exception.'''
+        pass
+
+    def on_error(self, error, invocation):
+        '''Called on any unexpected error.'''
+        pass
+
+
 class RestClient(object):
-    def __init__(self, url, session=None):
+    logger = logging.getLogger('pdef.rest.client')
+
+    def __init__(self, url, session=None, listener=None):
         '''Create an http client.
         @param url Base url.
         @param session A session to be use or None, see requests.session.
         '''
         self.url = url
         self.session = session
+        self.listener = listener or RestClientListener()
 
     def __call__(self, invocation):
-        return self.handle(invocation)
+        return self.invoke(invocation)
 
-    def handle(self, invocation):
+    def invoke(self, invocation):
         '''Serialize an invocation, send a request, parse a response and return the result.'''
-        request = self._create_request(invocation)
-        response = self._send_request(request)
-        result = self._parse_response(response, invocation)
-        return result
+        logger = self.logger
+        listener = self.listener
+
+        try:
+            logger.info('Invoking %s', invocation)
+            listener.on_invocation(invocation)
+
+            request = self._create_request(invocation)
+            listener.on_request(request, invocation)
+
+            response = self._send_request(request)
+            listener.on_response(response, invocation)
+
+            status, result = self._parse_response(response, invocation)
+            if status == RpcStatus.OK:
+                logger.debug('Received a result %s', result)
+                listener.on_result(result, invocation)
+                return result
+
+            exc = result
+            logger.debug('Received an exception %s', exc)
+            listener.on_exc(exc, invocation)
+        except Exception, e:
+            logger.exception('Error, e=%s, invocation=%s', e, invocation)
+            listener.on_error(e, invocation)
+            raise
+
+        # Raise the expected exception after the unhandled catch block.
+        raise exc
 
     def _create_request(self, invocation):
         '''Convert an invocation into a requests.Request.'''
@@ -122,7 +178,7 @@ class RestClient(object):
         return session.send(prepared)
 
     def _parse_response(self, http_response, invocation):
-        '''Parse a requests.Response into a result or raise an exception.'''
+        '''Parse a requests.Response into a result or an exception, return (RpcStatus, result).'''
 
         # If it is not a json response, raise an rpc exception
         # based on the status code.
@@ -160,7 +216,7 @@ class RestClient(object):
         if status == RpcStatus.OK:
             # It's a successful result.
             # Parse it using the invocation method result descriptor.
-            return invocation.result.parse_object(result)
+            return RpcStatus.OK, invocation.result.parse_object(result)
 
         elif status == RpcStatus.EXCEPTION:
             # It's an excepcted exception.
@@ -169,7 +225,7 @@ class RestClient(object):
             exc = invocation.exc
             if not exc:
                 raise ClientError('Unsupported application exception: %s' % result)
-            raise exc.parse_object(result)
+            return RpcStatus.EXCEPTION, exc.parse_object(result)
 
         raise ClientError('Unsupported rpc response status: response=%s' % response)
 

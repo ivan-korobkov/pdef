@@ -158,7 +158,9 @@ class TestRestClient(unittest.TestCase):
         response = self.response(200, text)
 
         invocation = self.proxy().queryMethod(msg)
-        result = self.client()._parse_response(response, invocation)
+        status, result = self.client()._parse_response(response, invocation)
+
+        assert status == RpcStatus.OK
         assert result == msg
 
     def test_parse_response__exception(self):
@@ -167,11 +169,10 @@ class TestRestClient(unittest.TestCase):
         response = self.response(200, text)
 
         invocation = self.proxy().excMethod()
-        try:
-            self.client()._parse_response(response, invocation)
-            self.fail('TestException is not raised')
-        except TestException, e:
-            assert e == exc
+        status, result = self.client()._parse_response(response, invocation)
+
+        assert status == RpcStatus.EXCEPTION
+        assert result == exc
 
 
 class TestRestServer(unittest.TestCase):
@@ -422,6 +423,10 @@ class TestIntegration(unittest.TestCase):
         self.server = make_server('localhost', 0, app)
         self.server_thread = Thread(target=self.server.serve_forever)
         self.server_thread.start()
+
+        import logging
+        FORMAT = '%(name)s %(levelname)s - %(message)s'
+        logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 
     def tearDown(self):
         self.server.shutdown()

@@ -192,9 +192,38 @@ class Invocation(object):
         self.exc = method.exc if method else (parent.exc if parent else None)
 
         self.is_root = method is None
+        self.__unicode = None  # Cache invocation unicode repr.
 
     def __str__(self):
-        return '<Invocation method=%r, args=%s>' % (self.method.name, self.args)
+        return unicode(self).encode('utf-8', 'replace')
+
+    def __unicode__(self):
+        if self.__unicode:
+            return self.__unicode
+
+        s = []
+        first = True
+        for inv in self.to_chain():
+            if first:
+                first = False
+            else:
+                s.append(u'.')
+            s.append(inv.method.name)
+            s.append(u'(')
+
+            first_arg = True
+            for arg in inv.method.args:
+                if first_arg:
+                    first_arg = False
+                else:
+                    s.append(u', ')
+                value = inv.args.get(arg.name)
+                s.append(arg.name)
+                s.append(u'=')
+                s.append(unicode(value))
+            s.append(u')')
+        self.__unicode = u''.join(s)
+        return self.__unicode
 
     def next(self, method, *args, **kwargs):
         '''Create a child invocation.'''

@@ -194,6 +194,51 @@ class Invocation(object):
         self.is_root = method is None
         self.__unicode = None  # Cache invocation unicode repr.
 
+        self._check_arg_types()
+
+    def _check_arg_types(self):
+        if self.is_root:
+            return
+
+        method = self.method
+        for arg in method.args:
+            value = self.args.get(arg.name)
+            descriptor = arg.type
+
+            if not descriptor.is_valid_type(value):
+                raise TypeError('Wrong method arguments, method=%s, args=%r' % (method, self.args))
+
+    def next(self, method, *args, **kwargs):
+        '''Create a child invocation.'''
+        if self.method and self.method.is_remote:
+            raise TypeError('Cannot create next invocation for a remote method invocation: %s'
+                            % self)
+        return Invocation(method, parent=self, args=args, kwargs=kwargs)
+
+    def to_chain(self):
+        '''Return a list of invocations.'''
+        chain = [] if not self.parent else self.parent.to_chain()
+        if not self.is_root:
+            chain.append(self)
+        return chain
+
+    def invoke(self, obj):
+        '''Invoke this invocation chain on an object.'''
+        chain = self.to_chain()
+        for inv in chain:
+            obj = inv.invoke_single(obj)
+        return obj
+
+    def invoke_single(self, obj):
+        '''Invoke only this invocation (not a chain) on an object.'''
+        method = self.method
+        result = method.invoke(obj, **self.args)
+
+        if not method.result.is_valid_type(result):
+            raise TypeError('Wrong method result, method=%s, result=%r' % (method, result))
+
+        return result
+
     def __str__(self):
         return unicode(self).encode('utf-8', 'replace')
 
@@ -224,31 +269,6 @@ class Invocation(object):
             s.append(u')')
         self.__unicode = u''.join(s)
         return self.__unicode
-
-    def next(self, method, *args, **kwargs):
-        '''Create a child invocation.'''
-        if self.method and self.method.is_remote:
-            raise TypeError('Cannot create next invocation for a remote method invocation: %s'
-                            % self)
-        return Invocation(method, parent=self, args=args, kwargs=kwargs)
-
-    def to_chain(self):
-        '''Return a list of invocations.'''
-        chain = [] if not self.parent else self.parent.to_chain()
-        if not self.is_root:
-            chain.append(self)
-        return chain
-
-    def invoke(self, obj):
-        '''Invoke this invocation chain on an object.'''
-        chain = self.to_chain()
-        for inv in chain:
-            obj = inv.invoke_single(obj)
-        return obj
-
-    def invoke_single(self, obj):
-        '''Invoke only this invocation (not a chain) on an object.'''
-        return self.method.invoke(obj, **self.args)
 
     @staticmethod
     def _build_args(method, args=None, kwargs=None):

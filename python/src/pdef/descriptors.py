@@ -10,12 +10,13 @@ class Descriptor(object):
 
         self.is_primitive = self.type in Type.PRIMITIVES
         self.is_datatype = self.type in Type.DATA_TYPES
-        self.is_interface = self.type == Type.INTERFACE
-        self.is_message = self.type == Type.MESSAGE
-        self.is_void = self.type == Type.VOID
         self.is_string = self.type == Type.STRING
 
         self.is_enum = self.type == Type.ENUM
+        self.is_message = self.type == Type.MESSAGE
+        self.is_void = self.type == Type.VOID
+
+        self.is_interface = self.type == Type.INTERFACE
 
         self.is_list = self.type == Type.LIST
         self.is_set = self.type == Type.SET
@@ -25,6 +26,21 @@ class Descriptor(object):
     def pyclass(self):
         return self.pyclass_supplier()
 
+    def check_type(self, obj):
+        '''Check the object type or raise a TypeError.'''
+        if self.is_valid_type(obj):
+            return
+        raise TypeError('Wrong type, expected=%r, actual=%r' % (self.pyclass, obj))
+
+    def is_valid_type(self, obj):
+        '''Return whether the object is of a valid type.'''
+        if obj is None:
+            return True
+
+        return isinstance(obj, self.pyclass)
+
+
+class DataTypeDescriptor(Descriptor):
     def parse_object(self, obj):
         '''Parse an object and return a value.'''
         raise NotImplementedError
@@ -47,7 +63,7 @@ class Descriptor(object):
         return json.dumps(value, indent=indent)
 
 
-class MessageDescriptor(Descriptor):
+class MessageDescriptor(DataTypeDescriptor):
     '''Message descriptor.'''
     def __init__(self, pyclass_supplier,
                  base=None,
@@ -76,6 +92,12 @@ class MessageDescriptor(Descriptor):
 
     def __str__(self):
         return self.pyclass.__class__.__name__
+
+    def find_field(self, name):
+        '''Return a field by its name or None.'''
+        for field in self.fields:
+            if field.name == name:
+                return field
 
     def subtype(self, type0):
         '''Returns a subtype descriptor by a type enum value.'''
@@ -108,6 +130,8 @@ class MessageDescriptor(Descriptor):
 
     def to_object(self, message):
         '''Serialize a message into a dict.'''
+        self.check_type(message)
+
         if message is None:
             return None
 
@@ -138,11 +162,25 @@ class FieldDescriptor(object):
         '''Return field type descriptor.'''
         return self.type_supplier()
 
-    def set(self, obj, value):
-        setattr(obj, self.name, value)
+    def set(self, message, value):
+        '''Set this field in a message to a value, check the type of the value.'''
+        type0 = self.type
+        if not type0.is_valid_type(value):
+            raise TypeError('Wrong field type, field=%s, expected=%r, actual=%r'
+                            % (self.name, type0.pyclass, value))
 
-    def get(self, obj):
-        return getattr(obj, self.name)
+        setattr(message, self.name, value)
+
+    def get(self, message):
+        '''Get this field value in a message, check the type of the value.'''
+        type0 = self.type
+        value = getattr(message, self.name)
+
+        if not type0.is_valid_type(value):
+            raise TypeError('Wrong field type, field=%s, expected=%r, actual=%r'
+                            % (self.name, type0.pyclass, value))
+
+        return value
 
 
 class InterfaceDescriptor(Descriptor):
@@ -251,11 +289,11 @@ class ArgDescriptor(object):
         return self.type_supplier()
 
 
-class PrimitiveDescriptor(Descriptor):
+class PrimitiveDescriptor(DataTypeDescriptor):
     '''Primitive descriptors must support serializing to/parsing from strings.'''
     def __init__(self, type0, pyclass):
         super(PrimitiveDescriptor, self).__init__(type0, lambda: pyclass)
-        self._native = pyclass  # Just an optimization to get rid of lambda in self.pyclass.
+        self._native = pyclass  # Just an optimization to get rid of the lambda in self.pyclass.
 
     def __str__(self):
         return self.type
@@ -268,11 +306,24 @@ class PrimitiveDescriptor(Descriptor):
         return None if s is None else self._native(s)
 
     def to_object(self, obj):
+        self.check_type(obj)
+
         return None if obj is None else self._native(obj)
 
     def to_string(self, obj):
         '''Serialize a primitive to a string, or return None when the primitive is None.'''
         return None if obj is None else unicode(self.to_object(obj))
+
+
+class StringDescriptor(PrimitiveDescriptor):
+    def __init__(self):
+        super(StringDescriptor, self).__init__(Type.STRING, unicode)
+
+    def is_valid_type(self, obj):
+        if obj is None:
+            return True
+
+        return isinstance(obj, basestring)
 
 
 class EnumDescriptor(PrimitiveDescriptor):
@@ -284,6 +335,12 @@ class EnumDescriptor(PrimitiveDescriptor):
     def __str__(self):
         return self.pyclass.__class__.__name__
 
+    def is_valid_type(self, obj):
+        if obj is None:
+            return True
+
+        return isinstance(obj, basestring)
+
     def parse_object(self, obj):
         if obj is None:
             return None
@@ -294,6 +351,8 @@ class EnumDescriptor(PrimitiveDescriptor):
         return self.parse_object(s)
 
     def to_object(self, obj):
+        self.check_type(obj)
+
         if obj is None:
             return None
         return unicode(obj).lower()
@@ -302,7 +361,7 @@ class EnumDescriptor(PrimitiveDescriptor):
         return self.to_object(obj)
 
 
-class _ListDescriptor(Descriptor):
+class _ListDescriptor(DataTypeDescriptor):
     '''Internal list descriptor.'''
     def __init__(self, element):
         super(_ListDescriptor, self).__init__(Type.LIST, lambda: list)
@@ -317,15 +376,17 @@ class _ListDescriptor(Descriptor):
         return [self.element.parse_object(e) for e in obj]
 
     def to_object(self, obj):
+        self.check_type(obj)
+
         if obj is None:
             return obj
         return [self.element.to_object(e) for e in obj]
 
 
-class _SetDescriptor(Descriptor):
+class _SetDescriptor(DataTypeDescriptor):
     '''Internal set descriptor.'''
     def __init__(self, element):
-        super(_SetDescriptor, self).__init__(Type.SET, set)
+        super(_SetDescriptor, self).__init__(Type.SET, lambda: set)
         self.element = element
 
     def __str__(self):
@@ -337,15 +398,17 @@ class _SetDescriptor(Descriptor):
         return set(self.element.parse_object(e) for e in obj)
 
     def to_object(self, obj):
+        self.check_type(obj)
+
         if obj is None:
             return None
         return set(self.element.to_object(e) for e in obj)
 
 
-class _MapDescriptor(Descriptor):
+class _MapDescriptor(DataTypeDescriptor):
     '''Internal map/dict descriptor.'''
     def __init__(self, key, value):
-        super(_MapDescriptor, self).__init__(Type.MAP, dict)
+        super(_MapDescriptor, self).__init__(Type.MAP, lambda: dict)
         self.key = key
         self.value = value
 
@@ -358,12 +421,14 @@ class _MapDescriptor(Descriptor):
         return {self.key.parse_object(k): self.value.parse_object(v) for k, v in obj.items()}
 
     def to_object(self, obj):
+        self.check_type(obj)
+
         if obj is None:
             return None
         return {self.key.to_object(k): self.value.to_object(v) for k, v in obj.items()}
 
 
-class _ObjectDescriptor(Descriptor):
+class _ObjectDescriptor(DataTypeDescriptor):
     def __init__(self):
         super(_ObjectDescriptor, self).__init__(Type.OBJECT, lambda: object)
 
@@ -377,7 +442,7 @@ class _ObjectDescriptor(Descriptor):
         return obj
 
 
-class _VoidDescriptor(Descriptor):
+class _VoidDescriptor(DataTypeDescriptor):
     def __init__(self):
         super(_VoidDescriptor, self).__init__(Type.VOID, lambda: object)
 
@@ -389,17 +454,6 @@ class _VoidDescriptor(Descriptor):
 
     def to_object(self, obj):
         return None
-
-
-bool0 = PrimitiveDescriptor(Type.BOOL, bool)
-int16 = PrimitiveDescriptor(Type.INT16, int)
-int32 = PrimitiveDescriptor(Type.INT32, int)
-int64 = PrimitiveDescriptor(Type.INT64, int)
-float0 = PrimitiveDescriptor(Type.FLOAT, float)
-double0 = PrimitiveDescriptor(Type.DOUBLE, float)
-string = PrimitiveDescriptor(Type.STRING, unicode)
-object0 = _ObjectDescriptor()
-void = _VoidDescriptor()
 
 
 def list0(element):
@@ -459,3 +513,14 @@ def method(name, result_supplier, is_index=False, is_post=False):
 def arg(name, descriptor_supplier, is_query=False):
     '''Create a method argument descriptor.'''
     return ArgDescriptor(name, descriptor_supplier, is_query=is_query)
+
+
+bool0 = PrimitiveDescriptor(Type.BOOL, bool)
+int16 = PrimitiveDescriptor(Type.INT16, int)
+int32 = PrimitiveDescriptor(Type.INT32, int)
+int64 = PrimitiveDescriptor(Type.INT64, int)
+float0 = PrimitiveDescriptor(Type.FLOAT, float)
+double0 = PrimitiveDescriptor(Type.DOUBLE, float)
+string = StringDescriptor()
+object0 = _ObjectDescriptor()
+void = _VoidDescriptor()

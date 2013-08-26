@@ -30,6 +30,12 @@ class TestMessageDescriptor(unittest.TestCase):
     def test_to_object__none(self):
         assert self.descriptor.to_object(None) is None
 
+    def test_to_object__check_type(self):
+        msg = self._fixture()
+        msg.aString = True
+
+        self.assertRaises(TypeError, self.descriptor.to_object, msg)
+
     def test_parse_object(self):
         d = self._fixture_dict()
         msg = self.descriptor.parse_object(d)
@@ -69,6 +75,29 @@ class TestPolymorphicMessageDescriptor(unittest.TestCase):
         assert d.parse_object(subtype_d) == polymorphic_pd.Subtype(subfield='hello')
         assert d.parse_object(subtype2_d) == polymorphic_pd.Subtype2(subfield2='hello')
         assert d.parse_object(mlevel_subtype_d) == polymorphic_pd.MultiLevelSubtype(mfield='hello')
+
+
+class TestFieldDescriptor(unittest.TestCase):
+    cls = messages_pd.SimpleMessage
+    descriptor = cls.__descriptor__
+    field = descriptor.find_field('aString')
+
+    def test_set(self):
+        msg = self.cls()
+        self.field.set(msg, 'hello')
+        assert msg.aString == 'hello'
+
+    def test_set__check_type(self):
+        msg = self.cls()
+        self.assertRaises(TypeError, self.field.set, msg, 123)
+
+    def test_get(self):
+        msg = self.cls(aString='hello')
+        assert self.field.get(msg) == 'hello'
+
+    def test_get__check_type(self):
+        msg = self.cls(aString=123)
+        self.assertRaises(TypeError, self.field.get, msg)
 
 
 class TestInterfaceDescriptor(unittest.TestCase):

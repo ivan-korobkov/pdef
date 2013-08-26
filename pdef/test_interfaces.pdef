@@ -15,7 +15,7 @@ interface TestInterface : throws TestException {
     indexMethod(a int32, b int32) int32;
 
     /** Remote method. */
-    remoteMethod(a int32, b int32) string;
+    remoteMethod(a int32, b int32) int32;
 
     /** Post remote method. */
     @post

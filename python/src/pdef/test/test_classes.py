@@ -85,6 +85,10 @@ class TestInvocation(unittest.TestCase):
         assert invocation.exc is TestException.__descriptor__
         assert invocation.result is method.result
 
+    def test_init__check_arg_types(self):
+        method = self.method()
+        self.assertRaises(TypeError, Invocation, method, None, args=[1, 'string'])
+
     def test_next(self):
         method = self.method()
 

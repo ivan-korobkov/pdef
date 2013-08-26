@@ -481,7 +481,7 @@ class TestIntegration(unittest.TestCase):
         form = SimpleMessage(u'Привет', True, 0)
 
         assert client.indexMethod(1, 2) == 3
-        assert client.remoteMethod(10, 2) == '5'
+        assert client.remoteMethod(10, 2) == 5
         assert client.postMethod([1, 2, 3], {4: 5}) == [1, 2, 3, 4, 5]
         assert client.formMethod(form) == form
         assert client.voidMethod() is None

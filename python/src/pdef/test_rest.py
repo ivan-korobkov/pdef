@@ -128,6 +128,12 @@ class TestRestClient(unittest.TestCase):
 
         assert result == '123'
 
+    def test_serialize_arg_to_string__primitive_none_to_empty_string(self):
+        descriptor = descriptors.int32
+        result = self.client()._serialize_arg_to_string(descriptor, None)
+
+        assert result == ''
+
     def test_serialize_arg_to_string__string(self):
         descriptor = descriptors.string
         result = self.client()._serialize_arg_to_string(descriptor, u'привет+ромашки')
@@ -289,6 +295,12 @@ class TestRestServer(unittest.TestCase):
 
         value = self.server()._parse_arg_from_string(descriptor, '123')
         assert value == 123
+
+    def test_parse_arg_from_string__primitive_empty_to_none(self):
+        descriptor = descriptors.int32
+
+        value = self.server()._parse_arg_from_string(descriptor, '')
+        assert value is None
 
     def test_parse_arg_from_string__string(self):
         descriptor = descriptors.string

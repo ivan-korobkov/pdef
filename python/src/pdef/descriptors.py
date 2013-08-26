@@ -13,6 +13,7 @@ class Descriptor(object):
         self.is_interface = self.type == Type.INTERFACE
         self.is_message = self.type == Type.MESSAGE
         self.is_void = self.type == Type.VOID
+        self.is_string = self.type == Type.STRING
 
         self.is_enum = self.type == Type.ENUM
 

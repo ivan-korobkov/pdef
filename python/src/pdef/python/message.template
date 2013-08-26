@@ -31,12 +31,15 @@ class {{ name }}({{ root_or_base }}):
     {% if base -%}
         {{ render_descriptor_base() }}
     {%- endif %}
-    {% if declared_fields -%}
-        {{ render_descriptor_fields() }}
-    {%- endif %}
     {% if subtypes -%}
         {{ render_descriptor_subtypes() }}
     {%- endif %}
+    {% if declared_fields -%}
+        {{ render_descriptor_fields() }}
+    {%- endif %}
+    {% if is_form %}
+        is_form=True
+    {% endif %}
     )
 
 {% if not fields %}

@@ -78,6 +78,7 @@ class PythonMessage(object):
         self.subtypes = [(ref(subtype), ref(submessage))
                          for subtype, submessage in msg.subtypes.items()]
         self.discriminator = PythonField(msg.discriminator, ref) if msg.discriminator else None
+        self.is_form = msg.is_form
 
         self.fields = [PythonField(field, ref) for field in msg.fields.values()]
         self.inherited_fields = [PythonField(field, ref) for field in msg.inherited_fields.values()]

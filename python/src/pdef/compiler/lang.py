@@ -454,7 +454,8 @@ class Message(Definition):
         '''Create a message from an AST node.'''
         check_isinstance(node, ast.Message)
 
-        message = Message(node.name, is_exception=node.is_exception, module=module, doc=node.doc)
+        message = Message(node.name, is_exception=node.is_exception, module=module, doc=node.doc,
+                          is_form=node.is_form)
         message.base = lookup(node.base) if node.base else None
         message.base_type = lookup(node.base_type) if node.base_type else None
 
@@ -462,13 +463,14 @@ class Message(Definition):
             message.parse_field(n, lookup)
         return message
 
-    def __init__(self, name, is_exception=False, module=None, doc=None):
+    def __init__(self, name, is_exception=False, module=None, doc=None, is_form=False):
         super(Message, self).__init__(Type.MESSAGE, name, module=module, doc=doc)
         self.is_exception = is_exception
 
         self.base = None
         self.base_type = None
         self.subtypes = OrderedDict()
+        self.is_form = is_form
         self._discriminator = None
 
         self.declared_fields = SymbolTable(self, 'declared_fields')

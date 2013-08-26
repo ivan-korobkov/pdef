@@ -219,7 +219,7 @@ class _GrammarRules(object):
         fields = t[6]
 
         t[0] = ast.Message(name, base=base, base_type=base_type, fields=fields,
-                           is_exception=is_exception)
+                           is_exception=is_exception, is_form=is_form)
 
     def p_message_options(self, t):
         '''

@@ -98,38 +98,48 @@ class TestRestClient(unittest.TestCase):
         assert query == {}
         assert post == {}
 
-    # serialize_arg.
+    # Serializing arguments.
 
-    def test_serialize_arg__primitive(self):
+    def test_serialize_positional_arg(self):
+        arg = descriptors.arg('arg', lambda: descriptors.string)
+
+        value = self.client()._serialize_positional_arg(arg, u'Привет')
+        assert value == '%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82'
+
+    def test_serialize_query_arg(self):
         arg = descriptors.arg('arg', lambda: descriptors.int32)
 
-        result = self.client()._serialize_arg(arg, 123)
+        dst = {}
+        self.client()._serialize_query_arg(arg, 123, dst)
+        assert dst == {'arg': '123'}
+
+    def test_serialize_query_arg__form(self):
+        arg = descriptors.arg('arg', lambda: SimpleMessage.__descriptor__)
+
+        dst = {}
+        msg = SimpleMessage(aString=u'Привет', aBool=False)
+        self.client()._serialize_query_arg(arg, msg, dst)
+
+        assert dst == {'aString': u'Привет', 'aBool': 'False'}
+
+    def test_serialize_arg_to_string__primitive(self):
+        descriptor = descriptors.int32
+        result = self.client()._serialize_arg_to_string(descriptor, 123)
+
         assert result == '123'
 
-    def test_serialize_arg__string(self):
-        arg = descriptors.arg('arg', lambda: descriptors.string)
+    def test_serialize_arg_to_string__string(self):
+        descriptor = descriptors.string
+        result = self.client()._serialize_arg_to_string(descriptor, u'привет+ромашки')
 
-        result = self.client()._serialize_arg(arg, u'привет+ромашки')
         assert result == u'привет+ромашки'
 
-    def test_serialize_arg__message(self):
-        arg = descriptors.arg('arg', lambda: SimpleMessage.__descriptor__)
+    def test_serialize_arg_to_string__message(self):
+        descriptor = SimpleMessage.__descriptor__
         msg = SimpleMessage(aString='hello', aBool=False, anInt16=256)
+        result = self.client()._serialize_arg_to_string(descriptor, msg)
 
-        result = self.client()._serialize_arg(arg, msg)
         assert result == '{"aBool": false, "anInt16": 256, "aString": "hello"}'
-
-    def test_serialize_positional_arg__quote(self):
-        arg = descriptors.arg('arg', lambda: descriptors.string)
-
-        result = self.client()._serialize_positional_arg(arg, u'привет')
-        assert result == '%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82'
-
-    def test_serialize_positional_arg__quote_json(self):
-        arg = descriptors.arg('arg', lambda: descriptors.map0(descriptors.int32, descriptors.int32))
-
-        result = self.client()._serialize_positional_arg(arg, {1: 2})
-        assert result == '{%221%22%3A%202}'
 
     # parse_response
 
@@ -249,34 +259,53 @@ class TestRestServer(unittest.TestCase):
 
         self.assertRaises(MethodNotFoundError, self.server()._parse_request, request)
 
-    def test_parse_positional_arg__primitive(self):
+    # Parsing args.
+
+    def test_parse_positional_arg(self):
         arg = descriptors.arg('arg', lambda: descriptors.string)
+        part = '%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82'
 
-        s = self.server()._parse_positional_arg(arg, urllib.quote(u'привет, мир?'.encode('utf-8')))
-        assert s == u'привет, мир?'
+        value = self.server()._parse_positional_arg(arg, part)
+        assert value == u'Привет'
 
-    def test_parse_positionsl_arg__message(self):
+    def test_parse_query_arg__form(self):
         arg = descriptors.arg('arg', lambda: SimpleMessage.__descriptor__)
+
+        msg = SimpleMessage(aString=u'Привет', aBool=True, anInt16=7)
+        src = {'aString': u'Привет', 'aBool': 'true', 'anInt16': '7'}
+
+        msg0 = self.server()._parse_query_arg(arg, src)
+        assert msg0 == msg
+
+    def test_parse_query_arg__primitive(self):
+        arg = descriptors.arg('arg', lambda: descriptors.int32)
+        src = {'arg': '123'}
+
+        value = self.server()._parse_query_arg(arg, src)
+        assert value == 123
+
+    def test_parse_arg_from_string__primitive(self):
+        descriptor = descriptors.int32
+
+        value = self.server()._parse_arg_from_string(descriptor, '123')
+        assert value == 123
+
+    def test_parse_arg_from_string__string(self):
+        descriptor = descriptors.string
+
+        value = self.server()._parse_arg_from_string(descriptor, u'привет, мир?')
+        assert value == u'привет, мир?'
+
+    def test_parse_arg_from_string__message(self):
+        descriptor = SimpleMessage.__descriptor__
 
         msg = SimpleMessage(aString=u'привет', aBool=True, anInt16=123)
-        value = urllib.quote(msg.to_json().encode('utf-8'))
+        value = msg.to_json()
 
-        msg0 = self.server()._parse_positional_arg(arg, value)
+        msg0 = self.server()._parse_arg_from_string(descriptor, value)
         assert msg0 == msg
 
-    def test_parse_arg__primitive(self):
-        arg = descriptors.arg('arg', lambda: descriptors.int32)
-
-        assert self.server()._parse_arg(arg, '123') == 123
-
-    def test_parse_arg__message(self):
-        arg = descriptors.arg('arg', lambda: SimpleMessage.__descriptor__)
-
-        msg = SimpleMessage(aString=u'привет', aBool=True, anInt16=7)
-        s = msg.to_json()
-
-        msg0 = self.server()._parse_arg(arg, s)
-        assert msg0 == msg
+    # Results and responses.
 
     def test_result_to_response(self):
         invocation = self.proxy().formMethod()
@@ -437,12 +466,12 @@ class TestIntegration(unittest.TestCase):
 
     def test(self):
         client = self.client()
-        msg = SimpleMessage(u'Привет', True, 0)
+        form = SimpleMessage(u'Привет', True, 0)
 
         assert client.indexMethod(1, 2) == 3
         assert client.remoteMethod(10, 2) == '5'
         assert client.postMethod([1, 2, 3], {4: 5}) == [1, 2, 3, 4, 5]
-        assert client.formMethod(msg) == msg
+        assert client.formMethod(form) == form
         assert client.voidMethod() is None
         assert client.stringMethod(u'Как дела?') == u'Как дела?'
         assert client.interfaceMethod(1, 2).indexMethod() == 'chained call 1 2'

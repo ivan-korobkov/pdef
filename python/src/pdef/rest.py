@@ -87,52 +87,61 @@ class RestClient(object):
         post = dict(post) if post else {}
 
         args = invocation.args
-        if method.is_remote and method.is_post:
+        if method.is_post:
+            # Post methods are remote.
             # Add arguments as post params, serialize messages and collections into json.
             for arg in method.args:
                 value = args.get(arg.name)
-                if value is None:
-                    continue
-                post[arg.name] = self._serialize_arg(arg, value)
+                self._serialize_query_arg(arg, value, post)
 
         elif method.is_remote:
             # Add arguments as query params.
             for arg in method.args:
                 value = args.get(arg.name)
-                if value is None:
-                    continue
-                query[arg.name] = self._serialize_arg(arg, value)
+                self._serialize_query_arg(arg, value, query)
         else:
             # Positionally prepend all arguments to the path.
             assert not method.is_post, 'Post methods must be remote, %s' % method
+
             for arg in method.args:
                 value = args.get(arg.name)
-                serialized = self._serialize_positional_arg(arg, value)
-                path += '/' + urllib.quote(serialized)
+                path += '/' + self._serialize_positional_arg(arg, value)
 
         return path, query, post
 
     def _serialize_positional_arg(self, arg, value):
         '''Serialize a positional argument and percent-encode it.'''
-        type0 = arg.type
+        serialized = self._serialize_arg_to_string(arg.type, value)
+        return urllib.quote(serialized.encode('utf-8'), safe='[],{}')
+
+    def _serialize_query_arg(self, arg, value, dst):
+        '''Serialize a query/post argument and put into a dst dict.'''
+        if value is None:
+            # Skip none arguments.
+            return
+
+        descriptor = arg.type
+        is_form = descriptor.is_message and descriptor.is_form
+        if not is_form:
+            dst[arg.name] = self._serialize_arg_to_string(descriptor, value)
+            return
+
+        # It's a form, expand its fields into distinct arguments.
+        for field in descriptor.fields:
+            fvalue = field.get(value)
+            if fvalue is None:
+                continue
+
+            dst[field.name] = self._serialize_arg_to_string(field.type, fvalue)
+
+    def _serialize_arg_to_string(self, descriptor, value):
         if value is None:
             return ''
 
-        if type0.is_primitive or type0.is_enum:
-            s = type0.to_string(value)
-        else:
-            s = type0.to_json(value)
+        if descriptor.is_primitive or descriptor.is_enum:
+            return descriptor.to_string(value)
 
-        return urllib.quote(s.encode('utf-8'), safe='[],{}')
-
-    def _serialize_arg(self, arg, value):
-        '''Serialize a query/post argument, but do not percent-encode it.'''
-        type0 = arg.type
-
-        if type0.is_primitive or type0.is_enum:
-            return type0.to_string(value)
-
-        return type0.to_json(value)
+        return descriptor.to_json(value)
 
     def _join_url_and_path(self, url, path):
         '''Join url and path, correctly handle slashes /.'''
@@ -323,20 +332,19 @@ class RestServer(object):
 
             # Parse method arguments.
             args = {}
-            if method.is_remote and method.is_post:
+            if method.is_post:
                 if request.method.upper() != 'POST':
                     raise MethodNotAllowedError('Method not allowed, POST required')
 
+                # Post methods are remote.
                 # Parse arguments as post params.
                 for arg in method.args:
-                    value = post.get(arg.name)
-                    args[arg.name] = self._parse_arg(arg, value)
+                    args[arg.name] = self._parse_query_arg(arg, post)
 
             elif method.is_remote:
                 # Parse arguments as query params.
                 for arg in method.args:
-                    value = query.get(arg.name)
-                    args[arg.name] = self._parse_arg(arg, value)
+                    args[arg.name] = self._parse_query_arg(arg, query)
 
             else:
                 # Parse arguments as positional params.
@@ -344,8 +352,7 @@ class RestServer(object):
                     if not parts:
                         raise WrongMethodArgsError('Wrong number of method args')
 
-                    value = urllib.unquote(parts.pop(0))
-                    args[arg.name] = self._parse_arg(arg, value)
+                    args[arg.name] = self._parse_positional_arg(arg, parts.pop(0))
 
             invocation = invocation.next(method, **args)
             descriptor = None if method.is_remote else method.result
@@ -356,19 +363,43 @@ class RestServer(object):
         return invocation
 
     def _parse_positional_arg(self, arg, value):
-        type0 = arg.type
+        value = urllib.unquote(value).decode('utf-8')
+        return self._parse_arg_from_string(arg.type, value)
+
+    def _parse_query_arg(self, arg, src):
+        descriptor = arg.type
+        is_form = descriptor.is_message and descriptor.is_form
+
+        if not is_form:
+            # Parse as a string argument.
+            value = src.get(arg.name)
+            if value is None:
+                return None
+            return self._parse_arg_from_string(arg.type, value)
+
+        # Parse as an expanded form fields.
+        form = {}
+        for field in descriptor.fields:
+            fvalue = src.get(field.name)
+            if fvalue is None:
+                continue
+
+            form[field.name] = self._parse_arg_from_string(field.type, fvalue)
+
+        return descriptor.parse_object(form)
+
+    def _parse_arg_from_string(self, descriptor, value):
+        if value is None:
+            # None values are skipped in _parse_query_arg.
+            return
+
         if value == '':
-            return '' if type0.is_string else None
+            return '' if descriptor.is_string else None
 
-        s = urllib.unquote(value).decode('utf-8')
-        if type0.is_primitive:
-            return type0.parse_string(s)
-        return type0.parse_json(s)
+        if descriptor.is_primitive or descriptor.is_enum:
+            return descriptor.parse_string(value)
 
-    def _parse_arg(self, arg, value):
-        if arg.type.is_primitive or arg.type.is_enum:
-            return arg.type.parse_string(value)
-        return arg.type.parse_json(value)
+        return descriptor.parse_json(value)
 
     def _invoke(self, invocation):
         '''Invoke an invocation on a service.'''

@@ -1,35 +1,35 @@
 # encoding: utf-8
 import unittest
-from pdef import test_pd
 from pdef import Proxy, Invocation
+from pdef.test.messages_pd import SimpleMessage
 from pdef.test.interfaces_pd import TestInterface, TestException
 
 
 class TestMessage(unittest.TestCase):
-    JSON = '''{"a": "one", "b": "two"}'''
+    JSON = '''{"aString": "hello", "aBool": true}'''
 
     def _fixture(self):
-        return test_pd.TestMessage(a="one", b="two")
+        return SimpleMessage(aString="hello", aBool=True)
 
     def _fixture_dict(self):
-        return {'a': 'one', 'b': 'two'}
+        return {'aString': 'hello', 'aBool': True}
 
     def test_parse_json(self):
-        msg = test_pd.TestMessage.parse_json(self.JSON)
+        msg = SimpleMessage.parse_json(self.JSON)
         assert msg == self._fixture()
 
     def test_parse_dict(self):
         msg = self._fixture()
         d = msg.to_dict()
 
-        msg1 = test_pd.TestMessage.parse_dict(d)
+        msg1 = SimpleMessage.parse_dict(d)
         assert msg == msg1
 
     def test_to_json(self):
         msg = self._fixture()
         s = msg.to_json()
 
-        msg1 = test_pd.TestMessage.parse_json(s)
+        msg1 = SimpleMessage.parse_json(s)
         assert msg == msg1
 
     def test_to_dict(self):
@@ -42,7 +42,7 @@ class TestMessage(unittest.TestCase):
         msg1 = self._fixture()
         assert msg0 == msg1
 
-        msg1.a = 'qwer'
+        msg1.aString = 'qwer'
         assert msg0 != msg1
 
 

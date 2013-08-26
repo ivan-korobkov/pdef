@@ -1,7 +1,0 @@
-module pdef.test;
-
-
-message TestMessage {
-    a   string;
-    b   string;
-}

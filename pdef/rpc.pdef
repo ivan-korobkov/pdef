@@ -25,7 +25,7 @@ exception RpcError {
 exception ServerError : RpcError {}
 
 /** Temporary network error, service unavailable, the request can be repeated. */
-exception NetworkError : RpcError {}
+exception ServiceUnavailableError : RpcError {}
 
 /** Client error (bad request), the request should not be repeated. */
 exception ClientError : RpcError {}

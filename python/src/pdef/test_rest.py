@@ -12,7 +12,7 @@ from pdef.rest import RestClient, RESPONSE_CONTENT_TYPE, RestServerRequest, \
 from pdef.test.messages_pd import SimpleMessage
 from pdef.test.interfaces_pd import TestInterface, TestException, NextTestInterface
 
-from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, NetworkError, \
+from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, ServiceUnavailableError, \
     ClientError, MethodNotFoundError, WrongMethodArgsError, MethodNotAllowedError
 
 
@@ -159,10 +159,10 @@ class TestRestClient(unittest.TestCase):
 
     def test_parse_response__empty_network_error(self):
         response = self.response(502)
-        self.assertRaises(NetworkError, self.client()._parse_response, response, None)
+        self.assertRaises(ServiceUnavailableError, self.client()._parse_response, response, None)
 
         response = self.response(503)
-        self.assertRaises(NetworkError, self.client()._parse_response, response, None)
+        self.assertRaises(ServiceUnavailableError, self.client()._parse_response, response, None)
 
     def test_parse_response__empty_server_error(self):
         response = self.response(500)
@@ -390,8 +390,8 @@ class TestRestServer(unittest.TestCase):
         assert resp.status == 400
         assert resp.content == e.text.encode('utf-8')
 
-    def test_error_response__network_error(self):
-        e = NetworkError(u'Сетевая ошибка')
+    def test_error_response__service_unavailable_error(self):
+        e = ServiceUnavailableError(u'Сетевая ошибка')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 503

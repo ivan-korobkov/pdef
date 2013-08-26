@@ -7,7 +7,7 @@ import urlparse
 import requests
 
 from pdef import Invocation
-from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, NetworkError, \
+from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, ServiceUnavailableError, \
     ClientError, MethodNotFoundError, WrongMethodArgsError, MethodNotAllowedError
 
 
@@ -178,7 +178,7 @@ class RestClient(object):
                 raise MethodNotAllowedError(http_response.text)
 
             elif http_status in (502, 503):
-                raise NetworkError(http_response.text)
+                raise ServiceUnavailableError(http_response.text)
 
             elif http_status == 500:
                 raise ServerError(http_response.text)
@@ -439,7 +439,7 @@ class RestServer(object):
         elif isinstance(e, ClientError):
             http_status = 400
             result = e.text
-        elif isinstance(e, NetworkError):
+        elif isinstance(e, ServiceUnavailableError):
             http_status = 503
             result = e.text
         elif isinstance(e, ServerError):

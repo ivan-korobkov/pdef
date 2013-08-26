@@ -45,34 +45,43 @@ class {{ name }}({{ root_or_base }}):
 {% if not fields %}
     def __init__(self):
 {% elif fields|length < 5 %}
-    def __init__(self, {% for field in fields -%}
+    def __init__(self, {% for field in fields if not field.is_discriminator -%}
         {{ field.name }}=None
         {%- if loop.last %}): {% else %}, {% endif %}
+    {% else %}):
     {% endfor %}
 
 {% else %}
     def __init__(self,
-    {% for field in fields %}
+    {% for field in fields if not field.is_discriminator %}
                  {{ field.name }}=None
                  {%- if loop.last %}): {% else %}, {% endif %}
 
+    {% else %}):
     {% endfor %}
 {% endif %}
 
     {%- if inherited_fields %}
         super({{ name }}, self).__init__(
-        {% for field in inherited_fields %}
+        {%- for field in inherited_fields if not field.is_discriminator %}
+
             {{ field.name }}={{ field.name }}
             {%- if loop.last %}) {% else %}, {% endif %}
-
+        {% else %})
         {% endfor %}
+
     {% endif %}
 
     {%- if not declared_fields and not base_type %}
         pass
     {% endif %}
     {% for field in declared_fields %}
-        self.{{ field.name }} = {{ field.name }}
+        self.{{ field.name }} = {% if field.is_discriminator -%}
+            None
+        {%- else -%}
+            {{ field.name }}
+        {%- endif %}
+
     {% endfor %}
     {% if base_type %}
         self.{{ discriminator.name }} = {{ base_type }}

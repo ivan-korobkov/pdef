@@ -220,7 +220,6 @@ class TestImport(unittest.TestCase):
         assert imports[0].name == 'absolute.module'
         lookup.assert_called_with('absolute.module')
 
-
     def test_parse_list_from_node__relative(self):
         node = ast.RelativeImport('absolute', 'module0', 'module1')
         lookup = mock.Mock()
@@ -264,7 +263,6 @@ class TestEnum(unittest.TestCase):
             enum.validate()
         except PdefCompilerException, e:
             assert 'Duplicate value' in e.message
-
 
 
 class TestMessage(unittest.TestCase):
@@ -704,10 +702,9 @@ class TestMethod(unittest.TestCase):
     def test_parse(self):
         node = ast.Method('name', args=[ast.Field('arg0', ast.DefRef('int32'))],
                           result=ast.DefRef('int32'))
-        iface = mock.Mock()
         lookup = mock.Mock()
 
-        method = Method.parse_from(node, iface, lookup)
+        method = Method.parse_from(node, lookup)
         assert method.name == 'name'
         assert method.result
         assert len(method.args) == 1
@@ -724,13 +721,25 @@ class TestMethod(unittest.TestCase):
         assert arg.type is NativeTypes.INT64
 
     def test_fullname(self):
-        iface = Interface('Interface')
-
-        method = Method('method', NativeTypes.INT32, iface)
+        method = Method('method', NativeTypes.INT32)
         method.create_arg('i0', NativeTypes.INT32)
         method.create_arg('i1', NativeTypes.INT32)
 
+        iface = Interface('Interface')
+        iface.add_method(method)
+
         assert method.fullname == 'Interface.method'
+
+    def test_validate__post_remote(self):
+        iface = Interface('Interface')
+        method = Method('method', iface, is_post=True)
+        method.link()
+
+        try:
+            method.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'Only remote methods can be @post' in e.message
 
 
 class TestMethodArg(unittest.TestCase):

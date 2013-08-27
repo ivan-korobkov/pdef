@@ -716,12 +716,15 @@ class Interface(Definition):
 
     def add_method(self, method):
         '''Add a method to this interface.'''
+        self._check(method.interface is None, 'Method is already in an interface, %s', method)
+
+        method.interface = self
         self.declared_methods.append(method)
         self._debug('Added a method, interface=%s, method=%s', self, method)
 
     def create_method(self, name, result=NativeTypes.VOID, *args_tuples):
         '''Add a new method to this interface and return the method.'''
-        method = Method(name, result, self)
+        method = Method(name, result)
         for arg_tuple in args_tuples:
             method.create_arg(*arg_tuple)
 
@@ -730,7 +733,7 @@ class Interface(Definition):
 
     def parse_method(self, node, lookup):
         '''Create a new method and add it to this interface.'''
-        method = Method.parse_from(node, self, lookup)
+        method = Method.parse_from(node, lookup)
         self.add_method(method)
 
     def _link(self):
@@ -779,18 +782,19 @@ class Interface(Definition):
 class Method(Symbol):
     '''Interface method.'''
     @classmethod
-    def parse_from(cls, node, interface, lookup):
+    def parse_from(cls, node, lookup):
         check_isinstance(node, ast.Method)
-        method = Method(node.name, result=lookup(node.result), interface=interface, doc=node.doc,
+        method = Method(node.name, result=lookup(node.result), doc=node.doc,
                         is_index=node.is_index, is_post=node.is_post)
         for n in node.args:
             method.parse_arg(n, lookup)
         return method
 
-    def __init__(self, name, result, interface, doc=None, is_index=False, is_post=False):
+    def __init__(self, name, result, doc=None, is_index=False, is_post=False):
         self.name = name
         self.result = result
-        self.interface = interface
+        self.interface = None
+
         self.doc = doc
         self.is_index = is_index
         self.is_post = is_post
@@ -802,7 +806,14 @@ class Method(Symbol):
 
     @property
     def fullname(self):
+        if not self.interface:
+            return self.name
+
         return '%s.%s' % (self.interface.fullname, self.name)
+
+    @property
+    def is_remote(self):
+        return not self.result.is_interface
 
     def add_arg(self, arg):
         '''Append an argument to this method.'''
@@ -828,6 +839,9 @@ class Method(Symbol):
     def _validate(self):
         for arg in self.args:
             arg.validate()
+
+        if self.is_post:
+            self._check(self.is_remote, 'Only remote methods can be @post, method=%s', self)
 
 
 class MethodArg(Symbol):

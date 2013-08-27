@@ -16,8 +16,8 @@ class JavaTranslator(AbstractTranslator):
 
     def translate(self, package):
         '''Translate package definitions and write them to files.'''
-        for module in package.modules.values():
-            for def0 in module.definitions.values():
+        for module in package.modules:
+            for def0 in module.definitions:
                 jdef = self.definition(def0)
                 self.write(jdef.package, '%s.java' % jdef.name, jdef.code)
 
@@ -81,7 +81,7 @@ class JavaDefinition(object):
 class JavaEnum(JavaDefinition):
     def __init__(self, enum, translator):
         super(JavaEnum, self).__init__(enum, translator)
-        self.values = [val.name for val in enum.values.values()]
+        self.values = [val.name for val in enum.values]
         self.template = translator.enum_template
 
 
@@ -97,9 +97,9 @@ class JavaMessage(JavaDefinition):
         self.subtypes = tuple((translator.ref(key), translator.ref(val))
                               for key, val in msg.subtypes.items())
 
-        self.fields = [translator.field(f) for f in msg.fields.values()]
-        self.declared_fields = [translator.field(f) for f in msg.declared_fields.values()]
-        self.inherited_fields = [translator.field(f) for f in msg.inherited_fields.values()]
+        self.fields = [translator.field(f) for f in msg.fields]
+        self.declared_fields = [translator.field(f) for f in msg.declared_fields]
+        self.inherited_fields = [translator.field(f) for f in msg.inherited_fields]
         self.is_exception = msg.is_exception
 
         self.base_or_root = self.base if self.base \
@@ -125,15 +125,15 @@ class JavaInterface(JavaDefinition):
 
         self.base = translator.ref(iface.base) if iface.base else None
         self.exc = translator.ref(iface.exc) if iface.exc else None
-        self.methods = [translator.method(method) for method in iface.methods.values()]
+        self.methods = [translator.method(method) for method in iface.methods]
         self.declared_methods = [translator.method(method)
-                                 for method in iface.declared_methods.values()]
+                                 for method in iface.declared_methods]
 
 
 class JavaMethod(object):
     def __init__(self, method, translator):
         self.name = method.name
-        self.args = [JavaArg(arg, translator) for arg in method.args.values()]
+        self.args = [JavaArg(arg, translator) for arg in method.args]
         self.result = translator.ref(method.result)
         self.is_post = method.is_post
         self.is_index = method.is_index

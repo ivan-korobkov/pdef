@@ -6,7 +6,7 @@ from collections import OrderedDict
 from pdef import Type
 from pdef.compiler import ast, parser
 from pdef.compiler.exc import PdefCompilerException
-from pdef.compiler.preconditions import check_isinstance, check_state
+from pdef.compiler.preconditions import check_isinstance
 
 EXT = 'pdef'
 
@@ -36,11 +36,11 @@ class Symbol(object):
 class Package(Symbol):
     '''Protocol definition.'''
     def __init__(self):
-        self.modules = SymbolTable(self, name='modules')
+        self.modules = []
 
     def add_module(self, module):
         '''Add a module to this package.'''
-        self.modules.add(module)
+        self.modules.append(module)
         self._debug('Added a module "%s"', module.name)
 
     def parse_module(self, node):
@@ -77,23 +77,24 @@ class Package(Symbol):
             return self.parse_directory(path)
         return self.parse_file(path)
 
-    def lookup_module(self, name):
+    def find_module_or_raise(self, name):
         '''Return a module by its name, or raise an exception.'''
-        module = self.modules.get(name)
-        if not module:
-            self._error('Module "%s" is not found', name)
-        return module
+        for module in self.modules:
+            if module.name == name:
+                return module
 
-    def lookup_module_lazy(self, name):
+        self._error('Module "%s" is not found', name)
+
+    def find_module_or_raise_lazy(self, name):
         '''Return a lambda which lookups a module by name.'''
-        return lambda: self.lookup_module(name)
+        return lambda: self.find_module_or_raise(name)
 
     def link(self):
         '''Link the package.'''
-        for module in self.modules.values():
+        for module in self.modules:
             module.link_imports()
 
-        for module in self.modules.values():
+        for module in self.modules:
             module.link_definitions()
         self._debug('Linked')
 
@@ -112,7 +113,7 @@ class Module(Symbol):
         module = Module(node.name, package)
 
         for import0 in node.imports:
-            module.parse_import(import0, module_lookup=package.lookup_module_lazy)
+            module.parse_import(import0, module_lookup=package.find_module_or_raise_lazy)
 
         for def0 in node.definitions:
             module.parse_definition(def0)
@@ -123,9 +124,9 @@ class Module(Symbol):
         self.name = name
         self.package = package
 
-        self.modules = SymbolTable(self, 'modules')
-        self.imports = SymbolTable(self, 'imports')
-        self.definitions = SymbolTable(self, 'definitions')
+        self.modules = []
+        self.imports = []
+        self.definitions = []
         self.imports_linked = False
         self.definitions_linked = False
 
@@ -142,7 +143,7 @@ class Module(Symbol):
     def add_import(self, import0):
         '''Add a module import to this module.'''
         check_isinstance(import0, Import)
-        self.imports.add(import0)
+        self.imports.append(import0)
 
     def parse_import(self, node, module_lookup):
         '''Parse an import and add it to this module.'''
@@ -155,6 +156,12 @@ class Module(Symbol):
         import0 = Import(name, module)
         self.add_import(import0)
         return import0
+
+    def find_import(self, name):
+        '''Find an import by its name.'''
+        for import0 in self.imports:
+            if import0.name == name:
+                return import0
 
     def add_definition(self, def0):
         '''Add a new definition to this module.'''
@@ -169,7 +176,7 @@ class Module(Symbol):
                 self._error('%s: definition clashes with an import, "%s", "%s"',
                             self, name, imp_name)
 
-        self.definitions.add(def0)
+        self.definitions.append(def0)
         def0.module = self
         self._debug('%s: added a definition "%s"', self, def0)
 
@@ -180,65 +187,66 @@ class Module(Symbol):
 
     def parse_definition(self, node):
         '''Parse a definition and add it to this module.'''
-        definition = Definition.parse_node(node, module=self, lookup=self.lookup_lazy)
+        definition = Definition.parse_node(node, module=self, lookup=self.find_ref_or_raise_lazy)
         self.add_definition(definition)
 
-    def get_definition(self, name):
-        '''Return a definition or an enum value by its name, or raise an exception.'''
+    def find_definition(self, name):
+        '''Return a definition or an enum value by its name, or None.'''
         def0 = None
 
         if '.' not in name:
-            def0 = self.definitions.get(name)
+            for d in self.definitions:
+                if d.name == name:
+                    def0 = d
+                    break
         else:
             # It must be an enum value
             left, right = name.split('.', 1)
 
-            enum = self.get_definition(left)
-            if enum.is_enum:
-                return enum.get_value(right)
-
-        if not def0:
-            self._error('%s: type is not foudn, "%s"', self, name)
+            enum = self.find_definition(left)
+            if enum and enum.is_enum:
+                return enum.find_value(right)
 
         return def0
 
-    def lookup(self, ref):
+    def find_ref_or_raise(self, ref):
         '''Look up a definition by an AST reference node and link it.'''
         check_isinstance(ref, ast.TypeRef)
-        def0 = self._lookup(ref)
+        def0 = self._find_ref(ref)
+        if not def0:
+            self._error('%s: type is not found, "%s"', self, ref)
+
         def0.link()
         return def0
 
-    def _lookup(self, ref):
+    def _find_ref(self, ref):
         def0 = NativeTypes.get_by_type(ref.type)
         if def0:
             return def0  # It's a simple value.
 
         t = ref.type
         if t == Type.LIST:
-            element = self.lookup(ref.element)
+            element = self.find_ref_or_raise(ref.element)
             return List(element, module=self)
 
         elif t == Type.SET:
-            element = self.lookup(ref.element)
+            element = self.find_ref_or_raise(ref.element)
             return Set(element, module=self)
 
         elif t == Type.MAP:
-            key = self.lookup(ref.key)
-            value = self.lookup(ref.value)
+            key = self.find_ref_or_raise(ref.key)
+            value = self.find_ref_or_raise(ref.value)
             return Map(key, value, module=self)
 
         elif t == Type.ENUM_VALUE:
-            enum = self.lookup(ref.enum)
-            value = enum.get_value(ref.value)
+            enum = self.find_ref_or_raise(ref.enum)
+            value = enum.find_value(ref.value)
             return value
 
         # It must be an import or a user defined type.
         name = ref.name
         if '.' not in name:
-            if name not in self.definitions:
-                self._error('%s: type is not found, "%s"', self, ref)
-            return self.definitions[name]
+            return self.find_definition(name)
 
         # It can be an enum value or an imported type (i.e. import.module.Enum.Value).
         left = []
@@ -248,26 +256,26 @@ class Module(Symbol):
             lname = '.'.join(left)
             rname = '.'.join(right)
 
-            if lname in self.imports:
-                import0 = self.imports[lname]
-                return import0.module.get_definition(rname)
+            import0 = self.find_import(lname)
+            if import0:
+                return import0.module.find_definition(rname)
 
-            if lname in self.definitions:
-                return self.get_definition(name)
+            def0 = self.find_definition(name)
+            if def0:
+                return def0
 
-        self._error('%s: type is not found, "%s"', self, ref)
+        return None
 
-
-    def lookup_lazy(self, ref):
+    def find_ref_or_raise_lazy(self, ref):
         '''Return a lambda for a lazy definition lookup.'''
         check_isinstance(ref, ast.TypeRef)
-        return lambda: self.lookup(ref)
+        return lambda: self.find_ref_or_raise(ref)
 
     def link_imports(self):
         '''Link this method imports, must be called before link_definitions().'''
         self._check(not self.imports_linked, '%s: imports are already linked', self)
 
-        for import0 in self.imports.values():
+        for import0 in self.imports:
             import0.link()
 
         self.imports_linked = True
@@ -278,7 +286,7 @@ class Module(Symbol):
         self._check(self.imports_linked, '%s: imports must be linked', self)
         self._check(not self.definitions_linked, '%s: definitions are already linked', self)
 
-        for def0 in self.definitions.values():
+        for def0 in self.definitions:
             def0.link()
 
         self.definitions_linked = True
@@ -330,7 +338,7 @@ class Definition(Symbol):
 
         raise ValueError('Unsupported definition node %s' % node)
 
-    is_exception = False # The flag is set in a message constructor.
+    is_exception = False  # The flag is set in a message constructor.
 
     def __init__(self, type0, name, module=None, doc=None):
         self.type = type0
@@ -420,23 +428,22 @@ class Enum(Definition):
 
     def __init__(self, name):
         super(Enum, self).__init__(Type.ENUM, name)
-        self.values = SymbolTable(self, 'values')
+        self.values = []
 
     def add_value(self, name):
         '''Create a new enum value by its name, add it to this enum, and return it.'''
         value = EnumValue(self, name)
-        self.values.add(value)
+        self.values.append(value)
         return value
 
-    def get_value(self, name):
+    def find_value(self, name):
         '''Get a value by its name or raise an exception.'''
-        value = self.values.get(name)
-        if not value:
-            self._error('%s: value is not found, "%s"', self, name)
-        return value
+        for value in self.values:
+            if value.name == name:
+                return value
 
-    def __contains__(self, item):
-        return item in self.values.values()
+    def __contains__(self, enum_value):
+        return enum_value in self.values
 
 
 class EnumValue(Definition):
@@ -473,7 +480,7 @@ class Message(Definition):
         self.is_form = is_form
         self._discriminator = None
 
-        self.declared_fields = SymbolTable(self, 'declared_fields')
+        self.declared_fields = []
 
     @property
     def fields(self):
@@ -485,7 +492,7 @@ class Message(Definition):
     @property
     def inherited_fields(self):
         if not self.base:
-            return SymbolTable('fields')
+            return []
 
         return self.base.fields
 
@@ -510,7 +517,7 @@ class Message(Definition):
                     '%s: cannot add a field from another message, "%s" from %s',
                     self, field.name, field.message)
 
-        self.declared_fields.add(field)
+        self.declared_fields.append(field)
         field.message = self
 
         self._debug('%s: added a field "%s"', self, field.name)
@@ -570,14 +577,14 @@ class Message(Definition):
                         '%s: no enum value for a base discriminator, base=%s', self, base)
 
     def _link_fields(self):
-        for field in self.declared_fields.values():
+        for field in self.declared_fields:
             field.link()
 
         inherited_fields = self.inherited_fields
-        for field in self.declared_fields.values():
+        for field in self.declared_fields:
             self._check(field.name not in inherited_fields, '%s: duplicate field %s', self, field)
 
-        for field in self.declared_fields.values():
+        for field in self.declared_fields:
             if field.is_discriminator:
                 self._check(not self.discriminator, '%s: duplicate discriminator', self)
                 self._discriminator = field
@@ -639,7 +646,7 @@ class Interface(Definition):
         super(Interface, self).__init__(Type.INTERFACE, name, module=module, doc=doc)
         self.base = base
         self.exc = exc
-        self.declared_methods = SymbolTable(self, 'declared_methods')
+        self.declared_methods = []
 
     @property
     def methods(self):
@@ -648,7 +655,7 @@ class Interface(Definition):
     @property
     def inherited_methods(self):
         if not self.base:
-            return SymbolTable(self, 'methods')
+            return []
         return self.base.methods
 
     def set_base(self, base):
@@ -658,7 +665,7 @@ class Interface(Definition):
 
     def add_method(self, method):
         '''Add a method to this interface.'''
-        self.declared_methods.add(method)
+        self.declared_methods.append(method)
         self._debug('%s: added a method "%s"', self, method.name)
 
     def create_method(self, name, result=NativeTypes.VOID, *args_tuples):
@@ -701,14 +708,14 @@ class Interface(Definition):
         self._check(self.exc.is_exception, '%s: tries to throw a non-exception, %s', self, self.exc)
 
     def _link_methods(self):
-        for method in self.declared_methods.values():
+        for method in self.declared_methods:
             method.link()
 
         if not self.base:
             return
 
         base_methods = self.base.methods
-        for m in self.declared_methods.values():
+        for m in self.declared_methods:
             self._check(m.name not in base_methods, '%s: duplicate base method %s', self, m)
 
     def _check_circular_inheritance(self):
@@ -737,7 +744,7 @@ class Method(Symbol):
         self.is_index = is_index
         self.is_post = is_post
 
-        self.args = SymbolTable(self, 'args')
+        self.args = []
 
     def __str__(self):
         return self.fullname
@@ -748,7 +755,7 @@ class Method(Symbol):
 
     def add_arg(self, arg):
         '''Append an argument to this method.'''
-        self.args.add(arg)
+        self.args.append(arg)
 
     def create_arg(self, name, definition):
         '''Create a new arg and add it to this method.'''
@@ -763,7 +770,7 @@ class Method(Symbol):
 
     def link(self):
         self.result = self.result() if callable(self.result) else self.result
-        for arg in self.args.values():
+        for arg in self.args:
             arg.link()
         self._debug('%s: linked', self)
 
@@ -827,26 +834,3 @@ class Map(Definition):
 
         self._check(self.key.is_primitive, '%s: key must be a primitive, %s', self, self.key)
         self._check(self.value.is_datatype, '%s: value must be a data type, %s', self, self.value)
-
-
-class SymbolTable(OrderedDict):
-    '''SymbolTable is an ordered dict which supports adding items using item.name as a key,
-    and prevents duplicate items.'''
-    def __init__(self, parent=None, name='items', *args, **kwds):
-        super(SymbolTable, self).__init__(*args, **kwds)
-        self.parent = parent
-        self.name = name
-
-    def add(self, item):
-        '''Add an item with item.name as a key.'''
-        self[item.name] = item
-
-    def __setitem__(self, key, value, PREV=0, NEXT=1, dict_setitem=dict.__setitem__):
-        check_state(key not in self, '%s.%s: duplicate %s', self.parent, self.name, key)
-        super(SymbolTable, self).__setitem__(key, value)
-
-    def __add__(self, other):
-        table = SymbolTable()
-        map(table.add, self.values())
-        map(table.add, other.values())
-        return table

@@ -22,7 +22,7 @@ class PythonTranslator(AbstractTranslator):
 
     def translate(self, package):
         pymodules = [PythonModule(module, self.pymodule_suffix)
-                     for module in package.modules.values()]
+                     for module in package.modules]
 
         for pm in pymodules:
             self._write(pm)
@@ -44,8 +44,8 @@ class PythonModule(object):
         ref = lambda def0: pyref(def0, module, pymodule_suffix)
 
         self.name = module.name
-        self.imports = [pyimport(import0, pymodule_suffix) for import0 in module.imports.values()]
-        self.definitions = [pydef(def0, ref) for def0 in module.definitions.values()]
+        self.imports = [pyimport(import0, pymodule_suffix) for import0 in module.imports]
+        self.definitions = [pydef(def0, ref) for def0 in module.definitions]
 
     def render(self, translator):
         defs = []
@@ -62,7 +62,7 @@ class PythonModule(object):
 class PythonEnum(object):
     def __init__(self, def0):
         self.name = def0.name
-        self.values = [value.name for value in def0.values.values()]
+        self.values = [value.name for value in def0.values]
 
     def render(self, translator):
         return translator.enum_template.render(**self.__dict__)
@@ -80,9 +80,9 @@ class PythonMessage(object):
         self.discriminator = PythonField(msg.discriminator, ref) if msg.discriminator else None
         self.is_form = msg.is_form
 
-        self.fields = [PythonField(field, ref) for field in msg.fields.values()]
-        self.inherited_fields = [PythonField(field, ref) for field in msg.inherited_fields.values()]
-        self.declared_fields = [PythonField(field, ref) for field in msg.declared_fields.values()]
+        self.fields = [PythonField(field, ref) for field in msg.fields]
+        self.inherited_fields = [PythonField(field, ref) for field in msg.inherited_fields]
+        self.declared_fields = [PythonField(field, ref) for field in msg.declared_fields]
 
         self.root_or_base = self.base if self.base else \
             'pdef.Exc' if self.is_exception else 'pdef.Message'
@@ -103,9 +103,9 @@ class PythonInterface(object):
         self.name = iface.name
         self.base = ref(iface.base) if iface.base else None
         self.exc = ref(iface.exc) if iface.exc else None
-        self.methods = [PythonMethod(m, ref) for m in iface.methods.values()]
-        self.declared_methods = [PythonMethod(m, ref) for m in iface.declared_methods.values()]
-        self.inherited_methods = [PythonMethod(m, ref)for m in iface.inherited_methods.values()]
+        self.methods = [PythonMethod(m, ref) for m in iface.methods]
+        self.declared_methods = [PythonMethod(m, ref) for m in iface.declared_methods]
+        self.inherited_methods = [PythonMethod(m, ref)for m in iface.inherited_methods]
 
         self.root_or_base = self.base if self.base else 'pdef.Interface'
 
@@ -117,7 +117,7 @@ class PythonMethod(object):
     def __init__(self, method, ref):
         self.name = method.name
         self.result = ref(method.result)
-        self.args = [PythonArg(arg, ref) for arg in method.args.values()]
+        self.args = [PythonArg(arg, ref) for arg in method.args]
         self.is_index = method.is_index
         self.is_post = method.is_post
 

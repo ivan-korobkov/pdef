@@ -17,7 +17,7 @@ class TestPackage(unittest.TestCase):
         package = Package()
         package.parse_module(module_node)
 
-        assert 'module' in package.modules
+        assert package.find_module_or_raise('module')
 
     def test_link(self):
         '''Should link modules in a package.'''
@@ -25,7 +25,7 @@ class TestPackage(unittest.TestCase):
         package.add_module(Module('module', package))
         package.link()
 
-        assert package.lookup_module('module').linked
+        assert package.find_module_or_raise('module').linked
 
 
 class TestModule(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestModule(unittest.TestCase):
         module = Module('module')
         module.add_import(import0)
 
-        assert 'imported' in module.imports
+        assert module.find_import('imported')
 
     def test_add_definition(self):
         '''Should add a new definition to a module.'''
@@ -43,7 +43,7 @@ class TestModule(unittest.TestCase):
 
         module = Module('test')
         module.add_definition(def0)
-        assert 'Test' in module.definitions
+        assert module.find_definition('Test')
 
     def test_add_definition__duplicate(self):
         '''Should prevent adding a duplicate definition to a module.'''
@@ -69,16 +69,16 @@ class TestModule(unittest.TestCase):
         except PdefCompilerException, e:
             assert 'definition clashes with an import' in e.message
 
-    def test_get_definition(self):
+    def test_find_definition(self):
         '''Should return a definition by its name.'''
         def0 = Definition(Type.DEFINITION, 'Test')
 
         module = Module('test')
         module.add_definition(def0)
 
-        assert def0 is module.get_definition('Test')
+        assert def0 is module.find_definition('Test')
 
-    def test_get_definition__enum_value(self):
+    def test_find_definition__enum_value(self):
         '''Should return an enum value by its name.'''
         enum = Enum('Number')
         one = enum.add_value('One')
@@ -86,60 +86,60 @@ class TestModule(unittest.TestCase):
         module = Module('test')
         module.add_definition(enum)
 
-        def0 = module.get_definition('Number.One')
+        def0 = module.find_definition('Number.One')
         assert def0 is one
 
-    def test_lookup__native(self):
+    def test_find_ref__native(self):
         '''Should lookup a native type by its ref.'''
         module = Module('test')
-        int64 = module.lookup(ast.TypeRef(Type.INT64))
+        int64 = module.find_ref_or_raise(ast.TypeRef(Type.INT64))
         assert int64 is NativeTypes.INT64
 
-    def test_lookup__list(self):
+    def test_find_ref__list(self):
         '''Should create and link a list by its ref.'''
         module = Module('test')
-        list0 = module.lookup(ast.ListRef(ast.TypeRef(Type.STRING)))
+        list0 = module.find_ref_or_raise(ast.ListRef(ast.TypeRef(Type.STRING)))
         assert isinstance(list0, List)
         assert list0.element is NativeTypes.STRING
 
-    def test_lookup__set(self):
+    def test_find_ref__set(self):
         '''Should create and link a set by its ref.'''
         module = Module('test')
-        set0 = module.lookup(ast.SetRef(ast.TypeRef(Type.FLOAT)))
+        set0 = module.find_ref_or_raise(ast.SetRef(ast.TypeRef(Type.FLOAT)))
         assert isinstance(set0, Set)
         assert set0.element is NativeTypes.FLOAT
 
-    def test_lookup__map(self):
+    def test_find_ref__map(self):
         '''Should create and link a map by its ref.'''
         module = Module('test')
-        map0 = module.lookup(ast.MapRef(ast.TypeRef(Type.STRING), ast.TypeRef(Type.INT32)))
+        map0 = module.find_ref_or_raise(ast.MapRef(ast.TypeRef(Type.STRING), ast.TypeRef(Type.INT32)))
         assert isinstance(map0, Map)
         assert map0.key is NativeTypes.STRING
         assert map0.value is NativeTypes.INT32
 
-    def test_lookup__enum_value(self):
+    def test_find_ref__enum_value(self):
         '''Should look up an enum value.'''
         enum = Enum('Number')
         enum.add_value('One')
 
         module = Module('test')
         module.add_definition(enum)
-        one = module.lookup(ast.EnumValueRef(ast.DefRef('Number'), 'One'))
-        assert one is enum.get_value('One')
+        one = module.find_ref_or_raise(ast.EnumValueRef(ast.DefRef('Number'), 'One'))
+        assert one is enum.find_value('One')
 
-    def test_lookup__enum_value_not_present(self):
+    def test_find_ref__enum_value_not_present(self):
         '''Should raise an error when an enum does not have a specified value.'''
         enum = Enum('Number')
         module = Module('test')
         module.add_definition(enum)
 
         try:
-            module.lookup(ast.EnumValueRef(ast.DefRef('Number'), 'One'))
+            module.find_ref_or_raise(ast.EnumValueRef(ast.DefRef('Number'), 'One'))
             self.fail()
         except PdefCompilerException, e:
             assert 'not found' in e.message
 
-    def test_lookup__user_defined(self):
+    def test_find_ref__user_defined(self):
         '''Should look up a user-defined definition by its reference.'''
         def0 = Definition(Type.DEFINITION, 'Test')
 
@@ -147,10 +147,10 @@ class TestModule(unittest.TestCase):
         module.add_definition(def0)
 
         ref = ast.DefRef('Test')
-        result = module.lookup(ref)
+        result = module.find_ref_or_raise(ref)
         assert def0 is result
 
-    def test_lookup___link(self):
+    def test_find_ref___link(self):
         '''Should look up a definition by its reference and link the definition.'''
         def0 = Definition(Type.DEFINITION, 'Test')
 
@@ -158,10 +158,10 @@ class TestModule(unittest.TestCase):
         module.add_definition(def0)
 
         ref = ast.DefRef('Test')
-        result = module.lookup(ref)
+        result = module.find_ref_or_raise(ref)
         assert result.linked
 
-    def test_lookup__imported_type(self):
+    def test_find_ref__imported_type(self):
         '''Should lookup an imported definition.'''
         def0 = Definition(Type.DEFINITION, 'Test')
 
@@ -172,10 +172,10 @@ class TestModule(unittest.TestCase):
         module1.create_import('test.module0', module0)
 
         ref = ast.DefRef('test.module0.Test')
-        result = module1.lookup(ref)
+        result = module1.find_ref_or_raise(ref)
         assert result is def0
 
-    def test_lookup__imported_enum_value(self):
+    def test_find_ref__imported_enum_value(self):
         '''Should lookup an imported enum value.'''
         enum = Enum('Number')
         one = enum.add_value('One')
@@ -187,7 +187,7 @@ class TestModule(unittest.TestCase):
         module1.create_import('module0', module0)
 
         ref = ast.DefRef('module0.Number.One')
-        result = module1.lookup(ref)
+        result = module1.find_ref_or_raise(ref)
         assert result is one
 
     def test_link_imports(self):
@@ -199,7 +199,7 @@ class TestModule(unittest.TestCase):
         module1.link_imports()
 
         assert module1.imports_linked
-        assert module1.imports['module0'].module is module0
+        assert module1.find_import('module0').module is module0
 
 
 class TestImport(unittest.TestCase):
@@ -235,9 +235,9 @@ class TestEnum(unittest.TestCase):
         enum = Enum.parse_node(node, module, lookup)
 
         assert len(enum.values) == 3
-        assert 'ONE' in enum.values
-        assert 'TWO' in enum.values
-        assert 'THREE' in enum.values
+        assert enum.find_value('ONE')
+        assert enum.find_value('TWO')
+        assert enum.find_value('THREE')
 
     def test_add_value(self):
         '''Should add to enum a new value by its name.'''
@@ -260,7 +260,8 @@ class TestMessage(unittest.TestCase):
         msg = Message.parse_node(node, module, lookup)
         assert msg.name == node.name
         assert msg.base
-        assert 'field' in msg.declared_fields
+        assert len(msg.declared_fields) == 1
+        assert msg.declared_fields[0].name == 'field'
 
     def test_link(self):
         '''Should init and link message base and fields.'''
@@ -268,11 +269,11 @@ class TestMessage(unittest.TestCase):
 
         msg = Message('Msg')
         msg.set_base(lambda: base)
-        msg.create_field('field', lambda: NativeTypes.STRING)
+        field = msg.create_field('field', lambda: NativeTypes.STRING)
         msg.link()
 
         assert msg.base is base
-        assert msg.fields['field'].type is NativeTypes.STRING
+        assert field.type is NativeTypes.STRING
 
     def test_link__base_with_type(self):
         '''Should link message and add to it to its base subtypes.'''
@@ -409,9 +410,9 @@ class TestMessage(unittest.TestCase):
     def test_create_field(self):
         '''Should create and add a field to a message.'''
         msg = Message('Msg')
-        msg.create_field('field', NativeTypes.INT32)
+        field = msg.create_field('field', NativeTypes.INT32)
 
-        field = msg.declared_fields['field']
+        assert [field] == msg.declared_fields
         assert field.name == 'field'
         assert field.type == NativeTypes.INT32
 
@@ -462,10 +463,10 @@ class TestMessage(unittest.TestCase):
         field1 = msg1.create_field('field1', NativeTypes.STRING)
         msg1.set_base(msg0, type1)
 
-        assert msg1.fields == {'type': type_field, 'field0': field0, 'field1': field1}
-        assert msg1.inherited_fields == {'type': type_field, 'field0': field0}
-        assert msg0.fields == {'type': type_field, 'field0': field0}
-        assert msg0.inherited_fields == {'type': type_field}
+        assert msg1.fields == [type_field, field0, field1]
+        assert msg1.inherited_fields == [type_field, field0]
+        assert msg0.fields == [type_field, field0]
+        assert msg0.inherited_fields == [type_field]
 
     def test_link_fields__duplicate_inherited_field(self):
         '''Should prevent duplicate fields with inherited fields.'''
@@ -551,19 +552,21 @@ class TestInterface(unittest.TestCase):
         assert iface.name == node.name
         assert iface.base
         assert iface.exc
-        assert 'echo' in iface.declared_methods
+        assert len(iface.declared_methods) == 1
+        assert iface.declared_methods[0].name == 'echo'
         assert len(lookup.call_args_list) == 4
 
     def test_link(self):
         '''Should init and link interface base and declared methods.'''
         base = Interface('Base')
         iface = Interface('Iface')
-        iface.set_base(lambda : base)
-        iface.create_method('method', result=lambda : NativeTypes.INT32)
+        iface.set_base(lambda: base)
+        method = iface.create_method('method', result=lambda : NativeTypes.INT32)
         iface.link()
 
         assert iface.base is base
-        assert iface.declared_methods['method'].result is NativeTypes.INT32
+        assert [method] == iface.declared_methods
+        assert method.result is NativeTypes.INT32
 
     def test_link_base__self_inheritance(self):
         '''Should prevent interface self-inheritance.'''
@@ -632,8 +635,8 @@ class TestInterface(unittest.TestCase):
         method0 = iface0.create_method('method0')
         method1 = iface1.create_method('method1')
 
-        assert iface1.inherited_methods == {'method0': method0}
-        assert iface1.methods == {'method0': method0, 'method1': method1}
+        assert iface1.inherited_methods == [method0]
+        assert iface1.methods == [method0, method1]
 
     def test_create_method(self):
         '''Should create a new method to this interface.'''
@@ -641,11 +644,11 @@ class TestInterface(unittest.TestCase):
         method = iface.create_method('sum', NativeTypes.INT32,
                                      ('i0', NativeTypes.INT32), ('i1', NativeTypes.INT32))
 
-        assert 'sum' in iface.declared_methods
+        assert [method] == iface.declared_methods
         assert method.name == 'sum'
         assert method.result is NativeTypes.INT32
-        assert 'i0' in method.args
-        assert 'i1' in method.args
+        assert method.args[0].name == 'i0'
+        assert method.args[1].name == 'i1'
 
     def test_create_method__prevent_duplicates(self):
         '''Should prevent duplicate methods in an interface.'''
@@ -681,16 +684,18 @@ class TestMethod(unittest.TestCase):
         method = Method.parse_from(node, iface, lookup)
         assert method.name == 'name'
         assert method.result
-        assert 'arg0' in method.args
+        assert len(method.args) == 1
+        assert method.args[0].name == 'arg0'
 
     def test_link(self):
         iface = mock.Mock()
         method = Method('name', lambda : NativeTypes.INT32, iface)
-        method.create_arg('arg', lambda : NativeTypes.INT64)
+        arg = method.create_arg('arg', lambda : NativeTypes.INT64)
         method.link()
 
         assert method.result is NativeTypes.INT32
-        assert method.args['arg'].type is NativeTypes.INT64
+        assert [arg] == method.args
+        assert arg.type is NativeTypes.INT64
 
     def test_fullname(self):
         iface = Interface('Interface')
@@ -713,7 +718,7 @@ class TestMethodArg(unittest.TestCase):
         lookup.assert_called_with(ref)
 
     def test_link(self):
-        ref = lambda : NativeTypes.INT32
+        ref = lambda: NativeTypes.INT32
         arg = MethodArg('name', ref)
         arg.link()
 

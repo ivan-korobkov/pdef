@@ -16,7 +16,7 @@ class TestPythonModule(unittest.TestCase):
         module.add_definitions(msg, iface, enum)
         module.create_import('module', imported)
         module.link_imports()
-        module.link_definitions()
+        module.link()
 
         return PythonModule(module, pymodule_suffix='_pd')
 
@@ -70,7 +70,7 @@ class TestPythonMessage(unittest.TestCase):
         module = Module('test')
         module.add_definitions(enum, base, msg)
         module.link_imports()
-        module.link_definitions()
+        module.link()
 
         return pydef(msg, ref=lambda x: pyref(x, module))
 
@@ -104,7 +104,7 @@ class TestPythonInterface(unittest.TestCase):
         module = Module('test')
         module.add_definitions(base, exc, iface)
         module.link_imports()
-        module.link_definitions()
+        module.link()
 
         return pydef(iface, ref=lambda x: pyref(x, module))
 

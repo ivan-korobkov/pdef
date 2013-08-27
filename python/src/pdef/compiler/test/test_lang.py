@@ -45,30 +45,6 @@ class TestModule(unittest.TestCase):
         module.add_definition(def0)
         assert module.find_definition('Test')
 
-    def test_add_definition__duplicate(self):
-        '''Should prevent adding a duplicate definition to a module.'''
-        def0 = Definition(Type.DEFINITION, 'Test')
-        def1 = Definition(Type.DEFINITION, 'Test')
-
-        module = Module('test')
-        module.add_definition(def0)
-        try:
-            module.add_definition(def1)
-            self.fail()
-        except PdefCompilerException, e:
-            assert 'duplicate' in e.message
-
-    def test_add_definition__import_clash(self):
-        '''Should prevent adding a definition to a module when its name clashes with an import.'''
-        module = Module('test')
-        module.create_import('clash.name', mock.Mock())
-
-        def0 = Definition(Type.DEFINITION, 'clash')
-        try:
-            module.add_definition(def0)
-        except PdefCompilerException, e:
-            assert 'definition clashes with an import' in e.message
-
     def test_find_definition(self):
         '''Should return a definition by its name.'''
         def0 = Definition(Type.DEFINITION, 'Test')
@@ -201,6 +177,38 @@ class TestModule(unittest.TestCase):
         assert module1.imports_linked
         assert module1.find_import('module0').module is module0
 
+    def test_valid__duplicate_definition(self):
+        '''Should prevent adding a duplicate definition to a module.'''
+        def0 = Definition(Type.DEFINITION, 'Test')
+        def1 = Definition(Type.DEFINITION, 'Test')
+
+        module = Module('test')
+        module.add_definition(def0)
+        module.add_definition(def1)
+        module.link_imports()
+        module.link()
+
+        try:
+            module.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'Duplicate definition' in e.message
+
+    def test_add_definition__import_clash(self):
+        '''Should prevent adding a definition to a module when its name clashes with an import.'''
+        module = Module('test')
+        module.create_import('clash.name', Module('imported'))
+
+        def0 = Definition(Type.DEFINITION, 'clash')
+        module.add_definition(def0)
+        module.link_imports()
+        module.link()
+
+        try:
+            module.validate()
+        except PdefCompilerException, e:
+            assert 'Definition clashes with an import' in e.message
+
 
 class TestImport(unittest.TestCase):
     def test_parse_list_from_node__absolute(self):
@@ -229,11 +237,9 @@ class TestEnum(unittest.TestCase):
     def test_parse_node(self):
         '''Should create an enum from an AST node.'''
         node = ast.Enum('Number', values=('ONE', 'TWO', 'THREE'))
-        module = mock.Mock()
         lookup = mock.Mock()
 
-        enum = Enum.parse_node(node, module, lookup)
-
+        enum = Enum.parse_node(node, lookup)
         assert len(enum.values) == 3
         assert enum.find_value('ONE')
         assert enum.find_value('TWO')
@@ -248,20 +254,71 @@ class TestEnum(unittest.TestCase):
         assert one.name == 'ONE'
         assert one.enum is enum
 
+    def test_validate__duplicate_values(self):
+        enum = Enum('Number')
+        enum.add_value('ONE')
+        enum.add_value('TWO')
+        enum.link()
+
+        try:
+            enum.validate()
+        except PdefCompilerException, e:
+            assert 'Duplicate value' in e.message
+
+
 
 class TestMessage(unittest.TestCase):
     def test_parse_node(self):
         '''Should create a message from an AST node.'''
         node = ast.Message('Msg', base=ast.DefRef('Base'),
                            fields=[ast.Field('field', ast.TypeRef(Type.INT32))])
-        module = mock.Mock()
         lookup = mock.Mock()
 
-        msg = Message.parse_node(node, module, lookup)
+        msg = Message.parse_node(node, lookup)
         assert msg.name == node.name
         assert msg.base
         assert len(msg.declared_fields) == 1
         assert msg.declared_fields[0].name == 'field'
+
+    def test_create_field(self):
+        '''Should create and add a field to a message.'''
+        msg = Message('Msg')
+        field = msg.create_field('field', NativeTypes.INT32)
+
+        assert [field] == msg.declared_fields
+        assert field.name == 'field'
+        assert field.type == NativeTypes.INT32
+
+    def test_create_field__set_discriminator(self):
+        '''Should set a message discriminator when a field is a discriminator.'''
+        enum = Enum('Type')
+        msg = Message('Msg')
+
+        field = msg.create_field('type', enum, is_discriminator=True)
+        msg.link()
+        assert field.is_discriminator
+        assert msg.discriminator is field
+
+    def test_inherited_fields(self):
+        '''Should correctly compute message inherited fields.'''
+        enum = Enum('Type')
+        type0 = enum.add_value('Type0')
+        type1 = enum.add_value('Type1')
+
+        base = Message('Base')
+        type_field = base.create_field('type', enum, is_discriminator=True)
+        msg0 = Message('Msg0')
+        field0 = msg0.create_field('field0', NativeTypes.INT32)
+        msg0.set_base(base, type0)
+
+        msg1 = Message('Msg1')
+        field1 = msg1.create_field('field1', NativeTypes.STRING)
+        msg1.set_base(msg0, type1)
+
+        assert msg1.fields == [type_field, field0, field1]
+        assert msg1.inherited_fields == [type_field, field0]
+        assert msg0.fields == [type_field, field0]
+        assert msg0.inherited_fields == [type_field]
 
     def test_link(self):
         '''Should init and link message base and fields.'''
@@ -289,41 +346,6 @@ class TestMessage(unittest.TestCase):
 
         assert subtype in base.subtypes
         assert msg in base.subtypes.values()
-
-    def test_link_base__self_inheritance(self):
-        '''Should prevent self-inheritance.'''
-        msg = Message('Msg')
-        msg.set_base(msg)
-        try:
-            msg.link()
-            self.fail()
-        except PdefCompilerException, e:
-            assert 'cannot inherit itself' in e.message
-
-    def test_link_base__circular_inheritance(self):
-        '''Should prevent circular inheritance.'''
-        msg0 = Message('Msg0')
-        msg1 = Message('Msg1')
-        msg1.set_base(msg0)
-        msg0.set_base(msg1)
-
-        try:
-            msg0.link()
-            self.fail()
-        except PdefCompilerException, e:
-            assert 'circular inheritance' in e.message
-
-    def test_link_base__message_exception_clash(self):
-        '''Should prevent message<->exception inheritance.'''
-        msg = Message('Msg')
-        exc = Message('Exc', is_exception=True)
-        exc.set_base(msg)
-
-        try:
-            exc.link()
-            self.fail()
-        except PdefCompilerException, e:
-            assert 'cannot inherit' in e.message
 
     def test_link_base__add_subtypes(self):
         '''Should set a message base with a base type and add the message to the base subtypes.'''
@@ -361,25 +383,46 @@ class TestMessage(unittest.TestCase):
         assert msg0.subtypes == {type1: msg1}
         assert base.subtypes == {type0: msg0, type1: msg1}
 
-    def test_link_base__forbid_multiple_discriminators(self):
-        '''Should forbid multiple discriminators in messages.'''
-        enum0 = Enum('Type0')
-        enum1 = Enum('Type1')
-        sub0 = enum0.add_value('SUB0')
+    def test_validate_base__self_inheritance(self):
+        '''Should prevent self-inheritance.'''
+        msg = Message('Msg')
+        msg.set_base(msg)
+        msg.link()
 
-        msg0 = Message('Msg0')
-        msg0.create_field('type0', enum0, is_discriminator=True)
-
-        msg1 = Message('Msg1')
-        msg1.create_field('type1', enum1, is_discriminator=True)
-        msg1.set_base(msg0, sub0)
         try:
-            msg1.link()
+            msg.validate()
             self.fail()
         except PdefCompilerException, e:
-            assert 'duplicate discriminator' in e.message
+            assert 'Circular inheritance' in e.message
 
-    def test_link_base__no_enum_value_for_discriminator(self):
+    def test_validate_base__circular_inheritance(self):
+        '''Should prevent circular inheritance.'''
+        msg0 = Message('Msg0')
+        msg1 = Message('Msg1')
+        msg1.set_base(msg0)
+        msg0.set_base(msg1)
+        msg0.link()
+
+        try:
+            msg0.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'Circular inheritance' in e.message
+
+    def test_validate_base__message_exception_clash(self):
+        '''Should prevent message<->exception inheritance.'''
+        msg = Message('Msg')
+        exc = Message('Exc', is_exception=True)
+        exc.set_base(msg)
+        exc.link()
+
+        try:
+            exc.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'Wrong base type (message/exc)' in e.message
+
+    def test_validate_base__no_enum_value_for_discriminator(self):
         '''Should prevent inheriting a polymorphic base by a non-polymorphic message.'''
         enum = Enum('Type')
         enum.add_value('Subtype')
@@ -394,7 +437,7 @@ class TestMessage(unittest.TestCase):
         except PdefCompilerException, e:
             assert 'no enum value for a base discriminator' in e.message
 
-    def test_link_base__base_does_not_have_discriminator(self):
+    def test_validate_base__base_does_not_have_discriminator(self):
         '''Should prevent inheriting a non-polymorphic base by a polymorphic message.'''
         base = Message('Base')
         enum = Enum('Type')
@@ -407,68 +450,19 @@ class TestMessage(unittest.TestCase):
         except PdefCompilerException, e:
             assert 'base does not have a discriminator' in e.message
 
-    def test_create_field(self):
-        '''Should create and add a field to a message.'''
-        msg = Message('Msg')
-        field = msg.create_field('field', NativeTypes.INT32)
-
-        assert [field] == msg.declared_fields
-        assert field.name == 'field'
-        assert field.type == NativeTypes.INT32
-
-    def test_create_field__duplicate(self):
+    def test_validate_fields__duplicate(self):
         '''Should prevent duplicate message fields.'''
         msg = Message('Msg')
         msg.create_field('field', NativeTypes.INT32)
-        try:
-            msg.create_field('field', NativeTypes.INT32)
-        except PdefCompilerException, e:
-            assert 'duplicate' in e.message
-
-    def test_create_field__set_discriminator(self):
-        '''Should set a message discriminator when a field is a discriminator.'''
-        enum = Enum('Type')
-        msg = Message('Msg')
-
-        field = msg.create_field('type', enum, is_discriminator=True)
+        msg.create_field('field', NativeTypes.INT32)
         msg.link()
-        assert field.is_discriminator
-        assert msg.discriminator is field
 
-    def test_create_field__duplicate_discriminator(self):
-        '''Should prevent multiple discriminators in a message'''
-        enum = Enum('Type')
-        msg = Message('Msg')
-        msg.create_field('type0', enum, is_discriminator=True)
-        msg.create_field('type1', enum, is_discriminator=True)
         try:
-            msg.link()
-            self.fail()
+            msg.validate()
         except PdefCompilerException, e:
-            assert 'duplicate discriminator' in e.message
+            assert 'Duplicate field' in e.message
 
-    def test_inherited_fields(self):
-        '''Should correctly compute message inherited fields.'''
-        enum = Enum('Type')
-        type0 = enum.add_value('Type0')
-        type1 = enum.add_value('Type1')
-
-        base = Message('Base')
-        type_field = base.create_field('type', enum, is_discriminator=True)
-        msg0 = Message('Msg0')
-        field0 = msg0.create_field('field0', NativeTypes.INT32)
-        msg0.set_base(base, type0)
-
-        msg1 = Message('Msg1')
-        field1 = msg1.create_field('field1', NativeTypes.STRING)
-        msg1.set_base(msg0, type1)
-
-        assert msg1.fields == [type_field, field0, field1]
-        assert msg1.inherited_fields == [type_field, field0]
-        assert msg0.fields == [type_field, field0]
-        assert msg0.inherited_fields == [type_field]
-
-    def test_link_fields__duplicate_inherited_field(self):
+    def test_validate_fields__duplicate_inherited_field(self):
         '''Should prevent duplicate fields with inherited fields.'''
         msg0 = Message('Msg0')
         msg0.create_field('field', NativeTypes.STRING)
@@ -476,21 +470,55 @@ class TestMessage(unittest.TestCase):
         msg1 = Message('Msg1')
         msg1.set_base(msg0)
         msg1.create_field('field', NativeTypes.STRING)
+        msg1.link()
 
         try:
-            msg1.link()
+            msg1.validate()
             self.fail()
         except PdefCompilerException, e:
-            assert 'duplicate field' in e.message
+            assert 'Duplicate field' in e.message
+
+    def test_validate_fields__duplicate_discriminator(self):
+        '''Should prevent multiple discriminators in a message'''
+        enum = Enum('Type')
+        msg = Message('Msg')
+        msg.create_field('type0', enum, is_discriminator=True)
+        msg.create_field('type1', enum, is_discriminator=True)
+        msg.link()
+
+        try:
+            msg.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'Multiple discriminator fields' in e.message
+
+    def test_validate_fields__duplicate_base_discriminator(self):
+        '''Should forbid multiple discriminators in messages.'''
+        enum0 = Enum('Type0')
+        enum1 = Enum('Type1')
+        sub0 = enum0.add_value('SUB0')
+
+        msg0 = Message('Msg0')
+        msg0.create_field('type0', enum0, is_discriminator=True)
+
+        msg1 = Message('Msg1')
+        msg1.create_field('type1', enum1, is_discriminator=True)
+        msg1.set_base(msg0, sub0)
+        msg1.link()
+
+        try:
+            msg1.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'Multiple discriminator fields' in e.message
 
 
 class TestField(unittest.TestCase):
     def test_parse_node(self):
         node = ast.Field('field', ast.TypeRef(ast.Type.STRING), is_discriminator=True)
-        message = mock.Mock()
         lookup = mock.Mock()
 
-        field = Field.parse_node(node, message, lookup)
+        field = Field.parse_node(node, lookup)
         assert field.name == 'field'
         assert field.is_discriminator
         lookup.assert_called_with(node.type)
@@ -502,18 +530,20 @@ class TestField(unittest.TestCase):
 
         assert field.type is NativeTypes.INT32
 
-    def test_link__must_be_datatype(self):
+    def test_validate__must_be_datatype(self):
         '''Should prevent fields which are not data types.'''
         iface = Interface('Interface')
         message = mock.Mock()
         field = Field('field', iface, message)
+        field.link()
+
         try:
-            field.link()
+            field.validate()
             self.fail()
         except PdefCompilerException, e:
-            assert 'field must be a data type' in e.message
+            assert 'Field must be a data type' in e.message
 
-    def test_link__discriminator_must_be_enum(self):
+    def test_validate__discriminator_must_be_enum(self):
         '''Should ensure discriminator field type is an enum.'''
         enum = Enum('Enum')
         message = mock.Mock()
@@ -522,17 +552,19 @@ class TestField(unittest.TestCase):
         field1 = Field('field1', NativeTypes.INT32, message, is_discriminator=True)
 
         field0.link()
+        field1.link()
         try:
-            field1.link()
+            field0.validate()
+            field1.validate()
             self.fail()
         except PdefCompilerException, e:
-            assert 'discriminator must be an enum' in e.message
+            assert 'Discriminator field must be an enum' in e.message
 
     def test_fullname(self):
         message = Message('Message')
-        field = Field('field', NativeTypes.STRING, message)
+        field = Field('field', NativeTypes.STRING, message=message)
 
-        assert field.fullname == 'Message.field=string'
+        assert field.fullname == 'Message.field'
 
 
 class TestInterface(unittest.TestCase):
@@ -544,11 +576,9 @@ class TestInterface(unittest.TestCase):
         node = ast.Interface('Iface', base=base_ref, exc=exc_ref,
                 methods=[ast.Method('echo', args=[ast.Field('text', ast.TypeRef(Type.STRING))],
                 result=ast.TypeRef(Type.STRING))])
-
-        module = mock.Mock()
         lookup = mock.Mock()
 
-        iface = Interface.parse_node(node, module, lookup)
+        iface = Interface.parse_node(node, lookup)
         assert iface.name == node.name
         assert iface.base
         assert iface.exc
@@ -568,43 +598,6 @@ class TestInterface(unittest.TestCase):
         assert [method] == iface.declared_methods
         assert method.result is NativeTypes.INT32
 
-    def test_link_base__self_inheritance(self):
-        '''Should prevent interface self-inheritance.'''
-        iface = Interface('Iface')
-        iface.set_base(iface)
-
-        try:
-            iface.link()
-            self.fail()
-        except PdefCompilerException, e:
-            assert 'self inheritance' in e.message
-
-    def test_link_base__circular_inheritance(self):
-        '''Should prevent circular interface inheritance.'''
-        iface0 = Interface('Iface0')
-        iface1 = Interface('Iface1')
-        iface2 = Interface('Iface2')
-
-        iface0.set_base(iface2)
-        iface1.set_base(iface0)
-        iface2.set_base(iface1)
-
-        try:
-            iface2.link()
-            self.fail()
-        except PdefCompilerException, e:
-            assert 'circular' in e.message
-
-    def test_link_base__must_be_interface(self):
-        '''Should prevent interface bases which are not interfaces.'''
-        iface = Interface('Iface0')
-        iface.set_base(NativeTypes.INT32)
-        try:
-            iface.link()
-            self.fail()
-        except PdefCompilerException, e:
-            assert 'base must be an interface' in e.message
-
     def test_link_exc(self):
         '''Should link interface exception.'''
         exc = Message('Exception', is_exception=True)
@@ -613,18 +606,6 @@ class TestInterface(unittest.TestCase):
 
         iface.link()
         assert iface.exc is exc
-
-    def test_link_exc__tries_to_throw_non_exception(self):
-        '''Should prevent setting interface exception to a non-exception type.'''
-        nonexc = Message('Message')
-        iface = Interface('Interface')
-        iface.exc = nonexc
-
-        try:
-            iface.link()
-            self.fail()
-        except PdefCompilerException, e:
-            assert 'tries to throw a non-exception' in e.message
 
     def test_methods(self):
         '''Should combine the inherited and declared methods.'''
@@ -650,28 +631,73 @@ class TestInterface(unittest.TestCase):
         assert method.args[0].name == 'i0'
         assert method.args[1].name == 'i1'
 
-    def test_create_method__prevent_duplicates(self):
-        '''Should prevent duplicate methods in an interface.'''
+    def test_validate_base__self_inheritance(self):
+        '''Should prevent interface self-inheritance.'''
         iface = Interface('Iface')
-        iface.create_method('doNothing')
+        iface.set_base(iface)
+        iface.link()
+
         try:
-            iface.create_method('doNothing')
+            iface.validate()
             self.fail()
         except PdefCompilerException, e:
-            assert 'duplicate' in e.message
+            assert 'Circular inheritance' in e.message
 
-    def test_link_methods__prevent_base_method_duplicates(self):
+    def test_validate_base__circular_inheritance(self):
+        '''Should prevent circular interface inheritance.'''
+        iface0 = Interface('Iface0')
+        iface1 = Interface('Iface1')
+        iface2 = Interface('Iface2')
+
+        iface0.set_base(iface2)
+        iface1.set_base(iface0)
+        iface2.set_base(iface1)
+        iface2.link()
+
+        try:
+            iface2.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'Circular inheritance' in e.message
+
+    def test_validate_base__must_be_interface(self):
+        '''Should prevent interface bases which are not interfaces.'''
+        iface = Interface('Iface0')
+        iface.set_base(NativeTypes.INT32)
+        iface.link()
+
+        try:
+            iface.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'Base must be an interface' in e.message
+
+    def test_validate_exc__tries_to_throw_non_exception(self):
+        '''Should prevent setting interface exception to a non-exception type.'''
+        nonexc = Message('Message')
+        iface = Interface('Interface')
+        iface.exc = nonexc
+        iface.link()
+
+        try:
+            iface.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'Wrong exception' in e.message
+
+    def test_validate_methods__duplicates(self):
         iface0 = Interface('Interface0')
         iface0.create_method('method')
 
         iface1 = Interface('Interface1')
         iface1.set_base(iface0)
         iface1.create_method('method')
+        iface1.link()
 
         try:
-            iface1.link()
+            iface1.validate()
         except PdefCompilerException, e:
-            assert 'duplicate base method' in e.message
+            assert 'Duplicate method' in e.message
 
 
 class TestMethod(unittest.TestCase):
@@ -708,7 +734,7 @@ class TestMethod(unittest.TestCase):
 
 
 class TestMethodArg(unittest.TestCase):
-    def parse_from(self):
+    def test_parse_from(self):
         ref = ast.DefRef('int32')
         node = ast.Field('arg', ref)
         lookup = mock.Mock()
@@ -730,33 +756,45 @@ class TestList(unittest.TestCase):
     def test_element_datatype(self):
         '''Should prevent list elements which are not data types.'''
         iface = Interface('Interface')
+        d = List(iface)
+        d.link()
+
         try:
-            List(iface)
+            d.validate()
         except PdefCompilerException, e:
-            assert 'element must be a data type' in e.message
+            assert 'List elements must be data types' in e.message
 
 
 class TestSet(unittest.TestCase):
     def test_element_datatype(self):
         '''Should prevent set elements which are not data types.'''
         iface = Interface('Interface')
+        d = Set(iface)
+        d.link()
+
         try:
-            Set(iface)
+            d.validate()
         except PdefCompilerException, e:
-            assert 'element must be a data type' in e.message
+            assert 'Set elements must be data types' in e.message
 
 
 class TestMap(unittest.TestCase):
     def test_key_primitive(self):
         msg = Message('Message')
+        d = Map(msg, msg)
+        d.link()
+
         try:
-            Map(msg, msg)
+            d.validate()
         except PdefCompilerException, e:
-            assert 'key must be a primitive' in e.message
+            assert 'Map keys must be primitives' in e.message
 
     def test_value_datatype(self):
         iface = Interface('Interface')
+        d = Map(NativeTypes.STRING, iface)
+        d.link()
+
         try:
-            Map(NativeTypes.STRING, iface)
+            d.validate()
         except PdefCompilerException, e:
-            assert 'value must be a data type' in e.message
+            assert 'Map values must be data types' in e.message

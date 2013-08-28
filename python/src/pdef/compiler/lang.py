@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, deque
 
 from pdef import Type
 from pdef.compiler import ast, parser
@@ -57,9 +57,9 @@ class Symbol(object):
     def _check(self, expression, msg, *args):
         if expression:
             return
-        self._error(msg, *args)
+        self._raise(msg, *args)
 
-    def _error(self, msg, *args):
+    def _raise(self, msg, *args):
         msg = msg % args if msg else 'Error'
         raise PdefCompilerException(msg)
 
@@ -122,7 +122,7 @@ class Package(Symbol):
             if module.name == name:
                 return module
 
-        self._error('Module "%s" is not found', name)
+        self._raise('Module "%s" is not found', name)
 
     def find_module_or_raise_lazy(self, name):
         '''Return a lambda which lookups a module by name.'''
@@ -240,7 +240,7 @@ class Module(Symbol):
         check_isinstance(ref, ast.TypeRef)
         def0 = self._find_ref(ref)
         if not def0:
-            self._error('Type is not found, module=%s, ref=%s', self, ref)
+            self._raise('Type is not found, module=%s, ref=%s', self, ref)
 
         def0.link()
         return def0
@@ -328,6 +328,25 @@ class Module(Symbol):
                 self._check(iname != name and not iname.startswith(name + '.'),
                             'Definition clashes with an import, module=%s, def=%s', self, def0)
 
+        for def0 in self.definitions:
+            def0.validate()
+
+    def _has_import_circle(self, another):
+        '''Return true if this module has an import circle with another module.'''
+        if another is self:
+            return False
+
+        q = deque(imp.module for imp in self.imports)
+        while q:
+            module = q.pop()
+            if module is self:
+                return True
+
+            for imp in module.imports:
+                q.append(imp.module)
+
+        return False
+
 
 class Import(Symbol):
     @classmethod
@@ -398,6 +417,34 @@ class Definition(Symbol):
     @property
     def fullname(self):
         return '%s.%s' % (self.module.name, self.name) if self.module else self.name
+
+    def _must_be_referenced_before(self, another):
+        '''Validate that this definition is reference before another one.'''
+        if not self.module or not another.module:
+            return True
+
+        if another.module is self.module:
+            # They are in the same module.
+
+            for def0 in self.module.definitions:
+                if def0 is self:
+                    return True
+                if def0 is another:
+                    self._raise('%s must be referenced before %s. Move it above in the file.',
+                                self, another)
+
+            raise AssertionError('Wrong module state')
+
+        if self.module._has_import_circle(another.module):
+            self._raise('%s must be referenced before %s, but their modules circularly import '
+                        'each other. Move %s into another module.',
+                        self, another, self)
+
+        return True
+
+    def _must_be_referenced_after(self, another):
+        '''Validate that this definition is referenced after another one.'''
+        return another._must_be_referenced_before(self)
 
 
 class NativeType(Definition):
@@ -597,7 +644,9 @@ class Message(Definition):
         self._check(base.is_message, 'Base must be a message, message=%s', self)
         self._check(self.is_exception == base.is_exception,
                     'Wrong base type (message/exc), message=%s', self)
+        self._must_be_referenced_after(base)
 
+        # Check circular inheritance.
         while base:
             self._check(base is not self, 'Circular inheritance, message=%s', self)
             base = base.base
@@ -608,7 +657,7 @@ class Message(Definition):
 
         if not btype:
             is_polymorphic = base and base.discriminator
-            self._check(not is_polymorphic, 'Polymorphic type required, message=%s', self)
+            self._check(not is_polymorphic, 'Discriminator value required for %s base', self)
             return
 
         self._check(btype.is_enum_value,
@@ -617,6 +666,8 @@ class Message(Definition):
         self._check(base.discriminator,
                     'Cannot set a polymorphic type, '
                     'the base does not have a discriminator, message=%s', self)
+
+        self._must_be_referenced_after(btype)
 
     def _validate_subtypes(self):
         if not self.subtypes:
@@ -758,7 +809,9 @@ class Interface(Definition):
 
         base = self.base
         self._check(base.is_interface, 'Base must be an interface, interface=%s', self)
+        self._must_be_referenced_after(base)
 
+        # Check circular inheritance.
         while base:
             self._check(base is not self, 'Circular inheritance, interface=%s', self)
             base = base.base

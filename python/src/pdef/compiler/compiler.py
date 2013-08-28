@@ -52,6 +52,7 @@ def _parse(paths):
         package.parse_path(path)
 
     package.link()
+    package.validate()
 
     t1 = time.time()
     t = (t1 - t0) * 1000

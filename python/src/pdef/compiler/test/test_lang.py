@@ -209,6 +209,29 @@ class TestModule(unittest.TestCase):
         except PdefCompilerException, e:
             assert 'Definition clashes with an import' in e.message
 
+    def test_has_import_circle__true(self):
+        # 0 -> 1 -> 2 -> 0
+        module0 = Module('module0')
+        module1 = Module('module1')
+        module2 = Module('module2')
+
+        module0.create_import('module1', module1)
+        module1.create_import('module2', module2)
+        module2.create_import('module0', module0)
+
+        assert module0._has_import_circle(module2) is True
+
+    def test_has_import_circle__false(self):
+        # 0 -> 1 -> 2
+        module0 = Module('module0')
+        module1 = Module('module1')
+        module2 = Module('module2')
+
+        module0.create_import('module0', module1)
+        module1.create_import('module0', module2)
+
+        assert module0._has_import_circle(module2) is False
+
 
 class TestImport(unittest.TestCase):
     def test_parse_list_from_node__absolute(self):
@@ -230,6 +253,58 @@ class TestImport(unittest.TestCase):
         assert imports[1].name == 'module1'
         assert lookup.call_args_list[0] == (('absolute.module0', ), {})
         assert lookup.call_args_list[1] == (('absolute.module1', ), {})
+
+
+class TestDefinition(unittest.TestCase):
+    def test_must_be_referenced_before__ok(self):
+        def0 = Definition(Type.MESSAGE, 'def0')
+        def1 = Definition(Type.MESSAGE, 'def1')
+
+        module = Module('module')
+        module.add_definitions(def0, def1)
+        module.link_imports()
+        module.link()
+
+        assert def0._must_be_referenced_before(def1)
+
+    def test_must_be_referenced_before__but_is_not(self):
+        def0 = Definition(Type.MESSAGE, 'def0')
+        def1 = Definition(Type.MESSAGE, 'def1')
+
+        module = Module('module')
+        module.add_definitions(def0, def1)
+        module.link_imports()
+        module.link()
+
+        try:
+            def1._must_be_referenced_before(def0)
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'must be referenced before' in e.message
+
+    def test_must_be_referenced_before__circular_import(self):
+        def0 = Definition(Type.MESSAGE, 'def0')
+        def1 = Definition(Type.MESSAGE, 'def1')
+
+        module0 = Module('module0')
+        module1 = Module('module1')
+
+        module0.add_definition(def0)
+        module1.add_definition(def1)
+
+        module0.create_import('module1', module1)
+        module1.create_import('module0', module0)
+
+        module0.link_imports()
+        module1.link_imports()
+        module0.link()
+        module1.link()
+
+        try:
+            def0._must_be_referenced_before(def1)
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'modules circularly import each other' in e.message
 
 
 class TestEnum(unittest.TestCase):
@@ -430,10 +505,13 @@ class TestMessage(unittest.TestCase):
 
         msg = Message('Msg')
         msg.set_base(base)
+        msg.link()
+
         try:
-            msg.link()
+            msg.validate()
+            self.fail()
         except PdefCompilerException, e:
-            assert 'no enum value for a base discriminator' in e.message
+            assert 'Discriminator value required' in e.message
 
     def test_validate_base__base_does_not_have_discriminator(self):
         '''Should prevent inheriting a non-polymorphic base by a polymorphic message.'''
@@ -443,10 +521,29 @@ class TestMessage(unittest.TestCase):
 
         msg = Message('Msg')
         msg.set_base(base, subtype)
+        msg.link()
         try:
-            msg.link()
+            msg.validate()
+            self.fail()
         except PdefCompilerException, e:
-            assert 'base does not have a discriminator' in e.message
+            assert 'Cannot set a polymorphic type, the base does not have a discriminator' \
+                in e.message
+
+    def test_validate_base__base_must_be_referenced_before(self):
+        base = Message('Base')
+        msg = Message('Message')
+        msg.set_base(base)
+
+        module = Module('module')
+        module.add_definitions(msg, base)
+        module.link_imports()
+        module.link()
+
+        try:
+            msg.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'must be referenced before' in e.message
 
     def test_validate_fields__duplicate(self):
         '''Should prevent duplicate message fields.'''
@@ -457,6 +554,7 @@ class TestMessage(unittest.TestCase):
 
         try:
             msg.validate()
+            self.fail()
         except PdefCompilerException, e:
             assert 'Duplicate field' in e.message
 
@@ -670,6 +768,23 @@ class TestInterface(unittest.TestCase):
         except PdefCompilerException, e:
             assert 'Base must be an interface' in e.message
 
+    def test_validate_base__must_be_referenced_before(self):
+        '''Base should be referenced before the interface.'''
+        base = Interface('Base')
+        iface = Interface('Interface')
+        iface.set_base(base)
+
+        module = Module('module')
+        module.add_definitions(iface, base)
+        module.link_imports()
+        module.link()
+
+        try:
+            iface.validate()
+            self.fail()
+        except PdefCompilerException, e:
+            assert 'must be referenced before' in e.message
+
     def test_validate_exc__tries_to_throw_non_exception(self):
         '''Should prevent setting interface exception to a non-exception type.'''
         nonexc = Message('Message')
@@ -694,6 +809,7 @@ class TestInterface(unittest.TestCase):
 
         try:
             iface1.validate()
+            self.fail()
         except PdefCompilerException, e:
             assert 'Duplicate method' in e.message
 
@@ -783,6 +899,7 @@ class TestSet(unittest.TestCase):
 
         try:
             d.validate()
+            self.fail()
         except PdefCompilerException, e:
             assert 'Set elements must be data types' in e.message
 
@@ -795,6 +912,7 @@ class TestMap(unittest.TestCase):
 
         try:
             d.validate()
+            self.fail()
         except PdefCompilerException, e:
             assert 'Map keys must be primitives' in e.message
 
@@ -805,5 +923,6 @@ class TestMap(unittest.TestCase):
 
         try:
             d.validate()
+            self.fail()
         except PdefCompilerException, e:
             assert 'Map values must be data types' in e.message

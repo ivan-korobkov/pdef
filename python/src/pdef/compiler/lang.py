@@ -799,14 +799,14 @@ class Interface(Definition):
         self._check(self.exc.is_exception, 'Wrong exception, interface=%s', self)
 
     def _validate_methods(self):
-        for method in self.methods:
-            method.validate()
-
         names = set()
         for method in self.methods:
             self._check(method.name not in names,
                         'Duplicate method, interface=%s, method=%s', self, method.name)
             names.add(method.name)
+
+        for method in self.methods:
+            method.validate()
 
 
 class Method(Symbol):
@@ -872,6 +872,18 @@ class Method(Symbol):
 
         if self.is_post:
             self._check(self.is_remote, 'Only remote methods can be @post, method=%s', self)
+
+        # Check that all form args fields do not clash with method arguments.
+        names = {arg.name for arg in self.args}
+        for arg in self.args:
+            type0 = arg.type
+            if not type0.is_message or not type0.is_form:
+                continue
+
+            for field in type0.fields:
+                self._check(field.name not in names,
+                            'Form fields clash with method args, method=%s, form_arg=%s, field=%s',
+                            self, arg, field.name)
 
 
 class MethodArg(Symbol):

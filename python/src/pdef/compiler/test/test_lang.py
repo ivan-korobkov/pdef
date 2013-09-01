@@ -826,8 +826,8 @@ class TestMethod(unittest.TestCase):
 
     def test_link(self):
         iface = mock.Mock()
-        method = Method('name', lambda : NativeTypes.INT32, iface)
-        arg = method.create_arg('arg', lambda : NativeTypes.INT64)
+        method = Method('name', lambda: NativeTypes.INT32, iface)
+        arg = method.create_arg('arg', lambda: NativeTypes.INT64)
         method.link()
 
         assert method.result is NativeTypes.INT32
@@ -845,8 +845,8 @@ class TestMethod(unittest.TestCase):
         assert method.fullname == 'Interface.method'
 
     def test_validate__post_remote(self):
-        iface = Interface('Interface')
-        method = Method('method', iface, is_post=True)
+        result = Interface('Interface')
+        method = Method('method', result, is_post=True)
         method.link()
 
         try:
@@ -854,6 +854,20 @@ class TestMethod(unittest.TestCase):
             self.fail()
         except PdefCompilerException, e:
             assert 'Only remote methods can be @post' in e.message
+
+    def test_validate__form_field_clashes_with_arg(self):
+        form = Message('Form', is_form=True)
+        form.create_field('clash', NativeTypes.INT32)
+
+        method = Method('method', NativeTypes.INT32)
+        method.create_arg('clash', NativeTypes.INT32)
+        method.create_arg('form', form)
+
+        method.link()
+        try:
+            method.validate()
+        except PdefCompilerException, e:
+            assert 'Form fields clash with method args' in e.message
 
 
 class TestMethodArg(unittest.TestCase):

@@ -8,14 +8,14 @@ from pdef.compiler.lang import *
 
 
 class TestPackage(unittest.TestCase):
-    def test_parse_module_node(self):
+    def test_create_module__node(self):
         '''Should parse a module from an AST node and add it to this package.'''
         module_node = ast.File('module', definitions=[
             ast.Enum('Enum', values=['One', 'Two'])
         ])
 
         package = Package()
-        package.parse_module(module_node)
+        package.create_module(module_node)
 
         assert package.find_module_or_raise('module')
 
@@ -433,7 +433,7 @@ class TestMessage(unittest.TestCase):
         msg.link()
 
         assert msg.base is base
-        assert msg.base_type is subtype
+        assert msg.discriminator_value is subtype
         assert subtype in base.subtypes
         assert base.subtypes[subtype] is msg
 
@@ -526,7 +526,7 @@ class TestMessage(unittest.TestCase):
             msg.validate()
             self.fail()
         except PdefCompilerException, e:
-            assert 'Cannot set a polymorphic type, the base does not have a discriminator' \
+            assert 'Cannot set a discriminator value, the base does not have a discriminator' \
                 in e.message
 
     def test_validate_base__base_must_be_referenced_before(self):

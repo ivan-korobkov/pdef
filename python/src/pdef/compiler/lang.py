@@ -80,41 +80,17 @@ class Package(Symbol):
         self.modules.append(module)
         self._debug('Added a module %s', module)
 
-    def parse_module(self, node):
+    def create_module(self, node):
         '''Parse a module from an AST node, add it to this package, and return the module.'''
         module = Module.parse_node(node, self)
         self.add_module(module)
         return module
 
-    def parse_file(self, path):
-        '''Parse a module from a file, add it to this package, and return the module.'''
-        logging.info('Parsing %s', path)
-
-        module = Module.parse_file(path, self)
-        return self.add_module(module)
-
-    def parse_directory(self, path):
-        '''Recursively parse modules from a directory, and return a list of modules.'''
-        logging.info('Walking %s' % path)
-
-        modules = []
-        for root, dirs, files in os.walk(path):
-            for file0 in files:
-                ext = os.path.splitext(file0)[1]
-                if ext.lower() != '.' + EXT:
-                    continue
-
-                filepath = os.path.join(root, file0)
-                module = self.parse_file(filepath)
-                modules.append(module)
-
-        return modules
-
     def parse_path(self, path):
-        '''Parse modules from a file or a directory.'''
-        if os.path.isdir(path):
-            return self.parse_directory(path)
-        return self.parse_file(path)
+        '''Parse a module file, or all modules in a directory, add them to this package.'''
+        nodes = parser.parse_path(path)
+        for node in nodes:
+            self.create_module(node)
 
     def find_module_or_raise(self, name):
         '''Return a module by its name, or raise an exception.'''
@@ -144,12 +120,6 @@ class Package(Symbol):
 
 class Module(Symbol):
     '''Module in a pdef package, usually, a module is parsed from one file.'''
-    @classmethod
-    def parse_file(cls, path, package):
-        '''Parses a module from a file.'''
-        node = parser.parse_file(path)
-        return cls.parse_node(node, package)
-
     @classmethod
     def parse_node(cls, node, package):
         '''Parse a module from an AST node.'''
@@ -537,7 +507,8 @@ class Message(Definition):
         message = Message(node.name, is_exception=node.is_exception, doc=node.doc,
                           is_form=node.is_form)
         message.base = lookup(node.base) if node.base else None
-        message.base_type = lookup(node.base_type) if node.base_type else None
+        message.discriminator_value = lookup(node.discriminator_value) \
+            if node.discriminator_value else None
 
         for n in node.fields:
             message.parse_field(n, lookup)
@@ -548,12 +519,20 @@ class Message(Definition):
         self.is_exception = is_exception
 
         self.base = None
-        self.base_type = None
+        self._discriminator = None       # Discriminator field, self.discriminator is a property.
+        self.discriminator_value = None  # Enum value.
         self.subtypes = OrderedDict()
-        self.is_form = is_form
-        self._discriminator = None
 
+        self.is_form = is_form
         self.declared_fields = []
+
+    @property
+    def discriminator(self):
+        '''Return this message discriminator field, base discriminator field, or None.'''
+        if self._discriminator:
+            return self._discriminator
+
+        return self.base.discriminator if self.base else None
 
     @property
     def fields(self):
@@ -569,19 +548,12 @@ class Message(Definition):
 
         return self.base.fields
 
-    @property
-    def discriminator(self):
-        '''Return this message discriminator field, base discriminator field, or None.'''
-        if self._discriminator:
-            return self._discriminator
-
-        return self.base.discriminator if self.base else None
-
-    def set_base(self, base, base_type=None):
+    def set_base(self, base, discriminator_value=None):
         '''Set this message base and polymorphic base type.'''
         self.base = base
-        self.base_type = base_type
-        self._debug('Set base, message=%s, base=%s, base_type=%s', self, base, base_type)
+        self.discriminator_value = discriminator_value
+        self._debug('Set base, message=%s, base=%s, discriminator_value=%s',
+                    self, base, discriminator_value)
 
     def add_field(self, field):
         '''Add a new field to this message and return the field.'''
@@ -608,23 +580,25 @@ class Message(Definition):
         return self.add_field(field)
 
     def _add_subtype(self, subtype):
-        '''Add a new subtype to this message, check its base_type.'''
+        '''Add a new subtype to this message, check its discriminator_value.'''
         check_isinstance(subtype, Message)
-        if subtype.base_type in self.subtypes:
+        if subtype.discriminator_value in self.subtypes:
             return
 
-        self.subtypes[subtype.base_type] = subtype
+        self.subtypes[subtype.discriminator_value] = subtype
         if self.base:
             self.base._add_subtype(subtype)
 
     def _link(self):
         '''Link the base and the fields.'''
         self.base = self.base() if callable(self.base) else self.base
-        self.base_type = self.base_type() if callable(self.base_type) else self.base_type
+        self.discriminator_value = self.discriminator_value() \
+            if callable(self.discriminator_value) else self.discriminator_value
+
         if self.base:
             self.base.link()
 
-        if self.base_type:
+        if self.discriminator_value:
             self.base._add_subtype(self)
 
         for field in self.declared_fields:
@@ -632,7 +606,7 @@ class Message(Definition):
 
     def _validate(self):
         self._validate_base()
-        self._validate_base_type()
+        self._validate_discriminator_value()
         self._validate_subtypes()
         self._validate_fields()
 
@@ -651,36 +625,37 @@ class Message(Definition):
             self._check(base is not self, 'Circular inheritance, message=%s', self)
             base = base.base
 
-    def _validate_base_type(self):
+    def _validate_discriminator_value(self):
         base = self.base
-        btype = self.base_type
+        dvalue = self.discriminator_value
 
-        if not btype:
+        if not dvalue:
             is_polymorphic = base and base.discriminator
             self._check(not is_polymorphic, 'Discriminator value required for %s base', self)
             return
 
-        self._check(btype.is_enum_value,
-                    'Polymorphic type must be an enum value, message=%s', self)
+        self._check(dvalue.is_enum_value,
+                    'Discriminator value must be an enum value, message=%s', self)
 
         self._check(base.discriminator,
-                    'Cannot set a polymorphic type, '
+                    'Cannot set a discriminator value, '
                     'the base does not have a discriminator, message=%s', self)
 
-        self._must_be_referenced_after(btype)
+        self._must_be_referenced_after(dvalue)
 
     def _validate_subtypes(self):
         if not self.subtypes:
             return
 
-        base_types = set()
+        discriminator_values = set()
         for subtype in self.subtypes.values():
-            self._check(subtype.base_type in self.discriminator.type,
-                        'Wrong polymorphic type, message=%s, subtype=%s', self, subtype)
+            self._check(subtype.discriminator_value in self.discriminator.type,
+                        'Wrong discriminator type, message=%s, subtype=%s', self, subtype)
 
-            self._check(subtype.base_type not in base_types,
-                        'Duplicate subtype, message=%s, subtype=%s', self, subtype.base_type)
-            base_types.add(subtype.base_type)
+            self._check(subtype.discriminator_value not in discriminator_values,
+                        'Duplicate subtype discriminator value, message=%s, subtype=%s',
+                        self, subtype.discriminator_value)
+            discriminator_values.add(subtype.discriminator_value)
 
     def _validate_fields(self):
         names = set()

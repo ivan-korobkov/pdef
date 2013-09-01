@@ -70,6 +70,7 @@ def _translate_to_java(package, out):
     t = (t1 - t0) * 1000
     logging.info('Translated to java in %dms', t)
 
+
 def _translate_to_python(package, out):
     logging.info('\nTranslating to python...')
     t0 = time.time()

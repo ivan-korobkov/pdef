@@ -45,12 +45,12 @@ class Definition(object):
 
 
 class Message(Definition):
-    def __init__(self, name, base=None, base_type=None, fields=None, is_exception=False,
+    def __init__(self, name, base=None, discriminator_value=None, fields=None, is_exception=False,
                  is_form=False):
         super(Message, self).__init__(name, Type.MESSAGE)
 
         self.base = base
-        self.base_type = base_type
+        self.discriminator_value = discriminator_value
 
         self.fields = tuple(fields) if fields else ()
         self.is_exception = is_exception

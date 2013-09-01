@@ -67,13 +67,13 @@ class MessageDescriptor(DataTypeDescriptor):
     '''Message descriptor.'''
     def __init__(self, pyclass_supplier,
                  base=None,
-                 base_type=None,
+                 discriminator_value=None,
                  subtypes=None,
                  declared_fields=None,
                  is_form=False):
         super(MessageDescriptor, self).__init__(Type.MESSAGE, pyclass_supplier)
         self.base = base
-        self.base_type = base_type
+        self.discriminator_value = discriminator_value
         self.subtypes = dict(subtypes) if subtypes else {}
         self.is_form = is_form
 
@@ -473,14 +473,14 @@ def map0(key, value):
 
 def message(pyclass_supplier,
             base=None,
-            base_type=None,
+            discriminator_value=None,
             subtypes=None,
             declared_fields=None,
             is_form=False):
     '''Create a message descriptor.'''
     return MessageDescriptor(pyclass_supplier,
                              base=base,
-                             base_type=base_type,
+                             discriminator_value=discriminator_value,
                              subtypes=subtypes,
                              declared_fields=declared_fields,
                              is_form=is_form)

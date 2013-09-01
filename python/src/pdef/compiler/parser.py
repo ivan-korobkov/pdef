@@ -1,17 +1,46 @@
 # encoding: utf-8
 import logging
 import re
+import os.path
 import ply.lex as lex
 import ply.yacc as yacc
 
 from pdef.compiler import ast
 from pdef.compiler.exc import PdefCompilerException
 
-__all__ = ('parse', 'parse_string')
+
+__all__ = ('parse', 'parse_string', 'EXT')
+EXT = 'pdef'
+
+
+def parse_path(path):
+    '''Parse a module file, or all modules in a directory and return a list of AST nodes.'''
+    if os.path.isdir(path):
+        return parse_directory(path)
+    return [parse_file(path)]
+
+
+def parse_directory(path):
+    '''Recursively parse modules from a directory, and return a list of modules.'''
+    logging.info('Walking %s' % path)
+
+    nodes = []
+    for root, dirs, files in os.walk(path):
+        for file0 in files:
+            ext = os.path.splitext(file0)[1]
+            if ext.lower() != '.' + EXT:
+                continue
+
+            filepath = os.path.join(root, file0)
+            node = parse_file(filepath)
+            nodes.append(node)
+
+    return nodes
 
 
 def parse_file(path):
     '''Parses a module file.'''
+    logging.info('Parsing %s', path)
     parser = _Parser(path)
     return parser.parse_file(path)
 
@@ -215,10 +244,10 @@ class _GrammarRules(object):
         is_form = '@form' in t[1]
         is_exception = t[2].lower() == 'exception'
         name = t[3]
-        base, base_type = t[4]
+        base, discriminator_value = t[4]
         fields = t[6]
 
-        t[0] = ast.Message(name, base=base, base_type=base_type, fields=fields,
+        t[0] = ast.Message(name, base=base, discriminator_value=discriminator_value, fields=fields,
                            is_exception=is_exception, is_form=is_form)
 
     def p_message_options(self, t):
@@ -457,7 +486,7 @@ class _Parser(_GrammarRules, _Tokens):
     def parse_string(self, s):
         result = self.parser.parse(s, debug=self.debug, tracking=True, lexer=self.lexer)
         if self.errors:
-            raise PdefCompilerException('Syntax errors')
+            raise PdefCompilerException('Syntax error')
         return result
 
     def _error(self, msg, *args):

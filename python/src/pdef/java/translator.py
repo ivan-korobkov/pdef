@@ -91,7 +91,7 @@ class JavaMessage(JavaDefinition):
         self.template = translator.message_template
 
         self.base = translator.ref(msg.base) if msg.base else None
-        self.base_type = translator.ref(msg.base_type)
+        self.discriminator_value = translator.ref(msg.discriminator_value)
         self.discriminator = translator.field(msg.discriminator) if msg.discriminator else None
 
         self.subtypes = tuple((translator.ref(key), translator.ref(val))

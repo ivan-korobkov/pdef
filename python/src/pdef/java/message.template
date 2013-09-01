@@ -82,8 +82,8 @@ public class {{ name }} extends {{ base_or_root }} {
 
         protected Builder() {
             super();
-            {% if base_type %}
-            this.{{ discriminator.name }} = {{ base_type }};
+            {% if discriminator_value %}
+            this.{{ discriminator.name }} = {{ discriminator_value }};
             {% endif %}
         }
 
@@ -144,8 +144,8 @@ public class {{ name }} extends {{ base_or_root }} {
             {% if base %}
             .setBase({{ base.descriptor }})
             {% endif %}
-            {% if base_type %}
-            .setBaseType({{ base_type }})
+            {% if discriminator_value %}
+            .setBaseType({{ discriminator_value }})
             {% endif %}
             {% for enum_value, subtype in subtypes %}
             .addSubtype({{ enum_value }}, new Supplier<MessageDescriptor>() { public MessageDescriptor get() { return {{ subtype.descriptor }}; } })

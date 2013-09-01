@@ -79,7 +79,7 @@ class TestPythonMessage(unittest.TestCase):
         assert pymsg.name == 'Message'
         assert pymsg.is_exception is False
         assert pymsg.base.name == 'Base'
-        assert pymsg.base_type.name == 'Type.MESSAGE'
+        assert pymsg.discriminator_value.name == 'Type.MESSAGE'
         assert pymsg.subtypes == []
         assert len(pymsg.declared_fields) == 1
         assert len(pymsg.inherited_fields) == 1

@@ -74,7 +74,7 @@ class PythonMessage(object):
         self.is_exception = msg.is_exception
 
         self.base = ref(msg.base) if msg.base else None
-        self.base_type = ref(msg.base_type) if msg.base_type else None
+        self.discriminator_value = ref(msg.discriminator_value) if msg.discriminator_value else None
         self.subtypes = [(ref(subtype), ref(submessage))
                          for subtype, submessage in msg.subtypes.items()]
         self.discriminator = PythonField(msg.discriminator, ref) if msg.discriminator else None

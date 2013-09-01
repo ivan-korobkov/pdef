@@ -1,7 +1,7 @@
 
 {%- macro render_descriptor_base() %}
         base={{ base.descriptor }},
-        base_type={{ base_type.name if base_type else None }},
+        discriminator_value={{ discriminator_value.name if discriminator_value else None }},
 {% endmacro %}
 
 {%- macro render_descriptor_subtypes() %}
@@ -72,7 +72,7 @@ class {{ name }}({{ root_or_base }}):
 
     {% endif %}
 
-    {%- if not declared_fields and not base_type %}
+    {%- if not declared_fields and not discriminator_value %}
         pass
     {% endif %}
     {% for field in declared_fields %}
@@ -83,6 +83,6 @@ class {{ name }}({{ root_or_base }}):
         {%- endif %}
 
     {% endfor %}
-    {% if base_type %}
-        self.{{ discriminator.name }} = {{ base_type }}
+    {% if discriminator_value %}
+        self.{{ discriminator.name }} = {{ discriminator_value }}
     {% endif %}

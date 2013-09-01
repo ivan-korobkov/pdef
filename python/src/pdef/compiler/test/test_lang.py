@@ -417,8 +417,7 @@ class TestMessage(unittest.TestCase):
         msg.set_base(lambda: base, lambda: subtype)
         msg.link()
 
-        assert subtype in base.subtypes
-        assert msg in base.subtypes.values()
+        assert msg in base.subtypes
 
     def test_link_base__add_subtypes(self):
         '''Should set a message base with a base type and add the message to the base subtypes.'''
@@ -434,8 +433,7 @@ class TestMessage(unittest.TestCase):
 
         assert msg.base is base
         assert msg.discriminator_value is subtype
-        assert subtype in base.subtypes
-        assert base.subtypes[subtype] is msg
+        assert msg in base.subtypes
 
     def test_link_base__subtype_tree(self):
         '''Should set a message base with a base type and add the message to the subtype tree.'''
@@ -453,8 +451,8 @@ class TestMessage(unittest.TestCase):
         msg1.set_base(msg0, type1)
         msg1.link()
 
-        assert msg0.subtypes == {type1: msg1}
-        assert base.subtypes == {type0: msg0, type1: msg1}
+        assert msg0.subtypes == [msg1]
+        assert base.subtypes == [msg0, msg1]
 
     def test_validate_base__self_inheritance(self):
         '''Should prevent self-inheritance.'''

@@ -74,10 +74,10 @@ class PythonMessage(object):
         self.is_exception = msg.is_exception
 
         self.base = ref(msg.base) if msg.base else None
+        self.subtypes = [(ref(stype.discriminator_value), ref(stype)) for stype in msg.subtypes]
         self.discriminator_value = ref(msg.discriminator_value) if msg.discriminator_value else None
-        self.subtypes = [(ref(subtype), ref(submessage))
-                         for subtype, submessage in msg.subtypes.items()]
         self.discriminator = PythonField(msg.discriminator, ref) if msg.discriminator else None
+
         self.is_form = msg.is_form
 
         self.fields = [PythonField(field, ref) for field in msg.fields]

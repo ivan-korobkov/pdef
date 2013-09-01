@@ -521,7 +521,7 @@ class Message(Definition):
         self.base = None
         self._discriminator = None       # Discriminator field, self.discriminator is a property.
         self.discriminator_value = None  # Enum value.
-        self.subtypes = OrderedDict()
+        self.subtypes = []
 
         self.is_form = is_form
         self.declared_fields = []
@@ -580,12 +580,12 @@ class Message(Definition):
         return self.add_field(field)
 
     def _add_subtype(self, subtype):
-        '''Add a new subtype to this message, check its discriminator_value.'''
+        '''Add a new subtype to this message.'''
         check_isinstance(subtype, Message)
-        if subtype.discriminator_value in self.subtypes:
+        if subtype is self:
             return
 
-        self.subtypes[subtype.discriminator_value] = subtype
+        self.subtypes.append(subtype)
         if self.base:
             self.base._add_subtype(subtype)
 
@@ -647,15 +647,17 @@ class Message(Definition):
         if not self.subtypes:
             return
 
-        discriminator_values = set()
-        for subtype in self.subtypes.values():
-            self._check(subtype.discriminator_value in self.discriminator.type,
-                        'Wrong discriminator type, message=%s, subtype=%s', self, subtype)
+        dvalues = set()
+        for subtype in self.subtypes:
+            dvalue = subtype.discriminator_value
 
-            self._check(subtype.discriminator_value not in discriminator_values,
-                        'Duplicate subtype discriminator value, message=%s, subtype=%s',
-                        self, subtype.discriminator_value)
-            discriminator_values.add(subtype.discriminator_value)
+            # Check that the value is a discriminator enum instance.
+            self._check(dvalue in self.discriminator.type,
+                        'Wrong discriminator value type, message=%s, subtype=%s', self, subtype)
+
+            self._check(dvalue not in dvalues,
+                        'Duplicate discriminator value, message=%s, subtype=%s', self, dvalue)
+            dvalues.add(dvalue)
 
     def _validate_fields(self):
         names = set()

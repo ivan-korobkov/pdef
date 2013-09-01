@@ -94,8 +94,8 @@ class JavaMessage(JavaDefinition):
         self.discriminator_value = translator.ref(msg.discriminator_value)
         self.discriminator = translator.field(msg.discriminator) if msg.discriminator else None
 
-        self.subtypes = tuple((translator.ref(key), translator.ref(val))
-                              for key, val in msg.subtypes.items())
+        self.subtypes = tuple((translator.ref(stype.discrminator_value), translator.ref(stype))
+                              for stype in msg.subtypes)
 
         self.fields = [translator.field(f) for f in msg.fields]
         self.declared_fields = [translator.field(f) for f in msg.declared_fields]

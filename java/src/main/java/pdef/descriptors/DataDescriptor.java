@@ -3,6 +3,8 @@ package pdef.descriptors;
 import pdef.TypeEnum;
 import pdef.json.Json;
 
+import javax.annotation.Nullable;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class DataDescriptor implements Descriptor {
@@ -15,6 +17,11 @@ public abstract class DataDescriptor implements Descriptor {
 	@Override
 	public TypeEnum getType() {
 		return type;
+	}
+
+	@Nullable
+	public MessageDescriptor asMessageDescriptor() {
+		return (this instanceof MessageDescriptor) ? (MessageDescriptor) this : null;
 	}
 
 	/** Parses a data type from a json string. */

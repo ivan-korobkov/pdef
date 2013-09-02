@@ -1,6 +1,5 @@
 package pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -9,23 +8,54 @@ import pdef.TypeEnum;
 import javax.annotation.Nullable;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class InterfaceDescriptor implements Descriptor {
 	private final Class<?> cls;
 	private final InterfaceDescriptor base;
-	private final Supplier<Descriptor> exc;
+	private final Supplier<MessageDescriptor> exc;
 	private final List<MethodDescriptor> declaredMethods;
-	private List<MethodDescriptor> cachedMethods;
+	private final List<MethodDescriptor> methods;
+	private final MethodDescriptor indexMethod;
 
 	private InterfaceDescriptor(final Builder builder) {
 		cls = checkNotNull(builder.cls);
 		base = builder.base;
 		exc = builder.exc;
 
+		declaredMethods = buildDeclaredMethods(builder, this);
+		methods = buildMethods(declaredMethods, base);
+		indexMethod = buildIndexMethod(methods);
+	}
+
+	private static ImmutableList<MethodDescriptor> buildDeclaredMethods(final Builder builder,
+			final InterfaceDescriptor iface) {
 		ImmutableList.Builder<MethodDescriptor> temp = ImmutableList.builder();
 		for (MethodDescriptor.Builder mb : builder.declaredMethods) {
-			temp.add(mb.build(this));
+			temp.add(mb.build(iface));
 		}
-		declaredMethods = temp.build();
+		return temp.build();
+	}
+
+	private static List<MethodDescriptor> buildMethods(final List<MethodDescriptor> declaredMethods,
+			final InterfaceDescriptor base) {
+		ImmutableList.Builder<MethodDescriptor> temp = ImmutableList.builder();
+		if (base != null) {
+			temp.addAll(base.getMethods());
+		}
+
+		temp.addAll(declaredMethods);
+		return temp.build();
+	}
+
+	private static MethodDescriptor buildIndexMethod(final List<MethodDescriptor> methods) {
+		for (MethodDescriptor method : methods) {
+			if (method.isIndex()) {
+				return method;
+			}
+		}
+
+		return null;
 	}
 
 	@Override
@@ -43,7 +73,7 @@ public class InterfaceDescriptor implements Descriptor {
 	}
 
 	@Nullable
-	public Descriptor getExc() {
+	public MessageDescriptor getExc() {
 		return exc == null ? null : exc.get();
 	}
 
@@ -56,13 +86,22 @@ public class InterfaceDescriptor implements Descriptor {
 	}
 
 	public List<MethodDescriptor> getMethods() {
-		if (cachedMethods == null) {
-			cachedMethods = ImmutableList.<MethodDescriptor>builder()
-					.addAll(getInheritedMethods())
-					.addAll(getDeclaredMethods())
-					.build();
+		return methods;
+	}
+
+	@Nullable
+	public MethodDescriptor findMethod(final String name) {
+		for (MethodDescriptor method : methods) {
+			if (method.getName().equals(name)) {
+				return method;
+			}
 		}
-		return cachedMethods;
+		return null;
+	}
+
+	@Nullable
+	public MethodDescriptor getIndexMethod() {
+		return indexMethod;
 	}
 
 	public static Builder builder() {
@@ -72,7 +111,7 @@ public class InterfaceDescriptor implements Descriptor {
 	public static class Builder {
 		private Class<?> cls;
 		private InterfaceDescriptor base;
-		private Supplier<Descriptor> exc;
+		private Supplier<MessageDescriptor> exc;
 		private final List<MethodDescriptor.Builder> declaredMethods;
 
 		private Builder() {
@@ -89,7 +128,7 @@ public class InterfaceDescriptor implements Descriptor {
 			return this;
 		}
 
-		public Builder setExc(final Supplier<Descriptor> exc) {
+		public Builder setExc(final Supplier<MessageDescriptor> exc) {
 			this.exc = exc;
 			return this;
 		}

@@ -1,12 +1,13 @@
 package pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ArgDescriptor {
 	private final String name;
 	private final boolean query;
-	private final Supplier<Descriptor> type;
+	private final Supplier<DataDescriptor> type;
 	private final MethodDescriptor method;
 
 	private ArgDescriptor(final Builder builder, final MethodDescriptor method) {
@@ -24,7 +25,7 @@ public class ArgDescriptor {
 		return query;
 	}
 
-	public Descriptor getType() {
+	public DataDescriptor getType() {
 		return type.get();
 	}
 
@@ -39,7 +40,7 @@ public class ArgDescriptor {
 	public static class Builder {
 		private String name;
 		private boolean query;
-		private Supplier<Descriptor> type;
+		private Supplier<DataDescriptor> type;
 
 		private Builder() {}
 
@@ -53,7 +54,7 @@ public class ArgDescriptor {
 			return this;
 		}
 
-		public Builder setType(final Supplier<Descriptor> type) {
+		public Builder setType(final Supplier<DataDescriptor> type) {
 			this.type = type;
 			return this;
 		}

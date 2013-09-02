@@ -14,6 +14,7 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MessageDescriptor extends DataDescriptor {
+	private final Class<?> javaClass;
 	private final MessageDescriptor base;
 	private final Enum<?> discriminatorValue;
 	private final FieldDescriptor discriminator;
@@ -30,6 +31,7 @@ public class MessageDescriptor extends DataDescriptor {
 
 	private MessageDescriptor(final Builder b) {
 		super(TypeEnum.MESSAGE);
+		javaClass = null;
 		base = b.base;
 		discriminatorValue = b.baseType;
 		subtypes = ImmutableList.copyOf(b.subtypes);
@@ -39,6 +41,10 @@ public class MessageDescriptor extends DataDescriptor {
 		discriminator = getDiscriminator(fields);
 
 		builder = checkNotNull(b.builder);
+	}
+
+	public Class<?> getJavaClass() {
+		return javaClass;
 	}
 
 	public MessageDescriptor getBase() {
@@ -81,6 +87,10 @@ public class MessageDescriptor extends DataDescriptor {
 
 	public FieldDescriptor getDiscriminator() {
 		return discriminator;
+	}
+
+	public boolean isForm() {
+		return false;
 	}
 
 	public Message.Builder createBuilder() {

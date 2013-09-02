@@ -317,7 +317,7 @@ class RestServer(object):
         invocation = Invocation.root()
         while parts:
             part = parts.pop(0)
-            # Find a method by a name or an index method.
+            # Find a method by a name or get an index method.
             if not descriptor:
                 raise MethodNotFoundError('Method not found')
 
@@ -333,7 +333,7 @@ class RestServer(object):
             # Parse method arguments.
             args = {}
             if method.is_post:
-                if request.method.upper() != 'POST':
+                if not request.is_post:
                     raise MethodNotAllowedError('Method not allowed, POST required')
 
                 # Post methods are remote.
@@ -357,7 +357,7 @@ class RestServer(object):
             invocation = invocation.next(method, **args)
             descriptor = None if method.is_remote else method.result
 
-        if not invocation.method.is_remote:
+        if not invocation.is_remote:
             raise MethodNotFoundError('Method not found')
 
         return invocation
@@ -390,7 +390,6 @@ class RestServer(object):
 
     def _parse_arg_from_string(self, descriptor, value):
         if value is None:
-            # None values are skipped in _parse_query_arg.
             return
 
         if value == '':
@@ -409,8 +408,8 @@ class RestServer(object):
     def _result_to_response(self, result, invocation):
         '''Serialize an invocation result and return an instance of RpcResponse.'''
         method = invocation.method
-        result = method.result.to_object(result)
-        return RpcResponse(status=RpcStatus.OK, result=result)
+        serialized = method.result.to_object(result)
+        return RpcResponse(status=RpcStatus.OK, result=serialized)
 
     def _app_exc_to_response(self, e, invocation):
         '''Handle an application exception and return an RpcResponse or return None.'''
@@ -472,6 +471,10 @@ class RestServerRequest(object):
     def __repr__(self):
         return '<RestServerRequest %s %s%s>' % (self.method, self.path,
                                                 '?%s' % self.query_string if self.query else '')
+
+    @property
+    def is_post(self):
+        return self.method.upper() == 'POST'
 
     @property
     def query_string(self):

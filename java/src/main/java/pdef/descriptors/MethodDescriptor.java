@@ -1,11 +1,15 @@
 package pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import pdef.TypeEnum;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MethodDescriptor {
 	private final String name;
@@ -14,6 +18,7 @@ public class MethodDescriptor {
 	private final boolean post;
 	private final List<ArgDescriptor> args;
 	private final InterfaceDescriptor anInterface;
+	private final Method reflexMethod;
 
 	private MethodDescriptor(final Builder builder, final InterfaceDescriptor anInterface) {
 		this.anInterface = checkNotNull(anInterface);
@@ -27,6 +32,8 @@ public class MethodDescriptor {
 			temp.add(ab.build(this));
 		}
 		args = temp.build();
+
+		reflexMethod = getReflexMethod(anInterface.getCls(), name);
 	}
 
 	public String getName() {
@@ -37,12 +44,8 @@ public class MethodDescriptor {
 		return result.get();
 	}
 
-	public boolean isIndex() {
-		return index;
-	}
-
-	public boolean isPost() {
-		return post;
+	public MessageDescriptor getExc() {
+		return anInterface.getExc();
 	}
 
 	public List<ArgDescriptor> getArgs() {
@@ -53,8 +56,33 @@ public class MethodDescriptor {
 		return anInterface;
 	}
 
+	public boolean isIndex() {
+		return index;
+	}
+
+	public boolean isPost() {
+		return post;
+	}
+
+	public boolean isRemote() {
+		return getResult().getType() != TypeEnum.INTERFACE;
+	}
+
 	public static Builder builder() {
 		return new Builder();
+	}
+
+	/** Invokes this method an object with arguments. */
+	public Object invoke(final Object object, final Object[] args) {
+		checkNotNull(object);
+
+		try {
+			return reflexMethod.invoke(object, args);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e.getCause());
+		}
 	}
 
 	public static class Builder {
@@ -96,5 +124,15 @@ public class MethodDescriptor {
 		public MethodDescriptor build(final InterfaceDescriptor anInterface) {
 			return new MethodDescriptor(this, anInterface);
 		}
+	}
+
+	private static Method getReflexMethod(final Class<?> cls, final String name) {
+		for (Method method : cls.getMethods()) {
+			if (method.getName().equals(name)) {
+				return method;
+			}
+		}
+
+		throw new AssertionError("Method is not found " + name);
 	}
 }

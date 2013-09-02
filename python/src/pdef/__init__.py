@@ -208,6 +208,10 @@ class Invocation(object):
             if not descriptor.is_valid_type(value):
                 raise TypeError('Wrong method arguments, method=%s, args=%r' % (method, self.args))
 
+    @property
+    def is_remote(self):
+        return self.method.is_remote if self.method else False
+
     def next(self, method, *args, **kwargs):
         '''Create a child invocation.'''
         if self.method and self.method.is_remote:

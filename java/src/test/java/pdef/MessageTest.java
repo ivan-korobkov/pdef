@@ -3,100 +3,47 @@ package pdef;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.Test;
-import pdef.test.*;
+import pdef.test.messages.ComplexMessage;
+import pdef.test.messages.TestEnum;
 
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MessageTest {
 	@Test
 	public void testEquals() throws Exception {
-		assertEquals(createTestMessage(), createTestMessage());
+		assertEquals(createComplexMessage(), createComplexMessage());
 	}
 
 	@Test
 	public void testHashCode() throws Exception {
-		TestMessage msg = createTestMessage();
+		ComplexMessage msg = createComplexMessage();
 		int h = msg.hashCode();
 		assertTrue(h != 0);
-		assertEquals(h, createTestMessage().hashCode());
+		assertEquals(h, createComplexMessage().hashCode());
 	}
 
 	@Test
 	public void  testSerialize() throws Exception {
-		Message msg = createTestMessage();
+		Message msg = createComplexMessage();
 		Map<String, Object> map = msg.toMap();
-		Map<String, Object> expected = createTestMessageMap();
+		Map<String, Object> expected = createComplexMessageMap();
 		assertEquals(expected, map);
 	}
 
 	@Test
 	public void testParse() throws Exception {
-		Map<String, Object> map = createTestMessageMap();
-		Message msg = TestMessage.parseMap(map);
-		Message expected = createTestMessage();
+		Map<String, Object> map = createComplexMessageMap();
+		Message msg = ComplexMessage.parseMap(map);
+		Message expected = createComplexMessage();
 		assertEquals(expected, msg);
 	}
 
-	@Test
-	public void testParse_polymorphicRootType() throws Exception {
-		Map<String, Object> map = ImmutableMap.<String, Object>of();
-		Tree0 tree = Tree0.parseMap(map);
-		Tree0 expected = Tree0.builder().build();
-		assertEquals(expected, tree);
-	}
-
-	@Test
-	public void testParse_polymorphicNoType() throws Exception {
-		Map<String, Object> map = ImmutableMap.of();
-		Tree0 tree = Tree0.parseMap(map);
-		Tree0 expected = Tree0.builder().build();
-		assertEquals(expected, tree);
-	}
-
-	@Test
-	public void testParse_polymorphicSubtype() throws Exception {
-		Map<String, Object> map = ImmutableMap.<String, Object>of("type", "one");
-		Tree0 tree = Tree0.parseMap(map);
-		Tree1 expected = Tree1.builder()
-				.setType(TreeType.ONE)
-				.build();
-		assertEquals(expected, tree);
-	}
-
-	@Test
-	public void testParse_nonpolymorphicSubtype() throws Exception {
-		Map<String, Object> map = ImmutableMap.<String, Object>of(
-				"firstField", true,
-				"secondField", "hello",
-				"forthField", 1.5);
-
-		TestSimpleSubmessage submessage = TestSimpleSubmessage.parseMap(map);
-		TestSimpleSubmessage expected = TestSimpleSubmessage.builder()
-				.setFirstField(true)
-				.setSecondField("hello")
-				.setForthField(1.5f)
-				.build();
-
-		assertEquals(expected, submessage);
-	}
-
-	@Test
-	public void testJson() throws Exception {
-		TestSimpleMessage msg = TestSimpleMessage.builder()
-				.setFirstField(true)
-				.setSecondField("hello")
-				.setThirdField(null)
-				.build();
-		String s = msg.toJson();
-		TestSimpleMessage msg1 = TestSimpleMessage.parseJson(s);
-		assertEquals(msg, msg1);
-	}
-
-	private TestMessage createTestMessage() {
-		return TestMessage.builder()
+	private ComplexMessage createComplexMessage() {
+		return ComplexMessage.builder()
 				.setAnEnum(TestEnum.THREE)
 				.setABool(true)
 				.setAnInt16((short)16)
@@ -105,15 +52,15 @@ public class MessageTest {
 				.setAFloat(1f)
 				.setADouble(2d)
 				.setAString("hello")
-				.setAList(ImmutableList.of("a", "b"))
-				.setASet(ImmutableSet.of("1", "2"))
-				.setAMap(ImmutableMap.of("a", "1"))
+				.setAList(ImmutableList.of(1, 2))
+				.setASet(ImmutableSet.of(1, 2))
+				.setAMap(ImmutableMap.<Integer, Float>of(1, 1.5f))
 				.setAMessage(null)
 				.setAnObject("object")
 				.build();
 	}
 
-	private ImmutableMap<String, Object> createTestMessageMap() {
+	private ImmutableMap<String, Object> createComplexMessageMap() {
 		return ImmutableMap.<String, Object>builder()
 				.put("anEnum", "three")
 				.put("aBool", true)
@@ -123,9 +70,9 @@ public class MessageTest {
 				.put("aFloat", 1f)
 				.put("aDouble", 2d)
 				.put("aString", "hello")
-				.put("aList", ImmutableList.of("a", "b"))
-				.put("aSet", ImmutableSet.of("1", "2"))
-				.put("aMap", ImmutableMap.of("a", "1"))
+				.put("aList", ImmutableList.of(1, 2))
+				.put("aSet", ImmutableSet.of(1, 2))
+				.put("aMap", ImmutableMap.of(1, 1.5f))
 				.put("anObject", "object")
 				.build();
 	}

@@ -1,48 +1,52 @@
 package pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import pdef.Message;
 import pdef.TypeEnum;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class MessageDescriptor extends DataDescriptor {
 	private final MessageDescriptor base;
-	private final Enum<?> baseType;
-	private final Supplier<? extends Message.Builder> builderSupplier;
+	private final Enum<?> discriminatorValue;
+	private final FieldDescriptor discriminator;
+	private final List<Supplier<MessageDescriptor>> subtypes;
+
 	private final List<FieldDescriptor> declaredFields;
 	private final List<FieldDescriptor> fields;
-	private final FieldDescriptor discriminator;
-	private final Map<Enum<?>, Supplier<MessageDescriptor>> subtypes;
+
+	private final Supplier<? extends Message.Builder> builder;
 
 	public static Builder builder() {
 		return new Builder();
 	}
 
-	private MessageDescriptor(final Builder builder) {
+	private MessageDescriptor(final Builder b) {
 		super(TypeEnum.MESSAGE);
-		base = builder.base;
-		baseType = builder.baseType;
-		builderSupplier = checkNotNull(builder.builder);
+		base = b.base;
+		discriminatorValue = b.baseType;
+		subtypes = ImmutableList.copyOf(b.subtypes);
 
-		declaredFields = buildDeclaredFields(builder.declaredFields, this);
+		declaredFields = buildDeclaredFields(b.declaredFields, this);
 		fields = buildFields(declaredFields, base);
-		subtypes = ImmutableMap.copyOf(builder.subtypes);
 		discriminator = getDiscriminator(fields);
+
+		builder = checkNotNull(b.builder);
 	}
 
 	public MessageDescriptor getBase() {
 		return base;
 	}
 
-	public Enum<?> getBaseType() {
-		return baseType;
+	public Enum<?> getDiscriminatorValue() {
+		return discriminatorValue;
 	}
 
 	public List<FieldDescriptor> getDeclaredFields() {
@@ -53,8 +57,22 @@ public class MessageDescriptor extends DataDescriptor {
 		return base != null ? base.getFields() : ImmutableList.<FieldDescriptor>of();
 	}
 
-	public Map<Enum<?>, Supplier<MessageDescriptor>> getSubtypes() {
+	public List<Supplier<MessageDescriptor>> getSubtypes() {
 		return subtypes;
+	}
+
+	@Nullable
+	public MessageDescriptor getSubtype(final Enum<?> value) {
+		checkNotNull(value);
+
+		for (Supplier<MessageDescriptor> supplier : subtypes) {
+			MessageDescriptor subtype = supplier.get();
+			if (value.equals(subtype.getDiscriminatorValue())) {
+				return subtype;
+			}
+		}
+
+		return null;
 	}
 
 	public List<FieldDescriptor> getFields() {
@@ -66,7 +84,7 @@ public class MessageDescriptor extends DataDescriptor {
 	}
 
 	public Message.Builder createBuilder() {
-		return builderSupplier.get();
+		return builder.get();
 	}
 
 	public Message.Builder toBuilder(final Message message) {
@@ -99,12 +117,12 @@ public class MessageDescriptor extends DataDescriptor {
 		Map<?, ?> map = (Map<?, ?>) object;
 
 		if (discriminator != null) {
-			Object value = map.get(discriminator.getName());
-			Object subtype = discriminator.getType().parseObject(value);
-			Supplier<MessageDescriptor> supplier = subtypes.get(subtype);
-			MessageDescriptor subtypeDescriptor = supplier == null ? null : supplier.get();
-			if (subtypeDescriptor != null && subtypeDescriptor != this) {
-				return subtypeDescriptor.parseObject(object);
+			Object dvalue = map.get(discriminator.getName());
+			Enum<?> denum = (Enum<?>) discriminator.getType().parseObject(dvalue);
+
+			MessageDescriptor subtype = getSubtype(denum);
+			if (subtype != null && subtype != this) {
+				return subtype.parseObject(object);
 			}
 		}
 
@@ -127,11 +145,11 @@ public class MessageDescriptor extends DataDescriptor {
 		private Enum<?> baseType;
 		private Supplier<? extends Message.Builder> builder;
 		private final List<FieldDescriptor.Builder> declaredFields;
-		private final Map<Enum<?>, Supplier<MessageDescriptor>> subtypes;
+		private final List<Supplier<MessageDescriptor>> subtypes;
 
 		private Builder() {
 			declaredFields = Lists.newArrayList();
-			subtypes = Maps.newLinkedHashMap();
+			subtypes = Lists.newArrayList();
 		}
 
 		public Builder setBase(final MessageDescriptor base) {
@@ -154,8 +172,8 @@ public class MessageDescriptor extends DataDescriptor {
 			return this;
 		}
 
-		public Builder addSubtype(final Enum<?> type, final Supplier<MessageDescriptor> subtype) {
-			subtypes.put(type, subtype);
+		public Builder addSubtype(final Supplier<MessageDescriptor> subtype) {
+			subtypes.add(subtype);
 			return this;
 		}
 

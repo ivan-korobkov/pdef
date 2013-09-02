@@ -147,8 +147,8 @@ public class {{ name }} extends {{ base_or_root }} {
             {% if discriminator_value %}
             .setBaseType({{ discriminator_value }})
             {% endif %}
-            {% for enum_value, subtype in subtypes %}
-            .addSubtype({{ enum_value }}, new Supplier<MessageDescriptor>() { public MessageDescriptor get() { return {{ subtype.descriptor }}; } })
+            {% for subtype in subtypes %}
+            .addSubtype(new Supplier<MessageDescriptor>() { public MessageDescriptor get() { return {{ subtype.descriptor }}; } })
             {% endfor %}
             {% for field in declared_fields %}
             .addField(FieldDescriptor.builder()

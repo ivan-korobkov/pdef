@@ -1,5 +1,6 @@
 package pdef.descriptors;
 
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -8,8 +9,6 @@ import pdef.TypeEnum;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MethodDescriptor {
 	private final String name;
@@ -114,6 +113,12 @@ public class MethodDescriptor {
 		public Builder setPost(final boolean post) {
 			this.post = post;
 			return this;
+		}
+
+		public Builder addArg(final String name, final Supplier<DataDescriptor> type) {
+			return addArg(ArgDescriptor.builder()
+					.setName(name)
+					.setType(type));
 		}
 
 		public Builder addArg(final ArgDescriptor.Builder arg) {

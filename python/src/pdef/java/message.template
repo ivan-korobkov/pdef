@@ -148,7 +148,9 @@ public class {{ name }} extends {{ base_or_root }} {
             .setBaseType({{ discriminator_value }})
             {% endif %}
             {% for subtype in subtypes %}
-            .addSubtype(new Supplier<MessageDescriptor>() { public MessageDescriptor get() { return {{ subtype.descriptor }}; } })
+            .addSubtype(new Supplier<MessageDescriptor>() {
+                public MessageDescriptor get() { return {{ subtype.descriptor }}; }
+            })
             {% endfor %}
             {% for field in declared_fields %}
             .addField(FieldDescriptor.builder()
@@ -156,16 +158,21 @@ public class {{ name }} extends {{ base_or_root }} {
                     {% if field.is_discriminator %}
                     .setDiscriminator(true)
                     {% endif %}
-                    .setType(new Supplier<Descriptor>() { public Descriptor get() { return {{ field.type.descriptor }}; } })
-                    .setAccessor(new FieldDescriptor.Accessor() {
+                    .setType(new Supplier<Descriptor>() {
+                        public Descriptor get() { return {{ field.type.descriptor }}; }
+                    })
+                    .setGetter(new FieldDescriptor.Getter() {
                         public Object get(final Object message) {
                             return (({{ name }}) message).{{ field.name }};
                         }
+                    })
+                    .setSetter(new FieldDescriptor.Setter() {
                         @SuppressWarnings("unchecked")
                         public void set(final Object builder, final Object value) {
                             ((Builder) builder).{{ field.name }} = ({{ field.type }}) value;
                         }
                     }))
+
             {% endfor %}
             .setBuilder(new Supplier<Builder>() { public Builder get() { return builder(); } })
             .build();

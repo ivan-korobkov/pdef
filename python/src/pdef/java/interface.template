@@ -3,10 +3,12 @@ package {{ package }};
 import com.google.common.base.Supplier;
 
 import pdef.descriptors.ArgDescriptor;
+import pdef.descriptors.DataDescriptor;
 import pdef.descriptors.Descriptor;
 import pdef.descriptors.Descriptors;
 import pdef.descriptors.InterfaceDescriptor;
 import pdef.descriptors.MethodDescriptor;
+import pdef.descriptors.MessageDescriptor;
 
 {% macro render_method(method) %}
             .addMethod(MethodDescriptor.builder()
@@ -17,14 +19,13 @@ import pdef.descriptors.MethodDescriptor;
                     {% if method.is_post %}
                     .setPost(true)
                     {% endif %}
-                    .setResult(new Supplier<Descriptor>() { public Descriptor get() { return {{ method.result.descriptor }}; } })
+                    .setResult(new Supplier<Descriptor>() {
+                        public Descriptor get() { return {{ method.result.descriptor }}; }
+                    })
                     {% for arg in method.args %}
-                    .addArg(ArgDescriptor.builder()
-                        {% if arg.is_query %}
-                            .setQuery(true)
-                        {% endif %}
-                            .setName("{{ arg.name }}")
-                            .setType(new Supplier<Descriptor>() { public Descriptor get() { return {{ arg.type.descriptor }}; } }))
+                    .addArg("{{ arg.name }}", new Supplier<DataDescriptor>() {
+                        public DataDescriptor get () { return {{ arg.type.descriptor }}; }
+                    })
                     {% endfor %}
             )
 {% endmacro %}
@@ -52,7 +53,9 @@ import pdef.descriptors.MethodDescriptor;
     static InterfaceDescriptor DESCRIPTOR = InterfaceDescriptor.builder()
             .setCls({{ name }}.class)
             {% if exc %}
-            .setExc(new Supplier<Descriptor>() { public Descriptor get() { return {{ exc.descriptor }}; } })
+            .setExc(new Supplier<MessageDescriptor>() {
+                public MessageDescriptor get() { return {{ exc.descriptor }}; }
+            })
             {% endif %}
             {% for method in declared_methods -%}
             {{ render_method(method) }}

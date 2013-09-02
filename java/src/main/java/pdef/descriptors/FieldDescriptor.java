@@ -8,13 +8,15 @@ public class FieldDescriptor {
 	private final String name;
 	private final Supplier<Descriptor> type;
 	private final boolean discriminator;
-	private final Accessor accessor;
+	private final Getter getter;
+	private final Setter setter;
 
 	private FieldDescriptor(final Builder builder, final MessageDescriptor message) {
 		this.message = checkNotNull(message);
 		name = checkNotNull(builder.name);
 		type = checkNotNull(builder.type);
-		accessor = checkNotNull(builder.accessor);
+		getter = checkNotNull(builder.getter);
+		setter = checkNotNull(builder.setter);
 		discriminator = checkNotNull(builder.discriminator);
 	}
 
@@ -35,11 +37,11 @@ public class FieldDescriptor {
 	}
 
 	public Object get(final Object message) {
-		return accessor.get(message);
+		return getter.get(message);
 	}
 
 	public void set(final Object builder, final Object value) {
-		accessor.set(builder, value);
+		setter.set(builder, value);
 	}
 
 	public static Builder builder() {
@@ -50,7 +52,8 @@ public class FieldDescriptor {
 		private String name;
 		private Supplier<Descriptor> type;
 		private boolean discriminator;
-		private Accessor accessor;
+		private Getter getter;
+		private Setter setter;
 
 		private Builder() {}
 
@@ -69,8 +72,13 @@ public class FieldDescriptor {
 			return this;
 		}
 
-		public Builder setAccessor(final Accessor accessor) {
-			this.accessor = accessor;
+		public Builder setGetter(final Getter getter) {
+			this.getter = getter;
+			return this;
+		}
+
+		public Builder setSetter(final Setter setter) {
+			this.setter = setter;
 			return this;
 		}
 
@@ -79,9 +87,11 @@ public class FieldDescriptor {
 		}
 	}
 
-	public static interface Accessor {
+	public static interface Getter {
 		Object get(Object message);
+	}
 
-		void set(Object message, Object value);
+	public static interface Setter {
+		void set(Object builder, Object value);
 	}
 }

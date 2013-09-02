@@ -1,6 +1,7 @@
 package pdef;
 
 import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import pdef.descriptors.Descriptor;
 import pdef.descriptors.MessageDescriptor;
@@ -9,8 +10,6 @@ import pdef.descriptors.MethodDescriptor;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Invocation {
 	private final MethodDescriptor method;
@@ -26,6 +25,8 @@ public class Invocation {
 		this.method = method;
 		this.parent = parent;
 		this.args = args == null ? new Object[0] : args.clone();
+
+		checkArgument(this.args.length == method.getArgs().size(), "Wrong number of args");
 	}
 
 	@Override
@@ -38,6 +39,14 @@ public class Invocation {
 
 	public boolean isRoot() {
 		return method == null;
+	}
+
+	public Object[] getArgs() {
+		return args;
+	}
+
+	public MethodDescriptor getMethod() {
+		return method;
 	}
 
 	public Descriptor getResult() {

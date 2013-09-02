@@ -1,6 +1,7 @@
 package pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -16,8 +17,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class RestServer {
 	public static final String CHARSET = "UTF-8";
 	private final InterfaceDescriptor descriptor;
@@ -28,7 +27,7 @@ public class RestServer {
 		this.serviceSupplier = serviceSupplier;
 	}
 
-	public RestServerResponse handle(final RestServerRequest request) {
+	public RestResponse handle(final RestRequest request) {
 		checkNotNull(request);
 
 		try {
@@ -51,7 +50,7 @@ public class RestServer {
 		}
 	}
 
-	private Invocation parseRequest(final RestServerRequest request) throws Exception {
+	private Invocation parseRequest(final RestRequest request) throws Exception {
 		checkNotNull(request);
 		String path = request.getPath();
 		Map<String, String> query = request.getQuery();
@@ -220,15 +219,15 @@ public class RestServer {
 	}
 
 	@VisibleForTesting
-	RestServerResponse restResponse(final RpcResponse response) {
+	RestResponse restResponse(final RpcResponse response) {
 		int httpStatus = 200;
 		String json = response.toJson();
 
-		return new RestServerResponse(httpStatus, json);
+		return new RestResponse(httpStatus, json, contentType);
 	}
 
 	@VisibleForTesting
-	RestServerResponse errorRestResponse(final Exception e) {
+	RestResponse errorRestResponse(final Exception e) {
 		int httpStatus;
 		String result;
 
@@ -254,6 +253,6 @@ public class RestServer {
 			result = "Internal server error";
 		}
 
-		return new RestServerResponse(httpStatus, result);
+		return new RestResponse(httpStatus, result, contentType);
 	}
 }

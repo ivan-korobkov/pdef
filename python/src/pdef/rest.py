@@ -88,20 +88,22 @@ class RestClient(object):
 
         args = invocation.args
         if method.is_post:
-            # Post methods are remote.
             # Add arguments as post params, serialize messages and collections into json.
+            # Post methods are remote.
+
             for arg in method.args:
                 value = args.get(arg.name)
                 self._serialize_query_arg(arg, value, post)
 
         elif method.is_remote:
             # Add arguments as query params.
+
             for arg in method.args:
                 value = args.get(arg.name)
                 self._serialize_query_arg(arg, value, query)
+
         else:
             # Positionally prepend all arguments to the path.
-            assert not method.is_post, 'Post methods must be remote, %s' % method
 
             for arg in method.args:
                 value = args.get(arg.name)

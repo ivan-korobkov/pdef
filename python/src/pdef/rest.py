@@ -82,9 +82,11 @@ class RestClient(object):
     def _serialize_invocation(self, invocation, path='', query=None, post=None):
         '''Add an invocation to a path, query dict, and post dict.'''
         method = invocation.method
-        path += '/' if method.is_index else '/' + urllib.quote(method.name)
         query = dict(query) if query else {}
         post = dict(post) if post else {}
+        path += '/'
+        if not method.is_index:
+            path += urllib.quote(method.name)
 
         args = invocation.args
         if method.is_post:

@@ -17,6 +17,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class RestClient implements Function<Invocation, Object> {
 	private final Function<RestRequest, RestResponse> sender;
 
+	/** Creates a rest client with the default rest client http sender. */
+	public RestClient(final String url) {
+		this(new RestClientHttpSender(url));
+	}
+
+	/** Creates a rest client with a given sender. */
 	public RestClient(final Function<RestRequest, RestResponse> sender) {
 		this.sender = checkNotNull(sender);
 	}
@@ -72,7 +78,10 @@ public class RestClient implements Function<Invocation, Object> {
 	/** Adds a single invocation to a rest request. */
 	private void serializeInvocation(final RestRequest request, final Invocation invocation) {
 		MethodDescriptor method = invocation.getMethod();
-		request.appendPath(method.isIndex() ? "/" : urlencode(method.getName()));
+		request.appendPath("/");
+		if (!method.isIndex()) {
+			request.appendPath(urlencode(method.getName()));
+		}
 
 		Object[] args = invocation.getArgs();
 		List<ArgDescriptor> argds = invocation.getMethod().getArgs();

@@ -6,6 +6,8 @@ import com.google.common.collect.Lists;
 import pdef.TypeEnum;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -106,6 +108,27 @@ public class InterfaceDescriptor implements Descriptor {
 
 	public static Builder builder() {
 		return new Builder();
+	}
+
+	/** Returns an interface class descriptor if present. */
+	public static <T> InterfaceDescriptor findDescriptor(final Class<T> cls) {
+		if (!cls.isInterface()) return null;
+
+		Field field;
+		try {
+			field = cls.getField("DESCRIPTOR");
+		} catch (NoSuchFieldException e) {
+			return null;
+		}
+
+		if (!Modifier.isStatic(field.getModifiers())) return null;
+		if (field.getType() != InterfaceDescriptor.class) return null;
+
+		try {
+			return (InterfaceDescriptor) field.get(null);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static class Builder {

@@ -2,6 +2,8 @@ package pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.client.fluent.Response;
 import pdef.Invocation;
 import pdef.TypeEnum;
 import pdef.descriptors.*;
@@ -20,6 +22,11 @@ public class RestClient implements Function<Invocation, Object> {
 	/** Creates a rest client with the default rest client http sender. */
 	public RestClient(final String url) {
 		this(new RestClientHttpSender(url));
+	}
+
+	/** Creates a rest client with a url and a session. */
+	public RestClient(final String url, final Function<Request, Response> session) {
+		this(new RestClientHttpSender(url, session));
 	}
 
 	/** Creates a rest client with a given sender. */

@@ -18,11 +18,18 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class RestClientHttpSender implements Function<RestRequest, RestResponse> {
+class RestClientHttpSender implements Function<RestRequest, RestResponse> {
 	private final String url;
+	private final Function<Request, Response> session;
 
-	public RestClientHttpSender(final String url) {
+	RestClientHttpSender(final String url) {
 		this.url = checkNotNull(url);
+		this.session = new DefaultSession(this);
+	}
+
+	RestClientHttpSender(final String url, final Function<Request, Response> session) {
+		this.url = checkNotNull(url);
+		this.session = checkNotNull(session);
 	}
 
 	@Override
@@ -33,7 +40,7 @@ public class RestClientHttpSender implements Function<RestRequest, RestResponse>
 	}
 
 	/** Creates a fluent http client request from a rest request. */
-	protected Request createRequest(final RestRequest request) {
+	private Request createRequest(final RestRequest request) {
 		URI uri = buildUri(request);
 		if (!request.isPost()) {
 			return Request.Get(uri);
@@ -48,7 +55,7 @@ public class RestClientHttpSender implements Function<RestRequest, RestResponse>
 	}
 
 	/** Creates a URI from a rest request. */
-	protected URI buildUri(final RestRequest request) {
+	private URI buildUri(final RestRequest request) {
 		String url = getUrl(request.getPath());
 		try {
 			URIBuilder builder = new URIBuilder(url);
@@ -63,23 +70,25 @@ public class RestClientHttpSender implements Function<RestRequest, RestResponse>
 	}
 
 	/** Joins the base url and the path. */
-	protected String getUrl(final String path) {
+	private String getUrl(final String path) {
 		return this.url + path;
 	}
 
 	/** Sends a fluent http client request and returns a response. */
-	protected Response sendRequest(final Request req) {
-		Response resp;
+	private Response sendRequest(final Request req) {
+		return session.apply(req);
+	}
+
+	private Response doSendRequest(final Request request) {
 		try {
-			resp = req.execute();
+			return request.execute();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		return resp;
 	}
 
 	/** Parses a fluent http client response into a rest response. */
-	protected RestResponse parseResponse(final Response resp) {
+	private RestResponse parseResponse(final Response resp) {
 		try {
 			return resp.handleResponse(new ResponseHandler<RestResponse>() {
 				@Override
@@ -104,5 +113,18 @@ public class RestClientHttpSender implements Function<RestRequest, RestResponse>
 		}
 
 		return new RestResponse(status, content, contentType);
+	}
+
+	private static class DefaultSession implements Function<Request, Response> {
+		private final RestClientHttpSender sender;
+
+		private DefaultSession(final RestClientHttpSender sender) {
+			this.sender = sender;
+		}
+
+		@Override
+		public Response apply(final Request request) {
+			return sender.doSendRequest(request);
+		}
 	}
 }

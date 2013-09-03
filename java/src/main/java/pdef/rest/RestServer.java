@@ -1,6 +1,7 @@
 package pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -18,14 +19,19 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class RestServer {
+public class RestServer<T> implements Function<RestRequest, RestResponse> {
 	public static final String CHARSET = "UTF-8";
 	private final InterfaceDescriptor descriptor;
-	private final Supplier<Object> serviceSupplier;
+	private final Supplier<T> serviceSupplier;
 
-	public RestServer(final InterfaceDescriptor descriptor, final Supplier<Object> serviceSupplier) {
-		this.descriptor = descriptor;
-		this.serviceSupplier = serviceSupplier;
+	public RestServer(final Class<T> cls, final Supplier<T> serviceSupplier) {
+		this.descriptor = InterfaceDescriptor.findDescriptor(cls);
+		this.serviceSupplier = checkNotNull(serviceSupplier);
+	}
+
+	@Override
+	public RestResponse apply(final RestRequest request) {
+		return handle(request);
 	}
 
 	public RestResponse handle(final RestRequest request) {

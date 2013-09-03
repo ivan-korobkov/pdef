@@ -28,6 +28,6 @@ public class RestResponse {
 	}
 
 	public boolean isApplicationJson() {
-		return contentType.equals(RestContentType.APPLICATION_JSON);
+		return contentType.equals("application/json");
 	}
 }

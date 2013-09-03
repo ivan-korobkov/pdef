@@ -11,8 +11,8 @@ import pdef.rest.ServletRestServer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Pdef server constructors. */
-public class Server {
-	private Server() {}
+public class Servers {
+	private Servers() {}
 
 	/** Creates a rest server. */
 	public static <T> Function<RestRequest, RestResponse> restServer(final Class<T> cls,
@@ -33,22 +33,22 @@ public class Server {
 	}
 
 	/** Creates a servlet rest server. */
-	public static <T> ServletRestServer<T> servletRestServer(
+	public static <T> ServletRestServer servletRestServer(
 			final Class<T> cls, final T service) {
 		Function<RestRequest, RestResponse> restServer = restServer(cls, service);
 		return servletRestServer(restServer);
 	}
 
 	/** Creates a servlet rest server. */
-	public static <T> ServletRestServer<T> servletRestServer(final Class<T> cls,
+	public static <T> ServletRestServer servletRestServer(final Class<T> cls,
 			final Supplier<T> serviceSupplier) {
 		Function<RestRequest, RestResponse> restServer = restServer(cls, serviceSupplier);
 		return servletRestServer(restServer);
 	}
 
 	/** Creates a servlet rest server. */
-	public static <T> ServletRestServer<T> servletRestServer(
+	public static <T> ServletRestServer servletRestServer(
 			final Function<RestRequest, RestResponse> restServer) {
-		return new ServletRestServer<T>(restServer);
+		return new ServletRestServer(restServer);
 	}
 }

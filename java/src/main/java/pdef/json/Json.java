@@ -89,7 +89,7 @@ public class Json {
 	/** Serializes a primitive or a collection into a JSON string w/o indentation.
 	 * @throws JsonException if any exception. */
 	public static String serialize(final Object o) throws JsonException {
-		return serialize(o, false);
+		return serialize(o, true);
 	}
 
 	/** Serializes a primitive or a collection into a JSON string with an optional indentation.

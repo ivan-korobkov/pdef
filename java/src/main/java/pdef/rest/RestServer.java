@@ -2,6 +2,7 @@ package pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -17,8 +18,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class RestServer<T> implements Function<RestRequest, RestResponse> {
 	public static final String CHARSET = "UTF-8";
 	private final InterfaceDescriptor descriptor;
@@ -27,6 +26,8 @@ public class RestServer<T> implements Function<RestRequest, RestResponse> {
 	public RestServer(final Class<T> cls, final Supplier<T> serviceSupplier) {
 		this.descriptor = InterfaceDescriptor.findDescriptor(cls);
 		this.serviceSupplier = checkNotNull(serviceSupplier);
+
+		checkArgument(descriptor != null, "Cannot find an interface descriptor in %s", cls);
 	}
 
 	@Override
@@ -67,7 +68,7 @@ public class RestServer<T> implements Function<RestRequest, RestResponse> {
 			path = path.substring(1);
 		}
 		LinkedList<String> parts = Lists.newLinkedList();
-		Collections.addAll(parts, path.split("//"));
+		Collections.addAll(parts, path.split("/"));
 
 		Invocation invocation = Invocation.root();
 		InterfaceDescriptor descriptor = this.descriptor;
@@ -195,7 +196,7 @@ public class RestServer<T> implements Function<RestRequest, RestResponse> {
 	}
 
 	@VisibleForTesting
-	Object invoke(final Invocation invocation) {
+	Object invoke(final Invocation invocation) throws Exception {
 		Object service = serviceSupplier.get();
 		return invocation.invoke(service);
 	}

@@ -1,6 +1,7 @@
 package pdef;
 
 import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import pdef.descriptors.Descriptor;
 import pdef.descriptors.MessageDescriptor;
@@ -9,9 +10,6 @@ import pdef.descriptors.MethodDescriptor;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Invocation {
 	private final MethodDescriptor method;
@@ -85,7 +83,7 @@ public class Invocation {
 	}
 
 	/** Invokes this invocation chain on an object. */
-	public Object invoke(Object object) {
+	public Object invoke(Object object) throws Exception {
 		checkNotNull(object);
 
 		List<Invocation> chain = toChain();
@@ -97,7 +95,7 @@ public class Invocation {
 	}
 
 	/** Invokes only this invocation (not a chain) on an object. */
-	public Object invokeSingle(final Object object) {
+	public Object invokeSingle(final Object object) throws Exception {
 		return method.invoke(object, args);
 	}
 }

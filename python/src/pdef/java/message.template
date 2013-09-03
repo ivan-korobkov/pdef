@@ -141,6 +141,7 @@ public class {{ name }} extends {{ base_or_root }} {
     
     private static final {{ name }} INSTANCE = new {{ name }}();
     private static final MessageDescriptor DESCRIPTOR = MessageDescriptor.builder()
+            .setJavaClass({{ name }}.class)
             {% if base %}
             .setBase({{ base.descriptor }})
             {% endif %}

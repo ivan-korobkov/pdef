@@ -12,8 +12,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Pdef client constructors. */
-public class Client {
-	private Client() {}
+public class Clients {
+	private Clients() {}
 
 	/** Creates a client interface proxy. */
 	public static <T> T proxy(final Class<T> cls, final Function<Invocation, Object> client) {

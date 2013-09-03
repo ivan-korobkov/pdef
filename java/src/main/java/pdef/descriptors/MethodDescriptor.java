@@ -72,15 +72,17 @@ public class MethodDescriptor {
 	}
 
 	/** Invokes this method an object with arguments. */
-	public Object invoke(final Object object, final Object[] args) {
+	public Object invoke(final Object object, final Object[] args) throws Exception {
 		checkNotNull(object);
 
 		try {
 			return reflexMethod.invoke(object, args);
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
 		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e.getCause());
+			Throwable t = e.getCause();
+			if (t instanceof Error) {
+				throw (Error) t;
+			}
+			throw (Exception) t;
 		}
 	}
 

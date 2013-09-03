@@ -1,7 +1,6 @@
 package pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -16,6 +15,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RestServer {
 	public static final String CHARSET = "UTF-8";
@@ -223,7 +224,7 @@ public class RestServer {
 		int httpStatus = 200;
 		String json = response.toJson();
 
-		return new RestResponse(httpStatus, json, contentType);
+		return new RestResponse(httpStatus, json, "application/json; charset=utf-8");
 	}
 
 	@VisibleForTesting
@@ -253,6 +254,6 @@ public class RestServer {
 			result = "Internal server error";
 		}
 
-		return new RestResponse(httpStatus, result, contentType);
+		return new RestResponse(httpStatus, result, "text/plain; charset=utf-8");
 	}
 }

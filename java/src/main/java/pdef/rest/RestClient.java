@@ -1,6 +1,7 @@
 package pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import pdef.Invocation;
 import pdef.TypeEnum;
 import pdef.descriptors.*;
@@ -11,7 +12,19 @@ import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
-public class RestClient {
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class RestClient implements Function<Invocation, Object> {
+	private final Function<RestRequest, RestResponse> sender;
+
+	public RestClient(final Function<RestRequest, RestResponse> sender) {
+		this.sender = checkNotNull(sender);
+	}
+
+	@Override
+	public Object apply(final Invocation invocation) {
+		return invoke(invocation);
+	}
 
 	/** Serializes an invocation, sends a rest request, parses a rest response,
 	 * and returns the result or raises an exception. */
@@ -153,7 +166,7 @@ public class RestClient {
 	/** Sends a rest request and returns a rest response. */
 	@VisibleForTesting
 	RestResponse sendRequest(final RestRequest request) {
-		return null;
+		return sender.apply(request);
 	}
 
 	/** Checks that a rest response has 200 OK status and application/json content type. */

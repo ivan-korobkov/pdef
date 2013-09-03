@@ -20,6 +20,7 @@
 		<guava.version>14.0.1</guava.version>
 
 		<servlet.version>2.5</servlet.version>
+		<httpcomponents.version>4.2.5</httpcomponents.version>
 
 		<pdef.path>pdefc</pdef.path>
 	</properties>
@@ -71,6 +72,19 @@
 			<groupId>javax.servlet</groupId>
 			<artifactId>servlet-api</artifactId>
 			<version>${servlet.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>${httpcomponents.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>fluent-hc</artifactId>
+			<version>${httpcomponents.version}</version>
 		</dependency>
 	</dependencies>
 

@@ -7,8 +7,8 @@ import requests
 from StringIO import StringIO
 
 from pdef import descriptors
-from pdef.rest import RestClient, RESPONSE_CONTENT_TYPE, RestServerRequest, \
-    ERROR_RESPONSE_CONTENT_TYPE, WsgiRestServer, RestServerResponse
+from pdef.rest import RestClient, JSON_CONTENT_TYPE, RestServerRequest, \
+    TEXT_CONTENT_TYPE, WsgiRestServer, RestResponse, RestRequest
 from pdef.test.messages_pd import SimpleMessage
 from pdef.test.interfaces_pd import TestInterface, TestException, NextTestInterface
 
@@ -23,9 +23,9 @@ class TestRestClient(unittest.TestCase):
         return TestInterface.create_proxy(lambda invocation: invocation)
 
     def client(self):
-        return RestClient('http://example.com/')
+        return RestClient()
 
-    def response(self, status_code, text=None, content_type=RESPONSE_CONTENT_TYPE):
+    def response(self, status_code, text=None, content_type=JSON_CONTENT_TYPE):
         r = requests.Response()
         r.status_code = status_code
         if text:
@@ -67,36 +67,40 @@ class TestRestClient(unittest.TestCase):
     # serialize_invocation.
 
     def test_serialize_invocation__index_method(self):
+        request = RestRequest()
         invocation = self.proxy().indexMethod(a=1, b=2)
-        path, query, post = self.client()._serialize_invocation(invocation)
+        self.client()._serialize_invocation(invocation, request)
 
-        assert path == '/'
-        assert query == {'a': '1', 'b': '2'}
-        assert post == {}
+        assert request.path == '/'
+        assert request.query == {'a': '1', 'b': '2'}
+        assert request.post == {}
 
     def test_serialize_invocation__post_method(self):
+        request = RestRequest()
         invocation = self.proxy().postMethod(aList=[1, 2, 3], aMap={1: 2})
-        path, query, post = self.client()._serialize_invocation(invocation)
+        self.client()._serialize_invocation(invocation, request)
 
-        assert path == '/postMethod'
-        assert query == {}
-        assert post == {'aList': '[1, 2, 3]', 'aMap': '{"1": 2}'}
+        assert request.path == '/postMethod'
+        assert request.query == {}
+        assert request.post == {'aList': '[1, 2, 3]', 'aMap': '{"1": 2}'}
 
     def test_serialize_invocation__remote_method(self):
+        request = RestRequest()
         invocation = self.proxy().remoteMethod(a=10, b=100)
-        path, query, post = self.client()._serialize_invocation(invocation)
+        self.client()._serialize_invocation(invocation, request)
 
-        assert path == '/remoteMethod'
-        assert query == {'a': '10', 'b': '100'}
-        assert post == {}
+        assert request.path == '/remoteMethod'
+        assert request.query == {'a': '10', 'b': '100'}
+        assert request.post == {}
 
     def test_serialize_invocation__interface_method(self):
+        request = RestRequest()
         invocation = self.proxy().interfaceMethod(a=1, b=2)._invocation
-        path, query, post = self.client()._serialize_invocation(invocation)
+        path, query, post = self.client()._serialize_invocation(invocation, request)
 
-        assert path == '/interfaceMethod/1/2'
-        assert query == {}
-        assert post == {}
+        assert request.path == '/interfaceMethod/1/2'
+        assert request.query == {}
+        assert request.post == {}
 
     # Serializing arguments.
 
@@ -348,7 +352,7 @@ class TestRestServer(unittest.TestCase):
         resp = self.server()._rest_response(response)
 
         assert resp.status == 200
-        assert resp.content_type == RESPONSE_CONTENT_TYPE
+        assert resp.content_type == JSON_CONTENT_TYPE
         assert resp.content == response.to_json()
         assert resp.content_length == len(resp.content)
 
@@ -357,52 +361,51 @@ class TestRestServer(unittest.TestCase):
         resp = self.server()._rest_response(response)
 
         assert resp.status == 200
-        assert resp.content_type == RESPONSE_CONTENT_TYPE
         assert resp.content == response.to_json()
-        assert resp.content_length == len(resp.content)
+        assert resp.content_type == JSON_CONTENT_TYPE
 
     def test_error_response__wrong_method_args(self):
         e = WrongMethodArgsError(u'Неправильные аргументы')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 400
-        assert resp.content == e.text.encode('utf-8')
-        assert resp.content_type == ERROR_RESPONSE_CONTENT_TYPE
+        assert resp.content == e.text
+        assert resp.content_type == TEXT_CONTENT_TYPE
 
     def test_error_response__method_not_found(self):
         e = MethodNotFoundError(u'Метод не найден')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 404
-        assert resp.content == e.text.encode('utf-8')
+        assert resp.content == e.text
 
     def test_error_response__method_not_allowed(self):
         e = MethodNotAllowedError(u'HTTP метод запрещен')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 405
-        assert resp.content == e.text.encode('utf-8')
+        assert resp.content == e.text
 
     def test_error_response__client_error(self):
         e = ClientError(u'Ошибка клиента')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 400
-        assert resp.content == e.text.encode('utf-8')
+        assert resp.content == e.text
 
     def test_error_response__service_unavailable_error(self):
         e = ServiceUnavailableError(u'Сетевая ошибка')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 503
-        assert resp.content == e.text.encode('utf-8')
+        assert resp.content == e.text
 
     def test_error_response__server_error(self):
         e = ServerError(u'Ошибка сервера')
         resp = self.server()._error_rest_response(e)
 
         assert resp.status == 500
-        assert resp.content == e.text.encode('utf-8')
+        assert resp.content == e.text
 
     def test_error_response__internal_server_error(self):
         e = ValueError('Unhandled exception')
@@ -423,7 +426,7 @@ class TestWsgiRestServer(unittest.TestCase):
 
     def test_handle(self):
         hello = u'Привет, мир'
-        response = RestServerResponse(status=200, content=hello, content_type='text/plain')
+        response = RestResponse(status=200, content=hello, content_type='text/plain')
         start_response = Mock()
 
         server = WsgiRestServer(lambda x: response)

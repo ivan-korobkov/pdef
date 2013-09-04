@@ -8,8 +8,8 @@ import java.util.Map;
 /** Simple REST request, which decouples the REST client/server from the transport.
  * The latter can be servlets, Netty, etc.
  *
- * The request contains an HTTP method, a url-encoded path, and two dicts with query and post
- * params. The params must be url-decoded using the UTF-8 encoding.
+ * The request contains an HTTP method, a url-encoded path, and two maps with query and post
+ * params. The params must be unicode not url-encoded strings.
  * */
 public class RestRequest {
 	private String method;

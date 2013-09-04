@@ -7,11 +7,11 @@ setup(
     url='http://github.com/ivan-korobkov/pdef',
     author='Ivan Korobkov',
     author_email='ivan.korobkov@gmail.com',
-    description='Pdef interface language',
+    description='Protocol language definition',
     license='Apache License 2.0',
     package_dir={'': 'src'},
     packages=['pdef', 'pdef.compiler', 'pdef.java', 'pdef.python'],
     package_data={'pdef': ['java/*.template', 'python/*.template']},
     scripts=['scripts/pdefc'],
-    requires=['argparse', 'jinja2', 'ply']
+    requires=['argparse', 'jinja2', 'ply', 'requests']
 )

@@ -5,6 +5,12 @@ import com.google.common.collect.Maps;
 
 import java.util.Map;
 
+/** Simple REST request, which decouples the REST client/server from the transport.
+ * The latter can be servlets, Netty, etc.
+ *
+ * The request contains an HTTP method, a url-encoded path, and two dicts with query and post
+ * params. The params must be url-decoded using the UTF-8 encoding.
+ * */
 public class RestRequest {
 	private String method;
 	private String path = "/";
@@ -13,26 +19,12 @@ public class RestRequest {
 
 	public RestRequest() {}
 
-	public RestRequest(final String method, final String path, final Map<String, String> query,
-			final Map<String, String> post) {
-		this.method = method;
-		this.path = path;
-
-		if (query != null) {
-			this.query.putAll(query);
-		}
-
-		if (post != null) {
-			this.post.putAll(post);
-		}
+	public static RestRequest get() {
+		return new RestRequest().setMethod(RestConstants.GET);
 	}
 
 	public static RestRequest post() {
-		return new RestRequest().setMethod("POST");
-	}
-
-	public static RestRequest get() {
-		return new RestRequest().setMethod("GET");
+		return new RestRequest().setMethod(RestConstants.POST);
 	}
 
 	@Override
@@ -41,6 +33,10 @@ public class RestRequest {
 				.addValue(method)
 				.addValue(path)
 				.toString();
+	}
+
+	public boolean isPost() {
+		return Objects.equal(method, RestConstants.POST);
 	}
 
 	public String getMethod() {
@@ -82,9 +78,5 @@ public class RestRequest {
 	public RestRequest setPost(final Map<String, String> post) {
 		this.post = post;
 		return this;
-	}
-
-	public boolean isPost() {
-		return method.toUpperCase().equals("POST");
 	}
 }

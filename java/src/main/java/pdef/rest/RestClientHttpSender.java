@@ -112,7 +112,10 @@ class RestClientHttpSender implements Function<RestRequest, RestResponse> {
 			content = EntityUtils.toString(entity);
 		}
 
-		return new RestResponse(status, content, contentType);
+		return new RestResponse()
+				.setStatus(status)
+				.setContentType(contentType)
+				.setContent(content);
 	}
 
 	private static class DefaultSession implements Function<Request, Response> {

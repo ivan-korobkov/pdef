@@ -2,7 +2,6 @@ package pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -12,11 +11,15 @@ import pdef.descriptors.*;
 import pdef.rpc.*;
 
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RestServer<T> implements Function<RestRequest, RestResponse> {
 	public static final String CHARSET = "UTF-8";
@@ -228,39 +231,44 @@ public class RestServer<T> implements Function<RestRequest, RestResponse> {
 
 	@VisibleForTesting
 	RestResponse restResponse(final RpcResponse response) {
-		int httpStatus = 200;
 		String json = response.toJson();
 
-		return new RestResponse(httpStatus, json, "application/json; charset=utf-8");
+		return new RestResponse()
+				.withOkStatus()
+				.withJsonContentType()
+				.setContent(json);
 	}
 
 	@VisibleForTesting
 	RestResponse errorRestResponse(final Exception e) {
 		int httpStatus;
-		String result;
+		String content;
 
 		if (e instanceof WrongMethodArgsError) {
-			httpStatus = 400;
+			httpStatus = HttpURLConnection.HTTP_BAD_REQUEST;
 		} else if (e instanceof MethodNotFoundError) {
-			httpStatus = 404;
+			httpStatus = HttpURLConnection.HTTP_NOT_FOUND;
 		} else if (e instanceof MethodNotAllowedError) {
-			httpStatus = 405;
+			httpStatus = HttpURLConnection.HTTP_BAD_METHOD;
 		} else if (e instanceof ClientError) {
-			httpStatus = 400;
+			httpStatus = HttpURLConnection.HTTP_BAD_REQUEST;
 		} else if (e instanceof ServiceUnavailableError) {
-			httpStatus = 503;
+			httpStatus = HttpURLConnection.HTTP_UNAVAILABLE;
 		} else if (e instanceof ServerError) {
-			httpStatus = 500;
+			httpStatus = HttpURLConnection.HTTP_INTERNAL_ERROR;
 		} else {
-			httpStatus = 500;
+			httpStatus = HttpURLConnection.HTTP_INTERNAL_ERROR;
 		}
 
 		if (e instanceof RpcError) {
-			result = ((RpcError) e).getText();
+			content = ((RpcError) e).getText();
 		} else {
-			result = "Internal server error";
+			content = "Internal server error";
 		}
 
-		return new RestResponse(httpStatus, result, "text/plain; charset=utf-8");
+		return new RestResponse()
+				.setStatus(httpStatus)
+				.setContent(content)
+				.withTextContentType();
 	}
 }

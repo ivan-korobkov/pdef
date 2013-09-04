@@ -2,6 +2,7 @@ package pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import com.google.common.base.Strings;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import pdef.Invocation;
@@ -10,6 +11,7 @@ import pdef.descriptors.*;
 import pdef.rpc.*;
 
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
@@ -44,24 +46,7 @@ public class RestClient implements Function<Invocation, Object> {
 	public Object invoke(final Invocation invocation) {
 		RestRequest request = createRequest(invocation);
 		RestResponse response = sendRequest(request);
-
-		if (!isSuccess(response)) {
-			throw parseError(response);
-		}
-
-		RpcResponse rpc = parseRpcResponse(response);
-		Object result = rpc.getResult();
-		RpcStatus status = rpc.getStatus();
-		switch (status) {
-			case OK:
-				return parseRpcResult(result, invocation);
-			case EXCEPTION:
-				throw parseRpcException(result, invocation);
-			default:
-				throw ClientError.builder()
-						.setText("Unknown rpc response status: " + status)
-						.build();
-		}
+		return parseResponse(response, invocation);
 	}
 
 	/** Converts an invocation into a rest request. */
@@ -185,40 +170,72 @@ public class RestClient implements Function<Invocation, Object> {
 		return sender.apply(request);
 	}
 
+	@VisibleForTesting
+	Object parseResponse(final RestResponse response, final Invocation invocation) {
+		if (!isSuccess(response)) {
+			throw parseError(response);
+		}
+
+		RpcResponse rpc = parseRpcResponse(response);
+		Object result = rpc.getResult();
+		RpcStatus status = rpc.getStatus();
+		switch (status) {
+			case OK:
+				return parseRpcResult(result, invocation);
+			case EXCEPTION:
+				throw parseRpcException(result, invocation);
+			default:
+				throw ClientError.builder()
+						.setText("Unknown rpc response status: " + status)
+						.build();
+		}
+	}
+
 	/** Checks that a rest response has 200 OK status and application/json content type. */
 	@VisibleForTesting
 	boolean isSuccess(final RestResponse response) {
-		return response.isOK() && response.isApplicationJson();
+		return response.hasOkStatus() && response.hasJsonContentType();
 	}
 
 	/** Parses an rpc error from a rest response via its status. */
 	@VisibleForTesting
 	RuntimeException parseError(final RestResponse response) {
 		int status = response.getStatus();
-		String text = response.getContent();
+		String text = Strings.nullToEmpty(response.getContent());
 
+		// Limit the text length to use it in an exception.
+		if (text.length() > 255) {
+			text = text.substring(0, 255);
+		}
+
+		// Map status to exception classes.
 		switch (status) {
-			case 400:
+			case HttpURLConnection.HTTP_BAD_REQUEST:	// 400
 				throw ClientError.builder()
 						.setText(text)
 						.build();
-			case 404:
+
+			case HttpURLConnection.HTTP_NOT_FOUND:		// 404
 				throw MethodNotFoundError.builder()
 						.setText(text)
 						.build();
-			case 405:
+
+			case HttpURLConnection.HTTP_BAD_METHOD:		// 405
 				throw MethodNotAllowedError.builder()
 						.setText(text)
 						.build();
-			case 502:
-			case 503:
+
+			case HttpURLConnection.HTTP_BAD_GATEWAY: 	// 502
+			case HttpURLConnection.HTTP_UNAVAILABLE:	// 503
 				throw ServiceUnavailableError.builder()
 						.setText(text)
 						.build();
-			case 500:
+
+			case HttpURLConnection.HTTP_INTERNAL_ERROR:	// 500
 				throw ServerError.builder()
 						.setText(text)
 						.build();
+
 			default:
 				throw ServerError.builder()
 						.setText("Status code: " + status + ", text=" + text)
@@ -256,7 +273,7 @@ public class RestClient implements Function<Invocation, Object> {
 	/** Url-encodes a string. */
 	private static String urlencode(final String s) {
 		try {
-			return URLEncoder.encode(s, "UTF-8");
+			return URLEncoder.encode(s, RestConstants.CHARSET);
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}

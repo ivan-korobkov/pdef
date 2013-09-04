@@ -1,7 +1,6 @@
 package pdef.rest;
 
 import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
@@ -10,6 +9,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ServletRestServer {
 	private final Function<RestRequest, RestResponse> restServer;
@@ -49,10 +50,10 @@ public class ServletRestServer {
 		return servletPath + pathInfo;
 	}
 
-	@SuppressWarnings("unchecked")
 	private Map<String, String> parseParams(final HttpServletRequest request) {
 		Map<String, String> params = Maps.newHashMap();
 
+		@SuppressWarnings("unchecked")
 		Enumeration<String> names = request.getParameterNames();
 		if (names == null) {
 			return params;
@@ -75,7 +76,6 @@ public class ServletRestServer {
 			throws IOException {
 		response.setStatus(resp.getStatus());
 		response.setContentType(resp.getContentType());
-		response.setCharacterEncoding("UTF-8");
 		response.getWriter().append(resp.getContent());
 	}
 }

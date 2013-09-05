@@ -16,8 +16,17 @@ class ClientProxy implements InvocationHandler {
 	private final Function<Invocation, Object> handler;
 	private final Invocation parent;
 
-	/** Creates a client proxy. */
-	static <T> T create(final Class<T> cls, final InterfaceDescriptor descriptor,
+	/** Creates a java proxy. */
+	static <T> T proxy(final Class<T> cls, final InterfaceDescriptor descriptor,
+			final Function<Invocation, Object> handler) {
+
+		ClientProxy clientProxy = create(cls, descriptor, handler);
+		Object proxy = clientProxy.toProxy();
+		return cls.cast(proxy);
+	}
+
+	/** Creates a client proxy instance. */
+	static <T> ClientProxy create(final Class<T> cls, final InterfaceDescriptor descriptor,
 			final Function<Invocation, Object> handler) {
 		checkNotNull(cls);
 		checkNotNull(descriptor);
@@ -25,9 +34,7 @@ class ClientProxy implements InvocationHandler {
 		checkArgument(cls == descriptor.getCls(), "Class/descriptor do not match, %s, %s",
 				cls, descriptor);
 
-		ClientProxy clientProxy = new ClientProxy(descriptor, handler, Invocation.root());
-		Object proxy = clientProxy.toProxy();
-		return cls.cast(proxy);
+		return new ClientProxy(descriptor, handler, Invocation.root());
 	}
 
 	private ClientProxy(final InterfaceDescriptor descriptor,

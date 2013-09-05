@@ -1,7 +1,6 @@
 package pdef;
 
 import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import pdef.descriptors.Descriptor;
 import pdef.descriptors.MessageDescriptor;
@@ -10,6 +9,9 @@ import pdef.descriptors.MethodDescriptor;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Invocation {
 	private final MethodDescriptor method;
@@ -56,17 +58,17 @@ public class Invocation {
 		return method == null ? null : method.getResult();
 	}
 
-	/** Returns true when the method result is not an interface. */
-	public boolean isRemote() {
-		return method.isRemote();
-	}
-
 	/** Returns the method exception or the parent exception. */
 	@Nullable
 	public MessageDescriptor getExc() {
 		if (method != null) return method.getExc();
 		if (parent != null) return parent.getExc();
 		return null;
+	}
+
+	/** Returns true when the method result is not an interface. */
+	public boolean isRemote() {
+		return !isRoot() && method.isRemote();
 	}
 
 	/** Creates a child invocation. */

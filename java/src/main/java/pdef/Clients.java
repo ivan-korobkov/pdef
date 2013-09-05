@@ -23,10 +23,10 @@ public class Clients {
 		InterfaceDescriptor descriptor = InterfaceDescriptor.findDescriptor(cls);
 		checkArgument(descriptor != null, "Cannot find an interface descriptor in " + cls);
 
-		return ClientProxy.create(cls, descriptor, client);
+		return ClientProxy.proxy(cls, descriptor, client);
 	}
 
-	/** Creates a rest client with the default http sender and a base url. */
+	/** Creates a rest client with Apache HttpClient sender. */
 	public static <T> T restClient(final Class<T> cls, final String url) {
 		checkNotNull(cls);
 		checkNotNull(url);
@@ -35,7 +35,7 @@ public class Clients {
 		return proxy(cls, client);
 	}
 
-	/** Creates a rest client. */
+	/** Creates a rest client with Apache HttpClient sender. */
 	public static <T> T restClient(final Class<T> cls, final String url,
 			final Function<Request, Response> httpSession) {
 		checkNotNull(cls);

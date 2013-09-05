@@ -5,6 +5,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.junit.Ignore;
 import org.junit.Test;
 import pdef.Servers;
 import pdef.test.interfaces.NextTestInterface;
@@ -23,6 +24,7 @@ import java.util.Map;
 
 public class ServletRestServerTest {
 
+	@Ignore
 	@Test
 	public void testHandle() throws Exception {
 		Server server = new Server(8080);

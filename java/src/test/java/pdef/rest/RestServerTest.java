@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class ServletRestServerTest {
+public class RestServerTest {
 
 	@Ignore
 	@Test
@@ -56,8 +56,7 @@ public class ServletRestServerTest {
 
 		private void handle(final HttpServletRequest req, final HttpServletResponse resp)
 				throws IOException {
-			ServletRestServer server = Servers
-					.servletRestServer(TestInterface.class, new TestService());
+			RestServer server = Servers.server(TestInterface.class, new TestService());
 			server.handle(req, resp);
 		}
 	}

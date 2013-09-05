@@ -1,54 +1,56 @@
 package pdef;
 
 import com.google.common.base.Function;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import pdef.rest.RestRequest;
 import pdef.rest.RestResponse;
 import pdef.rest.RestServer;
-import pdef.rest.ServletRestServer;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import pdef.rest.RestServerHandler;
 
 /** Pdef server constructors. */
 public class Servers {
 	private Servers() {}
 
-	/** Creates a rest server. */
-	public static <T> Function<RestRequest, RestResponse> restServer(final Class<T> cls,
-			final T service) {
+	/** Creates a default REST server. */
+	public static <T> RestServer server(final Class<T> cls, final T service) {
 		checkNotNull(cls);
 		checkNotNull(service);
 
-		return new RestServer<T>(cls, Suppliers.ofInstance(service));
+		return server(cls, Suppliers.ofInstance(service));
 	}
 
-	/** Creates a rest server. */
-	public static <T> RestServer<T> restServer(final Class<T> cls,
-			final Supplier<T> serviceSupplier) {
+	/** Creates a default REST server. */
+	public static <T> RestServer server(final Class<T> cls, final Supplier<T> serviceSupplier) {
 		checkNotNull(cls);
 		checkNotNull(serviceSupplier);
 
-		return new RestServer<T>(cls, serviceSupplier);
+		Invoker<T> invoker = invoker(serviceSupplier);
+		RestServerHandler handler = handler(cls, invoker);
+		return server(handler);
 	}
 
-	/** Creates a servlet rest server. */
-	public static <T> ServletRestServer servletRestServer(
-			final Class<T> cls, final T service) {
-		Function<RestRequest, RestResponse> restServer = restServer(cls, service);
-		return servletRestServer(restServer);
+	/** Creates a REST server with a custom handler. */
+	public static RestServer server(final Function<RestRequest, RestResponse> handler) {
+		checkNotNull(handler);
+
+		return new RestServer(handler);
 	}
 
-	/** Creates a servlet rest server. */
-	public static <T> ServletRestServer servletRestServer(final Class<T> cls,
-			final Supplier<T> serviceSupplier) {
-		Function<RestRequest, RestResponse> restServer = restServer(cls, serviceSupplier);
-		return servletRestServer(restServer);
+	/** Creates a REST handler with a custom invoker. */
+	public static RestServerHandler handler(final Class<?> cls,
+			final Function<Invocation, Object> invoker) {
+		checkNotNull(cls);
+		checkNotNull(invoker);
+
+		return new RestServerHandler(cls, invoker);
 	}
 
-	/** Creates a servlet rest server. */
-	public static <T> ServletRestServer servletRestServer(
-			final Function<RestRequest, RestResponse> restServer) {
-		return new ServletRestServer(restServer);
+	/** Creates a service invoker. */
+	public static <T> Invoker<T> invoker(final Supplier<T> serviceSupplier) {
+		checkNotNull(serviceSupplier);
+
+		return new Invoker<T>(serviceSupplier);
 	}
 }

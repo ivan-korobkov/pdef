@@ -1,6 +1,7 @@
 package pdef.rest;
 
 import com.google.common.base.Function;
+import static com.google.common.base.Preconditions.*;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
@@ -11,25 +12,20 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-class RestClientHttpSender implements Function<RestRequest, RestResponse> {
+public class RestClientSender implements Function<RestRequest, RestResponse> {
 	private final String url;
 	private final Function<Request, Response> session;
 
-	RestClientHttpSender(final String url) {
+	/** Creates a REST client sender. */
+	public RestClientSender(final String url, @Nullable final Function<Request, Response> session) {
 		this.url = checkNotNull(url);
-		this.session = new DefaultSession(this);
-	}
-
-	RestClientHttpSender(final String url, final Function<Request, Response> session) {
-		this.url = checkNotNull(url);
-		this.session = checkNotNull(session);
+		this.session = session != null ? session : new DefaultSession();
 	}
 
 	@Override
@@ -79,14 +75,6 @@ class RestClientHttpSender implements Function<RestRequest, RestResponse> {
 		return session.apply(req);
 	}
 
-	private Response doSendRequest(final Request request) {
-		try {
-			return request.execute();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	/** Parses a fluent http client response into a rest response. */
 	private RestResponse parseResponse(final Response resp) {
 		try {
@@ -119,15 +107,13 @@ class RestClientHttpSender implements Function<RestRequest, RestResponse> {
 	}
 
 	private static class DefaultSession implements Function<Request, Response> {
-		private final RestClientHttpSender sender;
-
-		private DefaultSession(final RestClientHttpSender sender) {
-			this.sender = sender;
-		}
-
 		@Override
 		public Response apply(final Request request) {
-			return sender.doSendRequest(request);
+			try {
+				return request.execute();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 }

@@ -1,58 +1,74 @@
 package pdef;
 
 import com.google.common.base.Function;
+import static com.google.common.base.Preconditions.*;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import pdef.descriptors.InterfaceDescriptor;
-import pdef.rest.RestClient;
+import pdef.rest.RestClientHandler;
+import pdef.rest.RestClientSender;
 import pdef.rest.RestRequest;
 import pdef.rest.RestResponse;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.annotation.Nullable;
 
 /** Pdef client constructors. */
 public class Clients {
 	private Clients() {}
 
-	/** Creates a client interface proxy. */
-	public static <T> T proxy(final Class<T> cls, final Function<Invocation, Object> client) {
+	/** Creates a default REST client. */
+	public static <T> T client(final Class<T> cls, final String url) {
 		checkNotNull(cls);
-		checkNotNull(client);
+		checkNotNull(url);
+
+		RestClientSender sender = sender(url, null);
+		RestClientHandler handler = handler(sender);
+		return client(cls, handler);
+	}
+
+	/** Creates a default REST client with a custom session. */
+	public static <T> T client(final Class<T> cls, final String url,
+			final Function<Request, Response> session) {
+		checkNotNull(cls);
+		checkNotNull(url);
+		checkNotNull(session);
+
+		RestClientSender sender = sender(url, session);
+		RestClientHandler handler = handler(sender);
+		return client(cls, handler);
+	}
+
+	/** Creates a custom client. */
+	public static <T> T client(final Class<T> cls,
+			final Function<Invocation, Object> invocationHandler) {
+		checkNotNull(cls);
+		checkNotNull(invocationHandler);
 
 		InterfaceDescriptor descriptor = InterfaceDescriptor.findDescriptor(cls);
 		checkArgument(descriptor != null, "Cannot find an interface descriptor in " + cls);
 
-		return ClientProxy.proxy(cls, descriptor, client);
+		return ClientProxy.proxy(cls, descriptor, invocationHandler);
 	}
 
-	/** Creates a rest client with Apache HttpClient sender. */
-	public static <T> T restClient(final Class<T> cls, final String url) {
-		checkNotNull(cls);
-		checkNotNull(url);
-
-		RestClient client = new RestClient(url);
-		return proxy(cls, client);
-	}
-
-	/** Creates a rest client with Apache HttpClient sender. */
-	public static <T> T restClient(final Class<T> cls, final String url,
-			final Function<Request, Response> httpSession) {
-		checkNotNull(cls);
-		checkNotNull(url);
-		checkNotNull(httpSession);
-
-		RestClient client = new RestClient(url, httpSession);
-		return proxy(cls, client);
-	}
-
-	/** Creates a rest client with a custom sender. */
-	public static <T> T restClient(final Class<T> cls,
-			final Function<RestRequest, RestResponse> sender) {
-		checkNotNull(cls);
+	/** Creates a REST client invocation handler with a custom sender. */
+	public static RestClientHandler handler(final Function<RestRequest, RestResponse> sender) {
 		checkNotNull(sender);
 
-		RestClient client = new RestClient(sender);
-		return proxy(cls, client);
+		return new RestClientHandler(sender);
+	}
+
+	/** Creates a REST client sender. */
+	public static RestClientSender sender(final String url) {
+		checkNotNull(url);
+
+		return sender(url, null);
+	}
+
+	/** Creates a REST client sender with a custom session or a default one. */
+	public static RestClientSender sender(final String url,
+			@Nullable final Function<Request, Response> session) {
+		checkNotNull(url);
+
+		return new RestClientSender(url, session);
 	}
 }

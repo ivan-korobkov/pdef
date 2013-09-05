@@ -2,9 +2,8 @@ package pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Strings;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
 import pdef.Invocation;
 import pdef.TypeEnum;
 import pdef.descriptors.*;
@@ -16,23 +15,11 @@ import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public class RestClient implements Function<Invocation, Object> {
+public class RestClientHandler implements Function<Invocation, Object> {
 	private final Function<RestRequest, RestResponse> sender;
 
-	/** Creates a rest client with the default rest client http sender. */
-	public RestClient(final String url) {
-		this(new RestClientHttpSender(url));
-	}
-
-	/** Creates a rest client with a url and a session. */
-	public RestClient(final String url, final Function<Request, Response> session) {
-		this(new RestClientHttpSender(url, session));
-	}
-
-	/** Creates a rest client with a given sender. */
-	public RestClient(final Function<RestRequest, RestResponse> sender) {
+	/** Creates a REST client. */
+	public RestClientHandler(final Function<RestRequest, RestResponse> sender) {
 		this.sender = checkNotNull(sender);
 	}
 

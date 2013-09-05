@@ -98,6 +98,7 @@ public class InterfaceDescriptor implements Descriptor {
 				return method;
 			}
 		}
+
 		return null;
 	}
 

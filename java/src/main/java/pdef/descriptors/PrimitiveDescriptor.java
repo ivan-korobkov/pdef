@@ -11,8 +11,8 @@ public abstract class PrimitiveDescriptor extends DataDescriptor {
 	public abstract Object parseString(String s);
 
 	/** Serializes a primitive to a string. */
-	public String toString(Object object) {
-		if (object == null) return null;
-		return toObject(object).toString();
+	public String toString(Object o) {
+		if (o == null) return null;
+		return toObject(o).toString();
 	}
 }

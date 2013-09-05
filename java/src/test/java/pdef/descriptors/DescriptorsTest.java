@@ -29,6 +29,12 @@ public class DescriptorsTest {
 	}
 
 	@Test
+	public void testInt16Parse_number() throws Exception {
+		Short value = (Short) Descriptors.int16.parseObject(123);
+		assertEquals(123, (short) value);
+	}
+
+	@Test
 	public void testInt16Serialize() throws Exception {
 		String value = Descriptors.int16.toString((short) 123);
 		assertEquals("123", value);
@@ -37,6 +43,12 @@ public class DescriptorsTest {
 	@Test
 	public void testInt32Parse() throws Exception {
 		Integer value = (Integer) Descriptors.int32.parseObject("123");
+		assertEquals(123, (int) value);
+	}
+
+	@Test
+	public void testInt32Parse_number() throws Exception {
+		Integer value = (Integer) Descriptors.int32.parseObject((long) 123);
 		assertEquals(123, (int) value);
 	}
 
@@ -53,6 +65,12 @@ public class DescriptorsTest {
 	}
 
 	@Test
+	public void testInt64Parse_number() throws Exception {
+		Long value = (Long) Descriptors.int64.parseObject((short) 123);
+		assertEquals(123L, (long) value);
+	}
+
+	@Test
 	public void testInt64Serialize() throws Exception {
 		String value = Descriptors.int64.toString(123L);
 		assertEquals("123", value);
@@ -61,7 +79,13 @@ public class DescriptorsTest {
 	@Test
 	public void testFloatParse() throws Exception {
 		Float value = (Float) Descriptors.float0.parseObject("1.5");
-		assertEquals(1.5f, value, 0.0001);
+		assertEquals(1.5f, value, 1e-5);
+	}
+
+	@Test
+	public void testFloatParse_number() throws Exception {
+		Float value = (Float) Descriptors.float0.parseObject(123);
+		assertEquals(123f, (float) value, 1e-5);
 	}
 
 	@Test
@@ -73,7 +97,13 @@ public class DescriptorsTest {
 	@Test
 	public void testDoubleParse() throws Exception {
 		Double value = (Double) Descriptors.double0.parseObject("0.5");
-		assertEquals(0.5d, value, 0.0001);
+		assertEquals(0.5d, value, 1e-5);
+	}
+
+	@Test
+	public void testDoubleParse_number() throws Exception {
+		Double value = (Double) Descriptors.double0.parseObject(123);
+		assertEquals(123d, value, 1e-5);
 	}
 
 	@Test

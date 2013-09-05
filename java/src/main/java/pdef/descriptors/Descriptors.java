@@ -16,14 +16,14 @@ public class Descriptors {
 
 	public static PrimitiveDescriptor bool = new PrimitiveDescriptor(TypeEnum.BOOL) {
 		@Override
-		public Boolean parseObject(final Object object) {
-			if (object instanceof String) return parseString((String) object);
-			return (Boolean) object;
+		public Boolean parseObject(final Object o) {
+			if (o instanceof String) return parseString((String) o);
+			return (Boolean) o;
 		}
 
 		@Override
-		public Boolean toObject(final Object object) {
-			return (Boolean) object;
+		public Boolean toObject(final Object o) {
+			return (Boolean) o;
 		}
 
 		@Override
@@ -34,14 +34,14 @@ public class Descriptors {
 
 	public static PrimitiveDescriptor int16 = new PrimitiveDescriptor(TypeEnum.INT16) {
 		@Override
-		public Short parseObject(final Object object) {
-			if (object instanceof  String ) return parseString((String) object);
-			return ((Number) object).shortValue();
+		public Short parseObject(final Object o) {
+			if (o instanceof  String ) return parseString((String) o);
+			return ((Number) o).shortValue();
 		}
 
 		@Override
-		public Short toObject(final Object object) {
-			return (Short) object;
+		public Short toObject(final Object o) {
+			return o == null ? null : ((Number) o).shortValue();
 		}
 
 		@Override
@@ -52,14 +52,14 @@ public class Descriptors {
 
 	public static PrimitiveDescriptor int32 = new PrimitiveDescriptor(TypeEnum.INT32) {
 		@Override
-		public Integer parseObject(final Object object) {
-			if (object instanceof String) return parseString((String) object);
-			return ((Number) object).intValue();
+		public Integer parseObject(final Object o) {
+			if (o instanceof String) return parseString((String) o);
+			return ((Number) o).intValue();
 		}
 
 		@Override
-		public Integer toObject(final Object object) {
-			return (Integer) object;
+		public Integer toObject(final Object o) {
+			return o == null ? null : ((Number) o).intValue();
 		}
 
 		@Override
@@ -70,14 +70,14 @@ public class Descriptors {
 
 	public static PrimitiveDescriptor int64 = new PrimitiveDescriptor(TypeEnum.INT64) {
 		@Override
-		public Long parseObject(final Object object) {
-			if (object instanceof String) return parseString((String) object);
-			return ((Number) object).longValue();
+		public Long parseObject(final Object o) {
+			if (o instanceof String) return parseString((String) o);
+			return ((Number) o).longValue();
 		}
 
 		@Override
-		public Long toObject(final Object object) {
-			return object == null ? null : (Long) object;
+		public Long toObject(final Object o) {
+			return o == null ? null : ((Number) o).longValue();
 		}
 
 		@Override
@@ -88,14 +88,14 @@ public class Descriptors {
 
 	public static PrimitiveDescriptor float0 = new PrimitiveDescriptor(TypeEnum.FLOAT) {
 		@Override
-		public Float parseObject(final Object object) {
-			if (object instanceof String) return parseString((String) object);
-			return ((Number) object).floatValue();
+		public Float parseObject(final Object o) {
+			if (o instanceof String) return parseString((String) o);
+			return ((Number) o).floatValue();
 		}
 
 		@Override
-		public Float toObject(final Object object) {
-			return (Float) object;
+		public Float toObject(final Object o) {
+			return o == null ? null : ((Number) o).floatValue();
 		}
 
 		@Override
@@ -106,14 +106,14 @@ public class Descriptors {
 
 	public static PrimitiveDescriptor double0 = new PrimitiveDescriptor(TypeEnum.DOUBLE) {
 		@Override
-		public Double parseObject(final Object object) {
-			if (object instanceof String) return parseString((String) object);
-			return ((Number) object).doubleValue();
+		public Double parseObject(final Object o) {
+			if (o instanceof String) return parseString((String) o);
+			return ((Number) o).doubleValue();
 		}
 
 		@Override
-		public Double toObject(final Object object) {
-			return (Double) object;
+		public Double toObject(final Object o) {
+			return o == null ? null : ((Number) o).doubleValue();
 		}
 
 		@Override
@@ -124,13 +124,13 @@ public class Descriptors {
 
 	public static PrimitiveDescriptor string = new PrimitiveDescriptor(TypeEnum.STRING) {
 		@Override
-		public String parseObject(final Object object) {
-			return (String) object;
+		public String parseObject(final Object o) {
+			return (String) o;
 		}
 
 		@Override
-		public String toObject(final Object object) {
-			return (String) object;
+		public String toObject(final Object o) {
+			return (String) o;
 		}
 
 		@Override
@@ -141,25 +141,25 @@ public class Descriptors {
 
 	public static DataDescriptor void0 = new DataDescriptor(TypeEnum.VOID) {
 		@Override
-		public Void parseObject(final Object object) {
+		public Void parseObject(final Object o) {
 			return null;
 		}
 
 		@Override
-		public Void toObject(final Object object) {
+		public Void toObject(final Object o) {
 			return null;
 		}
 	};
 
 	public static DataDescriptor object = new DataDescriptor(TypeEnum.OBJECT) {
 		@Override
-		public Object parseObject(final Object object) {
-			return object;
+		public Object parseObject(final Object o) {
+			return o;
 		}
 
 		@Override
-		public Object toObject(final Object object) {
-			return object;
+		public Object toObject(final Object o) {
+			return o;
 		}
 	};
 
@@ -167,10 +167,10 @@ public class Descriptors {
 		checkNotNull(element);
 		return new DataDescriptor(TypeEnum.LIST) {
 			@Override
-			public List<?> parseObject(final Object object) {
-				if (object == null) return null;
+			public List<?> parseObject(final Object o) {
+				if (o == null) return null;
 
-				Collection<?> collection = (Collection<?>) object;
+				Collection<?> collection = (Collection<?>) o;
 				List<Object> result = Lists.newArrayList();
 				for (Object e : collection) {
 					Object r = element.parseObject(e);
@@ -181,10 +181,10 @@ public class Descriptors {
 			}
 
 			@Override
-			public List<Object> toObject(final Object object) {
-				if (object == null) return null;
+			public List<Object> toObject(final Object o) {
+				if (o == null) return null;
 
-				List<?> list = (List<?>) object;
+				List<?> list = (List<?>) o;
 				List<Object> result = Lists.newArrayList();
 				for (Object e : list) {
 					result.add(element.toObject(e));
@@ -199,10 +199,10 @@ public class Descriptors {
 		checkNotNull(element);
 		return new DataDescriptor(TypeEnum.SET) {
 			@Override
-			public Set<?> parseObject(final Object object) {
-				if (object == null) return null;
+			public Set<?> parseObject(final Object o) {
+				if (o == null) return null;
 
-				Collection<?> collection = (Collection<?>) object;
+				Collection<?> collection = (Collection<?>) o;
 				List<Object> result = Lists.newArrayList();
 				for (Object e : collection) {
 					if (e == null) continue;
@@ -214,10 +214,10 @@ public class Descriptors {
 			}
 
 			@Override
-			public Set<Object> toObject(final Object object) {
-				if (object == null) return null;
+			public Set<Object> toObject(final Object o) {
+				if (o == null) return null;
 
-				Set<?> set = (Set<?>) object;
+				Set<?> set = (Set<?>) o;
 				Set<Object> result = Sets.newHashSet();
 				for (Object e : set) {
 					if (e == null) continue;
@@ -234,10 +234,10 @@ public class Descriptors {
 		checkNotNull(value);
 		return new DataDescriptor(TypeEnum.MAP) {
 			@Override
-			public Map<?, ?> parseObject(final Object object) {
-				if (object == null) return null;
+			public Map<?, ?> parseObject(final Object o) {
+				if (o == null) return null;
 
-				Map<?, ?> map = (Map<?, ?>) object;
+				Map<?, ?> map = (Map<?, ?>) o;
 				Map<Object, Object> result = Maps.newHashMap();
 				for (Map.Entry<?, ?> e : map.entrySet()) {
 					Object k = key.parseObject(e.getKey());
@@ -250,10 +250,10 @@ public class Descriptors {
 			}
 
 			@Override
-			public Map<Object, Object> toObject(final Object object) {
-				if (object == null) return null;
+			public Map<Object, Object> toObject(final Object o) {
+				if (o == null) return null;
 
-				Map<?, ?> map = (Map<?, ?>) object;
+				Map<?, ?> map = (Map<?, ?>) o;
 				Map<Object, Object> result = Maps.newHashMap();
 				for (Map.Entry<?, ?> e : map.entrySet()) {
 					Object k = key.toObject(e.getKey());

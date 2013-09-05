@@ -1,6 +1,5 @@
 package pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -11,6 +10,8 @@ import pdef.TypeEnum;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MessageDescriptor extends DataDescriptor {
 	private final Class<?> javaClass;
@@ -68,7 +69,9 @@ public class MessageDescriptor extends DataDescriptor {
 
 	@Nullable
 	public MessageDescriptor getSubtype(final Enum<?> value) {
-		checkNotNull(value);
+		if (value == null) {
+			return null;
+		}
 
 		for (Supplier<MessageDescriptor> supplier : subtypes) {
 			MessageDescriptor subtype = supplier.get();
@@ -102,9 +105,9 @@ public class MessageDescriptor extends DataDescriptor {
 	}
 
 	@Override
-	public Map<String, Object> toObject(final Object object) {
-		if (object == null) return null;
-		Message message = (Message) object;
+	public Map<String, Object> toObject(final Object o) {
+		if (o == null) return null;
+		Message message = (Message) o;
 
 		Map<String, Object> map = Maps.newLinkedHashMap();
 		for (FieldDescriptor field : fields) {
@@ -121,9 +124,9 @@ public class MessageDescriptor extends DataDescriptor {
 	}
 
 	@Override
-	public Message parseObject(final Object object) {
-		if (object == null) return null;
-		Map<?, ?> map = (Map<?, ?>) object;
+	public Message parseObject(final Object o) {
+		if (o == null) return null;
+		Map<?, ?> map = (Map<?, ?>) o;
 
 		if (discriminator != null) {
 			Object dvalue = map.get(discriminator.getName());
@@ -131,7 +134,7 @@ public class MessageDescriptor extends DataDescriptor {
 
 			MessageDescriptor subtype = getSubtype(denum);
 			if (subtype != null && subtype != this) {
-				return subtype.parseObject(object);
+				return subtype.parseObject(o);
 			}
 		}
 

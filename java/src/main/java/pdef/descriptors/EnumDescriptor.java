@@ -24,15 +24,20 @@ public class EnumDescriptor extends PrimitiveDescriptor {
 	}
 
 	@Override
-	public Enum<?> parseObject(final Object object) {
-		if (object == null) return null;
-		if (object instanceof String) return parseString((String) object);
-		return ((Enum<?>) object);
+	public Enum<?> parseObject(final Object o) {
+		if (o == null) {
+			return null;
+		}
+
+		if (o instanceof String) {
+			return parseString((String) o);
+		}
+		return ((Enum<?>) o);
 	}
 
 	@Override
-	public Object toObject(final Object object) {
-		return object == null ? null : toString(object);
+	public Object toObject(final Object o) {
+		return o == null ? null : toString(o);
 	}
 
 	@Override
@@ -41,8 +46,8 @@ public class EnumDescriptor extends PrimitiveDescriptor {
 	}
 
 	@Override
-	public String toString(final Object object) {
-		return object == null ? null : ((Enum<?>) object).name().toLowerCase();
+	public String toString(final Object o) {
+		return o == null ? null : ((Enum<?>) o).name().toLowerCase();
 	}
 
 	/** Creates an enum descriptor builder. */

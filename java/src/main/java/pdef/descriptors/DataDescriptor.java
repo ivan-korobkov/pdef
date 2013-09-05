@@ -32,15 +32,15 @@ public abstract class DataDescriptor implements Descriptor {
 	}
 
 	/** Serializes a data type into a json string. */
-	public String toJson(Object object) {
-		if (object == null) return "null";
-		Object value = toObject(object);
+	public String toJson(Object o) {
+		if (o == null) return "null";
+		Object value = toObject(o);
 		return Json.serialize(value);
 	}
 
 	/** Parses a data type from an object. */
-	public abstract Object parseObject(Object object);
+	public abstract Object parseObject(Object o);
 
 	/** Serializes a data type into an object. */
-	public abstract Object toObject(Object object);
+	public abstract Object toObject(Object o);
 }

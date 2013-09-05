@@ -82,24 +82,18 @@ class RestResponse(object):
 class RestClient(object):
     logger = logging.getLogger('pdef.rest.client')
 
-    def __init__(self, sender=None, listener=None):
+    def __init__(self, sender=None):
         '''Create a rest client.'''
         self.sender = sender
-        self.listener = listener or RestClientListener()
 
     def __call__(self, invocation):
         return self.invoke(invocation)
 
     def invoke(self, invocation):
         '''Serialize an invocation, send a request, parse a response and return the result.'''
-        self.listener.on_invocation(invocation)
-        self.logger.info('Invoking %s', invocation)
+        self.logger.debug('Invoking %s', invocation)
         request = self._create_request(invocation)
-
-        self.listener.on_request(request, invocation)
         response = self._send_request(request)
-        self.listener.on_response(response, invocation)
-
         return self._parse_response(response, invocation)
 
     def _create_request(self, invocation):
@@ -271,72 +265,30 @@ class RequestsSender(object):
         return url + path
 
 
-class RestClientListener(object):
-    '''RestClient listener with event callbacks.'''
-    def on_invocation(self, invocation):
-        '''Called on an invocation.'''
-        pass
-
-    def on_request(self, request, invocation):
-        '''Called on creating a request from an invocation.'''
-        pass
-
-    def on_response(self, response, invocation):
-        '''Called on receiving a response.'''
-        pass
-
-    def on_result(self, result, invocation):
-        '''Called on parsing a successful response.'''
-        pass
-
-    def on_exc(self, exc, invocation):
-        '''Called on parsing an expected application exception.'''
-        pass
-
-    def on_error(self, error, invocation):
-        '''Called on any unexpected error.'''
-        pass
-
-
-
 class RestServer(object):
     logger = logging.getLogger('pdef.rest.server')
 
-    def __init__(self, descriptor, service_or_callable, listener=None):
-        '''Create a WSGI server.
-
-        @param interface            Generated interface (class).
-        @param service_or_callable  Service instance or a callable which returns a service
-                                    for invocations.
-        @param on_invocation        Callback for incoming invocations.
-        @param on_exception         Callback for application (expected) exceptions
-                                    defined in the interface throws clause.
-        @param on_error             Callback for unhandled exceptions.
-        '''
+    def __init__(self, descriptor, service_or_callable):
+        '''Create a WSGI server.'''
         self.descriptor = descriptor
         self.supplier = service_or_callable if callable(service_or_callable) \
             else lambda: service_or_callable
-        self.listener = listener or RestServerListener()
 
     def __call__(self, request):
         return self.handle(request)
 
     def handle(self, request):
         logger = self.logger
-        listener = self.listener
 
         try:
             logger.debug('Incoming request %s', request)
-            listener.on_request(request)
 
             invocation = self._parse_request(request)
             try:
                 logger.debug('Invoking %s', invocation)
-                listener.on_invocation(invocation, request)
 
                 result = self._invoke(invocation)
                 logger.debug('Result %s', result)
-                listener.on_result(result, invocation, request)
 
                 response = self._result_to_response(result, invocation)
             except Exception, e:
@@ -347,19 +299,16 @@ class RestServer(object):
                     raise
 
                 logger.debug('Application exception %s', e)
-                listener.on_exc(e, invocation, request)
 
             # Create a rest response from a successful result or application exc rpc response.
             rest_response = self._rest_response(response)
 
         except Exception, e:
             logger.exception('Error, e=%s, request=%s', e, request)
-            listener.on_error(e, request)
 
             # Create a rest response from an unhandled exception.
             rest_response = self._error_rest_response(e)
 
-        listener.on_response(rest_response, request)
         return rest_response
 
     def _parse_request(self, request):
@@ -508,33 +457,6 @@ class RestServer(object):
             result = 'Internal server error'
 
         return RestResponse(http_status, content=result, content_type=TEXT_CONTENT_TYPE)
-
-
-class RestServerListener(object):
-    '''RestServer listener with event callbacks.'''
-    def on_request(self, request):
-        '''Called on an incoming request.'''
-        pass
-
-    def on_invocation(self, invocation, request):
-        '''Called on parsing an invocation.'''
-        pass
-
-    def on_result(self, result, invocation, request):
-        '''Called on getting a successful invocation result.'''
-        pass
-
-    def on_exc(self, exc, invocation, request):
-        '''Called on catching an expected application exception.'''
-        pass
-
-    def on_error(self, e, request):
-        '''Called on an unhandled exception.'''
-        pass
-
-    def on_response(self, response, request):
-        '''Called on returning a rest response.'''
-        pass
 
 
 class WsgiRestServer(object):

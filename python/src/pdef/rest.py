@@ -16,8 +16,8 @@ CHARSET = 'utf-8'
 JSON_MIME_TYPE = 'application/json'
 TEXT_MIME_TYPE = 'text/plain'
 
-JSON_CONTENT_TYPE = JSON_MIME_TYPE + '; charset=utf-8'
-TEXT_CONTENT_TYPE = TEXT_MIME_TYPE + '; charset=utf-8'
+JSON_CONTENT_TYPE = 'application/json; charset=utf-8'
+TEXT_CONTENT_TYPE = 'text/plain; charset=utf-8'
 FORM_CONTENT_TYPE = 'application/x-www-form-urlencoded'
 
 
@@ -27,11 +27,27 @@ class RestRequest(object):
     The result contains an HTTP method, a url-encoded path, and two dicts with query and post
     params. The params must be unicode not url-encoded strings.
     '''
-    def __init__(self, method=GET, path='/', query=None, post=None):
+    def __init__(self, method=GET, path='', query=None, post=None):
         self.method = method
         self.path = path
         self.query = dict(query) if query else {}
         self.post = dict(post) if post else {}
+
+    def __repr__(self):
+        return '<RestRequest %s %s%s>' % (self.method, self.path,
+                                          '?%s' % self.query_string if self.query else '')
+
+    @property
+    def is_post(self):
+        return self.method.upper() == POST
+
+    @property
+    def query_string(self):
+        if not self.query:
+            return ''
+
+        q = {unicode(k).encode('utf-8'): unicode(v).encode('utf-8') for k, v in self.query.items()}
+        return urllib.urlencode(q)
 
 
 class RestResponse(object):
@@ -51,11 +67,16 @@ class RestResponse(object):
 
     @property
     def is_application_json(self):
-        return self.content and self.content.lowercase().startswith(JSON_MIME_TYPE)
+        if not self.content_type:
+            return False
+
+        return self.content_type.lower().startswith(JSON_MIME_TYPE)
 
     @property
     def is_text_plain(self):
-        return self.content and self.content.lowercase().startswith(TEXT_MIME_TYPE)
+        if not self.content_type:
+            return False
+        return self.content_type.lower().startswith(TEXT_MIME_TYPE)
 
 
 class RestClient(object):
@@ -72,29 +93,14 @@ class RestClient(object):
     def invoke(self, invocation):
         '''Serialize an invocation, send a request, parse a response and return the result.'''
         self.listener.on_invocation(invocation)
-        try:
-            self.logger.info('Invoking %s', invocation)
-            request = self._create_request(invocation)
+        self.logger.info('Invoking %s', invocation)
+        request = self._create_request(invocation)
 
-            self.listener.on_request(request, invocation)
-            response = self._send_request(request)
-            self.listener.on_response(response, invocation)
+        self.listener.on_request(request, invocation)
+        response = self._send_request(request)
+        self.listener.on_response(response, invocation)
 
-            status, result = self._parse_response(response, invocation)
-            if status == RpcStatus.OK:
-                self.listener.on_result(result, invocation)
-                return result
-
-            exc = result
-            self.logger.debug('Received an exception %s', exc)
-            self.listener.on_exc(exc, invocation)
-        except Exception, e:
-            self.logger.exception('Error, e=%s, invocation=%s', e, invocation)
-            self.listener.on_error(e, invocation)
-            raise
-
-        # Raise the expected exception after the unhandled catch block.
-        raise exc
+        return self._parse_response(response, invocation)
 
     def _create_request(self, invocation):
         '''Convert an invocation into a RestRequest.'''
@@ -175,51 +181,24 @@ class RestClient(object):
         return descriptor.to_json(value)
 
     def _send_request(self, request):
-        '''Send a requests.Request.'''
-        session = self.sender if self.sender else requests.session()
-        prepared = request.prepare()
-        return session.send(prepared)
+        '''Send a request and return a response.'''
+        return self.sender(request)
 
-    def _parse_response(self, http_response, invocation):
+    def _parse_response(self, response, invocation):
         '''Parse a requests.Response into a result or an exception, return (RpcStatus, result).'''
+        if not (response.is_ok and response.is_application_json):
+            # It is not a valid RPC response.
+            self._parse_raise_error(response)
 
-        # If it is not a json response, raise an rpc exception
-        # based on the status code.
-        http_status = http_response.status_code
+        # Parse a json rpc response.
+        rpc = RpcResponse.parse_json(response.content)
+        status = rpc.status
+        result = rpc.result
 
-        if http_status != httplib.OK:               # 200
-            # The server has not replied with a valid rpc response.
-            if http_status == httplib.BAD_REQUEST:  # 400
-                raise ClientError(http_response.text)
-
-            elif http_status == httplib.NOT_FOUND:  # 404
-                raise MethodNotFoundError(http_response.text)
-
-            elif http_status == httplib.METHOD_NOT_ALLOWED:  # 405
-                raise MethodNotAllowedError(http_response.text)
-
-            elif http_status in (httplib.BAD_GATEWAY, httplib.SERVICE_UNAVAILABLE):  # 502, 503
-                raise ServiceUnavailableError(http_response.text)
-
-            elif http_status == httplib.INTERNAL_SERVER_ERROR:  # 500
-                raise ServerError(http_response.text)
-
-            raise ServerError('Status code: %s, text=%s' % (http_status, http_response.text))
-
-
-        # Try to parse a json rpc response.
-        try:
-            response = RpcResponse.parse_json(http_response.text)
-        except Exception, e:
-            raise ClientError('Failed to parse a server response: %s' % e)
-
-
-        status = response.status
-        result = response.result
         if status == RpcStatus.OK:
             # It's a successful result.
             # Parse it using the invocation method result descriptor.
-            return RpcStatus.OK, invocation.result.parse_object(result)
+            return invocation.result.parse_object(result)
 
         elif status == RpcStatus.EXCEPTION:
             # It's an expected exception.
@@ -227,10 +206,69 @@ class RestClient(object):
 
             exc = invocation.exc
             if not exc:
-                raise ClientError('Unsupported application exception: %s' % result)
-            return RpcStatus.EXCEPTION, exc.parse_object(result)
+                raise ClientError('Unsupported application exception')
+            raise exc.parse_object(result)
 
-        raise ClientError('Unsupported rpc response status: response=%s' % response)
+        raise ClientError('Unsupported rpc response status=%s' % status)
+
+    def _parse_raise_error(self, response):
+        '''Parse an error from a RestResponse.'''
+        status = response.status
+        text = response.content or 'No text'
+        text = text if len(text) < 255 else text[:255]  # Limit the length for the exception.
+
+        if status == httplib.BAD_REQUEST:               # 400
+            raise ClientError(text)
+
+        elif status == httplib.NOT_FOUND:               # 404
+            raise MethodNotFoundError(text)
+
+        elif status == httplib.METHOD_NOT_ALLOWED:      # 405
+            raise MethodNotAllowedError(text)
+
+        elif status in (httplib.BAD_GATEWAY, httplib.SERVICE_UNAVAILABLE):  # 502, 503
+            raise ServiceUnavailableError(text)
+
+        elif status == httplib.INTERNAL_SERVER_ERROR:   # 500
+            raise ServerError(text)
+
+        raise ServerError('Server error, status=%s, text=%s' % (status, text))
+
+
+class RequestsSender(object):
+    def __init__(self, url, session=None):
+        self.url = url
+        self.session = session
+
+    def __call__(self, request):
+        return self.send(request)
+
+    def send(self, request):
+        '''Send a RestRequest and return a RestResponse.'''
+        url = self._join_url_and_path(self.url, request.path)
+        req = requests.Request(request.method, url=url, data=request.post, params=request.query)
+        prepared = req.prepare()
+
+        session = self.session if self.session else requests.session()
+        resp = session.send(prepared)
+        return self._parse_response(resp)
+
+    def _parse_response(self, resp):
+        '''Parse a requests.Response into a RestResponse.'''
+        status = resp.status_code
+        content = resp.text
+        content_type = resp.headers.get('content-type') or TEXT_CONTENT_TYPE
+        return RestResponse(status, content=content, content_type=content_type)
+
+    def _join_url_and_path(self, url, path):
+        '''Join url and path, correctly handle slashes /.'''
+        if not url.endswith('/'):
+            url += '/'
+
+        if path.startswith('/'):
+            path = path[1:]
+
+        return url + path
 
 
 class RestClientListener(object):
@@ -441,69 +479,35 @@ class RestServer(object):
 
     def _rest_response(self, rpc_response):
         '''Write an rpc response and return an http server response.'''
-        status = 200
+        status = httplib.OK
         json = rpc_response.to_json()
-        return RestResponse(status, content=json)
+        return RestResponse(status, content=json, content_type=JSON_CONTENT_TYPE)
 
     def _error_rest_response(self, e):
         '''Handle an unhandled error and return an RpcResponse.'''
         if isinstance(e, WrongMethodArgsError):
-            http_status = 400
+            http_status = httplib.BAD_REQUEST           # 400
             result = e.text
         elif isinstance(e, MethodNotFoundError):
-            http_status = 404
+            http_status = httplib.NOT_FOUND             # 404
             result = e.text
         elif isinstance(e, MethodNotAllowedError):
-            http_status = 405
+            http_status = httplib.METHOD_NOT_ALLOWED    # 405
             result = e.text
         elif isinstance(e, ClientError):
-            http_status = 400
+            http_status = httplib.BAD_REQUEST           # 400
             result = e.text
         elif isinstance(e, ServiceUnavailableError):
-            http_status = 503
+            http_status = httplib.SERVICE_UNAVAILABLE   # 503
             result = e.text
         elif isinstance(e, ServerError):
-            http_status = 500
+            http_status = httplib.INTERNAL_SERVER_ERROR # 500
             result = e.text
         else:
-            http_status = 500
+            http_status = httplib.INTERNAL_SERVER_ERROR # 500
             result = 'Internal server error'
 
-        return RestResponse(http_status, content=result,
-                                  content_type=TEXT_CONTENT_TYPE)
-
-
-class RestServerRequest(object):
-    '''Simple gateway-agnostic server request, all fields must be unicode.'''
-
-    def __init__(self, method, path, query=None, post=None):
-        '''Create an http server request.
-
-        @param method   Http method string.
-        @param path     Request path.
-        @param query    Dict, unquoted query params, only single values.
-        @param body     Dict, unquoted post params, only single values.
-        '''
-        self.method = method
-        self.path = path
-        self.query = query
-        self.post = post
-
-    def __repr__(self):
-        return '<RestServerRequest %s %s%s>' % (self.method, self.path,
-                                                '?%s' % self.query_string if self.query else '')
-
-    @property
-    def is_post(self):
-        return self.method.upper() == 'POST'
-
-    @property
-    def query_string(self):
-        if not self.query:
-            return ''
-
-        q = {unicode(k).encode('utf-8'): unicode(v).encode('utf-') for k, v in self.query.items()}
-        return urllib.urlencode(q)
+        return RestResponse(http_status, content=result, content_type=TEXT_CONTENT_TYPE)
 
 
 class RestServerListener(object):
@@ -559,17 +563,16 @@ class WsgiRestServer(object):
         '''Create an http server request from a wsgi request.'''
         method = env['REQUEST_METHOD']
         path = env['SCRIPT_NAME'] + env['PATH_INFO']
-
         query = self._read_wsgi_query(env)
         post = self._read_wsgi_post(env)
 
-        decode = lambda s: s.decode(CHARSET)
-        query = {decode(k): decode(vv[0]) for k, vv in query.items()}
-        post = {decode(k): decode(vv[0]) for k, vv in post.items()}
-        return RestServerRequest(method, path, query=query, post=post)
+        return RestRequest(method, path=path, query=query, post=post)
 
     def _read_wsgi_query(self, env):
-        return urlparse.parse_qs(env['QUERY_STRING']) if 'QUERY_STRING' in env else {}
+        q = urlparse.parse_qs(env['QUERY_STRING']) if 'QUERY_STRING' in env else {}
+
+        decode = lambda s: s.decode('utf-8')
+        return {decode(k): decode(vv[0]) for k, vv in q.items()}
 
     def _read_wsgi_post(self, env):
         ctype = env.get('CONTENT_TYPE', '')
@@ -579,7 +582,10 @@ class WsgiRestServer(object):
         if clength > 0 and ctype.lower() == FORM_CONTENT_TYPE:
             body = env['wsgi.input'].read(clength)
 
-        return urlparse.parse_qs(body) if body else {}
+        post = urlparse.parse_qs(body) if body else {}
+
+        decode = lambda s: s.decode('utf-8')
+        return {decode(k): decode(vv[0]) for k, vv in post.items()}
 
     def _read_wsgi_clength(self, env):
         clength = env.get('CONTENT_LENGTH') or 0

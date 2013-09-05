@@ -1,19 +1,15 @@
 # encoding: utf-8
-from threading import Thread
 import unittest
 import urllib
-from mock import Mock
-import requests
 from StringIO import StringIO
+from threading import Thread
+
+from mock import Mock
 
 from pdef import descriptors
-from pdef.rest import RestClient, JSON_CONTENT_TYPE, RestServerRequest, \
-    TEXT_CONTENT_TYPE, WsgiRestServer, RestResponse, RestRequest
+from pdef.rest import *
 from pdef.test.messages_pd import SimpleMessage
 from pdef.test.interfaces_pd import TestInterface, TestException, NextTestInterface
-
-from pdef.rpc_pd import RpcResponse, RpcStatus, ServerError, ServiceUnavailableError, \
-    ClientError, MethodNotFoundError, WrongMethodArgsError, MethodNotAllowedError
 
 
 class TestRestClient(unittest.TestCase):
@@ -25,15 +21,8 @@ class TestRestClient(unittest.TestCase):
     def client(self):
         return RestClient()
 
-    def response(self, status_code, text=None, content_type=JSON_CONTENT_TYPE):
-        r = requests.Response()
-        r.status_code = status_code
-        if text:
-            r._content = text
-        if content_type:
-            r.headers['content-type'] = content_type
-
-        return r
+    def response(self, status_code, content=None, content_type=JSON_CONTENT_TYPE):
+        return RestResponse(status_code, content=content, content_type=content_type)
 
     # Tests.
 
@@ -42,27 +31,27 @@ class TestRestClient(unittest.TestCase):
         request = self.client()._create_request(invocation)
 
         assert request.method == 'GET'
-        assert request.url == 'http://example.com/'
-        assert request.params == {'a': '1', 'b': '2'}
-        assert request.data == {}
+        assert request.path == '/'
+        assert request.query == {'a': '1', 'b': '2'}
+        assert request.post == {}
 
     def test_create_request__post(self):
         invocation = self.proxy().postMethod(aList=[1, 2, 3], aMap={1: 2})
         request = self.client()._create_request(invocation)
 
         assert request.method == 'POST'
-        assert request.url == 'http://example.com/postMethod'
-        assert request.params == {}
-        assert request.data == {'aList': '[1, 2, 3]', 'aMap': '{"1": 2}'}
+        assert request.path == '/postMethod'
+        assert request.query == {}
+        assert request.post == {'aList': '[1, 2, 3]', 'aMap': '{"1": 2}'}
 
     def test_create_request__chained_methods(self):
         invocation = self.proxy().interfaceMethod(1, 2).stringMethod('hello')
         request = self.client()._create_request(invocation)
 
         assert request.method == 'GET'
-        assert request.url == 'http://example.com/interfaceMethod/1/2/stringMethod'
-        assert request.params == {'text': 'hello'}
-        assert request.data == {}
+        assert request.path == '/interfaceMethod/1/2/stringMethod'
+        assert request.query == {'text': 'hello'}
+        assert request.post == {}
 
     # serialize_invocation.
 
@@ -96,7 +85,7 @@ class TestRestClient(unittest.TestCase):
     def test_serialize_invocation__interface_method(self):
         request = RestRequest()
         invocation = self.proxy().interfaceMethod(a=1, b=2)._invocation
-        path, query, post = self.client()._serialize_invocation(invocation, request)
+        self.client()._serialize_invocation(invocation, request)
 
         assert request.path == '/interfaceMethod/1/2'
         assert request.query == {}
@@ -153,6 +142,30 @@ class TestRestClient(unittest.TestCase):
 
     # parse_response
 
+    def test_parse_response__ok(self):
+        msg = SimpleMessage(aString='hello', aBool=False, anInt16=127)
+        text = RpcResponse(status=RpcStatus.OK, result=msg).to_json()
+        response = self.response(200, text)
+
+        invocation = self.proxy().formMethod(msg)
+        result = self.client()._parse_response(response, invocation)
+
+        assert result == msg
+
+    def test_parse_response__exception(self):
+        exc = TestException(text='Application exception!')
+        text = RpcResponse(status=RpcStatus.EXCEPTION, result=exc).to_json()
+        response = self.response(200, text)
+
+        invocation = self.proxy().excMethod()
+        try:
+            self.client()._parse_response(response, invocation)
+            self.fail()
+        except TestException, e:
+            assert e == exc
+
+    # parse_raise_error
+
     def test_parse_response__empty_client_error(self):
         response = self.response(400)
         self.assertRaises(ClientError, self.client()._parse_response, response, None)
@@ -172,28 +185,6 @@ class TestRestClient(unittest.TestCase):
         response = self.response(500)
         self.assertRaises(ServerError, self.client()._parse_response, response, None)
 
-    def test_parse_response__ok(self):
-        msg = SimpleMessage(aString='hello', aBool=False, anInt16=127)
-        text = RpcResponse(status=RpcStatus.OK, result=msg).to_json()
-        response = self.response(200, text)
-
-        invocation = self.proxy().formMethod(msg)
-        status, result = self.client()._parse_response(response, invocation)
-
-        assert status == RpcStatus.OK
-        assert result == msg
-
-    def test_parse_response__exception(self):
-        exc = TestException(text='Application exception!')
-        text = RpcResponse(status=RpcStatus.EXCEPTION, result=exc).to_json()
-        response = self.response(200, text)
-
-        invocation = self.proxy().excMethod()
-        status, result = self.client()._parse_response(response, invocation)
-
-        assert status == RpcStatus.EXCEPTION
-        assert result == exc
-
 
 class TestRestServer(unittest.TestCase):
     def server(self):
@@ -204,10 +195,10 @@ class TestRestServer(unittest.TestCase):
         return TestInterface.create_proxy(lambda invocation: invocation)
 
     def get_request(self, path, query=None, post=None):
-        return RestServerRequest('GET', path, query=query, post=post)
+        return RestRequest(GET, path, query=query, post=post)
 
     def post_request(self, path, query=None, post=None):
-        return RestServerRequest('POST', path, query=query, post=post)
+        return RestRequest(POST, path, query=query, post=post)
 
     def test_handle(self):
         pass
@@ -342,9 +333,7 @@ class TestRestServer(unittest.TestCase):
     def test_app_exc_to_response__unexpected(self):
         invocation = self.proxy().excMethod()
 
-        exc = TestException()
         response = self.server()._app_exc_to_response(ValueError(), invocation)
-
         assert response is None
 
     def test_rest_response__ok(self):
@@ -352,9 +341,8 @@ class TestRestServer(unittest.TestCase):
         resp = self.server()._rest_response(response)
 
         assert resp.status == 200
-        assert resp.content_type == JSON_CONTENT_TYPE
         assert resp.content == response.to_json()
-        assert resp.content_length == len(resp.content)
+        assert resp.content_type == JSON_CONTENT_TYPE
 
     def test_rest_response_exception(self):
         response = RpcResponse(status=RpcStatus.OK, result=TestException().to_dict())
@@ -507,7 +495,7 @@ class IntegrationService(TestInterface):
         return msg
 
     def voidMethod(self):
-        return 'void?' # But should send None.
+        return 'void?'  # But should send None.
 
     def excMethod(self):
         raise TestException('Application Exception!')

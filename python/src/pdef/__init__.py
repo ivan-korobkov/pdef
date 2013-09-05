@@ -118,8 +118,9 @@ class Interface(object):
     @classmethod
     def create_rest_client(cls, url, session=None):
         '''Create a rest client.'''
-        from pdef.rest import RestClient
-        client = RestClient(url, session)
+        from pdef.rest import RestClient, RequestsSender
+        sender = RequestsSender(url, session)
+        client = RestClient(sender)
         return cls.create_proxy(client)
 
     def to_rest_server(self):

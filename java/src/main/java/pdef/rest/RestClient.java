@@ -172,29 +172,37 @@ public class RestClient implements Function<Invocation, Object> {
 
 	@VisibleForTesting
 	Object parseResponse(final RestResponse response, final Invocation invocation) {
-		if (!isSuccess(response)) {
+		if (!(response.hasOkStatus() && response.hasJsonContentType())) {
+			// It is not a valid RPC response.
 			throw parseError(response);
 		}
 
-		RpcResponse rpc = parseRpcResponse(response);
+		RpcResponse rpc = RpcResponse.parseJson(response.getContent());
 		Object result = rpc.getResult();
 		RpcStatus status = rpc.getStatus();
-		switch (status) {
-			case OK:
-				return parseRpcResult(result, invocation);
-			case EXCEPTION:
-				throw parseRpcException(result, invocation);
-			default:
-				throw ClientError.builder()
-						.setText("Unknown rpc response status: " + status)
-						.build();
-		}
-	}
 
-	/** Checks that a rest response has 200 OK status and application/json content type. */
-	@VisibleForTesting
-	boolean isSuccess(final RestResponse response) {
-		return response.hasOkStatus() && response.hasJsonContentType();
+		if (status == RpcStatus.OK) {
+			// It's a successful result.
+			// Parse it using the invocation method result descriptor.
+			DataDescriptor d = (DataDescriptor) invocation.getResult();
+			return d.parseObject(result);
+
+		} else if (status == RpcStatus.EXCEPTION) {
+			// It's an expected application exception.
+			// Parse it using the invocation exception descriptor.
+
+			MessageDescriptor d = invocation.getExc();
+			if (d == null) {
+				throw ClientError.builder()
+						.setText("Unsupported application exception")
+						.build();
+			}
+			throw (RuntimeException) d.parseObject(result);
+		}
+
+		throw ClientError.builder()
+				.setText("Unsupported rpc response status=" + status)
+				.build();
 	}
 
 	/** Parses an rpc error from a rest response via its status. */
@@ -238,36 +246,9 @@ public class RestClient implements Function<Invocation, Object> {
 
 			default:
 				throw ServerError.builder()
-						.setText("Status code: " + status + ", text=" + text)
+						.setText("Server error, status=" + status + ", text=" + text)
 						.build();
 		}
-	}
-
-	/** Parses a json rpc response. */
-	@VisibleForTesting
-	RpcResponse parseRpcResponse(final RestResponse response) {
-		String content = response.getContent();
-		return RpcResponse.parseJson(content);
-	}
-
-	/** Parses a successful rpc result. */
-	@VisibleForTesting
-	Object parseRpcResult(final Object result, final Invocation invocation) {
-		DataDescriptor d = (DataDescriptor) invocation.getResult();
-		return d.parseObject(result);
-	}
-
-	/** Parses an application exception. */
-	@VisibleForTesting
-	RuntimeException parseRpcException(final Object result, final Invocation invocation) {
-		MessageDescriptor d = invocation.getExc();
-		if (d == null) {
-			throw ClientError.builder()
-					.setText("Unsupported application exception: " + result)
-					.build();
-		}
-
-		return (RuntimeException) d.parseObject(result);
 	}
 
 	/** Url-encodes a string. */

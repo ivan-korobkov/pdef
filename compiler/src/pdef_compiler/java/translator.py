@@ -2,8 +2,8 @@
 import logging
 import os.path
 
-from pdef import Type
-from pdef.compiler.translator import AbstractTranslator, upper_first, mkdir_p
+from pdef_compiler.lang import Type
+from pdef_compiler.translator import AbstractTranslator, upper_first, mkdir_p
 
 
 class JavaTranslator(AbstractTranslator):

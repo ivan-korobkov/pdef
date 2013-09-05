@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef.compiler.exc import PdefCompilerException
+from pdef_compiler.exc import PdefCompilerException
 
 
 def check_state(expr, msg=None, *args):

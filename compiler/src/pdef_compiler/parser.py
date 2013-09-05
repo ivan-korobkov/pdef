@@ -5,8 +5,8 @@ import os.path
 import ply.lex as lex
 import ply.yacc as yacc
 
-from pdef.compiler import ast
-from pdef.compiler.exc import PdefCompilerException
+from pdef_compiler import ast
+from pdef_compiler.exc import PdefCompilerException
 
 
 __all__ = ('parse', 'parse_string', 'EXT')
@@ -409,7 +409,7 @@ class _GrammarRules(object):
                    | OBJECT
                    | VOID
         '''
-        t[0] = ast.TypeRef(t[1].lower())
+        t[0] = ast.ValueRef(t[1].lower())
 
     def p_list_type(self, t):
         '''
@@ -472,7 +472,7 @@ class _Parser(_GrammarRules, _Tokens):
         super(_Parser, self).__init__()
         self.debug = debug
         self.lexer = lex.lex(module=self, debug=debug)
-        self.parser = yacc.yacc(module=self, debug=debug, tabmodule='pdef.compiler.parsetab',
+        self.parser = yacc.yacc(module=self, debug=debug, tabmodule='pdef_compiler.parsetab',
                                 start='file')
         self.errors = []
         self.path = path

@@ -2,9 +2,8 @@
 import mock
 import unittest
 
-from pdef import Type
-from pdef.compiler import ast
-from pdef.compiler.lang import *
+from pdef_compiler import ast
+from pdef_compiler.lang import *
 
 
 class TestPackage(unittest.TestCase):
@@ -68,27 +67,27 @@ class TestModule(unittest.TestCase):
     def test_find_ref__native(self):
         '''Should lookup a native type by its ref.'''
         module = Module('test')
-        int64 = module.find_ref_or_raise(ast.TypeRef(Type.INT64))
+        int64 = module.find_ref_or_raise(ast.ValueRef(Type.INT64))
         assert int64 is NativeTypes.INT64
 
     def test_find_ref__list(self):
         '''Should create and link a list by its ref.'''
         module = Module('test')
-        list0 = module.find_ref_or_raise(ast.ListRef(ast.TypeRef(Type.STRING)))
+        list0 = module.find_ref_or_raise(ast.ListRef(ast.ValueRef(Type.STRING)))
         assert isinstance(list0, List)
         assert list0.element is NativeTypes.STRING
 
     def test_find_ref__set(self):
         '''Should create and link a set by its ref.'''
         module = Module('test')
-        set0 = module.find_ref_or_raise(ast.SetRef(ast.TypeRef(Type.FLOAT)))
+        set0 = module.find_ref_or_raise(ast.SetRef(ast.ValueRef(Type.FLOAT)))
         assert isinstance(set0, Set)
         assert set0.element is NativeTypes.FLOAT
 
     def test_find_ref__map(self):
         '''Should create and link a map by its ref.'''
         module = Module('test')
-        map0 = module.find_ref_or_raise(ast.MapRef(ast.TypeRef(Type.STRING), ast.TypeRef(Type.INT32)))
+        map0 = module.find_ref_or_raise(ast.MapRef(ast.ValueRef(Type.STRING), ast.ValueRef(Type.INT32)))
         assert isinstance(map0, Map)
         assert map0.key is NativeTypes.STRING
         assert map0.value is NativeTypes.INT32
@@ -344,7 +343,7 @@ class TestMessage(unittest.TestCase):
     def test_parse_node(self):
         '''Should create a message from an AST node.'''
         node = ast.Message('Msg', base=ast.DefRef('Base'),
-                           fields=[ast.Field('field', ast.TypeRef(Type.INT32))])
+                           fields=[ast.Field('field', ast.ValueRef(Type.INT32))])
         lookup = mock.Mock()
 
         msg = Message.parse_node(node, lookup)
@@ -609,7 +608,7 @@ class TestMessage(unittest.TestCase):
 
 class TestField(unittest.TestCase):
     def test_parse_node(self):
-        node = ast.Field('field', ast.TypeRef(ast.Type.STRING), is_discriminator=True)
+        node = ast.Field('field', ast.ValueRef(Type.STRING), is_discriminator=True)
         lookup = mock.Mock()
 
         field = Field.parse_node(node, lookup)
@@ -668,8 +667,8 @@ class TestInterface(unittest.TestCase):
         exc_ref = ast.DefRef('Exc')
 
         node = ast.Interface('Iface', base=base_ref, exc=exc_ref,
-                methods=[ast.Method('echo', args=[ast.Field('text', ast.TypeRef(Type.STRING))],
-                result=ast.TypeRef(Type.STRING))])
+                methods=[ast.Method('echo', args=[ast.Field('text', ast.ValueRef(Type.STRING))],
+                result=ast.ValueRef(Type.STRING))])
         lookup = mock.Mock()
 
         iface = Interface.parse_node(node, lookup)

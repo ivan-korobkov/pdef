@@ -1,5 +1,4 @@
 # encoding: utf-8
-from pdef import Type
 
 
 class Location(object):
@@ -37,9 +36,8 @@ class RelativeImport(Import):
 
 
 class Definition(object):
-    def __init__(self, name, type0, doc=None):
+    def __init__(self, name, doc=None):
         self.name = name
-        self.type = type0
         self.doc = doc
         self.location = None
 
@@ -47,7 +45,7 @@ class Definition(object):
 class Message(Definition):
     def __init__(self, name, base=None, discriminator_value=None, fields=None, is_exception=False,
                  is_form=False):
-        super(Message, self).__init__(name, Type.MESSAGE)
+        super(Message, self).__init__(name)
 
         self.base = base
         self.discriminator_value = discriminator_value
@@ -67,13 +65,13 @@ class Field(object):
 
 class Enum(Definition):
     def __init__(self, name, values=None):
-        super(Enum, self).__init__(name, Type.ENUM)
+        super(Enum, self).__init__(name)
         self.values = tuple(values) if values else ()
 
 
 class Interface(Definition):
     def __init__(self, name, base=None, exc=None, methods=None):
-        super(Interface, self).__init__(name, Type.INTERFACE)
+        super(Interface, self).__init__(name)
 
         self.base = base
         self.exc = exc
@@ -104,24 +102,11 @@ class MethodArg(object):
 
 
 class TypeRef(object):
-    def __init__(self, type0):
-        self.type = type0
-
-    def __repr__(self):
-        return self.type
-
-    @property
-    def is_primitive(self):
-        return self.type in Type.PRIMITIVES
-
-    @property
-    def is_datatype(self):
-        return self.type in Type.DATA_TYPES
+    pass
 
 
 class ListRef(TypeRef):
     def __init__(self, element):
-        super(ListRef, self).__init__(Type.LIST)
         self.element = element
 
     def __repr__(self):
@@ -130,7 +115,6 @@ class ListRef(TypeRef):
 
 class SetRef(TypeRef):
     def __init__(self, element):
-        super(SetRef, self).__init__(Type.SET)
         self.element = element
 
     def __repr__(self):
@@ -139,7 +123,6 @@ class SetRef(TypeRef):
 
 class MapRef(TypeRef):
     def __init__(self, key, value):
-        super(MapRef, self).__init__(Type.MAP)
         self.key = key
         self.value = value
 
@@ -149,7 +132,6 @@ class MapRef(TypeRef):
 
 class EnumValueRef(TypeRef):
     def __init__(self, enum, value):
-        super(EnumValueRef, self).__init__(Type.ENUM_VALUE)
         self.enum = enum
         self.value = value
 
@@ -159,8 +141,12 @@ class EnumValueRef(TypeRef):
 
 class DefRef(TypeRef):
     def __init__(self, name):
-        super(DefRef, self).__init__(Type.DEFINITION)
         self.name = name
 
     def __repr__(self):
         return self.name
+
+
+class ValueRef(TypeRef):
+    def __init__(self, type0):
+        self.type = type0

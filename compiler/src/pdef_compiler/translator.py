@@ -1,7 +1,7 @@
 # encoding: utf-8
 import inspect
-import logging
 import os
+
 from jinja2 import Environment
 
 

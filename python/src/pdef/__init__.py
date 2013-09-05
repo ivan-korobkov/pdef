@@ -34,7 +34,7 @@ def wsgi_server(interface, service_or_supplier):
 
 
 class Type(object):
-    '''Pdef types.'''
+    '''Pdef type enum.'''
 
     # Base value types.
     BOOL = 'bool'

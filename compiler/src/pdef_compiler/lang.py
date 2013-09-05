@@ -1,14 +1,45 @@
 # encoding: utf-8
-import os
 import logging
-from collections import OrderedDict, deque
+from collections import deque
 
-from pdef import Type
-from pdef.compiler import ast, parser
-from pdef.compiler.exc import PdefCompilerException
-from pdef.compiler.preconditions import check_isinstance
+from pdef_compiler.exc import PdefCompilerException
+from pdef_compiler import parser, ast
+from pdef_compiler.preconditions import check_isinstance
 
-EXT = 'pdef'
+
+class Type(object):
+    '''Pdef type enum.'''
+
+    # Base value types.
+    BOOL = 'bool'
+    INT16 = 'int16'
+    INT32 = 'int32'
+    INT64 = 'int64'
+    FLOAT = 'float'
+    DOUBLE = 'double'
+    STRING = 'string'
+
+    # Collection types.
+    LIST = 'list'
+    MAP = 'map'
+    SET = 'set'
+
+    # Special data type.
+    OBJECT = 'object'
+
+    # User defined data types.
+    DEFINITION = 'definition' # Abstract definition type, used in references.
+    ENUM = 'enum'
+    ENUM_VALUE = 'enum_value'
+    MESSAGE = 'message'
+    EXCEPTION = 'exception'
+
+    # Interface and void.
+    INTERFACE = 'interface'
+    VOID = 'void'
+
+    PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
+    DATA_TYPES = PRIMITIVES + (OBJECT, LIST, MAP, SET, DEFINITION, ENUM, MESSAGE, EXCEPTION)
 
 
 class Symbol(object):
@@ -216,25 +247,24 @@ class Module(Symbol):
         return def0
 
     def _find_ref(self, ref):
-        def0 = NativeTypes.get_by_type(ref.type)
-        if def0:
-            return def0  # It's a simple value.
+        if isinstance(ref, ast.ValueRef):
+            # It's a simple value.
+            return NativeTypes.get_by_type(ref.type)
 
-        t = ref.type
-        if t == Type.LIST:
+        if isinstance(ref, ast.ListRef):
             element = self.find_ref_or_raise(ref.element)
             return List(element, module=self)
 
-        elif t == Type.SET:
+        elif isinstance(ref, ast.SetRef):
             element = self.find_ref_or_raise(ref.element)
             return Set(element, module=self)
 
-        elif t == Type.MAP:
+        elif isinstance(ref, ast.MapRef):
             key = self.find_ref_or_raise(ref.key)
             value = self.find_ref_or_raise(ref.value)
             return Map(key, value, module=self)
 
-        elif t == Type.ENUM_VALUE:
+        elif isinstance(ref, ast.EnumValueRef):
             enum = self.find_ref_or_raise(ref.enum)
             value = enum.find_value(ref.value)
             return value
@@ -348,13 +378,13 @@ class Definition(Symbol):
     @classmethod
     def parse_node(cls, node, lookup):
         '''Create a definition from an AST node.'''
-        if node.type == Type.ENUM:
+        if isinstance(node, ast.Enum):
             return Enum.parse_node(node, lookup)
 
-        elif node.type == Type.MESSAGE:
+        elif isinstance(node, ast.Message):
             return Message.parse_node(node, lookup)
 
-        elif node.type == Type.INTERFACE:
+        elif isinstance(node, ast.Interface):
             return Interface.parse_node(node, lookup)
 
         raise ValueError('Unsupported definition node %s' % node)

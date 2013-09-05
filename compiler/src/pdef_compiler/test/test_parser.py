@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os.path
 import unittest
-from pdef.compiler import parser
+from pdef_compiler import parser
 
 
 class TestParser(unittest.TestCase):
@@ -19,13 +19,13 @@ class TestParser(unittest.TestCase):
         return parser.parse_file(path)
 
     def test_parse__messages(self):
-        module = self._parse('fixtures/test_messages.pdef')
+        module = self._parse('fixtures/messages.pdef')
         assert module.name == 'pdef.test.messages';
 
     def test_parse__polymorphic_messages(self):
-        module = self._parse('fixtures/test_polimorphic.pdef')
+        module = self._parse('fixtures/polimorphic.pdef')
         assert module.name == 'pdef.test.polymorphic';
 
     def test_parse_interfaces(self):
-        module = self._parse('fixtures/test_interfaces.pdef')
+        module = self._parse('fixtures/interfaces.pdef')
         assert module.name == 'pdef.test.interfaces';

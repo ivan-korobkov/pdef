@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
-from pdef.compiler.lang import *
-from pdef.python.translator import *
+from pdef_compiler.lang import *
+from pdef_compiler.python.translator import *
 
 
 class TestPythonModule(unittest.TestCase):

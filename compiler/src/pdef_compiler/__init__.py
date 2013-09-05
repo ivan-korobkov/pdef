@@ -1,12 +1,11 @@
-# encoding: utf-8
 import argparse
 import logging
 import time
 
-from pdef.compiler.exc import PdefCompilerException
-from pdef.compiler.lang import Package
-from pdef.java import JavaTranslator
-from pdef.python.translator import PythonTranslator
+from pdef_compiler.lang import Package
+from pdef_compiler.java.translator import JavaTranslator
+from pdef_compiler.python.translator import PythonTranslator
+from pdef_compiler.exc import PdefCompilerException
 
 
 def cli(argv=None):

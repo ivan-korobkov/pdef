@@ -1,6 +1,7 @@
 .*
 *.pyc
 *.iml
+compiler/build/
 java/target/
 python/build/
 python/env/

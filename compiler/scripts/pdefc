@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
-from pdef.compiler import compiler
+import pdef_compiler
 
 
 if __name__ == '__main__':
-    compiler.cli()
+    pdef_compiler.cli()

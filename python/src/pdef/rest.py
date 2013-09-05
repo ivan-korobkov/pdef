@@ -5,7 +5,7 @@ import requests
 import urllib
 import urlparse
 
-from pdef import Invocation
+import pdef
 from pdef.rpc_pd import *
 
 
@@ -229,7 +229,8 @@ class RestClient(object):
         raise ServerError('Server error, status=%s, text=%s' % (status, text))
 
 
-class RequestsSender(object):
+class RestClientRequestsSender(object):
+    '''The requests-based sender for RestClient.'''
     def __init__(self, url, session=None):
         self.url = url
         self.session = session
@@ -322,7 +323,7 @@ class RestServer(object):
         parts = path.split('/')
 
         descriptor = self.descriptor
-        invocation = Invocation.root()
+        invocation = pdef.Invocation.root()
         while parts:
             part = parts.pop(0)
             # Find a method by a name or get an index method.

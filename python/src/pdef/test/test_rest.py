@@ -1,11 +1,11 @@
 # encoding: utf-8
 import unittest
 import urllib
+from mock import Mock
 from StringIO import StringIO
 from threading import Thread
 
-from mock import Mock
-
+import pdef
 from pdef import descriptors
 from pdef.rest import *
 from pdef.test.messages_pd import SimpleMessage
@@ -16,7 +16,7 @@ class TestRestClient(unittest.TestCase):
     # Fixture methods.
 
     def proxy(self):
-        return TestInterface.create_proxy(lambda invocation: invocation)
+        return pdef.proxy(TestInterface, lambda invocation: invocation)
 
     def client(self):
         return RestClient()
@@ -189,10 +189,10 @@ class TestRestClient(unittest.TestCase):
 class TestRestServer(unittest.TestCase):
     def server(self):
         service = TestInterface()
-        return service.to_rest_server()
+        return pdef.rest_server(TestInterface, service)
 
     def proxy(self):
-        return TestInterface.create_proxy(lambda invocation: invocation)
+        return pdef.proxy(TestInterface, lambda invocation: invocation)
 
     def get_request(self, path, query=None, post=None):
         return RestRequest(GET, path, query=query, post=post)
@@ -435,7 +435,7 @@ class TestWsgiRestServer(unittest.TestCase):
             'PATH_INFO': '/method0/method1',
             'QUERY_STRING': query,
             'wsgi.input': StringIO(body),
-            }
+        }
 
         server = WsgiRestServer(None)
         request = server._parse_request(env)
@@ -450,7 +450,7 @@ class TestIntegration(unittest.TestCase):
     def setUp(self):
         from wsgiref.simple_server import make_server
         service = IntegrationService()
-        app = service.to_wsgi_server()
+        app = pdef.wsgi_server(TestInterface, service)
 
         self.server = make_server('localhost', 0, app)
         self.server_thread = Thread(target=self.server.serve_forever)
@@ -465,7 +465,7 @@ class TestIntegration(unittest.TestCase):
 
     def client(self):
         url = 'http://localhost:%s/' % self.server.server_port
-        return TestInterface.create_rest_client(url)
+        return pdef.rest_client(TestInterface, url)
 
     def test(self):
         client = self.client()

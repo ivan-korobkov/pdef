@@ -2,6 +2,37 @@
 from collections import deque
 
 
+def proxy(interface, client):
+    '''Create a interface proxy using a callable client.'''
+    descriptor = interface.__descriptor__
+    return Proxy(descriptor, client)
+
+
+def rest_client(interface, url, session=None):
+    '''Create a default REST client.'''
+    from pdef.rest import RestClient, RestClientRequestsSender
+
+    sender = RestClientRequestsSender(url, session=session)
+    client = RestClient(sender)
+    return proxy(interface, client)
+
+
+def rest_server(interface, service_or_supplier):
+    '''Create a REST server.'''
+    from pdef.rest import RestServer
+
+    descriptor = interface.__descriptor__
+    return RestServer(descriptor, service_or_supplier)
+
+
+def wsgi_server(interface, service_or_supplier):
+    '''Create a WSGI REST server.'''
+    from pdef.rest import WsgiRestServer
+
+    server = rest_server(interface, service_or_supplier)
+    return WsgiRestServer(server)
+
+
 class Type(object):
     '''Pdef types.'''
 
@@ -70,7 +101,7 @@ class Message(object):
         return unicode(self).encode('utf-8', errors='replace')
 
     def __unicode__(self):
-        s = ['<', self.__class__.__name__, ' ']
+        s = [u'<', self.__class__.__name__, u' ']
 
         first = True
         for field in self.__descriptor__.fields:
@@ -81,12 +112,12 @@ class Message(object):
             if first:
                 first = False
             else:
-                s.append(', ')
+                s.append(u', ')
 
             s.append(field.name)
             s.append('=')
             s.append(unicode(value))
-        s.append('>')
+        s.append(u'>')
         return u''.join(s)
 
 
@@ -109,29 +140,6 @@ class Enum(object):
 
 class Interface(object):
     __descriptor__ = None
-
-    @classmethod
-    def create_proxy(cls, callable_client):
-        '''Create a client with a given protocol.'''
-        return Proxy(cls.__descriptor__, callable_client)
-
-    @classmethod
-    def create_rest_client(cls, url, session=None):
-        '''Create a rest client.'''
-        from pdef.rest import RestClient, RequestsSender
-        sender = RequestsSender(url, session)
-        client = RestClient(sender)
-        return cls.create_proxy(client)
-
-    def to_rest_server(self):
-        '''Create a rest server.'''
-        from pdef.rest import RestServer
-        return RestServer(self.__descriptor__, self)
-
-    def to_wsgi_server(self):
-        '''Create a WSGI server.'''
-        from pdef.rest import WsgiRestServer
-        return WsgiRestServer(self.to_rest_server())
 
 
 class Proxy(object):
@@ -297,7 +305,7 @@ class Invocation(object):
 
 
         # Add keyword arguments using the remaining method args.
-        consumed_kargs = {}
+        consumed_kwargs = {}
         for arg in method_args:
             if arg.name not in kwargs:
                 params[arg.name] = None
@@ -305,10 +313,10 @@ class Invocation(object):
 
             value = kwargs.get(arg.name)
             params[arg.name] = value
-            consumed_kargs[arg.name] = value
+            consumed_kwargs[arg.name] = value
 
         # Check that all kwargs have been consumed.
-        if consumed_kargs.keys() != kwargs.keys():
+        if consumed_kwargs.keys() != kwargs.keys():
             raise wrong_args()
 
         return params

@@ -46,7 +46,7 @@ public abstract class GeneratedException extends RuntimeException implements Mes
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		GeneratedMessage cast = (GeneratedMessage) o;
+		GeneratedException cast = (GeneratedException) o;
 		for (FieldDescriptor field : descriptorForType().getFields()) {
 			Object value0 = field.get(this);
 			Object value1 = field.get(cast);

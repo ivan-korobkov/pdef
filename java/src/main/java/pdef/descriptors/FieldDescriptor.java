@@ -1,5 +1,6 @@
 package pdef.descriptors;
 
+import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 
@@ -18,6 +19,14 @@ public class FieldDescriptor {
 		getter = checkNotNull(builder.getter);
 		setter = checkNotNull(builder.setter);
 		discriminator = checkNotNull(builder.discriminator);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(name)
+				.addValue(type)
+				.toString();
 	}
 
 	public MessageDescriptor getMessage() {

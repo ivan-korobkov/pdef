@@ -64,4 +64,28 @@ public class RestResponse {
 		return contentType != null && contentType.toLowerCase()
 				.startsWith(RestConstants.JSON_MIME_TYPE);
 	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		final RestResponse response = (RestResponse) o;
+
+		if (status != response.status) return false;
+		if (content != null ? !content.equals(response.content) : response.content != null)
+			return false;
+		if (contentType != null ? !contentType.equals(response.contentType)
+		                        : response.contentType != null) return false;
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = status;
+		result = 31 * result + (content != null ? content.hashCode() : 0);
+		result = 31 * result + (contentType != null ? contentType.hashCode() : 0);
+		return result;
+	}
 }

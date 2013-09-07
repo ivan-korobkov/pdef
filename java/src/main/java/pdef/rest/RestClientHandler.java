@@ -55,7 +55,8 @@ public class RestClientHandler implements Function<Invocation, Object> {
 	}
 
 	/** Adds a single invocation to a rest request. */
-	private void serializeInvocation(final RestRequest request, final Invocation invocation) {
+	@VisibleForTesting
+	void serializeInvocation(final RestRequest request, final Invocation invocation) {
 		MethodDescriptor method = invocation.getMethod();
 		request.appendPath("/");
 		if (!method.isIndex()) {
@@ -98,13 +99,15 @@ public class RestClientHandler implements Function<Invocation, Object> {
 	}
 
 	/** Serializes a positional arg and urlencodes it. */
-	private String serializePositionalArg(final ArgDescriptor argd, final Object arg) {
+	@VisibleForTesting
+	String serializePositionalArg(final ArgDescriptor argd, final Object arg) {
 		String serialized = serializeArgToString(argd.getType(), arg);
 		return urlencode(serialized);
 	}
 
 	/** Serializes a query/post argument and puts it into a dst map. */
-	private void serializeQueryArg(final ArgDescriptor argd, final Object arg,
+	@VisibleForTesting
+	void serializeQueryArg(final ArgDescriptor argd, final Object arg,
 			final Map<String, String> dst) {
 		if (arg == null) {
 			return;
@@ -134,7 +137,8 @@ public class RestClientHandler implements Function<Invocation, Object> {
 	}
 
 	/** Serializes primitives and enums to strings and other types to json. */
-	private String serializeArgToString(final DataDescriptor descriptor, final Object arg) {
+	@VisibleForTesting
+	String serializeArgToString(final DataDescriptor descriptor, final Object arg) {
 		if (arg == null) {
 			return "";
 		}
@@ -148,7 +152,7 @@ public class RestClientHandler implements Function<Invocation, Object> {
 			return ((EnumDescriptor) descriptor).toString(arg);
 		}
 
-		return descriptor.toJson(arg);
+		return descriptor.toJson(arg, false);
 	}
 
 	/** Sends a rest request and returns a rest response. */
@@ -194,7 +198,7 @@ public class RestClientHandler implements Function<Invocation, Object> {
 
 	/** Parses an rpc error from a rest response via its status. */
 	@VisibleForTesting
-	RuntimeException parseError(final RestResponse response) {
+	RpcError parseError(final RestResponse response) {
 		int status = response.getStatus();
 		String text = Strings.nullToEmpty(response.getContent());
 
@@ -206,33 +210,33 @@ public class RestClientHandler implements Function<Invocation, Object> {
 		// Map status to exception classes.
 		switch (status) {
 			case HttpURLConnection.HTTP_BAD_REQUEST:	// 400
-				throw ClientError.builder()
+				return ClientError.builder()
 						.setText(text)
 						.build();
 
 			case HttpURLConnection.HTTP_NOT_FOUND:		// 404
-				throw MethodNotFoundError.builder()
+				return MethodNotFoundError.builder()
 						.setText(text)
 						.build();
 
 			case HttpURLConnection.HTTP_BAD_METHOD:		// 405
-				throw MethodNotAllowedError.builder()
+				return MethodNotAllowedError.builder()
 						.setText(text)
 						.build();
 
 			case HttpURLConnection.HTTP_BAD_GATEWAY: 	// 502
 			case HttpURLConnection.HTTP_UNAVAILABLE:	// 503
-				throw ServiceUnavailableError.builder()
+				return ServiceUnavailableError.builder()
 						.setText(text)
 						.build();
 
 			case HttpURLConnection.HTTP_INTERNAL_ERROR:	// 500
-				throw ServerError.builder()
+				return ServerError.builder()
 						.setText(text)
 						.build();
 
 			default:
-				throw ServerError.builder()
+				return ServerError.builder()
 						.setText("Server error, status=" + status + ", text=" + text)
 						.build();
 		}

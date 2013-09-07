@@ -1,5 +1,6 @@
 package pdef.descriptors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -10,7 +11,7 @@ public class ArgDescriptor {
 	private final MethodDescriptor method;
 
 	private ArgDescriptor(final Builder builder, final MethodDescriptor method) {
-		this.method = checkNotNull(method);
+		this.method = method;
 		name = checkNotNull(builder.name);
 		type = checkNotNull(builder.type);
 	}
@@ -49,6 +50,11 @@ public class ArgDescriptor {
 
 		public ArgDescriptor build(final MethodDescriptor method) {
 			return new ArgDescriptor(this, method);
+		}
+
+		@VisibleForTesting
+		public ArgDescriptor build() {
+			return new ArgDescriptor(this, null);
 		}
 	}
 }

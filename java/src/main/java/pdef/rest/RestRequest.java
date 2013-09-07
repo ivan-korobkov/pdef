@@ -13,7 +13,7 @@ import java.util.Map;
  * */
 public class RestRequest {
 	private String method;
-	private String path = "/";
+	private String path = "";
 	private Map<String, String> query = Maps.newLinkedHashMap();
 	private Map<String, String> post = Maps.newLinkedHashMap();
 
@@ -78,5 +78,29 @@ public class RestRequest {
 	public RestRequest setPost(final Map<String, String> post) {
 		this.post = post;
 		return this;
+	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		final RestRequest request = (RestRequest) o;
+
+		if (method != null ? !method.equals(request.method) : request.method != null) return false;
+		if (path != null ? !path.equals(request.path) : request.path != null) return false;
+		if (post != null ? !post.equals(request.post) : request.post != null) return false;
+		if (query != null ? !query.equals(request.query) : request.query != null) return false;
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = method != null ? method.hashCode() : 0;
+		result = 31 * result + (path != null ? path.hashCode() : 0);
+		result = 31 * result + (query != null ? query.hashCode() : 0);
+		result = 31 * result + (post != null ? post.hashCode() : 0);
+		return result;
 	}
 }

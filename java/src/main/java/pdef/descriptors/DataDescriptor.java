@@ -1,11 +1,10 @@
 package pdef.descriptors;
 
+import static com.google.common.base.Preconditions.*;
 import pdef.TypeEnum;
 import pdef.json.Json;
 
 import javax.annotation.Nullable;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class DataDescriptor implements Descriptor {
 	private final TypeEnum type;
@@ -33,9 +32,14 @@ public abstract class DataDescriptor implements Descriptor {
 
 	/** Serializes a data type into a json string. */
 	public String toJson(Object o) {
+		return toJson(o, true);
+	}
+
+	/** Serializes a data type into a json string. */
+	public String toJson(Object o, boolean indent) {
 		if (o == null) return "null";
 		Object value = toObject(o);
-		return Json.serialize(value);
+		return Json.serialize(value, indent);
 	}
 
 	/** Parses a data type from an object. */

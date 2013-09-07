@@ -27,7 +27,7 @@ import pdef.descriptors.MessageDescriptor;
 {% endif %}
 public class {{ name }} extends {{ base_or_root }} {
     {% for field in declared_fields %}
-    protected {{ field.type }} {{ field.name }};
+    private final {{ field.type }} {{ field.name }};
     {% endfor %}
 
     public {{ name }}() {
@@ -52,29 +52,6 @@ public class {{ name }} extends {{ base_or_root }} {
     }
 
     {% endfor %}
-    @Override
-    public Builder toBuilder() {
-        return builder().merge(this);
-    }
-
-    @Override
-    public Builder builderForType() {
-        return builder();
-    }
-
-    @Override
-    public MessageDescriptor descriptorForType() {
-        return descriptor();
-    }
-
-    public static {{ name }} parseMap(final java.util.Map<String, Object> map) {
-        return ({{ name }}) descriptor().parseObject(map);
-    }
-
-    public static {{ name }} parseJson(final String s) {
-        return ({{ name }}) descriptor().parseJson(s);
-    }
-
     public static class Builder extends {{ base_or_root }}.Builder {
         {% for field in declared_fields %}
         protected {{ field.type }} {{ field.name }};
@@ -127,16 +104,42 @@ public class {{ name }} extends {{ base_or_root }} {
         }
     }
 
+    /** Creates an empty message builder. */
     public static Builder builder() {
         return new Builder();
     }
 
+    /** Returns a default immutable message instance. */
     public static {{ name }} instance() {
         return INSTANCE;
     }
 
+    /** Returns a message descriptor. */
     public static MessageDescriptor descriptor() {
         return DESCRIPTOR;
+    }
+
+    @Override
+    public Builder toBuilder() {
+        return builder().merge(this);
+    }
+
+    @Override
+    public Builder builderForType() {
+        return builder();
+    }
+
+    @Override
+    public MessageDescriptor descriptorForType() {
+        return descriptor();
+    }
+
+    public static {{ name }} parseMap(final java.util.Map<String, Object> map) {
+        return ({{ name }}) descriptor().parseObject(map);
+    }
+
+    public static {{ name }} parseJson(final String s) {
+        return ({{ name }}) descriptor().parseJson(s);
     }
     
     private static final {{ name }} INSTANCE = new {{ name }}();

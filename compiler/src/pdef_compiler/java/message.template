@@ -146,7 +146,7 @@ public class {{ name }} extends {{ base_or_root }} {
             .setBase({{ base.descriptor }})
             {% endif %}
             {% if discriminator_value %}
-            .setBaseType({{ discriminator_value }})
+            .setDiscriminatorValue({{ discriminator_value }})
             {% endif %}
             {% for subtype in subtypes %}
             .addSubtype(new Supplier<MessageDescriptor>() {

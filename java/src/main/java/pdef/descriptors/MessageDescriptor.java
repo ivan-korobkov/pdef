@@ -1,5 +1,6 @@
 package pdef.descriptors;
 
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -10,8 +11,6 @@ import pdef.TypeEnum;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MessageDescriptor extends DataDescriptor {
 	private final Class<?> javaClass;
@@ -33,7 +32,7 @@ public class MessageDescriptor extends DataDescriptor {
 		super(TypeEnum.MESSAGE);
 		javaClass = checkNotNull(b.javaClass);
 		base = b.base;
-		discriminatorValue = b.baseType;
+		discriminatorValue = b.discriminatorValue;
 		subtypes = ImmutableList.copyOf(b.subtypes);
 
 		declaredFields = buildDeclaredFields(b.declaredFields, this);
@@ -155,7 +154,7 @@ public class MessageDescriptor extends DataDescriptor {
 	public static class Builder {
 		private Class<?> javaClass;
 		private MessageDescriptor base;
-		private Enum<?> baseType;
+		private Enum<?> discriminatorValue;
 		private Supplier<? extends Message.Builder> builder;
 		private final List<FieldDescriptor.Builder> declaredFields;
 		private final List<Supplier<MessageDescriptor>> subtypes;
@@ -175,8 +174,8 @@ public class MessageDescriptor extends DataDescriptor {
 			return this;
 		}
 
-		public Builder setBaseType(final Enum<?> baseType) {
-			this.baseType = baseType;
+		public Builder setDiscriminatorValue(final Enum<?> value) {
+			this.discriminatorValue = value;
 			return this;
 		}
 

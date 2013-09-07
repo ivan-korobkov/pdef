@@ -40,7 +40,7 @@ public class Clients {
 
 	/** Creates a custom client. */
 	public static <T> T client(final Class<T> cls,
-			final Function<Invocation, Object> invocationHandler) {
+			final Function<Invocation, InvocationResult> invocationHandler) {
 		checkNotNull(cls);
 		checkNotNull(invocationHandler);
 

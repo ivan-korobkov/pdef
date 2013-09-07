@@ -1,20 +1,19 @@
 package pdef;
 
+import static org.junit.Assert.*;
 import org.junit.Test;
+import static org.mockito.Mockito.*;
 import pdef.descriptors.InterfaceDescriptor;
 import pdef.descriptors.MethodDescriptor;
 import pdef.test.interfaces.NextTestInterface;
+import pdef.test.interfaces.TestException;
 import pdef.test.interfaces.TestInterface;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class InvocationTest {
 	private final InterfaceDescriptor iface = TestInterface.DESCRIPTOR;
+	private final MethodDescriptor excMethod = iface.findMethod("excMethod");
 	private final MethodDescriptor indexMethod = iface.findMethod("indexMethod");
 	private final MethodDescriptor interfaceMethod = iface.findMethod( "interfaceMethod");
 	private final MethodDescriptor nextStringMethod = NextTestInterface.DESCRIPTOR
@@ -80,8 +79,8 @@ public class InvocationTest {
 		when(iface.indexMethod(1, 2)).thenReturn(3);
 
 		Invocation invocation = Invocation.root().next(indexMethod, new Object[]{1, 2});
-		Object result = invocation.invoke(iface);
-		assertEquals(3, result);
+		InvocationResult result = invocation.invoke(iface);
+		assertEquals(3, result.getData());
 	}
 
 	@Test
@@ -93,12 +92,24 @@ public class InvocationTest {
 				.next(interfaceMethod, new Object[]{1, 2})
 				.next(nextStringMethod, new Object[]{"hello"});
 
-		Object result = invocation.invoke(iface);
-		assertEquals("good bye", result);
+		InvocationResult result = invocation.invoke(iface);
+		assertEquals("good bye", result.getData());
 	}
 
 	@Test
-	public void testInvokeSingle() throws Exception {
+	public void testInvoke_exc() throws Exception {
+		TestInterface iface = mock(TestInterface.class);
+		doThrow(TestException.instance()).when(iface).excMethod();
+
+		Invocation invocation = Invocation.root()
+				.next(excMethod, new Object[]{});
+
+		InvocationResult result = invocation.invoke(iface);
+		assertEquals(TestException.instance(), result.getData());
+	}
+
+	@Test
+	public void testInvokeSingle() throws Throwable {
 		TestInterface iface = mock(TestInterface.class);
 		when(iface.indexMethod(1, 2)).thenReturn(3);
 

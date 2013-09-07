@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import pdef.Clients;
 import pdef.Invocation;
+import pdef.InvocationResult;
 import pdef.descriptors.ArgDescriptor;
 import pdef.descriptors.DataDescriptor;
 import pdef.descriptors.Descriptors;
@@ -40,12 +41,12 @@ public class RestClientHandlerTest {
 	@Test
 	public void testInvoke() throws Exception {
 		RestRequest request = new RestRequest()
-				.setMethod(RestConstants.GET)
+				.setMethod(Rest.GET)
 				.setPath("/")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
 		RestResponse response = new RestResponse()
-				.withOkStatus()
-				.withJsonContentType()
+				.setOkStatus()
+				.setJsonContentType()
 				.setContent(RpcResponse.builder()
 						.setStatus(RpcStatus.OK)
 						.setResult(3)
@@ -66,7 +67,7 @@ public class RestClientHandlerTest {
 		proxy(ref).indexMethod(1, 2);
 
 		RestRequest request = handler.createRequest(ref.get());
-		assert request.getMethod().equals(RestConstants.GET);
+		assert request.getMethod().equals(Rest.GET);
 		assert request.getPath().equals("/");
 		assert request.getQuery().equals(ImmutableMap.of("a", "1", "b", "2"));
 		assert request.getPost().isEmpty();
@@ -78,7 +79,7 @@ public class RestClientHandlerTest {
 		proxy(ref).postMethod(ImmutableList.of(1, 2, 3), ImmutableMap.of(4, 5));
 
 		RestRequest request = handler.createRequest(ref.get());
-		assert request.getMethod().equals(RestConstants.POST);
+		assert request.getMethod().equals(Rest.POST);
 		assert request.getPath().equals("/postMethod");
 		assert request.getQuery().isEmpty();
 		assert request.getPost().equals(ImmutableMap.of(
@@ -93,7 +94,7 @@ public class RestClientHandlerTest {
 		proxy(ref).interfaceMethod(1, 2).stringMethod("hello");
 
 		RestRequest request = handler.createRequest(ref.get());
-		assert request.getMethod().equals(RestConstants.GET);
+		assert request.getMethod().equals(Rest.GET);
 		assert request.getPath().equals("/interfaceMethod/1/2/stringMethod");
 		assert request.getQuery().equals(ImmutableMap.of("text", "hello"));
 		assert request.getPost().isEmpty();
@@ -219,7 +220,27 @@ public class RestClientHandlerTest {
 		assert result.equals("{\"aString\":\"hello\",\"aBool\":true,\"anInt16\":256}");
 	}
 
-	// parseResponse.
+	// isSuccessful.
+
+	@Test
+	public void testIsSuccessful_ok() throws Exception {
+		RestResponse response = new RestResponse()
+				.setOkStatus()
+				.setJsonContentType();
+
+		assert handler.isSuccessful(response);
+	}
+
+	@Test
+	public void testIsSuccessful_error() throws Exception {
+		RestResponse response = new RestResponse()
+				.setStatus(123)
+				.setJsonContentType();
+
+		assert !handler.isSuccessful(response);
+	}
+
+	// parseResult.
 
 	@Test
 	public void testParseResponse_ok() throws Exception {
@@ -234,15 +255,16 @@ public class RestClientHandlerTest {
 				.build()
 				.toJson();
 		RestResponse response = new RestResponse()
-				.withOkStatus()
-				.withJsonContentType()
+				.setOkStatus()
+				.setJsonContentType()
 				.setContent(content);
 
 		AtomicReference<Invocation> ref = Atomics.newReference();
 		proxy(ref).formMethod(msg);
 
-		Object result = handler.parseResponse(response, ref.get());
-		assert result.equals(msg);
+		InvocationResult result = handler.parseResult(response, ref.get());
+		assert result.isOk();
+		assert result.getData().equals(msg);
 	}
 
 	@Test
@@ -256,31 +278,19 @@ public class RestClientHandlerTest {
 				.build()
 				.toJson();
 		RestResponse response = new RestResponse()
-				.withOkStatus()
-				.withJsonContentType()
+				.setOkStatus()
+				.setJsonContentType()
 				.setContent(content);
 
 		AtomicReference<Invocation> ref = Atomics.newReference();
 		proxy(ref).excMethod();
 
-		try {
-			handler.parseResponse(response, ref.get());
-			assert false;
-		} catch (TestException e) {
-			assert e.equals(exc);
-		}
+		InvocationResult result = handler.parseResult(response, ref.get());
+		assert !result.isOk();
+		assert result.getData().equals(exc);
 	}
 
-	@Test(expected = ServerError.class)
-	public void testParseResponse_error() throws Exception {
-		RestResponse response = new RestResponse()
-				.setStatus(500)
-				.setContent("Internal server error");
-
-		handler.parseResponse(response, null);
-	}
-
-	// parseThrowError.
+	// parseError.
 
 	@Test
 	public void testParseError_clientError() throws Exception {
@@ -353,18 +363,18 @@ public class RestClientHandlerTest {
 	}
 
 	private TestInterface proxy(final AtomicReference<Invocation> ref) {
-		Function<Invocation, Object> handler = new Function<Invocation, Object>() {
+		Function<Invocation, InvocationResult> handler = new Function<Invocation, InvocationResult>() {
 			@Override
-			public Object apply(final Invocation invocation) {
+			public InvocationResult apply(final Invocation invocation) {
 				ref.set(invocation);
-				return null;
+				return InvocationResult.ok(null);
 			}
 		};
 
 		return proxy(handler);
 	}
 
-	private TestInterface proxy(final Function<Invocation, Object> handler) {
+	private TestInterface proxy(final Function<Invocation, InvocationResult> handler) {
 		return Clients.client(TestInterface.class, handler);
 	}
 }

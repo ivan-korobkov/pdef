@@ -20,11 +20,11 @@ public class RestRequest {
 	public RestRequest() {}
 
 	public static RestRequest get() {
-		return new RestRequest().setMethod(RestConstants.GET);
+		return new RestRequest().setMethod(Rest.GET);
 	}
 
 	public static RestRequest post() {
-		return new RestRequest().setMethod(RestConstants.POST);
+		return new RestRequest().setMethod(Rest.POST);
 	}
 
 	@Override
@@ -36,7 +36,7 @@ public class RestRequest {
 	}
 
 	public boolean isPost() {
-		return Objects.equal(method, RestConstants.POST);
+		return Objects.equal(method, Rest.POST);
 	}
 
 	public String getMethod() {

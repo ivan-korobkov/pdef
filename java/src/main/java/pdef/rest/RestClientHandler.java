@@ -5,17 +5,16 @@ import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Strings;
 import pdef.Invocation;
+import pdef.InvocationResult;
 import pdef.TypeEnum;
 import pdef.descriptors.*;
 import pdef.rpc.*;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
-public class RestClientHandler implements Function<Invocation, Object> {
+public class RestClientHandler implements Function<Invocation, InvocationResult> {
 	private final Function<RestRequest, RestResponse> sender;
 
 	/** Creates a REST client. */
@@ -24,16 +23,21 @@ public class RestClientHandler implements Function<Invocation, Object> {
 	}
 
 	@Override
-	public Object apply(final Invocation invocation) {
+	public InvocationResult apply(final Invocation invocation) {
 		return invoke(invocation);
 	}
 
 	/** Serializes an invocation, sends a rest request, parses a rest response,
 	 * and returns the result or raises an exception. */
-	public Object invoke(final Invocation invocation) {
+	public InvocationResult invoke(final Invocation invocation) {
 		RestRequest request = createRequest(invocation);
 		RestResponse response = sendRequest(request);
-		return parseResponse(response, invocation);
+
+		if (isSuccessful(response)) {
+			return parseResult(response, invocation);
+		} else {
+			throw parseError(response);
+		}
 	}
 
 	/** Converts an invocation into a rest request. */
@@ -60,7 +64,7 @@ public class RestClientHandler implements Function<Invocation, Object> {
 		MethodDescriptor method = invocation.getMethod();
 		request.appendPath("/");
 		if (!method.isIndex()) {
-			request.appendPath(urlencode(method.getName()));
+			request.appendPath(Rest.urlencode(method.getName()));
 		}
 
 		Object[] args = invocation.getArgs();
@@ -102,7 +106,7 @@ public class RestClientHandler implements Function<Invocation, Object> {
 	@VisibleForTesting
 	String serializePositionalArg(final ArgDescriptor argd, final Object arg) {
 		String serialized = serializeArgToString(argd.getType(), arg);
-		return urlencode(serialized);
+		return Rest.urlencode(serialized);
 	}
 
 	/** Serializes a query/post argument and puts it into a dst map. */
@@ -162,12 +166,12 @@ public class RestClientHandler implements Function<Invocation, Object> {
 	}
 
 	@VisibleForTesting
-	Object parseResponse(final RestResponse response, final Invocation invocation) {
-		if (!(response.hasOkStatus() && response.hasJsonContentType())) {
-			// It is not a valid RPC response.
-			throw parseError(response);
-		}
+	boolean isSuccessful(final RestResponse response) {
+		return (response.hasOkStatus() && response.hasJsonContentType());
+	}
 
+	@VisibleForTesting
+	InvocationResult parseResult(final RestResponse response, final Invocation invocation) {
 		RpcResponse rpc = RpcResponse.parseJson(response.getContent());
 		Object result = rpc.getResult();
 		RpcStatus status = rpc.getStatus();
@@ -176,7 +180,8 @@ public class RestClientHandler implements Function<Invocation, Object> {
 			// It's a successful result.
 			// Parse it using the invocation method result descriptor.
 			DataDescriptor d = (DataDescriptor) invocation.getResult();
-			return d.parseObject(result);
+			Object r = d.parseObject(result);
+			return InvocationResult.ok(r);
 
 		} else if (status == RpcStatus.EXCEPTION) {
 			// It's an expected application exception.
@@ -188,7 +193,10 @@ public class RestClientHandler implements Function<Invocation, Object> {
 						.setText("Unsupported application exception")
 						.build();
 			}
-			throw (RuntimeException) d.parseObject(result);
+
+			// All application exceptions are runtime.
+			RuntimeException r = (RuntimeException) d.parseObject(result);
+			return InvocationResult.exc(r);
 		}
 
 		throw ClientError.builder()
@@ -239,15 +247,6 @@ public class RestClientHandler implements Function<Invocation, Object> {
 				return ServerError.builder()
 						.setText("Server error, status=" + status + ", text=" + text)
 						.build();
-		}
-	}
-
-	/** Url-encodes a string. */
-	private static String urlencode(final String s) {
-		try {
-			return URLEncoder.encode(s, RestConstants.CHARSET);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
 		}
 	}
 }

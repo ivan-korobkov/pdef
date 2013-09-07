@@ -85,25 +85,39 @@ public class Invocation {
 	}
 
 	/** Invokes this invocation chain on an object. */
-	public Object invoke(Object object) {
+	public InvocationResult invoke(Object object) {
 		checkNotNull(object);
 
 		List<Invocation> chain = toChain();
 		for (Invocation invocation : chain) {
-			object = invocation.invokeSingle(object);
+			try {
+				object = invocation.invokeSingle(object);
+			} catch (Throwable t) {
+				return handleException(t);
+			}
 		}
 
-		return object;
+		return InvocationResult.ok(object);
 	}
 
 	/** Invokes only this invocation (not a chain) on an object. */
-	public Object invokeSingle(final Object object) {
+	public Object invokeSingle(final Object object) throws Throwable {
 		try {
 			return method.invoke(object, args);
 		} catch (InvocationTargetException e) {
-			throw Throwables.propagate(e.getCause());
-		} catch (Exception e) {
-			throw Throwables.propagate(e);
+			throw e.getCause();
 		}
+	}
+
+	private InvocationResult handleException(final Throwable t) {
+		MessageDescriptor excd = getExc();
+		if (excd == null || !excd.getJavaClass().isInstance(t)) {
+			// It is not an expected application exception.
+			throw Throwables.propagate(t);
+		}
+
+		// It is an expected application exception.
+		// All application exceptions are runtime.
+		return InvocationResult.exc((RuntimeException) t);
 	}
 }

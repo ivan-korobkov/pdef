@@ -1,24 +1,24 @@
 package pdef;
 
 import com.google.common.base.Function;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import static org.mockito.Matchers.any;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import pdef.descriptors.MethodDescriptor;
+import pdef.test.interfaces.TestException;
 import pdef.test.interfaces.TestInterface;
 
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
 public class ClientProxyTest {
-	@Mock Function<Invocation, Object> handler;
+	@Mock Function<Invocation, InvocationResult> handler;
 
 	@Before
 	public void setUp() throws Exception {
@@ -28,18 +28,28 @@ public class ClientProxyTest {
 	@Test
 	public void testInvoke_handle() throws Throwable {
 		TestInterface iface = createProxy();
-		when(handler.apply(any(Invocation.class))).thenReturn(3);
+		when(handler.apply(any(Invocation.class))).thenReturn(InvocationResult.ok(3));
 
 		Object result = iface.indexMethod(1, 2);
 		assertEquals(3, result);
 	}
 
-	@Test
-	public void testInvoke_invocation() throws Exception {
+	@Test(expected = TestException.class)
+	public void testInvoke_handleExc() throws Exception {
 		TestInterface iface = createProxy();
-		iface.indexMethod(1, 2);
+		when(handler.apply(any(Invocation.class)))
+				.thenReturn(InvocationResult.exc(TestException.instance()));
 
+		iface.excMethod();
+	}
+
+	@Test
+	public void testInvoke_capture() throws Exception {
+		TestInterface iface = createProxy();
 		ArgumentCaptor<Invocation> captor = ArgumentCaptor.forClass(Invocation.class);
+		when(handler.apply(any(Invocation.class))).thenReturn(InvocationResult.ok(null));
+
+		iface.indexMethod(1, 2);
 		verify(handler).apply(captor.capture());
 
 		Invocation invocation = captor.getValue();
@@ -49,11 +59,12 @@ public class ClientProxyTest {
 	}
 
 	@Test
-	public void testInvoke_chain() throws Exception {
+	public void testInvoke_captureChain() throws Exception {
 		TestInterface iface = createProxy();
-		iface.interfaceMethod(1, 2).stringMethod("hello");
-
 		ArgumentCaptor<Invocation> captor = ArgumentCaptor.forClass(Invocation.class);
+		when(handler.apply(any(Invocation.class))).thenReturn(InvocationResult.ok(null));
+
+		iface.interfaceMethod(1, 2).stringMethod("hello");
 		verify(handler).apply(captor.capture());
 
 		List<Invocation> chain = captor.getValue().toChain();

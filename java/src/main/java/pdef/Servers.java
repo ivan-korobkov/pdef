@@ -40,7 +40,7 @@ public class Servers {
 
 	/** Creates a REST handler with a custom invoker. */
 	public static RestServerHandler handler(final Class<?> cls,
-			final Function<Invocation, Object> invoker) {
+			final Function<Invocation, InvocationResult> invoker) {
 		checkNotNull(cls);
 		checkNotNull(invoker);
 

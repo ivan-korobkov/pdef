@@ -6,25 +6,24 @@ import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import pdef.Invocation;
+import pdef.InvocationResult;
 import pdef.TypeEnum;
 import pdef.descriptors.*;
 import pdef.rpc.*;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 public class RestServerHandler implements Function<RestRequest, RestResponse> {
-	public static final String CHARSET = "UTF-8";
 	private final InterfaceDescriptor descriptor;
-	private final Function<Invocation, Object> invoker;
+	private final Function<Invocation, InvocationResult> invoker;
 
 	/** Creates a REST server handler. */
-	public RestServerHandler(final Class<?> cls, final Function<Invocation, Object> invoker) {
+	public RestServerHandler(final Class<?> cls,
+			final Function<Invocation, InvocationResult> invoker) {
 		this.descriptor = InterfaceDescriptor.findDescriptor(cls);
 		this.invoker = checkNotNull(invoker);
 
@@ -40,26 +39,18 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 		checkNotNull(request);
 
 		try {
-			RpcResponse response;
 			Invocation invocation = parseRequest(request);
-			try {
-				Object result = invoke(invocation);
-				response = resultToResponse(result, invocation);
-			} catch (Exception e) {
-				response = handleException(e, invocation);
-
-				if (response == null) {
-					return errorRestResponse(e);
-				}
-			}
-
-			return restResponse(response);
+			InvocationResult result = invoke(invocation);
+			return okResponse(result, invocation);
 		} catch (Exception e) {
-			return errorRestResponse(e);
+			// Catch any unhandled (not application-specific) exception and
+			// convert it into a server error response.
+			return errorResponse(e);
 		}
 	}
 
-	private Invocation parseRequest(final RestRequest request) throws Exception {
+	@VisibleForTesting
+	Invocation parseRequest(final RestRequest request) throws Exception {
 		checkNotNull(request);
 		String path = request.getPath();
 		Map<String, String> query = request.getQuery();
@@ -143,13 +134,14 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 		return invocation;
 	}
 
-	private Object parsePositionalArg(final ArgDescriptor argd, final String s)
-			throws UnsupportedEncodingException {
-		String value = URLDecoder.decode(s, CHARSET);
+	@VisibleForTesting
+	Object parsePositionalArg(final ArgDescriptor argd, final String s) {
+		String value = Rest.urldecode(s);
 		return parseArgFromString(argd.getType(), value);
 	}
 
-	private Object parseQueryArg(final ArgDescriptor argd, final Map<String, String> src) {
+	@VisibleForTesting
+	Object parseQueryArg(final ArgDescriptor argd, final Map<String, String> src) {
 		DataDescriptor d = argd.getType();
 		MessageDescriptor md = d.asMessageDescriptor();
 		boolean isForm = md != null && md.isForm();
@@ -178,7 +170,8 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 		return md.parseObject(fields);
 	}
 
-	private Object parseArgFromString(final DataDescriptor descriptor, final String value) {
+	@VisibleForTesting
+	Object parseArgFromString(final DataDescriptor descriptor, final String value) {
 		TypeEnum type = descriptor.getType();
 
 		if (value == null) {
@@ -197,7 +190,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 	}
 
 	@VisibleForTesting
-	Object invoke(final Invocation invocation) throws Exception {
+	InvocationResult invoke(final Invocation invocation) throws Exception {
 		return invoker.apply(invocation);
 	}
 
@@ -213,31 +206,42 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 	}
 
 	@VisibleForTesting
-	RpcResponse handleException(final Exception e, final Invocation invocation) {
-		MessageDescriptor excd = invocation.getExc();
-		if (excd == null || !excd.getJavaClass().isInstance(e)) {
-			return null;
-		}
-
-		Object serialized = excd.toObject(e);
-		return RpcResponse.builder()
-				.setStatus(RpcStatus.EXCEPTION)
-				.setResult(serialized)
-				.build();
-	}
-
-	@VisibleForTesting
 	RestResponse restResponse(final RpcResponse response) {
 		String json = response.toJson();
 
 		return new RestResponse()
-				.withOkStatus()
-				.withJsonContentType()
+				.setOkStatus()
+				.setJsonContentType()
 				.setContent(json);
 	}
 
 	@VisibleForTesting
-	RestResponse errorRestResponse(final Exception e) {
+	RestResponse okResponse(final InvocationResult result, final Invocation invocation) {
+		RpcResponse.Builder rpc = RpcResponse.builder();
+
+		Object data = result.getData();
+		if (result.isOk()) {
+			DataDescriptor d = (DataDescriptor) invocation.getResult();
+
+			rpc.setStatus(RpcStatus.OK);
+			rpc.setResult(d.toObject(data));
+		} else {
+			DataDescriptor d = invocation.getExc();
+			assert d != null;
+
+			rpc.setStatus(RpcStatus.EXCEPTION);
+			rpc.setResult(d.toObject(data));
+		}
+
+		String content = rpc.build().toJson();
+		return new RestResponse()
+				.setOkStatus()
+				.setContent(content)
+				.setJsonContentType();
+	}
+
+	@VisibleForTesting
+	RestResponse errorResponse(final Exception e) {
 		int httpStatus;
 		String content;
 
@@ -266,6 +270,6 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 		return new RestResponse()
 				.setStatus(httpStatus)
 				.setContent(content)
-				.withTextContentType();
+				.setTextContentType();
 	}
 }

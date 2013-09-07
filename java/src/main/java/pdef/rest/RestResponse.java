@@ -23,7 +23,7 @@ public class RestResponse {
 		return this;
 	}
 
-	public RestResponse withOkStatus() {
+	public RestResponse setOkStatus() {
 		this.status = HttpURLConnection.HTTP_OK;
 		return this;
 	}
@@ -50,19 +50,19 @@ public class RestResponse {
 		return this;
 	}
 
-	public RestResponse withTextContentType() {
-		this.contentType = RestConstants.TEXT_CONTENT_TYPE;
+	public RestResponse setTextContentType() {
+		this.contentType = Rest.TEXT_CONTENT_TYPE;
 		return this;
 	}
 
-	public RestResponse withJsonContentType() {
-		this.contentType = RestConstants.JSON_CONTENT_TYPE;
+	public RestResponse setJsonContentType() {
+		this.contentType = Rest.JSON_CONTENT_TYPE;
 		return this;
 	}
 
 	public boolean hasJsonContentType() {
 		return contentType != null && contentType.toLowerCase()
-				.startsWith(RestConstants.JSON_MIME_TYPE);
+				.startsWith(Rest.JSON_MIME_TYPE);
 	}
 
 	@Override

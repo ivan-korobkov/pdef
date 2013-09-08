@@ -60,6 +60,11 @@ public class RestResponse {
 		return this;
 	}
 
+	public boolean hasTextContentType() {
+		return contentType != null && contentType.toLowerCase()
+				.startsWith(Rest.TEXT_MIME_TYPE);
+	}
+
 	public boolean hasJsonContentType() {
 		return contentType != null && contentType.toLowerCase()
 				.startsWith(Rest.JSON_MIME_TYPE);

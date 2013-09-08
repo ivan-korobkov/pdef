@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import static org.junit.Assert.fail;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -12,11 +13,12 @@ import pdef.Invocation;
 import pdef.InvocationResult;
 import pdef.descriptors.ArgDescriptor;
 import pdef.descriptors.Descriptors;
-import pdef.rpc.MethodNotAllowedError;
-import pdef.rpc.MethodNotFoundError;
+import pdef.rpc.*;
+import pdef.test.interfaces.TestException;
 import pdef.test.interfaces.TestInterface;
 import pdef.test.messages.SimpleMessage;
 
+import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +35,73 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testHandle() throws Exception {
-		fail();
+		handler = new RestServerHandler(TestInterface.class,
+				new Function<Invocation, InvocationResult>() {
+					@Override
+					public InvocationResult apply(final Invocation input) {
+						return InvocationResult.ok(3);
+					}
+				});
+		RestRequest request = new RestRequest()
+				.setPath("/remoteMethod")
+				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
+		String content = RpcResponse.builder()
+				.setStatus(RpcStatus.OK)
+				.setResult(3)
+				.build()
+				.toJson();
+
+		RestResponse response = handler.handle(request);
+		assert response.hasOkStatus();
+		assert response.hasJsonContentType();
+		assert response.getContent().equals(content);
+	}
+
+	@Test
+	public void testHandle_exc() throws Exception {
+		final TestException exc = TestException.builder()
+				.setText("Hello, world")
+				.build();
+		handler = new RestServerHandler(TestInterface.class,
+				new Function<Invocation, InvocationResult>() {
+					@Override
+					public InvocationResult apply(final Invocation input) {
+						return InvocationResult.exc(exc);
+					}
+				});
+
+		RestRequest request = new RestRequest()
+				.setPath("/remoteMethod")
+				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
+		String content = RpcResponse.builder()
+				.setStatus(RpcStatus.EXCEPTION)
+				.setResult(exc.toMap())
+				.build()
+				.toJson();
+
+		RestResponse response = handler.handle(request);
+		assert response.hasOkStatus();
+		assert response.hasJsonContentType();
+		assert response.getContent().equals(content);
+	}
+
+	@Test
+	public void testHandle_error() throws Exception {
+		handler = new RestServerHandler(TestInterface.class,
+				new Function<Invocation, InvocationResult>() {
+					@Override
+					public InvocationResult apply(final Invocation input) {
+						throw new RuntimeException();
+					}
+				});
+
+		RestRequest request = new RestRequest()
+				.setPath("/remoteMethod")
+				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
+		RestResponse response = handler.handle(request);
+		assert response.getStatus() == HttpURLConnection.HTTP_INTERNAL_ERROR;
+		assert response.hasTextContentType();
+		assert response.getContent().equals("Internal server error");
 	}
 
 	// parseRequest.
@@ -158,6 +226,7 @@ public class RestServerHandlerTest {
 		assert result.equals(expected);
 	}
 
+	@Ignore
 	@Test
 	public void testParseQueryArg_form() throws Exception {
 		fail();
@@ -199,43 +268,129 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testOkResponse() throws Exception {
-		fail();
+		RestRequest request = new RestRequest().setPath("/formMethod");
+		Invocation invocation = handler.parseRequest(request);
+		SimpleMessage msg = SimpleMessage.builder()
+				.setAString("hello")
+				.setABool(true)
+				.setAnInt16((short) 123)
+				.build();
+
+		InvocationResult result = InvocationResult.ok(msg);
+		String content = RpcResponse.builder()
+				.setStatus(RpcStatus.OK)
+				.setResult(msg.toMap())
+				.build()
+				.toJson();
+
+		RestResponse response = handler.okResponse(result, invocation);
+		assert response.hasOkStatus();
+		assert response.hasJsonContentType();
+		assert response.getContent().equals(content);
 	}
 
 	@Test
 	public void testOkResponse_exception() throws Exception {
-		fail();
+		RestRequest request = new RestRequest().setPath("/");
+		Invocation invocation = handler.parseRequest(request);
+		TestException exc = TestException.builder()
+				.setText("hello, world")
+				.build();
+
+		InvocationResult result = InvocationResult.exc(exc);
+		String content = RpcResponse.builder()
+				.setStatus(RpcStatus.EXCEPTION)
+				.setResult(exc.toMap())
+				.build()
+				.toJson();
+
+		RestResponse response = handler.okResponse(result, invocation);
+		assert response.hasOkStatus();
+		assert response.hasJsonContentType();
+		assert response.getContent().equals(content);
 	}
 
 	// errorResponse.
 
 	@Test
 	public void testErrorResponse_wrongMethodArgs() throws Exception {
-		fail();
+		WrongMethodArgsError error = WrongMethodArgsError.builder()
+				.setText("Wrong method args")
+				.build();
+
+		RestResponse response = handler.errorResponse(error);
+		assert response.getStatus() == HttpURLConnection.HTTP_BAD_REQUEST;
+		assert response.getContentType().equals(Rest.TEXT_CONTENT_TYPE);
+		assert response.getContent().equals(error.getText());
 	}
 
 	@Test
 	public void testErrorResponse_methodNotFound() throws Exception {
-		fail();
+		MethodNotFoundError error = MethodNotFoundError.builder()
+				.setText("Method not found")
+				.build();
+
+		RestResponse response = handler.errorResponse(error);
+		assert response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND;
+		assert response.getContentType().equals(Rest.TEXT_CONTENT_TYPE);
+		assert response.getContent().equals(error.getText());
 	}
 
 	@Test
 	public void testErrorResponse_methodNotAllowed() throws Exception {
-		fail();
+		MethodNotAllowedError error = MethodNotAllowedError.builder()
+				.setText("Method not allowed")
+				.build();
+
+		RestResponse response = handler.errorResponse(error);
+		assert response.getStatus() == HttpURLConnection.HTTP_BAD_METHOD;
+		assert response.getContentType().equals(Rest.TEXT_CONTENT_TYPE);
+		assert response.getContent().equals(error.getText());
 	}
 
 	@Test
 	public void testErrorResponse_clientError() throws Exception {
-		fail();
+		ClientError error = ClientError.builder()
+				.setText("Bad request")
+				.build();
+
+		RestResponse response = handler.errorResponse(error);
+		assert response.getStatus() == HttpURLConnection.HTTP_BAD_REQUEST;
+		assert response.getContentType().equals(Rest.TEXT_CONTENT_TYPE);
+		assert response.getContent().equals(error.getText());
 	}
 
 	@Test
 	public void testErrorResponse_serviceUnavailable() throws Exception {
-		fail();
+		ServiceUnavailableError error = ServiceUnavailableError.builder()
+				.setText("Service unavailable")
+				.build();
+
+		RestResponse response = handler.errorResponse(error);
+		assert response.getStatus() == HttpURLConnection.HTTP_UNAVAILABLE;
+		assert response.getContentType().equals(Rest.TEXT_CONTENT_TYPE);
+		assert response.getContent().equals(error.getText());
 	}
 
 	@Test
 	public void testErrorResponse_serverError() throws Exception {
-		fail();
+		ServerError error = ServerError.builder()
+				.setText("Internal server error")
+				.build();
+
+		RestResponse response = handler.errorResponse(error);
+		assert response.getStatus() == HttpURLConnection.HTTP_INTERNAL_ERROR;
+		assert response.getContentType().equals(Rest.TEXT_CONTENT_TYPE);
+		assert response.getContent().equals(error.getText());
+	}
+
+	@Test
+	public void testErrorResponse_unhandledError() throws Exception {
+		RuntimeException error = new RuntimeException("Goodbye, world");
+
+		RestResponse response = handler.errorResponse(error);
+		assert response.getStatus() == HttpURLConnection.HTTP_INTERNAL_ERROR;
+		assert response.getContentType().equals(Rest.TEXT_CONTENT_TYPE);
+		assert response.getContent().equals("Internal server error");
 	}
 }

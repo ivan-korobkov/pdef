@@ -144,39 +144,50 @@ class Interface(object):
 
 class Proxy(object):
     '''Reflective client proxy.'''
-    def __init__(self, descriptor, callable_client, parent_invocation=None):
+    def __init__(self, descriptor, callable_handler, parent_invocation=None):
         self._descriptor = descriptor
-        self._client = callable_client
+        self._handler = callable_handler
         self._invocation = parent_invocation or Invocation.root()
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.__interface)
 
     def __getattr__(self, name):
-        '''Get a method by name and return a callable which collects the arguments
-        and handles remote invocations or creates intermediate chained clients.'''
-        method = None
+        '''Get a pdef method by name and return a callable which proxies its calls.'''
         for m in self._descriptor.methods:
             if m.name == name:
-                method = m
-                break
+                return lambda *args, **kwargs: self._invoke(m, *args, **kwargs)
 
-        if not method:
-            raise AttributeError(name)
+        raise AttributeError(name)
 
-        return lambda *args, **kwargs: self._handle(method, *args, **kwargs)
-
-    def _handle(self, method, *args, **kwargs):
-        '''Capture a method invocation with the given arguments and return a new client
-        if the method result is an interface or pass the invocation to the handler.
+    def _invoke(self, method, *args, **kwargs):
+        '''Handle a pdef method invocation.
+        First, capture the invocation. Then, handle it if the method is remote,
+        and return the result if invocation_result is OK, or raise the result exception.
+        If the method is not remote, create a next proxy for the method result interface.
         '''
-        invocation = self._invocation.next(method, *args, **kwargs)
+        invocation = self._capture(method, *args, **kwargs)
         if method.is_remote:
             # The method result is a data type or void.
-            return self._client(invocation)
+            return self._handle(invocation)
 
         # The method result is an interface, so create a new client for it.
-        return Proxy(method.result, self._client, invocation)
+        return self._next_proxy(invocation)
+
+    def _capture(self, method, *args, **kwargs):
+        return self._invocation.next(method, *args, **kwargs)
+
+    def _handle(self, invocation):
+        result = self._handler(invocation)
+        assert result
+
+        if result.ok:
+            return result.data
+
+        raise result.data
+
+    def _next_proxy(self, invocation):
+        return Proxy(invocation.method.result, self._handler, invocation)
 
 
 class Invocation(object):
@@ -238,9 +249,17 @@ class Invocation(object):
     def invoke(self, obj):
         '''Invoke this invocation chain on an object.'''
         chain = self.to_chain()
-        for inv in chain:
-            obj = inv.invoke_single(obj)
-        return obj
+        exc_class = self.exc.pyclass if self.exc else None
+
+        try:
+            for inv in chain:
+                obj = inv.invoke_single(obj)
+        except exc_class, e:
+            # Catch the expected application exception.
+            # It's valid to write 'except None, e' when no application exception.
+            return InvocationResult(e, ok=False)
+
+        return InvocationResult(obj)
 
     def invoke_single(self, obj):
         '''Invoke only this invocation (not a chain) on an object.'''
@@ -320,3 +339,10 @@ class Invocation(object):
             raise wrong_args()
 
         return params
+
+
+class InvocationResult(object):
+    '''Combines success and exception invocation results.'''
+    def __init__(self, data, ok=True):
+        self.data = data
+        self.ok = ok

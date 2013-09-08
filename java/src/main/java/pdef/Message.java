@@ -12,6 +12,9 @@ public interface Message extends Serializable {
 	/** Serializes this message to a json string. */
 	String toJson();
 
+	/** Serializes this method to a json string with optional indentation. */
+	String toJson(boolean indent);
+
 	/** Creates a builder and merges this message into it. */
 	Builder toBuilder();
 

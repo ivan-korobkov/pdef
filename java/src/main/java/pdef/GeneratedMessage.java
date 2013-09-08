@@ -21,14 +21,17 @@ public abstract class GeneratedMessage implements Message {
 
 	@Override
 	public Message.Builder toBuilder() {
-		MessageDescriptor descriptor = descriptorForType();
-		return descriptor.toBuilder(this);
+		return descriptorForType().toBuilder(this);
 	}
 
 	@Override
 	public String toJson() {
-		MessageDescriptor descriptor = descriptorForType();
-		return descriptor.toJson(this);
+		return descriptorForType().toJson(this);
+	}
+
+	@Override
+	public String toJson(final boolean indent) {
+		return descriptorForType().toJson(this, indent);
 	}
 
 	@Override

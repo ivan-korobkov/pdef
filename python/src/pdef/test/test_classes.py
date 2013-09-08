@@ -1,6 +1,7 @@
 # encoding: utf-8
 import unittest
-from pdef import Proxy, Invocation
+from mock import Mock
+from pdef import Proxy, Invocation, InvocationResult
 from pdef.test.messages_pd import SimpleMessage
 from pdef.test.interfaces_pd import TestInterface, TestException
 
@@ -48,16 +49,16 @@ class TestMessage(unittest.TestCase):
 
 class TestProxy(unittest.TestCase):
     def proxy(self):
-        return Proxy(TestInterface.__descriptor__, lambda invocation: invocation)
+        return Proxy(TestInterface.__descriptor__, lambda invocation: InvocationResult(invocation))
 
-    def test_method_invocation(self):
+    def test_invoke_capture(self):
         subproxy = self.proxy().interfaceMethod(1, 2)
 
         invocation = subproxy._invocation
         assert invocation.method.name == 'interfaceMethod'
         assert invocation.args == {'a': 1, 'b': 2}
 
-    def test_call_client(self):
+    def test_invoke_capture_chain(self):
         chain = self.proxy().interfaceMethod(1, 2).remoteMethod().to_chain()
         invocation0 = chain[0]
         invocation1 = chain[1]
@@ -67,6 +68,22 @@ class TestProxy(unittest.TestCase):
 
         assert invocation1.method.name == 'remoteMethod'
         assert invocation1.args == {}
+
+    def test_invoke_handle_ok(self):
+        proxy = Proxy(TestInterface.__descriptor__, lambda inv: InvocationResult(3))
+        result = proxy.indexMethod(1, 2)
+
+        assert result == 3
+
+    def test_invoke_handle_exc(self):
+        exc = TestException('hello')
+        proxy = Proxy(TestInterface.__descriptor__, lambda inv: InvocationResult(exc, ok=False))
+
+        try:
+            proxy.indexMethod(1, 2)
+            assert False
+        except TestException, e:
+            assert e == exc
 
 
 class TestInvocation(unittest.TestCase):
@@ -124,3 +141,27 @@ class TestInvocation(unittest.TestCase):
         self.assertRaises(TypeError, build, [1, 2], {'a': 1, 'b': 2})
         self.assertRaises(TypeError, build, None, {'a': 1, 'b': 2, 'c': 3})
         self.assertRaises(TypeError, build, None, {'c': 3})
+
+    def test_invoke(self):
+        class Service(TestInterface):
+            def indexMethod(self, a=None, b=None):
+                return a + b
+
+        method = self.method()
+        invocation = Invocation.root().next(method, 1, 2)
+        result = invocation.invoke(Service())
+
+        assert result.ok
+        assert result.data == 3
+
+    def test_invoke_exc(self):
+        class Service(TestInterface):
+            def indexMethod(self, a=None, b=None):
+                raise TestException('hello')
+
+        method = self.method()
+        invocation = Invocation.root().next(method, 1, 2)
+        result = invocation.invoke(Service())
+
+        assert result.ok is False
+        assert result.data == TestException('hello')

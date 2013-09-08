@@ -94,7 +94,12 @@ class RestClient(object):
         self.logger.debug('Invoking %s', invocation)
         request = self._create_request(invocation)
         response = self._send_request(request)
-        return self._parse_response(response, invocation)
+
+        if self._is_successful(response):
+            return self._parse_result(response, invocation)
+
+        # The method raise an error itself for better stack traces.
+        self._parse_raise_error(response)
 
     def _create_request(self, invocation):
         '''Convert an invocation into a RestRequest.'''
@@ -178,13 +183,12 @@ class RestClient(object):
         '''Send a request and return a response.'''
         return self.sender(request)
 
-    def _parse_response(self, response, invocation):
-        '''Parse a requests.Response into a result or an exception, return (RpcStatus, result).'''
-        if not (response.is_ok and response.is_application_json):
-            # It is not a valid RPC response.
-            self._parse_raise_error(response)
+    def _is_successful(self, response):
+        return response.is_ok and response.is_application_json
 
-        # Parse a json rpc response.
+    def _parse_result(self, response, invocation):
+        '''Parse a RestResponse into an invocation result'''
+
         rpc = RpcResponse.parse_json(response.content)
         status = rpc.status
         result = rpc.result
@@ -192,7 +196,9 @@ class RestClient(object):
         if status == RpcStatus.OK:
             # It's a successful result.
             # Parse it using the invocation method result descriptor.
-            return invocation.result.parse_object(result)
+
+            r = invocation.result.parse_object(result)
+            return pdef.InvocationResult(r)
 
         elif status == RpcStatus.EXCEPTION:
             # It's an expected exception.
@@ -201,7 +207,9 @@ class RestClient(object):
             exc = invocation.exc
             if not exc:
                 raise ClientError('Unsupported application exception')
-            raise exc.parse_object(result)
+
+            r = exc.parse_object(result)
+            return pdef.InvocationResult(r, ok=False)
 
         raise ClientError('Unsupported rpc response status=%s' % status)
 
@@ -279,38 +287,17 @@ class RestServer(object):
         return self.handle(request)
 
     def handle(self, request):
-        logger = self.logger
+        self.logger.debug('Incoming request %s', request)
 
         try:
-            logger.debug('Incoming request %s', request)
-
             invocation = self._parse_request(request)
-            try:
-                logger.debug('Invoking %s', invocation)
-
-                result = self._invoke(invocation)
-                logger.debug('Result %s', result)
-
-                response = self._result_to_response(result, invocation)
-            except Exception, e:
-                response = self._app_exc_to_response(e, invocation)
-
-                # If it is not an application exception then reraise it.
-                if not response:
-                    raise
-
-                logger.debug('Application exception %s', e)
-
-            # Create a rest response from a successful result or application exc rpc response.
-            rest_response = self._rest_response(response)
-
+            result = self._invoke(invocation)
+            return self._ok_response(result, invocation)
         except Exception, e:
-            logger.exception('Error, e=%s, request=%s', e, request)
+            self.logger.exception('Error, e=%s, request=%s', e, request)
 
             # Create a rest response from an unhandled exception.
-            rest_response = self._error_rest_response(e)
-
-        return rest_response
+            return self._error_response(e)
 
     def _parse_request(self, request):
         '''Parse a request and return a chained invocation.'''
@@ -414,27 +401,27 @@ class RestServer(object):
         service = self.supplier()
         return invocation.invoke(service)
 
-    def _result_to_response(self, result, invocation):
-        '''Serialize an invocation result and return an instance of RpcResponse.'''
+    def _ok_response(self, result, invocation):
+        '''Create a successful REST response from an invocation result.'''
+        data = result.data
         method = invocation.method
-        serialized = method.result.to_object(result)
-        return RpcResponse(status=RpcStatus.OK, result=serialized)
 
-    def _app_exc_to_response(self, e, invocation):
-        '''Handle an application exception and return an RpcResponse or return None.'''
-        if invocation.exc and isinstance(e, invocation.exc.pyclass):
-            result = invocation.exc.to_object(e)
-            return RpcResponse(status=RpcStatus.EXCEPTION, result=result)
-        return None
+        rpc = RpcResponse()
+        if result.ok:
+            # It's a successful method result.
+            rpc.status = RpcStatus.OK
+            rpc.result = method.result.to_object(data)
 
-    def _rest_response(self, rpc_response):
-        '''Write an rpc response and return an http server response.'''
-        status = httplib.OK
-        json = rpc_response.to_json()
-        return RestResponse(status, content=json, content_type=JSON_CONTENT_TYPE)
+        else:
+            # It's an expected application exception.
+            rpc.status = RpcStatus.EXCEPTION
+            rpc.result = method.exc.to_object(data)
 
-    def _error_rest_response(self, e):
-        '''Handle an unhandled error and return an RpcResponse.'''
+        content = rpc.to_json(indent=True)
+        return RestResponse(status=httplib.OK, content=content, content_type=JSON_CONTENT_TYPE)
+
+    def _error_response(self, e):
+        '''Create an error REST response from an unhandled exception.'''
         if isinstance(e, WrongMethodArgsError):
             http_status = httplib.BAD_REQUEST           # 400
             result = e.text

@@ -2,7 +2,6 @@ package pdef;
 
 import com.google.common.base.Objects;
 import pdef.descriptors.FieldDescriptor;
-import pdef.descriptors.MessageDescriptor;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -16,20 +15,22 @@ public abstract class GeneratedException extends RuntimeException implements Mes
 
 	@Override
 	public Map<String, Object> toMap() {
-		MessageDescriptor descriptor = descriptorForType();
-		return descriptor.toObject(this);
+		return descriptorForType().toObject(this);
 	}
 
 	@Override
 	public Message.Builder toBuilder() {
-		MessageDescriptor descriptor = descriptorForType();
-		return descriptor.toBuilder(this);
+		return descriptorForType().toBuilder(this);
 	}
 
 	@Override
 	public String toJson() {
-		MessageDescriptor descriptor = descriptorForType();
-		return descriptor.toJson(this);
+		return descriptorForType().toJson(this);
+	}
+
+	@Override
+	public String toJson(boolean indent) {
+		return descriptorForType().toJson(this, indent);
 	}
 
 	@Override

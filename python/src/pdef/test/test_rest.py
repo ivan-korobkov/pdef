@@ -6,7 +6,7 @@ from StringIO import StringIO
 from threading import Thread
 
 import pdef
-from pdef import descriptors
+from pdef import descriptors, InvocationResult
 from pdef.rest import *
 from pdef.test.messages_pd import SimpleMessage
 from pdef.test.interfaces_pd import TestInterface, TestException, NextTestInterface
@@ -16,7 +16,7 @@ class TestRestClient(unittest.TestCase):
     # Fixture methods.
 
     def proxy(self):
-        return pdef.proxy(TestInterface, lambda invocation: invocation)
+        return pdef.proxy(TestInterface, lambda invocation: InvocationResult(invocation))
 
     def client(self):
         return RestClient()
@@ -140,50 +140,50 @@ class TestRestClient(unittest.TestCase):
 
         assert result == '{"aBool": false, "anInt16": 256, "aString": "hello"}'
 
-    # parse_response
+    # parse_result
 
-    def test_parse_response__ok(self):
+    def test_parse_result__ok(self):
         msg = SimpleMessage(aString='hello', aBool=False, anInt16=127)
         text = RpcResponse(status=RpcStatus.OK, result=msg).to_json()
         response = self.response(200, text)
 
         invocation = self.proxy().formMethod(msg)
-        result = self.client()._parse_response(response, invocation)
+        result = self.client()._parse_result(response, invocation)
 
-        assert result == msg
+        assert result.ok
+        assert result.data == msg
 
-    def test_parse_response__exception(self):
+    def test_parse_result__exc(self):
         exc = TestException(text='Application exception!')
         text = RpcResponse(status=RpcStatus.EXCEPTION, result=exc).to_json()
         response = self.response(200, text)
 
         invocation = self.proxy().excMethod()
-        try:
-            self.client()._parse_response(response, invocation)
-            self.fail()
-        except TestException, e:
-            assert e == exc
+        result = self.client()._parse_result(response, invocation)
+
+        assert result.ok is False
+        assert result.data == exc
 
     # parse_raise_error
 
     def test_parse_response__empty_client_error(self):
         response = self.response(400)
-        self.assertRaises(ClientError, self.client()._parse_response, response, None)
+        self.assertRaises(ClientError, self.client()._parse_raise_error, response)
 
     def test_parse_response__empty_method_not_found(self):
         response = self.response(404)
-        self.assertRaises(MethodNotFoundError, self.client()._parse_response, response, None)
+        self.assertRaises(MethodNotFoundError, self.client()._parse_raise_error, response)
 
     def test_parse_response__empty_network_error(self):
         response = self.response(502)
-        self.assertRaises(ServiceUnavailableError, self.client()._parse_response, response, None)
+        self.assertRaises(ServiceUnavailableError, self.client()._parse_raise_error, response)
 
         response = self.response(503)
-        self.assertRaises(ServiceUnavailableError, self.client()._parse_response, response, None)
+        self.assertRaises(ServiceUnavailableError, self.client()._parse_raise_error, response)
 
     def test_parse_response__empty_server_error(self):
         response = self.response(500)
-        self.assertRaises(ServerError, self.client()._parse_response, response, None)
+        self.assertRaises(ServerError, self.client()._parse_raise_error, response)
 
 
 class TestRestServer(unittest.TestCase):
@@ -192,7 +192,7 @@ class TestRestServer(unittest.TestCase):
         return pdef.rest_server(TestInterface, service)
 
     def proxy(self):
-        return pdef.proxy(TestInterface, lambda invocation: invocation)
+        return pdef.proxy(TestInterface, lambda invocation: InvocationResult(invocation))
 
     def get_request(self, path, query=None, post=None):
         return RestRequest(GET, path, query=query, post=post)
@@ -201,7 +201,17 @@ class TestRestServer(unittest.TestCase):
         return RestRequest(POST, path, query=query, post=post)
 
     def test_handle(self):
-        pass
+        class Service(TestInterface):
+            def indexMethod(self, a=None, b=None):
+                return a + b
+
+        request = self.get_request('/', query={'a': '1', 'b': '2'})
+        server = pdef.rest_server(TestInterface, Service)
+        response = server.handle(request)
+
+        assert response.status == httplib.OK
+        assert response.content_type == JSON_CONTENT_TYPE
+        assert response.content == RpcResponse(status=RpcStatus.OK, result=3).to_json(True)
 
     def test_parse_request__index_method(self):
         request = self.get_request('/', query={'a': '123', 'b': '456'})
@@ -272,8 +282,8 @@ class TestRestServer(unittest.TestCase):
     def test_parse_query_arg__form(self):
         arg = descriptors.arg('arg', lambda: SimpleMessage.__descriptor__)
 
-        msg = SimpleMessage(aString=u'Привет', aBool=True, anInt16=7)
-        src = {'aString': u'Привет', 'aBool': 'true', 'anInt16': '7'}
+        msg = SimpleMessage(aString=u'Привет', aBool=True, anInt16=123)
+        src = {'aString': u'Привет', 'aBool': 'true', 'anInt16': '123'}
 
         msg0 = self.server()._parse_query_arg(arg, src)
         assert msg0 == msg
@@ -312,49 +322,35 @@ class TestRestServer(unittest.TestCase):
         msg0 = self.server()._parse_arg_from_string(descriptor, value)
         assert msg0 == msg
 
-    # Results and responses.
+    # ok_response.
 
-    def test_result_to_response(self):
+    def test_ok_response(self):
         invocation = self.proxy().formMethod()
 
         msg = SimpleMessage(aString=u'привет', aBool=False, anInt16=0)
-        response = self.server()._result_to_response(msg, invocation)
+        result = InvocationResult(msg)
+        response = self.server()._ok_response(result, invocation)
 
-        assert response == RpcResponse(status=RpcStatus.OK, result=msg.to_dict())
+        assert response.status == httplib.OK
+        assert response.content_type == JSON_CONTENT_TYPE
+        assert response.content == RpcResponse(status=RpcStatus.OK, result=msg).to_json(True)
 
-    def test_app_exc_to_response__expected(self):
+    def test_ok_response_exc(self):
         invocation = self.proxy().excMethod()
 
         exc = TestException(u'Привет, мир')
-        response = self.server()._app_exc_to_response(exc, invocation)
+        result = InvocationResult(exc, ok=False)
+        response = self.server()._ok_response(result, invocation)
 
-        assert response == RpcResponse(status=RpcStatus.EXCEPTION, result=exc.to_dict())
+        assert response.status == httplib.OK
+        assert response.content_type == JSON_CONTENT_TYPE
+        assert response.content == RpcResponse(status=RpcStatus.EXCEPTION, result=exc).to_json(True)
 
-    def test_app_exc_to_response__unexpected(self):
-        invocation = self.proxy().excMethod()
-
-        response = self.server()._app_exc_to_response(ValueError(), invocation)
-        assert response is None
-
-    def test_rest_response__ok(self):
-        response = RpcResponse(status=RpcStatus.OK, result='Hello, world!')
-        resp = self.server()._rest_response(response)
-
-        assert resp.status == 200
-        assert resp.content == response.to_json()
-        assert resp.content_type == JSON_CONTENT_TYPE
-
-    def test_rest_response_exception(self):
-        response = RpcResponse(status=RpcStatus.OK, result=TestException().to_dict())
-        resp = self.server()._rest_response(response)
-
-        assert resp.status == 200
-        assert resp.content == response.to_json()
-        assert resp.content_type == JSON_CONTENT_TYPE
+    # error_response.
 
     def test_error_response__wrong_method_args(self):
         e = WrongMethodArgsError(u'Неправильные аргументы')
-        resp = self.server()._error_rest_response(e)
+        resp = self.server()._error_response(e)
 
         assert resp.status == 400
         assert resp.content == e.text
@@ -362,45 +358,46 @@ class TestRestServer(unittest.TestCase):
 
     def test_error_response__method_not_found(self):
         e = MethodNotFoundError(u'Метод не найден')
-        resp = self.server()._error_rest_response(e)
+        resp = self.server()._error_response(e)
 
         assert resp.status == 404
         assert resp.content == e.text
 
     def test_error_response__method_not_allowed(self):
         e = MethodNotAllowedError(u'HTTP метод запрещен')
-        resp = self.server()._error_rest_response(e)
+        resp = self.server()._error_response(e)
 
         assert resp.status == 405
         assert resp.content == e.text
 
     def test_error_response__client_error(self):
         e = ClientError(u'Ошибка клиента')
-        resp = self.server()._error_rest_response(e)
+        resp = self.server()._error_response(e)
 
         assert resp.status == 400
         assert resp.content == e.text
 
     def test_error_response__service_unavailable_error(self):
         e = ServiceUnavailableError(u'Сетевая ошибка')
-        resp = self.server()._error_rest_response(e)
+        resp = self.server()._error_response(e)
 
         assert resp.status == 503
         assert resp.content == e.text
 
     def test_error_response__server_error(self):
         e = ServerError(u'Ошибка сервера')
-        resp = self.server()._error_rest_response(e)
+        resp = self.server()._error_response(e)
 
         assert resp.status == 500
         assert resp.content == e.text
 
     def test_error_response__internal_server_error(self):
         e = ValueError('Unhandled exception')
-        resp = self.server()._error_rest_response(e)
+        resp = self.server()._error_response(e)
 
         assert resp.status == 500
         assert resp.content == 'Internal server error'
+
 
 class TestWsgiRestServer(unittest.TestCase):
     def env(self):

@@ -1,9 +1,9 @@
 package pdef.descriptors;
 
 import com.google.common.annotations.VisibleForTesting;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Suppliers;
 
 public class ArgDescriptor {
 	private final String name;
@@ -46,6 +46,11 @@ public class ArgDescriptor {
 		public Builder setType(final Supplier<DataDescriptor> type) {
 			this.type = type;
 			return this;
+		}
+
+		@VisibleForTesting
+		public Builder setType(final DataDescriptor type) {
+			return setType(Suppliers.ofInstance(checkNotNull(type)));
 		}
 
 		public ArgDescriptor build(final MethodDescriptor method) {

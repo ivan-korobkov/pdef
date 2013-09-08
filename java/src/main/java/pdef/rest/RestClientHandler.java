@@ -35,9 +35,9 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 
 		if (isSuccessful(response)) {
 			return parseResult(response, invocation);
-		} else {
-			throw parseError(response);
 		}
+
+		throw parseError(response);
 	}
 
 	/** Converts an invocation into a rest request. */

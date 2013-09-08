@@ -12,10 +12,7 @@ import pdef.descriptors.*;
 import pdef.rpc.*;
 
 import java.net.HttpURLConnection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class RestServerHandler implements Function<RestRequest, RestResponse> {
 	private final InterfaceDescriptor descriptor;
@@ -59,21 +56,20 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 		if (path.startsWith("/")) {
 			path = path.substring(1);
 		}
-		LinkedList<String> parts = Lists.newLinkedList();
-		Collections.addAll(parts, path.split("/"));
 
+		// Split the path into method names and positions arguments parts.
+		String[] partsArray = path.split("/", -1); // -1 disables discarding trailing empty strings.
+		LinkedList<String> parts = Lists.newLinkedList();
+		Collections.addAll(parts, partsArray);
+
+
+		// Parse the parts as method invocations.
 		Invocation invocation = Invocation.root();
 		InterfaceDescriptor descriptor = this.descriptor;
 		while (!parts.isEmpty()) {
 			String part = parts.removeFirst();
 
 			// Find a method by name or get an index method.
-			if (descriptor == null) {
-				throw MethodNotFoundError.builder()
-						.setText("Method not found")
-						.build();
-			}
-
 			MethodDescriptor method = descriptor.findMethod(part);
 			if (method == null) method = descriptor.getIndexMethod();
 			if (method == null) {
@@ -121,17 +117,32 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 				}
 			}
 
+			// Chain a method invocation with the parsed args.
 			invocation = invocation.next(method, args.toArray());
-			descriptor = method.isRemote() ? null : (InterfaceDescriptor) method.getResult();
+
+			// Parse a next method or return an invocation chain.
+			if (!method.isRemote()) {
+				// Get the next interface and proceed parsing the parts.
+				descriptor = (InterfaceDescriptor) method.getResult();
+				continue;
+			}
+
+			// It's a remote method. Stop parsing the parts.
+			if (!parts.isEmpty()) {
+				// Cannot have any more parts here, bad url.
+				throw MethodNotFoundError.builder()
+						.setText("Method not found")
+						.build();
+			}
+
+			return invocation;
 		}
 
-		if (!invocation.isRemote()) {
-			throw MethodNotFoundError.builder()
-					.setText("Method not found")
-					.build();
-		}
-
-		return invocation;
+		// The parts are empty.
+		// No method invocations.
+		throw MethodNotFoundError.builder()
+				.setText("Method not found")
+				.build();
 	}
 
 	@VisibleForTesting
@@ -195,37 +206,18 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 	}
 
 	@VisibleForTesting
-	RpcResponse resultToResponse(final Object result, final Invocation invocation) {
-		DataDescriptor dd = (DataDescriptor) invocation.getResult();
-		Object serialized = dd.toObject(result);
-
-		return RpcResponse.builder()
-				.setStatus(RpcStatus.OK)
-				.setResult(serialized)
-				.build();
-	}
-
-	@VisibleForTesting
-	RestResponse restResponse(final RpcResponse response) {
-		String json = response.toJson();
-
-		return new RestResponse()
-				.setOkStatus()
-				.setJsonContentType()
-				.setContent(json);
-	}
-
-	@VisibleForTesting
 	RestResponse okResponse(final InvocationResult result, final Invocation invocation) {
 		RpcResponse.Builder rpc = RpcResponse.builder();
 
 		Object data = result.getData();
 		if (result.isOk()) {
+			// It's a successful method result.
 			DataDescriptor d = (DataDescriptor) invocation.getResult();
 
 			rpc.setStatus(RpcStatus.OK);
 			rpc.setResult(d.toObject(data));
 		} else {
+			// It's an expected application exception.
 			DataDescriptor d = invocation.getExc();
 			assert d != null;
 

@@ -1,5 +1,6 @@
 package pdef.rest;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import org.apache.http.HttpEntity;
@@ -36,7 +37,8 @@ public class RestClientSender implements Function<RestRequest, RestResponse> {
 	}
 
 	/** Creates a fluent http client request from a rest request. */
-	private Request createRequest(final RestRequest request) {
+	@VisibleForTesting
+	Request createRequest(final RestRequest request) {
 		URI uri = buildUri(request);
 		if (!request.isPost()) {
 			return Request.Get(uri);
@@ -47,12 +49,13 @@ public class RestClientSender implements Function<RestRequest, RestResponse> {
 			form.add(entry.getKey(), entry.getValue());
 		}
 
-		return Request.Post(uri).bodyForm(form.build());
+		return Request.Post(uri).bodyForm(form.build(), Rest.CHARSET);
 	}
 
 	/** Creates a URI from a rest request. */
-	private URI buildUri(final RestRequest request) {
-		String url = getUrl(request.getPath());
+	@VisibleForTesting
+	URI buildUri(final RestRequest request) {
+		String url = joinUrl(request.getPath());
 		try {
 			URIBuilder builder = new URIBuilder(url);
 			for (Map.Entry<String, String> entry : request.getQuery().entrySet()) {
@@ -65,9 +68,15 @@ public class RestClientSender implements Function<RestRequest, RestResponse> {
 		}
 	}
 
-	/** Joins the base url and the path. */
-	private String getUrl(final String path) {
-		return this.url + path;
+	/** Joins the base url and the path, deduplicates slashes,
+	 * i.e. "http://localhost/" + "/path" => "http://localhost/path". */
+	private String joinUrl(final String path) {
+		String url = this.url;
+		if (url.endsWith("/")) {
+			url = url.substring(0, url.length() - 1);
+		}
+
+		return path.startsWith("/") ? url + path : url + "/" + path;
 	}
 
 	/** Sends a fluent http client request and returns a response. */
@@ -89,7 +98,8 @@ public class RestClientSender implements Function<RestRequest, RestResponse> {
 		}
 	}
 
-	private RestResponse parseHttpResponse(final HttpResponse resp) throws IOException {
+	@VisibleForTesting
+	RestResponse parseHttpResponse(final HttpResponse resp) throws IOException {
 		int status = resp.getStatusLine().getStatusCode();
 		String content = null;
 		String contentType = null;

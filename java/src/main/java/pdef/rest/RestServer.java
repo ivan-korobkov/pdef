@@ -1,5 +1,6 @@
 package pdef.rest;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Strings;
@@ -8,15 +9,14 @@ import com.google.common.collect.Maps;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.Map;
 
 public class RestServer {
-	private final Function<RestRequest, RestResponse> restServer;
+	private final Function<RestRequest, RestResponse> handler;
 
 	/** Creates a REST server. */
 	public RestServer(final Function<RestRequest, RestResponse> handler) {
-		this.restServer = checkNotNull(handler);
+		this.handler = checkNotNull(handler);
 	}
 
 	public void handle(final HttpServletRequest request, final HttpServletResponse response)
@@ -28,7 +28,8 @@ public class RestServer {
 		writeResponse(resp, response);
 	}
 
-	private RestRequest parseRequest(final HttpServletRequest request) {
+	@VisibleForTesting
+	RestRequest parseRequest(final HttpServletRequest request) {
 		String method = request.getMethod();
 
 		// In servlets we cannot distinguish between query and post params,
@@ -53,28 +54,30 @@ public class RestServer {
 		Map<String, String> params = Maps.newHashMap();
 
 		@SuppressWarnings("unchecked")
-		Enumeration<String> names = request.getParameterNames();
-		if (names == null) {
-			return params;
-		}
+		Map<String, String[]> map = request.getParameterMap();
+		for (Map.Entry<String, String[]> entry : map.entrySet()) {
+			String key = entry.getKey();
+			String[] values = entry.getValue();
+			if (values == null || values.length == 0) {
+				continue;
+			}
 
-		while (names.hasMoreElements()) {
-			String name = names.nextElement();
-			String value = request.getParameter(name);
-			params.put(name, value);
+			String value = values[0];
+			params.put(key, value);
 		}
 
 		return params;
 	}
 
 	private RestResponse handleRequest(final RestRequest req) {
-		return restServer.apply(req);
+		return handler.apply(req);
 	}
 
-	private void writeResponse(final RestResponse resp, final HttpServletResponse response)
+	@VisibleForTesting
+	void writeResponse(final RestResponse resp, final HttpServletResponse response)
 			throws IOException {
 		response.setStatus(resp.getStatus());
 		response.setContentType(resp.getContentType());
-		response.getWriter().append(resp.getContent());
+		response.getWriter().print(resp.getContent());
 	}
 }

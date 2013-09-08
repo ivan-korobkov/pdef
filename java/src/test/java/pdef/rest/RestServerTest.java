@@ -1,108 +1,56 @@
 package pdef.rest;
 
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.DefaultHandler;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.junit.Ignore;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
+import org.junit.Before;
 import org.junit.Test;
-import pdef.Servers;
-import pdef.test.interfaces.NextTestInterface;
-import pdef.test.interfaces.TestException;
-import pdef.test.interfaces.TestInterface;
-import pdef.test.messages.SimpleMessage;
+import org.mockito.Mock;
+import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.net.HttpURLConnection;
 
 public class RestServerTest {
+	@Mock Function<RestRequest, RestResponse> handler;
+	RestServer server;
 
-	@Ignore
+	@Before
+	public void setUp() throws Exception {
+		initMocks(this);
+		server = new RestServer(handler);
+	}
+
 	@Test
-	public void testHandle() throws Exception {
-		Server server = new Server(8080);
+	public void testParseRequest() throws Exception {
+		HttpServletRequest request = mock(HttpServletRequest.class);
+		when(request.getMethod()).thenReturn(Rest.GET);
+		when(request.getServletPath()).thenReturn("/my/app");
+		when(request.getPathInfo()).thenReturn("/method1/method2");
+		when(request.getParameterMap()).thenReturn(ImmutableMap.of(
+				"key0", new String[]{"value0"},
+				"key1", new String[]{"value1", "value11"}));
 
-		ServletContextHandler context = new ServletContextHandler();
-		context.setContextPath("/hello");
-		context.addServlet(TestServlet.class, "/");
-
-		HandlerCollection handlers = new HandlerCollection();
-		handlers.setHandlers(new Handler[]{context, new DefaultHandler()});
-		server.setHandler(handlers);
-
-		server.start();
-		server.join();
+		RestRequest req = server.parseRequest(request);
+		assert req.getMethod().equals(Rest.GET);
+		assert req.getPath().equals("/my/app/method1/method2");
+		assert req.getQuery().equals(ImmutableMap.of("key0", "value0", "key1", "value1"));
+		assert req.getPost().equals(ImmutableMap.of("key0", "value0", "key1", "value1"));
 	}
 
-	public static class TestServlet extends HttpServlet {
-		@Override
-		protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-				throws ServletException, IOException {
-			handle(req, resp);
-		}
+	@Test
+	public void testWriteResponse() throws Exception {
+		RestResponse resp = new RestResponse()
+				.setOkStatus()
+				.setTextContentType()
+				.setContent("Привет, мир!");
 
-		@Override
-		protected void doPost(final HttpServletRequest req, final HttpServletResponse resp)
-				throws ServletException, IOException {
-			handle(req, resp);
-		}
+		HttpServletResponse response = mock(HttpServletResponse.class, RETURNS_DEEP_STUBS);
+		server.writeResponse(resp, response);
 
-		private void handle(final HttpServletRequest req, final HttpServletResponse resp)
-				throws IOException {
-			RestServer server = Servers.server(TestInterface.class, new TestService());
-			server.handle(req, resp);
-		}
-	}
-
-	public static class TestService implements TestInterface {
-		@Override
-		public Integer indexMethod(final Integer a, final Integer b) {
-			return a + b;
-		}
-
-		@Override
-		public Integer remoteMethod(final Integer a, final Integer b) {
-			return a + b;
-		}
-
-		@Override
-		public List<Integer> postMethod(final List<Integer> aList,
-				final Map<Integer, Integer> aMap) {
-			return Arrays.asList(1, 2, 3);
-		}
-
-		@Override
-		public SimpleMessage formMethod(final SimpleMessage msg) {
-			return msg;
-		}
-
-		@Override
-		public Void voidMethod() {
-			return null;
-		}
-
-		@Override
-		public Void excMethod() {
-			throw TestException.builder()
-					.setText("Exception!")
-					.build();
-		}
-
-		@Override
-		public String stringMethod(final String text) {
-			return text;
-		}
-
-		@Override
-		public NextTestInterface interfaceMethod(final Integer a, final Integer b) {
-			return null;
-		}
+		verify(response).setStatus(HttpURLConnection.HTTP_OK);
+		verify(response).setContentType(Rest.TEXT_CONTENT_TYPE);
+		verify(response.getWriter()).print(resp.getContent());
 	}
 }

@@ -1,12 +1,15 @@
 package pdef.rest;
 
-import org.eclipse.jetty.server.Handler;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.DefaultHandler;
-import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.junit.Ignore;
+import org.junit.After;
+import static org.junit.Assert.fail;
+import org.junit.Before;
 import org.junit.Test;
+import pdef.Clients;
 import pdef.Servers;
 import pdef.test.interfaces.NextTestInterface;
 import pdef.test.interfaces.TestException;
@@ -18,27 +21,79 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public class RestIntegrationTest {
+	Server server;
+	Thread serverThread;
+	String address;
 
-	@Ignore
-	@Test
-	public void testHandle() throws Exception {
-		Server server = new Server(8080);
+	@Before
+	public void setUp() throws Exception {
+		server = new Server(0);
 
 		ServletContextHandler context = new ServletContextHandler();
-		context.setContextPath("/hello");
+		context.setContextPath("/testapp");
 		context.addServlet(TestServlet.class, "/");
-
-		HandlerCollection handlers = new HandlerCollection();
-		handlers.setHandlers(new Handler[]{context, new DefaultHandler()});
-		server.setHandler(handlers);
+		server.setHandler(context);
 
 		server.start();
-		server.join();
+		address = "http://localhost:" + server.getConnectors()[0].getLocalPort() + "/testapp";
+
+		serverThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					server.join();
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+		});
+		serverThread.start();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		server.stop();
+		serverThread.interrupt();
+	}
+
+	@Test
+	public void test() throws Exception {
+		SimpleMessage form = SimpleMessage.builder()
+				.setAString("Привет, как дела?")
+				.setABool(false)
+				.setAnInt16((short) 123)
+				.build();
+
+		TestInterface client = client();
+
+		assert client.indexMethod(1, 2) == 3;
+		assert client.remoteMethod(10, 2) == 5;
+		assert client.postMethod(ImmutableList.of(1, 2, 3), ImmutableMap.of(4, 5)).equals(
+				ImmutableList.of(1, 2, 3, 4, 5));
+		assert client.formMethod(form).equals(form);
+		assert client.voidMethod() == null;
+		assert client.stringMethod("Привет").equals("Привет");
+		assert client.interfaceMethod(1, 2).indexMethod().equals("chained call 1 2");
+
+		try {
+			client.excMethod();
+			fail();
+		} catch (TestException e) {
+			TestException exc = TestException.builder()
+					.setText("Application exception")
+					.build();
+			assert e.equals(exc);
+		}
+	}
+
+	private TestInterface client() {
+		return Clients.client(TestInterface.class, address);
 	}
 
 	public static class TestServlet extends HttpServlet {
@@ -69,13 +124,17 @@ public class RestIntegrationTest {
 
 		@Override
 		public Integer remoteMethod(final Integer a, final Integer b) {
-			return a + b;
+			return a / b;
 		}
 
 		@Override
 		public List<Integer> postMethod(final List<Integer> aList,
 				final Map<Integer, Integer> aMap) {
-			return Arrays.asList(1, 2, 3);
+			List<Integer> result = Lists.newArrayList();
+			result.addAll(aList);
+			result.addAll(aMap.keySet());
+			result.addAll(aMap.values());
+			return result;
 		}
 
 		@Override
@@ -91,7 +150,7 @@ public class RestIntegrationTest {
 		@Override
 		public Void excMethod() {
 			throw TestException.builder()
-					.setText("Exception!")
+					.setText("Application exception")
 					.build();
 		}
 
@@ -102,7 +161,26 @@ public class RestIntegrationTest {
 
 		@Override
 		public NextTestInterface interfaceMethod(final Integer a, final Integer b) {
-			return null;
+			return new NextTestInterface() {
+				@Override
+				public String indexMethod() {
+					return "chained call " + a + " " + b;
+				}
+
+				@Override
+				public SimpleMessage remoteMethod() {
+					return SimpleMessage.builder()
+							.setAString("hello")
+							.setABool(true)
+							.setAnInt16((short) 123)
+							.build();
+				}
+
+				@Override
+				public String stringMethod(final String text) {
+					return text;
+				}
+			};
 		}
 	}
 }

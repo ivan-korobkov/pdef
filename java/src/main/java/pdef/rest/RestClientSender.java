@@ -5,6 +5,7 @@ import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
@@ -32,6 +33,7 @@ public class RestClientSender implements Function<RestRequest, RestResponse> {
 	@Override
 	public RestResponse apply(final RestRequest request) {
 		Request req = createRequest(request);
+		req.version(HttpVersion.HTTP_1_1);
 		Response resp = sendRequest(req);
 		return parseResponse(resp);
 	}

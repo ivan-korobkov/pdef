@@ -15,10 +15,10 @@ CHARSET = 'utf-8'
 
 JSON_MIME_TYPE = 'application/json'
 TEXT_MIME_TYPE = 'text/plain'
+FORM_MIME_TYPE = 'application/x-www-form-urlencoded'
 
 JSON_CONTENT_TYPE = 'application/json; charset=utf-8'
 TEXT_CONTENT_TYPE = 'text/plain; charset=utf-8'
-FORM_CONTENT_TYPE = 'application/x-www-form-urlencoded'
 
 
 class RestRequest(object):
@@ -472,7 +472,7 @@ class WsgiRestServer(object):
     def _parse_request(self, env):
         '''Create an http server request from a wsgi request.'''
         method = env['REQUEST_METHOD']
-        path = env['SCRIPT_NAME'] + env['PATH_INFO']
+        path = env['PATH_INFO']
         query = self._read_wsgi_query(env)
         post = self._read_wsgi_post(env)
 
@@ -489,7 +489,7 @@ class WsgiRestServer(object):
         clength = self._read_wsgi_clength(env)
 
         body = None
-        if clength > 0 and ctype.lower() == FORM_CONTENT_TYPE:
+        if clength > 0 and ctype.lower().startswith(FORM_MIME_TYPE):
             body = env['wsgi.input'].read(clength)
 
         post = urlparse.parse_qs(body) if body else {}

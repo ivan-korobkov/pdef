@@ -495,7 +495,7 @@ class IntegrationService(TestInterface):
         return 'void?'  # But should send None.
 
     def excMethod(self):
-        raise TestException('Application Exception!')
+        raise TestException('Application exception')
 
     def stringMethod(self, text=None):
         return text

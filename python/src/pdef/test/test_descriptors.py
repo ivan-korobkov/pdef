@@ -135,31 +135,47 @@ class TestMethodDescriptor(unittest.TestCase):
 
 
 class TestPrimitiveDescriptor(unittest.TestCase):
-    descriptor = descriptors.bool0
+    descriptor = descriptors.int32
 
     def parse(self):
-        assert self.descriptor.parse_object(True) is True
+        assert self.descriptor.parse_object(123) == 123
 
     def parse__none(self):
         assert self.descriptor.parse_object(None) is None
 
     def parse__string(self):
-        assert self.descriptor.parse_object('TrUe') is True
+        assert self.descriptor.parse_object('123') == 123
 
     def parse_string__none(self):
         assert self.descriptor.parse_string(None) is None
 
     def serialize(self):
-        assert self.descriptor.to_object(True) is True
+        assert self.descriptor.to_object(123) == 123
 
     def serialize__none(self):
         assert self.descriptor.to_object(None) is None
 
     def serialize_to_string(self):
-        assert self.descriptor.to_string(True) == 'True'
+        assert self.descriptor.to_string(123) == '123'
 
     def serialize_to_string__none(self):
         assert self.descriptor.to_string(None) is None
+
+
+class TestBoolDescriptor(unittest.TestCase):
+    descriptor = descriptors.bool0
+
+    def parse_string__true(self):
+        assert self.descriptor.parse_string('TruE') is True
+
+    def parse_string__false(self):
+        assert self.descriptor.parse_string('FalsE') is False
+
+    def parse_string__value_error(self):
+        self.assertRaises(ValueError, self.descriptor.parse_string, 'wrong value')
+
+    def serialize_to_string(self):
+        assert self.descriptor.to_string(True) == 'true'
 
 
 class TestEnumDescriptor(unittest.TestCase):

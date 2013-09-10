@@ -299,6 +299,9 @@ class PrimitiveDescriptor(DataTypeDescriptor):
         return self.type
 
     def parse_object(self, obj):
+        if isinstance(obj, basestring):
+            return self.parse_string(obj)
+
         return None if obj is None else self._native(obj)
 
     def parse_string(self, s):
@@ -313,6 +316,28 @@ class PrimitiveDescriptor(DataTypeDescriptor):
     def to_string(self, obj):
         '''Serialize a primitive to a string, or return None when the primitive is None.'''
         return None if obj is None else unicode(self.to_object(obj))
+
+
+class BoolDescriptor(PrimitiveDescriptor):
+    def __init__(self):
+        super(BoolDescriptor, self).__init__(Type.BOOL, bool)
+
+    def parse_string(self, s):
+        '''Parse a primitive from a string.'''
+        if s is None:
+            return None
+
+        s = s.lower()
+        if s == 'true':
+            return True
+        elif s == 'false':
+            return False
+
+        raise ValueError('Failed to parse a bool, %s' % s)
+
+    def to_string(self, obj):
+        '''Serialize a primitive to a string, or return None when the primitive is None.'''
+        return None if obj is None else unicode(self.to_object(obj)).lower()
 
 
 class StringDescriptor(PrimitiveDescriptor):
@@ -515,7 +540,7 @@ def arg(name, descriptor_supplier, is_query=False):
     return ArgDescriptor(name, descriptor_supplier, is_query=is_query)
 
 
-bool0 = PrimitiveDescriptor(Type.BOOL, bool)
+bool0 = BoolDescriptor()
 int16 = PrimitiveDescriptor(Type.INT16, int)
 int32 = PrimitiveDescriptor(Type.INT32, int)
 int64 = PrimitiveDescriptor(Type.INT64, int)

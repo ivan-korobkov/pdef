@@ -113,7 +113,7 @@ class TestRestClient(unittest.TestCase):
         form = SimpleForm(text=u'Привет', numbers=[1, 2, 3], flag=False)
         self.client()._serialize_query_arg(arg, form, dst)
 
-        assert dst == {'text': u'Привет', 'numbers': '[1, 2, 3]', 'flag': 'False'}
+        assert dst == {'text': u'Привет', 'numbers': '[1, 2, 3]', 'flag': 'false'}
 
     def test_serialize_arg_to_string__primitive(self):
         descriptor = descriptors.int32

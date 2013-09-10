@@ -8,7 +8,7 @@ from threading import Thread
 import pdef
 from pdef import descriptors, InvocationResult
 from pdef.rest import *
-from pdef.test.messages_pd import SimpleMessage
+from pdef.test.messages_pd import SimpleMessage, SimpleForm
 from pdef.test.interfaces_pd import TestInterface, TestException, NextTestInterface
 
 
@@ -107,13 +107,13 @@ class TestRestClient(unittest.TestCase):
         assert dst == {'arg': '123'}
 
     def test_serialize_query_arg__form(self):
-        arg = descriptors.arg('arg', lambda: SimpleMessage.__descriptor__)
+        arg = descriptors.arg('arg', lambda: SimpleForm.__descriptor__)
 
         dst = {}
-        msg = SimpleMessage(aString=u'Привет', aBool=False)
-        self.client()._serialize_query_arg(arg, msg, dst)
+        form = SimpleForm(text=u'Привет', numbers=[1, 2, 3], flag=False)
+        self.client()._serialize_query_arg(arg, form, dst)
 
-        assert dst == {'aString': u'Привет', 'aBool': 'False'}
+        assert dst == {'text': u'Привет', 'numbers': '[1, 2, 3]', 'flag': 'False'}
 
     def test_serialize_arg_to_string__primitive(self):
         descriptor = descriptors.int32
@@ -147,7 +147,7 @@ class TestRestClient(unittest.TestCase):
         text = RpcResponse(status=RpcStatus.OK, result=msg).to_json()
         response = self.response(200, text)
 
-        invocation = self.proxy().formMethod(msg)
+        invocation = self.proxy().messageMethod(msg)
         result = self.client()._parse_result(response, invocation)
 
         assert result.ok
@@ -280,13 +280,13 @@ class TestRestServer(unittest.TestCase):
         assert value == u'Привет'
 
     def test_parse_query_arg__form(self):
-        arg = descriptors.arg('arg', lambda: SimpleMessage.__descriptor__)
+        arg = descriptors.arg('arg', lambda: SimpleForm.__descriptor__)
 
-        msg = SimpleMessage(aString=u'Привет', aBool=True, anInt16=123)
-        src = {'aString': u'Привет', 'aBool': 'true', 'anInt16': '123'}
+        form = SimpleForm(text=u'Привет', numbers=[1, 2, 3], flag=True)
+        src = {'text': u'Привет', 'numbers': '[1,2,3]', 'flag': 'true'}
 
-        msg0 = self.server()._parse_query_arg(arg, src)
-        assert msg0 == msg
+        result = self.server()._parse_query_arg(arg, src)
+        assert result == form
 
     def test_parse_query_arg__primitive(self):
         arg = descriptors.arg('arg', lambda: descriptors.int32)
@@ -325,7 +325,7 @@ class TestRestServer(unittest.TestCase):
     # ok_response.
 
     def test_ok_response(self):
-        invocation = self.proxy().formMethod()
+        invocation = self.proxy().messageMethod()
 
         msg = SimpleMessage(aString=u'привет', aBool=False, anInt16=0)
         result = InvocationResult(msg)
@@ -438,7 +438,7 @@ class TestWsgiRestServer(unittest.TestCase):
         request = server._parse_request(env)
 
         assert request.method == 'POST'
-        assert request.path == '/myapp/method0/method1'
+        assert request.path == '/method0/method1'
         assert request.query == {u'привет': u'мир'}
         assert request.post == {u'пока': u'мир'}
 
@@ -466,11 +466,13 @@ class TestIntegration(unittest.TestCase):
 
     def test(self):
         client = self.client()
-        form = SimpleMessage(u'Привет', True, 0)
+        msg = SimpleMessage(u'Привет', True, 0)
+        form = SimpleForm(u'Привет', [1, 2, 3], True)
 
         assert client.indexMethod(1, 2) == 3
         assert client.remoteMethod(10, 2) == 5
         assert client.postMethod([1, 2, 3], {4: 5}) == [1, 2, 3, 4, 5]
+        assert client.messageMethod(msg) == msg
         assert client.formMethod(form) == form
         assert client.voidMethod() is None
         assert client.stringMethod(u'Как дела?') == u'Как дела?'
@@ -488,8 +490,11 @@ class IntegrationService(TestInterface):
     def postMethod(self, aList=None, aMap=None):
         return list(aList) + aMap.keys() + aMap.values()
 
-    def formMethod(self, msg=None):
+    def messageMethod(self, msg=None):
         return msg
+
+    def formMethod(self, form=None):
+        return form
 
     def voidMethod(self):
         return 'void?'  # But should send None.

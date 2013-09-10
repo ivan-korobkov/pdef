@@ -107,7 +107,7 @@ class TestInterfaceDescriptor(unittest.TestCase):
         assert self.descriptor.exc is interfaces_pd.TestException.__descriptor__
 
     def test_methods(self):
-        assert  len(self.descriptor.methods) == 8
+        assert  len(self.descriptor.methods) == 9
 
 
 class TestMethodDescriptor(unittest.TestCase):

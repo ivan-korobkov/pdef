@@ -99,6 +99,7 @@ class JavaMessage(JavaDefinition):
         self.declared_fields = [translator.field(f) for f in msg.declared_fields]
         self.inherited_fields = [translator.field(f) for f in msg.inherited_fields]
         self.is_exception = msg.is_exception
+        self.is_form = msg.is_form
 
         self.base_or_root = self.base if self.base \
             else 'pdef.GeneratedException' if msg.is_exception else 'pdef.GeneratedMessage'

@@ -148,6 +148,9 @@ public class {{ name }} extends {{ base_or_root }} {
             {% if base %}
             .setBase({{ base.descriptor }})
             {% endif %}
+            {% if is_form %}
+            .setForm(true)
+            {% endif %}
             {% if discriminator_value %}
             .setDiscriminatorValue({{ discriminator_value }})
             {% endif %}

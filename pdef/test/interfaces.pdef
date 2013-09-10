@@ -22,7 +22,10 @@ interface TestInterface : throws TestException {
     postMethod(aList list<int32>, aMap map<int32, int32>) list<int32>;
 
     /** Remote method with a message query arg, returns the same message. */
-    formMethod(msg messages.SimpleMessage) messages.SimpleMessage;
+    messageMethod(msg messages.SimpleMessage) messages.SimpleMessage;
+
+    /** Remote method with a form query arg, returns the same form. */
+    formMethod(form messages.SimpleForm) messages.SimpleForm;
 
     /** Void method which returns null. */
     voidMethod() void;

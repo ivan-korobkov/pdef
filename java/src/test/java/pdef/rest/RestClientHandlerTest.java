@@ -7,11 +7,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Atomics;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import pdef.Clients;
 import pdef.Invocation;
 import pdef.InvocationResult;
@@ -22,11 +19,15 @@ import pdef.descriptors.MessageDescriptor;
 import pdef.rpc.*;
 import pdef.test.interfaces.TestException;
 import pdef.test.interfaces.TestInterface;
+import pdef.test.messages.SimpleForm;
 import pdef.test.messages.SimpleMessage;
 
 import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class RestClientHandlerTest {
 	@Mock Function<RestRequest, RestResponse> sender;
@@ -180,10 +181,25 @@ public class RestClientHandlerTest {
 		assert dst.equals(ImmutableMap.of("arg", "123"));
 	}
 
-	@Ignore
 	@Test
 	public void testSerializeQueryArg_form() throws Exception {
-		assert false;
+		ArgDescriptor argd = ArgDescriptor.builder()
+				.setName("arg")
+				.setType(SimpleForm.descriptor())
+				.build();
+
+		Map<String, String> dst = Maps.newHashMap();
+		SimpleForm msg = SimpleForm.builder()
+				.setText("Привет, как дела?")
+				.setNumbers(ImmutableList.of(1, 2, 3))
+				.setFlag(false)
+				.build();
+		handler.serializeQueryArg(argd, msg, dst);
+
+		assert dst.equals(ImmutableMap.of(
+				"text", "Привет, как дела?",
+				"numbers", "[1,2,3]",
+				"flag", "false"));
 	}
 
 	@Test
@@ -260,7 +276,7 @@ public class RestClientHandlerTest {
 				.setContent(content);
 
 		AtomicReference<Invocation> ref = Atomics.newReference();
-		proxy(ref).formMethod(msg);
+		proxy(ref).messageMethod(msg);
 
 		InvocationResult result = handler.parseResult(response, ref.get());
 		assert result.isOk();

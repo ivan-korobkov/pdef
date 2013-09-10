@@ -1,6 +1,5 @@
 package pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -12,9 +11,13 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class MessageDescriptor extends DataDescriptor {
 	private final Class<?> javaClass;
 	private final MessageDescriptor base;
+	private final boolean form;
+
 	private final Enum<?> discriminatorValue;
 	private final FieldDescriptor discriminator;
 	private final List<Supplier<MessageDescriptor>> subtypes;
@@ -40,6 +43,7 @@ public class MessageDescriptor extends DataDescriptor {
 		discriminator = getDiscriminator(fields);
 
 		builder = checkNotNull(b.builder);
+		form = b.form;
 	}
 
 	public Class<?> getJavaClass() {
@@ -48,6 +52,10 @@ public class MessageDescriptor extends DataDescriptor {
 
 	public MessageDescriptor getBase() {
 		return base;
+	}
+
+	public boolean isForm() {
+		return form;
 	}
 
 	public Enum<?> getDiscriminatorValue() {
@@ -88,10 +96,6 @@ public class MessageDescriptor extends DataDescriptor {
 
 	public FieldDescriptor getDiscriminator() {
 		return discriminator;
-	}
-
-	public boolean isForm() {
-		return false;
 	}
 
 	public Message.Builder createBuilder() {
@@ -158,6 +162,7 @@ public class MessageDescriptor extends DataDescriptor {
 		private Supplier<? extends Message.Builder> builder;
 		private final List<FieldDescriptor.Builder> declaredFields;
 		private final List<Supplier<MessageDescriptor>> subtypes;
+		private boolean form;
 
 		private Builder() {
 			declaredFields = Lists.newArrayList();
@@ -171,6 +176,11 @@ public class MessageDescriptor extends DataDescriptor {
 
 		public Builder setBase(final MessageDescriptor base) {
 			this.base = base;
+			return this;
+		}
+
+		public Builder setForm(final boolean form) {
+			this.form = form;
 			return this;
 		}
 

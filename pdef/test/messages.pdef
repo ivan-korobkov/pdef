@@ -8,7 +8,6 @@ enum TestEnum {
 
 
 /** Simple message . */
-@form
 message SimpleMessage {
     aString     string;
     aBool       bool;
@@ -29,4 +28,11 @@ message ComplexMessage : SimpleMessage {
     anEnum      TestEnum;
     aMessage    ComplexMessage;
     anObject    object;
+}
+
+@form
+message SimpleForm {
+    text        string;
+    numbers     list<int32>;
+    flag        bool;
 }

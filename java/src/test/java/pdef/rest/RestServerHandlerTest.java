@@ -3,12 +3,9 @@ package pdef.rest;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import static org.junit.Assert.fail;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
-import static org.mockito.MockitoAnnotations.initMocks;
 import pdef.Invocation;
 import pdef.InvocationResult;
 import pdef.descriptors.ArgDescriptor;
@@ -16,12 +13,15 @@ import pdef.descriptors.Descriptors;
 import pdef.rpc.*;
 import pdef.test.interfaces.TestException;
 import pdef.test.interfaces.TestInterface;
+import pdef.test.messages.SimpleForm;
 import pdef.test.messages.SimpleMessage;
 
 import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class RestServerHandlerTest {
 	RestServerHandler handler;
@@ -226,10 +226,24 @@ public class RestServerHandlerTest {
 		assert result.equals(expected);
 	}
 
-	@Ignore
 	@Test
 	public void testParseQueryArg_form() throws Exception {
-		fail();
+		ArgDescriptor argd = ArgDescriptor.builder()
+				.setName("arg")
+				.setType(SimpleForm.descriptor())
+				.build();
+
+		SimpleForm expected = SimpleForm.builder()
+				.setText("Привет, как дела?")
+				.setNumbers(ImmutableList.of(1, 2, 3))
+				.setFlag(false)
+				.build();
+		Map<String, String> src = ImmutableMap.of(
+				"text", "Привет, как дела?",
+				"numbers", "[1,2,3]",
+				"flag", "false");
+		SimpleForm result = (SimpleForm) handler.parseQueryArg(argd, src);
+		assert result.equals(expected);
 	}
 
 	@Test
@@ -268,7 +282,7 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testOkResponse() throws Exception {
-		RestRequest request = new RestRequest().setPath("/formMethod");
+		RestRequest request = new RestRequest().setPath("/messageMethod");
 		Invocation invocation = handler.parseRequest(request);
 		SimpleMessage msg = SimpleMessage.builder()
 				.setAString("hello")

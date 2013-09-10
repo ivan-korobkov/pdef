@@ -158,7 +158,7 @@ class Proxy(object):
             if m.name == name:
                 return lambda *args, **kwargs: self._invoke(m, *args, **kwargs)
 
-        raise AttributeError(name)
+        raise AttributeError('Method not found: %s' % name)
 
     def _invoke(self, method, *args, **kwargs):
         '''Handle a pdef method invocation.

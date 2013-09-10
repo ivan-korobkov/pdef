@@ -6,7 +6,6 @@ import com.google.common.collect.Lists;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.junit.After;
-import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
 import pdef.Clients;
@@ -14,6 +13,7 @@ import pdef.Servers;
 import pdef.test.interfaces.NextTestInterface;
 import pdef.test.interfaces.TestException;
 import pdef.test.interfaces.TestInterface;
+import pdef.test.messages.SimpleForm;
 import pdef.test.messages.SimpleMessage;
 
 import javax.servlet.ServletException;
@@ -23,6 +23,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.Assert.fail;
 
 public class RestIntegrationTest {
 	Server server;
@@ -64,10 +66,15 @@ public class RestIntegrationTest {
 
 	@Test
 	public void test() throws Exception {
-		SimpleMessage form = SimpleMessage.builder()
+		SimpleMessage message = SimpleMessage.builder()
 				.setAString("Привет, как дела?")
 				.setABool(false)
 				.setAnInt16((short) 123)
+				.build();
+		SimpleForm form = SimpleForm.builder()
+				.setText("Привет, как дела?")
+				.setNumbers(ImmutableList.of(1, 2, 3))
+				.setFlag(true)
 				.build();
 
 		TestInterface client = client();
@@ -76,6 +83,7 @@ public class RestIntegrationTest {
 		assert client.remoteMethod(10, 2) == 5;
 		assert client.postMethod(ImmutableList.of(1, 2, 3), ImmutableMap.of(4, 5)).equals(
 				ImmutableList.of(1, 2, 3, 4, 5));
+		assert client.messageMethod(message).equals(message);
 		assert client.formMethod(form).equals(form);
 		assert client.voidMethod() == null;
 		assert client.stringMethod("Привет").equals("Привет");
@@ -138,8 +146,13 @@ public class RestIntegrationTest {
 		}
 
 		@Override
-		public SimpleMessage formMethod(final SimpleMessage msg) {
+		public SimpleMessage messageMethod(final SimpleMessage msg) {
 			return msg;
+		}
+
+		@Override
+		public SimpleForm formMethod(final SimpleForm form) {
+			return form;
 		}
 
 		@Override

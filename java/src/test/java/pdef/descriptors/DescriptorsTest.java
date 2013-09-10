@@ -13,25 +13,37 @@ public class DescriptorsTest {
 	@Test
 	public void testBoolParse() throws Exception {
 		Boolean value = (Boolean) Descriptors.bool.parseObject("true");
-		assertTrue(value);
+		assert value;
+	}
+
+	@Test
+	public void testBoolParse_null() throws Exception {
+		Boolean value = (Boolean) Descriptors.bool.parseObject(null);
+		assert value == null;
 	}
 
 	@Test
 	public void testBoolSerialize() throws Exception {
 		String value = Descriptors.bool.toString(true);
-		assertEquals("true", value);
+		assert "true".equals(value);
 	}
 
 	@Test
 	public void testInt16Parse() throws Exception {
 		Short value = (Short) Descriptors.int16.parseObject("123");
-		assertEquals((short) 123, (short) value);
+		assert (short) 123 == value;
 	}
 
 	@Test
 	public void testInt16Parse_number() throws Exception {
 		Short value = (Short) Descriptors.int16.parseObject(123);
-		assertEquals(123, (short) value);
+		assert (short) 123 == value;
+	}
+
+	@Test
+	public void testInt16Parse_null() throws Exception {
+		Short value = (Short) Descriptors.int16.parseObject(null);
+		assert value == null;
 	}
 
 	@Test
@@ -43,37 +55,49 @@ public class DescriptorsTest {
 	@Test
 	public void testInt32Parse() throws Exception {
 		Integer value = (Integer) Descriptors.int32.parseObject("123");
-		assertEquals(123, (int) value);
+		assert 123 == value;
 	}
 
 	@Test
 	public void testInt32Parse_number() throws Exception {
 		Integer value = (Integer) Descriptors.int32.parseObject((long) 123);
-		assertEquals(123, (int) value);
+		assert 123 == value;
+	}
+
+	@Test
+	public void testInt32Parse_null() throws Exception {
+		Integer value = (Integer) Descriptors.int32.parseObject(null);
+		assert value == null;
 	}
 
 	@Test
 	public void testInt32Serialize() throws Exception {
 		String value = Descriptors.int32.toString(123);
-		assertEquals("123", value);
+		assert "123".equals(value);
 	}
 
 	@Test
 	public void testInt64Parse() throws Exception {
 		Long value = (Long) Descriptors.int64.parseObject("123");
-		assertEquals(123L, (long) value);
+		assert 123L == value;
 	}
 
 	@Test
 	public void testInt64Parse_number() throws Exception {
 		Long value = (Long) Descriptors.int64.parseObject((short) 123);
-		assertEquals(123L, (long) value);
+		assert 123L == value;
+	}
+
+	@Test
+	public void testInt64Parse_null() throws Exception {
+		Long value = (Long) Descriptors.int64.parseObject(null);
+		assert value == null;
 	}
 
 	@Test
 	public void testInt64Serialize() throws Exception {
 		String value = Descriptors.int64.toString(123L);
-		assertEquals("123", value);
+		assert "123".equals(value);
 	}
 
 	@Test
@@ -85,13 +109,19 @@ public class DescriptorsTest {
 	@Test
 	public void testFloatParse_number() throws Exception {
 		Float value = (Float) Descriptors.float0.parseObject(123);
-		assertEquals(123f, (float) value, 1e-5);
+		assertEquals(123f, value, 1e-5);
+	}
+
+	@Test
+	public void testFloatParse_null() throws Exception {
+		Float value = (Float) Descriptors.float0.parseObject(null);
+		assert value == null;
 	}
 
 	@Test
 	public void testFloatSerialize() throws Exception {
 		String value = Descriptors.float0.toString(1.5f);
-		assertEquals("1.5", value);
+		assert "1.5".equals(value);
 	}
 
 	@Test
@@ -104,6 +134,12 @@ public class DescriptorsTest {
 	public void testDoubleParse_number() throws Exception {
 		Double value = (Double) Descriptors.double0.parseObject(123);
 		assertEquals(123d, value, 1e-5);
+	}
+
+	@Test
+	public void testDoubleParse_null() throws Exception {
+		Double value = (Double) Descriptors.double0.parseObject(null);
+		assert value == null;
 	}
 
 	@Test

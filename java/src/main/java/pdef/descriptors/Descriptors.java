@@ -18,7 +18,7 @@ public class Descriptors {
 		@Override
 		public Boolean parseObject(final Object o) {
 			if (o instanceof String) return parseString((String) o);
-			return (Boolean) o;
+			return o == null ? null : (Boolean) o;
 		}
 
 		@Override
@@ -36,7 +36,7 @@ public class Descriptors {
 		@Override
 		public Short parseObject(final Object o) {
 			if (o instanceof  String ) return parseString((String) o);
-			return ((Number) o).shortValue();
+			return o == null ? null : ((Number) o).shortValue();
 		}
 
 		@Override
@@ -54,7 +54,7 @@ public class Descriptors {
 		@Override
 		public Integer parseObject(final Object o) {
 			if (o instanceof String) return parseString((String) o);
-			return ((Number) o).intValue();
+			return o == null ? null : ((Number) o).intValue();
 		}
 
 		@Override
@@ -72,7 +72,7 @@ public class Descriptors {
 		@Override
 		public Long parseObject(final Object o) {
 			if (o instanceof String) return parseString((String) o);
-			return ((Number) o).longValue();
+			return o == null ? null : ((Number) o).longValue();
 		}
 
 		@Override
@@ -90,7 +90,7 @@ public class Descriptors {
 		@Override
 		public Float parseObject(final Object o) {
 			if (o instanceof String) return parseString((String) o);
-			return ((Number) o).floatValue();
+			return o == null ? null : ((Number) o).floatValue();
 		}
 
 		@Override
@@ -108,7 +108,7 @@ public class Descriptors {
 		@Override
 		public Double parseObject(final Object o) {
 			if (o instanceof String) return parseString((String) o);
-			return ((Number) o).doubleValue();
+			return o == null ? null : ((Number) o).doubleValue();
 		}
 
 		@Override

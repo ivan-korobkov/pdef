@@ -144,7 +144,7 @@ class TestRestClient(unittest.TestCase):
 
     def test_parse_result__ok(self):
         msg = SimpleMessage(aString='hello', aBool=False, anInt16=127)
-        text = RpcResponse(status=RpcStatus.OK, result=msg).to_json()
+        text = RpcResult(status=RpcStatus.OK, data=msg).to_json()
         response = self.response(200, text)
 
         invocation = self.proxy().messageMethod(msg)
@@ -155,7 +155,7 @@ class TestRestClient(unittest.TestCase):
 
     def test_parse_result__exc(self):
         exc = TestException(text='Application exception!')
-        text = RpcResponse(status=RpcStatus.EXCEPTION, result=exc).to_json()
+        text = RpcResult(status=RpcStatus.EXCEPTION, data=exc).to_json()
         response = self.response(200, text)
 
         invocation = self.proxy().excMethod()
@@ -211,7 +211,7 @@ class TestRestServer(unittest.TestCase):
 
         assert response.status == httplib.OK
         assert response.content_type == JSON_CONTENT_TYPE
-        assert response.content == RpcResponse(status=RpcStatus.OK, result=3).to_json(True)
+        assert response.content == RpcResult(status=RpcStatus.OK, data=3).to_json(True)
 
     def test_parse_request__index_method(self):
         request = self.get_request('/', query={'a': '123', 'b': '456'})
@@ -333,7 +333,7 @@ class TestRestServer(unittest.TestCase):
 
         assert response.status == httplib.OK
         assert response.content_type == JSON_CONTENT_TYPE
-        assert response.content == RpcResponse(status=RpcStatus.OK, result=msg).to_json(True)
+        assert response.content == RpcResult(status=RpcStatus.OK, data=msg).to_json(True)
 
     def test_ok_response_exc(self):
         invocation = self.proxy().excMethod()
@@ -344,7 +344,7 @@ class TestRestServer(unittest.TestCase):
 
         assert response.status == httplib.OK
         assert response.content_type == JSON_CONTENT_TYPE
-        assert response.content == RpcResponse(status=RpcStatus.EXCEPTION, result=exc).to_json(True)
+        assert response.content == RpcResult(status=RpcStatus.EXCEPTION, data=exc).to_json(True)
 
     # error_response.
 

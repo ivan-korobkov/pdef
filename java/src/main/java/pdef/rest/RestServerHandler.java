@@ -2,7 +2,6 @@ package pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import pdef.Invocation;
@@ -12,7 +11,13 @@ import pdef.descriptors.*;
 import pdef.rpc.*;
 
 import java.net.HttpURLConnection;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RestServerHandler implements Function<RestRequest, RestResponse> {
 	private final InterfaceDescriptor descriptor;
@@ -207,7 +212,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 
 	@VisibleForTesting
 	RestResponse okResponse(final InvocationResult result, final Invocation invocation) {
-		RpcResponse.Builder rpc = RpcResponse.builder();
+		RpcResult.Builder rpc = RpcResult.builder();
 
 		Object data = result.getData();
 		if (result.isOk()) {
@@ -215,14 +220,14 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 			DataDescriptor d = (DataDescriptor) invocation.getResult();
 
 			rpc.setStatus(RpcStatus.OK);
-			rpc.setResult(d.toObject(data));
+			rpc.setData(d.toObject(data));
 		} else {
 			// It's an expected application exception.
 			DataDescriptor d = invocation.getExc();
 			assert d != null;
 
 			rpc.setStatus(RpcStatus.EXCEPTION);
-			rpc.setResult(d.toObject(data));
+			rpc.setData(d.toObject(data));
 		}
 
 		String content = rpc.build().toJson();

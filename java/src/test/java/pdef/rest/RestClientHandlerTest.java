@@ -48,9 +48,9 @@ public class RestClientHandlerTest {
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()
-				.setContent(RpcResponse.builder()
+				.setContent(RpcResult.builder()
 						.setStatus(RpcStatus.OK)
-						.setResult(3)
+						.setData(3)
 						.build()
 						.toJson());
 
@@ -265,9 +265,9 @@ public class RestClientHandlerTest {
 				.setABool(true)
 				.setAnInt16((short) 1)
 				.build();
-		String content = RpcResponse.builder()
+		String content = RpcResult.builder()
 				.setStatus(RpcStatus.OK)
-				.setResult(msg.toMap())
+				.setData(msg.toMap())
 				.build()
 				.toJson();
 		RestResponse response = new RestResponse()
@@ -288,9 +288,9 @@ public class RestClientHandlerTest {
 		TestException exc = TestException.builder()
 				.setText("Application exception")
 				.build();
-		String content = RpcResponse.builder()
+		String content = RpcResult.builder()
 				.setStatus(RpcStatus.EXCEPTION)
-				.setResult(exc.toMap())
+				.setData(exc.toMap())
 				.build()
 				.toJson();
 		RestResponse response = new RestResponse()

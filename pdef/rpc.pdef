@@ -9,9 +9,9 @@ enum RpcStatus {
     EXCEPTION
 }
 
-message RpcResponse {
+message RpcResult {
     status  RpcStatus;
-    result  object;
+    data    object;
 }
 
 

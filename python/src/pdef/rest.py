@@ -189,15 +189,15 @@ class RestClient(object):
     def _parse_result(self, response, invocation):
         '''Parse a RestResponse into an invocation result'''
 
-        rpc = RpcResponse.parse_json(response.content)
+        rpc = RpcResult.parse_json(response.content)
         status = rpc.status
-        result = rpc.result
+        data = rpc.data
 
         if status == RpcStatus.OK:
             # It's a successful result.
             # Parse it using the invocation method result descriptor.
 
-            r = invocation.result.parse_object(result)
+            r = invocation.result.parse_object(data)
             return pdef.InvocationResult(r)
 
         elif status == RpcStatus.EXCEPTION:
@@ -208,7 +208,7 @@ class RestClient(object):
             if not exc:
                 raise ClientError('Unsupported application exception')
 
-            r = exc.parse_object(result)
+            r = exc.parse_object(data)
             return pdef.InvocationResult(r, ok=False)
 
         raise ClientError('Unsupported rpc response status=%s' % status)
@@ -406,16 +406,16 @@ class RestServer(object):
         data = result.data
         method = invocation.method
 
-        rpc = RpcResponse()
+        rpc = RpcResult()
         if result.ok:
             # It's a successful method result.
             rpc.status = RpcStatus.OK
-            rpc.result = method.result.to_object(data)
+            rpc.data = method.result.to_object(data)
 
         else:
             # It's an expected application exception.
             rpc.status = RpcStatus.EXCEPTION
-            rpc.result = method.exc.to_object(data)
+            rpc.data = method.exc.to_object(data)
 
         content = rpc.to_json(indent=True)
         return RestResponse(status=httplib.OK, content=content, content_type=JSON_CONTENT_TYPE)
@@ -501,5 +501,5 @@ class WsgiRestServer(object):
         clength = env.get('CONTENT_LENGTH') or 0
         try:
             return int(clength)
-        except:
+        except (ValueError, TypeError):
             return 0

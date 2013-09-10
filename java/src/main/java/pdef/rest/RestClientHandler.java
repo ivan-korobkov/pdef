@@ -172,8 +172,8 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 
 	@VisibleForTesting
 	InvocationResult parseResult(final RestResponse response, final Invocation invocation) {
-		RpcResponse rpc = RpcResponse.parseJson(response.getContent());
-		Object result = rpc.getResult();
+		RpcResult rpc = RpcResult.parseJson(response.getContent());
+		Object result = rpc.getData();
 		RpcStatus status = rpc.getStatus();
 
 		if (status == RpcStatus.OK) {

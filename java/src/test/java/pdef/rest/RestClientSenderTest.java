@@ -12,7 +12,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHttpResponse;
 import org.junit.Before;
 import org.junit.Test;
-import pdef.rpc.RpcResponse;
+import pdef.rpc.RpcResult;
 import pdef.rpc.RpcStatus;
 
 import java.io.ByteArrayOutputStream;
@@ -68,9 +68,9 @@ public class RestClientSenderTest {
 
 	@Test
 	public void testParseHttpResponse() throws Exception {
-		String content = RpcResponse.builder()
+		String content = RpcResult.builder()
 				.setStatus(RpcStatus.OK)
-				.setResult("привет")
+				.setData("привет")
 				.build()
 				.toJson();
 		HttpResponse resp = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 0), 200, "OK");

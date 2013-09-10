@@ -45,9 +45,9 @@ public class RestServerHandlerTest {
 		RestRequest request = new RestRequest()
 				.setPath("/remoteMethod")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
-		String content = RpcResponse.builder()
+		String content = RpcResult.builder()
 				.setStatus(RpcStatus.OK)
-				.setResult(3)
+				.setData(3)
 				.build()
 				.toJson();
 
@@ -73,9 +73,9 @@ public class RestServerHandlerTest {
 		RestRequest request = new RestRequest()
 				.setPath("/remoteMethod")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
-		String content = RpcResponse.builder()
+		String content = RpcResult.builder()
 				.setStatus(RpcStatus.EXCEPTION)
-				.setResult(exc.toMap())
+				.setData(exc.toMap())
 				.build()
 				.toJson();
 
@@ -291,9 +291,9 @@ public class RestServerHandlerTest {
 				.build();
 
 		InvocationResult result = InvocationResult.ok(msg);
-		String content = RpcResponse.builder()
+		String content = RpcResult.builder()
 				.setStatus(RpcStatus.OK)
-				.setResult(msg.toMap())
+				.setData(msg.toMap())
 				.build()
 				.toJson();
 
@@ -312,9 +312,9 @@ public class RestServerHandlerTest {
 				.build();
 
 		InvocationResult result = InvocationResult.exc(exc);
-		String content = RpcResponse.builder()
+		String content = RpcResult.builder()
 				.setStatus(RpcStatus.EXCEPTION)
-				.setResult(exc.toMap())
+				.setData(exc.toMap())
 				.build()
 				.toJson();
 

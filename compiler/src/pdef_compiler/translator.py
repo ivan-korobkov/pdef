@@ -24,6 +24,33 @@ class AbstractTranslator(object):
         return self.env.from_string(text)
 
 
+class NameMapper(object):
+    '''Maps module names to prefix names.
+
+    Example::
+        >>> mapper = NameMapper({'pdef.tests': 'pdef_tests'})
+        >>> mapper.map('pdef.tests.messages')
+        >>> 'pdef_tests.messages'
+    '''
+    def __init__(self, name_map=None):
+        self.name_map = dict(name_map) if name_map else {}
+
+    def __call__(self, module_name):
+        return self.map(module_name)
+
+    def map(self, module_name):
+        '''Returns a new module name.'''
+        for name, mapped in self.name_map.items():
+            if module_name == name:
+                # Full match, service.module => service_module.
+                return mapped
+
+            if module_name.startswith(name + '.'):
+                return mapped + module_name[len(name):]
+
+        return module_name
+
+
 def upper_first(s):
     '''Uppercase the first letter in a string.'''
     if not s:

@@ -18,7 +18,7 @@ class TestPythonModule(unittest.TestCase):
         module.link_imports()
         module.link()
 
-        return PythonModule(module, pymodule_suffix='_pd')
+        return PythonModule(module)
 
     def test_constructor(self):
         pymodule = self.create()
@@ -131,11 +131,13 @@ class TestPyImport(unittest.TestCase):
         s = pyimport(import0)
         assert s == 'my.test'
 
-    def test_pymodule_suffix(self):
+    def test_mapper(self):
         module = Module('my.test')
         import0 = Import('alias', module)
-        s = pyimport(import0, pymodule_suffix='_pd')
-        assert s == 'my.test_pd'
+
+        mapper = NameMapper({'my.test': 'my_test'})
+        s = pyimport(import0, mapper)
+        assert s == 'my_test'
 
 
 class TestPyRef(unittest.TestCase):
@@ -210,11 +212,12 @@ class TestPyRef(unittest.TestCase):
         assert ref.name == 'Message'
         assert ref.descriptor == 'Message.__descriptor__'
 
-    def test_pymodule_suffix(self):
+    def test_mapper(self):
         def0 = Message('Message')
-        module = Module('my.test')
+        module = Module('my.test.submodule')
         module.add_definition(def0)
 
-        ref = pyref(def0, pymodule_suffix='_pd')
-        assert ref.name == 'my.test_pd.Message'
-        assert ref.descriptor == 'my.test_pd.Message.__descriptor__'
+        mapper = NameMapper({'my.test': 'my_test'})
+        ref = pyref(def0, mapper=mapper)
+        assert ref.name == 'my_test.submodule.Message'
+        assert ref.descriptor == 'my_test.submodule.Message.__descriptor__'

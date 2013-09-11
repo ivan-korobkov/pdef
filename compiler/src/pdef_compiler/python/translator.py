@@ -3,18 +3,18 @@ import logging
 import os.path
 
 from pdef_compiler.lang import Type
-from pdef_compiler.translator import AbstractTranslator, mkdir_p
+from pdef_compiler.translator import AbstractTranslator, NameMapper, mkdir_p
 
 
-def translate(out, package):
+def translate(out, package, module_name_map=None):
     '''Translates a package into python code.'''
-    return PythonTranslator(out).translate(package)
+    return PythonTranslator(out, module_name_map=module_name_map).translate(package)
 
 
 class PythonTranslator(AbstractTranslator):
-    def __init__(self, out, pymodule_suffix='_pd'):
+    def __init__(self, out, module_name_map=None):
         super(PythonTranslator, self).__init__(out)
-        self.pymodule_suffix = pymodule_suffix
+        self.mapper = NameMapper(module_name_map)
 
         self.module_template = self.read_template('module.template')
         self.enum_template = self.read_template('enum.template')
@@ -22,15 +22,13 @@ class PythonTranslator(AbstractTranslator):
         self.interface_template = self.read_template('interface.template')
 
     def translate(self, package):
-        pymodules = [PythonModule(module, self.pymodule_suffix)
-                     for module in package.modules]
+        pymodules = [PythonModule(module, self.mapper) for module in package.modules]
 
         for pm in pymodules:
             self._write(pm)
 
     def _write(self, pymodule):
-        name = pymodule.name + self.pymodule_suffix
-        relpath = name.replace('.', os.path.sep) + '.py'
+        relpath = pymodule.name.replace('.', os.path.sep) + '.py'
         filepath = os.path.join(self.out, relpath)
         dirpath = os.path.dirname(filepath)
 
@@ -41,11 +39,13 @@ class PythonTranslator(AbstractTranslator):
 
 
 class PythonModule(object):
-    def __init__(self, module, pymodule_suffix):
-        ref = lambda def0: pyref(def0, module, pymodule_suffix)
+    def __init__(self, module, mapper=None):
+        # Create a module local reference lookup, which correctly handles
+        # when definitions are referenced inside declaring modules.
+        ref = lambda def0: pyref(def0, module, mapper)
 
-        self.name = module.name
-        self.imports = [pyimport(import0, pymodule_suffix) for import0 in module.imports]
+        self.name = mapper(module.name) if mapper else module.name
+        self.imports = [pyimport(import0, mapper) for import0 in module.imports]
         self.definitions = [pydef(def0, ref) for def0 in module.definitions]
 
     def render(self, translator):
@@ -150,47 +150,55 @@ def pydef(def0, ref):
     raise ValueError('Unsupported definition %s' % def0)
 
 
-def pyimport(import0, pymodule_suffix=''):
+def pyimport(import0, mapper=None):
     '''Create a python import string.'''
-    return '%s%s' % (import0.module.name, pymodule_suffix)
+    if not mapper:
+        return import0.module.name
+    return mapper(import0.module.name)
 
 
-def pyref(def0, module=None, pymodule_suffix=''):
+def pyref(def0, module=None, mapper=None):
     '''Create a python reference.
 
     @param def0:    pdef definition.
     @param module:  pdef module in which the definition is referenced.
-    @param pymodule_suffix: suffix which is used for all python modules.
+    @param mapper:  optional module name mapper.
     '''
     type0 = def0.type
     if type0 in NATIVE:
         return NATIVE[type0]
 
     if def0.is_list:
-        element = pyref(def0.element, module, pymodule_suffix)
+        element = pyref(def0.element, module, mapper)
         descriptor = 'descriptors.list0(%s)' % element.descriptor
         return PythonRef('list', descriptor)
 
     elif def0.is_set:
-        element = pyref(def0.element, module, pymodule_suffix)
+        element = pyref(def0.element, module, mapper)
         descriptor = 'descriptors.set0(%s)' % element.descriptor
         return PythonRef('set', descriptor)
 
     elif def0.is_map:
-        key = pyref(def0.key, module, pymodule_suffix)
-        value = pyref(def0.value, module, pymodule_suffix)
+        key = pyref(def0.key, module, mapper)
+        value = pyref(def0.value, module, mapper)
         descriptor = 'descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
         return PythonRef('dict', descriptor)
 
     elif def0.is_enum_value:
-        enum = pyref(def0.enum, module, pymodule_suffix)
+        enum = pyref(def0.enum, module, mapper)
         name = '%s.%s' % (enum.name, def0.name)
         return PythonRef(name, None)
 
     if def0.module == module:
+        # This definition is references from its own module.
         name = def0.name
     else:
-        name = '%s%s.%s' % (def0.module.name, pymodule_suffix, def0.name)
+        module_name = def0.module.name
+        if mapper:
+            module_name = mapper(module_name)
+
+        name = '%s.%s' % (module_name, def0.name)
+
     descriptor = '%s.__descriptor__' % name
     return PythonRef(name, descriptor)
 

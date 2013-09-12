@@ -1,12 +1,13 @@
 # encoding: utf-8
 import unittest
 from mock import Mock
+
 from pdef import descriptors
-from pdef.test import messages_pd, polymorphic_pd, interfaces_pd
+from pdef_tests import messages, polymorphic, interfaces
 
 
 class TestMessageDescriptor(unittest.TestCase):
-    cls = messages_pd.SimpleMessage
+    cls = messages.SimpleMessage
     descriptor = cls.__descriptor__
 
     def _fixture(self):
@@ -57,14 +58,15 @@ class TestMessageDescriptor(unittest.TestCase):
 
 
 class TestPolymorphicMessageDescriptor(unittest.TestCase):
-    descriptor = polymorphic_pd.Base.__descriptor__
+    descriptor = polymorphic.Base.__descriptor__
+
     def test_subtype(self):
         d = self.descriptor
 
-        assert d.subtype(polymorphic_pd.PolymorphicType.SUBTYPE) is polymorphic_pd.Subtype
-        assert d.subtype(polymorphic_pd.PolymorphicType.SUBTYPE2) is polymorphic_pd.Subtype2
-        assert d.subtype(polymorphic_pd.PolymorphicType.MULTILEVEL_SUBTYPE) \
-            is polymorphic_pd.MultiLevelSubtype
+        assert d.subtype(polymorphic.PolymorphicType.SUBTYPE) is polymorphic.Subtype
+        assert d.subtype(polymorphic.PolymorphicType.SUBTYPE2) is polymorphic.Subtype2
+        assert d.subtype(polymorphic.PolymorphicType.MULTILEVEL_SUBTYPE) \
+            is polymorphic.MultiLevelSubtype
 
     def test_parse_object(self):
         subtype_d = {'type': 'subtype', 'subfield': 'hello'}
@@ -72,13 +74,13 @@ class TestPolymorphicMessageDescriptor(unittest.TestCase):
         mlevel_subtype_d = {'type': 'multilevel_subtype', 'mfield': 'hello'}
 
         d = self.descriptor
-        assert d.parse_object(subtype_d) == polymorphic_pd.Subtype(subfield='hello')
-        assert d.parse_object(subtype2_d) == polymorphic_pd.Subtype2(subfield2='hello')
-        assert d.parse_object(mlevel_subtype_d) == polymorphic_pd.MultiLevelSubtype(mfield='hello')
+        assert d.parse_object(subtype_d) == polymorphic.Subtype(subfield='hello')
+        assert d.parse_object(subtype2_d) == polymorphic.Subtype2(subfield2='hello')
+        assert d.parse_object(mlevel_subtype_d) == polymorphic.MultiLevelSubtype(mfield='hello')
 
 
 class TestFieldDescriptor(unittest.TestCase):
-    cls = messages_pd.SimpleMessage
+    cls = messages.SimpleMessage
     descriptor = cls.__descriptor__
     field = descriptor.find_field('aString')
 
@@ -101,10 +103,10 @@ class TestFieldDescriptor(unittest.TestCase):
 
 
 class TestInterfaceDescriptor(unittest.TestCase):
-    descriptor = interfaces_pd.TestInterface.__descriptor__
+    descriptor = interfaces.TestInterface.__descriptor__
 
     def test_exc(self):
-        assert self.descriptor.exc is interfaces_pd.TestException.__descriptor__
+        assert self.descriptor.exc is interfaces.TestException.__descriptor__
 
     def test_methods(self):
         assert  len(self.descriptor.methods) == 9
@@ -179,7 +181,7 @@ class TestBoolDescriptor(unittest.TestCase):
 
 
 class TestEnumDescriptor(unittest.TestCase):
-    cls = messages_pd.TestEnum
+    cls = messages.TestEnum
     descriptor = cls.__descriptor__
 
     def test_parse(self):

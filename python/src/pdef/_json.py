@@ -9,7 +9,6 @@ def dumps(obj, indent=2):
     return json.dumps(obj, indent=indent, default=_default)
 
 
-
 def loads(s):
     '''Deserialize a string into a python object.'''
     return json.loads(s)

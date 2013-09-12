@@ -1,9 +1,9 @@
 # encoding: utf-8
 import unittest
-from mock import Mock
-from pdef import Proxy, Invocation, InvocationResult
-from pdef.test.messages_pd import SimpleMessage
-from pdef.test.interfaces_pd import TestInterface, TestException
+
+from pdef.classes import Proxy, Invocation, InvocationResult
+from pdef_tests.messages import SimpleMessage
+from pdef_tests.interfaces import TestInterface, TestException
 
 
 class TestMessage(unittest.TestCase):
@@ -45,45 +45,6 @@ class TestMessage(unittest.TestCase):
 
         msg1.aString = 'qwer'
         assert msg0 != msg1
-
-
-class TestProxy(unittest.TestCase):
-    def proxy(self):
-        return Proxy(TestInterface.__descriptor__, lambda invocation: InvocationResult(invocation))
-
-    def test_invoke_capture(self):
-        subproxy = self.proxy().interfaceMethod(1, 2)
-
-        invocation = subproxy._invocation
-        assert invocation.method.name == 'interfaceMethod'
-        assert invocation.args == {'a': 1, 'b': 2}
-
-    def test_invoke_capture_chain(self):
-        chain = self.proxy().interfaceMethod(1, 2).remoteMethod().to_chain()
-        invocation0 = chain[0]
-        invocation1 = chain[1]
-
-        assert invocation0.method.name == 'interfaceMethod'
-        assert invocation0.args == {'a': 1, 'b': 2}
-
-        assert invocation1.method.name == 'remoteMethod'
-        assert invocation1.args == {}
-
-    def test_invoke_handle_ok(self):
-        proxy = Proxy(TestInterface.__descriptor__, lambda inv: InvocationResult(3))
-        result = proxy.indexMethod(1, 2)
-
-        assert result == 3
-
-    def test_invoke_handle_exc(self):
-        exc = TestException('hello')
-        proxy = Proxy(TestInterface.__descriptor__, lambda inv: InvocationResult(exc, ok=False))
-
-        try:
-            proxy.indexMethod(1, 2)
-            assert False
-        except TestException, e:
-            assert e == exc
 
 
 class TestInvocation(unittest.TestCase):
@@ -165,3 +126,42 @@ class TestInvocation(unittest.TestCase):
 
         assert result.ok is False
         assert result.data == TestException('hello')
+
+
+class TestProxy(unittest.TestCase):
+    def proxy(self):
+        return Proxy(TestInterface.__descriptor__, lambda invocation: InvocationResult(invocation))
+
+    def test_invoke_capture(self):
+        subproxy = self.proxy().interfaceMethod(1, 2)
+
+        invocation = subproxy._invocation
+        assert invocation.method.name == 'interfaceMethod'
+        assert invocation.args == {'a': 1, 'b': 2}
+
+    def test_invoke_capture_chain(self):
+        chain = self.proxy().interfaceMethod(1, 2).remoteMethod().to_chain()
+        invocation0 = chain[0]
+        invocation1 = chain[1]
+
+        assert invocation0.method.name == 'interfaceMethod'
+        assert invocation0.args == {'a': 1, 'b': 2}
+
+        assert invocation1.method.name == 'remoteMethod'
+        assert invocation1.args == {}
+
+    def test_invoke_handle_ok(self):
+        proxy = Proxy(TestInterface.__descriptor__, lambda inv: InvocationResult(3))
+        result = proxy.indexMethod(1, 2)
+
+        assert result == 3
+
+    def test_invoke_handle_exc(self):
+        exc = TestException('hello')
+        proxy = Proxy(TestInterface.__descriptor__, lambda inv: InvocationResult(exc, ok=False))
+
+        try:
+            proxy.indexMethod(1, 2)
+            assert False
+        except TestException, e:
+            assert e == exc

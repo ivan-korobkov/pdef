@@ -5,8 +5,8 @@ import requests
 import urllib
 import urlparse
 
-import pdef
-from pdef.rpc_pd import *
+import pdef.classes
+from pdef_rpc import *
 
 
 GET = 'GET'
@@ -19,6 +19,35 @@ FORM_MIME_TYPE = 'application/x-www-form-urlencoded'
 
 JSON_CONTENT_TYPE = 'application/json; charset=utf-8'
 TEXT_CONTENT_TYPE = 'text/plain; charset=utf-8'
+
+
+def client(interface, url, session=None):
+    '''Create a REST client.'''
+    sender = client_sender(url, session=session)
+    handler = client_handler(sender)
+    return pdef.classes.proxy(interface, handler)
+
+
+def client_handler(sender):
+    '''Create a REST client handler.'''
+    return RestClientHandler(sender)
+
+
+def client_sender(url, session=None):
+    '''Create a REST client sender.'''
+    return RestClientSender(url, session=session)
+
+
+def server_handler(interface, service_or_supplier):
+    '''Create a REST server.'''
+    descriptor = interface.__descriptor__
+    return RestServerHandler(descriptor, service_or_supplier)
+
+
+def wsgi_server(interface, service_or_supplier):
+    '''Create a WSGI REST server.'''
+    server = server_handler(interface, service_or_supplier)
+    return WsgiRestServer(server)
 
 
 class RestRequest(object):
@@ -79,8 +108,8 @@ class RestResponse(object):
         return self.content_type.lower().startswith(TEXT_MIME_TYPE)
 
 
-class RestClient(object):
-    logger = logging.getLogger('pdef.rest.client')
+class RestClientHandler(object):
+    logger = logging.getLogger('pdef.rest.RestClientHandler')
 
     def __init__(self, sender=None):
         '''Create a rest client.'''
@@ -198,7 +227,7 @@ class RestClient(object):
             # Parse it using the invocation method result descriptor.
 
             r = invocation.result.parse_object(data)
-            return pdef.InvocationResult(r)
+            return pdef.classes.InvocationResult(r)
 
         elif status == RpcStatus.EXCEPTION:
             # It's an expected exception.
@@ -209,7 +238,7 @@ class RestClient(object):
                 raise ClientError('Unsupported application exception')
 
             r = exc.parse_object(data)
-            return pdef.InvocationResult(r, ok=False)
+            return pdef.classes.InvocationResult(r, ok=False)
 
         raise ClientError('Unsupported rpc response status=%s' % status)
 
@@ -237,7 +266,7 @@ class RestClient(object):
         raise ServerError('Server error, status=%s, text=%s' % (status, text))
 
 
-class RestClientRequestsSender(object):
+class RestClientSender(object):
     '''The requests-based sender for RestClient.'''
     def __init__(self, url, session=None):
         self.url = url
@@ -274,8 +303,8 @@ class RestClientRequestsSender(object):
         return url + path
 
 
-class RestServer(object):
-    logger = logging.getLogger('pdef.rest.server')
+class RestServerHandler(object):
+    logger = logging.getLogger('pdef.rest.RestServerHandler')
 
     def __init__(self, descriptor, service_or_callable):
         '''Create a WSGI server.'''
@@ -310,7 +339,7 @@ class RestServer(object):
         parts = path.split('/')
 
         descriptor = self.descriptor
-        invocation = pdef.Invocation.root()
+        invocation = pdef.classes.Invocation.root()
         while parts:
             part = parts.pop(0)
             # Find a method by a name or get an index method.

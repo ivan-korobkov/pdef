@@ -76,11 +76,11 @@ def _translate_to_python(package, out, python_modules=None):
     logging.info('\nTranslating to python...')
     t0 = time.time()
 
-    module_name_map = None
+    module_name_map = {}
     if python_modules:
         for m in python_modules:
             key, value = m.split(':')
-            module_name_map = {key: value}
+            module_name_map[key] = value
 
     translator = PythonTranslator(out, module_name_map)
     translator.translate(package)

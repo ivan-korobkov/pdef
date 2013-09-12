@@ -1,3 +1,5 @@
 #!/bin/bash
-pdefc -v --python src/ ../pdef/
-
+pdefc -v --python src/ \
+    --python-module=pdef.test:pdef_tests \
+    --python-module=pdef.rpc:pdef_rpc \
+    ../pdef/

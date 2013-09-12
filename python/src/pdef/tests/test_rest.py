@@ -6,20 +6,21 @@ from StringIO import StringIO
 from threading import Thread
 
 import pdef
-from pdef import descriptors, InvocationResult
+from pdef import descriptors
 from pdef.rest import *
-from pdef.test.messages_pd import SimpleMessage, SimpleForm
-from pdef.test.interfaces_pd import TestInterface, TestException, NextTestInterface
+from pdef.classes import InvocationResult
+from pdef_tests.messages import SimpleMessage, SimpleForm
+from pdef_tests.interfaces import TestInterface, TestException, NextTestInterface
 
 
-class TestRestClient(unittest.TestCase):
+class TestRestClientHandler(unittest.TestCase):
     # Fixture methods.
 
     def proxy(self):
         return pdef.proxy(TestInterface, lambda invocation: InvocationResult(invocation))
 
     def client(self):
-        return RestClient()
+        return RestClientHandler()
 
     def response(self, status_code, content=None, content_type=JSON_CONTENT_TYPE):
         return RestResponse(status_code, content=content, content_type=content_type)
@@ -186,10 +187,10 @@ class TestRestClient(unittest.TestCase):
         self.assertRaises(ServerError, self.client()._parse_raise_error, response)
 
 
-class TestRestServer(unittest.TestCase):
+class TestRestServerHandler(unittest.TestCase):
     def server(self):
         service = TestInterface()
-        return pdef.rest_server(TestInterface, service)
+        return server_handler(TestInterface, service)
 
     def proxy(self):
         return pdef.proxy(TestInterface, lambda invocation: InvocationResult(invocation))
@@ -206,7 +207,7 @@ class TestRestServer(unittest.TestCase):
                 return a + b
 
         request = self.get_request('/', query={'a': '1', 'b': '2'})
-        server = pdef.rest_server(TestInterface, Service)
+        server = server_handler(TestInterface, Service)
         response = server.handle(request)
 
         assert response.status == httplib.OK
@@ -462,7 +463,7 @@ class TestIntegration(unittest.TestCase):
 
     def client(self):
         url = 'http://localhost:%s/' % self.server.server_port
-        return pdef.rest_client(TestInterface, url)
+        return client(TestInterface, url)
 
     def test(self):
         client = self.client()

@@ -13,7 +13,7 @@ setup(
 
     package_dir={'': 'src'},
     packages=['pdef'],
+    py_modules=['pdef_rpc'],
 
-    scripts=['scripts/pdefc'],
     requires=['requests']
 )

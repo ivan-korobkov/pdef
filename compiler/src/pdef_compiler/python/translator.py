@@ -22,10 +22,23 @@ class PythonTranslator(AbstractTranslator):
         self.interface_template = self.read_template('interface.template')
 
     def translate(self, package):
-        pymodules = [PythonModule(module, self.mapper) for module in package.modules]
+        pymodules = self._convert_package(package)
+        tree = self._build_tree(pymodules)
+        tree.write(self)
+
+    def _convert_package(self, package):
+        return [PythonModule(module, self.mapper) for module in package.modules]
+
+    def _build_tree(self, pymodules):
+        root = DirectoryOrFile(self.out, is_root=True)
 
         for pm in pymodules:
-            self._write(pm)
+            node = root
+            for name in pm.name.split('.'):
+                node = node.child(name)
+            node.module = pm
+
+        return root
 
     def _write(self, pymodule):
         relpath = pymodule.name.replace('.', os.path.sep) + '.py'
@@ -38,8 +51,61 @@ class PythonTranslator(AbstractTranslator):
             logging.info('Created %s', relpath)
 
 
+class DirectoryOrFile(object):
+    def __init__(self, name, parent=None, is_root=False):
+        self.name = name
+        self.parent = parent
+        self.children = {}
+        self.is_directory = False
+        self.is_root = is_root
+
+        self.module = None
+
+    def child(self, name):
+        if name not in self.children:
+            node = DirectoryOrFile(name, parent=self)
+            self.children[name] = node
+            self.is_directory = True
+
+        return self.children[name]
+
+    @property
+    def dirpath(self):
+        if self.is_directory:
+            return os.path.join(self.parent.dirpath, self.name) if self.parent else self.name
+        return self.parent.dirpath if self.parent else ''
+
+    @property
+    def filepath(self):
+        if self.is_directory:
+            return os.path.join(self.dirpath, '__init__.py')
+        return os.path.join(self.dirpath, self.name + '.py')
+
+    def write(self, translator):
+        mkdir_p(self.dirpath)
+
+        if not self.is_root:
+            self._write_file(translator)
+
+        for child in self.children.values():
+            child.write(translator)
+
+    def _write_file(self, translator):
+        if self.module:
+            code = self.module.render(translator)
+        elif self.is_directory:
+            code = '# encoding: utf-8\n'
+        else:
+            raise AssertionError
+
+        filepath = self.filepath
+        with open(filepath, 'wt') as f:
+            f.write(code)
+            logging.info('Created %s', filepath)
+
+
 class PythonModule(object):
-    def __init__(self, module, mapper=None):
+    def __init__(self, module, mapper=None, generator=None):
         # Create a module local reference lookup, which correctly handles
         # when definitions are referenced inside declaring modules.
         ref = lambda def0: pyref(def0, module, mapper)
@@ -47,6 +113,7 @@ class PythonModule(object):
         self.name = mapper(module.name) if mapper else module.name
         self.imports = [pyimport(import0, mapper) for import0 in module.imports]
         self.definitions = [pydef(def0, ref) for def0 in module.definitions]
+        self.generator = generator
 
     def render(self, translator):
         defs = []

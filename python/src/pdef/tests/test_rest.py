@@ -1,14 +1,15 @@
 # encoding: utf-8
+import httplib
 import unittest
 import urllib
 from mock import Mock
 from StringIO import StringIO
 from threading import Thread
 
-import pdef
-from pdef import descriptors
+import pdef.invocation
+import pdef.descriptors
+import pdef.rest
 from pdef.rest import *
-from pdef.classes import InvocationResult
 from pdef_tests.messages import SimpleMessage, SimpleForm
 from pdef_tests.interfaces import TestInterface, TestException, NextTestInterface
 
@@ -17,10 +18,12 @@ class TestRestClientHandler(unittest.TestCase):
     # Fixture methods.
 
     def proxy(self):
-        return pdef.proxy(TestInterface, lambda invocation: InvocationResult(invocation))
+        handler = lambda inv: pdef.invocation.InvocationResult(inv)
+        return pdef.invocation.proxy(TestInterface, handler)
 
-    def client(self):
-        return RestClientHandler()
+    def handler(self):
+        sender = lambda inv: inv.InvocationResult(inv)
+        return pdef.rest.client_handler(sender)
 
     def response(self, status_code, content=None, content_type=JSON_CONTENT_TYPE):
         return RestResponse(status_code, content=content, content_type=content_type)
@@ -29,7 +32,7 @@ class TestRestClientHandler(unittest.TestCase):
 
     def test_create_request(self):
         invocation = self.proxy().indexMethod(a=1, b=2)
-        request = self.client()._create_request(invocation)
+        request = self.handler()._create_request(invocation)
 
         assert request.method == 'GET'
         assert request.path == '/'
@@ -38,7 +41,7 @@ class TestRestClientHandler(unittest.TestCase):
 
     def test_create_request__post(self):
         invocation = self.proxy().postMethod(aList=[1, 2, 3], aMap={1: 2})
-        request = self.client()._create_request(invocation)
+        request = self.handler()._create_request(invocation)
 
         assert request.method == 'POST'
         assert request.path == '/postMethod'
@@ -47,7 +50,7 @@ class TestRestClientHandler(unittest.TestCase):
 
     def test_create_request__chained_methods(self):
         invocation = self.proxy().interfaceMethod(1, 2).stringMethod('hello')
-        request = self.client()._create_request(invocation)
+        request = self.handler()._create_request(invocation)
 
         assert request.method == 'GET'
         assert request.path == '/interfaceMethod/1/2/stringMethod'
@@ -59,7 +62,7 @@ class TestRestClientHandler(unittest.TestCase):
     def test_serialize_invocation__index_method(self):
         request = RestRequest()
         invocation = self.proxy().indexMethod(a=1, b=2)
-        self.client()._serialize_invocation(invocation, request)
+        self.handler()._serialize_invocation(invocation, request)
 
         assert request.path == '/'
         assert request.query == {'a': '1', 'b': '2'}
@@ -68,7 +71,7 @@ class TestRestClientHandler(unittest.TestCase):
     def test_serialize_invocation__post_method(self):
         request = RestRequest()
         invocation = self.proxy().postMethod(aList=[1, 2, 3], aMap={1: 2})
-        self.client()._serialize_invocation(invocation, request)
+        self.handler()._serialize_invocation(invocation, request)
 
         assert request.path == '/postMethod'
         assert request.query == {}
@@ -77,7 +80,7 @@ class TestRestClientHandler(unittest.TestCase):
     def test_serialize_invocation__remote_method(self):
         request = RestRequest()
         invocation = self.proxy().remoteMethod(a=10, b=100)
-        self.client()._serialize_invocation(invocation, request)
+        self.handler()._serialize_invocation(invocation, request)
 
         assert request.path == '/remoteMethod'
         assert request.query == {'a': '10', 'b': '100'}
@@ -86,7 +89,7 @@ class TestRestClientHandler(unittest.TestCase):
     def test_serialize_invocation__interface_method(self):
         request = RestRequest()
         invocation = self.proxy().interfaceMethod(a=1, b=2)._invocation
-        self.client()._serialize_invocation(invocation, request)
+        self.handler()._serialize_invocation(invocation, request)
 
         assert request.path == '/interfaceMethod/1/2'
         assert request.query == {}
@@ -97,14 +100,14 @@ class TestRestClientHandler(unittest.TestCase):
     def test_serialize_positional_arg(self):
         arg = descriptors.arg('arg', lambda: descriptors.string)
 
-        value = self.client()._serialize_positional_arg(arg, u'Привет')
+        value = self.handler()._serialize_positional_arg(arg, u'Привет')
         assert value == '%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82'
 
     def test_serialize_query_arg(self):
         arg = descriptors.arg('arg', lambda: descriptors.int32)
 
         dst = {}
-        self.client()._serialize_query_arg(arg, 123, dst)
+        self.handler()._serialize_query_arg(arg, 123, dst)
         assert dst == {'arg': '123'}
 
     def test_serialize_query_arg__form(self):
@@ -112,32 +115,32 @@ class TestRestClientHandler(unittest.TestCase):
 
         dst = {}
         form = SimpleForm(text=u'Привет', numbers=[1, 2, 3], flag=False)
-        self.client()._serialize_query_arg(arg, form, dst)
+        self.handler()._serialize_query_arg(arg, form, dst)
 
         assert dst == {'text': u'Привет', 'numbers': '[1, 2, 3]', 'flag': 'false'}
 
     def test_serialize_arg_to_string__primitive(self):
         descriptor = descriptors.int32
-        result = self.client()._serialize_arg_to_string(descriptor, 123)
+        result = self.handler()._serialize_arg_to_string(descriptor, 123)
 
         assert result == '123'
 
     def test_serialize_arg_to_string__primitive_none_to_empty_string(self):
         descriptor = descriptors.int32
-        result = self.client()._serialize_arg_to_string(descriptor, None)
+        result = self.handler()._serialize_arg_to_string(descriptor, None)
 
         assert result == ''
 
     def test_serialize_arg_to_string__string(self):
         descriptor = descriptors.string
-        result = self.client()._serialize_arg_to_string(descriptor, u'привет+ромашки')
+        result = self.handler()._serialize_arg_to_string(descriptor, u'привет+ромашки')
 
         assert result == u'привет+ромашки'
 
     def test_serialize_arg_to_string__message(self):
         descriptor = SimpleMessage.__descriptor__
         msg = SimpleMessage(aString='hello', aBool=False, anInt16=256)
-        result = self.client()._serialize_arg_to_string(descriptor, msg)
+        result = self.handler()._serialize_arg_to_string(descriptor, msg)
 
         assert result == '{"aBool": false, "anInt16": 256, "aString": "hello"}'
 
@@ -149,7 +152,7 @@ class TestRestClientHandler(unittest.TestCase):
         response = self.response(200, text)
 
         invocation = self.proxy().messageMethod(msg)
-        result = self.client()._parse_result(response, invocation)
+        result = self.handler()._parse_result(response, invocation)
 
         assert result.ok
         assert result.data == msg
@@ -160,7 +163,7 @@ class TestRestClientHandler(unittest.TestCase):
         response = self.response(200, text)
 
         invocation = self.proxy().excMethod()
-        result = self.client()._parse_result(response, invocation)
+        result = self.handler()._parse_result(response, invocation)
 
         assert result.ok is False
         assert result.data == exc
@@ -169,31 +172,32 @@ class TestRestClientHandler(unittest.TestCase):
 
     def test_parse_response__empty_client_error(self):
         response = self.response(400)
-        self.assertRaises(ClientError, self.client()._parse_raise_error, response)
+        self.assertRaises(ClientError, self.handler()._parse_raise_error, response)
 
     def test_parse_response__empty_method_not_found(self):
         response = self.response(404)
-        self.assertRaises(MethodNotFoundError, self.client()._parse_raise_error, response)
+        self.assertRaises(MethodNotFoundError, self.handler()._parse_raise_error, response)
 
     def test_parse_response__empty_network_error(self):
         response = self.response(502)
-        self.assertRaises(ServiceUnavailableError, self.client()._parse_raise_error, response)
+        self.assertRaises(ServiceUnavailableError, self.handler()._parse_raise_error, response)
 
         response = self.response(503)
-        self.assertRaises(ServiceUnavailableError, self.client()._parse_raise_error, response)
+        self.assertRaises(ServiceUnavailableError, self.handler()._parse_raise_error, response)
 
     def test_parse_response__empty_server_error(self):
         response = self.response(500)
-        self.assertRaises(ServerError, self.client()._parse_raise_error, response)
+        self.assertRaises(ServerError, self.handler()._parse_raise_error, response)
 
 
 class TestRestServerHandler(unittest.TestCase):
     def server(self):
-        service = TestInterface()
-        return server_handler(TestInterface, service)
+        invoker = lambda inv: pdef.invocation.InvocationResult(inv)
+        return server_handler(TestInterface, invoker)
 
     def proxy(self):
-        return pdef.proxy(TestInterface, lambda invocation: InvocationResult(invocation))
+        handler = lambda inv: pdef.invocation.InvocationResult(inv)
+        return pdef.invocation.proxy(TestInterface, handler)
 
     def get_request(self, path, query=None, post=None):
         return RestRequest(GET, path, query=query, post=post)
@@ -207,7 +211,7 @@ class TestRestServerHandler(unittest.TestCase):
                 return a + b
 
         request = self.get_request('/', query={'a': '1', 'b': '2'})
-        server = server_handler(TestInterface, Service)
+        server = pdef.rest.server(TestInterface, Service)
         response = server.handle(request)
 
         assert response.status == httplib.OK
@@ -329,7 +333,7 @@ class TestRestServerHandler(unittest.TestCase):
         invocation = self.proxy().messageMethod()
 
         msg = SimpleMessage(aString=u'привет', aBool=False, anInt16=0)
-        result = InvocationResult(msg)
+        result = pdef.invocation.InvocationResult(msg)
         response = self.server()._ok_response(result, invocation)
 
         assert response.status == httplib.OK
@@ -340,7 +344,7 @@ class TestRestServerHandler(unittest.TestCase):
         invocation = self.proxy().excMethod()
 
         exc = TestException(u'Привет, мир')
-        result = InvocationResult(exc, ok=False)
+        result = pdef.invocation.InvocationResult(exc, ok=False)
         response = self.server()._ok_response(result, invocation)
 
         assert response.status == httplib.OK
@@ -448,7 +452,8 @@ class TestIntegration(unittest.TestCase):
     def setUp(self):
         from wsgiref.simple_server import make_server
         service = IntegrationService()
-        app = pdef.wsgi_server(TestInterface, service)
+        server = pdef.rest.server(TestInterface, service)
+        app = pdef.wsgi_server(server)
 
         self.server = make_server('localhost', 0, app)
         self.server_thread = Thread(target=self.server.serve_forever)

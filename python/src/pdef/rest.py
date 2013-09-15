@@ -1,11 +1,13 @@
 # encoding: utf-8
 import httplib
 import logging
-import requests
 import urllib
 import urlparse
 
+import requests
+
 import pdef.classes
+import pdef.invocation
 from pdef_rpc import *
 
 
@@ -22,10 +24,10 @@ TEXT_CONTENT_TYPE = 'text/plain; charset=utf-8'
 
 
 def client(interface, url, session=None):
-    '''Create a REST client.'''
+    '''Create a default REST client.'''
     sender = client_sender(url, session=session)
     handler = client_handler(sender)
-    return pdef.classes.proxy(interface, handler)
+    return pdef.invocation.proxy(interface, handler)
 
 
 def client_handler(sender):
@@ -38,16 +40,25 @@ def client_sender(url, session=None):
     return RestClientSender(url, session=session)
 
 
-def server_handler(interface, service_or_supplier):
-    '''Create a REST server.'''
+def server(interface, service_or_provider):
+    '''Create a default REST server.
+
+    @param interface:           An interface class with a __descriptor__ field.
+    @param service_or_provider: A service or a callable service provider.
+    '''
+    invoker = pdef.invocation.invoker(service_or_provider)
+    return server_handler(interface, invoker)
+
+
+def server_handler(interface, invoker):
+    '''Create a REST server handler.'''
     descriptor = interface.__descriptor__
-    return RestServerHandler(descriptor, service_or_supplier)
+    return RestServerHandler(descriptor, invoker)
 
 
-def wsgi_server(interface, service_or_supplier):
+def wsgi_server(rest_server):
     '''Create a WSGI REST server.'''
-    server = server_handler(interface, service_or_supplier)
-    return WsgiRestServer(server)
+    return WsgiRestServer(rest_server)
 
 
 class RestRequest(object):
@@ -111,7 +122,7 @@ class RestResponse(object):
 class RestClientHandler(object):
     logger = logging.getLogger('pdef.rest.RestClientHandler')
 
-    def __init__(self, sender=None):
+    def __init__(self, sender):
         '''Create a rest client.'''
         self.sender = sender
 
@@ -227,7 +238,7 @@ class RestClientHandler(object):
             # Parse it using the invocation method result descriptor.
 
             r = invocation.result.parse_object(data)
-            return pdef.classes.InvocationResult(r)
+            return pdef.invocation.InvocationResult(r)
 
         elif status == RpcStatus.EXCEPTION:
             # It's an expected exception.
@@ -238,7 +249,7 @@ class RestClientHandler(object):
                 raise ClientError('Unsupported application exception')
 
             r = exc.parse_object(data)
-            return pdef.classes.InvocationResult(r, ok=False)
+            return pdef.invocation.InvocationResult(r, ok=False)
 
         raise ClientError('Unsupported rpc response status=%s' % status)
 
@@ -306,11 +317,10 @@ class RestClientSender(object):
 class RestServerHandler(object):
     logger = logging.getLogger('pdef.rest.RestServerHandler')
 
-    def __init__(self, descriptor, service_or_callable):
+    def __init__(self, descriptor, invoker):
         '''Create a WSGI server.'''
         self.descriptor = descriptor
-        self.supplier = service_or_callable if callable(service_or_callable) \
-            else lambda: service_or_callable
+        self.invoker = invoker
 
     def __call__(self, request):
         return self.handle(request)
@@ -339,7 +349,7 @@ class RestServerHandler(object):
         parts = path.split('/')
 
         descriptor = self.descriptor
-        invocation = pdef.classes.Invocation.root()
+        invocation = pdef.invocation.Invocation.root()
         while parts:
             part = parts.pop(0)
             # Find a method by a name or get an index method.
@@ -426,9 +436,8 @@ class RestServerHandler(object):
         return descriptor.parse_json(value)
 
     def _invoke(self, invocation):
-        '''Invoke an invocation on a service.'''
-        service = self.supplier()
-        return invocation.invoke(service)
+        '''Invoke an invocation and return InvocationResult.'''
+        return self.invoker.invoke(invocation)
 
     def _ok_response(self, result, invocation):
         '''Create a successful REST response from an invocation result.'''
@@ -510,7 +519,7 @@ class WsgiRestServer(object):
     def _read_wsgi_query(self, env):
         q = urlparse.parse_qs(env['QUERY_STRING']) if 'QUERY_STRING' in env else {}
 
-        decode = lambda s: s.decode('utf-8')
+        decode = lambda s: s.decode(CHARSET)
         return {decode(k): decode(vv[0]) for k, vv in q.items()}
 
     def _read_wsgi_post(self, env):
@@ -523,7 +532,7 @@ class WsgiRestServer(object):
 
         post = urlparse.parse_qs(body) if body else {}
 
-        decode = lambda s: s.decode('utf-8')
+        decode = lambda s: s.decode(CHARSET)
         return {decode(k): decode(vv[0]) for k, vv in post.items()}
 
     def _read_wsgi_clength(self, env):

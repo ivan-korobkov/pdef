@@ -1,4 +1,4 @@
-package pdef;
+package pdef.invocation;
 
 /** Combines success and exception invocation results. */
 public class InvocationResult {

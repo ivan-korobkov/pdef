@@ -1,16 +1,21 @@
 package pdef;
 
 import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import pdef.descriptors.InterfaceDescriptor;
+import pdef.invocation.Invocation;
+import pdef.invocation.InvocationProxy;
+import pdef.invocation.InvocationResult;
 import pdef.rest.RestClientHandler;
 import pdef.rest.RestClientSender;
 import pdef.rest.RestRequest;
 import pdef.rest.RestResponse;
 
 import javax.annotation.Nullable;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Pdef client constructors. */
 public class Clients {
@@ -21,17 +26,14 @@ public class Clients {
 		checkNotNull(cls);
 		checkNotNull(url);
 
-		RestClientSender sender = sender(url, null);
-		RestClientHandler handler = handler(sender);
-		return client(cls, handler);
+		return client(cls, url, null);
 	}
 
 	/** Creates a default REST client with a custom session. */
 	public static <T> T client(final Class<T> cls, final String url,
-			final Function<Request, Response> session) {
+			@Nullable final Function<Request, Response> session) {
 		checkNotNull(cls);
 		checkNotNull(url);
-		checkNotNull(session);
 
 		RestClientSender sender = sender(url, session);
 		RestClientHandler handler = handler(sender);
@@ -47,20 +49,18 @@ public class Clients {
 		InterfaceDescriptor descriptor = InterfaceDescriptor.findDescriptor(cls);
 		checkArgument(descriptor != null, "Cannot find an interface descriptor in " + cls);
 
-		return ClientProxy.proxy(cls, descriptor, invocationHandler);
+		return InvocationProxy.create(cls, descriptor, invocationHandler);
 	}
 
 	/** Creates a REST client invocation handler with a custom sender. */
 	public static RestClientHandler handler(final Function<RestRequest, RestResponse> sender) {
 		checkNotNull(sender);
-
 		return new RestClientHandler(sender);
 	}
 
 	/** Creates a REST client sender. */
 	public static RestClientSender sender(final String url) {
 		checkNotNull(url);
-
 		return sender(url, null);
 	}
 
@@ -68,7 +68,6 @@ public class Clients {
 	public static RestClientSender sender(final String url,
 			@Nullable final Function<Request, Response> session) {
 		checkNotNull(url);
-
 		return new RestClientSender(url, session);
 	}
 }

@@ -1,4 +1,4 @@
-package pdef;
+package pdef.invocation;
 
 import static org.junit.Assert.*;
 import org.junit.Test;

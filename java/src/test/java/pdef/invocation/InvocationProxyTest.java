@@ -1,23 +1,24 @@
-package pdef;
+package pdef.invocation;
 
 import com.google.common.base.Function;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import static org.mockito.Matchers.any;
 import org.mockito.Mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import pdef.descriptors.MethodDescriptor;
 import pdef.test.interfaces.TestException;
 import pdef.test.interfaces.TestInterface;
 
 import java.util.List;
 
-public class ClientProxyTest {
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+public class InvocationProxyTest {
 	@Mock Function<Invocation, InvocationResult> handler;
 
 	@Before
@@ -77,7 +78,7 @@ public class ClientProxyTest {
 	}
 
 	private TestInterface createProxy() {
-		return ClientProxy.proxy(TestInterface.class, TestInterface.DESCRIPTOR, handler);
+		return InvocationProxy.create(TestInterface.class, TestInterface.DESCRIPTOR, handler);
 	}
 
 	private MethodDescriptor getIndexMethod() {

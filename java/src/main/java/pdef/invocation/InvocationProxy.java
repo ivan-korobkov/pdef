@@ -1,7 +1,6 @@
-package pdef;
+package pdef.invocation;
 
 import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
 import pdef.descriptors.InterfaceDescriptor;
 import pdef.descriptors.MethodDescriptor;
 
@@ -9,22 +8,16 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-class ClientProxy implements InvocationHandler {
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class InvocationProxy implements InvocationHandler {
 	private final InterfaceDescriptor descriptor;
 	private final Function<Invocation, InvocationResult> handler;
 	private final Invocation parent;
 
-	/** Creates a java proxy. */
-	static <T> T proxy(final Class<T> cls, final InterfaceDescriptor descriptor,
-			final Function<Invocation, InvocationResult> handler) {
-
-		ClientProxy clientProxy = create(cls, descriptor, handler);
-		Object proxy = clientProxy.toProxy();
-		return cls.cast(proxy);
-	}
-
-	/** Creates a client proxy instance. */
-	static <T> ClientProxy create(final Class<T> cls, final InterfaceDescriptor descriptor,
+	/** Creates a Java invocation proxy. */
+	public static <T> T create(final Class<T> cls, final InterfaceDescriptor descriptor,
 			final Function<Invocation, InvocationResult> handler) {
 		checkNotNull(cls);
 		checkNotNull(descriptor);
@@ -32,10 +25,12 @@ class ClientProxy implements InvocationHandler {
 		checkArgument(cls == descriptor.getCls(), "Class/descriptor do not match, %s, %s",
 				cls, descriptor);
 
-		return new ClientProxy(descriptor, handler, Invocation.root());
+		InvocationProxy invocationProxy = new InvocationProxy(descriptor, handler, Invocation.root());
+		Object proxy = invocationProxy.toProxy();
+		return cls.cast(proxy);
 	}
 
-	private ClientProxy(final InterfaceDescriptor descriptor,
+	private InvocationProxy(final InterfaceDescriptor descriptor,
 			final Function<Invocation, InvocationResult> handler,
 			final Invocation parent) {
 		this.descriptor = descriptor;
@@ -83,7 +78,7 @@ class ClientProxy implements InvocationHandler {
 
 	private Object nextProxy(final Invocation invocation) {
 		InterfaceDescriptor ndescriptor = (InterfaceDescriptor) invocation.getResult();
-		ClientProxy nproxy = new ClientProxy(ndescriptor, handler, invocation);
+		InvocationProxy nproxy = new InvocationProxy(ndescriptor, handler, invocation);
 		return nproxy.toProxy();
 	}
 }

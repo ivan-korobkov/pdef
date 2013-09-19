@@ -1,13 +1,17 @@
 package pdef;
 
 import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import pdef.invocation.Invocation;
+import pdef.invocation.InvocationResult;
+import pdef.invocation.Invoker;
 import pdef.rest.RestRequest;
 import pdef.rest.RestResponse;
 import pdef.rest.RestServer;
 import pdef.rest.RestServerHandler;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Pdef server constructors. */
 public class Servers {
@@ -34,7 +38,6 @@ public class Servers {
 	/** Creates a REST server with a custom handler. */
 	public static RestServer server(final Function<RestRequest, RestResponse> handler) {
 		checkNotNull(handler);
-
 		return new RestServer(handler);
 	}
 
@@ -43,14 +46,12 @@ public class Servers {
 			final Function<Invocation, InvocationResult> invoker) {
 		checkNotNull(cls);
 		checkNotNull(invoker);
-
 		return new RestServerHandler(cls, invoker);
 	}
 
 	/** Creates a service invoker. */
 	public static <T> Invoker<T> invoker(final Supplier<T> serviceSupplier) {
 		checkNotNull(serviceSupplier);
-
-		return new Invoker<T>(serviceSupplier);
+		return Invoker.of(serviceSupplier);
 	}
 }

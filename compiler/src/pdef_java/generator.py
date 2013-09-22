@@ -7,7 +7,7 @@ from pdef_compiler.translator import AbstractTranslator, upper_first, mkdir_p
 
 
 class JavaTranslator(AbstractTranslator):
-    def __init__(self, out):
+    def __init__(self, out, name_mapping=None):
         super(JavaTranslator, self).__init__(out)
 
         self.enum_template = self.read_template('enum.template')

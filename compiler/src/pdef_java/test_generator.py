@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
 from pdef_compiler.lang import *
-from pdef_compiler.java.translator import *
+from pdef_java.generator import *
 
 
 class TestJavaEnum(unittest.TestCase):

@@ -57,13 +57,13 @@ public class JsonTest {
 	@Test
 	public void testSerialize_map() throws Exception {
 		Map<?, ?> map = ImmutableMap.of("hello", "world", "float", 1.23d, "int", 123L);
-		String s = Json.serialize(map);
+		String s = Json.serialize(map, false);
 		assertEquals("{\"hello\":\"world\",\"float\":1.23,\"int\":123}", s);
 	}
 
 	@Test
 	public void testSerialize_array() throws Exception {
-		Object result = Json.serialize(ImmutableList.of(123L, 456L, 5.5d, "hello"));
+		Object result = Json.serialize(ImmutableList.of(123L, 456L, 5.5d, "hello"), false);
 		assertEquals("[123,456,5.5,\"hello\"]", result);
 	}
 
@@ -79,7 +79,7 @@ public class JsonTest {
 		map.put("object", ImmutableMap.of("emptyArray", ImmutableList.of()));
 		map.put("emptyObject", ImmutableMap.of());
 
-		String s = Json.serialize(ImmutableList.of(map));
+		String s = Json.serialize(ImmutableList.of(map), false);
 		String expected = "[{\"null\":null,\"true\":true,\"false\":false,\"string\":\"hello\","
 				+ "\"int\":123,\"float\":0.5,\"object\":{\"emptyArray\":[]},\"emptyObject\":{}}]";
 		assertEquals(expected, s);

@@ -12,10 +12,10 @@ setup(
     author_email='ivan.korobkov@gmail.com',
 
     package_dir={'': 'src'},
-    packages=['pdef_compiler', 'pdef_compiler.java', 'pdef_compiler.python'],
+    packages=['pdef_compiler', 'pdef_java', 'pdef_python'],
     package_data={
-        'pdef_compiler.java': ['*.template'],
-        'pdef_compiler.python': ['*.template']},
+        'pdef_java': ['*.template'],
+        'pdef_python': ['*.template']},
 
     scripts=['scripts/pdefc'],
     requires=['argparse', 'jinja2', 'ply']

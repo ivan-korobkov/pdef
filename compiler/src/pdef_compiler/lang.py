@@ -2,7 +2,7 @@
 import logging
 from collections import deque
 
-from pdef_compiler.exc import PdefCompilerException
+import pdef_compiler
 from pdef_compiler import parser, ast
 from pdef_compiler.preconditions import check_isinstance
 
@@ -28,7 +28,7 @@ class Type(object):
     OBJECT = 'object'
 
     # User defined data types.
-    DEFINITION = 'definition' # Abstract definition type, used in references.
+    DEFINITION = 'definition'  # Abstract definition type, used in references.
     ENUM = 'enum'
     ENUM_VALUE = 'enum_value'
     MESSAGE = 'message'
@@ -92,7 +92,7 @@ class Symbol(object):
 
     def _raise(self, msg, *args):
         msg = msg % args if msg else 'Error'
-        raise PdefCompilerException(msg)
+        raise pdef_compiler.CompilerException(msg)
 
     def _debug(self, msg, *args):
         logging.debug('  ' + msg, *args)

@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef_compiler.exc import PdefCompilerException
+import pdef_compiler
 
 
 def check_state(expr, msg=None, *args):
@@ -8,7 +8,7 @@ def check_state(expr, msg=None, *args):
         return True
 
     msg = msg % args if msg else 'Illegal state exception'
-    raise PdefCompilerException(msg)
+    raise pdef_compiler.CompilerException(msg)
 
 
 def check_isinstance(argument, class_or_type_or_typle, msg=None, *args):

@@ -2,7 +2,7 @@
 import mock
 import unittest
 
-from pdef_compiler import ast
+from pdef_compiler import ast, CompilerException
 from pdef_compiler.lang import *
 
 
@@ -111,7 +111,7 @@ class TestModule(unittest.TestCase):
         try:
             module.find_ref_or_raise(ast.EnumValueRef(ast.DefRef('Number'), 'One'))
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'not found' in e.message
 
     def test_find_ref__user_defined(self):
@@ -190,7 +190,7 @@ class TestModule(unittest.TestCase):
         try:
             module.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Duplicate definition' in e.message
 
     def test_add_definition__import_clash(self):
@@ -205,7 +205,7 @@ class TestModule(unittest.TestCase):
 
         try:
             module.validate()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Definition clashes with an import' in e.message
 
     def test_has_import_circle__true(self):
@@ -278,7 +278,7 @@ class TestDefinition(unittest.TestCase):
         try:
             def1._must_be_referenced_before(def0)
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'must be referenced before' in e.message
 
     def test_must_be_referenced_before__circular_import(self):
@@ -302,7 +302,7 @@ class TestDefinition(unittest.TestCase):
         try:
             def0._must_be_referenced_before(def1)
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'modules circularly import each other' in e.message
 
 
@@ -335,7 +335,7 @@ class TestEnum(unittest.TestCase):
 
         try:
             enum.validate()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Duplicate value' in e.message
 
 
@@ -462,7 +462,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Circular inheritance' in e.message
 
     def test_validate_base__circular_inheritance(self):
@@ -476,7 +476,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg0.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Circular inheritance' in e.message
 
     def test_validate_base__message_exception_clash(self):
@@ -489,7 +489,7 @@ class TestMessage(unittest.TestCase):
         try:
             exc.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Wrong base type (message/exc)' in e.message
 
     def test_validate_base__no_enum_value_for_discriminator(self):
@@ -507,7 +507,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Discriminator value required' in e.message
 
     def test_validate_base__base_does_not_have_discriminator(self):
@@ -522,7 +522,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Cannot set a discriminator value, the base does not have a discriminator' \
                 in e.message
 
@@ -539,7 +539,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'must be referenced before' in e.message
 
     def test_validate_fields__duplicate(self):
@@ -552,7 +552,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Duplicate field' in e.message
 
     def test_validate_fields__duplicate_inherited_field(self):
@@ -568,7 +568,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg1.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Duplicate field' in e.message
 
     def test_validate_fields__duplicate_discriminator(self):
@@ -582,7 +582,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Multiple discriminator fields' in e.message
 
     def test_validate_fields__duplicate_base_discriminator(self):
@@ -602,7 +602,7 @@ class TestMessage(unittest.TestCase):
         try:
             msg1.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Multiple discriminator fields' in e.message
 
 
@@ -633,7 +633,7 @@ class TestField(unittest.TestCase):
         try:
             field.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Field must be a data type' in e.message
 
     def test_validate__discriminator_must_be_enum(self):
@@ -650,7 +650,7 @@ class TestField(unittest.TestCase):
             field0.validate()
             field1.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Discriminator field must be an enum' in e.message
 
     def test_fullname(self):
@@ -733,7 +733,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Circular inheritance' in e.message
 
     def test_validate_base__circular_inheritance(self):
@@ -750,7 +750,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface2.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Circular inheritance' in e.message
 
     def test_validate_base__must_be_interface(self):
@@ -762,7 +762,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Base must be an interface' in e.message
 
     def test_validate_base__must_be_referenced_before(self):
@@ -779,7 +779,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'must be referenced before' in e.message
 
     def test_validate_exc__tries_to_throw_non_exception(self):
@@ -792,7 +792,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Wrong exception' in e.message
 
     def test_validate_methods__duplicates(self):
@@ -807,7 +807,7 @@ class TestInterface(unittest.TestCase):
         try:
             iface1.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Duplicate method' in e.message
 
 
@@ -851,7 +851,7 @@ class TestMethod(unittest.TestCase):
         try:
             method.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Only remote methods can be @post' in e.message
 
     def test_validate__form_field_clashes_with_arg(self):
@@ -865,7 +865,7 @@ class TestMethod(unittest.TestCase):
         method.link()
         try:
             method.validate()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Form fields clash with method args' in e.message
 
 
@@ -897,7 +897,7 @@ class TestList(unittest.TestCase):
 
         try:
             d.validate()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'List elements must be data types' in e.message
 
 
@@ -911,7 +911,7 @@ class TestSet(unittest.TestCase):
         try:
             d.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Set elements must be data types' in e.message
 
 
@@ -924,7 +924,7 @@ class TestMap(unittest.TestCase):
         try:
             d.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Map keys must be primitives' in e.message
 
     def test_value_datatype(self):
@@ -935,5 +935,5 @@ class TestMap(unittest.TestCase):
         try:
             d.validate()
             self.fail()
-        except PdefCompilerException, e:
+        except CompilerException, e:
             assert 'Map values must be data types' in e.message

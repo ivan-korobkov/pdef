@@ -3,7 +3,24 @@ import logging
 import os.path
 
 from pdef_compiler.lang import Type
+from pdef_compiler.generator import JinjaGenerator
 from pdef_compiler.translator import AbstractTranslator, upper_first, mkdir_p
+
+
+class JavaGenerator(JinjaGenerator):
+    def __init__(self, out, name_mapping=None):
+        super(JavaGenerator, self).__init__()
+
+        self.enum_template = self.read_template('enum.template')
+        self.message_template = self.read_template('message.template')
+        self.interface_template = self.read_template('interface.template')
+
+    def generate(self, package):
+        for module in package.modules:
+            jmodules = [self._jmodule(m) for m in package.modules]
+
+    def _jmodule(self, module):
+        pass
 
 
 class JavaTranslator(AbstractTranslator):
@@ -14,7 +31,7 @@ class JavaTranslator(AbstractTranslator):
         self.message_template = self.read_template('message.template')
         self.interface_template = self.read_template('interface.template')
 
-    def translate(self, package):
+    def translate(self, package, out, name_mapping=None):
         '''Translate package definitions and write them to files.'''
         for module in package.modules:
             for def0 in module.definitions:

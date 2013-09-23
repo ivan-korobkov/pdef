@@ -1,23 +1,20 @@
 # encoding: utf-8
-from pdef_compiler.generator import GeneratorCli as _GeneratorCli
-from pdef_java.generator import JavaTranslator
+from pdef_java.generator import JavaGenerator
+from pdef_compiler.generator import GeneratorModule
 
 
-class JavaGeneratorCli(_GeneratorCli):
-    def get_name(self):
-        return 'java'
-
-    def fill_arg_group(self, group):
+class JavaGeneratorModule(GeneratorModule):
+    def fill_cli_group(self, group):
+        '''Fill a java source code generator argparse group.'''
         group.add_argument('--java', help='output directory for java files')
         group.add_argument('--java-modules', dest='java_modules',
                            help='java package name mappings')
 
-    def generate(self, args, package):
-        out = args.java
-        mapping = args.java_modules
-        generator = JavaTranslator(out, mapping)
-        generator.translate(package)
+    def create_generator(self, out, name_mapping=None, **kwargs):
+        '''Create a java source code generator.'''
+        return JavaGenerator(out, name_mapping)
 
 
-def generator_cli():
-    return JavaGeneratorCli()
+def module():
+    '''Create a java generator module interface.'''
+    return JavaGeneratorModule()

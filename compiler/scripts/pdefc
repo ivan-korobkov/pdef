@@ -4,4 +4,4 @@ import pdef_compiler
 
 
 if __name__ == '__main__':
-    pdef_compiler.cli()
+    pdef_compiler.main()

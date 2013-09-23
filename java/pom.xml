@@ -135,6 +135,7 @@
 						<configuration>
 							<tasks>
 								<exec executable="pdefc" failonerror="true">
+									<arg value="generate" />
 									<arg value="--java=target/generated-sources/pdef" />
 									<arg value="../pdef/rpc.pdef" />
 								</exec>
@@ -151,6 +152,7 @@
 						<configuration>
 							<tasks>
 								<exec executable="pdefc" failonerror="true">
+									<arg value="generate" />
 									<arg value="--java=target/generated-test-sources/pdef" />
 									<arg value="../pdef/test" />
 								</exec>

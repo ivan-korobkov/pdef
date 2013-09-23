@@ -12,7 +12,7 @@ class TestJavaEnum(unittest.TestCase):
         module = Module('test.module')
         module.add_definition(enum)
 
-        translator = JavaTranslator('/tmp')
+        translator = JavaGenerator('/tmp')
         jenum = JavaEnum(enum, translator)
         assert jenum.code
 
@@ -43,7 +43,7 @@ class TestInterface(unittest.TestCase):
         module1 = Module('test.module1')
         module1.add_definition(iface)
 
-        translator = JavaTranslator('/tmp')
+        translator = JavaGenerator('/tmp')
         self.jiface = JavaInterface(iface, translator)
 
     def test(self):
@@ -75,7 +75,7 @@ class TestMessage(unittest.TestCase):
         module1 = Module('test.module1')
         module1.add_definition(msg)
 
-        translator = JavaTranslator('/tmp')
+        translator = JavaGenerator('/tmp')
         jmsg = JavaMessage(msg, translator)
         jbase = JavaMessage(base, translator)
         assert jbase.code
@@ -84,7 +84,7 @@ class TestMessage(unittest.TestCase):
 
 class TestRef(unittest.TestCase):
     def setUp(self):
-        self.translator = JavaTranslator('/tmp')
+        self.translator = JavaGenerator('/tmp')
 
     def test_list(self):
         obj = List(NativeTypes.INT32)

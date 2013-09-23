@@ -1,4 +1,4 @@
-module pdef.test.polymorphic;
+module pdef.test.inheritance;
 
 
 enum PolymorphicType {

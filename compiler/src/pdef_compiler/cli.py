@@ -73,4 +73,5 @@ def _generate(compiler, args):
 
     for gm in compiler.generator_modules:
         generator = gm.create_generator_from_cli_args(args)
-        generator.generate(package)
+        if generator:
+            generator.generate(package)

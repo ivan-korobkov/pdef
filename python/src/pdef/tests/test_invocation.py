@@ -2,7 +2,7 @@
 import unittest
 
 from pdef.invocation import *
-from pdef_tests.interfaces import TestInterface, TestException
+from pdef_test.interfaces import TestInterface, TestException
 
 
 class TestInvocation(unittest.TestCase):

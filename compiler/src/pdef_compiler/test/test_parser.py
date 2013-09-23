@@ -18,14 +18,14 @@ class TestParser(unittest.TestCase):
         path = self._filepath(filename)
         return parser.parse_file(path)
 
+    def test_parse__polymorphic_messages(self):
+        module = self._parse('fixtures/inheritance.pdef')
+        assert module.name == 'pdef.test.inheritance'
+
     def test_parse__messages(self):
         module = self._parse('fixtures/messages.pdef')
-        assert module.name == 'pdef.test.messages';
-
-    def test_parse__polymorphic_messages(self):
-        module = self._parse('fixtures/polimorphic.pdef')
-        assert module.name == 'pdef.test.polymorphic';
+        assert module.name == 'pdef.test.messages'
 
     def test_parse_interfaces(self):
         module = self._parse('fixtures/interfaces.pdef')
-        assert module.name == 'pdef.test.interfaces';
+        assert module.name == 'pdef.test.interfaces'

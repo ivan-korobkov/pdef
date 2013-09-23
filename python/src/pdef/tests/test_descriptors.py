@@ -3,7 +3,7 @@ import unittest
 from mock import Mock
 
 from pdef import descriptors
-from pdef_tests import messages, polymorphic, interfaces
+from pdef_test import messages, inheritance, interfaces
 
 
 class TestMessageDescriptor(unittest.TestCase):
@@ -58,15 +58,15 @@ class TestMessageDescriptor(unittest.TestCase):
 
 
 class TestPolymorphicMessageDescriptor(unittest.TestCase):
-    descriptor = polymorphic.Base.__descriptor__
+    descriptor = inheritance.Base.__descriptor__
 
     def test_subtype(self):
         d = self.descriptor
 
-        assert d.subtype(polymorphic.PolymorphicType.SUBTYPE) is polymorphic.Subtype
-        assert d.subtype(polymorphic.PolymorphicType.SUBTYPE2) is polymorphic.Subtype2
-        assert d.subtype(polymorphic.PolymorphicType.MULTILEVEL_SUBTYPE) \
-            is polymorphic.MultiLevelSubtype
+        assert d.subtype(inheritance.PolymorphicType.SUBTYPE) is inheritance.Subtype
+        assert d.subtype(inheritance.PolymorphicType.SUBTYPE2) is inheritance.Subtype2
+        assert d.subtype(inheritance.PolymorphicType.MULTILEVEL_SUBTYPE) \
+            is inheritance.MultiLevelSubtype
 
     def test_parse_object(self):
         subtype_d = {'type': 'subtype', 'subfield': 'hello'}
@@ -74,9 +74,9 @@ class TestPolymorphicMessageDescriptor(unittest.TestCase):
         mlevel_subtype_d = {'type': 'multilevel_subtype', 'mfield': 'hello'}
 
         d = self.descriptor
-        assert d.parse_object(subtype_d) == polymorphic.Subtype(subfield='hello')
-        assert d.parse_object(subtype2_d) == polymorphic.Subtype2(subfield2='hello')
-        assert d.parse_object(mlevel_subtype_d) == polymorphic.MultiLevelSubtype(mfield='hello')
+        assert d.parse_object(subtype_d) == inheritance.Subtype(subfield='hello')
+        assert d.parse_object(subtype2_d) == inheritance.Subtype2(subfield2='hello')
+        assert d.parse_object(mlevel_subtype_d) == inheritance.MultiLevelSubtype(mfield='hello')
 
 
 class TestFieldDescriptor(unittest.TestCase):

@@ -11,7 +11,7 @@ class PythonGeneratorModule(GeneratorModule):
                            help='python package name mappings')
 
     def create_generator_from_cli_args(self, args):
-        if not hasattr(args, 'python'):
+        if not args.python:
             return
 
         out, module_name_map = self._parse_cli_args(args)

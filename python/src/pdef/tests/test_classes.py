@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
 
-from pdef_tests.messages import SimpleMessage
+from pdef_test.messages import SimpleMessage
 
 
 class TestMessage(unittest.TestCase):

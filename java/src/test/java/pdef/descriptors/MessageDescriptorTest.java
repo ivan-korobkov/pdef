@@ -3,7 +3,7 @@ package pdef.descriptors;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 import pdef.test.messages.SimpleMessage;
-import pdef.test.polymorphic.*;
+import pdef.test.inheritance.*;
 
 import java.util.Map;
 

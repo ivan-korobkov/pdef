@@ -9,22 +9,6 @@ from pdef_compiler.generator import JinjaGenerator, upper_first, mkdir_p
 class JavaGenerator(JinjaGenerator):
     def __init__(self, out, name_mapping=None):
         super(JavaGenerator, self).__init__()
-
-        self.enum_template = self.read_template('enum.template')
-        self.message_template = self.read_template('message.template')
-        self.interface_template = self.read_template('interface.template')
-
-    def generate(self, package):
-        for module in package.modules:
-            jmodules = [self._jmodule(m) for m in package.modules]
-
-    def _jmodule(self, module):
-        pass
-
-
-class JavaTranslator(JinjaGenerator):
-    def __init__(self, out, name_mapping=None):
-        super(JavaTranslator, self).__init__()
         self.out = out
 
         self.enum_template = self.read_template('enum.template')

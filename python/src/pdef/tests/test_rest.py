@@ -10,8 +10,8 @@ import pdef.invocation
 import pdef.descriptors
 import pdef.rest
 from pdef.rest import *
-from pdef_tests.messages import SimpleMessage, SimpleForm
-from pdef_tests.interfaces import TestInterface, TestException, NextTestInterface
+from pdef_test.messages import SimpleMessage, SimpleForm
+from pdef_test.interfaces import TestInterface, TestException, NextTestInterface
 
 
 class TestRestClientHandler(unittest.TestCase):

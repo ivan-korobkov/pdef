@@ -386,10 +386,10 @@ class EnumDescriptor(PrimitiveDescriptor):
         return self.to_object(obj)
 
 
-class _ListDescriptor(DataTypeDescriptor):
+class ListDescriptor(DataTypeDescriptor):
     '''Internal list descriptor.'''
     def __init__(self, element):
-        super(_ListDescriptor, self).__init__(Type.LIST, lambda: list)
+        super(ListDescriptor, self).__init__(Type.LIST, lambda: list)
         self.element = element
 
     def __str__(self):
@@ -408,10 +408,10 @@ class _ListDescriptor(DataTypeDescriptor):
         return [self.element.to_object(e) for e in obj]
 
 
-class _SetDescriptor(DataTypeDescriptor):
+class SetDescriptor(DataTypeDescriptor):
     '''Internal set descriptor.'''
     def __init__(self, element):
-        super(_SetDescriptor, self).__init__(Type.SET, lambda: set)
+        super(SetDescriptor, self).__init__(Type.SET, lambda: set)
         self.element = element
 
     def __str__(self):
@@ -430,10 +430,10 @@ class _SetDescriptor(DataTypeDescriptor):
         return set(self.element.to_object(e) for e in obj)
 
 
-class _MapDescriptor(DataTypeDescriptor):
+class MapDescriptor(DataTypeDescriptor):
     '''Internal map/dict descriptor.'''
     def __init__(self, key, value):
-        super(_MapDescriptor, self).__init__(Type.MAP, lambda: dict)
+        super(MapDescriptor, self).__init__(Type.MAP, lambda: dict)
         self.key = key
         self.value = value
 
@@ -453,9 +453,9 @@ class _MapDescriptor(DataTypeDescriptor):
         return {self.key.to_object(k): self.value.to_object(v) for k, v in obj.items()}
 
 
-class _ObjectDescriptor(DataTypeDescriptor):
+class ObjectDescriptor(DataTypeDescriptor):
     def __init__(self):
-        super(_ObjectDescriptor, self).__init__(Type.OBJECT, lambda: object)
+        super(ObjectDescriptor, self).__init__(Type.OBJECT, lambda: object)
 
     def __str__(self):
         return 'object'
@@ -467,9 +467,9 @@ class _ObjectDescriptor(DataTypeDescriptor):
         return obj
 
 
-class _VoidDescriptor(DataTypeDescriptor):
+class VoidDescriptor(DataTypeDescriptor):
     def __init__(self):
-        super(_VoidDescriptor, self).__init__(Type.VOID, lambda: object)
+        super(VoidDescriptor, self).__init__(Type.VOID, lambda: object)
 
     def __str__(self):
         return 'void'
@@ -483,17 +483,17 @@ class _VoidDescriptor(DataTypeDescriptor):
 
 def list0(element):
     '''Create a list descriptor with an element descriptor.'''
-    return _ListDescriptor(element)
+    return ListDescriptor(element)
 
 
 def set0(element):
     '''Create a set descriptor with an element descriptor.'''
-    return _SetDescriptor(element)
+    return SetDescriptor(element)
 
 
 def map0(key, value):
     '''Create a map (dict) descriptor with key/value descriptors.'''
-    return _MapDescriptor(key, value)
+    return MapDescriptor(key, value)
 
 
 def message(pyclass_supplier,
@@ -547,5 +547,5 @@ int64 = PrimitiveDescriptor(Type.INT64, int)
 float0 = PrimitiveDescriptor(Type.FLOAT, float)
 double0 = PrimitiveDescriptor(Type.DOUBLE, float)
 string = StringDescriptor()
-object0 = _ObjectDescriptor()
-void = _VoidDescriptor()
+object0 = ObjectDescriptor()
+void = VoidDescriptor()

@@ -1,206 +1,76 @@
 package pdef.descriptors;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.Assert.*;
-
 public class DescriptorsTest {
-	@Test
-	public void testBoolParse() throws Exception {
-		Boolean value = (Boolean) Descriptors.bool.parseObject("true");
-		assert value;
+	private void testPrimitive(final PrimitiveDescriptor descriptor, final String stringToParse,
+			final Object expected, final String expectedString) {
+		assert descriptor.parseObject(stringToParse).equals(expected);
+		assert descriptor.parseObject(stringToParse).getClass() == expected.getClass();
+		assert descriptor.parseObject(expected).equals(expected);
+		assert descriptor.parseObject(expected).getClass() == expected.getClass();
+		assert descriptor.parseObject(null) == null;
+		assert descriptor.toString(null) == null;
+		assert descriptor.toString(expected).equals(expectedString);
 	}
 
 	@Test
-	public void testBoolParse_null() throws Exception {
-		Boolean value = (Boolean) Descriptors.bool.parseObject(null);
-		assert value == null;
+	public void testBool() throws Exception {
+		testPrimitive(Descriptors.bool, "TRUE", true, "true");
+		testPrimitive(Descriptors.bool, "False", false, "false");
 	}
 
 	@Test
-	public void testBoolSerialize() throws Exception {
-		String value = Descriptors.bool.toString(true);
-		assert "true".equals(value);
+	public void testInt16() throws Exception {
+		testPrimitive(Descriptors.int16, "16", (short) 16, "16");
 	}
 
 	@Test
-	public void testInt16Parse() throws Exception {
-		Short value = (Short) Descriptors.int16.parseObject("123");
-		assert (short) 123 == value;
+	public void testInt32() throws Exception {
+		testPrimitive(Descriptors.int32, "32", 32, "32");
 	}
 
 	@Test
-	public void testInt16Parse_number() throws Exception {
-		Short value = (Short) Descriptors.int16.parseObject(123);
-		assert (short) 123 == value;
+	public void testInt64() throws Exception {
+		testPrimitive(Descriptors.int64, "64", 64L, "64");
 	}
 
 	@Test
-	public void testInt16Parse_null() throws Exception {
-		Short value = (Short) Descriptors.int16.parseObject(null);
-		assert value == null;
+	public void testFloat() throws Exception {
+		testPrimitive(Descriptors.float0, "1.5", 1.5f, "1.5");
 	}
 
 	@Test
-	public void testInt16Serialize() throws Exception {
-		String value = Descriptors.int16.toString((short) 123);
-		assertEquals("123", value);
+	public void testDouble() throws Exception {
+		testPrimitive(Descriptors.double0, "2.5", 2.5d, "2.5");
+	}
+
+	private void testData(final DataDescriptor descriptor, final Object objectToParse,
+			final Object expected) {
+		assert descriptor.parseObject(objectToParse).equals(expected);
+		assert descriptor.parseObject(null) == null;
+		assert descriptor.toObject(null) == null;
+		assert descriptor.toObject(expected).equals(expected);
 	}
 
 	@Test
-	public void testInt32Parse() throws Exception {
-		Integer value = (Integer) Descriptors.int32.parseObject("123");
-		assert 123 == value;
+	public void testList() throws Exception {
+		DataDescriptor descriptor = Descriptors.list(Descriptors.int32);
+		testData(descriptor, ImmutableList.of("123", "456"), ImmutableList.of(123, 456));
 	}
 
 	@Test
-	public void testInt32Parse_number() throws Exception {
-		Integer value = (Integer) Descriptors.int32.parseObject((long) 123);
-		assert 123 == value;
+	public void testSet() throws Exception {
+		DataDescriptor descriptor = Descriptors.set(Descriptors.int32);
+		testData(descriptor, ImmutableSet.of("123", "456"), ImmutableSet.of(123, 456));
 	}
 
 	@Test
-	public void testInt32Parse_null() throws Exception {
-		Integer value = (Integer) Descriptors.int32.parseObject(null);
-		assert value == null;
-	}
-
-	@Test
-	public void testInt32Serialize() throws Exception {
-		String value = Descriptors.int32.toString(123);
-		assert "123".equals(value);
-	}
-
-	@Test
-	public void testInt64Parse() throws Exception {
-		Long value = (Long) Descriptors.int64.parseObject("123");
-		assert 123L == value;
-	}
-
-	@Test
-	public void testInt64Parse_number() throws Exception {
-		Long value = (Long) Descriptors.int64.parseObject((short) 123);
-		assert 123L == value;
-	}
-
-	@Test
-	public void testInt64Parse_null() throws Exception {
-		Long value = (Long) Descriptors.int64.parseObject(null);
-		assert value == null;
-	}
-
-	@Test
-	public void testInt64Serialize() throws Exception {
-		String value = Descriptors.int64.toString(123L);
-		assert "123".equals(value);
-	}
-
-	@Test
-	public void testFloatParse() throws Exception {
-		Float value = (Float) Descriptors.float0.parseObject("1.5");
-		assertEquals(1.5f, value, 1e-5);
-	}
-
-	@Test
-	public void testFloatParse_number() throws Exception {
-		Float value = (Float) Descriptors.float0.parseObject(123);
-		assertEquals(123f, value, 1e-5);
-	}
-
-	@Test
-	public void testFloatParse_null() throws Exception {
-		Float value = (Float) Descriptors.float0.parseObject(null);
-		assert value == null;
-	}
-
-	@Test
-	public void testFloatSerialize() throws Exception {
-		String value = Descriptors.float0.toString(1.5f);
-		assert "1.5".equals(value);
-	}
-
-	@Test
-	public void testDoubleParse() throws Exception {
-		Double value = (Double) Descriptors.double0.parseObject("0.5");
-		assertEquals(0.5d, value, 1e-5);
-	}
-
-	@Test
-	public void testDoubleParse_number() throws Exception {
-		Double value = (Double) Descriptors.double0.parseObject(123);
-		assertEquals(123d, value, 1e-5);
-	}
-
-	@Test
-	public void testDoubleParse_null() throws Exception {
-		Double value = (Double) Descriptors.double0.parseObject(null);
-		assert value == null;
-	}
-
-	@Test
-	public void testDoubleSerialize() throws Exception {
-		String value = Descriptors.double0.toString(0.5d);
-		assertEquals("0.5", value);
-	}
-
-	@Test
-	public void testList_serialize() throws Exception {
-		List<String> list = ImmutableList.of("hello", "world");
-		Object result = Descriptors.list(Descriptors.string).toObject(list);
-		assertEquals(list, result);
-		assertFalse(list == result);
-	}
-
-	@Test
-	public void testList_serializeNull() throws Exception {
-		Object result = Descriptors.list(Descriptors.string).toObject(null);
-		assertNull(result);
-	}
-
-	@Test
-	public void testList_parse() throws Exception {
-		Object list = ImmutableList.of("hello", "world");
-		List<?> result = (List<?>) Descriptors.list(Descriptors.string).parseObject(list);
-		assertEquals(list, result);
-		assertFalse(list == result);
-	}
-
-	@Test
-	public void testList_parseNull() throws Exception {
-		List<?> result = (List<?>) Descriptors.list(Descriptors.string).parseObject(null);
-		assertNull(result);
-	}
-
-	@Test
-	public void testSet_serialize() throws Exception {
-		Set<String> list = ImmutableSet.of("hello", "world");
-		Object result = Descriptors.set(Descriptors.string).toObject(list);
-		assertEquals(list, result);
-		assertFalse(list == result);
-	}
-
-	@Test
-	public void testSet_serializeNull() throws Exception {
-		Object result = Descriptors.set(Descriptors.string).toObject(null);
-		assertNull(result);
-	}
-
-	@Test
-	public void testSet_parse() throws Exception {
-		Object list = ImmutableSet.of("hello", "world");
-		Set<?> result = (Set<?>) Descriptors.set(Descriptors.string).parseObject(list);
-		assertEquals(list, result);
-		assertFalse(list == result);
-	}
-
-	@Test
-	public void testSet_parseNull() throws Exception {
-		Set<?> result = (Set<?>) Descriptors.set(Descriptors.string).parseObject(null);
-		assertNull(result);
+	public void testMap() throws Exception {
+		DataDescriptor descriptor = Descriptors.map(Descriptors.int32, Descriptors.int32);
+		testData(descriptor, ImmutableMap.of("123", "456"), ImmutableMap.of(123, 456));
 	}
 }

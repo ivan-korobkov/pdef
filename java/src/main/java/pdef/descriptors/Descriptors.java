@@ -18,7 +18,7 @@ public class Descriptors {
 		@Override
 		public Boolean parseObject(final Object o) {
 			if (o instanceof String) return parseString((String) o);
-			return o == null ? null : (Boolean) o;
+			return (Boolean) o;
 		}
 
 		@Override
@@ -35,13 +35,14 @@ public class Descriptors {
 	public static PrimitiveDescriptor int16 = new PrimitiveDescriptor(TypeEnum.INT16) {
 		@Override
 		public Short parseObject(final Object o) {
-			if (o instanceof  String ) return parseString((String) o);
-			return o == null ? null : ((Number) o).shortValue();
+			if (o instanceof String) return parseString((String) o);
+			return toObject(o);
 		}
 
 		@Override
 		public Short toObject(final Object o) {
-			return o == null ? null : ((Number) o).shortValue();
+			if (o == null) return null;
+			return o instanceof Short ? (Short) o : ((Number) o).shortValue();
 		}
 
 		@Override
@@ -54,12 +55,13 @@ public class Descriptors {
 		@Override
 		public Integer parseObject(final Object o) {
 			if (o instanceof String) return parseString((String) o);
-			return o == null ? null : ((Number) o).intValue();
+			return toObject(o);
 		}
 
 		@Override
 		public Integer toObject(final Object o) {
-			return o == null ? null : ((Number) o).intValue();
+			if (o == null) return null;
+			return o instanceof Integer ? (Integer) o : ((Number) o).intValue();
 		}
 
 		@Override
@@ -72,12 +74,13 @@ public class Descriptors {
 		@Override
 		public Long parseObject(final Object o) {
 			if (o instanceof String) return parseString((String) o);
-			return o == null ? null : ((Number) o).longValue();
+			return toObject(o);
 		}
 
 		@Override
 		public Long toObject(final Object o) {
-			return o == null ? null : ((Number) o).longValue();
+			if (o == null) return null;
+			return o instanceof Long ? (Long) o : ((Number) o).longValue();
 		}
 
 		@Override
@@ -90,12 +93,13 @@ public class Descriptors {
 		@Override
 		public Float parseObject(final Object o) {
 			if (o instanceof String) return parseString((String) o);
-			return o == null ? null : ((Number) o).floatValue();
+			return toObject(o);
 		}
 
 		@Override
 		public Float toObject(final Object o) {
-			return o == null ? null : ((Number) o).floatValue();
+			if (o == null) return null;
+			return o instanceof Float ? (Float) o : ((Number) o).floatValue();
 		}
 
 		@Override
@@ -108,12 +112,13 @@ public class Descriptors {
 		@Override
 		public Double parseObject(final Object o) {
 			if (o instanceof String) return parseString((String) o);
-			return o == null ? null : ((Number) o).doubleValue();
+			return toObject(o);
 		}
 
 		@Override
 		public Double toObject(final Object o) {
-			return o == null ? null : ((Number) o).doubleValue();
+			if (o == null) return null;
+			return o instanceof Double ? (Double) o : ((Number) o).doubleValue();
 		}
 
 		@Override

@@ -3,17 +3,13 @@ import logging
 import os.path
 
 from pdef_compiler.lang import Type
-from pdef_compiler.translator import AbstractTranslator, NameMapper, mkdir_p
+from pdef_compiler.generator import JinjaGenerator, NameMapper, mkdir_p
 
 
-def translate(out, package, module_name_map=None):
-    '''Translates a package into python code.'''
-    return PythonTranslator(out, module_name_map=module_name_map).translate(package)
-
-
-class PythonTranslator(AbstractTranslator):
+class PythonGenerator(JinjaGenerator):
     def __init__(self, out, module_name_map=None):
-        super(PythonTranslator, self).__init__(out)
+        super(PythonGenerator, self).__init__()
+        self.out = out
         self.mapper = NameMapper(module_name_map)
 
         self.module_template = self.read_template('module.template')
@@ -21,7 +17,7 @@ class PythonTranslator(AbstractTranslator):
         self.message_template = self.read_template('message.template')
         self.interface_template = self.read_template('interface.template')
 
-    def translate(self, package):
+    def generate(self, package):
         pymodules = self._convert_package(package)
         tree = self._build_tree(pymodules)
         tree.write(self)

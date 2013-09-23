@@ -72,6 +72,5 @@ def _generate(compiler, args):
     package = compiler.compile(paths)
 
     for gm in compiler.generator_modules:
-        kwargs = gm.parse_cli_args(args)
-        generator = gm.create_generator(**kwargs)
+        generator = gm.create_generator_from_cli_args(args)
         generator.generate(package)

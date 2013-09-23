@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
 from pdef_compiler.lang import *
-from pdef_python.translator import *
+from pdef_python.generator import *
 
 
 class TestPythonModule(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestPythonModule(unittest.TestCase):
         assert len(pymodule.definitions) == 3
 
     def test_code(self):
-        translator = PythonTranslator('/dev/null')
+        translator = PythonGenerator('/dev/null')
         pymodule = self.create()
         code = pymodule.render(translator)
         assert code
@@ -49,7 +49,7 @@ class TestPythonEnum(unittest.TestCase):
         assert pyenum.values == ['ONE', 'TWO', 'THREE']
 
     def test_render(self):
-        translator = PythonTranslator('/dev/null')
+        translator = PythonGenerator('/dev/null')
         pyenum = self.create()
         code = pyenum.render(translator)
         assert code
@@ -86,7 +86,7 @@ class TestPythonMessage(unittest.TestCase):
         assert len(pymsg.fields) == 2
 
     def test_render(self):
-        translator = PythonTranslator('/dev/null')
+        translator = PythonGenerator('/dev/null')
         pymsg = self.create()
         code = pymsg.render(translator)
         assert code
@@ -118,7 +118,7 @@ class TestPythonInterface(unittest.TestCase):
         assert len(pyiface.inherited_methods) == 1
 
     def test_render(self):
-        translator = PythonTranslator('/dev/null')
+        translator = PythonGenerator('/dev/null')
         pyiface = self.create()
         code = pyiface.render(translator)
         assert code

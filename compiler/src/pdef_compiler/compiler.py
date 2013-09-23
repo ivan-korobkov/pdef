@@ -2,7 +2,7 @@
 import logging
 import time
 
-from pdef_compiler import lang, generator
+from pdef_compiler import lang, generator, parser
 
 
 class Compiler(object):
@@ -32,7 +32,9 @@ class Compiler(object):
 
         package = lang.Package()
         for path in paths:
-            package.parse_path(path)
+            nodes = parser.parse_path(path)
+            for node in nodes:
+                package.parse_module(node)
 
         t = (time.time() - t0) * 1000
         logging.info('Parsed files in %dms', t)

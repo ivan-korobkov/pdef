@@ -3,7 +3,7 @@ import logging
 from collections import deque
 
 import pdef_compiler
-from pdef_compiler import parser, ast
+from pdef_compiler import ast
 from pdef_compiler.preconditions import check_isinstance
 
 
@@ -111,17 +111,11 @@ class Package(Symbol):
         self.modules.append(module)
         self._debug('Added a module %s', module)
 
-    def create_module(self, node):
+    def parse_module(self, node):
         '''Parse a module from an AST node, add it to this package, and return the module.'''
         module = Module.parse_node(node, self)
         self.add_module(module)
         return module
-
-    def parse_path(self, path):
-        '''Parse a module file, or all modules in a directory, add them to this package.'''
-        nodes = parser.parse_path(path)
-        for node in nodes:
-            self.create_module(node)
 
     def find_module_or_raise(self, name):
         '''Return a module by its name, or raise an exception.'''

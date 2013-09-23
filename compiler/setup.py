@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='pdef-compiler',
-    version='1.0-beta1',
+    version='1.0-dev',
     url='http://github.com/ivan-korobkov/pdef',
     description='Pdef compiler',
     license='Apache License 2.0',

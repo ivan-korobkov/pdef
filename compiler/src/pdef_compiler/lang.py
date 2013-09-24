@@ -42,6 +42,12 @@ class Type(object):
     DATA_TYPES = PRIMITIVES + (OBJECT, LIST, MAP, SET, DEFINITION, ENUM, MESSAGE, EXCEPTION)
 
 
+class Reference(object):
+    def __init__(self, node, module):
+        self.node = node
+        self.module = module
+
+
 class Symbol(object):
     '''Abstract base symbol.'''
     name = None
@@ -60,15 +66,6 @@ class Symbol(object):
     def fullname(self):
         return self.name
 
-    def link(self):
-        '''Links this symbol.'''
-        if self.linked:
-            return
-
-        self.linked = True
-        self._link()
-        self._debug('Linked %s', self)
-
     def validate(self):
         '''Validates this symbol.'''
         if self.validated:
@@ -78,9 +75,6 @@ class Symbol(object):
         self.validated = True
         self._validate()
         self._debug('Validated %s', self)
-
-    def _link(self):
-        pass
 
     def _validate(self):
         pass
@@ -128,14 +122,6 @@ class Package(Symbol):
     def find_module_or_raise_lazy(self, name):
         '''Return a lambda which lookups a module by name.'''
         return lambda: self.find_module_or_raise(name)
-
-    def _link(self):
-        '''Link the package.'''
-        for module in self.modules:
-            module.link_imports()
-
-        for module in self.modules:
-            module.link()
 
     def _validate(self):
         '''Validate the package.'''
@@ -212,23 +198,12 @@ class Module(Symbol):
         self.add_definition(definition)
 
     def find_definition(self, name):
-        '''Return a definition or an enum value by its name, or None.'''
-        def0 = None
+        '''Find a definition in this module by a name.'''
+        for d in self.definitions:
+            if d.name == name:
+                return d
 
-        if '.' not in name:
-            for d in self.definitions:
-                if d.name == name:
-                    def0 = d
-                    break
-        else:
-            # It must be an enum value
-            left, right = name.split('.', 1)
-
-            enum = self.find_definition(left)
-            if enum and enum.is_enum:
-                return enum.find_value(right)
-
-        return def0
+        return None
 
     def find_ref_or_raise(self, ref):
         '''Look up a definition by an AST reference node and link it.'''
@@ -239,71 +214,6 @@ class Module(Symbol):
 
         def0.link()
         return def0
-
-    def _find_ref(self, ref):
-        if isinstance(ref, ast.ValueRef):
-            # It's a simple value.
-            return NativeTypes.get_by_type(ref.type)
-
-        if isinstance(ref, ast.ListRef):
-            element = self.find_ref_or_raise(ref.element)
-            return List(element, module=self)
-
-        elif isinstance(ref, ast.SetRef):
-            element = self.find_ref_or_raise(ref.element)
-            return Set(element, module=self)
-
-        elif isinstance(ref, ast.MapRef):
-            key = self.find_ref_or_raise(ref.key)
-            value = self.find_ref_or_raise(ref.value)
-            return Map(key, value, module=self)
-
-        elif isinstance(ref, ast.EnumValueRef):
-            enum = self.find_ref_or_raise(ref.enum)
-            value = enum.find_value(ref.value)
-            return value
-
-        # It must be an import or a user defined type.
-        name = ref.name
-        if '.' not in name:
-            return self.find_definition(name)
-
-        # It can be an enum value or an imported type (i.e. import.module.Enum.Value).
-        left = []
-        right = name.split('.')
-        while right:
-            left.append(right.pop(0))
-            lname = '.'.join(left)
-            rname = '.'.join(right)
-
-            import0 = self.find_import(lname)
-            if import0:
-                return import0.module.find_definition(rname)
-
-            def0 = self.find_definition(name)
-            if def0:
-                return def0
-
-        return None
-
-    def find_ref_or_raise_lazy(self, ref):
-        '''Return a lambda for a lazy definition lookup.'''
-        check_isinstance(ref, ast.TypeRef)
-        return lambda: self.find_ref_or_raise(ref)
-
-    def link_imports(self):
-        '''Link imports, must be called before module.link().'''
-        for import0 in self.imports:
-            import0.link()
-
-        self.imports_linked = True
-
-    def _link(self):
-        '''Link imports and definitions.'''
-        self._check(self.imports_linked, 'Imports must be linked before the module, module%s', self)
-
-        for def0 in self.definitions:
-            def0.link()
 
     def _validate(self):
         '''Validate imports and definitions.'''
@@ -361,10 +271,6 @@ class Import(Symbol):
         self.name = name
         self.module = module
         self.linked = False
-
-    def _link(self):
-        self.module = self.module() if callable(self.module) else self.module
-        self._check(isinstance(self.module, Module), 'Import must be a module, import=%s', self)
 
 
 class Definition(Symbol):
@@ -613,21 +519,6 @@ class Message(Definition):
         if self.base:
             self.base._add_subtype(subtype)
 
-    def _link(self):
-        '''Link the base and the fields.'''
-        self.base = self.base() if callable(self.base) else self.base
-        self.discriminator_value = self.discriminator_value() \
-            if callable(self.discriminator_value) else self.discriminator_value
-
-        if self.base:
-            self.base.link()
-
-        if self.discriminator_value:
-            self.base._add_subtype(self)
-
-        for field in self.declared_fields:
-            field.link()
-
     def _validate(self):
         self._validate_base()
         self._validate_discriminator_value()
@@ -721,9 +612,6 @@ class Field(Symbol):
 
         return '%s.%s' % (self.message.fullname, self.name)
 
-    def _link(self):
-        self.type = self.type() if callable(self.type) else self.type
-
     def _validate(self):
         self._check(self.type.is_datatype, 'Field must be a data type, field=%s', self)
 
@@ -787,17 +675,6 @@ class Interface(Definition):
         '''Create a new method and add it to this interface.'''
         method = Method.parse_from(node, lookup)
         self.add_method(method)
-
-    def _link(self):
-        '''Link the base, the exception and the methods.'''
-        self.base = self.base() if callable(self.base) else self.base
-        if self.base:
-            self.base.link()
-
-        self.exc = self.exc() if callable(self.exc) else self.exc
-
-        for method in self.declared_methods:
-            method.link()
 
     def _validate(self):
         self._validate_base()
@@ -885,11 +762,6 @@ class Method(Symbol):
         arg = MethodArg.parse_from(node, lookup)
         return self.add_arg(arg)
 
-    def _link(self):
-        self.result = self.result() if callable(self.result) else self.result
-        for arg in self.args:
-            arg.link()
-
     def _validate(self):
         for arg in self.args:
             arg.validate()
@@ -926,9 +798,6 @@ class MethodArg(Symbol):
     def fullname(self):
         return '%s.%s' % (self.method, self.name)
 
-    def _link(self):
-        self.type = self.type() if callable(self.type) else self.type
-
     def _validate(self):
         self._check(self.type.is_datatype, 'Argument must be a data type, arg=%s', self)
 
@@ -939,9 +808,6 @@ class List(Definition):
         super(List, self).__init__(Type.LIST, 'list')
         self.element = element
         self.module = module
-
-    def _link(self):
-        self.element = self.element() if callable(self.element) else self.element
 
     def _validate(self):
         self._check(self.element.is_datatype, 'List elements must be data types, %s', self)
@@ -954,9 +820,6 @@ class Set(Definition):
         self.element = element
         self.module = module
 
-    def _link(self):
-        self.element = self.element() if callable(self.element) else self.element
-
     def _validate(self):
         self._check(self.element.is_datatype, 'Set elements must be data types, %s', self)
 
@@ -968,10 +831,6 @@ class Map(Definition):
         self.key = key
         self.value = value
         self.module = module
-
-    def _link(self):
-        self.key = self.key() if callable(self.key) else self.key
-        self.value = self.value() if callable(self.value) else self.value
 
     def _validate(self):
         self._check(self.key.is_primitive, 'Map keys must be primitives, %s', self)

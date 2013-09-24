@@ -130,15 +130,6 @@ class MapRef(TypeRef):
         return 'map<%s, %s>' % (self.key, self.value)
 
 
-class EnumValueRef(TypeRef):
-    def __init__(self, enum, value):
-        self.enum = enum
-        self.value = value
-
-    def __repr__(self):
-        return '%s.%s' % (self.enum, self.value)
-
-
 class DefRef(TypeRef):
     def __init__(self, name):
         self.name = name

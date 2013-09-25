@@ -3,13 +3,7 @@ from pdef_compiler import ast, lang
 
 
 class Lookup(object):
-    def find(self, ref):
-        assert ref.module, 'no module in a reference %s' % ref
-        assert isinstance(ref, lang.Reference)
-
-        return self._find(ref.node, ref.module)
-
-    def _find(self, node, module):
+    def find(self, node, module):
         if isinstance(node, ast.ValueRef):
             return self._find_value(node)
 
@@ -34,29 +28,28 @@ class Lookup(object):
         return None, [node.type]
 
     def _find_list(self, node, module):
-        element, errors = self._find(node.element, module)
+        element, errors = self.find(node.element, module)
         return lang.List(element, module=module), errors
 
     def _find_set(self, node, module):
-        element, errors = self._find(node.element, module)
+        element, errors = self.find(node.element, module)
         return lang.Set(element, module=module), errors
 
     def _find_map(self, node, module):
-        key, errors0 = self._find(node.key, module)
-        value, errors1 = self._find(node.value, module)
+        key, errors0 = self.find(node.key, module)
+        value, errors1 = self.find(node.value, module)
 
         return lang.Map(key, value, module=module), errors0 + errors1
-    
+
     def _find_definition(self, node, module):
         name = node.name
 
-        if '.' not in name:
-            def0 = self._get_definition_by_relative_name(name, module)
-            if def0:
-                return def0, []
+        # Try to find a definition in the current module.
+        def0 = self._get_definition_or_enum_value(name, module)
+        if def0:
+            return def0, []
 
-            return None, [name]
-
+        # It must be an imported definition.
         left = []
         right = name.split('.')
         while right:
@@ -64,12 +57,12 @@ class Lookup(object):
             lname = '.'.join(left)
             rname = '.'.join(right)
 
-            import0 = module.find_import(lname)
+            import0 = module.get_import(lname)
             if not import0:
                 continue
 
-            # It must be an imported definition.
-            def0 = self._get_definition_by_relative_name(rname, import0.module)
+            # Try to get a definition or an enum value from the imported module.
+            def0 = self._get_definition_or_enum_value(rname, import0.module)
             if def0:
                 return def0, []
 
@@ -79,26 +72,26 @@ class Lookup(object):
 
         return None, [name]
 
-    def _get_definition_by_relative_name(self, name, module):
-        '''Get a definition or an enum value by a relative name, or None.'''
+    def _get_definition_or_enum_value(self, name, module):
+        '''Get a definition or an enum value by a name.
+
+        @return A definition or an enum value or None.
+        '''
         if '.' not in name:
             # It must be a user-defined type.
-            return module.find_definition(name)
+            return module.get_definition(name)
 
-        # It must be an enum value.
+        # It can be an enum value.
         left, right = name.split('.', 1)
 
-        enum = self._get_definition_by_relative_name(left, module)
+        enum = self._get_definition_or_enum_value(left, module)
         if not enum or not enum.is_enum:
             return None
 
-        return enum._find_value(right)
+        return enum.get_value(right)
 
 
 class Linker(object):
-    def __init__(self):
-        pass
-
     def link(self, package):
         errors = []
 

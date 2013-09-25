@@ -171,8 +171,8 @@ class Module(Symbol):
         self.add_import(import0)
         return import0
 
-    def find_import(self, name):
-        '''Find an import by its name.'''
+    def get_import(self, name):
+        '''Get an import by a name.'''
         for import0 in self.imports:
             if import0.name == name:
                 return import0
@@ -197,23 +197,13 @@ class Module(Symbol):
         definition = Definition.parse_node(node, lookup=self.find_ref_or_raise_lazy)
         self.add_definition(definition)
 
-    def find_definition(self, name):
+    def get_definition(self, name):
         '''Find a definition in this module by a name.'''
         for d in self.definitions:
             if d.name == name:
                 return d
 
         return None
-
-    def find_ref_or_raise(self, ref):
-        '''Look up a definition by an AST reference node and link it.'''
-        check_isinstance(ref, ast.TypeRef)
-        def0 = self._find_ref(ref)
-        if not def0:
-            self._raise('Type is not found, module=%s, ref=%s', self, ref)
-
-        def0.link()
-        return def0
 
     def _validate(self):
         '''Validate imports and definitions.'''
@@ -403,7 +393,7 @@ class Enum(Definition):
         self.values.append(value)
         return value
 
-    def find_value(self, name):
+    def get_value(self, name):
         '''Get a value by its name or raise an exception.'''
         for value in self.values:
             if value.name == name:

@@ -34,7 +34,7 @@ class TestModule(unittest.TestCase):
         module = Module('module')
         module.add_import(import0)
 
-        assert module.find_import('imported')
+        assert module.get_import('imported')
 
     def test_add_definition(self):
         '''Should add a new definition to a module.'''
@@ -42,128 +42,16 @@ class TestModule(unittest.TestCase):
 
         module = Module('test')
         module.add_definition(def0)
-        assert module.find_definition('Test')
+        assert module.get_definition('Test')
 
-    def test_find_definition(self):
+    def test_get_definition(self):
         '''Should return a definition by its name.'''
         def0 = Definition(Type.DEFINITION, 'Test')
 
         module = Module('test')
         module.add_definition(def0)
 
-        assert def0 is module.find_definition('Test')
-
-    def test_find_definition__enum_value(self):
-        '''Should return an enum value by its name.'''
-        enum = Enum('Number')
-        one = enum.add_value('One')
-
-        module = Module('test')
-        module.add_definition(enum)
-
-        def0 = module.find_definition('Number.One')
-        assert def0 is one
-
-    def test_find_ref__native(self):
-        '''Should lookup a native type by its ref.'''
-        module = Module('test')
-        int64 = module.find_ref_or_raise(ast.ValueRef(Type.INT64))
-        assert int64 is NativeTypes.INT64
-
-    def test_find_ref__list(self):
-        '''Should create and link a list by its ref.'''
-        module = Module('test')
-        list0 = module.find_ref_or_raise(ast.ListRef(ast.ValueRef(Type.STRING)))
-        assert isinstance(list0, List)
-        assert list0.element is NativeTypes.STRING
-
-    def test_find_ref__set(self):
-        '''Should create and link a set by its ref.'''
-        module = Module('test')
-        set0 = module.find_ref_or_raise(ast.SetRef(ast.ValueRef(Type.FLOAT)))
-        assert isinstance(set0, Set)
-        assert set0.element is NativeTypes.FLOAT
-
-    def test_find_ref__map(self):
-        '''Should create and link a map by its ref.'''
-        module = Module('test')
-        map0 = module.find_ref_or_raise(ast.MapRef(ast.ValueRef(Type.STRING), ast.ValueRef(Type.INT32)))
-        assert isinstance(map0, Map)
-        assert map0.key is NativeTypes.STRING
-        assert map0.value is NativeTypes.INT32
-
-    def test_find_ref__enum_value(self):
-        '''Should look up an enum value.'''
-        enum = Enum('Number')
-        enum.add_value('One')
-
-        module = Module('test')
-        module.add_definition(enum)
-        one = module.find_ref_or_raise(ast.EnumValueRef(ast.DefRef('Number'), 'One'))
-        assert one is enum.find_value('One')
-
-    def test_find_ref__enum_value_not_present(self):
-        '''Should raise an error when an enum does not have a specified value.'''
-        enum = Enum('Number')
-        module = Module('test')
-        module.add_definition(enum)
-
-        try:
-            module.find_ref_or_raise(ast.EnumValueRef(ast.DefRef('Number'), 'One'))
-            self.fail()
-        except CompilerException, e:
-            assert 'not found' in e.message
-
-    def test_find_ref__user_defined(self):
-        '''Should look up a user-defined definition by its reference.'''
-        def0 = Definition(Type.DEFINITION, 'Test')
-
-        module = Module('test')
-        module.add_definition(def0)
-
-        ref = ast.DefRef('Test')
-        result = module.find_ref_or_raise(ref)
-        assert def0 is result
-
-    def test_find_ref___link(self):
-        '''Should look up a definition by its reference and link the definition.'''
-        def0 = Definition(Type.DEFINITION, 'Test')
-
-        module = Module('test')
-        module.add_definition(def0)
-
-        ref = ast.DefRef('Test')
-        result = module.find_ref_or_raise(ref)
-        assert result.linked
-
-    def test_find_ref__imported_type(self):
-        '''Should lookup an imported definition.'''
-        def0 = Definition(Type.DEFINITION, 'Test')
-
-        module0 = Module('test.module0')
-        module0.add_definition(def0)
-
-        module1 = Module('module1')
-        module1.create_import('test.module0', module0)
-
-        ref = ast.DefRef('test.module0.Test')
-        result = module1.find_ref_or_raise(ref)
-        assert result is def0
-
-    def test_find_ref__imported_enum_value(self):
-        '''Should lookup an imported enum value.'''
-        enum = Enum('Number')
-        one = enum.add_value('One')
-
-        module0 = Module('test.module0')
-        module0.add_definition(enum)
-
-        module1 = Module('module1')
-        module1.create_import('module0', module0)
-
-        ref = ast.DefRef('module0.Number.One')
-        result = module1.find_ref_or_raise(ref)
-        assert result is one
+        assert def0 is module.get_definition('Test')
 
     def test_link_imports(self):
         '''Should link module imports.'''
@@ -314,9 +202,9 @@ class TestEnum(unittest.TestCase):
 
         enum = Enum.parse_node(node, lookup)
         assert len(enum.values) == 3
-        assert enum.find_value('ONE')
-        assert enum.find_value('TWO')
-        assert enum.find_value('THREE')
+        assert enum.get_value('ONE')
+        assert enum.get_value('TWO')
+        assert enum.get_value('THREE')
 
     def test_add_value(self):
         '''Should add to enum a new value by its name.'''

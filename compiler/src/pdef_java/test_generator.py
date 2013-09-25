@@ -62,7 +62,7 @@ class TestMessage(unittest.TestCase):
         msg0 = Message('Message0')
 
         msg = Message('Message')
-        msg.set_base(base, enum.find_value('MSG'))
+        msg.set_base(base, enum.get_value('MSG'))
         msg.create_field('field2', NativeTypes.INT32)
         msg.create_field('field3', NativeTypes.STRING)
         msg.create_field('field4', msg0)

@@ -1,9 +1,22 @@
 # encoding: utf-8
-from pdef_compiler import ast, lang
+from pdef_compiler import ast, lang, CompilerException
+
+
+class LinkerException(CompilerException):
+    def __init__(self, errors=None):
+        super(LinkerException, self).__init__('Symbols not found')
+        self.errors = errors
 
 
 class Lookup(object):
     def find(self, node, module):
+        def0, errors = self._find(node, module)
+        if def0 and not errors:
+            return def0, []
+
+        return def0, ['%s: %s' % (node.location or 'nofile', e) for e in errors]
+
+    def _find(self, node, module):
         if node is None:
             raise ValueError('Node is None')
         if module is None:
@@ -110,6 +123,9 @@ class Linker(object):
             errors += self._link_module_defs(module)
 
         package.linked = True
+
+        if errors:
+            raise LinkerException(errors)
 
     # Modules.
 

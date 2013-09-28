@@ -115,6 +115,21 @@ class TestLinker(unittest.TestCase):
         assert package.linked
         assert package.get_module('module').linked
 
+    def test_link_package__errors(self):
+        module = Module('test')
+        msg = Message('Message')
+        msg.add_field(Field('field', Reference(ast.DefRef('test.Reference'), module)))
+        module.add_definition(msg)
+
+        package = Package()
+        package.add_module(module)
+
+        try:
+            self.linker.link_package(package)
+            self.fail()
+        except LinkerException as e:
+            assert e.errors == ['nofile: test.Reference']
+
     def test_link_imports(self):
         import0 = AbsoluteImport('imported')
 

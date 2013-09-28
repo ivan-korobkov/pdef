@@ -102,7 +102,7 @@ class MethodArg(object):
 
 
 class TypeRef(object):
-    pass
+    location = None
 
 
 class ListRef(TypeRef):

@@ -100,3 +100,125 @@ class TestLookup(unittest.TestCase):
         result, errors = self.lookup.find(ref, module1)
         assert result is one
         assert not errors
+
+
+class TestLinker(unittest.TestCase):
+    def setUp(self):
+        self.linker = Linker()
+
+    def test_link_package(self):
+        '''Should link modules in a package.'''
+        package = Package()
+        package.add_module(Module('module', package))
+
+        self.linker.link_package(package)
+        assert package.linked
+        assert package.get_module('module').linked
+
+    def test_link_imports(self):
+        raise AssertionError
+
+    def test_link_def__message(self):
+        '''Should init and link message base and fields.'''
+        base = Message('Base')
+
+        module = Module('test')
+        module.add_definition(base)
+
+        msg = Message('Msg')
+        msg.set_base(Reference(ast.DefRef('Base'), module))
+        field = msg.create_field('field', Reference(ast.ValueRef('string'), module))
+
+        self.linker._link_def(msg)
+        assert msg.base is base
+        assert field.type is NativeTypes.STRING
+
+    def test_link_message__base_with_type(self):
+        '''Should link message and add to it to its base subtypes.'''
+        enum = Enum('Type')
+        subtype = enum.add_value('SUBTYPE')
+
+        base = Message('Base')
+        base.create_field('type', enum, is_discriminator=True)
+
+        module = Module('test')
+        module.add_definitions(enum, base)
+
+        msg = Message('Msg')
+        msg.set_base(Reference(ast.DefRef('Base'), module),
+                     Reference(ast.DefRef('Type.SUBTYPE'), module))
+
+        self.linker._link_def(msg)
+        assert msg.base is base
+        assert msg.discriminator_value is subtype
+        assert msg in base.subtypes
+
+    def test_link_message__base_subtype_tree(self):
+        '''Should set a message base with a base type and add the message to the subtype tree.'''
+        enum = Enum('Type')
+        type0 = enum.add_value('Type0')
+        type1 = enum.add_value('Type1')
+
+        base = Message('Base')
+        base.create_field('type', enum, is_discriminator=True)
+
+        msg0 = Message('Msg0')
+        msg0.set_base(base, type0)
+
+        msg1 = Message('Msg1')
+        msg1.set_base(msg0, type1)
+
+        module = Module('test')
+        module.add_definitions(enum, base, msg0, msg1)
+
+        self.linker._link_def(msg1)
+        assert msg0.subtypes == [msg1]
+        assert base.subtypes == [msg0, msg1]
+
+    def test_link_field(self):
+        module = Module('test')
+        message = Message('Msg')
+        field = Field('field', Reference(ast.ValueRef(Type.INT32), module), message)
+
+        self.linker._link_field(field)
+        assert field.type is NativeTypes.INT32
+
+    def test_link_interface(self):
+        '''Should init and link interface base and declared methods.'''
+        base = Interface('Base')
+
+        module = Module('test')
+        module.add_definition(base)
+
+        iface = Interface('Iface')
+        iface.set_base(Reference(ast.DefRef('Base'), module))
+        method = iface.create_method('method', Reference(ast.ValueRef(Type.INT32), module))
+
+        self.linker._link_def(iface)
+        assert iface.base is base
+        assert [method] == iface.declared_methods
+        assert method.result is NativeTypes.INT32
+
+    def test_link_interface__exc(self):
+        '''Should link interface exception.'''
+        exc = Message('Exception', is_exception=True)
+
+        module = Module('test')
+        module.add_definition(exc)
+
+        iface = Interface('Interface')
+        iface.exc = Reference(ast.DefRef('Exception'), module)
+
+        self.linker._link_def(iface)
+        assert iface.exc is exc
+
+    def test_link_method(self):
+        module = Module('test')
+
+        method = Method('name', Reference(ast.ValueRef(Type.INT64), module))
+        arg = method.create_arg('arg', Reference(ast.ValueRef(Type.INT32), module))
+
+        self.linker._link_method(method)
+        assert method.result is NativeTypes.INT64
+        assert method.args == [arg]
+        assert arg.type is NativeTypes.INT32

@@ -4,6 +4,11 @@ from pdef_compiler import ast, lang
 
 class Lookup(object):
     def find(self, node, module):
+        if node is None:
+            raise ValueError('Node is None')
+        if module is None:
+            raise ValueError('Module is None')
+
         if isinstance(node, ast.ValueRef):
             return self._find_value(node)
 
@@ -92,7 +97,10 @@ class Lookup(object):
 
 
 class Linker(object):
-    def link(self, package):
+    def __init__(self):
+        self.lookup = Lookup()
+
+    def link_package(self, package):
         errors = []
 
         for module in package.modules:
@@ -100,6 +108,8 @@ class Linker(object):
 
         for module in package.modules:
             errors += self._link_module_defs(module)
+
+        package.linked = True
 
     # Modules.
 
@@ -130,6 +140,7 @@ class Linker(object):
         for def0 in module.definitions:
             errors += self._link_def(def0)
 
+        module.linked = True
         return errors
 
     # Definitions.
@@ -231,4 +242,7 @@ class Linker(object):
         return errors
 
     def _link_ref(self, ref):
-        return ref, []
+        if not isinstance(ref, lang.Reference):
+            return ref, []
+
+        return self.lookup.find(ref.node, ref.module)

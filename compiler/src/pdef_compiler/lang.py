@@ -111,17 +111,11 @@ class Package(Symbol):
         self.add_module(module)
         return module
 
-    def find_module_or_raise(self, name):
-        '''Return a module by its name, or raise an exception.'''
+    def get_module(self, name):
+        '''Return a module by its name.'''
         for module in self.modules:
             if module.name == name:
                 return module
-
-        self._raise('Module "%s" is not found', name)
-
-    def find_module_or_raise_lazy(self, name):
-        '''Return a lambda which lookups a module by name.'''
-        return lambda: self.find_module_or_raise(name)
 
     def _validate(self):
         '''Validate the package.'''

@@ -18,14 +18,6 @@ class TestPackage(unittest.TestCase):
 
         assert package.find_module_or_raise('module')
 
-    def test_link(self):
-        '''Should link modules in a package.'''
-        package = Package()
-        package.add_module(Module('module', package))
-        package.link()
-
-        assert package.find_module_or_raise('module').linked
-
 
 class TestModule(unittest.TestCase):
     def test_add_import(self):
@@ -280,67 +272,6 @@ class TestMessage(unittest.TestCase):
         assert msg0.fields == [type_field, field0]
         assert msg0.inherited_fields == [type_field]
 
-    def test_link(self):
-        '''Should init and link message base and fields.'''
-        base = Message('Base')
-
-        msg = Message('Msg')
-        msg.set_base(lambda: base)
-        field = msg.create_field('field', lambda: NativeTypes.STRING)
-        msg.link()
-
-        assert msg.base is base
-        assert field.type is NativeTypes.STRING
-
-    def test_link__base_with_type(self):
-        '''Should link message and add to it to its base subtypes.'''
-        enum = Enum('Type')
-        subtype = enum.add_value('SUBTYPE')
-
-        base = Message('Base')
-        base.create_field('type', enum, is_discriminator=True)
-
-        msg = Message('Msg')
-        msg.set_base(lambda: base, lambda: subtype)
-        msg.link()
-
-        assert msg in base.subtypes
-
-    def test_link_base__add_subtypes(self):
-        '''Should set a message base with a base type and add the message to the base subtypes.'''
-        enum = Enum('Type')
-        subtype = enum.add_value('SUBTYPE')
-
-        base = Message('Base')
-        base.create_field('type', enum, is_discriminator=True)
-
-        msg = Message('Msg')
-        msg.set_base(base, subtype)
-        msg.link()
-
-        assert msg.base is base
-        assert msg.discriminator_value is subtype
-        assert msg in base.subtypes
-
-    def test_link_base__subtype_tree(self):
-        '''Should set a message base with a base type and add the message to the subtype tree.'''
-        enum = Enum('Type')
-        type0 = enum.add_value('Type0')
-        type1 = enum.add_value('Type1')
-
-        base = Message('Base')
-        base.create_field('type', enum, is_discriminator=True)
-
-        msg0 = Message('Msg0')
-        msg0.set_base(base, type0)
-
-        msg1 = Message('Msg1')
-        msg1.set_base(msg0, type1)
-        msg1.link()
-
-        assert msg0.subtypes == [msg1]
-        assert base.subtypes == [msg0, msg1]
-
     def test_validate_base__self_inheritance(self):
         '''Should prevent self-inheritance.'''
         msg = Message('Msg')
@@ -504,13 +435,6 @@ class TestField(unittest.TestCase):
         assert field.is_discriminator
         lookup.assert_called_with(node.type)
 
-    def test_link(self):
-        message = mock.Mock()
-        field = Field('field', lambda: NativeTypes.INT32, message)
-        field.link()
-
-        assert field.type is NativeTypes.INT32
-
     def test_validate__must_be_datatype(self):
         '''Should prevent fields which are not data types.'''
         iface = Interface('Interface')
@@ -566,27 +490,6 @@ class TestInterface(unittest.TestCase):
         assert len(iface.declared_methods) == 1
         assert iface.declared_methods[0].name == 'echo'
         assert len(lookup.call_args_list) == 4
-
-    def test_link(self):
-        '''Should init and link interface base and declared methods.'''
-        base = Interface('Base')
-        iface = Interface('Iface')
-        iface.set_base(lambda: base)
-        method = iface.create_method('method', result=lambda : NativeTypes.INT32)
-        iface.link()
-
-        assert iface.base is base
-        assert [method] == iface.declared_methods
-        assert method.result is NativeTypes.INT32
-
-    def test_link_exc(self):
-        '''Should link interface exception.'''
-        exc = Message('Exception', is_exception=True)
-        iface = Interface('Interface')
-        iface.exc = lambda: exc
-
-        iface.link()
-        assert iface.exc is exc
 
     def test_methods(self):
         '''Should combine the inherited and declared methods.'''
@@ -710,16 +613,6 @@ class TestMethod(unittest.TestCase):
         assert method.result
         assert len(method.args) == 1
         assert method.args[0].name == 'arg0'
-
-    def test_link(self):
-        iface = mock.Mock()
-        method = Method('name', lambda: NativeTypes.INT32, iface)
-        arg = method.create_arg('arg', lambda: NativeTypes.INT64)
-        method.link()
-
-        assert method.result is NativeTypes.INT32
-        assert [arg] == method.args
-        assert arg.type is NativeTypes.INT64
 
     def test_fullname(self):
         method = Method('method', NativeTypes.INT32)

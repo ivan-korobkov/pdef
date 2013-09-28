@@ -102,14 +102,12 @@ class Package(Symbol):
 
     def add_module(self, module):
         '''Add a module to this package.'''
-        self.modules.append(module)
-        self._debug('Added a module %s', module)
+        if module.package:
+            raise ValueError('Module is already in a package, %s' % module)
 
-    def parse_module(self, node):
-        '''Parse a module from an AST node, add it to this package, and return the module.'''
-        module = Module.parse_node(node, self)
-        self.add_module(module)
-        return module
+        self.modules.append(module)
+        module.package = self
+        self._debug('Added a module %s', module)
 
     def get_module(self, name):
         '''Return a module by its name.'''
@@ -125,59 +123,43 @@ class Package(Symbol):
 
 class Module(Symbol):
     '''Module in a pdef package, usually, a module is parsed from one file.'''
-    @classmethod
-    def parse_node(cls, node, package):
-        '''Parse a module from an AST node.'''
-        module = Module(node.name, package)
-
-        for import0 in node.imports:
-            module.parse_import(import0, module_lookup=package.find_module_or_raise_lazy)
-
-        for def0 in node.definitions:
-            module.parse_definition(def0)
-
-        return module
-
     def __init__(self, name, package=None):
         self.name = name
         self.package = package
 
-        self.modules = []
         self.imports = []
+        self.imported_modules = []
         self.definitions = []
 
         self.imports_linked = False
 
     def add_import(self, import0):
         '''Add a module import to this module.'''
-        check_isinstance(import0, Import)
+        if import0.module:
+            raise ValueError('Import is already in a module, %s' % import0)
+
         self.imports.append(import0)
+        import0.module = self
 
-    def parse_import(self, node, module_lookup):
-        '''Parse an import and add it to this module.'''
-        imports = Import.parse_list_from_node(node, module_lookup=module_lookup)
-        for import0 in imports:
-            self.add_import(import0)
+    def add_imported_module(self, alias, module):
+        '''Add an imported module to this module.'''
+        imported = ImportedModule(alias, module)
+        self.imported_modules.append(imported)
+        return imported
 
-    def create_import(self, name, module):
-        '''Create an import and add it to this module.'''
-        import0 = Import(name, module)
-        self.add_import(import0)
-        return import0
-
-    def get_import(self, name):
-        '''Get an import by a name.'''
-        for import0 in self.imports:
-            if import0.name == name:
-                return import0
+    def get_imported_module(self, alias):
+        '''Find a module by its import alias.'''
+        for imported_module in self.imported_modules:
+            if imported_module.alias == alias:
+                return imported_module.module
 
     def add_definition(self, def0):
         '''Add a new definition to this module.'''
-        check_isinstance(def0, Definition)
-        self._check(def0.module is None, 'Definition is already in a module, def=%s,', def0)
+        if def0.module:
+            raise ValueError('Definition is already in a module, def=%s,' % def0)
 
-        def0.module = self
         self.definitions.append(def0)
+        def0.module = self
 
         self._debug('Added a definition, module=%s, def=%s', self, def0.name)
 
@@ -186,18 +168,11 @@ class Module(Symbol):
         for def0 in defs:
             self.add_definition(def0)
 
-    def parse_definition(self, node):
-        '''Parse a definition and add it to this module.'''
-        definition = Definition.parse_node(node, lookup=self.find_ref_or_raise_lazy)
-        self.add_definition(definition)
-
     def get_definition(self, name):
         '''Find a definition in this module by a name.'''
         for d in self.definitions:
             if d.name == name:
                 return d
-
-        return None
 
     def _validate(self):
         '''Validate imports and definitions.'''
@@ -236,25 +211,33 @@ class Module(Symbol):
         return False
 
 
-class Import(Symbol):
-    @classmethod
-    def parse_list_from_node(cls, node, module_lookup):
-        '''Parse a node and return a list of imports.'''
-        check_isinstance(node, ast.Import)
-        if isinstance(node, ast.AbsoluteImport):
-            return [Import(node.name, module_lookup(node.name))]
+class AbstractImport(object):
+    def __init__(self):
+        self.names = None
+        self.module = None
 
-        elif isinstance(node, ast.RelativeImport):
-            prefix = node.prefix
-            return [Import(name, module_lookup(prefix + '.' + name)) for name in node.names]
 
-        else:
-            raise ValueError('Unsupported import node %s' % node)
+class AbsoluteImport(AbstractImport):
+    def __init__(self, name):
+        super(AbsoluteImport, self).__init__()
 
-    def __init__(self, name, module):
         self.name = name
+        self.names = [name]
+
+
+class RelativeImport(AbstractImport):
+    def __init__(self, prefix, *relative_names):
+        super(RelativeImport, self).__init__()
+
+        self.prefix = prefix
+        self.relative_names = relative_names
+        self.names = tuple(prefix + '.' + name for name in relative_names)
+
+
+class ImportedModule(object):
+    def __init__(self, alias, module):
+        self.alias = alias
         self.module = module
-        self.linked = False
 
 
 class Definition(Symbol):

@@ -78,7 +78,7 @@ class TestLookup(unittest.TestCase):
         module0.add_definition(def0)
 
         module1 = Module('module1')
-        module1.create_import('test.module0', module0)
+        module1.add_imported_module('test.module0', module0)
 
         ref = ast.DefRef('test.module0.Test')
         result, errors = self.lookup.find(ref, module1)
@@ -94,7 +94,7 @@ class TestLookup(unittest.TestCase):
         module0.add_definition(enum)
 
         module1 = Module('module1')
-        module1.create_import('module0', module0)
+        module1.add_imported_module('module0', module0)
 
         ref = ast.DefRef('module0.Number.One')
         result, errors = self.lookup.find(ref, module1)
@@ -109,14 +109,57 @@ class TestLinker(unittest.TestCase):
     def test_link_package(self):
         '''Should link modules in a package.'''
         package = Package()
-        package.add_module(Module('module', package))
+        package.add_module(Module('module'))
 
         self.linker.link_package(package)
         assert package.linked
         assert package.get_module('module').linked
 
     def test_link_imports(self):
-        raise AssertionError
+        import0 = AbsoluteImport('imported')
+
+        module0 = Module('test')
+        module0.add_import(import0)
+        module1 = Module('imported')
+
+        package = Package()
+        package.add_module(module0)
+        package.add_module(module1)
+
+        self.linker._link_module_imports(module0)
+        assert module0.imports_linked
+        assert module0.imported_modules[0].module is module1
+
+    def test_link_import__absolute(self):
+        import0 = AbsoluteImport('test.module')
+
+        module = Module('test.module')
+        module.add_import(import0)
+
+        package = Package()
+        package.add_module(module)
+
+        imported_modules, errors = self.linker._link_import(import0)
+        assert imported_modules[0].module is module
+        assert errors == []
+
+    def test_link_import__relative(self):
+        import0 = RelativeImport('test', 'module0', 'module1')
+
+        module0 = Module('test.module0')
+        module1 = Module('test.module1')
+        module2 = Module('test.module2')
+        module2.add_import(import0)
+
+        package = Package()
+        package.add_module(module0)
+        package.add_module(module1)
+        package.add_module(module2)
+
+        imported_modules, errors = self.linker._link_import(import0)
+        assert imported_modules[0].module is module0
+        assert imported_modules[1].module is module1
+        assert errors == []
 
     def test_link_def__message(self):
         '''Should init and link message base and fields.'''

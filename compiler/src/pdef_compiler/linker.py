@@ -62,12 +62,12 @@ class Lookup(object):
             lname = '.'.join(left)
             rname = '.'.join(right)
 
-            import0 = module.get_import(lname)
-            if not import0:
+            imported_module = module.get_imported_module(lname)
+            if not imported_module:
                 continue
 
             # Try to get a definition or an enum value from the imported module.
-            def0 = self._get_definition_or_enum_value(rname, import0.module)
+            def0 = self._get_definition_or_enum_value(rname, imported_module)
             if def0:
                 return def0, []
 
@@ -118,18 +118,34 @@ class Linker(object):
         errors = []
 
         for import0 in module.imports:
-            errors += self._link_import(import0)
+            imported_modules, errors0 = self._link_import(import0)
+            module.imported_modules += imported_modules
+            errors += errors0
 
         module.imports_linked = True
         return errors
 
     def _link_import(self, import0):
-        import0.module, errors = self._link_module_ref(import0.module)
-        # self._check(isinstance(self.module, Module), 'Import must be a module, import=%s', self)
-        return errors
+        '''Link an import and return a tuple of imported modules and errors.'''
+        module = import0.module
+        if not module:
+            raise ValueError('Declaring module is None in %s' % import0)
 
-    def _link_module_ref(self, ref):
-        return ref, []
+        package = module.package
+        if not package:
+            raise ValueError('Declaring package is None in %s' % module)
+
+        errors = []
+        imodules = []
+
+        for name in import0.names:
+            imodule = package.get_module(name)
+            if imodule:
+                imodules.append(lang.ImportedModule(name, imodule))
+            else:
+                errors.append(name)
+
+        return imodules, errors
 
     def _link_module_defs(self, module):
         '''Link imports and definitions.'''

@@ -2,7 +2,7 @@
 import mock
 import unittest
 
-from pdef_compiler import ast, CompilerException
+from pdef_compiler import CompilerException
 from pdef_compiler.lang import *
 
 
@@ -30,7 +30,7 @@ class TestModule(unittest.TestCase):
 
     def test_add_definition(self):
         '''Should add a new definition to a module.'''
-        def0 = Definition(Type.DEFINITION, 'Test')
+        def0 = Definition(Type.REFERENCE, 'Test')
 
         module = Module('test')
         module.add_definition(def0)
@@ -38,7 +38,7 @@ class TestModule(unittest.TestCase):
 
     def test_get_definition(self):
         '''Should return a definition by its name.'''
-        def0 = Definition(Type.DEFINITION, 'Test')
+        def0 = Definition(Type.REFERENCE, 'Test')
 
         module = Module('test')
         module.add_definition(def0)
@@ -58,8 +58,8 @@ class TestModule(unittest.TestCase):
 
     def test_valid__duplicate_definition(self):
         '''Should prevent adding a duplicate definition to a module.'''
-        def0 = Definition(Type.DEFINITION, 'Test')
-        def1 = Definition(Type.DEFINITION, 'Test')
+        def0 = Definition(Type.REFERENCE, 'Test')
+        def1 = Definition(Type.REFERENCE, 'Test')
 
         module = Module('test')
         module.add_definition(def0)
@@ -78,7 +78,7 @@ class TestModule(unittest.TestCase):
         module = Module('test')
         module.create_import('clash.name', Module('imported'))
 
-        def0 = Definition(Type.DEFINITION, 'clash')
+        def0 = Definition(Type.REFERENCE, 'clash')
         module.add_definition(def0)
         module.link_imports()
         module.link()

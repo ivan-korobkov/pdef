@@ -2,10 +2,6 @@
 import logging
 from collections import deque
 
-import pdef_compiler
-from pdef_compiler import ast
-from pdef_compiler.preconditions import check_isinstance
-
 
 class Type(object):
     '''Pdef type enum.'''
@@ -28,7 +24,7 @@ class Type(object):
     OBJECT = 'object'
 
     # User defined data types.
-    DEFINITION = 'definition'  # Abstract definition type, used in references.
+    REFERENCE = 'reference'  # A special type.
     ENUM = 'enum'
     ENUM_VALUE = 'enum_value'
     MESSAGE = 'message'
@@ -39,63 +35,29 @@ class Type(object):
     VOID = 'void'
 
     PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
-    DATA_TYPES = PRIMITIVES + (OBJECT, LIST, MAP, SET, DEFINITION, ENUM, MESSAGE, EXCEPTION)
+    DATA_TYPES = PRIMITIVES + (OBJECT, LIST, MAP, SET, REFERENCE, ENUM, MESSAGE, EXCEPTION)
 
 
-class Reference(object):
-    def __init__(self, node, module):
-        self.node = node
-        self.module = module
-
-
-class Symbol(object):
-    '''Abstract base symbol.'''
-    name = None
-    doc = None
-
-    linked = False
-    validated = False
+class Location(object):
+    def __init__(self, path, line=0):
+        self.path = path
+        self.line = line
 
     def __str__(self):
-        return self.fullname
-
-    def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.name)
-
-    @property
-    def fullname(self):
-        return self.name
-
-    def validate(self):
-        '''Validates this symbol.'''
-        if self.validated:
-            return
-
-        self._check(self.linked, 'Symbol must be linked before validation, %s', self)
-        self.validated = True
-        self._validate()
-        self._debug('Validated %s', self)
-
-    def _validate(self):
-        pass
-
-    def _check(self, expression, msg, *args):
-        if expression:
-            return
-        self._raise(msg, *args)
-
-    def _raise(self, msg, *args):
-        msg = msg % args if msg else 'Error'
-        raise pdef_compiler.CompilerException(msg)
-
-    def _debug(self, msg, *args):
-        logging.debug('  ' + msg, *args)
+        s = self.path if self.path else 'nofile'
+        return '%s, line %s' % (s, self.line) if self.line else s
 
 
-class Package(Symbol):
+# === Packages and modules ===
+
+
+class Package(object):
     '''Protocol definition.'''
-    def __init__(self):
+    def __init__(self, modules=None):
         self.modules = []
+
+        if modules:
+            map(self.add_module, modules)
 
     def __str__(self):
         return 'package'
@@ -107,10 +69,11 @@ class Package(Symbol):
 
         self.modules.append(module)
         module.package = self
-        self._debug('Added a module %s', module)
+
+        logging.debug('%s: added a module %s', self, module)
 
     def get_module(self, name):
-        '''Return a module by its name.'''
+        '''Find a module by its name.'''
         for module in self.modules:
             if module.name == name:
                 return module
@@ -121,17 +84,21 @@ class Package(Symbol):
             module.validate()
 
 
-class Module(Symbol):
+class Module(object):
     '''Module in a pdef package, usually, a module is parsed from one file.'''
-    def __init__(self, name, package=None):
+    def __init__(self, name, imports=None, definitions=None):
         self.name = name
-        self.package = package
 
         self.imports = []
         self.imported_modules = []
         self.definitions = []
-
         self.imports_linked = False
+
+        if imports:
+            map(self.add_import, imports)
+
+        if definitions:
+            map(self.add_definition, definitions)
 
     def add_import(self, import0):
         '''Add a module import to this module.'''
@@ -161,7 +128,7 @@ class Module(Symbol):
         self.definitions.append(def0)
         def0.module = self
 
-        self._debug('Added a definition, module=%s, def=%s', self, def0.name)
+        logging.debug('%s: added a definition, def=%s', self, def0.name)
 
     def add_definitions(self, *defs):
         '''Add definitions to this module.'''
@@ -211,10 +178,13 @@ class Module(Symbol):
         return False
 
 
+# === Imports ===
+
+
 class AbstractImport(object):
     def __init__(self):
-        self.names = None
         self.module = None
+        self.module_names = ()
 
 
 class AbsoluteImport(AbstractImport):
@@ -222,49 +192,41 @@ class AbsoluteImport(AbstractImport):
         super(AbsoluteImport, self).__init__()
 
         self.name = name
-        self.names = [name]
+        self.module_names = (name,)
 
 
 class RelativeImport(AbstractImport):
-    def __init__(self, prefix, *relative_names):
+    def __init__(self, prefix, relative_names):
         super(RelativeImport, self).__init__()
 
         self.prefix = prefix
         self.relative_names = relative_names
-        self.names = tuple(prefix + '.' + name for name in relative_names)
+        self.module_names = tuple(prefix + '.' + name for name in relative_names)
 
 
 class ImportedModule(object):
+    '''Alias/module pair, i.e. from package.module import submodule.'''
     def __init__(self, alias, module):
         self.alias = alias
         self.module = module
 
 
-class Definition(Symbol):
+# === Definitions ===
+
+
+class Definition(object):
     '''Base definition.'''
-    @classmethod
-    def parse_node(cls, node, lookup):
-        '''Create a definition from an AST node.'''
-        if isinstance(node, ast.Enum):
-            return Enum.parse_node(node, lookup)
-
-        elif isinstance(node, ast.Message):
-            return Message.parse_node(node, lookup)
-
-        elif isinstance(node, ast.Interface):
-            return Interface.parse_node(node, lookup)
-
-        raise ValueError('Unsupported definition node %s' % node)
-
+    linked = False
+    location = None
     is_exception = False  # The flag is set in a message constructor.
 
-    def __init__(self, type0, name, doc=None):
+    def __init__(self, type0, name, doc=None, location=None):
         self.type = type0
         self.name = name
         self.doc = doc
+        self.location = location
 
         self.module = None
-        self.linked = False
 
         self.is_primitive = self.type in Type.PRIMITIVES
         self.is_datatype = self.type in Type.DATA_TYPES
@@ -272,7 +234,6 @@ class Definition(Symbol):
         self.is_message = self.type == Type.MESSAGE
 
         self.is_enum = self.type == Type.ENUM
-        self.is_enum_value = self.type == Type.ENUM_VALUE
 
         self.is_list = self.type == Type.LIST
         self.is_set = self.type == Type.SET
@@ -280,6 +241,9 @@ class Definition(Symbol):
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.fullname)
+
+    def __str__(self):
+        return self.name
 
     @property
     def fullname(self):
@@ -318,7 +282,6 @@ class NativeType(Definition):
     '''Native type definition, i.e. it defines a native language type such as string, int, etc.'''
     def __init__(self, type0):
         super(NativeType, self).__init__(type0, type0)
-        self.type = type0
 
 
 class NativeTypes(object):
@@ -349,20 +312,17 @@ class NativeTypes(object):
         return cls._BY_TYPE.get(t)
 
 
+# === Enums ===
+
+
 class Enum(Definition):
     '''Enum definition.'''
-    @classmethod
-    def parse_node(cls, node, lookup):
-        '''Creates an enum from an AST node.'''
-        check_isinstance(node, ast.Enum)
-        enum = Enum(node.name)
-        for n in node.values:
-            enum.add_value(n)
-        return enum
-
-    def __init__(self, name):
+    def __init__(self, name, values=None):
         super(Enum, self).__init__(Type.ENUM, name)
         self.values = []
+
+        if values:
+            map(self.add_value, values)
 
     def add_value(self, name):
         '''Create a new enum value by its name, add it to this enum, and return it.'''
@@ -386,42 +346,34 @@ class Enum(Definition):
             names.add(value.name)
 
 
-class EnumValue(Definition):
+class EnumValue(object):
     '''Single enum value which has a name and a pointer to the declaring enum.'''
     def __init__(self, enum, name):
-        super(EnumValue, self).__init__(Type.ENUM_VALUE, name)
         self.enum = enum
         self.name = name
 
 
+# === Messages and fields ===
+
+
 class Message(Definition):
     '''User-defined message.'''
-    @classmethod
-    def parse_node(cls, node, lookup):
-        '''Create a message from an AST node.'''
-        check_isinstance(node, ast.Message)
+    def __init__(self, name, base=None, discriminator_value=None, declared_fields=None,
+                 is_exception=False, is_form=False, doc=None, location=None):
+        super(Message, self).__init__(Type.MESSAGE, name, doc=doc, location=location)
 
-        message = Message(node.name, is_exception=node.is_exception, doc=node.doc,
-                          is_form=node.is_form)
-        message.base = lookup(node.base) if node.base else None
-        message.discriminator_value = lookup(node.discriminator_value) \
-            if node.discriminator_value else None
+        self.base = base
+        self.discriminator_value = discriminator_value  # Enum value.
+        self._discriminator = None  # Discriminator field, self.discriminator is a property.
 
-        for n in node.fields:
-            message.parse_field(n, lookup)
-        return message
-
-    def __init__(self, name, is_exception=False, doc=None, is_form=False):
-        super(Message, self).__init__(Type.MESSAGE, name, doc=doc)
-        self.is_exception = is_exception
-
-        self.base = None
-        self._discriminator = None       # Discriminator field, self.discriminator is a property.
-        self.discriminator_value = None  # Enum value.
         self.subtypes = []
+        self.declared_fields = []
 
         self.is_form = is_form
-        self.declared_fields = []
+        self.is_exception = is_exception
+
+        if declared_fields:
+            map(self.add_field, declared_fields)
 
     @property
     def discriminator(self):
@@ -445,17 +397,10 @@ class Message(Definition):
 
         return self.base.fields
 
-    def set_base(self, base, discriminator_value=None):
-        '''Set this message base and polymorphic base type.'''
-        self.base = base
-        self.discriminator_value = discriminator_value
-        self._debug('Set base, message=%s, base=%s, discriminator_value=%s',
-                    self, base, discriminator_value)
-
     def add_field(self, field):
         '''Add a new field to this message and return the field.'''
-        check_isinstance(field, Field)
-        self._check(field.message is None, 'Field is already in a message, field=%s', field)
+        if field.message:
+            raise ValueError('Field is already in a message, %s' % file)
 
         self.declared_fields.append(field)
         field.message = self
@@ -463,7 +408,7 @@ class Message(Definition):
         if field.is_discriminator:
             self._discriminator = field
 
-        self._debug('Added a field, message=%s, field=%s', self, field.name)
+        logging.debug('%s: added a field, field=%s', self, field.name)
         return field
 
     def create_field(self, name, definition, is_discriminator=False):
@@ -471,14 +416,11 @@ class Message(Definition):
         field = Field(name, definition, is_discriminator=is_discriminator)
         return self.add_field(field)
 
-    def parse_field(self, node, lookup):
-        '''Parse an AST node, add a new field to this message, and return the field.'''
-        field = Field.parse_node(node, lookup=lookup)
-        return self.add_field(field)
-
     def _add_subtype(self, subtype):
         '''Add a new subtype to this message.'''
-        check_isinstance(subtype, Message)
+        if not isinstance(subtype, Message):
+            raise ValueError('Must be a message instance, %r'  % subtype)
+
         if subtype is self:
             return
 
@@ -555,22 +497,13 @@ class Message(Definition):
                 discriminator = field
 
 
-class Field(Symbol):
+class Field(object):
     '''Single message field.'''
-    @classmethod
-    def parse_node(cls, node, lookup):
-        '''Create a field from an AST node.'''
-        check_isinstance(node, ast.Field)
-        type0 = lookup(node.type)
-        return Field(node.name, type0, is_discriminator=node.is_discriminator,
-                     is_query=node.is_query)
-
-    def __init__(self, name, type0, message=None, is_discriminator=False, is_query=False):
+    def __init__(self, name, type0, is_discriminator=False):
         self.name = name
         self.type = type0
         self.is_discriminator = is_discriminator
-        self.is_query = is_query
-        self.message = message
+        self.message = None
 
     @property
     def fullname(self):
@@ -586,25 +519,19 @@ class Field(Symbol):
             self._check(self.type.is_enum, 'Discriminator field must be an enum, field=%s', self)
 
 
+# === Interfaces and methods ===
+
+
 class Interface(Definition):
     '''User-defined interface.'''
-    @classmethod
-    def parse_node(cls, node, lookup):
-        check_isinstance(node, ast.Interface)
-        iface = Interface(node.name, doc=node.doc)
-        iface.base = lookup(node.base) if node.base else None
-        iface.exc = lookup(node.exc) if node.exc else None
-
-        for mnode in node.methods:
-            iface.parse_method(mnode, lookup)
-
-        return iface
-
-    def __init__(self, name, base=None, exc=None, doc=None):
-        super(Interface, self).__init__(Type.INTERFACE, name, doc=doc)
+    def __init__(self, name, base=None, exc=None, declared_methods=None, doc=None, location=None):
+        super(Interface, self).__init__(Type.INTERFACE, name, doc=doc, location=location)
         self.base = base
         self.exc = exc
         self.declared_methods = []
+
+        if declared_methods:
+            map(self.add_method, declared_methods)
 
     @property
     def methods(self):
@@ -616,18 +543,15 @@ class Interface(Definition):
             return []
         return self.base.methods
 
-    def set_base(self, base):
-        '''Set the base of this interface.'''
-        self.base = base
-        self._debug('Set a base, interface=%s, base=%s', self, base)
-
     def add_method(self, method):
         '''Add a method to this interface.'''
-        self._check(method.interface is None, 'Method is already in an interface, %s', method)
+        if method.interface:
+            raise ValueError('Method is already in an interface, %s' % method)
 
         method.interface = self
         self.declared_methods.append(method)
-        self._debug('Added a method, interface=%s, method=%s', self, method)
+
+        logging.debug('%s: added a method, method=%s', self, method)
 
     def create_method(self, name, result=NativeTypes.VOID, *args_tuples):
         '''Add a new method to this interface and return the method.'''
@@ -637,11 +561,6 @@ class Interface(Definition):
 
         self.add_method(method)
         return method
-
-    def parse_method(self, node, lookup):
-        '''Create a new method and add it to this interface.'''
-        method = Method.parse_from(node, lookup)
-        self.add_method(method)
 
     def _validate(self):
         self._validate_base()
@@ -677,27 +596,23 @@ class Interface(Definition):
             method.validate()
 
 
-class Method(Symbol):
+class Method(object):
     '''Interface method.'''
-    @classmethod
-    def parse_from(cls, node, lookup):
-        check_isinstance(node, ast.Method)
-        method = Method(node.name, result=lookup(node.result), doc=node.doc,
-                        is_index=node.is_index, is_post=node.is_post)
-        for n in node.args:
-            method.parse_arg(n, lookup)
-        return method
-
-    def __init__(self, name, result, doc=None, is_index=False, is_post=False):
+    def __init__(self, name, args=None, result=None, is_index=False, is_post=False,
+                 doc=None, location=None):
         self.name = name
+        self.args = []
         self.result = result
         self.interface = None
 
-        self.doc = doc
         self.is_index = is_index
         self.is_post = is_post
 
-        self.args = []
+        self.doc = doc
+        self.location = location
+
+        if args:
+            map(self.add_arg, args)
 
     def __str__(self):
         return self.fullname
@@ -724,11 +639,6 @@ class Method(Symbol):
         self.add_arg(arg)
         return arg
 
-    def parse_arg(self, node, lookup):
-        '''Create a new argument and add it to this method.'''
-        arg = MethodArg.parse_from(node, lookup)
-        return self.add_arg(arg)
-
     def _validate(self):
         for arg in self.args:
             arg.validate()
@@ -749,16 +659,11 @@ class Method(Symbol):
                             self, arg, field.name)
 
 
-class MethodArg(Symbol):
+class MethodArg(object):
     '''Single method argument.'''
-    @classmethod
-    def parse_from(cls, node, lookup):
-        return MethodArg(node.name, lookup(node.type))
-
-    def __init__(self, name, definition):
+    def __init__(self, name, type0):
         self.name = name
-        self.type = definition
-        self.is_query = False
+        self.type = type0
         self.method = None
 
     @property
@@ -769,12 +674,14 @@ class MethodArg(Symbol):
         self._check(self.type.is_datatype, 'Argument must be a data type, arg=%s', self)
 
 
+# === Collections ===
+
+
 class List(Definition):
     '''List definition.'''
-    def __init__(self, element, module=None):
+    def __init__(self, element):
         super(List, self).__init__(Type.LIST, 'list')
         self.element = element
-        self.module = module
 
     def _validate(self):
         self._check(self.element.is_datatype, 'List elements must be data types, %s', self)
@@ -782,10 +689,9 @@ class List(Definition):
 
 class Set(Definition):
     '''Set definition.'''
-    def __init__(self, element, module=None):
+    def __init__(self, element):
         super(Set, self).__init__(Type.SET, 'set')
         self.element = element
-        self.module = module
 
     def _validate(self):
         self._check(self.element.is_datatype, 'Set elements must be data types, %s', self)
@@ -793,12 +699,38 @@ class Set(Definition):
 
 class Map(Definition):
     '''Map definition.'''
-    def __init__(self, key, value, module=None):
+    def __init__(self, key, value):
         super(Map, self).__init__(Type.MAP, 'map')
         self.key = key
         self.value = value
-        self.module = module
 
     def _validate(self):
         self._check(self.key.is_primitive, 'Map keys must be primitives, %s', self)
         self._check(self.value.is_datatype, 'Map values must be data types, %s', self)
+
+
+# === References ===
+
+
+class Reference(Definition):
+    def __init__(self, name):
+        super(Reference, self).__init__(Type.REFERENCE, name)
+
+
+class ListReference(Reference):
+    def __init__(self, element):
+        super(ListReference, self).__init__(Type.LIST)
+        self.element = element
+
+
+class SetReference(Reference):
+    def __init__(self, element):
+        super(SetReference, self).__init__(Type.SET)
+        self.element = element
+
+
+class MapReference(Reference):
+    def __init__(self, key, value):
+        super(MapReference, self).__init__(Type.MAP)
+        self.key = key
+        self.value = value

@@ -48,7 +48,7 @@ class TestLookup(unittest.TestCase):
 
     def test_find__user_definition(self):
         '''Should find up a user-defined definition by its reference.'''
-        def0 = Definition(Type.DEFINITION, 'Test')
+        def0 = Definition(Type.REFERENCE, 'Test')
 
         module = Module('test')
         module.add_definition(def0)
@@ -72,7 +72,7 @@ class TestLookup(unittest.TestCase):
 
     def test_find__imported_definition(self):
         '''Should find an imported definition.'''
-        def0 = Definition(Type.DEFINITION, 'Test')
+        def0 = Definition(Type.REFERENCE, 'Test')
 
         module0 = Module('test.module0')
         module0.add_definition(def0)

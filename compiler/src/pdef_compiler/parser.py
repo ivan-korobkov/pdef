@@ -6,7 +6,7 @@ import ply.lex as lex
 import ply.yacc as yacc
 
 import pdef_compiler
-from pdef_compiler import ast
+from pdef_compiler import lang
 
 
 EXT = 'pdef'
@@ -137,7 +137,7 @@ class _GrammarRules(object):
         name = t[2]
         imports = t[4]
         definitions = t[5]
-        t[0] = ast.File(name, imports=imports, definitions=definitions)
+        t[0] = lang.Module(name, imports=imports, definitions=definitions)
         t[0].location = self._location(t)
 
     # Empty token to support optional values.
@@ -176,13 +176,13 @@ class _GrammarRules(object):
         '''
         absolute_import : IMPORT IDENTIFIER SEMI
         '''
-        t[0] = ast.AbsoluteImport(t[2])
+        t[0] = lang.AbsoluteImport(t[2])
 
     def p_relative_import(self, t):
         '''
         relative_import : FROM IDENTIFIER IMPORT relative_import_names SEMI
         '''
-        t[0] = ast.RelativeImport(t[2], *t[4])
+        t[0] = lang.RelativeImport(t[2], t[4])
 
     def p_relative_import_names(self, t):
         '''
@@ -213,7 +213,7 @@ class _GrammarRules(object):
         '''
         enum : ENUM IDENTIFIER LBRACE enum_values RBRACE
         '''
-        t[0] = ast.Enum(t[2], values=t[4])
+        t[0] = lang.Enum(t[2], values=t[4])
 
     def p_enum_values(self, t):
         '''
@@ -246,8 +246,8 @@ class _GrammarRules(object):
         base, discriminator_value = t[4]
         fields = t[6]
 
-        t[0] = ast.Message(name, base=base, discriminator_value=discriminator_value, fields=fields,
-                           is_exception=is_exception, is_form=is_form)
+        t[0] = lang.Message(name, base=base, discriminator_value=discriminator_value,
+                            declared_fields=fields, is_exception=is_exception, is_form=is_form)
 
     def p_message_options(self, t):
         '''
@@ -296,7 +296,7 @@ class _GrammarRules(object):
         name = t[2]
         type0 = t[3]
         is_discriminator = '@discriminator' in t[4]
-        t[0] = ast.Field(name, type0, is_discriminator=is_discriminator)
+        t[0] = lang.Field(name, type0, is_discriminator=is_discriminator)
 
     def p_field_options(self, t):
         '''
@@ -314,7 +314,7 @@ class _GrammarRules(object):
         base, exc = t[3]
         methods = t[5]
 
-        t[0] = ast.Interface(name, base=base, exc=exc, methods=methods)
+        t[0] = lang.Interface(name, base=base, exc=exc, declared_methods=methods)
 
     def p_interface_base_exc(self, t):
         '''
@@ -354,8 +354,8 @@ class _GrammarRules(object):
         result = t[7]
         is_index = '@index' in options
         is_post = '@post' in options
-        t[0] = ast.Method(name, args=args, result=result, doc=doc, is_index=is_index,
-                          is_post=is_post)
+        t[0] = lang.Method(name, args=args, result=result, is_index=is_index, is_post=is_post,
+                           doc=doc)
 
     def p_method_args(self, t):
         '''
@@ -369,7 +369,7 @@ class _GrammarRules(object):
         '''
         method_arg : doc IDENTIFIER type
         '''
-        t[0] = ast.MethodArg(t[2], t[3])
+        t[0] = lang.MethodArg(t[2], t[3])
 
     def p_method_options(self, t):
         '''
@@ -408,31 +408,31 @@ class _GrammarRules(object):
                    | OBJECT
                    | VOID
         '''
-        t[0] = ast.ValueRef(t[1].lower())
-
-    def p_list_type(self, t):
-        '''
-        list_type : LIST LESS type GREATER
-        '''
-        t[0] = ast.ListRef(t[3])
-
-    def p_set_type(self, t):
-        '''
-        set_type : SET LESS type GREATER
-        '''
-        t[0] = ast.SetRef(t[3])
-
-    def p_map_type(self, t):
-        '''
-        map_type : MAP LESS type COMMA type GREATER
-        '''
-        t[0] = ast.MapRef(t[3], t[5])
+        t[0] = lang.Reference(t[1].lower())
 
     def p_def_type(self, t):
         '''
         def_type : IDENTIFIER
         '''
-        t[0] = ast.DefRef(t[1])
+        t[0] = lang.Reference(t[1])
+
+    def p_list_type(self, t):
+        '''
+        list_type : LIST LESS type GREATER
+        '''
+        t[0] = lang.ListReference(t[3])
+
+    def p_set_type(self, t):
+        '''
+        set_type : SET LESS type GREATER
+        '''
+        t[0] = lang.SetReference(t[3])
+
+    def p_map_type(self, t):
+        '''
+        map_type : MAP LESS type COMMA type GREATER
+        '''
+        t[0] = lang.MapReference(t[3], t[5])
 
     def p_error(self, t):
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)
@@ -494,4 +494,4 @@ class _Parser(_GrammarRules, _Tokens):
         self.errors.append(msg)
 
     def _location(self, t):
-        return ast.Location(self.path, t.lineno(1))
+        return lang.Location(self.path, t.lineno(1))

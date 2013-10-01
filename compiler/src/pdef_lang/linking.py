@@ -1,11 +1,5 @@
 # encoding: utf-8
-from pdef_compiler import lang, CompilerException
-
-
-class LinkerException(CompilerException):
-    def __init__(self, errors=None):
-        super(LinkerException, self).__init__('Symbols not found')
-        self.errors = errors
+import pdef_lang
 
 
 class Linker(object):
@@ -28,7 +22,7 @@ class Linker(object):
         if module is None:
             raise ValueError('Module is None')
 
-        if isinstance(node, lang.ListRe):
+        if isinstance(node, pdef_lang.ListRe):
             return self._find_list(node, module)
 
         elif isinstance(node, ast.SetRef):

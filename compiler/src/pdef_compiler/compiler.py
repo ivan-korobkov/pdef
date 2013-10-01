@@ -2,7 +2,8 @@
 import logging
 import time
 
-from pdef_compiler import lang, generator, parser
+import pdef_lang
+from pdef_compiler import generator, parser
 
 
 class Compiler(object):
@@ -30,7 +31,7 @@ class Compiler(object):
         '''Parse paths into a package. The package is not linked no validated. '''
         t0 = time.time()
 
-        package = lang.Package()
+        package = pdef_lang.Package()
         for path in paths:
             nodes = parser.parse_path(path)
             for node in nodes:

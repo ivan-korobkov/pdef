@@ -1,11 +1,4 @@
 # encoding: utf-8
-from pdef_compiler import CompilerException
-
-
-class ValidatorException(CompilerException):
-    def __init__(self, errors=None):
-        super(ValidatorException, self).__init__('Invalid code')
-        self.errors = errors or []
 
 
 class ValidatorError(object):

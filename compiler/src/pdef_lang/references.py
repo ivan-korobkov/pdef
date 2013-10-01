@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef_compiler import lang
+from . import collections, definitions
 
 
 def reference(name_ref_def):
@@ -10,7 +10,7 @@ def reference(name_ref_def):
     elif isinstance(name_ref_def, basestring):
         return Reference(name_ref_def)
 
-    elif isinstance(name_ref_def, lang.Definition):
+    elif isinstance(name_ref_def, definitions.Definition):
         return Reference(name_ref_def)
 
     elif isinstance(name_ref_def, Reference):
@@ -63,7 +63,7 @@ class ListReference(Reference):
         element, errors = self.element.link(linker)
 
         if element:
-            self._definition = lang.List(element)
+            self._definition = collections.List(element)
 
         return errors
 
@@ -78,7 +78,7 @@ class SetReference(Reference):
         element, errors = self.element.link(linker)
 
         if element:
-            self._definition = lang.Set(element)
+            self._definition = collections.Set(element)
 
         return errors
 
@@ -95,6 +95,6 @@ class MapReference(Reference):
         value, errors1 = self.value.link(linker)
 
         if key and value:
-            self._definition = lang.Map(key, value)
+            self._definition = collections.Map(key, value)
 
         return errors0 + errors1

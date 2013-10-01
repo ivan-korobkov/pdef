@@ -50,7 +50,7 @@ class Definition(object):
         self.module = None
 
         self.is_primitive = self.type in Type.PRIMITIVES
-        self.is_datatype = self.type in Type.DATA_TYPES
+        self.is_data_type = self.type in Type.DATA_TYPES
         self.is_interface = self.type == Type.INTERFACE
         self.is_message = self.type == Type.MESSAGE
 
@@ -95,9 +95,9 @@ class Definition(object):
             raise AssertionError('Wrong module state')
 
         if self.module._has_import_circle(another.module):
-            return [validation.error('%s must be referenced before %s, but their modules '
-                                     'circularly import each other. Move %s into another module.',
-                                    self, another, self)]
+            return [validation.error(self,
+                   '%s must be referenced before %s, but their modules circularly '
+                   'import each other. Move %s into another module.', self, another, self)]
 
         return []
 
@@ -121,16 +121,19 @@ class NativeTypes(object):
     OBJECT = NativeType(Type.OBJECT)
     VOID = NativeType(Type.VOID)
 
-    _BY_TYPE = None
+    _BY_TYPE = {
+        Type.BOOL: BOOL,
+        Type.INT16: INT16,
+        Type.INT32: INT32,
+        Type.INT64: INT64,
+        Type.FLOAT: FLOAT,
+        Type.DOUBLE: DOUBLE,
+        Type.STRING: STRING,
+        Type.OBJECT: OBJECT,
+        Type.VOID: VOID
+    }
 
     @classmethod
     def get_by_type(cls, t):
         '''Returns a value by its type or none.'''
-        if cls._BY_TYPE is None:
-            cls._BY_TYPE = {}
-            for k, v in cls.__dict__.items():
-                if not isinstance(v, NativeType):
-                    continue
-                cls._BY_TYPE[v.type] = v
-
         return cls._BY_TYPE.get(t)

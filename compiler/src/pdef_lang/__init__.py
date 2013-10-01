@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef_lang.collections import *
+from pdef_lang.collect import *
 from pdef_lang.definitions import *
 from pdef_lang.enums import *
 from pdef_lang.interfaces import *

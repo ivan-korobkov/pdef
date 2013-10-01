@@ -230,7 +230,7 @@ class MethodArg(object):
         return errors
 
     def validate(self):
-        if not self.type.is_datatype:
+        if not self.type.is_data_type:
             return [validation.error(self, 'Argument must be a data type')]
 
         return []

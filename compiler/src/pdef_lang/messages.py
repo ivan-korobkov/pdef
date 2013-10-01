@@ -247,7 +247,7 @@ class Field(object):
     def validate(self):
         errors = []
 
-        if not self.type.is_datatype:
+        if not self.type.is_data_type:
             errors.append(validation.error(self, 'Field must be a data type'))
 
         if self.is_discriminator and not self.type.is_enum:

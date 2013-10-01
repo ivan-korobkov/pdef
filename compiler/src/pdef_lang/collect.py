@@ -22,7 +22,7 @@ class List(definitions.Definition):
     def validate(self):
         errors = []
 
-        if not self.element.is_datatype:
+        if not self.element.is_data_type:
             errors.append(validation.ValidatorError(self, 'List element must be a data type'))
 
         return errors
@@ -48,7 +48,7 @@ class Set(definitions.Definition):
     def validate(self):
         errors = []
 
-        if not self.element.is_datatype:
+        if not self.element.is_data_type:
             errors.append(validation.error(self, 'Set element must be a data type'))
 
         return errors
@@ -88,7 +88,7 @@ class Map(definitions.Definition):
         if not self.key.is_primitive:
             errors.append(validation.error(self, 'Map key must be a primitive'))
 
-        if not self.value.is_datatype:
+        if not self.value.is_data_type:
             errors.append(validation.error(self, 'Map value must be a data type'))
 
         return errors

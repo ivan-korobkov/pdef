@@ -107,15 +107,15 @@ class Module(object):
 
         return errors
 
-    def _has_import_circle(self, module, another):
+    def _has_import_circle(self, another):
         '''Return true if a module has an import circle with another module.'''
         if another is self:
             return False
 
-        q = deque(imp.module for imp in module.imported_modules)
+        q = deque(imp.module for imp in self.imported_modules)
         while q:
             m = q.pop()
-            if m is module:
+            if m is self:
                 return True
 
             for imp in m.imported_modules:
@@ -148,7 +148,7 @@ class AbstractImport(object):
                 imodules.append(ImportedModule(name, imodule))
             else:
                 errors.append(validation.error(module, 'Import not found %s', name))
-        
+
         return imodules, errors
 
 

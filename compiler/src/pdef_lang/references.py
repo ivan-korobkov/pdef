@@ -1,5 +1,5 @@
 # encoding: utf-8
-import pdef_lang.collections
+import pdef_lang.collect
 from pdef_lang import definitions
 
 
@@ -64,7 +64,7 @@ class ListReference(Reference):
         errors = self.element.link(linker)
 
         if not errors:
-            self._definition = pdef_lang.collections.List(self.element)
+            self._definition = pdef_lang.collect.List(self.element)
 
         return errors
 
@@ -79,7 +79,7 @@ class SetReference(Reference):
         errors = self.element.link(linker)
 
         if not errors:
-            self._definition = pdef_lang.collections.Set(self.element)
+            self._definition = pdef_lang.collect.Set(self.element)
 
         return errors
 
@@ -97,6 +97,6 @@ class MapReference(Reference):
         errors = errors0 + errors1
 
         if not errors:
-            self._definition = pdef_lang.collections.Map(self.key, self.value)
+            self._definition = pdef_lang.collect.Map(self.key, self.value)
 
         return errors

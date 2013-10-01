@@ -22,3 +22,7 @@ class ValidatorError(object):
         if hasattr(self.symbol, 'location'):
             return '%s: %s' % (self.symbol.location, self.message)
         return '%s: %s' % (self.symbol, self.message)
+
+
+def error(symbol, message, *args):
+    return ValidatorError(symbol, message, *args)

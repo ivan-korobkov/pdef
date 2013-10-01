@@ -1,19 +1,36 @@
 # encoding: utf-8
 import logging
 from .definitions import Definition, Type, NativeTypes
-from .validator import ValidatorError
+from . import validation, references
 
 
 class Interface(Definition):
     '''User-defined interface.'''
     def __init__(self, name, base=None, exc=None, declared_methods=None, doc=None, location=None):
         super(Interface, self).__init__(Type.INTERFACE, name, doc=doc, location=location)
+
         self.base = base
         self.exc = exc
         self.declared_methods = []
 
         if declared_methods:
             map(self.add_method, declared_methods)
+
+    @property
+    def base(self):
+        return self._base.dereference()
+
+    @base.setter
+    def base(self, value):
+        self._base = references.reference(value)
+
+    @property
+    def exc(self):
+        return self._exc.dereference()
+
+    @exc.setter
+    def exc(self, value):
+        self._exc = references.reference(value)
 
     @property
     def methods(self):
@@ -23,6 +40,7 @@ class Interface(Definition):
     def inherited_methods(self):
         if not self.base:
             return []
+
         return self.base.methods
 
     def add_method(self, method):
@@ -47,15 +65,8 @@ class Interface(Definition):
     def link(self, linker):
         '''Link the base, the exception and the methods.'''
         errors = []
-
-        self.base, errors0 = linker.link(self.base)
-        errors += errors0
-
-        if self.base:
-            self.base.link(linker)
-
-        self.exc, errors0 = linker.link(self.exc)
-        errors += errors0
+        errors += self._base.link(linker)
+        errors += self._exc.link(linker)
 
         for method in self.declared_methods:
             errors += method.link(linker)
@@ -79,14 +90,14 @@ class Interface(Definition):
 
         base = self.base
         if not base.is_interface:
-            errors.append(ValidatorError(self, 'Base must be an interface'))
+            errors.append(validation.error(self, 'Base must be an interface'))
 
         errors += base._validate_is_defined_before(self)
 
         # Check circular inheritance.
         while base:
             if base is self:
-                errors.append(ValidatorError(self, 'Circular inheritance'))
+                errors.append(validation.error(self, 'Circular inheritance'))
                 break
 
             base = base.base
@@ -98,7 +109,7 @@ class Interface(Definition):
             return []
 
         if not self.exc.is_exception:
-            return [ValidatorError(self, 'Wrong exception')]
+            return [validation.error(self, 'Wrong exception')]
 
         return []
 
@@ -109,7 +120,7 @@ class Interface(Definition):
         for method in self.methods:
             name = method.name
             if name in names:
-                errors.append(ValidatorError(self, 'Duplicate method %r', name))
+                errors.append(validation.error(self, 'Duplicate method %r', name))
 
             names.add(name)
 
@@ -178,8 +189,8 @@ class Method(object):
         errors = []
 
         if self.is_post and not self.is_remote:
-            errors.append(ValidatorError(self,
-                '@post method must be remote (return a data type or void)'))
+            errors.append(validation.error(self, '@post method must be remote (return a data type '
+                                                 'or void)'))
 
         # Check that all form args fields do not clash with method arguments.
         names = {arg.name for arg in self.args}
@@ -193,8 +204,8 @@ class Method(object):
                 if field.name not in names:
                     continue
 
-                errors.append(ValidatorError(self,
-                    'Form fields clash with method args, form arg=%s', arg.name))
+                errors.append(validation.error(self, 'Form fields clash with method args, '
+                                                     'form arg=%s', arg.name))
                 break  # One error is enough
 
         for arg in self.args:
@@ -220,6 +231,6 @@ class MethodArg(object):
 
     def validate(self):
         if not self.type.is_datatype:
-            return [ValidatorError(self, 'Argument must be a data type')]
+            return [validation.error(self, 'Argument must be a data type')]
 
         return []

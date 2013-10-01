@@ -1,4 +1,5 @@
 # encoding: utf-8
+from . import validation
 
 
 class Type(object):
@@ -22,7 +23,6 @@ class Type(object):
     OBJECT = 'object'
 
     # User defined data types.
-    REFERENCE = 'reference'  # A special type.
     ENUM = 'enum'
     ENUM_VALUE = 'enum_value'
     MESSAGE = 'message'
@@ -33,7 +33,7 @@ class Type(object):
     VOID = 'void'
 
     PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
-    DATA_TYPES = PRIMITIVES + (OBJECT, LIST, MAP, SET, REFERENCE, ENUM, MESSAGE, EXCEPTION)
+    DATA_TYPES = PRIMITIVES + (OBJECT, LIST, MAP, SET, ENUM, MESSAGE, EXCEPTION)
 
 
 class Definition(object):
@@ -89,15 +89,15 @@ class Definition(object):
                     return []
 
                 if def0 is another:
-                    return [ValidatorError(def0, '%s must be defined before %s. Move it above in '
-                                                 'the file.', def0, another)]
+                    return [validation.error(def0, '%s must be defined before %s. Move it above '
+                                                   'in the file.', def0, another)]
 
             raise AssertionError('Wrong module state')
 
         if self.module._has_import_circle(another.module):
-            return [ValidatorError('%s must be referenced before %s, but their modules circularly '
-                                   'import each other. Move %s into another module.',
-                                   self, another, self)]
+            return [validation.error('%s must be referenced before %s, but their modules '
+                                     'circularly import each other. Move %s into another module.',
+                                    self, another, self)]
 
         return []
 
@@ -134,27 +134,3 @@ class NativeTypes(object):
                 cls._BY_TYPE[v.type] = v
 
         return cls._BY_TYPE.get(t)
-
-
-class Reference(Definition):
-    def __init__(self, name):
-        super(Reference, self).__init__(Type.REFERENCE, name)
-
-
-class ListReference(Reference):
-    def __init__(self, element):
-        super(ListReference, self).__init__(Type.LIST)
-        self.element = element
-
-
-class SetReference(Reference):
-    def __init__(self, element):
-        super(SetReference, self).__init__(Type.SET)
-        self.element = element
-
-
-class MapReference(Reference):
-    def __init__(self, key, value):
-        super(MapReference, self).__init__(Type.MAP)
-        self.key = key
-        self.value = value

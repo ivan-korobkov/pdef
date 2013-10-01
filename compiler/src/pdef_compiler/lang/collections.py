@@ -1,6 +1,7 @@
 # encoding: utf-8
-from .definitions import Definition, Type
-from pdef_compiler.lang.validator import ValidatorError
+from . import Definition, Type
+from . import references
+from . import validation
 
 
 class List(Definition):
@@ -9,15 +10,22 @@ class List(Definition):
         super(List, self).__init__(Type.LIST, 'list')
         self.element = element
 
+    @property
+    def element(self):
+        return self._element.dereference()
+
+    @element.setter
+    def element(self, value):
+        self._element = references.reference(value)
+
     def link(self, linker):
-        self.element, errors = linker.link(self.element)
-        return errors
+        return self._element.link(linker)
 
     def validate(self):
         errors = []
 
         if not self.element.is_datatype:
-            errors.append(ValidatorError(self, 'List element must be a data type'))
+            errors.append(validation.ValidatorError(self, 'List element must be a data type'))
 
         return errors
 
@@ -28,15 +36,22 @@ class Set(Definition):
         super(Set, self).__init__(Type.SET, 'set')
         self.element = element
 
+    @property
+    def element(self):
+        return self._element.dereference()
+
+    @element.setter
+    def element(self, value):
+        self._element = references.reference(value)
+
     def link(self, linker):
-        self.element, errors = linker.link(self.element)
-        return errors
+        return self._element.link(linker)
 
     def validate(self):
         errors = []
 
         if not self.element.is_datatype:
-            errors.append(ValidatorError(self, 'Set element must be a data type'))
+            errors.append(validation.error(self, 'Set element must be a data type'))
 
         return errors
 
@@ -48,24 +63,34 @@ class Map(Definition):
         self.key = key
         self.value = value
 
+    @property
+    def key(self):
+        return self._key.dereference()
+
+    @key.setter
+    def key(self, value):
+        self._key = references.reference(value)
+
+    @property
+    def value(self):
+        return self._value.dereference()
+
+    @value.setter
+    def value(self, value):
+        self._value = references.reference(value)
+
     def link(self, linker):
-        errors = []
-
-        self.key, errors0 = linker.link(self.key)
-        errors += errors0
-
-        self.value, errors0 = linker.link(self.value)
-        errors += errors0
-
-        return errors
+        errors0 = self._key.link(linker)
+        errors1 = self._value.link(linker)
+        return errors0 + errors1
 
     def validate(self):
         errors = []
 
         if not self.key.is_primitive:
-            errors.append(ValidatorError(self, 'Map key must be a primitive'))
+            errors.append(validation.error(self, 'Map key must be a primitive'))
 
         if not self.value.is_datatype:
-            errors.append(ValidatorError(self, 'Map value must be a data type'))
+            errors.append(validation.error(self, 'Map value must be a data type'))
 
         return errors

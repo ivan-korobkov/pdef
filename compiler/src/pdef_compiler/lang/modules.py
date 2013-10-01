@@ -2,7 +2,7 @@
 from collections import deque
 import logging
 
-from .validator import ValidatorError
+from . import validation
 
 
 class Module(object):
@@ -90,7 +90,7 @@ class Module(object):
         for imported_module in self.imported_modules:
             alias = imported_module.alias
             if alias in names:
-                errors.append(ValidatorError(imported_module, 'duplicate import %r' % alias))
+                errors.append(validation.error(imported_module, 'duplicate import %r' % alias))
 
             names.add(alias)
 
@@ -98,7 +98,7 @@ class Module(object):
         for def0 in self.definitions:
             name = def0.name
             if name in names:
-                errors.append(ValidatorError(def0, 'duplicate definition or import %r' % name))
+                errors.append(validation.error(def0, 'duplicate definition or import %r' % name))
 
             names.add(name)
 
@@ -147,8 +147,8 @@ class AbstractImport(object):
             if imodule:
                 imodules.append(ImportedModule(name, imodule))
             else:
-                errors.append(name)
-
+                errors.append(validation.error(module, 'Import not found %s', name))
+        
         return imodules, errors
 
 

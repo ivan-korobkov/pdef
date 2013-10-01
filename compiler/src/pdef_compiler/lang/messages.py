@@ -1,7 +1,7 @@
 # encoding: utf-8
 import logging
 from .definitions import Type, Definition
-from .validator import ValidatorError
+from . import validation, references
 
 
 class Message(Definition):
@@ -11,8 +11,8 @@ class Message(Definition):
         super(Message, self).__init__(Type.MESSAGE, name, doc=doc, location=location)
 
         self.base = base
-        self.discriminator_value = discriminator_value  # Enum value.
-        self._discriminator = None  # Discriminator field, self.discriminator is a property.
+        self.discriminator_value = discriminator_value
+        self._discriminator = None  # Field.
 
         self.subtypes = []
         self.declared_fields = []
@@ -24,8 +24,20 @@ class Message(Definition):
             map(self.add_field, declared_fields)
 
     @property
-    def is_polymorphic(self):
-        return bool(self.discriminator)
+    def base(self):
+        return self._base.dereference()
+
+    @base.setter
+    def base(self, value):
+        self._base = references.reference(value)
+
+    @property
+    def discriminator_value(self):
+        return self._discriminator_value.dereference()
+
+    @discriminator_value.setter
+    def discriminator_value(self, value):
+        self._discriminator_value = references.reference(value)
 
     @property
     def discriminator(self):
@@ -34,6 +46,10 @@ class Message(Definition):
             return self._discriminator
 
         return self.base.discriminator if self.base else None
+
+    @property
+    def is_polymorphic(self):
+        return bool(self.discriminator)
 
     @property
     def fields(self):
@@ -50,11 +66,9 @@ class Message(Definition):
         return self.base.fields
 
     def add_field(self, field):
-        '''Add a new field to this message and return the field.
-        :param field:
-        '''
+        '''Add a new field to this message and return the field.'''
         if field.message:
-            raise ValueError('Field is already in a message, %s' % file)
+            raise ValueError('Field is already in a message, %s' % field)
 
         self.declared_fields.append(field)
         field.message = self
@@ -84,17 +98,10 @@ class Message(Definition):
 
     def link(self, linker):
         errors = []
+        errors += self._base.link(linker)
+        errors += self._discriminator_value.link(linker)
 
-        self.base, errors0 = linker.link(self.base)
-        errors += errors0
-
-        self.discriminator_value, errors0 = linker.link(self.discriminator_value)
-        errors += errors0
-
-        if self.base:
-            errors += self.base.link(linker)
-
-        if self.discriminator_value:
+        if self._discriminator_value:
             self.base._add_subtype(self)
 
         for field in self.declared_fields:
@@ -118,11 +125,11 @@ class Message(Definition):
 
         # The base must be a message itself.
         if not base.is_message:
-            errors.append(ValidatorError(self, 'base must be a message, base=%s' % base))
+            errors.append(validation.error(self, 'base must be a message, base=%s' % base))
 
         # The base exception/message flag must match this message flag.
         if self.is_exception != base.is_exception:
-            errors.append(ValidatorError(self, 'wrong base type (message/exc), base=%s', base))
+            errors.append(validation.error(self, 'wrong base type (message/exc), base=%s', base))
 
         # The base must be defined before this message.
         errors += base._validate_is_defined_before(base)
@@ -130,7 +137,7 @@ class Message(Definition):
         # Prevent circular inheritance.
         while base:
             if base is self:
-                errors.append(ValidatorError(self, 'circular inheritance'))
+                errors.append(validation.error(self, 'circular inheritance'))
                 break
 
             base = base.base
@@ -144,25 +151,25 @@ class Message(Definition):
             if base and base.is_polymorphic:
                 # The base is present and it is polymorphic,
                 # so it requires a discriminator value.
-                return [ValidatorError(self, 'discriminator value required')]
+                return [validation.error(self, 'discriminator value required')]
 
             return []
 
         # The discriminator value is present.
         if not base:
             # But no base, it's an error.
-            return [ValidatorError(self, 'cannot set a discriminator value, no base')]
+            return [validation.error(self, 'cannot set a discriminator value, no base')]
 
         if not dvalue.is_enum_value:
-            errors.append(ValidatorError(self, 'discriminator value must be an enum value'))
+            errors.append(validation.error(self, 'discriminator value must be an enum value'))
 
         if not base.is_polymorphic:
-            errors.append(ValidatorError(self, 'cannot set a discriminator value, the base '
-                                               'does not have a discriminator'))
+            errors.append(validation.error(self, 'cannot set a discriminator value, the base '
+                                                 'does not have a discriminator'))
 
         if dvalue not in base.discriminator.type:
-            errors.append(ValidatorError(self, 'discriminator value does not match base '
-                                               'discriminator type'))
+            errors.append(validation.error(self, 'discriminator value does not match base '
+                                                 'discriminator type'))
 
         # The discriminator type must be defined before the message.
         errors += dvalue.enum._validate_is_defined_before(self)
@@ -179,7 +186,7 @@ class Message(Definition):
             dvalue = subtype.discriminator_value
 
             if dvalue in dvalues:
-                errors.append(ValidatorError(self, 'Duplicate discriminator value, %s', dvalue))
+                errors.append(validation.error(self, 'Duplicate discriminator value, %s', dvalue))
 
             dvalues.add(dvalue)
 
@@ -192,7 +199,7 @@ class Message(Definition):
         names = set()
         for field in self.fields:
             if field.name in names:
-                errors.append(ValidatorError(self, 'Duplicate field %r', field.name))
+                errors.append(validation.error(self, 'Duplicate field %r', field.name))
 
             names.add(field.name)
 
@@ -203,7 +210,7 @@ class Message(Definition):
                 continue
 
             if discriminator:
-                errors.append(ValidatorError(self, 'Multiple discriminator fields'))
+                errors.append(validation.error(self, 'Multiple discriminator fields'))
                 break  # One multiple discriminator error is enough.
 
             discriminator = field
@@ -218,9 +225,14 @@ class Field(object):
     '''Single message field.'''
     def __init__(self, name, type0, is_discriminator=False):
         self.name = name
-        self.type = type0
+        self._type = references.reference(type0)
+
         self.is_discriminator = is_discriminator
         self.message = None
+
+    @property
+    def type(self):
+        return self._type.dereference()
 
     @property
     def fullname(self):
@@ -230,16 +242,15 @@ class Field(object):
         return '%s.%s' % (self.message.fullname, self.name)
 
     def link(self, linker):
-        self.type, errors = linker.link(self.type)
-        return errors
+        return self._type.link(linker)
 
     def validate(self):
         errors = []
 
         if not self.type.is_datatype:
-            errors.append(ValidatorError(self, 'Field must be a data type'))
+            errors.append(validation.error(self, 'Field must be a data type'))
 
         if self.is_discriminator and not self.type.is_enum:
-            errors.append(ValidatorError(self, 'Discriminator field must be an enum'))
+            errors.append(validation.error(self, 'Discriminator field must be an enum'))
 
         return errors

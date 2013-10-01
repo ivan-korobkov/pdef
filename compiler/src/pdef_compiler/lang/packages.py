@@ -1,7 +1,6 @@
 # encoding: utf-8
 import logging
-from .linker import Linker, LinkerException
-from .validator import ValidatorException
+from . import linking, validation
 
 
 class Package(object):
@@ -33,7 +32,7 @@ class Package(object):
 
     def link(self):
         errors = []
-        linker = Linker()
+        linker = linking.Linker()
 
         for module in self.modules:
             errors += module.link_imports(linker)
@@ -42,7 +41,7 @@ class Package(object):
             errors += module.link_definitions(linker)
 
         if errors:
-            raise LinkerException(errors)
+            raise linking.LinkerException(errors)
 
     def validate(self):
         errors = []
@@ -50,4 +49,4 @@ class Package(object):
             errors += module.validate()
 
         if errors:
-            raise ValidatorException(errors)
+            raise validation.ValidatorException(errors)

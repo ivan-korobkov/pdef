@@ -1,6 +1,6 @@
 # encoding: utf-8
 from .definitions import Definition, Type
-from .validator import ValidatorError
+from . import validation
 
 
 class Enum(Definition):
@@ -33,7 +33,7 @@ class Enum(Definition):
         names = set()
         for value in self.values:
             if value.name in names:
-                errors.append(ValidatorError(self, 'duplicate enum value, %r', value.name))
+                errors.append(validation.error(self, 'duplicate enum value, %r', value.name))
 
             names.add(value.name)
 

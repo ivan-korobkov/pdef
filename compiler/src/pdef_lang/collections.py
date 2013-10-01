@@ -1,13 +1,11 @@
 # encoding: utf-8
-from . import Definition, Type
-from . import references
-from . import validation
+from pdef_lang import definitions, references, validation
 
 
-class List(Definition):
+class List(definitions.Definition):
     '''List definition.'''
     def __init__(self, element):
-        super(List, self).__init__(Type.LIST, 'list')
+        super(List, self).__init__(definitions.Type.LIST, 'list')
         self.element = element
 
     @property
@@ -30,10 +28,10 @@ class List(Definition):
         return errors
 
 
-class Set(Definition):
+class Set(definitions.Definition):
     '''Set definition.'''
     def __init__(self, element):
-        super(Set, self).__init__(Type.SET, 'set')
+        super(Set, self).__init__(definitions.Type.SET, 'set')
         self.element = element
 
     @property
@@ -56,10 +54,10 @@ class Set(Definition):
         return errors
 
 
-class Map(Definition):
+class Map(definitions.Definition):
     '''Map definition.'''
     def __init__(self, key, value):
-        super(Map, self).__init__(Type.MAP, 'map')
+        super(Map, self).__init__(definitions.Type.MAP, 'map')
         self.key = key
         self.value = value
 

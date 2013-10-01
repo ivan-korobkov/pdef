@@ -1,5 +1,6 @@
 # encoding: utf-8
-from . import collections, definitions
+import pdef_lang.collections
+from pdef_lang import definitions
 
 
 def reference(name_ref_def):
@@ -8,7 +9,7 @@ def reference(name_ref_def):
         return EmptyReference()
 
     elif isinstance(name_ref_def, basestring):
-        return Reference(name_ref_def)
+        return NameReference(name_ref_def)
 
     elif isinstance(name_ref_def, definitions.Definition):
         return Reference(name_ref_def)
@@ -49,7 +50,7 @@ class NameReference(Reference):
         self.name = name
 
     def link(self, linker):
-        self._definition, errors = linker.find(self.name)
+        self._definition, errors = linker(self.name)
         return errors
 
 
@@ -60,10 +61,10 @@ class ListReference(Reference):
         self.element = reference(element)
 
     def link(self, linker):
-        element, errors = self.element.link(linker)
+        errors = self.element.link(linker)
 
-        if element:
-            self._definition = collections.List(element)
+        if not errors:
+            self._definition = pdef_lang.collections.List(self.element)
 
         return errors
 
@@ -75,10 +76,10 @@ class SetReference(Reference):
         self.element = reference(element)
 
     def link(self, linker):
-        element, errors = self.element.link(linker)
+        errors = self.element.link(linker)
 
-        if element:
-            self._definition = collections.Set(element)
+        if not errors:
+            self._definition = pdef_lang.collections.Set(self.element)
 
         return errors
 
@@ -91,10 +92,11 @@ class MapReference(Reference):
         self.value = reference(value)
 
     def link(self, linker):
-        key, errors0 = self.key.link(linker)
-        value, errors1 = self.value.link(linker)
+        errors0 = self.key.link(linker)
+        errors1 = self.value.link(linker)
+        errors = errors0 + errors1
 
-        if key and value:
-            self._definition = collections.Map(key, value)
+        if not errors:
+            self._definition = pdef_lang.collections.Map(self.key, self.value)
 
-        return errors0 + errors1
+        return errors

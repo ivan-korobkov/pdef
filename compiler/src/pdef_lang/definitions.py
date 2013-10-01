@@ -1,5 +1,5 @@
 # encoding: utf-8
-from . import validation
+import pdef_lang.validation as validation
 
 
 class Type(object):

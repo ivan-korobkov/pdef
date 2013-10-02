@@ -10,7 +10,8 @@ class TestDefinition(unittest.TestCase):
         def1 = Definition(Type.MESSAGE, 'def1')
 
         module = Module('module')
-        module.add_definitions(def0, def1)
+        module.add_definition(def0)
+        module.add_definition(def1)
 
         errors = def0._validate_is_defined_before(def0)
         assert not errors
@@ -20,7 +21,8 @@ class TestDefinition(unittest.TestCase):
         def1 = Definition(Type.MESSAGE, 'def1')
 
         module = Module('module')
-        module.add_definitions(def0, def1)
+        module.add_definition(def0)
+        module.add_definition(def1)
 
         errors = def1._validate_is_defined_before(def0)
         assert 'must be defined before' in errors[0].message

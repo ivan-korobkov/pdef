@@ -68,7 +68,8 @@ class TestInterface(unittest.TestCase):
         iface = Interface('Interface', base=base)
 
         module = Module('module')
-        module.add_definitions(iface, base)
+        module.add_definition(iface)
+        module.add_definition(base)
 
         errors = iface.validate()
         assert 'must be defined before' in errors[0].message

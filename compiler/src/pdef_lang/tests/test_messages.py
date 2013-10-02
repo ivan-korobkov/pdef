@@ -110,7 +110,8 @@ class TestMessage(unittest.TestCase):
         msg.base = base
 
         module = Module('module')
-        module.add_definitions(msg, base)
+        module.add_definition(msg)
+        module.add_definition(base)
 
         errors = msg.validate()
         assert 'must be defined before' in errors[0].message

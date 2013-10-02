@@ -61,14 +61,10 @@ class Definition(object):
         self.is_map = self.type == Type.MAP
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.fullname)
+        return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
     def __str__(self):
         return self.name
-
-    @property
-    def fullname(self):
-        return '%s.%s' % (self.module.name, self.name) if self.module else self.name
 
     def link(self, linker):
         return []
@@ -89,8 +85,8 @@ class Definition(object):
                     return []
 
                 if def0 is another:
-                    return [validation.error(def0, '%s must be defined before %s. Move it above '
-                                                   'in the file.', def0, another)]
+                    return [validation.error(self, '%s must be defined before %s. Move it above '
+                                                   'in the file.', self, another)]
 
             raise AssertionError('Wrong module state')
 

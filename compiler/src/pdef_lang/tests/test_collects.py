@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
 from pdef_lang import definitions, interfaces, messages
-from pdef_lang.collect import *
+from pdef_lang.collects import *
 
 
 class TestList(unittest.TestCase):

@@ -1,13 +1,13 @@
 # encoding: utf-8
 import logging
-from .definitions import Definition, Type, NativeTypes
-from . import validation, references
+from pdef_lang import definitions, validation, references
 
 
-class Interface(Definition):
+class Interface(definitions.Definition):
     '''User-defined interface.'''
     def __init__(self, name, base=None, exc=None, declared_methods=None, doc=None, location=None):
-        super(Interface, self).__init__(Type.INTERFACE, name, doc=doc, location=location)
+        super(Interface, self).__init__(definitions.Type.INTERFACE, name, doc=doc,
+                                        location=location)
 
         self.base = base
         self.exc = exc
@@ -53,7 +53,7 @@ class Interface(Definition):
 
         logging.debug('%s: added a method, method=%s', self, method)
 
-    def create_method(self, name, result=NativeTypes.VOID, *arg_tuples):
+    def create_method(self, name, result=definitions.NativeTypes.VOID, *arg_tuples):
         '''Add a new method to this interface and return the method.'''
         method = Method(name, result=result)
         for arg_tuple in arg_tuples:
@@ -128,8 +128,8 @@ class Interface(Definition):
 
 class Method(object):
     '''Interface method.'''
-    def __init__(self, name, result=NativeTypes.VOID, args=None, is_index=False, is_post=False,
-                 doc=None, location=None):
+    def __init__(self, name, result=definitions.NativeTypes.VOID, args=None, is_index=False,
+                 is_post=False, doc=None, location=None):
         self.name = name
         self.args = []
         self.result = result
@@ -146,7 +146,10 @@ class Method(object):
             map(self.add_arg, args)
 
     def __str__(self):
-        return self.fullname
+        return self.name
+
+    def __repr__(self):
+        return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
     @property
     def result(self):
@@ -155,13 +158,6 @@ class Method(object):
     @result.setter
     def result(self, value):
         self._result = references.reference(value)
-
-    @property
-    def fullname(self):
-        if not self.interface:
-            return self.name
-
-        return '%s.%s' % (self.interface.fullname, self.name)
 
     @property
     def is_remote(self):

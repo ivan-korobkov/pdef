@@ -1,5 +1,6 @@
 # encoding: utf-8
-import pdef_lang.collect
+import pdef_lang.collects
+import pdef_lang.enums
 from pdef_lang import definitions
 
 
@@ -10,6 +11,10 @@ def reference(name_ref_def):
 
     elif isinstance(name_ref_def, basestring):
         return NameReference(name_ref_def)
+
+    elif isinstance(name_ref_def, pdef_lang.enums.EnumValue):
+        # TODO: replace with Type
+        return Reference(name_ref_def)
 
     elif isinstance(name_ref_def, definitions.Definition):
         return Reference(name_ref_def)
@@ -64,7 +69,7 @@ class ListReference(Reference):
         errors = self.element.link(linker)
 
         if not errors:
-            self._definition = pdef_lang.collect.List(self.element)
+            self._definition = pdef_lang.collects.List(self.element)
 
         return errors
 
@@ -79,7 +84,7 @@ class SetReference(Reference):
         errors = self.element.link(linker)
 
         if not errors:
-            self._definition = pdef_lang.collect.Set(self.element)
+            self._definition = pdef_lang.collects.Set(self.element)
 
         return errors
 
@@ -97,6 +102,6 @@ class MapReference(Reference):
         errors = errors0 + errors1
 
         if not errors:
-            self._definition = pdef_lang.collect.Map(self.key, self.value)
+            self._definition = pdef_lang.collects.Map(self.key, self.value)
 
         return errors

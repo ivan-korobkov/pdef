@@ -44,3 +44,6 @@ class EnumValue(object):
     def __init__(self, enum, name):
         self.enum = enum
         self.name = name
+
+        # TODO: type/definition
+        self.is_enum_value = True

@@ -1,5 +1,6 @@
 # encoding: utf-8
 import unittest
+from pdef_lang import NativeTypes
 from pdef_lang.interfaces import *
 from pdef_lang.messages import Message
 from pdef_lang.modules import Module
@@ -92,16 +93,6 @@ class TestInterface(unittest.TestCase):
 
 
 class TestMethod(unittest.TestCase):
-    def test_fullname(self):
-        method = Method('method', result=NativeTypes.INT32)
-        method.create_arg('i0', NativeTypes.INT32)
-        method.create_arg('i1', NativeTypes.INT32)
-
-        iface = Interface('Interface')
-        iface.add_method(method)
-
-        assert method.fullname == 'Interface.method'
-
     def test_validate__post_must_be_remote(self):
         result = Interface('Interface')
         method = Method('method', result, is_post=True)

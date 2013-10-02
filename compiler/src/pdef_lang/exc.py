@@ -6,13 +6,13 @@ class LanguageException(Exception):
     pass
 
 
-class ValidatorException(LanguageException):
+class ValidationException(LanguageException):
     def __init__(self, errors=None):
-        super(ValidatorException, self).__init__('Invalid code')
+        super(ValidationException, self).__init__('Invalid code')
         self.errors = errors or []
 
 
-class LinkerException(LanguageException):
+class LinkingException(LanguageException):
     def __init__(self, errors=None):
-        super(LinkerException, self).__init__('Symbols not found')
+        super(LinkingException, self).__init__('Symbols not found')
         self.errors = errors

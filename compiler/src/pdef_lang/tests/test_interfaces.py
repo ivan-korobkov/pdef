@@ -1,31 +1,15 @@
 # encoding: utf-8
-
+import unittest
+from pdef_lang.interfaces import *
+from pdef_lang.messages import Message
+from pdef_lang.modules import Module
 
 
 class TestInterface(unittest.TestCase):
-    def test_parse_node(self):
-        '''Should create an interface from an AST node.'''
-        base_ref = ast.DefRef('Base')
-        exc_ref = ast.DefRef('Exc')
-
-        node = ast.Interface('Iface', base=base_ref, exc=exc_ref,
-                             methods=[ast.Method('echo', args=[ast.Field('text', ast.ValueRef(Type.STRING))],
-                                                 result=ast.ValueRef(Type.STRING))])
-        lookup = mock.Mock()
-
-        iface = Interface.parse_node(node, lookup)
-        assert iface.name == node.name
-        assert iface.base
-        assert iface.exc
-        assert len(iface.declared_methods) == 1
-        assert iface.declared_methods[0].name == 'echo'
-        assert len(lookup.call_args_list) == 4
-
     def test_methods(self):
         '''Should combine the inherited and declared methods.'''
         iface0 = Interface('Iface0')
-        iface1 = Interface('Iface1')
-        iface1.set_base(iface0)
+        iface1 = Interface('Iface1', base=iface0)
 
         method0 = iface0.create_method('method0')
         method1 = iface1.create_method('method1')
@@ -45,21 +29,71 @@ class TestInterface(unittest.TestCase):
         assert method.args[0].name == 'i0'
         assert method.args[1].name == 'i1'
 
+    def test_link(self):
+        pass
+
+    def test_validate_base__self_inheritance(self):
+        '''Should prevent interface self-inheritance.'''
+        iface = Interface('Iface')
+        iface.base = iface
+
+        errors = iface.validate()
+        assert 'circular inheritance' in errors[0].message
+
+    def test_validate_base__circular_inheritance(self):
+        '''Should prevent circular interface inheritance.'''
+        iface0 = Interface('Iface0')
+        iface1 = Interface('Iface1')
+        iface2 = Interface('Iface2')
+
+        iface0.base = iface2
+        iface1.base = iface0
+        iface2.base = iface1
+
+        errors = iface2.validate()
+        assert 'circular inheritance' in errors[0].message
+
+    def test_validate_base__must_be_interface(self):
+        '''Should prevent interface bases which are not interfaces.'''
+        iface = Interface('Iface0')
+        iface.base = NativeTypes.INT32
+
+        errors = iface.validate()
+        assert 'base must be an interface' in errors[0].message
+
+    def test_validate_base__must_be_referenced_before(self):
+        '''Base should be referenced before the interface.'''
+        base = Interface('Base')
+        iface = Interface('Interface', base=base)
+
+        module = Module('module')
+        module.add_definitions(iface, base)
+
+        errors = iface.validate()
+        assert 'must be defined before' in errors[0].message
+
+    def test_validate_exc__tries_to_throw_non_exception(self):
+        '''Should prevent setting interface exception to a non-exception type.'''
+        nonexc = NativeTypes.INT32
+        iface = Interface('Interface', exc=nonexc)
+
+        errors = iface.validate()
+        assert 'interface exc must be an exception' in errors[0].message
+
+    def test_validate_methods__duplicates(self):
+        iface0 = Interface('Interface0')
+        iface0.create_method('method')
+
+        iface1 = Interface('Interface1', base=iface0)
+        iface1.create_method('method')
+
+        errors = iface1.validate()
+        assert 'duplicate method' in errors[0].message
+
 
 class TestMethod(unittest.TestCase):
-    def test_parse(self):
-        node = ast.Method('name', args=[ast.Field('arg0', ast.DefRef('int32'))],
-                          result=ast.DefRef('int32'))
-        lookup = mock.Mock()
-
-        method = Method.parse_from(node, lookup)
-        assert method.name == 'name'
-        assert method.result
-        assert len(method.args) == 1
-        assert method.args[0].name == 'arg0'
-
     def test_fullname(self):
-        method = Method('method', NativeTypes.INT32)
+        method = Method('method', result=NativeTypes.INT32)
         method.create_arg('i0', NativeTypes.INT32)
         method.create_arg('i1', NativeTypes.INT32)
 
@@ -68,21 +102,45 @@ class TestMethod(unittest.TestCase):
 
         assert method.fullname == 'Interface.method'
 
+    def test_validate__post_must_be_remote(self):
+        result = Interface('Interface')
+        method = Method('method', result, is_post=True)
+
+        errors = method.validate()
+        assert '@post method must be remote' in errors[0].message
+
+    def test_validate__duplicate_args(self):
+        method = Method('method')
+        method.create_arg('arg', NativeTypes.INT32)
+        method.create_arg('arg', NativeTypes.INT32)
+
+        errors = method.validate()
+        assert 'duplicate argument' in errors[0].message
+
+    def test_validate__form_field_clashes_with_arg(self):
+        form = Message('Form', is_form=True)
+        form.create_field('clash', NativeTypes.INT32)
+
+        method = Method('method', NativeTypes.INT32)
+        method.create_arg('clash', NativeTypes.INT32)
+        method.create_arg('form', form)
+
+        errors = method.validate()
+        assert 'form fields clash with method args' in errors[0].message
+
 
 class TestMethodArg(unittest.TestCase):
-    def test_parse_from(self):
-        ref = ast.DefRef('int32')
-        node = ast.Field('arg', ref)
-        lookup = mock.Mock()
-
-        arg = MethodArg.parse_from(node, lookup)
-        assert arg.name == 'arg'
-        lookup.assert_called_with(ref)
-
     def test_link(self):
-        ref = lambda: NativeTypes.INT32
-        arg = MethodArg('name', ref)
-        arg.link()
+        linker = lambda name: (name, [])
+        arg = MethodArg('arg', 'module.Message')
 
-        assert arg.name == 'name'
-        assert arg.type is NativeTypes.INT32
+        errors = arg.link(linker)
+        assert not errors
+        assert arg.type == 'module.Message'
+
+    def test_validate__argument_is_data_type(self):
+        iface = Interface('Interface')
+        arg = MethodArg('arg', iface)
+
+        errors = arg.validate()
+        assert 'argument must be a data type' in errors[0].message

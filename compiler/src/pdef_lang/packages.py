@@ -1,6 +1,6 @@
 # encoding: utf-8
 import logging
-from . import linking, validation
+from pdef_lang import exc, linking, validation
 
 
 class Package(object):
@@ -41,7 +41,7 @@ class Package(object):
             errors += module.link_definitions(linker)
 
         if errors:
-            raise linking.LinkerException(errors)
+            raise exc.LinkingException(errors)
 
     def validate(self):
         errors = []
@@ -49,4 +49,4 @@ class Package(object):
             errors += module.validate()
 
         if errors:
-            raise validation.ValidatorException(errors)
+            raise exc.ValidationException(errors)

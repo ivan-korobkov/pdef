@@ -53,10 +53,10 @@ class Interface(Definition):
 
         logging.debug('%s: added a method, method=%s', self, method)
 
-    def create_method(self, name, result=NativeTypes.VOID, *args_tuples):
+    def create_method(self, name, result=NativeTypes.VOID, *arg_tuples):
         '''Add a new method to this interface and return the method.'''
-        method = Method(name, result)
-        for arg_tuple in args_tuples:
+        method = Method(name, result=result)
+        for arg_tuple in arg_tuples:
             method.create_arg(*arg_tuple)
 
         self.add_method(method)
@@ -75,41 +75,39 @@ class Interface(Definition):
 
     def validate(self):
         errors = []
-
         errors += self._validate_base()
-        errors += self._validate_exc()
-        errors += self._validate_methods()
 
+        if not errors:
+            # Cannot validate methods if the base is wrong.
+            errors += self._validate_methods()
+
+        errors += self._validate_exc()
         return errors
 
     def _validate_base(self):
-        errors = []
-
         if not self.base:
             return []
 
+        if not self.base.is_interface:
+            return [validation.error(self, 'base must be an interface')]
+
+        # The base is in interface, continue validation.
+        errors = []
+        errors += self.base._validate_is_defined_before(self)
+
+        # Prevent circular inheritance.
         base = self.base
-        if not base.is_interface:
-            errors.append(validation.error(self, 'Base must be an interface'))
-
-        errors += base._validate_is_defined_before(self)
-
-        # Check circular inheritance.
         while base:
             if base is self:
-                errors.append(validation.error(self, 'Circular inheritance'))
+                errors.append(validation.error(self, 'circular inheritance'))
                 break
-
             base = base.base
 
         return errors
 
     def _validate_exc(self):
-        if not self.exc:
-            return []
-
-        if not self.exc.is_exception:
-            return [validation.error(self, 'Wrong exception')]
+        if self.exc and not self.exc.is_exception:
+            return [validation.error(self, 'interface exc must be an exception, got %s', self.exc)]
 
         return []
 
@@ -118,11 +116,9 @@ class Interface(Definition):
 
         names = set()
         for method in self.methods:
-            name = method.name
-            if name in names:
-                errors.append(validation.error(self, 'Duplicate method %r', name))
-
-            names.add(name)
+            if method.name in names:
+                errors.append(validation.error(self, 'duplicate method %r', method.name))
+            names.add(method.name)
 
         for method in self.methods:
             errors += method.validate()
@@ -132,12 +128,11 @@ class Interface(Definition):
 
 class Method(object):
     '''Interface method.'''
-    def __init__(self, name, args=None, result=None, is_index=False, is_post=False,
+    def __init__(self, name, result=NativeTypes.VOID, args=None, is_index=False, is_post=False,
                  doc=None, location=None):
         self.name = name
         self.args = []
         self.result = result
-        self.interface = None
 
         self.is_index = is_index
         self.is_post = is_post
@@ -145,11 +140,21 @@ class Method(object):
         self.doc = doc
         self.location = location
 
+        self.interface = None
+
         if args:
             map(self.add_arg, args)
 
     def __str__(self):
         return self.fullname
+
+    @property
+    def result(self):
+        return self._result.dereference()
+
+    @result.setter
+    def result(self, value):
+        self._result = references.reference(value)
 
     @property
     def fullname(self):
@@ -160,10 +165,13 @@ class Method(object):
 
     @property
     def is_remote(self):
-        return not self.result.is_interface
+        return self.result and (not self.result.is_interface)
 
     def add_arg(self, arg):
         '''Append an argument to this method.'''
+        if arg.method:
+            raise ValueError('Argument is already in a method, %s' % arg)
+
         arg.method = self
         self.args.append(arg)
 
@@ -175,13 +183,10 @@ class Method(object):
 
     def link(self, linker):
         errors = []
-
-        self.result, errors0 = linker.link(self.result)
-        errors += errors0
+        errors += self._result.link(linker)
 
         for arg in self.args:
-            arg.type, errors0 = arg.link(linker)
-            errors += errors0
+            errors += arg.link(linker)
 
         return errors
 
@@ -192,11 +197,17 @@ class Method(object):
             errors.append(validation.error(self, '@post method must be remote (return a data type '
                                                  'or void)'))
 
-        # Check that all form args fields do not clash with method arguments.
-        names = {arg.name for arg in self.args}
+        # Prevent duplicate arguments.
+        names = set()
+        for arg in self.args:
+            if arg.name in names:
+                errors.append(validation.error(self, 'duplicate argument %r', arg.name))
+            names.add(arg.name)
+
+        # Prevent form arg fields and arguments name clashes.
         for arg in self.args:
             type0 = arg.type
-            if not type0.is_message or not type0.is_form:
+            if not (type0.is_message and type0.is_form):
                 continue
 
             # It's a form.
@@ -204,7 +215,7 @@ class Method(object):
                 if field.name not in names:
                     continue
 
-                errors.append(validation.error(self, 'Form fields clash with method args, '
+                errors.append(validation.error(self, 'form fields clash with method args, '
                                                      'form arg=%s', arg.name))
                 break  # One error is enough
 
@@ -222,15 +233,22 @@ class MethodArg(object):
         self.method = None
 
     @property
+    def type(self):
+        return self._type.dereference()
+
+    @type.setter
+    def type(self, value):
+        self._type = references.reference(value)
+
+    @property
     def fullname(self):
         return '%s.%s' % (self.method, self.name)
 
     def link(self, linker):
-        self.type, errors = linker.link(self.type)
-        return errors
+        return self._type.link(linker)
 
     def validate(self):
         if not self.type.is_data_type:
-            return [validation.error(self, 'Argument must be a data type')]
+            return [validation.error(self, 'argument must be a data type')]
 
         return []

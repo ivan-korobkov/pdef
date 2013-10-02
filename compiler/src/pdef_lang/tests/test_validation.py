@@ -71,20 +71,6 @@ class TestAbstractValidator(unittest.TestCase):
         assert self.validator._has_import_circle(module0, module2) is False
 
 
-class TestEnumValidator(unittest.TestCase):
-    def __init__(self):
-        self.validator = EnumValidator()
-
-    def test_validate_enum__duplicate_values(self):
-        enum = Enum('Number')
-        enum.add_value('ONE')
-        enum.add_value('ONE')
-
-        errors = self.validator._validate_definition(enum)
-        assert len(errors) == 1
-        assert 'duplicate enum value' in errors[0].message
-
-
 class TestMessageValidator(unittest.TestCase):
     def test_validate_message_base__self_inheritance(self):
         '''Should prevent self-inheritance.'''

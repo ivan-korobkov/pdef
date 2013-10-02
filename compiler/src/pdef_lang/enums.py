@@ -1,12 +1,11 @@
 # encoding: utf-8
-from .definitions import Definition, Type
-from . import validation
+from pdef_lang import definitions, validation
 
 
-class Enum(Definition):
+class Enum(definitions.Definition):
     '''Enum definition.'''
     def __init__(self, name, values=None):
-        super(Enum, self).__init__(Type.ENUM, name)
+        super(Enum, self).__init__(definitions.Type.ENUM, name)
         self.values = []
 
         if values:

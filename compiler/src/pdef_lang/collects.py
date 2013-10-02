@@ -16,8 +16,8 @@ class List(definitions.Definition):
     def element(self, value):
         self._element = references.reference(value)
 
-    def link(self, linker):
-        return self._element.link(linker)
+    def link(self, scope):
+        return self._element.link(scope)
 
     def validate(self):
         errors = []
@@ -42,8 +42,8 @@ class Set(definitions.Definition):
     def element(self, value):
         self._element = references.reference(value)
 
-    def link(self, linker):
-        return self._element.link(linker)
+    def link(self, scope):
+        return self._element.link(scope)
 
     def validate(self):
         errors = []
@@ -77,9 +77,9 @@ class Map(definitions.Definition):
     def value(self, value):
         self._value = references.reference(value)
 
-    def link(self, linker):
-        errors0 = self._key.link(linker)
-        errors1 = self._value.link(linker)
+    def link(self, scope):
+        errors0 = self._key.link(scope)
+        errors1 = self._value.link(scope)
         return errors0 + errors1
 
     def validate(self):

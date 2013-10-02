@@ -1,11 +1,11 @@
 # encoding: utf-8
 import logging
 from collections import deque
-from pdef_lang import linking, validation
+from pdef_lang import validation, definitions
 
 
 class Module(object):
-    '''Module in a pdef package, usually, a module is parsed from one file.'''
+    '''Module with definitions.'''
     def __init__(self, name, imports=None, definitions=None):
         self.name = name
         self.package = None
@@ -81,11 +81,11 @@ class Module(object):
 
     def _link_definitions(self):
         '''Link imports and definitions.'''
+        scope = lambda name: self._find(name)
+
         errors = []
-        # linker = linking.Linker(self)
-        #
-        # for def0 in self.definitions:
-        #     errors += def0.link(linker)
+        for def0 in self.definitions:
+            errors += def0.link(scope)
 
         return errors
 
@@ -128,6 +128,57 @@ class Module(object):
                 q.append(imp.module)
 
         return False
+
+    def _find(self, name):
+        '''Find a type by its name.'''
+
+        # Try to get a native type.
+        def0 = definitions.NativeTypes.get_by_type(name)
+        if def0:
+            return def0
+
+        # Try to find a type or an enum value in the current module.
+        def0 = self._find_definition(name)
+        if def0:
+            return def0
+
+        # Try to find an imported type.
+        left = []
+        right = name.split('.')
+        while right:
+            left.append(right.pop(0))
+            lname = '.'.join(left)
+            rname = '.'.join(right)
+
+            imodule = self.get_imported_module(lname)
+            if not imodule:
+                continue
+
+            # Try to get a definition or an enum value from the imported module.
+            def0 = imodule._find_definition(rname)
+            if def0:
+                return def0
+
+                # Still can have more imports to check, i.e.:
+                # import com.project
+                # import com.project.submodule
+
+        return None
+
+    def _find_definition(self, name):
+        '''Find a definition or an enum value by a name.'''
+        if '.' not in name:
+            # It must be a user-defined type.
+            return self.get_definition(name)
+
+        # It can be an enum value.
+        left, right = name.split('.', 1)
+
+        enum = self.get_definition(left)
+        if enum and enum.is_enum:
+            return enum.get_value(right)
+
+        return None
 
 
 class AbstractImport(object):

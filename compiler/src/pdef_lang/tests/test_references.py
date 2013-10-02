@@ -15,35 +15,45 @@ class TestReference(unittest.TestCase):
     def test_definition(self):
         def0 = definitions.Definition(definitions.Type.MESSAGE, 'Message')
         ref = references.reference(def0)
+
         assert isinstance(ref, references.Reference)
         assert ref.dereference() is def0
 
     def test_reference(self):
         ref0 = references.reference(None)
         ref1 = references.reference(ref0)
+
         assert ref0 is ref1
 
     def test_dereference(self):
         def0 = definitions.Definition(definitions.Type.MESSAGE, 'Message')
         ref = references.Reference(def0)
+
         assert ref.dereference() is def0
 
 
 class TestNameReference(unittest.TestCase):
     def test_link(self):
-        linker = lambda name: (name, ['error'])
+        scope = lambda name: name
         ref = references.reference('module.Message')
-        errors = ref.link(linker)
+        errors = ref.link(scope)
 
-        assert errors == ['error']
+        assert not errors
         assert ref.dereference() == 'module.Message'
+
+    def test_link__error(self):
+        scope = lambda name: None
+        ref = references.reference('module.Message')
+        errors = ref.link(scope)
+
+        assert "symbol not found 'module.Message'" in errors[0].message
 
 
 class TestListReference(unittest.TestCase):
     def test_link(self):
-        linker = lambda name: (name, [])
+        scope = lambda name: name
         ref = references.ListReference('element')
-        errors = ref.link(linker)
+        errors = ref.link(scope)
         list0 = ref.dereference()
 
         assert not errors
@@ -51,19 +61,19 @@ class TestListReference(unittest.TestCase):
         assert list0.element == 'element'
 
     def test_link_errors(self):
-        linker = lambda name: (name, ['list_error'])
+        scope = lambda name: None
         ref = references.ListReference('element')
-        errors = ref.link(linker)
+        errors = ref.link(scope)
 
-        assert errors == ['list_error']
-        assert ref._definition is None
+        assert not ref
+        assert len(errors) == 1
 
 
 class TestSetReference(unittest.TestCase):
     def test_link(self):
-        linker = lambda name: (name, [])
+        scope = lambda name: name
         ref = references.SetReference('set_element')
-        errors = ref.link(linker)
+        errors = ref.link(scope)
         set0 = ref.dereference()
 
         assert not errors
@@ -71,19 +81,19 @@ class TestSetReference(unittest.TestCase):
         assert set0.element == 'set_element'
 
     def test_link_errors(self):
-        linker = lambda name: (name, ['set_error'])
+        scope = lambda name: None
         ref = references.SetReference('set_element')
-        errors = ref.link(linker)
+        errors = ref.link(scope)
 
-        assert errors == ['set_error']
-        assert ref._definition is None
+        assert not ref
+        assert len(errors) == 1
 
 
 class TestMapReference(unittest.TestCase):
     def test_link(self):
-        linker = lambda name: (name, [])
+        scope = lambda name: name
         ref = references.MapReference('key', 'value')
-        errors = ref.link(linker)
+        errors = ref.link(scope)
         map0 = ref.dereference()
 
         assert not errors
@@ -92,9 +102,10 @@ class TestMapReference(unittest.TestCase):
         assert map0.value == 'value'
 
     def test_link_errors(self):
-        linker = lambda name: (name, ['map_error_' + name])
+        scope = lambda name: None
         ref = references.MapReference('key', 'value')
-        errors = ref.link(linker)
+        errors = ref.link(scope)
 
-        assert errors == ['map_error_key', 'map_error_value']
-        assert ref._definition is None
+        assert not ref
+        assert "symbol not found 'key'" in errors[0].message
+        assert "symbol not found 'value'" in errors[1].message

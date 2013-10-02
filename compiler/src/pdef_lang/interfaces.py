@@ -62,14 +62,14 @@ class Interface(definitions.Definition):
         self.add_method(method)
         return method
 
-    def link(self, linker):
+    def link(self, scope):
         '''Link the base, the exception and the methods.'''
         errors = []
-        errors += self._base.link(linker)
-        errors += self._exc.link(linker)
+        errors += self._base.link(scope)
+        errors += self._exc.link(scope)
 
         for method in self.declared_methods:
-            errors += method.link(linker)
+            errors += method.link(scope)
 
         return errors
 
@@ -177,12 +177,12 @@ class Method(object):
         self.add_arg(arg)
         return arg
 
-    def link(self, linker):
+    def link(self, scope):
         errors = []
-        errors += self._result.link(linker)
+        errors += self._result.link(scope)
 
         for arg in self.args:
-            errors += arg.link(linker)
+            errors += arg.link(scope)
 
         return errors
 
@@ -240,8 +240,8 @@ class MethodArg(object):
     def fullname(self):
         return '%s.%s' % (self.method, self.name)
 
-    def link(self, linker):
-        return self._type.link(linker)
+    def link(self, scope):
+        return self._type.link(scope)
 
     def validate(self):
         if not self.type.is_data_type:

@@ -7,7 +7,7 @@ from pdef_lang.collects import *
 class TestList(unittest.TestCase):
     def test_link(self):
         list0 = List('module.Message')
-        errors = list0.link(lambda name: (name, []))
+        errors = list0.link(lambda name: name)
 
         assert not errors
         assert list0.element == 'module.Message'
@@ -23,7 +23,7 @@ class TestList(unittest.TestCase):
 class TestSet(unittest.TestCase):
     def test_link(self):
         set0 = Set('module.Message')
-        errors = set0.link(lambda name: (name, []))
+        errors = set0.link(lambda name: name)
 
         assert not errors
         assert set0.element == 'module.Message'
@@ -39,7 +39,7 @@ class TestSet(unittest.TestCase):
 class TestMap(unittest.TestCase):
     def test_link(self):
         map0 = Map('key', 'value')
-        errors = map0.link(lambda name: (name, []))
+        errors = map0.link(lambda name: name)
 
         assert not errors
         assert map0.key == 'key'

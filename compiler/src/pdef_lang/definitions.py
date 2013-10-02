@@ -66,7 +66,7 @@ class Definition(object):
     def __str__(self):
         return self.name
 
-    def link(self, linker):
+    def link(self, scope):
         return []
 
     def validate(self):

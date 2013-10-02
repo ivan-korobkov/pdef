@@ -123,7 +123,7 @@ class TestMethod(unittest.TestCase):
 
 class TestMethodArg(unittest.TestCase):
     def test_link(self):
-        linker = lambda name: (name, [])
+        linker = lambda name: name
         arg = MethodArg('arg', 'module.Message')
 
         errors = arg.link(linker)

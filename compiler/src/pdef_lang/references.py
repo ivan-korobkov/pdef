@@ -1,7 +1,7 @@
 # encoding: utf-8
 import pdef_lang.collects
 import pdef_lang.enums
-from pdef_lang import definitions
+from pdef_lang import definitions, validation
 
 
 def reference(name_ref_def):
@@ -30,12 +30,15 @@ class Reference(object):
     def __init__(self, definition=None):
         self._definition = definition
 
+    def __nonzero__(self):
+        return bool(self._definition)
+
     def dereference(self):
         if not self._definition:
             raise ValueError('Reference is not linked: %s' % self)
         return self._definition
 
-    def link(self, linker):
+    def link(self, scope):
         return []
 
 
@@ -54,9 +57,12 @@ class NameReference(Reference):
         super(NameReference, self).__init__(None)
         self.name = name
 
-    def link(self, linker):
-        self._definition, errors = linker(self.name)
-        return errors
+    def link(self, scope):
+        self._definition = scope(self.name)
+        if self._definition:
+            return []
+
+        return [validation.error(self, 'symbol not found %r', self.name)]
 
 
 class ListReference(Reference):
@@ -65,13 +71,13 @@ class ListReference(Reference):
         super(ListReference, self).__init__()
         self.element = reference(element)
 
-    def link(self, linker):
-        errors = self.element.link(linker)
+    def link(self, scope):
+        errors = self.element.link(scope)
+        if errors:
+            return errors
 
-        if not errors:
-            self._definition = pdef_lang.collects.List(self.element)
-
-        return errors
+        self._definition = pdef_lang.collects.List(self.element)
+        return []
 
 
 class SetReference(Reference):
@@ -80,13 +86,13 @@ class SetReference(Reference):
         super(SetReference, self).__init__()
         self.element = reference(element)
 
-    def link(self, linker):
-        errors = self.element.link(linker)
+    def link(self, scope):
+        errors = self.element.link(scope)
+        if errors:
+            return errors
 
-        if not errors:
-            self._definition = pdef_lang.collects.Set(self.element)
-
-        return errors
+        self._definition = pdef_lang.collects.Set(self.element)
+        return []
 
 
 class MapReference(Reference):
@@ -96,12 +102,11 @@ class MapReference(Reference):
         self.key = reference(key)
         self.value = reference(value)
 
-    def link(self, linker):
-        errors0 = self.key.link(linker)
-        errors1 = self.value.link(linker)
-        errors = errors0 + errors1
+    def link(self, scope):
+        errors0 = self.key.link(scope)
+        errors1 = self.value.link(scope)
+        if errors0 or errors1:
+            return errors0 + errors1
 
-        if not errors:
-            self._definition = pdef_lang.collects.Map(self.key, self.value)
-
-        return errors
+        self._definition = pdef_lang.collects.Map(self.key, self.value)
+        return []

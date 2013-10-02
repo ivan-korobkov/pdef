@@ -96,13 +96,13 @@ class Message(definitions.Definition):
         if self.base:
             self.base._add_subtype(subtype)
 
-    def link(self, linker):
+    def link(self, scope):
         errors = []
-        errors += self._base.link(linker)
-        errors += self._discriminator_value.link(linker)
+        errors += self._base.link(scope)
+        errors += self._discriminator_value.link(scope)
 
         for field in self.declared_fields:
-            errors += field.link()
+            errors += field.link(scope)
 
         if self._discriminator_value:
             # TODO: move to the build stage.
@@ -251,8 +251,8 @@ class Field(object):
     def type(self):
         return self._type.dereference()
 
-    def link(self, linker):
-        return self._type.link(linker)
+    def link(self, scope):
+        return self._type.link(scope)
 
     def validate(self):
         errors = []

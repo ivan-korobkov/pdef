@@ -1,6 +1,7 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import exc
+from pdef_lang import exc, NativeTypes
+from pdef_lang.messages import Message
 from pdef_lang.modules import *
 from pdef_lang.packages import *
 
@@ -31,4 +32,17 @@ class TestPackage(unittest.TestCase):
             assert 'duplicate module' in e.errors[0].message
 
     def test_validate(self):
-        raise NotImplementedError
+        msg = Message('Message')
+        msg.create_field('field', NativeTypes.VOID)  # It's an error, not a data type.
+
+        module = Module('module')
+        module.add_definition(msg)
+
+        package = Package()
+        package.add_module(module)
+
+        try:
+            package.validate()
+            self.fail()
+        except exc.ValidationException as e:
+            assert len(e.errors) == 1

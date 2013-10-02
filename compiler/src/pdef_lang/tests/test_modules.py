@@ -1,7 +1,8 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import Definition, Type
+from pdef_lang import Definition, Type, Enum
 from pdef_lang.modules import *
+from pdef_lang.messages import Message
 from pdef_lang.packages import Package
 
 
@@ -21,6 +22,8 @@ class TestModule(unittest.TestCase):
         module.add_definition(def0)
 
         assert module.get_definition('Test') is def0
+
+    # Linking.
 
     def test_link_imports(self):
         '''Should link module imports.'''
@@ -43,7 +46,21 @@ class TestModule(unittest.TestCase):
         assert module.get_imported_module('module1') is module1
 
     def test_link_definitions(self):
-        raise NotImplementedError
+        msg0 = Message('Message0')
+        msg0.create_field('field0', 'Message1')
+
+        msg1 = Message('Message1')
+        msg1.create_field('field1', 'Message0')
+
+        module = Module('module')
+        module.add_definition(msg0)
+        module.add_definition(msg1)
+        module._link_definitions()
+
+        assert msg0.fields[0].type is msg1
+        assert msg1.fields[0].type is msg0
+
+    # Validation.
 
     def test_validate_module__duplicate_imports(self):
         module = Module('test')
@@ -101,6 +118,56 @@ class TestModule(unittest.TestCase):
         module1.add_imported_module('module0', module2)
 
         assert module0._has_import_circle(module2) is False
+
+    # Search.
+
+    def test_find__definition(self):
+        '''Should find up a user-defined definition by its reference.'''
+        def0 = Definition(Type.MESSAGE, 'Test')
+
+        module = Module('test')
+        module.add_definition(def0)
+
+        result = module._find('Test')
+        assert result is def0
+
+    def test_find__enum_value(self):
+        '''Should find an enum value by its name.'''
+        enum = Enum('Number')
+        one = enum.add_value('One')
+
+        module = Module('test')
+        module.add_definition(enum)
+
+        result = module._find('Number.One')
+        assert result is one
+
+    def test_find__imported_definition(self):
+        '''Should find an imported definition.'''
+        def0 = Definition(Type.MESSAGE, 'Test')
+
+        module0 = Module('test.module0')
+        module0.add_definition(def0)
+
+        module1 = Module('module1')
+        module1.add_imported_module('test.module0', module0)
+
+        result = module1._find('test.module0.Test')
+        assert result is def0
+
+    def test_find__imported_enum_value(self):
+        '''Should find an imported enum value.'''
+        enum = Enum('Number')
+        one = enum.add_value('One')
+
+        module0 = Module('test.module0')
+        module0.add_definition(enum)
+
+        module1 = Module('module1')
+        module1.add_imported_module('module0', module0)
+
+        result = module1._find('module0.Number.One')
+        assert result is one
 
 
 class TestAbsoluteImport(unittest.TestCase):

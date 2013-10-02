@@ -163,6 +163,50 @@ class TestMessage(unittest.TestCase):
         errors = msg1.validate()
         assert 'multiple discriminator fields' in errors[0].message
 
+    # Building.
+
+    def test_link_message__base_with_type(self):
+        '''Should link message and add to it to its base subtypes.'''
+        enum = Enum('Type')
+        subtype = enum.add_value('SUBTYPE')
+
+        base = Message('Base')
+        base.create_field('type', enum, is_discriminator=True)
+
+        module = Module('test')
+        module.add_definitions(enum, base)
+
+        msg = Message('Msg')
+        msg.set_base(Reference(ast.DefRef('Base'), module),
+                     Reference(ast.DefRef('Type.SUBTYPE'), module))
+
+        self.linker._link_def(msg)
+        assert msg.base is base
+        assert msg.discriminator_value is subtype
+        assert msg in base.subtypes
+
+    def test_link_message__base_subtype_tree(self):
+        '''Should set a message base with a base type and add the message to the subtype tree.'''
+        enum = Enum('Type')
+        type0 = enum.add_value('Type0')
+        type1 = enum.add_value('Type1')
+
+        base = Message('Base')
+        base.create_field('type', enum, is_discriminator=True)
+
+        msg0 = Message('Msg0')
+        msg0.set_base(base, type0)
+
+        msg1 = Message('Msg1')
+        msg1.set_base(msg0, type1)
+
+        module = Module('test')
+        module.add_definitions(enum, base, msg0, msg1)
+
+        self.linker._link_def(msg1)
+        assert msg0.subtypes == [msg1]
+        assert base.subtypes == [msg0, msg1]
+
 
 class TestField(unittest.TestCase):
     def test_validate__must_be_datatype(self):

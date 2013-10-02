@@ -1,8 +1,5 @@
 # encoding: utf-8
 import unittest
-from pdef_compiler import ast
-from pdef_compiler.lang import *
-from pdef_compiler.linker import *
 
 
 class TestLookup(unittest.TestCase):

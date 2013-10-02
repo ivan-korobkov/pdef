@@ -1,6 +1,6 @@
 # encoding: utf-8
 import logging
-from pdef_lang import exc, linking, validation
+from pdef_lang import exc, validation
 
 
 class Package(object):
@@ -32,13 +32,20 @@ class Package(object):
 
     def link(self):
         errors = []
-        linker = linking.Linker()
 
+        # Prevent duplicate module names.
+        names = set()
         for module in self.modules:
-            errors += module.link_imports(linker)
+            if module.name in names:
+                errors.append(validation.error(self, 'duplicate module %r', module.name))
+            names.add(module.name)
 
+        if errors:
+            raise exc.LinkingException(errors)
+
+        # Link modules.
         for module in self.modules:
-            errors += module.link_definitions(linker)
+            errors += module.link()
 
         if errors:
             raise exc.LinkingException(errors)

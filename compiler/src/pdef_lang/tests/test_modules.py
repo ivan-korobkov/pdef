@@ -35,12 +35,15 @@ class TestModule(unittest.TestCase):
         package.add_module(module)
         package.add_module(module0)
         package.add_module(module1)
-        errors = module.link_imports()
+        errors = module.link()
 
         assert not errors
         assert len(module.imported_modules) == 2
         assert module.get_imported_module('package.module0') is module0
         assert module.get_imported_module('module1') is module1
+
+    def test_link_definitions(self):
+        raise NotImplementedError
 
     def test_validate_module__duplicate_imports(self):
         module = Module('test')

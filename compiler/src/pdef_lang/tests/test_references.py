@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import collections, definitions, references
+from pdef_lang import collects, definitions, references
 
 
 class TestReference(unittest.TestCase):
@@ -47,7 +47,7 @@ class TestListReference(unittest.TestCase):
         list0 = ref.dereference()
 
         assert not errors
-        assert isinstance(list0, collections.List)
+        assert isinstance(list0, collects.List)
         assert list0.element == 'element'
 
     def test_link_errors(self):
@@ -67,7 +67,7 @@ class TestSetReference(unittest.TestCase):
         set0 = ref.dereference()
 
         assert not errors
-        assert isinstance(set0, collections.Set)
+        assert isinstance(set0, collects.Set)
         assert set0.element == 'set_element'
 
     def test_link_errors(self):
@@ -87,7 +87,7 @@ class TestMapReference(unittest.TestCase):
         map0 = ref.dereference()
 
         assert not errors
-        assert isinstance(map0, collections.Map)
+        assert isinstance(map0, collects.Map)
         assert map0.key == 'key'
         assert map0.value == 'value'
 

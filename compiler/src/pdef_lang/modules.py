@@ -56,7 +56,15 @@ class Module(object):
             if d.name == name:
                 return d
 
-    def link_imports(self):
+    def link(self):
+        '''Link module imports and definitions.'''
+        errors = self._link_imports()
+        if errors:
+            return errors
+
+        return self._link_definitions()
+
+    def _link_imports(self):
         '''Link imports, must be called before link_module_defs().'''
         if not self.package:
             raise ValueError('Module must be in a package, %s' % self)
@@ -71,13 +79,13 @@ class Module(object):
 
         return errors
 
-    def link_definitions(self):
+    def _link_definitions(self):
         '''Link imports and definitions.'''
         errors = []
-        linker = linking.Linker(self)
-
-        for def0 in self.definitions:
-            errors += def0.link(linker)
+        # linker = linking.Linker(self)
+        #
+        # for def0 in self.definitions:
+        #     errors += def0.link(linker)
 
         return errors
 

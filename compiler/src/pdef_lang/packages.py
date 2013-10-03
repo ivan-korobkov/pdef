@@ -50,6 +50,10 @@ class Package(object):
         if errors:
             raise exc.LinkingException(errors)
 
+    def build(self):
+        for module in self.modules:
+            module.build()
+
     def validate(self):
         errors = []
         for module in self.modules:

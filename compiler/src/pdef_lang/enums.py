@@ -11,6 +11,12 @@ class Enum(definitions.Definition):
         if value_names:
             map(self.add_value, value_names)
 
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return '<%s %s %s>' % (self.__class__.__name__, self.name, hex(id(self)))
+
     def add_value(self, name):
         '''Create a new enum value by its name, add it to this enum, and return it.'''
         value = EnumValue(self, name)
@@ -45,3 +51,11 @@ class EnumValue(definitions.Type):
         super(EnumValue, self).__init__(definitions.TypeEnum.ENUM_VALUE)
         self.enum = enum
         self.name = name
+
+    def __str__(self):
+        if not self.enum:
+            return self.name
+        return self.enum.name + '.' + self.name
+
+    def __repr__(self):
+        return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))

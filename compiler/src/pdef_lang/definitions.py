@@ -117,6 +117,10 @@ class Definition(Type):
         '''Link this definition references and return a list of errors.'''
         return []
 
+    def build(self):
+        '''Build this definition after linking.'''
+        pass
+
     def validate(self):
         '''Validate this definition and return a list of errors.'''
         return []

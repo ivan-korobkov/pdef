@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import exc, NativeType
+from pdef_lang import exc, NativeType, Enum
 from pdef_lang.messages import Message
 from pdef_lang.modules import *
 from pdef_lang.packages import *
@@ -30,6 +30,25 @@ class TestPackage(unittest.TestCase):
         except exc.LinkingException as e:
             assert len(e.errors) == 1
             assert 'duplicate module' in e.errors[0].message
+
+    def test_build(self):
+        enum = Enum('Enum')
+        one_type = enum.add_value('ONE')
+
+        zero = Message('Zero')
+        one = Message('One', base=zero, discriminator_value=one_type)
+
+        module = Module('module')
+        module.add_definition(zero)
+        module.add_definition(one)
+
+        package = Package()
+        package.add_module(module)
+
+        package.link()
+        package.build()
+
+        assert one in zero.subtypes
 
     def test_validate(self):
         msg = Message('Message')

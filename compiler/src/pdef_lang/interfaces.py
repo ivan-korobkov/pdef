@@ -191,7 +191,7 @@ class Method(object):
 
         if self.is_post and not self.is_remote:
             errors.append(exc.error(self, '@post method must be remote (return a data type '
-                                                 'or void)'))
+                                          'or void)'))
 
         # Prevent duplicate arguments.
         names = set()
@@ -212,7 +212,7 @@ class Method(object):
                     continue
 
                 errors.append(exc.error(self, 'form fields clash with method args, '
-                                                     'form arg=%s', arg.name))
+                                              'form arg=%s', arg.name))
                 break  # One error is enough
 
         for arg in self.args:

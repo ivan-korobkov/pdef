@@ -64,6 +64,11 @@ class Module(object):
 
         return self._link_definitions()
 
+    def build(self):
+        '''Build definitions.'''
+        for def0 in self.definitions:
+            def0.build()
+
     def _link_imports(self):
         '''Link imports, must be called before link_module_defs().'''
         if not self.package:

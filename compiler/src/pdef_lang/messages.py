@@ -7,7 +7,8 @@ class Message(definitions.Definition):
     '''User-defined message.'''
     def __init__(self, name, base=None, discriminator_value=None, declared_fields=None,
                  is_exception=False, is_form=False, doc=None, location=None):
-        super(Message, self).__init__(definitions.TypeEnum.MESSAGE, name, doc=doc, location=location)
+        super(Message, self).__init__(definitions.TypeEnum.MESSAGE, name, doc=doc,
+                                      location=location)
 
         self.base = base
         self.discriminator_value = discriminator_value
@@ -72,16 +73,15 @@ class Message(definitions.Definition):
         field.message = self
         self.declared_fields.append(field)
 
-        # TODO: move into the build stage.
         if field.is_discriminator:
             self._discriminator = field
 
         logging.debug('%s: added a field %r', self, field.name)
         return field
 
-    def create_field(self, name, definition, is_discriminator=False):
+    def create_field(self, name, type0, is_discriminator=False):
         '''Create a new field, add it to this message and return the field.'''
-        field = Field(name, definition, is_discriminator=is_discriminator)
+        field = Field(name, type0, is_discriminator=is_discriminator)
         return self.add_field(field)
 
     def _add_subtype(self, subtype):
@@ -104,11 +104,12 @@ class Message(definitions.Definition):
         for field in self.declared_fields:
             errors += field.link(scope)
 
-        if self._discriminator_value:
-            # TODO: move to the build stage.
-            self.base._add_subtype(self)
-
         return errors
+
+    def build(self):
+        # Add this message to base subtypes.
+        if self._discriminator_value and self.base:
+            self.base._add_subtype(self)
 
     def validate(self):
         errors = []
@@ -117,7 +118,7 @@ class Message(definitions.Definition):
             # Cannot continue validation when the base is wrong.
             return errors
 
-        errors += self._validate_discriminator_value()
+        errors += self._validate_discriminator()
         errors += self._validate_subtypes()
         errors += self._validate_fields()
         return errors
@@ -150,7 +151,7 @@ class Message(definitions.Definition):
 
         return errors
 
-    def _validate_discriminator_value(self):
+    def _validate_discriminator(self):
         base = self.base
         dvalue = self.discriminator_value
 
@@ -176,13 +177,13 @@ class Message(definitions.Definition):
         if not base.is_polymorphic:
             # The base is not polymorphic, i.e. does not have a discriminator field.
             errors.append(exc.error(self, 'cannot set a discriminator value, the base '
-                                                 'does not have a discriminator field'))
+                                          'is not polymorphic (does not have a discriminator)'))
             return errors
 
         if dvalue not in base.discriminator.type:
             # The discriminator value is not a base discriminator enum value.
-            errors.append(exc.error(self, 'discriminator value does not match base '
-                                                 'discriminator type'))
+            errors.append(exc.error(self, 'discriminator value does not match the base '
+                                          'discriminator type'))
             return errors
 
         # The discriminator type must be defined before the message.
@@ -199,7 +200,8 @@ class Message(definitions.Definition):
         for subtype in self.subtypes:
             value = subtype.discriminator_value
             if value in values:
-                errors.append(exc.error(self, 'duplicate discriminator value %s', value))
+                errors.append(exc.error(self, 'duplicate subtype with a discriminator value %r',
+                                        value.name))
             values.add(value)
 
         return errors

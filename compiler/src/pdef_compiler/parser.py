@@ -212,7 +212,7 @@ class _GrammarRules(object):
         '''
         enum : ENUM IDENTIFIER LBRACE enum_values RBRACE
         '''
-        t[0] = pdef_lang.Enum(t[2], values=t[4])
+        t[0] = pdef_lang.Enum(t[2], value_names=t[4])
 
     def p_enum_values(self, t):
         '''

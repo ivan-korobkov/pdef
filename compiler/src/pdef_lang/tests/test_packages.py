@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import exc, NativeTypes
+from pdef_lang import exc, NativeType
 from pdef_lang.messages import Message
 from pdef_lang.modules import *
 from pdef_lang.packages import *
@@ -33,7 +33,7 @@ class TestPackage(unittest.TestCase):
 
     def test_validate(self):
         msg = Message('Message')
-        msg.create_field('field', NativeTypes.VOID)  # It's an error, not a data type.
+        msg.create_field('field', NativeType.VOID)  # It's an error, not a data type.
 
         module = Module('module')
         module.add_definition(msg)

@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import Definition, Type, Enum
+from pdef_lang import Definition, TypeEnum, Enum
 from pdef_lang.modules import *
 from pdef_lang.messages import Message
 from pdef_lang.packages import Package
@@ -17,7 +17,7 @@ class TestModule(unittest.TestCase):
 
     def test_add_get_definition(self):
         '''Should add a new definition to a module.'''
-        def0 = Definition(Type.MESSAGE, 'Test')
+        def0 = Definition(TypeEnum.MESSAGE, 'Test')
         module = Module('test')
         module.add_definition(def0)
 
@@ -73,8 +73,8 @@ class TestModule(unittest.TestCase):
 
     def test_validate_module__duplicate_definition(self):
         '''Should prevent adding a duplicate definition to a module.'''
-        def0 = Definition(Type.MESSAGE, 'Test')
-        def1 = Definition(Type.MESSAGE, 'Test')
+        def0 = Definition(TypeEnum.MESSAGE, 'Test')
+        def1 = Definition(TypeEnum.MESSAGE, 'Test')
 
         module = Module('test')
         module.add_definition(def0)
@@ -89,7 +89,7 @@ class TestModule(unittest.TestCase):
         module = Module('test')
         module.add_imported_module('clash', Module('imported'))
 
-        def0 = Definition(Type.MESSAGE, 'clash')
+        def0 = Definition(TypeEnum.MESSAGE, 'clash')
         module.add_definition(def0)
         errors = module.validate()
 
@@ -123,7 +123,7 @@ class TestModule(unittest.TestCase):
 
     def test_find__definition(self):
         '''Should find up a user-defined definition by its reference.'''
-        def0 = Definition(Type.MESSAGE, 'Test')
+        def0 = Definition(TypeEnum.MESSAGE, 'Test')
 
         module = Module('test')
         module.add_definition(def0)
@@ -144,7 +144,7 @@ class TestModule(unittest.TestCase):
 
     def test_find__imported_definition(self):
         '''Should find an imported definition.'''
-        def0 = Definition(Type.MESSAGE, 'Test')
+        def0 = Definition(TypeEnum.MESSAGE, 'Test')
 
         module0 = Module('test.module0')
         module0.add_definition(def0)

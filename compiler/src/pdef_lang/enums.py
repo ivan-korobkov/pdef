@@ -4,12 +4,12 @@ from pdef_lang import definitions, exc
 
 class Enum(definitions.Definition):
     '''Enum definition.'''
-    def __init__(self, name, values=None):
-        super(Enum, self).__init__(definitions.Type.ENUM, name)
+    def __init__(self, name, value_names=None):
+        super(Enum, self).__init__(definitions.TypeEnum.ENUM, name)
         self.values = []
 
-        if values:
-            map(self.add_value, values)
+        if value_names:
+            map(self.add_value, value_names)
 
     def add_value(self, name):
         '''Create a new enum value by its name, add it to this enum, and return it.'''
@@ -39,11 +39,9 @@ class Enum(definitions.Definition):
         return errors
 
 
-class EnumValue(object):
+class EnumValue(definitions.Type):
     '''Single enum value which has a name and a pointer to the declaring enum.'''
     def __init__(self, enum, name):
+        super(EnumValue, self).__init__(definitions.TypeEnum.ENUM_VALUE)
         self.enum = enum
         self.name = name
-
-        # TODO: type/definition
-        self.is_enum_value = True

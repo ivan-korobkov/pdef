@@ -1,23 +1,15 @@
 # encoding: utf-8
-from pdef_lang import definitions, exc, references
+from pdef_lang import definitions, exc
 
 
-class List(definitions.Definition):
-    '''List definition.'''
+class List(definitions.Type):
+    '''List collection.'''
     def __init__(self, element):
-        super(List, self).__init__(definitions.Type.LIST, 'list')
+        super(List, self).__init__(definitions.TypeEnum.LIST)
         self.element = element
 
-    @property
-    def element(self):
-        return self._element.dereference()
-
-    @element.setter
-    def element(self, value):
-        self._element = references.reference(value)
-
-    def link(self, scope):
-        return self._element.link(scope)
+        if not isinstance(element, definitions.Type):
+            raise TypeError('Element must be a definitions.Type instance, %r' % element)
 
     def validate(self):
         errors = []
@@ -28,22 +20,14 @@ class List(definitions.Definition):
         return errors
 
 
-class Set(definitions.Definition):
-    '''Set definition.'''
+class Set(definitions.Type):
+    '''Set collection.'''
     def __init__(self, element):
-        super(Set, self).__init__(definitions.Type.SET, 'set')
+        super(Set, self).__init__(definitions.TypeEnum.SET)
         self.element = element
 
-    @property
-    def element(self):
-        return self._element.dereference()
-
-    @element.setter
-    def element(self, value):
-        self._element = references.reference(value)
-
-    def link(self, scope):
-        return self._element.link(scope)
+        if not isinstance(element, definitions.Type):
+            raise TypeError('Element must be a definitions.Type instance, %r' % element)
 
     def validate(self):
         errors = []
@@ -54,33 +38,18 @@ class Set(definitions.Definition):
         return errors
 
 
-class Map(definitions.Definition):
-    '''Map definition.'''
+class Map(definitions.Type):
+    '''Map collection.'''
     def __init__(self, key, value):
-        super(Map, self).__init__(definitions.Type.MAP, 'map')
+        super(Map, self).__init__(definitions.TypeEnum.MAP)
         self.key = key
         self.value = value
 
-    @property
-    def key(self):
-        return self._key.dereference()
+        if not isinstance(key, definitions.Type):
+            raise TypeError('Key must be a definitions.Type instance, %r' % key)
 
-    @key.setter
-    def key(self, value):
-        self._key = references.reference(value)
-
-    @property
-    def value(self):
-        return self._value.dereference()
-
-    @value.setter
-    def value(self, value):
-        self._value = references.reference(value)
-
-    def link(self, scope):
-        errors0 = self._key.link(scope)
-        errors1 = self._value.link(scope)
-        return errors0 + errors1
+        if not isinstance(value, definitions.Type):
+            raise TypeError('Value must be a definitions.Type instance, %r' % value)
 
     def validate(self):
         errors = []

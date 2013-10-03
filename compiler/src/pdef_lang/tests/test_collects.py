@@ -5,13 +5,6 @@ from pdef_lang.collects import *
 
 
 class TestList(unittest.TestCase):
-    def test_link(self):
-        list0 = List('module.Message')
-        errors = list0.link(lambda name: name)
-
-        assert not errors
-        assert list0.element == 'module.Message'
-
     def test_validate__element_is_data_type(self):
         iface = interfaces.Interface('Interface')
         list0 = List(iface)
@@ -21,13 +14,6 @@ class TestList(unittest.TestCase):
 
 
 class TestSet(unittest.TestCase):
-    def test_link(self):
-        set0 = Set('module.Message')
-        errors = set0.link(lambda name: name)
-
-        assert not errors
-        assert set0.element == 'module.Message'
-
     def test_validate__element_is_data_type(self):
         iface = interfaces.Interface('Interface')
         set0 = Set(iface)
@@ -37,14 +23,6 @@ class TestSet(unittest.TestCase):
 
 
 class TestMap(unittest.TestCase):
-    def test_link(self):
-        map0 = Map('key', 'value')
-        errors = map0.link(lambda name: name)
-
-        assert not errors
-        assert map0.key == 'key'
-        assert map0.value == 'value'
-
     def test_validate__key_is_primitive(self):
         msg = messages.Message('Message')
         map0 = Map(msg, msg)
@@ -54,7 +32,7 @@ class TestMap(unittest.TestCase):
 
     def test_validate__value_is_data_type(self):
         iface = interfaces.Interface('Interface')
-        map0 = Map(definitions.NativeTypes.STRING, iface)
+        map0 = Map(definitions.NativeType.STRING, iface)
         errors = map0.validate()
 
         assert 'map value must be a data type' in errors[0].message

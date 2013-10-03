@@ -7,7 +7,7 @@ class Message(definitions.Definition):
     '''User-defined message.'''
     def __init__(self, name, base=None, discriminator_value=None, declared_fields=None,
                  is_exception=False, is_form=False, doc=None, location=None):
-        super(Message, self).__init__(definitions.Type.MESSAGE, name, doc=doc, location=location)
+        super(Message, self).__init__(definitions.TypeEnum.MESSAGE, name, doc=doc, location=location)
 
         self.base = base
         self.discriminator_value = discriminator_value

@@ -1,6 +1,5 @@
 # encoding: utf-8
 import pdef_lang.collects
-import pdef_lang.enums
 from pdef_lang import definitions, exc
 
 
@@ -12,11 +11,7 @@ def reference(name_ref_def):
     elif isinstance(name_ref_def, basestring):
         return NameReference(name_ref_def)
 
-    elif isinstance(name_ref_def, pdef_lang.enums.EnumValue):
-        # TODO: replace with Type
-        return Reference(name_ref_def)
-
-    elif isinstance(name_ref_def, definitions.Definition):
+    elif isinstance(name_ref_def, definitions.Type):
         return Reference(name_ref_def)
 
     elif isinstance(name_ref_def, Reference):
@@ -26,47 +21,49 @@ def reference(name_ref_def):
 
 
 class Reference(object):
-    '''Simple reference which directly points to a definition.'''
-    def __init__(self, definition=None):
-        self._definition = definition
+    '''Reference directly references a type.'''
+    def __init__(self, type0=None):
+        self._type = type0
 
     def __nonzero__(self):
-        return bool(self._definition)
+        return bool(self._type)
 
     def dereference(self):
-        if not self._definition:
+        '''Return a type this references points to or raise ValueError when not linked.'''
+        if not self._type:
             raise ValueError('Reference is not linked: %s' % self)
-        return self._definition
+        return self._type
 
     def link(self, scope):
+        '''Link this reference in a provided callable scope.'''
         return []
 
 
 class EmptyReference(Reference):
-    '''Always returns None when dereferenced.'''
+    '''EmptyReference is a sentinel for an absent type. It returns None when dereferenced'''
     def __init__(self):
-        super(EmptyReference, self).__init__(None)
+        super(EmptyReference, self).__init__()
 
     def dereference(self):
         return None
 
 
 class NameReference(Reference):
-    '''Reference which uses a definition name to reference it.'''
+    '''NameReference references a type by its name.'''
     def __init__(self, name):
         super(NameReference, self).__init__(None)
         self.name = name
 
     def link(self, scope):
-        self._definition = scope(self.name)
-        if self._definition:
+        self._type = scope(self.name)
+        if self._type:
             return []
 
-        return [exc.error(self, 'symbol not found %r', self.name)]
+        return [exc.error(self, 'type not found %r', self.name)]
 
 
 class ListReference(Reference):
-    '''List reference, the element can be a name, another reference or a definition.'''
+    '''ListReference has a child reference for an element, creates a list on linking.'''
     def __init__(self, element):
         super(ListReference, self).__init__()
         self.element = reference(element)
@@ -76,12 +73,12 @@ class ListReference(Reference):
         if errors:
             return errors
 
-        self._definition = pdef_lang.collects.List(self.element)
+        self._type = pdef_lang.collects.List(self.element.dereference())
         return []
 
 
 class SetReference(Reference):
-    '''Set reference, the element can be a name, another reference or a definition.'''
+    '''SetReference has a child for an element, creates a set on linking.'''
     def __init__(self, element):
         super(SetReference, self).__init__()
         self.element = reference(element)
@@ -91,12 +88,12 @@ class SetReference(Reference):
         if errors:
             return errors
 
-        self._definition = pdef_lang.collects.Set(self.element)
+        self._type = pdef_lang.collects.Set(self.element.dereference())
         return []
 
 
 class MapReference(Reference):
-    '''Map reference, the key/value can be names, another references or definitions.'''
+    '''MapReference has children references for a key and a value, creates a map on linking.'''
     def __init__(self, key, value):
         super(MapReference, self).__init__()
         self.key = reference(key)
@@ -108,5 +105,5 @@ class MapReference(Reference):
         if errors0 or errors1:
             return errors0 + errors1
 
-        self._definition = pdef_lang.collects.Map(self.key, self.value)
+        self._type = pdef_lang.collects.Map(self.key.dereference(), self.value.dereference())
         return []

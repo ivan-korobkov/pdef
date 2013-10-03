@@ -6,7 +6,7 @@ from pdef_lang import definitions, exc, references
 class Interface(definitions.Definition):
     '''User-defined interface.'''
     def __init__(self, name, base=None, exc=None, declared_methods=None, doc=None, location=None):
-        super(Interface, self).__init__(definitions.Type.INTERFACE, name, doc=doc,
+        super(Interface, self).__init__(definitions.TypeEnum.INTERFACE, name, doc=doc,
                                         location=location)
 
         self.base = base
@@ -53,7 +53,7 @@ class Interface(definitions.Definition):
 
         logging.debug('%s: added a method, method=%s', self, method)
 
-    def create_method(self, name, result=definitions.NativeTypes.VOID, *arg_tuples):
+    def create_method(self, name, result=definitions.NativeType.VOID, *arg_tuples):
         '''Add a new method to this interface and return the method.'''
         method = Method(name, result=result)
         for arg_tuple in arg_tuples:
@@ -128,7 +128,7 @@ class Interface(definitions.Definition):
 
 class Method(object):
     '''Interface method.'''
-    def __init__(self, name, result=definitions.NativeTypes.VOID, args=None, is_index=False,
+    def __init__(self, name, result=definitions.NativeType.VOID, args=None, is_index=False,
                  is_post=False, doc=None, location=None):
         self.name = name
         self.args = []

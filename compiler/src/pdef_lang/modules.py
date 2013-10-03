@@ -5,7 +5,7 @@ from pdef_lang import definitions, exc
 
 
 class Module(object):
-    '''Module with definitions.'''
+    '''Module is a named scope for definitions. It is usually a *.pdef file.'''
     def __init__(self, name, imports=None, definitions=None):
         self.name = name
         self.package = None
@@ -57,7 +57,7 @@ class Module(object):
                 return d
 
     def link(self):
-        '''Link module imports and definitions.'''
+        '''Link imports and definitions and return a list of errors.'''
         errors = self._link_imports()
         if errors:
             return errors
@@ -90,7 +90,7 @@ class Module(object):
         return errors
 
     def validate(self):
-        '''Validate imports and definitions.'''
+        '''Validate imports and definitions and return a list of errors.'''
         errors = []
 
         # Prevent imports with duplicate aliases.
@@ -114,7 +114,7 @@ class Module(object):
         return errors
 
     def _has_import_circle(self, another):
-        '''Return true if a module has an import circle with another module.'''
+        '''Return true if this module has an import circle with another module.'''
         if another is self:
             return False
 
@@ -130,10 +130,10 @@ class Module(object):
         return False
 
     def _find(self, name):
-        '''Find a type by its name.'''
+        '''Find a type by a name.'''
 
         # Try to get a native type.
-        def0 = definitions.NativeTypes.get_by_type(name)
+        def0 = definitions.NativeType.get(name)
         if def0:
             return def0
 
@@ -166,7 +166,7 @@ class Module(object):
         return None
 
     def _find_definition(self, name):
-        '''Find a definition or an enum value by a name.'''
+        '''Find a definition or an enum value by a name inside this module.'''
         if '.' not in name:
             # It must be a user-defined type.
             return self.get_definition(name)
@@ -182,17 +182,19 @@ class Module(object):
 
 
 class AbstractImport(object):
+    '''AbstractImport is a base class for module imports.'''
     def __init__(self):
         self.module = None
 
     def link(self, package):
-        '''Link an import and return a tuple of imported modules and errors.'''
+        '''Link this import and return a list of imported modules and a list errors.'''
         errors = []
         imodules = []
         return imodules, errors
 
 
 class AbsoluteImport(AbstractImport):
+    '''AbsoluteImport references a single module by its absolute name.'''
     def __init__(self, name):
         super(AbsoluteImport, self).__init__()
         self.name = name
@@ -212,6 +214,8 @@ class AbsoluteImport(AbstractImport):
 
 
 class RelativeImport(AbstractImport):
+    '''RelativeImport references modules with a prefix and multiple relative names,
+    i.e, from my_package import module0, module1.'''
     def __init__(self, prefix, relative_names):
         super(RelativeImport, self).__init__()
 
@@ -241,7 +245,9 @@ class RelativeImport(AbstractImport):
 
 
 class ImportedModule(object):
-    '''Alias/module pair, i.e. from package.module import submodule.'''
+    '''ImportedModule is a pair of an alias and a module. For example,
+    in "from package import submodule" the alias is "submodule" and the module is "package.module".
+    '''
     def __init__(self, alias, module):
         self.alias = alias
         self.module = module

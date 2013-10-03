@@ -6,8 +6,8 @@ from pdef_lang.modules import *
 
 class TestDefinition(unittest.TestCase):
     def test_validate_is_defined_before__ok(self):
-        def0 = Definition(Type.MESSAGE, 'def0')
-        def1 = Definition(Type.MESSAGE, 'def1')
+        def0 = Definition(TypeEnum.MESSAGE, 'def0')
+        def1 = Definition(TypeEnum.MESSAGE, 'def1')
 
         module = Module('module')
         module.add_definition(def0)
@@ -17,8 +17,8 @@ class TestDefinition(unittest.TestCase):
         assert not errors
 
     def test_validate_is_defined_before__but_is_not(self):
-        def0 = Definition(Type.MESSAGE, 'def0')
-        def1 = Definition(Type.MESSAGE, 'def1')
+        def0 = Definition(TypeEnum.MESSAGE, 'def0')
+        def1 = Definition(TypeEnum.MESSAGE, 'def1')
 
         module = Module('module')
         module.add_definition(def0)
@@ -28,8 +28,8 @@ class TestDefinition(unittest.TestCase):
         assert 'must be defined before' in errors[0].message
 
     def test_must_be_referenced_before__circular_import(self):
-        def0 = Definition(Type.MESSAGE, 'def0')
-        def1 = Definition(Type.MESSAGE, 'def1')
+        def0 = Definition(TypeEnum.MESSAGE, 'def0')
+        def1 = Definition(TypeEnum.MESSAGE, 'def1')
 
         module0 = Module('module0')
         module1 = Module('module1')
@@ -46,6 +46,6 @@ class TestDefinition(unittest.TestCase):
 
 class TestNativeTypes(unittest.TestCase):
     def test_get_by_type(self):
-        ntypes = NativeTypes._BY_TYPE.values()
+        ntypes = NativeType._BY_TYPE.values()
         for ntype in ntypes:
-            assert NativeTypes.get_by_type(ntype.type) is ntype
+            assert NativeType.get(ntype.type) is ntype

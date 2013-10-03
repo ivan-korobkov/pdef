@@ -10,11 +10,11 @@ class TestMessage(unittest.TestCase):
     def test_create_field(self):
         '''Should create and add a field to a message.'''
         msg = Message('Msg')
-        field = msg.create_field('field', NativeTypes.INT32)
+        field = msg.create_field('field', NativeType.INT32)
 
         assert [field] == msg.declared_fields
         assert field.name == 'field'
-        assert field.type == NativeTypes.INT32
+        assert field.type == NativeType.INT32
 
     def test_create_field__set_discriminator(self):
         '''Should set a message discriminator when a field is a discriminator.'''
@@ -37,12 +37,12 @@ class TestMessage(unittest.TestCase):
         msg0 = Message('Msg0')
         msg0.base = base
         msg0.discriminator_value = type0
-        field0 = msg0.create_field('field0', NativeTypes.INT32)
+        field0 = msg0.create_field('field0', NativeType.INT32)
 
         msg1 = Message('Msg1')
         msg1.base = msg0
         msg1.discriminator_value = type1
-        field1 = msg1.create_field('field1', NativeTypes.STRING)
+        field1 = msg1.create_field('field1', NativeType.STRING)
 
         assert msg1.fields == [type_field, field0, field1]
         assert msg1.inherited_fields == [type_field, field0]
@@ -119,8 +119,8 @@ class TestMessage(unittest.TestCase):
     def test_validate_fields__duplicate(self):
         '''Should prevent duplicate message fields.'''
         msg = Message('Msg')
-        msg.create_field('field', NativeTypes.INT32)
-        msg.create_field('field', NativeTypes.INT32)
+        msg.create_field('field', NativeType.INT32)
+        msg.create_field('field', NativeType.INT32)
 
         errors = msg.validate()
         assert 'duplicate field' in errors[0].message
@@ -128,10 +128,10 @@ class TestMessage(unittest.TestCase):
     def test_validate_fields__duplicate_inherited_field(self):
         '''Should prevent duplicate fields with inherited fields.'''
         msg0 = Message('Msg0')
-        msg0.create_field('field', NativeTypes.STRING)
+        msg0.create_field('field', NativeType.STRING)
 
         msg1 = Message('Msg1', base=msg0)
-        msg1.create_field('field', NativeTypes.STRING)
+        msg1.create_field('field', NativeType.STRING)
 
         errors = msg1.validate()
         assert 'duplicate field' in errors[0].message
@@ -222,7 +222,7 @@ class TestField(unittest.TestCase):
         enum = Enum('Enum')
 
         field0 = Field('field0', enum, is_discriminator=True)
-        field1 = Field('field1', NativeTypes.INT32, is_discriminator=True)
+        field1 = Field('field1', NativeType.INT32, is_discriminator=True)
 
         errors0 = field0.validate()
         errors1 = field1.validate()

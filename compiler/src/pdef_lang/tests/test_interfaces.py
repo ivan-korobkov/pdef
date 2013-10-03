@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import NativeTypes
+from pdef_lang import NativeType
 from pdef_lang.interfaces import *
 from pdef_lang.messages import Message
 from pdef_lang.modules import Module
@@ -21,12 +21,12 @@ class TestInterface(unittest.TestCase):
     def test_create_method(self):
         '''Should create a new method to this interface.'''
         iface = Interface('Calc')
-        method = iface.create_method('sum', NativeTypes.INT32,
-                                     ('i0', NativeTypes.INT32), ('i1', NativeTypes.INT32))
+        method = iface.create_method('sum', NativeType.INT32,
+                                     ('i0', NativeType.INT32), ('i1', NativeType.INT32))
 
         assert [method] == iface.declared_methods
         assert method.name == 'sum'
-        assert method.result is NativeTypes.INT32
+        assert method.result is NativeType.INT32
         assert method.args[0].name == 'i0'
         assert method.args[1].name == 'i1'
 
@@ -57,7 +57,7 @@ class TestInterface(unittest.TestCase):
     def test_validate_base__must_be_interface(self):
         '''Should prevent interface bases which are not interfaces.'''
         iface = Interface('Iface0')
-        iface.base = NativeTypes.INT32
+        iface.base = NativeType.INT32
 
         errors = iface.validate()
         assert 'base must be an interface' in errors[0].message
@@ -76,7 +76,7 @@ class TestInterface(unittest.TestCase):
 
     def test_validate_exc__tries_to_throw_non_exception(self):
         '''Should prevent setting interface exception to a non-exception type.'''
-        nonexc = NativeTypes.INT32
+        nonexc = NativeType.INT32
         iface = Interface('Interface', exc=nonexc)
 
         errors = iface.validate()
@@ -103,18 +103,18 @@ class TestMethod(unittest.TestCase):
 
     def test_validate__duplicate_args(self):
         method = Method('method')
-        method.create_arg('arg', NativeTypes.INT32)
-        method.create_arg('arg', NativeTypes.INT32)
+        method.create_arg('arg', NativeType.INT32)
+        method.create_arg('arg', NativeType.INT32)
 
         errors = method.validate()
         assert 'duplicate argument' in errors[0].message
 
     def test_validate__form_field_clashes_with_arg(self):
         form = Message('Form', is_form=True)
-        form.create_field('clash', NativeTypes.INT32)
+        form.create_field('clash', NativeType.INT32)
 
-        method = Method('method', NativeTypes.INT32)
-        method.create_arg('clash', NativeTypes.INT32)
+        method = Method('method', NativeType.INT32)
+        method.create_arg('clash', NativeType.INT32)
         method.create_arg('form', form)
 
         errors = method.validate()

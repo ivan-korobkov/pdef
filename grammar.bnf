@@ -63,7 +63,7 @@ RelativeImport  ::= from id import id (',' id)* ';'
 
 Definition    ::= doc? (Enum | Message | Interface)
 
-Enum          ::= 'enum' id '{' EnumValues '}'
+Enum          ::= 'enum' id '{' EnumValues? '}'
 EnumValues    ::= EnumValue (',' EnumValue)* ';'?
 EnumValue     ::= doc? id
 

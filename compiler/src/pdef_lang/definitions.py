@@ -2,6 +2,19 @@
 from pdef_lang import exc
 
 
+class Location(object):
+    def __init__(self, path, linenum):
+        self.path = path
+        self.linenum = linenum
+
+    def __str__(self):
+        return 'File "%s" line %s' % (self.path, self.linenum)
+
+    def __repr__(self):
+        return '<%s %r:%s at %s>' % (self.__class__.__name__, self.path, self.linenum,
+                                     hex(id(self)))
+
+
 class TypeEnum(object):
     '''TypeEnum is an enumeration of all pdef type tokens.'''
 

@@ -48,8 +48,3 @@ class Compiler(object):
     def _iter_generator_modules(self):
         '''Dynamically load source code generator modules.'''
         return generator.iter_generator_modules()
-
-
-class CompilerException(Exception):
-    '''Compiler exception.'''
-    pass

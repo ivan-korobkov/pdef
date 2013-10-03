@@ -5,51 +5,111 @@ import os.path
 import ply.lex as lex
 import ply.yacc as yacc
 
-import pdef_compiler
 import pdef_lang
 
-EXT = 'pdef'
+EXTENSION = 'pdef'
 
 
-def parse_path(path):
-    '''Parse a module file, or all modules in a directory and return a list of AST nodes.'''
-    if os.path.isdir(path):
-        return parse_directory(path)
-    return [parse_file(path)]
+def create_parser():
+    '''Create a new parser, the parser is reusable but not thread-safe.'''
+    return Parser()
 
 
-def parse_directory(path):
-    '''Recursively parse modules from a directory, and return a list of modules.'''
-    logging.info('Walking %s' % path)
-
-    nodes = []
-    for root, dirs, files in os.walk(path):
-        for file0 in files:
-            ext = os.path.splitext(file0)[1]
-            if ext.lower() != '.' + EXT:
-                continue
-
-            filepath = os.path.join(root, file0)
-            node = parse_file(filepath)
-            nodes.append(node)
-
-    return nodes
+class ParserException(Exception):
+    pass
 
 
-def parse_file(path):
-    '''Parses a module file.'''
-    logging.info('Parsing %s', path)
-    parser = _Parser(path)
-    return parser.parse_file(path)
+class Parser(object):
+    '''Pdef parser. It is reusable but not thread-safe.'''
 
+    def __init__(self):
+        self.grammar = _Grammar(self._error, self._location)
 
-def parse_string(s):
-    '''Parses a module string.'''
-    parser = _Parser('stream')
-    return parser.parse_string(s)
+        # Some docs on options:
+        # * optimize=False and write_tables=False force to generate tabmodule each time
+        #   parser is created. It is required for production.
+        # * module=self.grammar sets the grammar for a lexer and a parser.
+        # * start='file' sets the start grammar rule.
+
+        self.lexer = lex.lex(module=self.grammar, optimize=False, debug=False)
+        self.parser = yacc.yacc(module=self.grammar, optimize=False, write_tables=False,
+                                start='module', debug=False)
+
+        # These are cleaned on each parse invocation.
+        self._errors = []
+        self._path = None
+
+    def parse_path(self, path):
+        '''Parse a module file, or all modules in a directory and return a list of AST nodes.'''
+        if not os.path.exists(path):
+            raise ValueError('Path does not exist %r' % path)
+
+        if os.path.isdir(path):
+            return self.parse_directory(path)
+
+        return [self.parse_file(path)]
+
+    def parse_directory(self, path):
+        '''Recursively parse modules from a directory, and return a list of modules.'''
+        if not os.path.isdir(path):
+            raise ValueError('Not a directory %r' % path)
+
+        logging.info('Walking %s' % path)
+
+        nodes = []
+        for root, dirs, files in os.walk(path):
+            for file0 in files:
+                ext = os.path.splitext(file0)[1]
+                if ext.lower() != '.' + EXTENSION:
+                    continue
+
+                filepath = os.path.join(root, file0)
+                node = self.parse_file(filepath)
+                nodes.append(node)
+
+        return nodes
+
+    def parse_file(self, path):
+        if not os.path.exists(path):
+            raise ValueError('File does not exist %r' % path)
+
+        if not os.path.isfile(path):
+            raise ValueError('Not a file %r' % path)
+
+        with open(path, 'r') as f:
+            s = f.read()
+
+        return self.parse_string(s, path)
+
+    def parse_string(self, s, path='stream'):
+        '''Parses a module string.'''
+        logging.info('Parsing %s', path)
+
+        # Clear the variables.
+        self._errors = []
+        self._path = path or 'stream'
+
+        try:
+            result = self.parser.parse(s, tracking=True, lexer=self.lexer)
+            if self._errors:
+                raise ParserException('Syntax error')
+            return result
+        finally:
+            self._errors = None
+            self._path = None
+
+    def _error(self, msg, *args):
+        msg = '%s: %s' % (self._path, msg)
+        logging.error(msg, *args)
+        self._errors.append(msg)
+
+    def _location(self, t):
+        return pdef_lang.Location(self._path or 'nofile', t.lineno(0))
 
 
 class _Tokens(object):
+    '''Lexer tokens.'''
+
     # Simple reserved words.
     types = (
         'BOOL', 'INT16', 'INT32', 'INT64', 'FLOAT', 'DOUBLE',
@@ -128,10 +188,21 @@ class _Tokens(object):
 
 
 class _GrammarRules(object):
+    '''Parser grammar rules.'''
+    def __init__(self, error_func, location_func):
+        self._error = error_func
+        self._location = location_func
+
+    def _error(self, msg, *args):
+        raise NotImplementedError('Pass it to the constructor')
+
+    def _location(self, t):
+        raise NotImplementedError('Pass it to the constructor')
+
     # Starting point.
-    def p_file(self, t):
+    def p_module(self, t):
         '''
-        file : MODULE IDENTIFIER SEMI imports definitions
+        module : MODULE IDENTIFIER SEMI imports definitions
         '''
         name = t[2]
         imports = t[4]
@@ -194,6 +265,7 @@ class _GrammarRules(object):
         '''
         definitions : definitions definition
                     | definition
+                    | empty
         '''
         self._list(t)
 
@@ -225,6 +297,7 @@ class _GrammarRules(object):
         '''
         enum_value_list : enum_value_list COMMA enum_value
                         | enum_value
+                        | empty
         '''
         self._list(t, separated=1)
 
@@ -276,7 +349,7 @@ class _GrammarRules(object):
         elif len(t) == 6:
             t[0] = t[2], t[4]
         else:
-            raise SyntaxError
+            raise AssertionError('Unreachable code')
 
     # List of message fields
     def p_fields(self, t):
@@ -354,8 +427,8 @@ class _GrammarRules(object):
         result = t[7]
         is_index = '@index' in options
         is_post = '@post' in options
-        t[0] = pdef_lang.Method(name, args=args, result=result, is_index=is_index, is_post=is_post,
-                               doc=doc)
+        t[0] = pdef_lang.Method(name, result=result, args=args, is_index=is_index, is_post=is_post,
+                                doc=doc)
 
     def p_method_args(self, t):
         '''
@@ -377,7 +450,7 @@ class _GrammarRules(object):
                        | method_option
                        | empty
         '''
-        self._list(t, separated=True)
+        self._list(t)
 
     def p_method_option(self, t):
         '''
@@ -408,13 +481,13 @@ class _GrammarRules(object):
                    | OBJECT
                    | VOID
         '''
-        t[0] = pdef_lang.Reference(t[1].lower())
+        t[0] = pdef_lang.reference(t[1].lower())
 
     def p_def_type(self, t):
         '''
         def_type : IDENTIFIER
         '''
-        t[0] = pdef_lang.Reference(t[1])
+        t[0] = pdef_lang.reference(t[1])
 
     def p_list_type(self, t):
         '''
@@ -435,6 +508,7 @@ class _GrammarRules(object):
         t[0] = pdef_lang.MapReference(t[3], t[5])
 
     def p_error(self, t):
+        # TODO: t can be None (is it the end?)
         self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)
 
     def _list(self, t, separated=False):
@@ -459,39 +533,10 @@ class _GrammarRules(object):
             else:
                 t[0].append(t[3])
 
-    def _error(self, msg, *args):
-        raise NotImplementedError()
 
-    def _location(self, t):
-        raise NotImplementedError()
+class _Grammar(_GrammarRules, _Tokens):
+    '''Grammar combines grammar rules and lexer tokens. It can be passed to the ply.yacc
+    and pla.lex functions as the module argument.'''
 
-
-class _Parser(_GrammarRules, _Tokens):
-    def __init__(self, path, debug=False):
-        super(_Parser, self).__init__()
-        self.debug = debug
-        self.lexer = lex.lex(module=self, debug=debug)
-        self.parser = yacc.yacc(module=self, debug=debug, tabmodule='pdef_compiler.parsetab',
-                                start='file')
-        self.errors = []
-        self.path = path
-
-    def parse_file(self, path):
-        with open(path, 'r') as f:
-            s = f.read()
-
-        return self.parse_string(s)
-
-    def parse_string(self, s):
-        result = self.parser.parse(s, debug=self.debug, tracking=True, lexer=self.lexer)
-        if self.errors:
-            raise pdef_compiler.CompilerException('Syntax error')
-        return result
-
-    def _error(self, msg, *args):
-        msg = '%s: %s' % (self.path, msg)
-        logging.error(msg, *args)
-        self.errors.append(msg)
-
-    def _location(self, t):
-        return pdef_lang.Location(self.path, t.lineno(1))
+    def __init__(self, error_func, location_func):
+        _GrammarRules.__init__(self, error_func, location_func)

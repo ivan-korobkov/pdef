@@ -138,8 +138,8 @@ class Message(definitions.Definition):
         if self.is_exception != base.is_exception:
             errors.append(exc.error(self, 'wrong base type (message/exc), base=%s', base))
 
-        # The base must be defined before this message.
-        errors += base._validate_is_defined_before(self)
+        # The message must be defined after the base.
+        errors += self._validate_is_defined_after(base)
 
         # Prevent circular inheritance.
         while base:
@@ -186,8 +186,8 @@ class Message(definitions.Definition):
                                           'discriminator type'))
             return errors
 
-        # The discriminator type must be defined before the message.
-        errors += dvalue.enum._validate_is_defined_before(self)
+        # The message must be defined after the discriminator enum.
+        errors += self._validate_is_defined_after(dvalue.enum)
         return errors
 
     def _validate_subtypes(self):

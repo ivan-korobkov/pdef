@@ -12,6 +12,12 @@ class TestEnum(unittest.TestCase):
         assert one.name == 'ONE'
         assert one.enum is enum
 
+    def test_get_value(self):
+        enum = Enum('Number')
+        one = enum.add_value('ONE')
+
+        assert enum.get_value('ONE') is one
+
     def test_validate__duplicate_values(self):
         enum = Enum('Number')
         enum.add_value('ONE')

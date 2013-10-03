@@ -8,7 +8,7 @@ from pdef_lang.modules import Module
 
 class TestInterface(unittest.TestCase):
     def test_methods(self):
-        '''Should combine the inherited and declared methods.'''
+        '''Should combine the inherited and the declared methods.'''
         iface0 = Interface('Iface0')
         iface1 = Interface('Iface1', base=iface0)
 
@@ -19,7 +19,6 @@ class TestInterface(unittest.TestCase):
         assert iface1.methods == [method0, method1]
 
     def test_create_method(self):
-        '''Should create a new method to this interface.'''
         iface = Interface('Calc')
         method = iface.create_method('sum', NativeType.INT32,
                                      ('i0', NativeType.INT32), ('i1', NativeType.INT32))
@@ -31,10 +30,15 @@ class TestInterface(unittest.TestCase):
         assert method.args[1].name == 'i1'
 
     def test_link(self):
-        pass
+        iface = Interface('Interface', base='base', exc='exc')
+        iface.create_method('method', 'result', ('arg', 'arg_type'))
+        errors = iface.link(lambda name: None)
+
+        assert len(errors) == 4
+
+    # validate_base.
 
     def test_validate_base__self_inheritance(self):
-        '''Should prevent interface self-inheritance.'''
         iface = Interface('Iface')
         iface.base = iface
 
@@ -42,7 +46,6 @@ class TestInterface(unittest.TestCase):
         assert 'circular inheritance' in errors[0].message
 
     def test_validate_base__circular_inheritance(self):
-        '''Should prevent circular interface inheritance.'''
         iface0 = Interface('Iface0')
         iface1 = Interface('Iface1')
         iface2 = Interface('Iface2')
@@ -55,15 +58,13 @@ class TestInterface(unittest.TestCase):
         assert 'circular inheritance' in errors[0].message
 
     def test_validate_base__must_be_interface(self):
-        '''Should prevent interface bases which are not interfaces.'''
         iface = Interface('Iface0')
         iface.base = NativeType.INT32
 
         errors = iface.validate()
         assert 'base must be an interface' in errors[0].message
 
-    def test_validate_base__must_be_referenced_before(self):
-        '''Base should be referenced before the interface.'''
+    def test_validate_base__message_must_be_defined_after_base(self):
         base = Interface('Base')
         iface = Interface('Interface', base=base)
 
@@ -72,7 +73,9 @@ class TestInterface(unittest.TestCase):
         module.add_definition(base)
 
         errors = iface.validate()
-        assert 'must be defined before' in errors[0].message
+        assert 'Interface must be defined after Base' in errors[0].message
+
+    # validate_exc
 
     def test_validate_exc__tries_to_throw_non_exception(self):
         '''Should prevent setting interface exception to a non-exception type.'''
@@ -81,6 +84,8 @@ class TestInterface(unittest.TestCase):
 
         errors = iface.validate()
         assert 'interface exc must be an exception' in errors[0].message
+
+    # validate_methods
 
     def test_validate_methods__duplicates(self):
         iface0 = Interface('Interface0')
@@ -120,6 +125,12 @@ class TestMethod(unittest.TestCase):
         errors = method.validate()
         assert 'form fields clash with method args' in errors[0].message
 
+    def test_validate__required_result(self):
+        method = Method('method', result=None)
+        errors = method.validate()
+
+        assert 'method result required' in errors[0].message
+
 
 class TestMethodArg(unittest.TestCase):
     def test_link(self):
@@ -130,7 +141,13 @@ class TestMethodArg(unittest.TestCase):
         assert not errors
         assert arg.type == 'module.Message'
 
-    def test_validate__argument_is_data_type(self):
+    def test_validate__type_required(self):
+        arg = MethodArg('arg', None)
+
+        errors = arg.validate()
+        assert 'argument type required' in errors[0].message
+
+    def test_validate__is_data_type(self):
         iface = Interface('Interface')
         arg = MethodArg('arg', iface)
 

@@ -5,31 +5,31 @@ from pdef_lang.modules import *
 
 
 class TestDefinition(unittest.TestCase):
-    def test_validate_is_defined_before__ok(self):
-        def0 = Definition(TypeEnum.MESSAGE, 'def0')
-        def1 = Definition(TypeEnum.MESSAGE, 'def1')
+    def test_validate_is_defined_after__ok(self):
+        def0 = Definition(TypeEnum.MESSAGE, 'Def0')
+        def1 = Definition(TypeEnum.MESSAGE, 'Def1')
 
         module = Module('module')
         module.add_definition(def0)
         module.add_definition(def1)
 
-        errors = def0._validate_is_defined_before(def0)
+        errors = def1._validate_is_defined_after(def0)
         assert not errors
 
     def test_validate_is_defined_before__but_is_not(self):
-        def0 = Definition(TypeEnum.MESSAGE, 'def0')
-        def1 = Definition(TypeEnum.MESSAGE, 'def1')
+        def0 = Definition(TypeEnum.MESSAGE, 'Def0')
+        def1 = Definition(TypeEnum.MESSAGE, 'Def1')
 
         module = Module('module')
         module.add_definition(def0)
         module.add_definition(def1)
 
-        errors = def1._validate_is_defined_before(def0)
-        assert 'must be defined before' in errors[0].message
+        errors = def0._validate_is_defined_after(def1)
+        assert 'Def0 must be defined after Def1' in errors[0].message
 
     def test_must_be_referenced_before__circular_import(self):
-        def0 = Definition(TypeEnum.MESSAGE, 'def0')
-        def1 = Definition(TypeEnum.MESSAGE, 'def1')
+        def0 = Definition(TypeEnum.MESSAGE, 'Def0')
+        def1 = Definition(TypeEnum.MESSAGE, 'Def1')
 
         module0 = Module('module0')
         module1 = Module('module1')
@@ -40,7 +40,7 @@ class TestDefinition(unittest.TestCase):
         module0.add_imported_module('module1', module1)
         module1.add_imported_module('module0', module0)
 
-        errors = def0._validate_is_defined_before(def1)
+        errors = def1._validate_is_defined_after(def0)
         assert 'modules circularly import each other' in errors[0].message
 
 

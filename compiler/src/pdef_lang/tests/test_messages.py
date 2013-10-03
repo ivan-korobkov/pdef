@@ -122,7 +122,7 @@ class TestMessage(unittest.TestCase):
         errors = exc.validate()
         assert 'wrong base type (message/exc)' in errors[0].message
 
-    def test_validate_base__base_must_be_defined_before_message(self):
+    def test_validate_base__message_must_be_defined_after_base(self):
         base = Message('Base')
         msg = Message('Message')
         msg.base = base
@@ -132,7 +132,7 @@ class TestMessage(unittest.TestCase):
         module.add_definition(base)
 
         errors = msg.validate()
-        assert 'must be defined before' in errors[0].message
+        assert 'Message must be defined after Base' in errors[0].message
 
     # validate_discriminator.
 
@@ -174,7 +174,7 @@ class TestMessage(unittest.TestCase):
 
         assert 'discriminator value does not match the base discriminator type' in errors[0].message
 
-    def test_validate_discriminator__discriminator_type_is_defined_before_message(self):
+    def test_validate_discriminator__message_must_be_defined_after_discriminator_type(self):
         enum = Enum('Enum')
         subtype = enum.add_value('SUBTYPE')
 
@@ -188,7 +188,7 @@ class TestMessage(unittest.TestCase):
         module.add_definition(enum)
         errors = msg.validate()
 
-        assert 'Enum must be defined before Message' in errors[0].message
+        assert 'Message must be defined after Enum' in errors[0].message
 
     # validate_fields.
 

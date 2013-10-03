@@ -125,8 +125,8 @@ class Definition(Type):
         '''Validate this definition and return a list of errors.'''
         return []
 
-    def _validate_is_defined_before(self, another):
-        '''Validate this definition is defined before another one.'''
+    def _validate_is_defined_after(self, another):
+        '''Validate this definition is defined after another one.'''
         if not self.module or not another.module:
             return []
 
@@ -134,18 +134,18 @@ class Definition(Type):
             # They are in the same module.
 
             for def0 in self.module.definitions:
-                if def0 is self:
+                if def0 is another:
                     return []
 
-                if def0 is another:
-                    return [exc.error(self, '%s must be defined before %s. Move it above '
+                if def0 is self:
+                    return [exc.error(self, '%s must be defined after %s. Move it above '
                                             'in the file.', self, another)]
 
             raise AssertionError('Wrong module state')
 
         if self.module._has_import_circle(another.module):
             return [exc.error(self,
-                    '%s must be referenced before %s, but their modules circularly '
+                    '%s must be defined after %s, but their modules circularly '
                     'import each other. Move %s into another module.', self, another, self)]
 
         return []

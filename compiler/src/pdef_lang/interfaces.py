@@ -93,7 +93,7 @@ class Interface(definitions.Definition):
 
         # The base is in interface, continue validation.
         errors = []
-        errors += self.base._validate_is_defined_before(self)
+        errors += self._validate_is_defined_after(self.base)
 
         # Prevent circular inheritance.
         base = self.base
@@ -189,6 +189,11 @@ class Method(object):
     def validate(self):
         errors = []
 
+        # The method must have a result.
+        if not self.result:
+            errors.append(exc.error(self, 'method result required'))
+
+        # @post methods must be remote.
         if self.is_post and not self.is_remote:
             errors.append(exc.error(self, '@post method must be remote (return a data type '
                                           'or void)'))
@@ -244,6 +249,9 @@ class MethodArg(object):
         return self._type.link(scope)
 
     def validate(self):
+        if not self.type:
+            return [exc.error(self, 'argument type required')]
+
         if not self.type.is_data_type:
             return [exc.error(self, 'argument must be a data type')]
 

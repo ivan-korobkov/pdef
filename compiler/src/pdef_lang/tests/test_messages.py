@@ -256,11 +256,16 @@ class TestMessage(unittest.TestCase):
 class TestField(unittest.TestCase):
     def test_validate__must_be_datatype(self):
         '''Should prevent fields which are not data types.'''
-        iface = Interface('Interface')
-        field = Field('field', iface)
-
+        field = Field('field', NativeType.VOID)
         errors = field.validate()
+
         assert 'field must be a data type' in errors[0].message
+
+    def test_validate__reference(self):
+        field = Field('field', references.ListReference(NativeType.VOID))
+        errors = field.validate()
+
+        assert 'list element must be a data type' in errors[0].message
 
     def test_validate__discriminator_must_be_enum(self):
         '''Should ensure discriminator field type is an enum.'''

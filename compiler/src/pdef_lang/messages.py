@@ -134,9 +134,12 @@ class Message(definitions.Definition):
 
         errors = []
 
-        # The base exception/message flag must match this message flag.
         if self.is_exception != base.is_exception:
+            # The base exception/message flag must match this message flag.
             errors.append(exc.error(self, 'wrong base type (message/exc), base=%s', base))
+
+        # Validate the reference.
+        errors += self._base.validate()
 
         # The message must be defined after the base.
         errors += self._validate_is_defined_after(base)
@@ -185,6 +188,9 @@ class Message(definitions.Definition):
             errors.append(exc.error(self, 'discriminator value does not match the base '
                                           'discriminator type'))
             return errors
+
+        # Validate the reference.
+        errors += self._discriminator_value.validate()
 
         # The message must be defined after the discriminator enum.
         errors += self._validate_is_defined_after(dvalue.enum)
@@ -265,4 +271,6 @@ class Field(object):
         if self.is_discriminator and not self.type.is_enum:
             errors.append(exc.error(self, 'discriminator field must be an enum'))
 
+        # Validate the reference (it can be a collection).
+        errors += self._type.validate()
         return errors

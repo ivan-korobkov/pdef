@@ -38,6 +38,10 @@ class Reference(object):
         '''Link this reference in a provided callable scope.'''
         return []
 
+    def validate(self):
+        '''Validate this reference and return a list of errors.'''
+        return []
+
 
 class EmptyReference(Reference):
     '''EmptyReference is a sentinel for an absent type. It returns None when dereferenced'''
@@ -67,14 +71,25 @@ class ListReference(Reference):
     def __init__(self, element):
         super(ListReference, self).__init__()
         self.element = reference(element)
+        self._init_type()
+
+    def _init_type(self):
+        if not self.element:
+            return
+        self._type = pdef_lang.collects.List(self.element.dereference())
 
     def link(self, scope):
         errors = self.element.link(scope)
         if errors:
             return errors
 
-        self._type = pdef_lang.collects.List(self.element.dereference())
+        self._init_type()
         return []
+
+    def validate(self):
+        if not self._type:
+            return []
+        return self._type.validate()
 
 
 class SetReference(Reference):
@@ -82,14 +97,25 @@ class SetReference(Reference):
     def __init__(self, element):
         super(SetReference, self).__init__()
         self.element = reference(element)
+        self._init_type()
+
+    def _init_type(self):
+        if not self.element:
+            return
+        self._type = pdef_lang.collects.Set(self.element.dereference())
 
     def link(self, scope):
         errors = self.element.link(scope)
         if errors:
             return errors
 
-        self._type = pdef_lang.collects.Set(self.element.dereference())
+        self._init_type()
         return []
+
+    def validate(self):
+        if not self._type:
+            return []
+        return self._type.validate()
 
 
 class MapReference(Reference):
@@ -98,6 +124,12 @@ class MapReference(Reference):
         super(MapReference, self).__init__()
         self.key = reference(key)
         self.value = reference(value)
+        self._init_type()
+
+    def _init_type(self):
+        if not self.key or not self.value:
+            return
+        self._type = pdef_lang.collects.Map(self.key.dereference(), self.value.dereference())
 
     def link(self, scope):
         errors0 = self.key.link(scope)
@@ -105,5 +137,10 @@ class MapReference(Reference):
         if errors0 or errors1:
             return errors0 + errors1
 
-        self._type = pdef_lang.collects.Map(self.key.dereference(), self.value.dereference())
+        self._init_type()
         return []
+
+    def validate(self):
+        if not self._type:
+            return []
+        return self._type.validate()

@@ -99,6 +99,18 @@ class TestInterface(unittest.TestCase):
 
 
 class TestMethod(unittest.TestCase):
+    def test_validate__required_result(self):
+        method = Method('method', result=None)
+        errors = method.validate()
+
+        assert 'method result required' in errors[0].message
+
+    def test_validate__result_reference(self):
+        method = Method('method', result=references.ListReference(NativeType.VOID))
+        errors = method.validate()
+
+        assert 'list element must be a data type' in errors[0].message
+
     def test_validate__post_must_be_remote(self):
         result = Interface('Interface')
         method = Method('method', result, is_post=True)
@@ -125,21 +137,20 @@ class TestMethod(unittest.TestCase):
         errors = method.validate()
         assert 'form fields clash with method args' in errors[0].message
 
-    def test_validate__required_result(self):
-        method = Method('method', result=None)
-        errors = method.validate()
-
-        assert 'method result required' in errors[0].message
-
 
 class TestMethodArg(unittest.TestCase):
     def test_link(self):
-        linker = lambda name: name
+        scope = lambda name: None
         arg = MethodArg('arg', 'module.Message')
 
-        errors = arg.link(linker)
-        assert not errors
-        assert arg.type == 'module.Message'
+        errors = arg.link(scope)
+        assert 'type not found' in errors[0].message
+
+    def test_validate__type_reference(self):
+        arg = MethodArg('arg', references.ListReference(NativeType.VOID))
+        errors = arg.validate()
+
+        assert 'list element must be a data type' in errors[0].message
 
     def test_validate__type_required(self):
         arg = MethodArg('arg', None)

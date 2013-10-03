@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import collects, definitions, references, NativeType
+from pdef_lang import collects, definitions, references, NativeType, Interface
 
 
 class TestReference(unittest.TestCase):
@@ -68,6 +68,12 @@ class TestListReference(unittest.TestCase):
         assert not ref
         assert len(errors) == 1
 
+    def test_validate(self):
+        ref = references.ListReference(NativeType.VOID)
+        errors = ref.validate()
+
+        assert len(errors) == 1
+
 
 class TestSetReference(unittest.TestCase):
     def test_link(self):
@@ -86,6 +92,12 @@ class TestSetReference(unittest.TestCase):
         errors = ref.link(scope)
 
         assert not ref
+        assert len(errors) == 1
+
+    def test_validate(self):
+        ref = references.SetReference(NativeType.VOID)
+        errors = ref.validate()
+
         assert len(errors) == 1
 
 
@@ -109,3 +121,9 @@ class TestMapReference(unittest.TestCase):
         assert not ref
         assert "type not found 'key'" in errors[0].message
         assert "type not found 'value'" in errors[1].message
+
+    def test_validate(self):
+        ref = references.MapReference(NativeType.VOID, NativeType.VOID)
+        errors = ref.validate()
+
+        assert len(errors) == 2

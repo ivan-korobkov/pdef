@@ -93,6 +93,7 @@ class Interface(definitions.Definition):
 
         # The base is in interface, continue validation.
         errors = []
+        errors += self._base.validate()
         errors += self._validate_is_defined_after(self.base)
 
         # Prevent circular inheritance.
@@ -106,10 +107,13 @@ class Interface(definitions.Definition):
         return errors
 
     def _validate_exc(self):
-        if self.exc and not self.exc.is_exception:
+        if not self.exc:
+            return []
+
+        if not self.exc.is_exception:
             return [exc.error(self, 'interface exc must be an exception, got %s', self.exc)]
 
-        return []
+        return self._exc.validate()
 
     def _validate_methods(self):
         errors = []
@@ -192,6 +196,8 @@ class Method(object):
         # The method must have a result.
         if not self.result:
             errors.append(exc.error(self, 'method result required'))
+        else:
+            errors += self._result.validate()
 
         # @post methods must be remote.
         if self.is_post and not self.is_remote:
@@ -255,4 +261,4 @@ class MethodArg(object):
         if not self.type.is_data_type:
             return [exc.error(self, 'argument must be a data type')]
 
-        return []
+        return self._type.validate()

@@ -1,6 +1,6 @@
 # encoding: utf-8
 import logging
-from pdef_lang import definitions, validation, references
+from pdef_lang import definitions, exc, references
 
 
 class Interface(definitions.Definition):
@@ -89,7 +89,7 @@ class Interface(definitions.Definition):
             return []
 
         if not self.base.is_interface:
-            return [validation.error(self, 'base must be an interface')]
+            return [exc.error(self, 'base must be an interface')]
 
         # The base is in interface, continue validation.
         errors = []
@@ -99,7 +99,7 @@ class Interface(definitions.Definition):
         base = self.base
         while base:
             if base is self:
-                errors.append(validation.error(self, 'circular inheritance'))
+                errors.append(exc.error(self, 'circular inheritance'))
                 break
             base = base.base
 
@@ -107,7 +107,7 @@ class Interface(definitions.Definition):
 
     def _validate_exc(self):
         if self.exc and not self.exc.is_exception:
-            return [validation.error(self, 'interface exc must be an exception, got %s', self.exc)]
+            return [exc.error(self, 'interface exc must be an exception, got %s', self.exc)]
 
         return []
 
@@ -117,7 +117,7 @@ class Interface(definitions.Definition):
         names = set()
         for method in self.methods:
             if method.name in names:
-                errors.append(validation.error(self, 'duplicate method %r', method.name))
+                errors.append(exc.error(self, 'duplicate method %r', method.name))
             names.add(method.name)
 
         for method in self.methods:
@@ -190,14 +190,14 @@ class Method(object):
         errors = []
 
         if self.is_post and not self.is_remote:
-            errors.append(validation.error(self, '@post method must be remote (return a data type '
+            errors.append(exc.error(self, '@post method must be remote (return a data type '
                                                  'or void)'))
 
         # Prevent duplicate arguments.
         names = set()
         for arg in self.args:
             if arg.name in names:
-                errors.append(validation.error(self, 'duplicate argument %r', arg.name))
+                errors.append(exc.error(self, 'duplicate argument %r', arg.name))
             names.add(arg.name)
 
         # Prevent form arg fields and arguments name clashes.
@@ -211,7 +211,7 @@ class Method(object):
                 if field.name not in names:
                     continue
 
-                errors.append(validation.error(self, 'form fields clash with method args, '
+                errors.append(exc.error(self, 'form fields clash with method args, '
                                                      'form arg=%s', arg.name))
                 break  # One error is enough
 
@@ -245,6 +245,6 @@ class MethodArg(object):
 
     def validate(self):
         if not self.type.is_data_type:
-            return [validation.error(self, 'argument must be a data type')]
+            return [exc.error(self, 'argument must be a data type')]
 
         return []

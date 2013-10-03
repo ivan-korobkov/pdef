@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef_lang import definitions, references, validation
+from pdef_lang import definitions, exc, references
 
 
 class List(definitions.Definition):
@@ -23,7 +23,7 @@ class List(definitions.Definition):
         errors = []
 
         if not self.element.is_data_type:
-            errors.append(validation.ValidatorError(self, 'List element must be a data type'))
+            errors.append(exc.error(self, 'list element must be a data type'))
 
         return errors
 
@@ -49,7 +49,7 @@ class Set(definitions.Definition):
         errors = []
 
         if not self.element.is_data_type:
-            errors.append(validation.error(self, 'Set element must be a data type'))
+            errors.append(exc.error(self, 'set element must be a data type'))
 
         return errors
 
@@ -86,9 +86,9 @@ class Map(definitions.Definition):
         errors = []
 
         if not self.key.is_primitive:
-            errors.append(validation.error(self, 'Map key must be a primitive'))
+            errors.append(exc.error(self, 'map key must be a primitive'))
 
         if not self.value.is_data_type:
-            errors.append(validation.error(self, 'Map value must be a data type'))
+            errors.append(exc.error(self, 'map value must be a data type'))
 
         return errors

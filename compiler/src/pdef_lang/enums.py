@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef_lang import definitions, validation
+from pdef_lang import definitions, exc
 
 
 class Enum(definitions.Definition):
@@ -32,7 +32,7 @@ class Enum(definitions.Definition):
         names = set()
         for value in self.values:
             if value.name in names:
-                errors.append(validation.error(self, 'duplicate enum value, %r', value.name))
+                errors.append(exc.error(self, 'duplicate enum value, %r', value.name))
 
             names.add(value.name)
 

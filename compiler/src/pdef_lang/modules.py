@@ -1,7 +1,7 @@
 # encoding: utf-8
 import logging
 from collections import deque
-from pdef_lang import validation, definitions
+from pdef_lang import definitions, exc
 
 
 class Module(object):
@@ -98,14 +98,14 @@ class Module(object):
         for imported_module in self.imported_modules:
             alias = imported_module.alias
             if alias in names:
-                errors.append(validation.error(imported_module, 'duplicate import %r' % alias))
+                errors.append(exc.error(imported_module, 'duplicate import %r' % alias))
             names.add(alias)
 
         # Prevent definitions and imports with duplicate names.
         for def0 in self.definitions:
             name = def0.name
             if name in names:
-                errors.append(validation.error(def0, 'duplicate definition or import %r' % name))
+                errors.append(exc.error(def0, 'duplicate definition or import %r' % name))
             names.add(name)
 
         for def0 in self.definitions:
@@ -208,7 +208,7 @@ class AbsoluteImport(AbstractImport):
         if imodule:
             return [ImportedModule(self.name, imodule)], []
 
-        return [], [validation.error(self, 'module not found %r', self.name)]
+        return [], [exc.error(self, 'module not found %r', self.name)]
 
 
 class RelativeImport(AbstractImport):
@@ -235,7 +235,7 @@ class RelativeImport(AbstractImport):
             if imodule:
                 imodules.append(ImportedModule(rname, imodule))
             else:
-                errors.append(validation.error(self, 'module not found %r', fullname))
+                errors.append(exc.error(self, 'module not found %r', fullname))
 
         return imodules, errors
 

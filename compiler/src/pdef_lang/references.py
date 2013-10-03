@@ -1,7 +1,7 @@
 # encoding: utf-8
 import pdef_lang.collects
 import pdef_lang.enums
-from pdef_lang import definitions, validation
+from pdef_lang import definitions, exc
 
 
 def reference(name_ref_def):
@@ -62,7 +62,7 @@ class NameReference(Reference):
         if self._definition:
             return []
 
-        return [validation.error(self, 'symbol not found %r', self.name)]
+        return [exc.error(self, 'symbol not found %r', self.name)]
 
 
 class ListReference(Reference):

@@ -1,6 +1,6 @@
 # encoding: utf-8
 import logging
-from pdef_lang import definitions, validation, references
+from pdef_lang import definitions, exc, references
 
 
 class Message(definitions.Definition):
@@ -129,13 +129,13 @@ class Message(definitions.Definition):
 
         # The base must be a message.
         if not base.is_message:
-            return [validation.error(self, 'base must be a message, base=%s' % base)]
+            return [exc.error(self, 'base must be a message, base=%s' % base)]
 
         errors = []
 
         # The base exception/message flag must match this message flag.
         if self.is_exception != base.is_exception:
-            errors.append(validation.error(self, 'wrong base type (message/exc), base=%s', base))
+            errors.append(exc.error(self, 'wrong base type (message/exc), base=%s', base))
 
         # The base must be defined before this message.
         errors += base._validate_is_defined_before(self)
@@ -143,7 +143,7 @@ class Message(definitions.Definition):
         # Prevent circular inheritance.
         while base:
             if base is self:
-                errors.append(validation.error(self, 'circular inheritance'))
+                errors.append(exc.error(self, 'circular inheritance'))
                 break
 
             base = base.base
@@ -160,28 +160,28 @@ class Message(definitions.Definition):
 
             # The base is present and it is polymorphic,
             # so it requires a discriminator value.
-            return [validation.error(self, 'discriminator value required')]
+            return [exc.error(self, 'discriminator value required')]
 
         # The discriminator value is present.
 
         errors = []
         if not dvalue.is_enum_value:
-            errors.append(validation.error(self, 'discriminator value must be an enum value'))
+            errors.append(exc.error(self, 'discriminator value must be an enum value'))
 
         if not base:
             # No base but the discriminator value is present.
-            errors.append(validation.error(self, 'cannot set a discriminator value, no base'))
+            errors.append(exc.error(self, 'cannot set a discriminator value, no base'))
             return errors
 
         if not base.is_polymorphic:
             # The base is not polymorphic, i.e. does not have a discriminator field.
-            errors.append(validation.error(self, 'cannot set a discriminator value, the base '
+            errors.append(exc.error(self, 'cannot set a discriminator value, the base '
                                                  'does not have a discriminator field'))
             return errors
 
         if dvalue not in base.discriminator.type:
             # The discriminator value is not a base discriminator enum value.
-            errors.append(validation.error(self, 'discriminator value does not match base '
+            errors.append(exc.error(self, 'discriminator value does not match base '
                                                  'discriminator type'))
             return errors
 
@@ -199,7 +199,7 @@ class Message(definitions.Definition):
         for subtype in self.subtypes:
             value = subtype.discriminator_value
             if value in values:
-                errors.append(validation.error(self, 'duplicate discriminator value %s', value))
+                errors.append(exc.error(self, 'duplicate discriminator value %s', value))
             values.add(value)
 
         return errors
@@ -211,7 +211,7 @@ class Message(definitions.Definition):
         names = set()
         for field in self.fields:
             if field.name in names:
-                errors.append(validation.error(self, 'duplicate field %r', field.name))
+                errors.append(exc.error(self, 'duplicate field %r', field.name))
             names.add(field.name)
 
         # Prevent multiple discriminator fields.
@@ -221,7 +221,7 @@ class Message(definitions.Definition):
                 continue
 
             if discriminator:
-                errors.append(validation.error(self, 'multiple discriminator fields'))
+                errors.append(exc.error(self, 'multiple discriminator fields'))
                 break  # One multiple discriminator error is enough.
 
             discriminator = field
@@ -258,9 +258,9 @@ class Field(object):
         errors = []
 
         if not self.type.is_data_type:
-            errors.append(validation.error(self, 'field must be a data type'))
+            errors.append(exc.error(self, 'field must be a data type'))
 
         if self.is_discriminator and not self.type.is_enum:
-            errors.append(validation.error(self, 'discriminator field must be an enum'))
+            errors.append(exc.error(self, 'discriminator field must be an enum'))
 
         return errors

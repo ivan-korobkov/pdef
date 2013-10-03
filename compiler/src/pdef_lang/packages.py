@@ -1,6 +1,6 @@
 # encoding: utf-8
 import logging
-from pdef_lang import exc, validation
+from pdef_lang import exc
 
 
 class Package(object):
@@ -37,7 +37,7 @@ class Package(object):
         names = set()
         for module in self.modules:
             if module.name in names:
-                errors.append(validation.error(self, 'duplicate module %r', module.name))
+                errors.append(exc.error(self, 'duplicate module %r', module.name))
             names.add(module.name)
 
         if errors:

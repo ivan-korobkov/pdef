@@ -1,5 +1,5 @@
 # encoding: utf-8
-import pdef_lang.validation as validation
+from pdef_lang import exc
 
 
 class Type(object):
@@ -85,15 +85,15 @@ class Definition(object):
                     return []
 
                 if def0 is another:
-                    return [validation.error(self, '%s must be defined before %s. Move it above '
-                                                   'in the file.', self, another)]
+                    return [exc.error(self, '%s must be defined before %s. Move it above '
+                                            'in the file.', self, another)]
 
             raise AssertionError('Wrong module state')
 
         if self.module._has_import_circle(another.module):
-            return [validation.error(self,
-                   '%s must be referenced before %s, but their modules circularly '
-                   'import each other. Move %s into another module.', self, another, self)]
+            return [exc.error(self,
+                    '%s must be referenced before %s, but their modules circularly '
+                    'import each other. Move %s into another module.', self, another, self)]
 
         return []
 

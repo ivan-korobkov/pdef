@@ -9,7 +9,8 @@ exception TestException {
 
 
 /** Test interface with method of all types. */
-interface TestInterface : throws TestException {
+@throws(TestException)
+interface TestInterface {
     /** Index remote method. */
     @index
     indexMethod(a int32, b int32) int32;

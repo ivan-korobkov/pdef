@@ -237,7 +237,8 @@ class TestParser(unittest.TestCase):
         s = '''
             module hello.world;
 
-            interface Interface : throws Exception {}
+            @throws(Exception)
+            interface Interface {}
         '''
 
         module, _ = self.parser.parse_string(s)

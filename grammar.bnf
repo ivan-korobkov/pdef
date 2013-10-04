@@ -37,13 +37,12 @@
         exception_token='exception'
         enum_token='enum'
 
-        throws='throws'
-
         // Options
         discriminator='@discriminator'
         form='@form'
         index='@index'
         post='@post'
+        throws='@throws'
 
         // Idd, docs and comments.
         // Dots cannot be used in definition, method, enum value, and field names.
@@ -74,8 +73,8 @@ MessageOption ::= '@form'
 Field         ::= doc? id Type FieldOption* ';'
 FieldOption   ::= '@discriminator'
 
-Interface     ::= 'interface' id (':' InterfaceExc)? '{' Method* '}'
-InterfaceExc  ::= throws id
+Interface     ::= InterfaceExc? 'interface' id '{' Method* '}'
+InterfaceExc  ::= '@throws' '(' id ')'
 
 Method        ::= doc? MethodOption* id '(' MethodArgs? ')' Type ';'
 MethodArg     ::= doc? id Type

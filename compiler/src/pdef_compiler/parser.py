@@ -143,14 +143,14 @@ class _Tokens(object):
         'STRING', 'OBJECT', 'VOID', 'LIST', 'SET', 'MAP', 'ENUM',
         'MESSAGE', 'EXCEPTION', 'INTERFACE')
 
-    reserved = types + ('MODULE', 'FROM', 'IMPORT', 'THROWS')
+    reserved = types + ('MODULE', 'FROM', 'IMPORT')
 
     tokens = reserved + \
         ('COLON', 'COMMA', 'SEMI',
          'LESS', 'GREATER', 'LBRACE', 'RBRACE',
          'LPAREN', 'RPAREN',
          'IDENTIFIER', 'DOC') \
-        + ('DISCRIMINATOR', 'FORM', 'INDEX', 'POST')
+        + ('DISCRIMINATOR', 'FORM', 'INDEX', 'POST', 'THROWS')
 
     # Regexp for simple rules.
     t_COLON = r'\:'
@@ -168,6 +168,7 @@ class _Tokens(object):
     t_FORM = r'@form'
     t_INDEX = r'@index'
     t_POST = r'@post'
+    t_THROWS = r'@throws'
 
     # Ignored characters
     t_ignore = " \t"
@@ -403,20 +404,20 @@ class _GrammarRules(object):
     # Interface definition
     def p_interface(self, t):
         '''
-        interface : INTERFACE IDENTIFIER interface_exc LBRACE methods RBRACE
+        interface : interface_exc INTERFACE IDENTIFIER LBRACE methods RBRACE
         '''
-        name = t[2]
-        exc = t[3]
+        exc = t[1]
+        name = t[3]
         methods = t[5]
 
         t[0] = pdef_lang.Interface(name, exc=exc, declared_methods=methods)
 
     def p_interface_exc(self, t):
         '''
-        interface_exc : COLON THROWS type
+        interface_exc : THROWS LPAREN type RPAREN
                       | empty
         '''
-        if len(t) == 4:
+        if len(t) == 5:
             t[0] = t[3]
         else:
             t[0] = None

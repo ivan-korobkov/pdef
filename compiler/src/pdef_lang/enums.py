@@ -4,8 +4,8 @@ from pdef_lang.definitions import Definition, TypeEnum, Type
 
 class Enum(Definition):
     '''Enum definition.'''
-    def __init__(self, name, values=None, value_names=None, location=None):
-        super(Enum, self).__init__(TypeEnum.ENUM, name, location=location)
+    def __init__(self, name, values=None, value_names=None, doc=None, location=None):
+        super(Enum, self).__init__(TypeEnum.ENUM, name, doc=doc, location=location)
         self.values = []
 
         if values and value_names:
@@ -61,9 +61,10 @@ class Enum(Definition):
 
 class EnumValue(Type):
     '''Single enum value which has a name and a pointer to the declaring enum.'''
-    def __init__(self, name, location=None):
+    def __init__(self, name, doc=None, location=None):
         super(EnumValue, self).__init__(TypeEnum.ENUM_VALUE, location=location)
         self.name = name
+        self.doc = doc
         self.enum = None
 
     def __str__(self):

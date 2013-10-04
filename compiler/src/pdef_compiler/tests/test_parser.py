@@ -114,8 +114,20 @@ class TestParser(unittest.TestCase):
         assert not module
         assert 'Unexpected end of file' in errors[0].errors
 
+    def test_doc(self):
+        s = '''
+            /** This is
+            a multi-line
+            doc string. */
+            module hello.world;
+        '''
+        module, _ = self.parser.parse_string(s)
+
+        assert module.doc == 'This is\na multi-line\ndoc string.'
+
     def test_module(self):
         s = '''
+            /** Module doc. */
             module hello.world;
             import another_module;
 
@@ -123,10 +135,10 @@ class TestParser(unittest.TestCase):
             message Message {}
             interface Interface {}
         '''
-
         module, _ = self.parser.parse_string(s)
 
         assert module.name == 'hello.world'
+        assert module.doc == 'Module doc.'
         assert len(module.imports) == 1
         assert len(module.definitions) == 3
 
@@ -171,8 +183,16 @@ class TestParser(unittest.TestCase):
         s = '''
             module hello.world;
 
+            /** Doc. */
             enum Enum {
-                ONE, TWO, THREE;
+                /** One. */
+                ONE,
+
+                /** Two. */
+                TWO,
+
+                /** Three. */
+                THREE;
             }
         '''
 
@@ -181,15 +201,23 @@ class TestParser(unittest.TestCase):
         values = enum.values
 
         assert enum.name == 'Enum'
-        assert enum.location == Location(4)
+        assert enum.doc == 'Doc.'
+        assert enum.location == Location(5)
         assert len(values) == 3
         assert [v.name for v in values] == ['ONE', 'TWO', 'THREE']
-        assert all(v.location == Location(5) for v in values)
+
+        assert values[0].doc == 'One.'
+        assert values[0].location == Location(7)
+        assert values[1].doc == 'Two.'
+        assert values[1].location == Location(10)
+        assert values[2].doc == 'Three.'
+        assert values[2].location == Location(13)
 
     def test_message(self):
         s = '''
             module hello.world;
 
+            /** Message doc. */
             @form
             message Message :
                 Base(
@@ -200,19 +228,21 @@ class TestParser(unittest.TestCase):
         message = module.definitions[0]
 
         assert message.name == 'Message'
+        assert message.doc == 'Message doc.'
         assert message.is_form
         assert len(message.declared_fields) == 0
-        assert message.location == Location(5)
+        assert message.location == Location(6)
 
-        assert message._base.location == Location(6)
+        assert message._base.location == Location(7)
         assert message._base.name == 'Base'
         assert message._discriminator_value.name == 'Type.MESSAGE'
-        assert message._discriminator_value.location == Location(7)
+        assert message._discriminator_value.location == Location(8)
 
     def test_message_exception(self):
         s = '''
             module hello.world;
 
+            /** Exception doc. */
             exception Exception {}
         '''
 
@@ -220,17 +250,20 @@ class TestParser(unittest.TestCase):
         message = module.definitions[0]
 
         assert message.name == 'Exception'
+        assert message.doc == 'Exception doc.'
         assert message.is_exception
-        assert message.location == Location(4)
+        assert message.location == Location(5)
 
     def test_fields(self):
         s = '''
             module hello.world;
 
             message Message {
+                /** Field zero. */
                 field0
                     Type @discriminator;
 
+                /** Field one. */
                 field1 AnotherMessage;
             }
         '''
@@ -244,20 +277,23 @@ class TestParser(unittest.TestCase):
 
         field0 = fields[0]
         assert field0.name == 'field0'
+        assert field0.doc == 'Field zero.'
         assert field0._type.name == 'Type'
         assert field0.is_discriminator
-        assert field0.location == Location(5)
+        assert field0.location == Location(6)
 
         field1 = fields[1]
         assert field1.name == 'field1'
+        assert field1.doc == 'Field one.'
         assert field1._type.name == 'AnotherMessage'
         assert field1.is_discriminator is False
-        assert field1.location == Location(8)
+        assert field1.location == Location(10)
 
     def test_interface(self):
         s = '''
             module hello.world;
 
+            /** Interface doc. */
             @throws(Exception)
             interface Interface {}
         '''
@@ -266,19 +302,22 @@ class TestParser(unittest.TestCase):
         interface = module.definitions[0]
 
         assert interface.name == 'Interface'
-        assert interface.location == Location(5)
+        assert interface.doc == 'Interface doc.'
+        assert interface.location == Location(6)
         assert interface._exc.name == 'Exception'
-        assert interface._exc.location == Location(4)
+        assert interface._exc.location == Location(5)
 
     def test_methods(self):
         s = '''
             module hello.world;
 
             interface Interface {
+                /** Method zero. */
                 @index
                 @post
                 method0() void;
 
+                /** Method one. */
                 method1(
                     arg0 type0,
                     arg1 type1) result;
@@ -293,28 +332,30 @@ class TestParser(unittest.TestCase):
 
         method0 = methods[0]
         assert method0.name == 'method0'
+        assert method0.doc == 'Method zero.'
         assert method0.is_post
         assert method0.is_index
-        assert method0.location == Location(7)
+        assert method0.location == Location(8)
         assert method0._result.name == 'void'
-        assert method0._result.location == Location(7)
+        assert method0._result.location == Location(8)
         assert method0.args == []
 
         method1 = methods[1]
         assert method1.name == 'method1'
+        assert method1.doc == 'Method one.'
         assert method1.is_post is False
         assert method1.is_index is False
-        assert method1.location == Location(9)
+        assert method1.location == Location(11)
         assert method1._result.name == 'result'
-        assert method1._result.location == Location(11)
+        assert method1._result.location == Location(13)
 
         assert len(method1.args) == 2
         assert method1.args[0].name == 'arg0'
         assert method1.args[0]._type.name == 'type0'
-        assert method1.args[0]._type.location == Location(10)
+        assert method1.args[0]._type.location == Location(12)
         assert method1.args[1].name == 'arg1'
         assert method1.args[1]._type.name == 'type1'
-        assert method1.args[1]._type.location == Location(11)
+        assert method1.args[1]._type.location == Location(13)
 
     def test_collections(self):
         s = '''

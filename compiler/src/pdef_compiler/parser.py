@@ -240,12 +240,13 @@ class _GrammarRules(object):
     @_with_location(0)
     def p_module(self, t):
         '''
-        module : MODULE IDENTIFIER SEMI imports definitions
+        module : doc MODULE IDENTIFIER SEMI imports definitions
         '''
-        name = t[2]
-        imports = t[4]
-        definitions = t[5]
-        t[0] = pdef_lang.Module(name, imports=imports, definitions=definitions)
+        doc = t[1]
+        name = t[3]
+        imports = t[5]
+        definitions = t[6]
+        t[0] = pdef_lang.Module(name, imports=imports, definitions=definitions, doc=doc)
 
     # Empty token to support optional values.
     def p_empty(self, t):
@@ -344,7 +345,7 @@ class _GrammarRules(object):
         '''
         enum_value : doc IDENTIFIER
         '''
-        t[0] = pdef_lang.EnumValue(t[2])
+        t[0] = pdef_lang.EnumValue(t[2], doc=t[1])
 
     # Message definition
     @_with_location(3)
@@ -414,7 +415,7 @@ class _GrammarRules(object):
         name = t[2]
         type0 = t[3]
         is_discriminator = t[4]
-        t[0] = pdef_lang.Field(name, type0, is_discriminator=is_discriminator)
+        t[0] = pdef_lang.Field(name, type0, is_discriminator=is_discriminator, doc=doc)
 
     def p_field_discriminator(self, t):
         '''

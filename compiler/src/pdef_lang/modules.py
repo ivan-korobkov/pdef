@@ -25,8 +25,9 @@ class ModuleErrors(object):
 
 class Module(object):
     '''Module is a named scope for definitions. It is usually a *.pdef file.'''
-    def __init__(self, name, imports=None, definitions=None, path=None):
+    def __init__(self, name, imports=None, definitions=None, doc=None, path=None):
         self.name = name
+        self.doc = doc
         self.path = path
         self.package = None
 

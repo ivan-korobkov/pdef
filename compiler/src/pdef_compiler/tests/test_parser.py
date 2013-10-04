@@ -237,14 +237,13 @@ class TestParser(unittest.TestCase):
         s = '''
             module hello.world;
 
-            interface Interface : Base, throws Exception {}
+            interface Interface : throws Exception {}
         '''
 
         module, _ = self.parser.parse_string(s)
         interface = module.definitions[0]
 
         assert interface.name == 'Interface'
-        assert interface._base.name == 'Base'
         assert interface._exc.name == 'Exception'
 
     def test_methods(self):

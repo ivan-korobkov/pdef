@@ -403,32 +403,23 @@ class _GrammarRules(object):
     # Interface definition
     def p_interface(self, t):
         '''
-        interface : INTERFACE IDENTIFIER interface_base_exc LBRACE methods RBRACE
+        interface : INTERFACE IDENTIFIER interface_exc LBRACE methods RBRACE
         '''
         name = t[2]
-        base, exc = t[3]
+        exc = t[3]
         methods = t[5]
 
-        t[0] = pdef_lang.Interface(name, base=base, exc=exc, declared_methods=methods)
+        t[0] = pdef_lang.Interface(name, exc=exc, declared_methods=methods)
 
-    def p_interface_base_exc(self, t):
+    def p_interface_exc(self, t):
         '''
-        interface_base_exc : COLON type COMMA THROWS type
-                           | COLON THROWS type
-                           | COLON type
-                           | empty
+        interface_exc : COLON THROWS type
+                      | empty
         '''
-        base = None
-        exc = None
-        if len(t) == 6:
-            base = t[2]
-            exc = t[5]
-        elif len(t) == 4:
-            exc = t[3]
-        elif len(t) == 3:
-            base = t[2]
-
-        t[0] = base, exc
+        if len(t) == 4:
+            t[0] = t[3]
+        else:
+            t[0] = None
 
     def p_methods(self, t):
         '''

@@ -8,15 +8,12 @@ from pdef_lang.modules import Module
 
 class TestInterface(unittest.TestCase):
     def test_methods(self):
-        '''Should combine the inherited and the declared methods.'''
         iface0 = Interface('Iface0')
-        iface1 = Interface('Iface1', base=iface0)
 
         method0 = iface0.create_method('method0')
-        method1 = iface1.create_method('method1')
+        method1 = iface0.create_method('method1')
 
-        assert iface1.inherited_methods == [method0]
-        assert iface1.methods == [method0, method1]
+        assert iface0.methods == [method0, method1]
 
     def test_create_method(self):
         iface = Interface('Calc')
@@ -30,50 +27,11 @@ class TestInterface(unittest.TestCase):
         assert method.args[1].name == 'i1'
 
     def test_link(self):
-        iface = Interface('Interface', base='base', exc='exc')
+        iface = Interface('Interface', exc='exc')
         iface.create_method('method', 'result', ('arg', 'arg_type'))
         errors = iface.link(lambda name: None)
 
-        assert len(errors) == 4
-
-    # validate_base.
-
-    def test_validate_base__self_inheritance(self):
-        iface = Interface('Iface')
-        iface.base = iface
-
-        errors = iface.validate()
-        assert 'circular inheritance' in errors[0].message
-
-    def test_validate_base__circular_inheritance(self):
-        iface0 = Interface('Iface0')
-        iface1 = Interface('Iface1')
-        iface2 = Interface('Iface2')
-
-        iface0.base = iface2
-        iface1.base = iface0
-        iface2.base = iface1
-
-        errors = iface2.validate()
-        assert 'circular inheritance' in errors[0].message
-
-    def test_validate_base__must_be_interface(self):
-        iface = Interface('Iface0')
-        iface.base = NativeType.INT32
-
-        errors = iface.validate()
-        assert 'base must be an interface' in errors[0].message
-
-    def test_validate_base__message_must_be_defined_after_base(self):
-        base = Interface('Base')
-        iface = Interface('Interface', base=base)
-
-        module = Module('module')
-        module.add_definition(iface)
-        module.add_definition(base)
-
-        errors = iface.validate()
-        assert 'Interface must be defined after Base' in errors[0].message
+        assert len(errors) == 3
 
     # validate_exc
 
@@ -90,11 +48,9 @@ class TestInterface(unittest.TestCase):
     def test_validate_methods__duplicates(self):
         iface0 = Interface('Interface0')
         iface0.create_method('method')
+        iface0.create_method('method')
 
-        iface1 = Interface('Interface1', base=iface0)
-        iface1.create_method('method')
-
-        errors = iface1.validate()
+        errors = iface0.validate()
         assert 'duplicate method' in errors[0].message
 
 

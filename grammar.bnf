@@ -74,8 +74,7 @@ MessageOption ::= '@form'
 Field         ::= doc? id Type FieldOption* ';'
 FieldOption   ::= '@discriminator'
 
-Interface     ::= 'interface' id (':' InterfaceBase? InterfaceExc?)? '{' Method* '}'
-InterfaceBase ::= id
+Interface     ::= 'interface' id (':' InterfaceExc)? '{' Method* '}'
 InterfaceExc  ::= throws id
 
 Method        ::= doc? MethodOption* id '(' MethodArgs? ')' Type ';'

@@ -5,24 +5,15 @@ from pdef_lang import definitions, exc, references
 
 class Interface(definitions.Definition):
     '''User-defined interface.'''
-    def __init__(self, name, base=None, exc=None, declared_methods=None, doc=None, location=None):
+    def __init__(self, name, exc=None, declared_methods=None, doc=None, location=None):
         super(Interface, self).__init__(definitions.TypeEnum.INTERFACE, name, doc=doc,
                                         location=location)
 
-        self.base = base
         self.exc = exc
         self.declared_methods = []
 
         if declared_methods:
             map(self.add_method, declared_methods)
-
-    @property
-    def base(self):
-        return self._base.dereference()
-
-    @base.setter
-    def base(self, value):
-        self._base = references.reference(value)
 
     @property
     def exc(self):
@@ -34,14 +25,7 @@ class Interface(definitions.Definition):
 
     @property
     def methods(self):
-        return self.inherited_methods + self.declared_methods
-
-    @property
-    def inherited_methods(self):
-        if not self.base:
-            return []
-
-        return self.base.methods
+        return self.declared_methods
 
     def add_method(self, method):
         '''Add a method to this interface.'''
@@ -65,7 +49,6 @@ class Interface(definitions.Definition):
     def link(self, scope):
         '''Link the base, the exception and the methods.'''
         errors = []
-        errors += self._base.link(scope)
         errors += self._exc.link(scope)
 
         for method in self.declared_methods:
@@ -75,35 +58,8 @@ class Interface(definitions.Definition):
 
     def validate(self):
         errors = []
-        errors += self._validate_base()
-
-        if not errors:
-            # Cannot validate methods if the base is wrong.
-            errors += self._validate_methods()
-
+        errors += self._validate_methods()
         errors += self._validate_exc()
-        return errors
-
-    def _validate_base(self):
-        if not self.base:
-            return []
-
-        if not self.base.is_interface:
-            return [exc.error(self, 'base must be an interface')]
-
-        # The base is in interface, continue validation.
-        errors = []
-        errors += self._base.validate()
-        errors += self._validate_is_defined_after(self.base)
-
-        # Prevent circular inheritance.
-        base = self.base
-        while base:
-            if base is self:
-                errors.append(exc.error(self, 'circular inheritance'))
-                break
-            base = base.base
-
         return errors
 
     def _validate_exc(self):

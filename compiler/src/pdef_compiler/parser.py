@@ -4,10 +4,12 @@ import re
 import os.path
 import ply.lex as lex
 import ply.yacc as yacc
+from io import open
 
 import pdef_lang
 
-EXTENSION = 'pdef'
+EXTENSION = '.pdef'
+ENCODING = 'utf8'
 
 
 def create_parser():
@@ -19,10 +21,57 @@ class ParserException(Exception):
     pass
 
 
+class DirectoryParserException(ParserException):
+    def __init__(self, msg, file_exceptions=None):
+        super(DirectoryParserException, self).__init__(msg)
+        self._file_exceptions = file_exceptions
+
+    def __unicode__(self):
+        s = [self.message]
+
+        if self._file_exceptions:
+            for fe in self._file_exceptions:
+                s.append(fe._path)
+                for e in fe._errors:
+                    s.append(u'  ' + e)
+
+        return '\n'.join(s)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+
+class FileParserException(ParserException):
+    def __init__(self, msg, path, errors=None):
+        super(FileParserException, self).__init__(msg)
+        self._path = path
+        self._errors = errors
+
+    def __unicode__(self):
+        s = [self.message, self._path]
+
+        if self._errors:
+            for e in self._errors:
+                s.append(u'  ' + e)
+
+        return '\n'.join(s)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+
+class FileErrors(object):
+    def __init__(self, path, errors):
+        self.path = path
+        self.errors = errors
+
+
 class Parser(object):
     '''Pdef parser. It is reusable but not thread-safe.'''
 
-    def __init__(self):
+    def __init__(self, extension=EXTENSION, encoding=ENCODING):
+        self.extension = (extension if extension.startswith('.') else '.' + extension).lower()
+        self.encoding = encoding
         self.grammar = _Grammar(self._error, self._location)
 
         # Some docs on options:
@@ -31,7 +80,7 @@ class Parser(object):
         # * module=self.grammar sets the grammar for a lexer and a parser.
         # * start='file' sets the start grammar rule.
 
-        self.lexer = lex.lex(module=self.grammar, optimize=False, debug=False)
+        self.lexer = lex.lex(module=self.grammar, optimize=False, debug=False, reflags=re.UNICODE)
         self.parser = yacc.yacc(module=self.grammar, optimize=False, write_tables=False,
                                 start='module', debug=False)
 
@@ -56,18 +105,26 @@ class Parser(object):
 
         logging.info('Walking %s' % path)
 
-        nodes = []
+        modules = []
+        file_excs = []
+
         for root, dirs, files in os.walk(path):
             for file0 in files:
                 ext = os.path.splitext(file0)[1]
-                if ext.lower() != '.' + EXTENSION:
+                if ext.lower() != self.extension:
                     continue
 
                 filepath = os.path.join(root, file0)
-                node = self.parse_file(filepath)
-                nodes.append(node)
+                try:
+                    module = self.parse_file(filepath)
+                    modules.append(module)
+                except FileParserException as e:
+                    file_excs.append(e)
 
-        return nodes
+        if file_excs:
+            raise DirectoryParserException('Parser errors', file_exceptions=file_excs)
+
+        return modules
 
     def parse_file(self, path):
         if not os.path.exists(path):
@@ -76,7 +133,7 @@ class Parser(object):
         if not os.path.isfile(path):
             raise ValueError('Not a file %r' % path)
 
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding=self.encoding) as f:
             s = f.read()
 
         return self.parse_string(s, path)
@@ -92,15 +149,13 @@ class Parser(object):
         try:
             result = self.parser.parse(s, tracking=True, lexer=self.lexer)
             if self._errors:
-                raise ParserException('Syntax error')
+                raise FileParserException('Failed to parse a file', path=path, errors=self._errors)
             return result
         finally:
             self._errors = None
             self._path = None
 
-    def _error(self, msg, *args):
-        msg = '%s: %s' % (self._path, msg)
-        logging.error(msg, *args)
+    def _error(self, msg):
         self._errors.append(msg)
 
     def _location(self, t):
@@ -178,26 +233,21 @@ class _Tokens(object):
         t.value = value
         return t
 
-    # Print the error message
     def t_error(self, t):
-        self._error("Illegal character %s", t.value[0])
+        self._error(u"Illegal character '%s', line %s" % (t.value[0], t.lexer.lineno))
         t.lexer.skip(1)
 
-    def _error(self, msg, *args):
+    def _error(self, msg):
         raise NotImplementedError()
 
 
 class _GrammarRules(object):
     '''Parser grammar rules.'''
-    def __init__(self, error_func, location_func):
-        self._error = error_func
-        self._location = location_func
-
-    def _error(self, msg, *args):
-        raise NotImplementedError('Pass it to the constructor')
+    def _error(self, msg):
+        raise NotImplementedError()
 
     def _location(self, t):
-        raise NotImplementedError('Pass it to the constructor')
+        raise NotImplementedError()
 
     # Starting point.
     def p_module(self, t):
@@ -508,8 +558,11 @@ class _GrammarRules(object):
         t[0] = pdef_lang.MapReference(t[3], t[5])
 
     def p_error(self, t):
-        # TODO: t can be None (is it the end?)
-        self._error("Syntax error at '%s', line %s", t.value, t.lexer.lineno)
+        if t is None:
+            msg = u'Unexpected end of file'
+        else:
+            msg = u"Syntax error at '%s', line %s" % (t.value, t.lexer.lineno)
+        self._error(msg)
 
     def _list(self, t, separated=False):
         '''List builder, supports separated and empty lists.
@@ -539,4 +592,5 @@ class _Grammar(_GrammarRules, _Tokens):
     and pla.lex functions as the module argument.'''
 
     def __init__(self, error_func, location_func):
-        _GrammarRules.__init__(self, error_func, location_func)
+        self._error = error_func
+        self._location = location_func

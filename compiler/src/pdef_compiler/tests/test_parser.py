@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os.path
 import unittest
-from pdef_compiler.parser import create_parser, ParserException
+from pdef_compiler.parser import create_parser, ParserException, FileParserException
 from pdef_lang import AbsoluteImport, RelativeImport
 from pdef_lang.references import ListReference, SetReference, MapReference
 
@@ -67,7 +67,48 @@ class TestParser(unittest.TestCase):
         assert module.name == 'correct'
         assert len(module.definitions) == 1
 
-    # Test grammar rules.
+    # Test lexer.
+
+    def test_illegal_character(self):
+        s = u'''module hello.world;
+
+        // Привет
+        message ЭMessage {}
+
+        enum ЙEnum {}
+        '''
+        try:
+            self.parser.parse_string(s)
+            self.fail()
+        except FileParserException as e:
+            assert e._errors[0] == u"Illegal character 'Э', line 3"
+            assert e._errors[1] == u"Illegal character 'Й', line 5"
+
+    # Test syntax parser.
+
+    def test_syntax_error(self):
+        s = '''module hello.world;
+
+        message Message {
+            wrong field definition;
+        }
+        '''
+        try:
+            self.parser.parse_string(s)
+            self.fail()
+        except FileParserException as e:
+            assert "Syntax error at 'definition', line 4" in str(e)
+
+    def test_syntax_error__end_of_file(self):
+        s = '''module hello.world;
+
+        message Message {
+        '''
+        try:
+            self.parser.parse_string(s)
+            self.fail()
+        except FileParserException as e:
+            assert 'Unexpected end of file' in str(e)
 
     def test_module(self):
         s = '''

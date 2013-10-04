@@ -60,7 +60,7 @@ class Type(object):
         self.is_data_type = self.type in TypeEnum.DATA_TYPES
         self.is_native = self.type in TypeEnum.NATIVE
 
-        self.is_message = self.type == TypeEnum.MESSAGE
+        self.is_message = self.type == TypeEnum.MESSAGE or self.type == TypeEnum.EXCEPTION
         self.is_exception = self.type == TypeEnum.EXCEPTION
         self.is_interface = self.type == TypeEnum.INTERFACE
         self.is_enum = self.type == TypeEnum.ENUM
@@ -117,7 +117,6 @@ class Definition(Type):
         self.name = name
         self.doc = doc
         self.location = location
-        self.is_exception = False
         self.module = None
 
     def __repr__(self):

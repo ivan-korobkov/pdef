@@ -7,6 +7,16 @@ from pdef_lang.modules import Module
 
 
 class TestMessage(unittest.TestCase):
+    def test_message_exception(self):
+        msg = Message('Message')
+        exc = Message('Exception', is_exception=True)
+
+        assert msg.is_message
+        assert msg.is_exception is False
+
+        assert exc.is_message
+        assert exc.is_exception
+
     def test_create_field(self):
         '''Should create and add a field to a message.'''
         msg = Message('Msg')

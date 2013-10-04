@@ -37,11 +37,13 @@ class Interface(definitions.Definition):
 
         logging.debug('%s: added a method, method=%s', self, method)
 
-    def create_method(self, name, result=definitions.NativeType.VOID, *arg_tuples):
+    def create_method(self, name, result=definitions.NativeType.VOID,
+                      is_index=False, is_post=False, arg_tuples=None):
         '''Add a new method to this interface and return the method.'''
-        method = Method(name, result=result)
-        for arg_tuple in arg_tuples:
-            method.create_arg(*arg_tuple)
+        method = Method(name, result=result, is_index=is_index, is_post=is_post)
+        if arg_tuples:
+            for arg_tuple in arg_tuples:
+                method.create_arg(*arg_tuple)
 
         self.add_method(method)
         return method
@@ -74,12 +76,25 @@ class Interface(definitions.Definition):
     def _validate_methods(self):
         errors = []
 
+        # Prevent duplicate methods.
         names = set()
         for method in self.methods:
             if method.name in names:
                 errors.append(exc.error(self, 'duplicate method %r', method.name))
             names.add(method.name)
 
+        # Prevent duplicate index methods.
+        index = None
+        for method in self.methods:
+            if not method.is_index:
+                continue
+
+            if index:
+                errors.append(exc.error(self, 'duplicate index method'))
+                break
+            index = method
+
+        # Validate methods.
         for method in self.methods:
             errors += method.validate()
 

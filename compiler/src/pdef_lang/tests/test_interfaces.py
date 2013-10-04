@@ -18,7 +18,7 @@ class TestInterface(unittest.TestCase):
     def test_create_method(self):
         iface = Interface('Calc')
         method = iface.create_method('sum', NativeType.INT32,
-                                     ('i0', NativeType.INT32), ('i1', NativeType.INT32))
+            arg_tuples=[('i0', NativeType.INT32), ('i1', NativeType.INT32)])
 
         assert [method] == iface.declared_methods
         assert method.name == 'sum'
@@ -28,7 +28,7 @@ class TestInterface(unittest.TestCase):
 
     def test_link(self):
         iface = Interface('Interface', exc='exc')
-        iface.create_method('method', 'result', ('arg', 'arg_type'))
+        iface.create_method('method', 'result', arg_tuples=[('arg', 'arg_type')])
         errors = iface.link(lambda name: None)
 
         assert len(errors) == 3
@@ -52,6 +52,14 @@ class TestInterface(unittest.TestCase):
 
         errors = iface0.validate()
         assert 'duplicate method' in errors[0].message
+
+    def test_validate_methods__one_index(self):
+        iface = Interface('Interface')
+        iface.create_method('method0', is_index=True)
+        iface.create_method('method1', is_index=True)
+
+        errors = iface.validate()
+        assert 'duplicate index method' in errors[0].message
 
 
 class TestMethod(unittest.TestCase):

@@ -185,17 +185,12 @@ class FieldDescriptor(object):
 
 class InterfaceDescriptor(Descriptor):
     '''Interface descriptor.'''
-    def __init__(self, pyclass_supplier,
-                 base=None,
-                 exc_supplier=None,
-                 declared_methods=None):
+    def __init__(self, pyclass_supplier, exc_supplier=None, declared_methods=None):
         super(InterfaceDescriptor, self).__init__(Type.INTERFACE, pyclass_supplier)
-        self.base = base
         self.exc_supplier = exc_supplier
 
         self.declared_methods = tuple(declared_methods) if declared_methods else ()
-        self.inherited_methods = base.methods if base else ()
-        self.methods = self.inherited_methods + self.declared_methods
+        self.methods = self.declared_methods
 
         for method in self.declared_methods:
             method.interface = self
@@ -496,19 +491,11 @@ def map0(key, value):
     return MapDescriptor(key, value)
 
 
-def message(pyclass_supplier,
-            base=None,
-            discriminator_value=None,
-            subtypes=None,
-            declared_fields=None,
-            is_form=False):
+def message(pyclass_supplier, base=None, discriminator_value=None, subtypes=None,
+            declared_fields=None, is_form=False):
     '''Create a message descriptor.'''
-    return MessageDescriptor(pyclass_supplier,
-                             base=base,
-                             discriminator_value=discriminator_value,
-                             subtypes=subtypes,
-                             declared_fields=declared_fields,
-                             is_form=is_form)
+    return MessageDescriptor(pyclass_supplier, base=base, discriminator_value=discriminator_value,
+                             subtypes=subtypes, declared_fields=declared_fields, is_form=is_form)
 
 
 def field(name, descriptor_supplier, is_discriminator=False):
@@ -521,11 +508,9 @@ def enum(pyclass, values):
     return EnumDescriptor(pyclass, values)
 
 
-def interface(pyclass_supplier, base=None, exc_supplier=None, declared_methods=None):
+def interface(pyclass_supplier, exc_supplier=None, declared_methods=None):
     '''Create an interface descriptor.'''
-    return InterfaceDescriptor(pyclass_supplier,
-                               base=base,
-                               exc_supplier=exc_supplier,
+    return InterfaceDescriptor(pyclass_supplier, exc_supplier=exc_supplier,
                                declared_methods=declared_methods)
 
 

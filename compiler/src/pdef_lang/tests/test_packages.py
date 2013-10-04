@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import exc, NativeType, Enum
+from pdef_lang import NativeType, Enum
 from pdef_lang.messages import Message
 from pdef_lang.modules import *
 from pdef_lang.packages import *
@@ -23,17 +23,14 @@ class TestPackage(unittest.TestCase):
         package = Package()
         package.add_module(module0)
         package.add_module(module1)
+        errors = package.link()
 
-        try:
-            package.link()
-            self.fail()
-        except exc.LinkingException as e:
-            assert len(e.errors) == 1
-            assert 'duplicate module' in e.errors[0].message
+        assert len(errors) == 1
+        assert 'Duplicate module' in errors[0]
 
     def test_build(self):
         enum = Enum('Enum')
-        one_type = enum.add_value('ONE')
+        one_type = enum.create_value('ONE')
 
         zero = Message('Zero')
         one = Message('One', base=zero, discriminator_value=one_type)
@@ -59,9 +56,6 @@ class TestPackage(unittest.TestCase):
 
         package = Package()
         package.add_module(module)
+        errors = package.validate()
 
-        try:
-            package.validate()
-            self.fail()
-        except exc.ValidationException as e:
-            assert len(e.errors) == 1
+        assert len(errors) == 1

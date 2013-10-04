@@ -38,8 +38,8 @@ class TestMessage(unittest.TestCase):
     def test_inherited_fields(self):
         '''Should correctly compute message inherited fields.'''
         enum = Enum('Type')
-        type0 = enum.add_value('Type0')
-        type1 = enum.add_value('Type1')
+        type0 = enum.create_value('Type0')
+        type1 = enum.create_value('Type1')
 
         base = Message('Base')
         type_field = base.create_field('type', enum, is_discriminator=True)
@@ -67,16 +67,16 @@ class TestMessage(unittest.TestCase):
         errors = message.link(lambda name: None)
 
         assert len(errors) == 3
-        assert "type not found 'base'" in errors[0].message
-        assert "type not found 'subtype'" in errors[1].message
-        assert "type not found 'field_type'" in errors[2].message
+        assert "Type not found 'base'" in errors[0]
+        assert "Type not found 'subtype'" in errors[1]
+        assert "Type not found 'field_type'" in errors[2]
 
     # build.
 
     def test_build___add_message_to_base_subtypes(self):
         '''Should add a message it to its base subtypes.'''
         enum = Enum('Type')
-        subtype = enum.add_value('SUBTYPE')
+        subtype = enum.create_value('SUBTYPE')
 
         base = Message('Base')
         base.create_field('type', enum, is_discriminator=True)
@@ -91,8 +91,8 @@ class TestMessage(unittest.TestCase):
     def test_build__add_message_to_subtype_tree(self):
         '''Should add a message to to its base tree subtypes.'''
         enum = Enum('Type')
-        type0 = enum.add_value('TYPE0')
-        type1 = enum.add_value('TYPE1')
+        type0 = enum.create_value('TYPE0')
+        type1 = enum.create_value('TYPE1')
 
         base = Message('Base')
         base.create_field('type', enum, is_discriminator=True)
@@ -113,7 +113,7 @@ class TestMessage(unittest.TestCase):
 
         errors = msg.validate()
         assert len(errors) == 1
-        assert 'circular inheritance' in errors[0].message
+        assert 'circular inheritance' in errors[0]
 
     def test_validate_base__circular_inheritance(self):
         msg0 = Message('Msg0')
@@ -122,7 +122,7 @@ class TestMessage(unittest.TestCase):
         msg1.base = msg0
 
         errors = msg0.validate()
-        assert 'circular inheritance' in errors[0].message
+        assert 'circular inheritance' in errors[0]
 
     def test_validate_base__message_exception_clash(self):
         msg = Message('Msg')
@@ -130,7 +130,7 @@ class TestMessage(unittest.TestCase):
         exc.base = msg
 
         errors = exc.validate()
-        assert 'wrong base type (message/exc)' in errors[0].message
+        assert 'wrong base type (message/exc)' in errors[0]
 
     def test_validate_base__message_must_be_defined_after_base(self):
         base = Message('Base')
@@ -142,7 +142,7 @@ class TestMessage(unittest.TestCase):
         module.add_definition(base)
 
         errors = msg.validate()
-        assert 'Message must be defined after Base' in errors[0].message
+        assert 'Message must be defined after Base' in errors[0]
 
     # validate_discriminator.
 
@@ -150,7 +150,7 @@ class TestMessage(unittest.TestCase):
         msg = Message('Message', discriminator_value=NativeType.STRING)
         errors = msg.validate()
 
-        assert 'discriminator value must be an enum value' in errors[0].message
+        assert 'discriminator value must be an enum value' in errors[0]
 
     def test_validate_discriminator__no_discriminator_value_but_polymorphic_base(self):
         enum = Enum('Type')
@@ -160,17 +160,17 @@ class TestMessage(unittest.TestCase):
         msg = Message('Msg', base=base)
         errors = msg.validate()
 
-        assert 'discriminator value required' in errors[0].message
+        assert 'discriminator value required' in errors[0]
 
     def test_validate_discriminator__discriminator_value_but_nonpolymorphic_base(self):
         base = Message('Base')
         enum = Enum('Type')
-        subtype = enum.add_value('SUBTYPE')
+        subtype = enum.create_value('SUBTYPE')
 
         msg = Message('Msg', base=base, discriminator_value=subtype)
         errors = msg.validate()
 
-        assert 'cannot set a discriminator value, the base is not polymorphic' in errors[0].message
+        assert 'cannot set a discriminator value, the base is not polymorphic' in errors[0]
 
     def test_validate_discrminator__value_type_does_not_match_base_discriminator_type(self):
         enum0 = Enum('Enum0')
@@ -178,15 +178,15 @@ class TestMessage(unittest.TestCase):
         base.create_field('field', enum0, is_discriminator=True)
 
         enum1 = Enum('Enum1')
-        subtype = enum1.add_value('SUBTYPE')
+        subtype = enum1.create_value('SUBTYPE')
         msg = Message('Message', base=base, discriminator_value=subtype)
         errors = msg.validate()
 
-        assert 'discriminator value does not match the base discriminator type' in errors[0].message
+        assert 'discriminator value does not match the base discriminator type' in errors[0]
 
     def test_validate_discriminator__message_must_be_defined_after_discriminator_type(self):
         enum = Enum('Enum')
-        subtype = enum.add_value('SUBTYPE')
+        subtype = enum.create_value('SUBTYPE')
 
         base = Message('Base')
         base.create_field('field', enum, is_discriminator=True)
@@ -198,7 +198,7 @@ class TestMessage(unittest.TestCase):
         module.add_definition(enum)
         errors = msg.validate()
 
-        assert 'Message must be defined after Enum' in errors[0].message
+        assert 'Message must be defined after Enum' in errors[0]
 
     # validate_fields.
 
@@ -208,7 +208,7 @@ class TestMessage(unittest.TestCase):
         msg.create_field('field', NativeType.INT32)
 
         errors = msg.validate()
-        assert 'duplicate field' in errors[0].message
+        assert 'duplicate field' in errors[0]
 
     def test_validate_fields__duplicate_inherited_fields(self):
         msg0 = Message('Msg0')
@@ -218,7 +218,7 @@ class TestMessage(unittest.TestCase):
         msg1.create_field('field', NativeType.STRING)
 
         errors = msg1.validate()
-        assert 'duplicate field' in errors[0].message
+        assert 'duplicate field' in errors[0]
 
     def test_validate_fields__multiple_discriminators(self):
         enum = Enum('Type')
@@ -227,12 +227,12 @@ class TestMessage(unittest.TestCase):
         msg.create_field('type1', enum, is_discriminator=True)
 
         errors = msg.validate()
-        assert 'multiple discriminator fields' in errors[0].message
+        assert 'multiple discriminator fields' in errors[0]
 
     def test_validate_fields__multiple_discriminators_in_inheritance_tree(self):
         enum0 = Enum('Type0')
         enum1 = Enum('Type1')
-        sub0 = enum0.add_value('SUB0')
+        sub0 = enum0.create_value('SUB0')
 
         msg0 = Message('Msg0')
         msg0.create_field('type0', enum0, is_discriminator=True)
@@ -243,13 +243,13 @@ class TestMessage(unittest.TestCase):
         msg1.discriminator_value = sub0
 
         errors = msg1.validate()
-        assert 'multiple discriminator fields' in errors[0].message
+        assert 'multiple discriminator fields' in errors[0]
 
     # validate_subtypes.
 
     def test_validate_subtypes__duplicate_subtype_discriminator_value(self):
         enum = Enum('Type')
-        subtype = enum.add_value('SUBTYPE')
+        subtype = enum.create_value('SUBTYPE')
 
         base = Message('Base')
         base.create_field('field', enum, is_discriminator=True)
@@ -260,7 +260,7 @@ class TestMessage(unittest.TestCase):
         msg1.build()
 
         errors = base.validate()
-        assert "duplicate subtype with a discriminator value 'SUBTYPE'" in errors[0].message
+        assert "duplicate subtype with a discriminator value 'SUBTYPE'" in errors[0]
 
 
 class TestField(unittest.TestCase):
@@ -269,13 +269,13 @@ class TestField(unittest.TestCase):
         field = Field('field', NativeType.VOID)
         errors = field.validate()
 
-        assert 'field must be a data type' in errors[0].message
+        assert 'field must be a data type' in errors[0]
 
     def test_validate__reference(self):
         field = Field('field', references.ListReference(NativeType.VOID))
         errors = field.validate()
 
-        assert 'list element must be a data type' in errors[0].message
+        assert 'List element must be a data type' in errors[0]
 
     def test_validate__discriminator_must_be_enum(self):
         '''Should ensure discriminator field type is an enum.'''
@@ -288,4 +288,4 @@ class TestField(unittest.TestCase):
         errors1 = field1.validate()
 
         assert not errors0
-        assert 'discriminator field must be an enum' in errors1[0].message
+        assert 'discriminator field must be an enum' in errors1[0]

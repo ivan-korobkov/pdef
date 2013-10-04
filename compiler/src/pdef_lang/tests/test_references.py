@@ -46,7 +46,7 @@ class TestNameReference(unittest.TestCase):
         ref = references.reference('module.Message')
         errors = ref.link(scope)
 
-        assert "type not found 'module.Message'" in errors[0].message
+        assert "Type not found 'module.Message'" in errors[0]
 
 
 class TestListReference(unittest.TestCase):
@@ -119,8 +119,8 @@ class TestMapReference(unittest.TestCase):
         errors = ref.link(scope)
 
         assert not ref
-        assert "type not found 'key'" in errors[0].message
-        assert "type not found 'value'" in errors[1].message
+        assert "Type not found 'key'" in errors[0]
+        assert "Type not found 'value'" in errors[1]
 
     def test_validate(self):
         ref = references.MapReference(NativeType.VOID, NativeType.VOID)

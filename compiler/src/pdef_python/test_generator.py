@@ -37,9 +37,9 @@ class TestPythonModule(unittest.TestCase):
 class TestPythonEnum(unittest.TestCase):
     def create(self):
         enum = Enum('Number')
-        enum.add_value('ONE')
-        enum.add_value('TWO')
-        enum.add_value('THREE')
+        enum.create_value('ONE')
+        enum.create_value('TWO')
+        enum.create_value('THREE')
 
         return pydef(enum, None)
 
@@ -58,7 +58,7 @@ class TestPythonEnum(unittest.TestCase):
 class TestPythonMessage(unittest.TestCase):
     def create(self):
         enum = Enum('Type')
-        type0 = enum.add_value('MESSAGE')
+        type0 = enum.create_value('MESSAGE')
 
         base = Message('Base')
         base.create_field('type', enum, is_discriminator=True)
@@ -166,8 +166,8 @@ class TestPyRef(unittest.TestCase):
 
     def test_enum_value(self):
         def0 = Enum('Number')
-        def0.add_value('ONE')
-        two = def0.add_value('TWO')
+        def0.create_value('ONE')
+        two = def0.create_value('TWO')
 
         module = Module('test')
         module.add_definition(def0)

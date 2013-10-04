@@ -41,7 +41,7 @@ class TestInterface(unittest.TestCase):
         iface = Interface('Interface', exc=nonexc)
 
         errors = iface.validate()
-        assert 'interface exc must be an exception' in errors[0].message
+        assert 'exc must be an exception' in errors[0]
 
     # validate_methods
 
@@ -51,7 +51,7 @@ class TestInterface(unittest.TestCase):
         iface0.create_method('method')
 
         errors = iface0.validate()
-        assert 'duplicate method' in errors[0].message
+        assert 'duplicate method' in errors[0]
 
     def test_validate_methods__one_index(self):
         iface = Interface('Interface')
@@ -59,7 +59,7 @@ class TestInterface(unittest.TestCase):
         iface.create_method('method1', is_index=True)
 
         errors = iface.validate()
-        assert 'duplicate index method' in errors[0].message
+        assert 'duplicate index method' in errors[0]
 
 
 class TestMethod(unittest.TestCase):
@@ -67,20 +67,20 @@ class TestMethod(unittest.TestCase):
         method = Method('method', result=None)
         errors = method.validate()
 
-        assert 'method result required' in errors[0].message
+        assert 'method result required' in errors[0]
 
     def test_validate__result_reference(self):
         method = Method('method', result=references.ListReference(NativeType.VOID))
         errors = method.validate()
 
-        assert 'list element must be a data type' in errors[0].message
+        assert 'List element must be a data type' in errors[0]
 
     def test_validate__post_must_be_remote(self):
         result = Interface('Interface')
         method = Method('method', result, is_post=True)
 
         errors = method.validate()
-        assert '@post method must be remote' in errors[0].message
+        assert '@post method must be remote' in errors[0]
 
     def test_validate__duplicate_args(self):
         method = Method('method')
@@ -88,7 +88,7 @@ class TestMethod(unittest.TestCase):
         method.create_arg('arg', NativeType.INT32)
 
         errors = method.validate()
-        assert 'duplicate argument' in errors[0].message
+        assert 'duplicate argument' in errors[0]
 
     def test_validate__form_field_clashes_with_arg(self):
         form = Message('Form', is_form=True)
@@ -99,7 +99,7 @@ class TestMethod(unittest.TestCase):
         method.create_arg('form', form)
 
         errors = method.validate()
-        assert 'form fields clash with method args' in errors[0].message
+        assert 'form fields clash with method args' in errors[0]
 
 
 class TestMethodArg(unittest.TestCase):
@@ -108,23 +108,23 @@ class TestMethodArg(unittest.TestCase):
         arg = MethodArg('arg', 'module.Message')
 
         errors = arg.link(scope)
-        assert 'type not found' in errors[0].message
+        assert 'Type not found' in errors[0]
 
     def test_validate__type_reference(self):
         arg = MethodArg('arg', references.ListReference(NativeType.VOID))
         errors = arg.validate()
 
-        assert 'list element must be a data type' in errors[0].message
+        assert 'List element must be a data type' in errors[0]
 
     def test_validate__type_required(self):
         arg = MethodArg('arg', None)
 
         errors = arg.validate()
-        assert 'argument type required' in errors[0].message
+        assert 'argument type required' in errors[0]
 
     def test_validate__is_data_type(self):
         iface = Interface('Interface')
         arg = MethodArg('arg', iface)
 
         errors = arg.validate()
-        assert 'argument must be a data type' in errors[0].message
+        assert 'argument must be a data type' in errors[0]

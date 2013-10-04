@@ -63,13 +63,13 @@ class TestModule(unittest.TestCase):
     # Validation.
 
     def test_validate_module__duplicate_imports(self):
-        module = Module('test')
+        module = Module('test', path='/home/ivan/test.pdef')
         module.add_imported_module('submodule', Module('module0.submodule'))
         module.add_imported_module('submodule', Module('module1.submodule'))
         errors = module.validate()
 
         assert len(errors) == 1
-        assert 'duplicate import' in errors[0].message
+        assert 'Duplicate import' in str(errors[0])
 
     def test_validate_module__duplicate_definition(self):
         '''Should prevent adding a duplicate definition to a module.'''
@@ -82,7 +82,7 @@ class TestModule(unittest.TestCase):
         errors = module.validate()
 
         assert len(errors) == 1
-        assert 'duplicate definition or import' in errors[0].message
+        assert 'Duplicate definition or import' in str(errors[0])
 
     def test_validate_module__definition_import_clash(self):
         '''Should prevent adding a definition to a module when its name clashes with an import.'''
@@ -94,7 +94,7 @@ class TestModule(unittest.TestCase):
         errors = module.validate()
 
         assert len(errors) == 1
-        assert 'duplicate definition or import' in errors[0].message
+        assert 'Duplicate definition or import' in str(errors[0])
 
     def test_has_import_circle__true(self):
         # 0 -> 1 -> 2 -> 0
@@ -134,7 +134,7 @@ class TestModule(unittest.TestCase):
     def test_find__enum_value(self):
         '''Should find an enum value by its name.'''
         enum = Enum('Number')
-        one = enum.add_value('One')
+        one = enum.create_value('One')
 
         module = Module('test')
         module.add_definition(enum)
@@ -158,7 +158,7 @@ class TestModule(unittest.TestCase):
     def test_find__imported_enum_value(self):
         '''Should find an imported enum value.'''
         enum = Enum('Number')
-        one = enum.add_value('One')
+        one = enum.create_value('One')
 
         module0 = Module('test.module0')
         module0.add_definition(enum)
@@ -188,7 +188,7 @@ class TestAbsoluteImport(unittest.TestCase):
         imodules, errors = import0.link(package)
 
         assert not imodules
-        assert 'module not found' in errors[0].message
+        assert 'Module not found' in errors[0]
 
 
 class TestRelativeImport(unittest.TestCase):
@@ -213,5 +213,5 @@ class TestRelativeImport(unittest.TestCase):
         imodules, errors = import0.link(package)
 
         assert not imodules
-        assert "module not found 'package.system.module0'" in errors[0].message
-        assert "module not found 'package.system.module1'" in errors[1].message
+        assert "Module not found 'package.system.module0'" in errors[0]
+        assert "Module not found 'package.system.module1'" in errors[1]

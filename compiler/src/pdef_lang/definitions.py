@@ -1,18 +1,39 @@
 # encoding: utf-8
-from pdef_lang import exc
 
 
 class Location(object):
-    def __init__(self, path, linenum):
-        self.path = path
-        self.linenum = linenum
+    def __init__(self, lineno):
+        self.lineno = lineno
 
     def __str__(self):
-        return 'File "%s" line %s' % (self.path, self.linenum)
+        return 'line %s' % self.lineno
 
     def __repr__(self):
-        return '<%s %r:%s at %s>' % (self.__class__.__name__, self.path, self.linenum,
-                                     hex(id(self)))
+        return '<%s %s at %s>' % (self.__class__.__name__, self.lineno, hex(id(self)))
+
+    def __eq__(self, other):
+        if other is None:
+            return False
+
+        if self.__class__ != other.__class__:
+            return False
+
+        return self.lineno == other.lineno
+
+    def __hash__(self):
+        return self.lineno
+
+
+class Located(object):
+    location = None
+
+    def _error(self, msg, *args):
+        '''Shortcut for errors.'''
+        location = self.location
+
+        if not location or not location.lineno:
+            return msg % args
+        return 'Line %s, %s' % (location.lineno, (msg % args))
 
 
 class TypeEnum(object):
@@ -50,11 +71,12 @@ class TypeEnum(object):
     NATIVE = PRIMITIVES + (OBJECT, VOID)
 
 
-class Type(object):
+class Type(Located):
     '''Type is a common class for all pdef types. These include native types, definitions,
     collections, and enum values.'''
-    def __init__(self, type0):
+    def __init__(self, type0, location=None):
         self.type = type0
+        self.location = location
 
         self.is_primitive = self.type in TypeEnum.PRIMITIVES
         self.is_data_type = self.type in TypeEnum.DATA_TYPES
@@ -113,10 +135,9 @@ class Definition(Type):
     interfaces and enums.'''
 
     def __init__(self, type0, name, doc=None, location=None):
-        super(Definition, self).__init__(type0)
+        super(Definition, self).__init__(type0, location=location)
         self.name = name
         self.doc = doc
-        self.location = location
         self.module = None
 
     def __repr__(self):
@@ -150,14 +171,13 @@ class Definition(Type):
                     return []
 
                 if def0 is self:
-                    return [exc.error(self, '%s must be defined after %s. Move it above '
-                                            'in the file.', self, another)]
+                    return [self._error('%s must be defined after %s.', self, another)]
 
             raise AssertionError('Wrong module state')
 
         if self.module._has_import_circle(another.module):
-            return [exc.error(self,
-                    '%s must be defined after %s, but their modules circularly '
-                    'import each other. Move %s into another module.', self, another, self)]
+            return [self._error('%s must be defined after %s, but their modules circularly '
+                                'import each other. Move %s into another module.',
+                                self, another, self)]
 
         return []

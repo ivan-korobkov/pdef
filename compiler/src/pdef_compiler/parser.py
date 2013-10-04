@@ -1,4 +1,5 @@
 # encoding: utf-8
+import functools
 import logging
 import re
 import os.path
@@ -19,8 +20,7 @@ def create_parser():
 
 class FileErrors(object):
     '''FileErrors class combines a path and its error messages into a single error.
-    This error supports pretty printing.
-    '''
+    This error supports pretty printing.'''
     def __init__(self, path, errors):
         self.path = path
         self.errors = list(errors)
@@ -42,7 +42,7 @@ class Parser(object):
     def __init__(self, extension=EXTENSION, encoding=ENCODING):
         self.extension = (extension if extension.startswith('.') else '.' + extension).lower()
         self.encoding = encoding
-        self.grammar = _Grammar(self._error, self._location)
+        self.grammar = _Grammar(self._error)
 
         # Some docs on options:
         # * optimize=False and write_tables=False force to generate tabmodule each time
@@ -109,18 +109,21 @@ class Parser(object):
 
         return self.parse_string(s, path)
 
-    def parse_string(self, s, path='stream'):
+    def parse_string(self, s, path=None):
         '''Parses a string into a module, return a module and a list of errors.'''
         logging.info('Parsing %s', path)
 
         # Clear the variables.
         self._errors = []
-        self._path = path or 'stream'
+        self._path = path
 
         try:
             module = self.parser.parse(s, tracking=True, lexer=self.lexer)
+
             errors = list(self._errors)
             module = None if errors else module
+            if module:
+                module.path = path
 
             return module, [FileErrors(path, self._errors)] if errors else []
         finally:
@@ -130,8 +133,22 @@ class Parser(object):
     def _error(self, msg):
         self._errors.append(msg)
 
-    def _location(self, t):
-        return pdef_lang.Location(self._path or 'nofile', t.lineno(0))
+
+def _location(t, token_position):
+    lineno = t.lineno(token_position)
+    return pdef_lang.Location(lineno)
+
+
+def _with_location(token_position):
+    def decorator(func):
+        def set_location(self, t):
+            func(self, t)
+            t[0].location = _location(t, token_position)
+
+        functools.update_wrapper(set_location, func)
+        return set_location
+
+    return decorator
 
 
 class _Tokens(object):
@@ -219,10 +236,8 @@ class _GrammarRules(object):
     def _error(self, msg):
         raise NotImplementedError()
 
-    def _location(self, t):
-        raise NotImplementedError()
-
     # Starting point.
+    @_with_location(0)
     def p_module(self, t):
         '''
         module : MODULE IDENTIFIER SEMI imports definitions
@@ -231,7 +246,6 @@ class _GrammarRules(object):
         imports = t[4]
         definitions = t[5]
         t[0] = pdef_lang.Module(name, imports=imports, definitions=definitions)
-        t[0].location = self._location(t)
 
     # Empty token to support optional values.
     def p_empty(self, t):
@@ -258,6 +272,7 @@ class _GrammarRules(object):
         '''
         self._list(t)
 
+    @_with_location(1)
     def p_import(self, t):
         '''
         import : absolute_import
@@ -300,14 +315,14 @@ class _GrammarRules(object):
         '''
         d = t[2]
         d.doc = t[1]
-        d.location = self._location(t)
         t[0] = d
 
+    @_with_location(2)
     def p_enum(self, t):
         '''
         enum : ENUM IDENTIFIER LBRACE enum_values RBRACE
         '''
-        t[0] = pdef_lang.Enum(t[2], value_names=t[4])
+        t[0] = pdef_lang.Enum(t[2], values=t[4])
 
     def p_enum_values(self, t):
         '''
@@ -324,13 +339,15 @@ class _GrammarRules(object):
         '''
         self._list(t, separated=1)
 
+    @_with_location(2)
     def p_enum_value(self, t):
         '''
         enum_value : doc IDENTIFIER
         '''
-        t[0] = t[2]
+        t[0] = pdef_lang.EnumValue(t[2])
 
     # Message definition
+    @_with_location(3)
     def p_message(self, t):
         '''
         message : message_form message_or_exc IDENTIFIER message_base LBRACE fields RBRACE
@@ -361,18 +378,22 @@ class _GrammarRules(object):
 
     def p_message_base(self, t):
         '''
-        message_base : COLON type LPAREN def_type RPAREN
+        message_base : COLON type LPAREN type RPAREN
                      | COLON type
                      | empty
         '''
-        if len(t) == 2:
-            t[0] = None, None
-        elif len(t) == 3:
-            t[0] = t[2], None
+        base, discriminator = None, None
+
+        if len(t) == 3:
+            base = t[2]
         elif len(t) == 6:
-            t[0] = t[2], t[4]
-        else:
-            raise AssertionError('Unreachable code')
+            base = t[2]
+            discriminator = t[4]
+
+        if base:
+            base.location = _location(t, 2)
+
+        t[0] = base, discriminator
 
     # List of message fields
     def p_fields(self, t):
@@ -384,6 +405,7 @@ class _GrammarRules(object):
         self._list(t)
 
     # Single message field
+    @_with_location(2)
     def p_field(self, t):
         '''
         field : doc IDENTIFIER type field_discriminator SEMI
@@ -402,6 +424,7 @@ class _GrammarRules(object):
         t[0] = bool(t[1])
 
     # Interface definition
+    @_with_location(3)
     def p_interface(self, t):
         '''
         interface : interface_exc INTERFACE IDENTIFIER LBRACE methods RBRACE
@@ -430,6 +453,7 @@ class _GrammarRules(object):
         '''
         self._list(t)
 
+    @_with_location(3)
     def p_method(self, t):
         '''
         method : doc method_attrs IDENTIFIER LPAREN method_args RPAREN type SEMI
@@ -452,6 +476,7 @@ class _GrammarRules(object):
         '''
         self._list(t, separated=True)
 
+    @_with_location(2)
     def p_method_arg(self, t):
         '''
         method_arg : doc IDENTIFIER type
@@ -473,6 +498,7 @@ class _GrammarRules(object):
         '''
         t[0] = t[1]
 
+    @_with_location(1)
     def p_type(self, t):
         '''
         type : value_type
@@ -555,6 +581,5 @@ class _Grammar(_GrammarRules, _Tokens):
     '''Grammar combines grammar rules and lexer tokens. It can be passed to the ply.yacc
     and pla.lex functions as the module argument.'''
 
-    def __init__(self, error_func, location_func):
+    def __init__(self, error_func):
         self._error = error_func
-        self._location = location_func

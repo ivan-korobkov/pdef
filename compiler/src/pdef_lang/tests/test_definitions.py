@@ -25,7 +25,7 @@ class TestDefinition(unittest.TestCase):
         module.add_definition(def1)
 
         errors = def0._validate_is_defined_after(def1)
-        assert 'Def0 must be defined after Def1' in errors[0].message
+        assert 'Def0 must be defined after Def1' in errors[0]
 
     def test_must_be_referenced_before__circular_import(self):
         def0 = Definition(TypeEnum.MESSAGE, 'Def0')
@@ -41,7 +41,7 @@ class TestDefinition(unittest.TestCase):
         module1.add_imported_module('module0', module0)
 
         errors = def1._validate_is_defined_after(def0)
-        assert 'modules circularly import each other' in errors[0].message
+        assert 'modules circularly import each other' in errors[0]
 
 
 class TestNativeTypes(unittest.TestCase):

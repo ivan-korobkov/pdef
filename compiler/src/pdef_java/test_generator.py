@@ -7,8 +7,8 @@ from pdef_java.generator import *
 class TestJavaEnum(unittest.TestCase):
     def test(self):
         enum = Enum('Number')
-        enum.add_value('ONE')
-        enum.add_value('TWO')
+        enum.create_value('ONE')
+        enum.create_value('TWO')
         module = Module('test.module')
         module.add_definition(enum)
 
@@ -53,7 +53,7 @@ class TestInterface(unittest.TestCase):
 class TestMessage(unittest.TestCase):
     def test(self):
         enum = Enum('Type')
-        enum.add_value('MSG')
+        enum.create_value('MSG')
 
         base = Message('Base')
         base.create_field('type', enum, is_discriminator=True)
@@ -113,7 +113,7 @@ class TestRef(unittest.TestCase):
 
     def test_enum_value(self):
         enum = Enum('Number')
-        one = enum.add_value('ONE')
+        one = enum.create_value('ONE')
 
         module = Module('test.module')
         module.add_definition(enum)

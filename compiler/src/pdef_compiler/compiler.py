@@ -13,8 +13,18 @@ def create_compiler():
 
 class CompilerException(Exception):
     def __init__(self, message, errors=None):
-        self.message = message
-        self.errors = errors
+        super(CompilerException, self).__init__(message)
+        self.errors = errors or ()
+
+    def __unicode__(self):
+        s = [self.message]
+        for e in self.errors:
+            s.append(unicode(e))
+
+        return '\n'.join(s)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
 
 
 class Compiler(object):

@@ -1,6 +1,6 @@
 # encoding: utf-8
 import pdef_lang.collects
-from pdef_lang import definitions, exc
+from pdef_lang.definitions import Located, Type
 
 
 def reference(name_ref_def):
@@ -11,7 +11,7 @@ def reference(name_ref_def):
     elif isinstance(name_ref_def, basestring):
         return NameReference(name_ref_def)
 
-    elif isinstance(name_ref_def, definitions.Type):
+    elif isinstance(name_ref_def, Type):
         return Reference(name_ref_def)
 
     elif isinstance(name_ref_def, Reference):
@@ -20,10 +20,11 @@ def reference(name_ref_def):
     raise ValueError('Unsupported type: %r' % name_ref_def)
 
 
-class Reference(object):
+class Reference(Located):
     '''Reference directly references a type.'''
-    def __init__(self, type0=None):
+    def __init__(self, type0=None, location=None):
         self._type = type0
+        self.location = location
 
     def __nonzero__(self):
         return bool(self._type)
@@ -45,8 +46,8 @@ class Reference(object):
 
 class EmptyReference(Reference):
     '''EmptyReference is a sentinel for an absent type. It returns None when dereferenced'''
-    def __init__(self):
-        super(EmptyReference, self).__init__()
+    def __init__(self, location=None):
+        super(EmptyReference, self).__init__(None, location=location)
 
     def dereference(self):
         return None
@@ -54,8 +55,8 @@ class EmptyReference(Reference):
 
 class NameReference(Reference):
     '''NameReference references a type by its name.'''
-    def __init__(self, name):
-        super(NameReference, self).__init__(None)
+    def __init__(self, name, location=None):
+        super(NameReference, self).__init__(None, location=location)
         self.name = name
 
     def link(self, scope):
@@ -63,20 +64,20 @@ class NameReference(Reference):
         if self._type:
             return []
 
-        return [exc.error(self, 'type not found %r', self.name)]
+        return [self._error('Type not found %r', self.name)]
 
 
 class ListReference(Reference):
     '''ListReference has a child reference for an element, creates a list on linking.'''
-    def __init__(self, element):
-        super(ListReference, self).__init__()
+    def __init__(self, element, location=None):
+        super(ListReference, self).__init__(None, location=location)
         self.element = reference(element)
         self._init_type()
 
     def _init_type(self):
         if not self.element:
             return
-        self._type = pdef_lang.collects.List(self.element.dereference())
+        self._type = pdef_lang.collects.List(self.element.dereference(), location=self.location)
 
     def link(self, scope):
         errors = self.element.link(scope)
@@ -94,15 +95,15 @@ class ListReference(Reference):
 
 class SetReference(Reference):
     '''SetReference has a child for an element, creates a set on linking.'''
-    def __init__(self, element):
-        super(SetReference, self).__init__()
+    def __init__(self, element, location=None):
+        super(SetReference, self).__init__(None, location=location)
         self.element = reference(element)
         self._init_type()
 
     def _init_type(self):
         if not self.element:
             return
-        self._type = pdef_lang.collects.Set(self.element.dereference())
+        self._type = pdef_lang.collects.Set(self.element.dereference(), location=self.location)
 
     def link(self, scope):
         errors = self.element.link(scope)
@@ -120,8 +121,8 @@ class SetReference(Reference):
 
 class MapReference(Reference):
     '''MapReference has children references for a key and a value, creates a map on linking.'''
-    def __init__(self, key, value):
-        super(MapReference, self).__init__()
+    def __init__(self, key, value, location=None):
+        super(MapReference, self).__init__(None, location=location)
         self.key = reference(key)
         self.value = reference(value)
         self._init_type()
@@ -129,7 +130,8 @@ class MapReference(Reference):
     def _init_type(self):
         if not self.key or not self.value:
             return
-        self._type = pdef_lang.collects.Map(self.key.dereference(), self.value.dereference())
+        self._type = pdef_lang.collects.Map(self.key.dereference(), self.value.dereference(),
+                                            location=self.location)
 
     def link(self, scope):
         errors0 = self.key.link(scope)

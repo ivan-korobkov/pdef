@@ -1,8 +1,9 @@
 # encoding: utf-8
 import os.path
 import unittest
+
 from pdef_compiler.parser import create_parser
-from pdef_lang import AbsoluteImport, RelativeImport
+from pdef_lang import AbsoluteImport, RelativeImport, Location
 from pdef_lang.references import ListReference, SetReference, MapReference
 
 
@@ -25,6 +26,7 @@ class TestParser(unittest.TestCase):
         assert not errors
         assert len(modules) == 1
         assert modules[0].name == 'pdef.test.inheritance'
+        assert modules[0].path.endswith('inheritance.pdef')
 
     def test_parse_fixtures__messages(self):
         filepath = self._fixture_path('messages.pdef')
@@ -33,6 +35,7 @@ class TestParser(unittest.TestCase):
         assert not errors
         assert len(modules) == 1
         assert modules[0].name == 'pdef.test.messages'
+        assert modules[0].path.endswith('messages.pdef')
 
     def test_parse_fixtures__interfaces(self):
         filepath = self._fixture_path('interfaces.pdef')
@@ -41,6 +44,7 @@ class TestParser(unittest.TestCase):
         assert not errors
         assert len(modules) == 1
         assert modules[0].name == 'pdef.test.interfaces'
+        assert modules[0].path.endswith('interfaces.pdef')
 
     def _fixture_path(self, filename=None):
         dirpath = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -144,20 +148,24 @@ class TestParser(unittest.TestCase):
         import0 = imports[0]
         assert isinstance(import0, AbsoluteImport)
         assert import0.name == 'module0'
+        assert import0.location == Location(4)
 
         import1 = imports[1]
         assert isinstance(import1, AbsoluteImport)
         assert import1.name == 'package0.module1'
+        assert import1.location == Location(5)
 
         import2 = imports[2]
         assert isinstance(import2, RelativeImport)
         assert import2.prefix == 'package1'
         assert import2.relative_names == ('module2', 'module3')
+        assert import2.location == Location(6)
 
         import3 = imports[3]
         assert isinstance(import3, RelativeImport)
         assert import3.prefix == 'package1.subpackage'
         assert import3.relative_names == ('module4', )
+        assert import3.location == Location(7)
 
     def test_enum(self):
         s = '''
@@ -173,15 +181,19 @@ class TestParser(unittest.TestCase):
         values = enum.values
 
         assert enum.name == 'Enum'
+        assert enum.location == Location(4)
         assert len(values) == 3
         assert [v.name for v in values] == ['ONE', 'TWO', 'THREE']
+        assert all(v.location == Location(5) for v in values)
 
     def test_message(self):
         s = '''
             module hello.world;
 
             @form
-            message Message : Base(Type.MESSAGE) {}
+            message Message :
+                Base(
+                    Type.MESSAGE) {}
         '''
 
         module, _ = self.parser.parse_string(s)
@@ -189,9 +201,13 @@ class TestParser(unittest.TestCase):
 
         assert message.name == 'Message'
         assert message.is_form
+        assert len(message.declared_fields) == 0
+        assert message.location == Location(5)
+
+        assert message._base.location == Location(6)
         assert message._base.name == 'Base'
         assert message._discriminator_value.name == 'Type.MESSAGE'
-        assert len(message.declared_fields) == 0
+        assert message._discriminator_value.location == Location(7)
 
     def test_message_exception(self):
         s = '''
@@ -205,14 +221,17 @@ class TestParser(unittest.TestCase):
 
         assert message.name == 'Exception'
         assert message.is_exception
+        assert message.location == Location(4)
 
     def test_fields(self):
         s = '''
             module hello.world;
 
             message Message {
-                field0  Type @discriminator;
-                field1  AnotherMessage;
+                field0
+                    Type @discriminator;
+
+                field1 AnotherMessage;
             }
         '''
 
@@ -227,11 +246,13 @@ class TestParser(unittest.TestCase):
         assert field0.name == 'field0'
         assert field0._type.name == 'Type'
         assert field0.is_discriminator
+        assert field0.location == Location(5)
 
         field1 = fields[1]
         assert field1.name == 'field1'
         assert field1._type.name == 'AnotherMessage'
         assert field1.is_discriminator is False
+        assert field1.location == Location(8)
 
     def test_interface(self):
         s = '''
@@ -245,7 +266,9 @@ class TestParser(unittest.TestCase):
         interface = module.definitions[0]
 
         assert interface.name == 'Interface'
+        assert interface.location == Location(5)
         assert interface._exc.name == 'Exception'
+        assert interface._exc.location == Location(4)
 
     def test_methods(self):
         s = '''
@@ -255,7 +278,10 @@ class TestParser(unittest.TestCase):
                 @index
                 @post
                 method0() void;
-                method1(arg0 type0, arg1 type1) result;
+
+                method1(
+                    arg0 type0,
+                    arg1 type1) result;
             }
         '''
 
@@ -269,25 +295,35 @@ class TestParser(unittest.TestCase):
         assert method0.name == 'method0'
         assert method0.is_post
         assert method0.is_index
+        assert method0.location == Location(7)
         assert method0._result.name == 'void'
+        assert method0._result.location == Location(7)
         assert method0.args == []
 
         method1 = methods[1]
         assert method1.name == 'method1'
         assert method1.is_post is False
         assert method1.is_index is False
+        assert method1.location == Location(9)
+        assert method1._result.name == 'result'
+        assert method1._result.location == Location(11)
+
         assert len(method1.args) == 2
         assert method1.args[0].name == 'arg0'
         assert method1.args[0]._type.name == 'type0'
+        assert method1.args[0]._type.location == Location(10)
         assert method1.args[1].name == 'arg1'
         assert method1.args[1]._type.name == 'type1'
+        assert method1.args[1]._type.location == Location(11)
 
     def test_collections(self):
         s = '''
             module hello.world;
 
             message Message {
-                field0  list<list<Element>>;
+                field0  list<
+                    list<
+                        Element>>;
                 field1  set<set<Element>>;
                 field2  map<list<Key>, set<Value>>;
             }
@@ -296,20 +332,34 @@ class TestParser(unittest.TestCase):
         module, _ = self.parser.parse_string(s)
         fields = module.definitions[0].fields
 
-        # Get references.
+        # List.
         list0 = fields[0]._type
         assert isinstance(list0, ListReference)
         assert isinstance(list0.element, ListReference)
         assert list0.element.element.name == 'Element'
 
+        assert list0.location == Location(5)
+        assert list0.element.location == Location(6)
+        assert list0.element.element.location == Location(7)
+
+        # Set.
         set0 = fields[1]._type
         assert isinstance(set0, SetReference)
         assert isinstance(set0.element, SetReference)
         assert set0.element.element.name == 'Element'
 
+        assert set0.location == Location(8)
+        assert set0.element.location == Location(8)
+        assert set0.element.element.location == Location(8)
+
+        # Map.
         map0 = fields[2]._type
         assert isinstance(map0, MapReference)
         assert isinstance(map0.key, ListReference)
         assert isinstance(map0.value, SetReference)
         assert map0.key.element.name == 'Key'
         assert map0.value.element.name == 'Value'
+
+        assert map0.location == Location(9)
+        assert map0.key.location == Location(9)
+        assert map0.value.location == Location(9)

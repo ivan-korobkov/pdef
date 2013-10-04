@@ -1,6 +1,5 @@
 # encoding: utf-8
 import logging
-from pdef_lang import exc
 
 
 class Package(object):
@@ -38,18 +37,17 @@ class Package(object):
         names = set()
         for module in self.modules:
             if module.name in names:
-                errors.append(exc.error(self, 'duplicate module %r', module.name))
+                errors.append('Duplicate module %r' % module.name)
             names.add(module.name)
 
         if errors:
-            raise exc.LinkingException(errors)
+            return errors
 
         # Link modules.
         for module in self.modules:
             errors += module.link()
 
-        if errors:
-            raise exc.LinkingException(errors)
+        return errors
 
     def build(self):
         '''Build this package and return a list of errors.'''
@@ -64,5 +62,4 @@ class Package(object):
         for module in self.modules:
             errors += module.validate()
 
-        if errors:
-            raise exc.ValidationException(errors)
+        return errors

@@ -1,13 +1,13 @@
 # encoding: utf-8
 import logging
-from pdef_lang import definitions, exc, references
+from pdef_lang.definitions import Definition, TypeEnum, NativeType, Located
+from pdef_lang import references
 
 
-class Interface(definitions.Definition):
+class Interface(Definition):
     '''User-defined interface.'''
     def __init__(self, name, exc=None, declared_methods=None, doc=None, location=None):
-        super(Interface, self).__init__(definitions.TypeEnum.INTERFACE, name, doc=doc,
-                                        location=location)
+        super(Interface, self).__init__(TypeEnum.INTERFACE, name, doc=doc, location=location)
 
         self.exc = exc
         self.declared_methods = []
@@ -37,8 +37,8 @@ class Interface(definitions.Definition):
 
         logging.debug('%s: added a method, method=%s', self, method)
 
-    def create_method(self, name, result=definitions.NativeType.VOID,
-                      is_index=False, is_post=False, arg_tuples=None):
+    def create_method(self, name, result=NativeType.VOID, is_index=False, is_post=False,
+                      arg_tuples=None):
         '''Add a new method to this interface and return the method.'''
         method = Method(name, result=result, is_index=is_index, is_post=is_post)
         if arg_tuples:
@@ -69,7 +69,7 @@ class Interface(definitions.Definition):
             return []
 
         if not self.exc.is_exception:
-            return [exc.error(self, 'interface exc must be an exception, got %s', self.exc)]
+            return [self._error('%s: exc must be an exception, got %s', self, self.exc)]
 
         return self._exc.validate()
 
@@ -80,7 +80,7 @@ class Interface(definitions.Definition):
         names = set()
         for method in self.methods:
             if method.name in names:
-                errors.append(exc.error(self, 'duplicate method %r', method.name))
+                errors.append(self._error('%s: duplicate method %r', self, method.name))
             names.add(method.name)
 
         # Prevent duplicate index methods.
@@ -90,7 +90,7 @@ class Interface(definitions.Definition):
                 continue
 
             if index:
-                errors.append(exc.error(self, 'duplicate index method'))
+                errors.append(self._error('%s: duplicate index method', self))
                 break
             index = method
 
@@ -101,10 +101,10 @@ class Interface(definitions.Definition):
         return errors
 
 
-class Method(object):
+class Method(Located):
     '''Interface method.'''
-    def __init__(self, name, result=definitions.NativeType.VOID, args=None, is_index=False,
-                 is_post=False, doc=None, location=None):
+    def __init__(self, name, result=NativeType.VOID, args=None, is_index=False, is_post=False,
+                 doc=None, location=None):
         self.name = name
         self.args = []
         self.result = result
@@ -166,20 +166,20 @@ class Method(object):
 
         # The method must have a result.
         if not self.result:
-            errors.append(exc.error(self, 'method result required'))
+            errors.append(self._error('%s: method result required', self))
         else:
             errors += self._result.validate()
 
         # @post methods must be remote.
         if self.is_post and not self.is_remote:
-            errors.append(exc.error(self, '@post method must be remote (return a data type '
-                                          'or void)'))
+            errors.append(self._error('%s: @post method must be remote (return a data type '
+                                      'or void)', self))
 
         # Prevent duplicate arguments.
         names = set()
         for arg in self.args:
             if arg.name in names:
-                errors.append(exc.error(self, 'duplicate argument %r', arg.name))
+                errors.append(self._error('%s: duplicate argument %r', self, arg.name))
             names.add(arg.name)
 
         # Prevent form arg fields and arguments name clashes.
@@ -193,8 +193,8 @@ class Method(object):
                 if field.name not in names:
                     continue
 
-                errors.append(exc.error(self, 'form fields clash with method args, '
-                                              'form arg=%s', arg.name))
+                errors.append(self._error('%s: form fields clash with method args, form arg=%s',
+                                          self, arg.name))
                 break  # One error is enough
 
         for arg in self.args:
@@ -203,12 +203,18 @@ class Method(object):
         return errors
 
 
-class MethodArg(object):
+class MethodArg(Located):
     '''Single method argument.'''
     def __init__(self, name, type0):
         self.name = name
         self.type = type0
         self.method = None
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
     @property
     def type(self):
@@ -227,9 +233,9 @@ class MethodArg(object):
 
     def validate(self):
         if not self.type:
-            return [exc.error(self, 'argument type required')]
+            return [self._error('%s: argument type required', self)]
 
         if not self.type.is_data_type:
-            return [exc.error(self, 'argument must be a data type')]
+            return [self._error('%s: argument must be a data type', self)]
 
         return self._type.validate()

@@ -1,7 +1,7 @@
 # encoding: utf-8
 import logging
-from pdef_lang import exc, references
-from pdef_lang.definitions import Definition, TypeEnum
+from pdef_lang import references
+from pdef_lang.definitions import Definition, TypeEnum, Located
 
 
 class Message(Definition):
@@ -131,13 +131,13 @@ class Message(Definition):
 
         # The base must be a message.
         if not base.is_message:
-            return [exc.error(self, 'base must be a message, base=%s' % base)]
+            return [self._error('%s: base must be a message, got %s', self, base)]
 
         errors = []
 
         if self.is_exception != base.is_exception:
             # The base exception/message flag must match this message flag.
-            errors.append(exc.error(self, 'wrong base type (message/exc), base=%s', base))
+            errors.append(self._error('%s: wrong base type (message/exc) %s', self, base))
 
         # Validate the reference.
         errors += self._base.validate()
@@ -148,7 +148,7 @@ class Message(Definition):
         # Prevent circular inheritance.
         while base:
             if base is self:
-                errors.append(exc.error(self, 'circular inheritance'))
+                errors.append(self._error('%s: circular inheritance', self))
                 break
 
             base = base.base
@@ -165,29 +165,29 @@ class Message(Definition):
 
             # The base is present and it is polymorphic,
             # so it requires a discriminator value.
-            return [exc.error(self, 'discriminator value required')]
+            return [self._error('%s: discriminator value required', self)]
 
         # The discriminator value is present.
 
         errors = []
         if not dvalue.is_enum_value:
-            errors.append(exc.error(self, 'discriminator value must be an enum value'))
+            errors.append(self._error('%s: discriminator value must be an enum value', self))
 
         if not base:
             # No base but the discriminator value is present.
-            errors.append(exc.error(self, 'cannot set a discriminator value, no base'))
+            errors.append(self._error('%s: cannot set a discriminator value, no base', self))
             return errors
 
         if not base.is_polymorphic:
             # The base is not polymorphic, i.e. does not have a discriminator field.
-            errors.append(exc.error(self, 'cannot set a discriminator value, the base '
-                                          'is not polymorphic (does not have a discriminator)'))
+            errors.append(self._error('%s: cannot set a discriminator value, the base '
+                                      'is not polymorphic (does not have a discriminator)', self))
             return errors
 
         if dvalue not in base.discriminator.type:
             # The discriminator value is not a base discriminator enum value.
-            errors.append(exc.error(self, 'discriminator value does not match the base '
-                                          'discriminator type'))
+            errors.append(self._error('%s: discriminator value does not match the base '
+                                      'discriminator type', self))
             return errors
 
         # Validate the reference.
@@ -207,8 +207,8 @@ class Message(Definition):
         for subtype in self.subtypes:
             value = subtype.discriminator_value
             if value in values:
-                errors.append(exc.error(self, 'duplicate subtype with a discriminator value %r',
-                                        value.name))
+                errors.append(self._error('%s: duplicate subtype with a discriminator value %r',
+                                          self, value.name))
             values.add(value)
 
         return errors
@@ -220,7 +220,7 @@ class Message(Definition):
         names = set()
         for field in self.fields:
             if field.name in names:
-                errors.append(exc.error(self, 'duplicate field %r', field.name))
+                errors.append(self._error('%s: duplicate field %r', self, field.name))
             names.add(field.name)
 
         # Prevent multiple discriminator fields.
@@ -230,7 +230,7 @@ class Message(Definition):
                 continue
 
             if discriminator:
-                errors.append(exc.error(self, 'multiple discriminator fields'))
+                errors.append(self._error('%s: multiple discriminator fields', self))
                 break  # One multiple discriminator error is enough.
 
             discriminator = field
@@ -241,13 +241,14 @@ class Message(Definition):
         return errors
 
 
-class Field(object):
+class Field(Located):
     '''Message field.'''
-    def __init__(self, name, type0, is_discriminator=False):
+    def __init__(self, name, type0, is_discriminator=False, location=None):
         self.name = name
         self._type = references.reference(type0)
-
         self.is_discriminator = is_discriminator
+        self.location = location
+
         self.message = None
 
     def __str__(self):
@@ -267,10 +268,10 @@ class Field(object):
         errors = []
 
         if not self.type.is_data_type:
-            errors.append(exc.error(self, 'field must be a data type'))
+            errors.append(self._error('%s: field must be a data type', self))
 
         if self.is_discriminator and not self.type.is_enum:
-            errors.append(exc.error(self, 'discriminator field must be an enum'))
+            errors.append(self._error('%s: discriminator field must be an enum', self))
 
         # Validate the reference (it can be a collection).
         errors += self._type.validate()

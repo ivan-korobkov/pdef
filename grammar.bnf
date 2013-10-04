@@ -66,20 +66,20 @@ Enum          ::= 'enum' id '{' EnumValues? '}'
 EnumValues    ::= EnumValue (',' EnumValue)* ';'?
 EnumValue     ::= doc? id
 
-Message       ::= MessageOption* ('message' | 'exception') id (':' MessageBase)? '{' Field* '}'
+Message       ::= MessageForm? ('message' | 'exception') id (':' MessageBase)? '{' Field* '}'
 MessageBase   ::= id ('(' id ')')?  // Base with an optional polymorphic type.
-MessageOption ::= '@form'
+MessageForm ::= '@form'
 
-Field         ::= doc? id Type FieldOption* ';'
-FieldOption   ::= '@discriminator'
+Field         ::= doc? id Type FieldDiscriminator? ';'
+FieldDiscriminator ::= '@discriminator'
 
 Interface     ::= InterfaceExc? 'interface' id '{' Method* '}'
 InterfaceExc  ::= '@throws' '(' id ')'
 
-Method        ::= doc? MethodOption* id '(' MethodArgs? ')' Type ';'
+Method        ::= doc? MethodAttribute* id '(' MethodArgs? ')' Type ';'
 MethodArg     ::= doc? id Type
 MethodArgs    ::= MethodArg (',' MethodArg)*
-MethodOption  ::= '@index' | '@post'
+MethodAttribute ::= '@index' | '@post'
 
 Type          ::= ValueType | ListType | SetType | MapType | id
 ValueType     ::= bool

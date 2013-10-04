@@ -333,9 +333,9 @@ class _GrammarRules(object):
     # Message definition
     def p_message(self, t):
         '''
-        message : message_options message_or_exc IDENTIFIER message_base LBRACE fields RBRACE
+        message : message_form message_or_exc IDENTIFIER message_base LBRACE fields RBRACE
         '''
-        is_form = '@form' in t[1]
+        is_form = t[1]
         is_exception = t[2].lower() == 'exception'
         name = t[3]
         base, discriminator_value = t[4]
@@ -345,12 +345,12 @@ class _GrammarRules(object):
                                  declared_fields=fields, is_exception=is_exception,
                                  is_form=is_form)
 
-    def p_message_options(self, t):
+    def p_message_form(self, t):
         '''
-        message_options : FORM
-                        | empty
+        message_form : FORM
+                     | empty
         '''
-        t[0] = [t[1]] if t[1] else []
+        t[0] = bool(t[1])
 
     def p_message_or_exception(self, t):
         '''
@@ -386,20 +386,20 @@ class _GrammarRules(object):
     # Single message field
     def p_field(self, t):
         '''
-        field : doc IDENTIFIER type field_options SEMI
+        field : doc IDENTIFIER type field_discriminator SEMI
         '''
         doc = t[1]
         name = t[2]
         type0 = t[3]
-        is_discriminator = '@discriminator' in t[4]
+        is_discriminator = t[4]
         t[0] = pdef_lang.Field(name, type0, is_discriminator=is_discriminator)
 
-    def p_field_options(self, t):
+    def p_field_discriminator(self, t):
         '''
-        field_options : DISCRIMINATOR
-                      | empty
+        field_discriminator : DISCRIMINATOR
+                            | empty
         '''
-        t[0] = [t[1]] if t[1] else []
+        t[0] = bool(t[1])
 
     # Interface definition
     def p_interface(self, t):
@@ -432,15 +432,15 @@ class _GrammarRules(object):
 
     def p_method(self, t):
         '''
-        method : doc method_options IDENTIFIER LPAREN method_args RPAREN type SEMI
+        method : doc method_attrs IDENTIFIER LPAREN method_args RPAREN type SEMI
         '''
         doc = t[1]
-        options = t[2]
+        attrs = t[2]
         name = t[3]
         args = t[5]
         result = t[7]
-        is_index = '@index' in options
-        is_post = '@post' in options
+        is_index = '@index' in attrs
+        is_post = '@post' in attrs
         t[0] = pdef_lang.Method(name, result=result, args=args, is_index=is_index, is_post=is_post,
                                 doc=doc)
 
@@ -458,18 +458,18 @@ class _GrammarRules(object):
         '''
         t[0] = pdef_lang.MethodArg(t[2], t[3])
 
-    def p_method_options(self, t):
+    def p_method_attrs(self, t):
         '''
-        method_options : method_options method_option
-                       | method_option
-                       | empty
+        method_attrs : method_attrs method_attr
+                     | method_attr
+                     | empty
         '''
         self._list(t)
 
-    def p_method_option(self, t):
+    def p_method_attr(self, t):
         '''
-        method_option : INDEX
-                      | POST
+        method_attr : INDEX
+                    | POST
         '''
         t[0] = t[1]
 

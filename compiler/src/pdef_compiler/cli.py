@@ -2,18 +2,18 @@
 import argparse
 import logging
 
-import pdef_compiler.compiler as pdefc
+import pdef_compiler
 
 
 def main(argv=None):
-    '''Run compiler command-line interface.'''
-    compiler = pdefc.Compiler()
-    parser = _create_parser(compiler)
-    args = parser.parse_args(argv)
+    '''Run the compiler command-line interface.'''
+    compiler = pdef_compiler.create_compiler()
+    arg_parser = _create_arg_parser(compiler)
+    args = arg_parser.parse_args(argv)
     return _execute_command(compiler, args)
 
 
-def _create_parser(compiler):
+def _create_arg_parser(compiler):
     parser = argparse.ArgumentParser(description='Pdef compiler')
     parser.add_argument('-v', '--verbose', action='store_true', help='verbose output')
     parser.add_argument('-d', '--debug', action='store_true', help='debug output')
@@ -46,30 +46,29 @@ def _execute_command(compiler, args):
     level = logging.DEBUG if args.debug else logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(level=level, format='%(message)s')
 
-    # Set as the default in each subparser.
+    # The command_func is set as the default in each subparser in _create_arg_parser.
     func = args.command_func
     if not func:
         raise ValueError('No command_func in %s' % args)
 
     try:
         func(compiler, args)
-    except pdefc.CompilerException, e:
+    except pdef_compiler.CompilerException, e:
         if level == logging.DEBUG:
             raise
         else:
             # Get rid of the traceback.
-            logging.error('error: %s' % e)
+            logging.error('%s', e)
 
 
 def _check(compiler, args):
     paths = args.paths
-    package = compiler.parse(paths)
-    compiler.compile(package)
+    return compiler.compile(*paths)
 
 
 def _generate(compiler, args):
     paths = args.paths
-    package = compiler.compile(paths)
+    package = compiler.compile(*paths)
 
     for gm in compiler.generator_modules:
         generator = gm.create_generator_from_cli_args(args)

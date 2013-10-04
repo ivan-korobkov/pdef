@@ -31,6 +31,7 @@ class Package(object):
                 return module
 
     def link(self):
+        '''Link this package and return a list of errors.'''
         errors = []
 
         # Prevent duplicate module names.
@@ -51,10 +52,14 @@ class Package(object):
             raise exc.LinkingException(errors)
 
     def build(self):
+        '''Build this package and return a list of errors.'''
+        errors = []
         for module in self.modules:
-            module.build()
+            errors += module.build()
+        return errors
 
     def validate(self):
+        '''Validate this package and return a list of errors.'''
         errors = []
         for module in self.modules:
             errors += module.validate()

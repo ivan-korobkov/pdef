@@ -17,53 +17,23 @@ def create_parser():
     return Parser()
 
 
-class ParserException(Exception):
-    pass
-
-
-class DirectoryParserException(ParserException):
-    def __init__(self, msg, file_exceptions=None):
-        super(DirectoryParserException, self).__init__(msg)
-        self._file_exceptions = file_exceptions
-
-    def __unicode__(self):
-        s = [self.message]
-
-        if self._file_exceptions:
-            for fe in self._file_exceptions:
-                s.append(fe._path)
-                for e in fe._errors:
-                    s.append(u'  ' + e)
-
-        return '\n'.join(s)
-
-    def __str__(self):
-        return unicode(self).encode('utf-8')
-
-
-class FileParserException(ParserException):
-    def __init__(self, msg, path, errors=None):
-        super(FileParserException, self).__init__(msg)
-        self._path = path
-        self._errors = errors
-
-    def __unicode__(self):
-        s = [self.message, self._path]
-
-        if self._errors:
-            for e in self._errors:
-                s.append(u'  ' + e)
-
-        return '\n'.join(s)
-
-    def __str__(self):
-        return unicode(self).encode('utf-8')
-
-
 class FileErrors(object):
+    '''FileErrors class combines a path and its error messages into a single error.
+    This error supports pretty printing.
+    '''
     def __init__(self, path, errors):
         self.path = path
-        self.errors = errors
+        self.errors = list(errors)
+
+    def __unicode__(self):
+        s = [self.path]
+        for e in self.errors:
+            s.append('  ' + unicode(e))
+
+        return '\n'.join(s)
+
+    def __str__(self):
+        return unicode(self).encode('utf8')
 
 
 class Parser(object):
@@ -89,24 +59,28 @@ class Parser(object):
         self._path = None
 
     def parse_path(self, path):
-        '''Parse a module file, or all modules in a directory and return a list of AST nodes.'''
+        '''Parse a directory or a file and return a list of modules and a list of errors.'''
         if not os.path.exists(path):
-            raise ValueError('Path does not exist %r' % path)
+            return None, ['Path does not exist %r' % path]
 
         if os.path.isdir(path):
             return self.parse_directory(path)
 
-        return [self.parse_file(path)]
+        module, errors = self.parse_file(path)
+        return [module] if module else [], errors
 
     def parse_directory(self, path):
-        '''Recursively parse modules from a directory, and return a list of modules.'''
+        '''Recursively parse a directory, return a list of modules and a list of errors.'''
+        if not os.path.exists(path):
+            return None, ['Directory does not exist %r' % path]
+
         if not os.path.isdir(path):
-            raise ValueError('Not a directory %r' % path)
+            return None, ['Not a directory %r' % path]
 
         logging.info('Walking %s' % path)
 
         modules = []
-        file_excs = []
+        errors = []
 
         for root, dirs, files in os.walk(path):
             for file0 in files:
@@ -115,23 +89,20 @@ class Parser(object):
                     continue
 
                 filepath = os.path.join(root, file0)
-                try:
-                    module = self.parse_file(filepath)
+                module, errors0 = self.parse_file(filepath)
+                if module:
                     modules.append(module)
-                except FileParserException as e:
-                    file_excs.append(e)
+                errors += errors0
 
-        if file_excs:
-            raise DirectoryParserException('Parser errors', file_exceptions=file_excs)
-
-        return modules
+        return modules, errors
 
     def parse_file(self, path):
+        '''Parse a file into a module, return a module and a list of errors.'''
         if not os.path.exists(path):
-            raise ValueError('File does not exist %r' % path)
+            return None, ['File does not exist %r' % path]
 
         if not os.path.isfile(path):
-            raise ValueError('Not a file %r' % path)
+            return None, ['Not a file %r' % path]
 
         with open(path, 'r', encoding=self.encoding) as f:
             s = f.read()
@@ -139,7 +110,7 @@ class Parser(object):
         return self.parse_string(s, path)
 
     def parse_string(self, s, path='stream'):
-        '''Parses a module string.'''
+        '''Parses a string into a module, return a module and a list of errors.'''
         logging.info('Parsing %s', path)
 
         # Clear the variables.
@@ -147,10 +118,11 @@ class Parser(object):
         self._path = path or 'stream'
 
         try:
-            result = self.parser.parse(s, tracking=True, lexer=self.lexer)
-            if self._errors:
-                raise FileParserException('Failed to parse a file', path=path, errors=self._errors)
-            return result
+            module = self.parser.parse(s, tracking=True, lexer=self.lexer)
+            errors = list(self._errors)
+            module = None if errors else module
+
+            return module, [FileErrors(path, self._errors)] if errors else []
         finally:
             self._errors = None
             self._path = None

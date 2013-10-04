@@ -111,6 +111,8 @@ class Message(definitions.Definition):
         if self._discriminator_value and self.base:
             self.base._add_subtype(self)
 
+        return []
+
     def validate(self):
         errors = []
         errors += self._validate_base()

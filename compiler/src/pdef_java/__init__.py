@@ -24,6 +24,6 @@ class JavaGeneratorModule(GeneratorModule):
         return out, module_name_map
 
 
-def module():
+def create_generator_module():
     '''Create a java generator module interface.'''
     return JavaGeneratorModule()

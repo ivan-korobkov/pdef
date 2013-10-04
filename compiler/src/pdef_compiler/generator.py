@@ -1,6 +1,7 @@
 # encoding: utf-8
 import importlib
 import inspect
+import logging
 import os
 import pkgutil
 
@@ -8,7 +9,7 @@ from jinja2 import Environment
 
 
 GENERATOR_MODULE_PREFIX = 'pdef_'
-GENERATOR_MODULE_FACTORY_NAME = 'module'
+GENERATOR_MODULE_FACTORY_NAME = 'create_generator_module'
 
 
 class Generator(object):
@@ -76,13 +77,19 @@ class NameMapper(object):
         return module_name
 
 
-def iter_generator_modules():
+def list_generator_modules():
     '''Dynamically load source code generator modules.'''
+    modules = []
     for module_finder, name, ispkg in pkgutil.iter_modules():
         if not name.startswith(GENERATOR_MODULE_PREFIX):
             continue
 
-        module = importlib.import_module(name)
+        try:
+            module = importlib.import_module(name)
+        except Exception as e:
+            logging.error('Failed to import a possible generator module %r' % name)
+            continue
+
         if not hasattr(module, GENERATOR_MODULE_FACTORY_NAME):
             continue
 
@@ -90,7 +97,8 @@ def iter_generator_modules():
         if not isinstance(gmodule, GeneratorModule):
             continue
 
-        yield gmodule
+        modules.append(gmodule)
+    return modules
 
 
 def upper_first(s):

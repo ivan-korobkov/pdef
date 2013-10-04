@@ -65,9 +65,11 @@ class Module(object):
         return self._link_definitions()
 
     def build(self):
-        '''Build definitions.'''
+        '''Build definitions and return a list of errors.'''
+        errors = []
         for def0 in self.definitions:
-            def0.build()
+            errors += def0.build()
+        return errors
 
     def _link_imports(self):
         '''Link imports, must be called before link_module_defs().'''

@@ -131,8 +131,8 @@ class Definition(Type):
         return []
 
     def build(self):
-        '''Build this definition after linking.'''
-        pass
+        '''Build this definition after linking and return a list of errors.'''
+        return []
 
     def validate(self):
         '''Validate this definition and return a list of errors.'''

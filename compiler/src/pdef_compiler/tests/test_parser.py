@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os.path
 import unittest
-from pdef_compiler.parser import create_parser, ParserException, FileParserException
+from pdef_compiler.parser import create_parser
 from pdef_lang import AbsoluteImport, RelativeImport
 from pdef_lang.references import ListReference, SetReference, MapReference
 
@@ -12,28 +12,35 @@ class TestParser(unittest.TestCase):
 
     def test_parse_path(self):
         dirpath = self._fixture_path()
-        modules = self.parser.parse_path(dirpath)
+        modules, errors = self.parser.parse_path(dirpath)
         assert len(modules) == 3
+        assert not errors
 
     # Test parsing fixtures.
 
     def test_parse_fixtures__polymorphic_messages(self):
         filepath = self._fixture_path('inheritance.pdef')
-        module = self.parser.parse_path(filepath)[0]
+        modules, errors = self.parser.parse_path(filepath)
 
-        assert module.name == 'pdef.test.inheritance'
+        assert not errors
+        assert len(modules) == 1
+        assert modules[0].name == 'pdef.test.inheritance'
 
     def test_parse_fixtures__messages(self):
         filepath = self._fixture_path('messages.pdef')
-        module = self.parser.parse_path(filepath)[0]
+        modules, errors = self.parser.parse_path(filepath)
 
-        assert module.name == 'pdef.test.messages'
+        assert not errors
+        assert len(modules) == 1
+        assert modules[0].name == 'pdef.test.messages'
 
     def test_parse_fixtures__interfaces(self):
         filepath = self._fixture_path('interfaces.pdef')
-        module = self.parser.parse_path(filepath)[0]
+        modules, errors = self.parser.parse_path(filepath)
 
-        assert module.name == 'pdef.test.interfaces'
+        assert not errors
+        assert len(modules) == 1
+        assert modules[0].name == 'pdef.test.interfaces'
 
     def _fixture_path(self, filename=None):
         dirpath = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -57,15 +64,14 @@ class TestParser(unittest.TestCase):
             message Message {}
         '''
 
-        try:
-            self.parser.parse_string(s0)
-            self.fail()
-        except ParserException as e:
-            pass
+        module, errors = self.parser.parse_string(s0)
+        assert module is None
+        assert errors
 
-        module = self.parser.parse_string(s1)
+        module, errors = self.parser.parse_string(s1)
         assert module.name == 'correct'
         assert len(module.definitions) == 1
+        assert not errors
 
     # Test lexer.
 
@@ -77,12 +83,10 @@ class TestParser(unittest.TestCase):
 
         enum ЙEnum {}
         '''
-        try:
-            self.parser.parse_string(s)
-            self.fail()
-        except FileParserException as e:
-            assert e._errors[0] == u"Illegal character 'Э', line 3"
-            assert e._errors[1] == u"Illegal character 'Й', line 5"
+        module, errors = self.parser.parse_string(s)
+        assert not module
+        assert errors[0].errors[0] == u"Illegal character 'Э', line 3"
+        assert errors[0].errors[1] == u"Illegal character 'Й', line 5"
 
     # Test syntax parser.
 
@@ -93,22 +97,18 @@ class TestParser(unittest.TestCase):
             wrong field definition;
         }
         '''
-        try:
-            self.parser.parse_string(s)
-            self.fail()
-        except FileParserException as e:
-            assert "Syntax error at 'definition', line 4" in str(e)
+        module, errors = self.parser.parse_string(s)
+        assert not module
+        assert "Syntax error at 'definition', line 4" in errors[0].errors
 
     def test_syntax_error__end_of_file(self):
         s = '''module hello.world;
 
         message Message {
         '''
-        try:
-            self.parser.parse_string(s)
-            self.fail()
-        except FileParserException as e:
-            assert 'Unexpected end of file' in str(e)
+        module, errors = self.parser.parse_string(s)
+        assert not module
+        assert 'Unexpected end of file' in errors[0].errors
 
     def test_module(self):
         s = '''
@@ -120,7 +120,7 @@ class TestParser(unittest.TestCase):
             interface Interface {}
         '''
 
-        module = self.parser.parse_string(s)
+        module, _ = self.parser.parse_string(s)
 
         assert module.name == 'hello.world'
         assert len(module.imports) == 1
@@ -136,7 +136,7 @@ class TestParser(unittest.TestCase):
             from package1.subpackage import module4;
         '''
 
-        module = self.parser.parse_string(s)
+        module, _ = self.parser.parse_string(s)
         imports = module.imports
 
         assert len(imports) == 4
@@ -168,7 +168,7 @@ class TestParser(unittest.TestCase):
             }
         '''
 
-        module = self.parser.parse_string(s)
+        module, _ = self.parser.parse_string(s)
         enum = module.definitions[0]
         values = enum.values
 
@@ -184,7 +184,7 @@ class TestParser(unittest.TestCase):
             message Message : Base(Type.MESSAGE) {}
         '''
 
-        module = self.parser.parse_string(s)
+        module, _ = self.parser.parse_string(s)
         message = module.definitions[0]
 
         assert message.name == 'Message'
@@ -200,7 +200,7 @@ class TestParser(unittest.TestCase):
             exception Exception {}
         '''
 
-        module = self.parser.parse_string(s)
+        module, _ = self.parser.parse_string(s)
         message = module.definitions[0]
 
         assert message.name == 'Exception'
@@ -216,7 +216,7 @@ class TestParser(unittest.TestCase):
             }
         '''
 
-        module = self.parser.parse_string(s)
+        module, _ = self.parser.parse_string(s)
         message = module.definitions[0]
         fields = message.declared_fields
 
@@ -240,7 +240,7 @@ class TestParser(unittest.TestCase):
             interface Interface : Base, throws Exception {}
         '''
 
-        module = self.parser.parse_string(s)
+        module, _ = self.parser.parse_string(s)
         interface = module.definitions[0]
 
         assert interface.name == 'Interface'
@@ -259,7 +259,7 @@ class TestParser(unittest.TestCase):
             }
         '''
 
-        module = self.parser.parse_string(s)
+        module, _ = self.parser.parse_string(s)
         interface = module.definitions[0]
         methods = interface.methods
 
@@ -293,7 +293,7 @@ class TestParser(unittest.TestCase):
             }
         '''
 
-        module = self.parser.parse_string(s)
+        module, _ = self.parser.parse_string(s)
         fields = module.definitions[0].fields
 
         # Get references.

@@ -24,6 +24,6 @@ class PythonGeneratorModule(GeneratorModule):
         return out, module_name_map
 
 
-def module():
+def create_generator_module():
     '''Create a python generator module interface.'''
     return PythonGeneratorModule()

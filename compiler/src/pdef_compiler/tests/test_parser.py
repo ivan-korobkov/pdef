@@ -77,21 +77,6 @@ class TestParser(unittest.TestCase):
         assert len(module.definitions) == 1
         assert not errors
 
-    # Test lexer.
-
-    def test_illegal_character(self):
-        s = u'''module hello.world;
-
-        // Привет
-        message ЭMessage {}
-
-        enum ЙEnum {}
-        '''
-        module, errors = self.parser.parse_string(s)
-        assert not module
-        assert errors[0].errors[0] == u"Illegal character 'Э', line 3"
-        assert errors[0].errors[1] == u"Illegal character 'Й', line 5"
-
     # Test syntax parser.
 
     def test_syntax_error(self):

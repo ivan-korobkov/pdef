@@ -163,13 +163,14 @@ class _Tokens(object):
     reserved = types + ('MODULE', 'FROM', 'IMPORT')
 
     tokens = reserved + \
-        ('COLON', 'COMMA', 'SEMI',
+        ('DOT', 'COLON', 'COMMA', 'SEMI',
          'LESS', 'GREATER', 'LBRACE', 'RBRACE',
          'LPAREN', 'RPAREN',
          'IDENTIFIER', 'DOC') \
         + ('DISCRIMINATOR', 'FORM', 'INDEX', 'POST', 'THROWS')
 
     # Regexp for simple rules.
+    t_DOT = r'.'
     t_COLON = r'\:'
     t_COMMA = r'\,'
     t_SEMI = r'\;'
@@ -197,7 +198,7 @@ class _Tokens(object):
         reserved_map[r.lower()] = r
 
     def t_IDENTIFIER(self, t):
-        r'[a-zA-Z_]{1}[a-zA-Z0-9_]*(\.[a-zA-Z_]{1}[a-zA-Z0-9_]*)*'
+        r'[a-zA-Z_]{1}[a-zA-Z0-9_]*'
         t.type = self.reserved_map.get(t.value, 'IDENTIFIER')
         return t
 
@@ -240,13 +241,33 @@ class _GrammarRules(object):
     @_with_location(0)
     def p_module(self, t):
         '''
-        module : doc MODULE IDENTIFIER SEMI imports definitions
+        module : doc MODULE module_name SEMI imports definitions
         '''
         doc = t[1]
         name = t[3]
         imports = t[5]
         definitions = t[6]
         t[0] = pdef_lang.Module(name, imports=imports, definitions=definitions, doc=doc)
+
+    # Any absolute name, returns a list.
+    def p_absolute_name(self, t):
+        '''
+        absolute_name : absolute_name DOT IDENTIFIER
+                      | IDENTIFIER
+        '''
+        self._list(t, separated=True)
+
+    def p_type_name(self, t):
+        '''
+        type_name : absolute_name
+        '''
+        t[0] = '.'.join(t[1])
+
+    def p_module_name(self, t):
+        '''
+        module_name : absolute_name
+        '''
+        t[0] = '.'.join(t[1])
 
     # Empty token to support optional values.
     def p_empty(self, t):
@@ -283,20 +304,20 @@ class _GrammarRules(object):
 
     def p_absolute_import(self, t):
         '''
-        absolute_import : IMPORT IDENTIFIER SEMI
+        absolute_import : IMPORT module_name SEMI
         '''
         t[0] = pdef_lang.AbsoluteImport(t[2])
 
     def p_relative_import(self, t):
         '''
-        relative_import : FROM IDENTIFIER IMPORT relative_import_names SEMI
+        relative_import : FROM module_name IMPORT relative_import_names SEMI
         '''
         t[0] = pdef_lang.RelativeImport(t[2], t[4])
 
     def p_relative_import_names(self, t):
         '''
-        relative_import_names : relative_import_names COMMA IDENTIFIER
-                              | IDENTIFIER
+        relative_import_names : relative_import_names COMMA module_name
+                              | module_name
         '''
         self._list(t, separated=True)
 
@@ -502,51 +523,51 @@ class _GrammarRules(object):
     @_with_location(1)
     def p_type(self, t):
         '''
-        type : value_type
-            | list_type
-            | set_type
-            | map_type
-            | def_type
+        type : value_ref
+             | list_ref
+             | set_ref
+             | map_ref
+             | def_ref
         '''
         t[0] = t[1]
 
-    def p_value_type(self, t):
+    def p_value_ref(self, t):
         '''
-        value_type : BOOL
-                   | INT16
-                   | INT32
-                   | INT64
-                   | FLOAT
-                   | DOUBLE
-                   | STRING
-                   | OBJECT
-                   | VOID
+        value_ref : BOOL
+                  | INT16
+                  | INT32
+                  | INT64
+                  | FLOAT
+                  | DOUBLE
+                  | STRING
+                  | OBJECT
+                  | VOID
         '''
         t[0] = pdef_lang.reference(t[1].lower())
 
-    def p_def_type(self, t):
+    def p_list_ref(self, t):
         '''
-        def_type : IDENTIFIER
-        '''
-        t[0] = pdef_lang.reference(t[1])
-
-    def p_list_type(self, t):
-        '''
-        list_type : LIST LESS type GREATER
+        list_ref : LIST LESS type GREATER
         '''
         t[0] = pdef_lang.ListReference(t[3])
 
-    def p_set_type(self, t):
+    def p_set_ref(self, t):
         '''
-        set_type : SET LESS type GREATER
+        set_ref : SET LESS type GREATER
         '''
         t[0] = pdef_lang.SetReference(t[3])
 
-    def p_map_type(self, t):
+    def p_map_ref(self, t):
         '''
-        map_type : MAP LESS type COMMA type GREATER
+        map_ref : MAP LESS type COMMA type GREATER
         '''
         t[0] = pdef_lang.MapReference(t[3], t[5])
+
+    def p_def_ref(self, t):
+        '''
+        def_ref : type_name
+        '''
+        t[0] = pdef_lang.reference(t[1])
 
     def p_error(self, t):
         if t is None:

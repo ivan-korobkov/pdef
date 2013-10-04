@@ -72,15 +72,7 @@ class Compiler(object):
     def _compile(self, package):
         t0 = time.time()
 
-        errors = package.link()
-        if errors:
-            return errors
-
-        errors = package.build()
-        if errors:
-            return errors
-
-        errors = package.validate()
+        errors = package.compile()
         if errors:
             return errors
 

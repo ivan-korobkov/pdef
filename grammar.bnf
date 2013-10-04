@@ -2,6 +2,7 @@
 {
     tokens=[
         // Punctuation
+        dot='.'
         colon=':'
         comma=','
         semi=';'
@@ -46,51 +47,53 @@
 
         // Idd, docs and comments.
         // Dots cannot be used in definition, method, enum value, and field names.
-        id='regexp:[a-zA-Z]{1}[a-zA-Z0-9_]*(\.[a-zA-Z]{1}[a-zA-Z0-9_]*)*'
+        id='regexp:[a-zA-Z]{1}[a-zA-Z0-9_]*'
         doc='regexp:/\*\*(.|\n|\r)*?\*/'
         comment='regexp://.*'
     ]
 }
 // Single quotes (') are used to enclose tokens in GrammarKit when they clash with the rules,
-// i.e. the message rule and the message_token 'message'.
+// i.e. a message rule and a message_token 'message'.
 
-File          ::= doc? module id ';' ImportBlock* Definition*
+File            ::= doc? 'module' TypeName ';' ImportBlock* Definition*
+TypeName        ::= id ('.' id)*
+ModuleName      ::= id ('.' id)*
 
 ImportBlock     ::= AbsoluteImport | RelativeImport
-AbsoluteImport  ::= import id ';'
-RelativeImport  ::= from id import id (',' id)* ';'
+AbsoluteImport  ::= import ModuleName ';'
+RelativeImport  ::= from ModuleName import ModuleName (',' ModuleName)* ';'
 
-Definition    ::= doc? (Enum | Message | Interface)
+Definition      ::= doc? (Enum | Message | Interface)
 
-Enum          ::= 'enum' id '{' EnumValues? '}'
-EnumValues    ::= EnumValue (',' EnumValue)* ';'?
-EnumValue     ::= doc? id
+Enum            ::= 'enum' id '{' EnumValues? '}'
+EnumValues      ::= EnumValue (',' EnumValue)* ';'?
+EnumValue       ::= doc? id
 
-Message       ::= MessageForm? ('message' | 'exception') id (':' MessageBase)? '{' Field* '}'
-MessageBase   ::= id ('(' id ')')?  // Base with an optional polymorphic type.
-MessageForm ::= '@form'
+Message         ::= MessageForm? ('message' | 'exception') id (':' MessageBase)? '{' Field* '}'
+MessageBase     ::= Type ('(' Type ')')?  // Base with an optional polymorphic type.
+MessageForm     ::= '@form'
 
-Field         ::= doc? id Type FieldDiscriminator? ';'
+Field           ::= doc? id Type FieldDiscriminator? ';'
 FieldDiscriminator ::= '@discriminator'
 
-Interface     ::= InterfaceExc? 'interface' id '{' Method* '}'
-InterfaceExc  ::= '@throws' '(' id ')'
+Interface       ::= InterfaceExc? 'interface' id '{' Method* '}'
+InterfaceExc    ::= '@throws' '(' TypeName ')'
 
-Method        ::= doc? MethodAttribute* id '(' MethodArgs? ')' Type ';'
-MethodArg     ::= doc? id Type
-MethodArgs    ::= MethodArg (',' MethodArg)*
+Method          ::= doc? MethodAttribute* id '(' MethodArgs? ')' Type ';'
+MethodArg       ::= doc? id Type
+MethodArgs      ::= MethodArg (',' MethodArg)*
 MethodAttribute ::= '@index' | '@post'
 
-Type          ::= ValueType | ListType | SetType | MapType | id
-ValueType     ::= bool
-                | int16
-                | int32
-                | int64
-                | float
-                | double
-                | string
-                | object
-                | void
-ListType      ::= list '<' Type '>'
-SetType       ::= set '<' Type '>'
-MapType       ::= map '<' Type ',' Type '>'
+Type            ::= ValueType | ListType | SetType | MapType | TypeName
+ValueType       ::= bool
+                    | int16
+                    | int32
+                    | int64
+                    | float
+                    | double
+                    | string
+                    | object
+                    | void
+ListType        ::= list '<' Type '>'
+SetType         ::= set '<' Type '>'
+MapType         ::= map '<' Type ',' Type '>'

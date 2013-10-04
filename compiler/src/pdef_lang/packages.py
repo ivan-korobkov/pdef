@@ -29,6 +29,22 @@ class Package(object):
             if module.name == name:
                 return module
 
+    def compile(self):
+        '''Compile this package and return a list of errors.'''
+        errors = self.link()
+        if errors:
+            return errors
+
+        errors = self.build()
+        if errors:
+            return errors
+
+        errors = self.validate()
+        if errors:
+            return errors
+
+        return []
+
     def link(self):
         '''Link this package and return a list of errors.'''
         errors = []

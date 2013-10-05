@@ -1,9 +1,9 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import Enum, Interface
-from pdef_lang.definitions import *
-from pdef_lang.messages import *
-from pdef_lang.modules import Module
+from pdef_code.ast import Enum, Interface
+from pdef_code.ast.definitions import *
+from pdef_code.ast.messages import *
+from pdef_code.ast.modules import Module
 
 
 class TestMessage(unittest.TestCase):

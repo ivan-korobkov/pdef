@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef_lang.definitions import Definition, TypeEnum, Type
+from pdef_code.ast.definitions import Definition, TypeEnum, Type
 
 
 class Enum(Definition):

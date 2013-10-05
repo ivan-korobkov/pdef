@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdef_lang import collects, definitions, references, NativeType, Interface
+from pdef_code.ast import collects, definitions, references, NativeType, Interface
 
 
 class TestReference(unittest.TestCase):

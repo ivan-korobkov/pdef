@@ -2,12 +2,12 @@
 import argparse
 import logging
 
-import pdef_compiler
+import pdef_code
 
 
 def main(argv=None):
     '''Run the compiler command-line interface.'''
-    compiler = pdef_compiler.create_compiler()
+    compiler = pdef_code.create_compiler()
     arg_parser = _create_arg_parser(compiler)
     args = arg_parser.parse_args(argv)
     return _execute_command(compiler, args)
@@ -53,7 +53,7 @@ def _execute_command(compiler, args):
 
     try:
         func(compiler, args)
-    except pdef_compiler.CompilerException, e:
+    except pdef_code.CompilerException, e:
         if level == logging.DEBUG:
             raise
         else:

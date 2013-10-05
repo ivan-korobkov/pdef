@@ -1,7 +1,7 @@
 # encoding: utf-8
 import logging
-from pdef_lang import references
-from pdef_lang.definitions import Definition, TypeEnum, Located
+from pdef_code.ast import references
+from pdef_code.ast.definitions import Definition, TypeEnum, Located
 
 
 class Message(Definition):

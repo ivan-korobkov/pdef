@@ -2,9 +2,9 @@
 import os.path
 import unittest
 
-from pdef_compiler.parser import create_parser
-from pdef_lang import AbsoluteImport, RelativeImport, Location
-from pdef_lang.references import ListReference, SetReference, MapReference
+from pdef_code.parser import create_parser
+from pdef_code.ast import AbsoluteImport, RelativeImport, Location
+from pdef_code.ast.references import ListReference, SetReference, MapReference
 
 
 class TestParser(unittest.TestCase):

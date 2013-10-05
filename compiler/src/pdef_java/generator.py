@@ -2,8 +2,8 @@
 import logging
 import os.path
 
-from pdef_compiler.lang import Type
-from pdef_compiler.generator import JinjaGenerator, upper_first, mkdir_p
+from pdef_code.lang import Type
+from pdef_code.generator import JinjaGenerator, upper_first, mkdir_p
 
 
 class JavaGenerator(JinjaGenerator):

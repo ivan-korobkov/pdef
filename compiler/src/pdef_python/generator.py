@@ -2,8 +2,8 @@
 import logging
 import os.path
 
-import pdef_lang
-from pdef_compiler.generator import Generator, GeneratorModule, Templates, NameMapper, mkdir_p
+import pdef_code.ast
+from pdef_code.generator import Generator, GeneratorModule, Templates, NameMapper, mkdir_p
 
 
 MODULE_TEMPLATE = 'module.template'
@@ -177,15 +177,15 @@ class PythonReference(object):
 
 
 NATIVE_TYPES = {
-    pdef_lang.TypeEnum.BOOL: PythonReference('bool', 'descriptors.bool0'),
-    pdef_lang.TypeEnum.INT16: PythonReference('int', 'descriptors.int16'),
-    pdef_lang.TypeEnum.INT32: PythonReference('int', 'descriptors.int32'),
-    pdef_lang.TypeEnum.INT64: PythonReference('int', 'descriptors.int64'),
-    pdef_lang.TypeEnum.FLOAT: PythonReference('float', 'descriptors.float0'),
-    pdef_lang.TypeEnum.DOUBLE: PythonReference('float', 'descriptors.double0'),
-    pdef_lang.TypeEnum.STRING: PythonReference('unicode', 'descriptors.string'),
-    pdef_lang.TypeEnum.OBJECT: PythonReference('object', 'descriptors.object0'),
-    pdef_lang.TypeEnum.VOID: PythonReference('object', 'descriptors.void'),
+    pdef_code.ast.TypeEnum.BOOL: PythonReference('bool', 'descriptors.bool0'),
+    pdef_code.ast.TypeEnum.INT16: PythonReference('int', 'descriptors.int16'),
+    pdef_code.ast.TypeEnum.INT32: PythonReference('int', 'descriptors.int32'),
+    pdef_code.ast.TypeEnum.INT64: PythonReference('int', 'descriptors.int64'),
+    pdef_code.ast.TypeEnum.FLOAT: PythonReference('float', 'descriptors.float0'),
+    pdef_code.ast.TypeEnum.DOUBLE: PythonReference('float', 'descriptors.double0'),
+    pdef_code.ast.TypeEnum.STRING: PythonReference('unicode', 'descriptors.string'),
+    pdef_code.ast.TypeEnum.OBJECT: PythonReference('object', 'descriptors.object0'),
+    pdef_code.ast.TypeEnum.VOID: PythonReference('object', 'descriptors.void'),
 }
 
 

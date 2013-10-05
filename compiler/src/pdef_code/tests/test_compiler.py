@@ -3,12 +3,12 @@ import os
 import tempfile
 import unittest
 
-import pdef_compiler
+import pdef_code
 
 
 class TestCompiler(unittest.TestCase):
     def setUp(self):
-        self.compiler = pdef_compiler.create_compiler()
+        self.compiler = pdef_code.create_compiler()
         self.tempfiles = []
 
     def tearDown(self):
@@ -55,7 +55,7 @@ class TestCompiler(unittest.TestCase):
         try:
             self.compiler.compile(path)
             self.fail()
-        except pdef_compiler.CompilerException as e:
+        except pdef_code.CompilerException as e:
             pass
 
     def _tempfile(self):

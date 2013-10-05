@@ -1,7 +1,7 @@
 # encoding: utf-8
 import logging
-from pdef_lang.definitions import Definition, TypeEnum, NativeType, Located
-from pdef_lang import references
+from pdef_code.ast.definitions import Definition, TypeEnum, NativeType, Located
+from pdef_code.ast import references
 
 
 class Interface(Definition):

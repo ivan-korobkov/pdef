@@ -1,8 +1,8 @@
 # encoding: utf-8
 import logging
 from collections import deque
-from pdef_lang import definitions
-from pdef_lang.definitions import Located
+from pdef_code.ast import definitions
+from pdef_code.ast.definitions import Located
 
 
 class ModuleErrors(object):

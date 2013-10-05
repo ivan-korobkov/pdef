@@ -1,13 +1,23 @@
+/**
+Test pdef module with messages and forms.
+Multi-line comment.
+*/
 module pdef.test.messages;
 
 
-/** Enum. */
+/**
+Enum.
+Multi-line comment.
+*/
 enum TestEnum {
     ONE, TWO, THREE;
 }
 
 
-/** Simple message . */
+/**
+Simple message.
+Multi-line comment.
+*/
 message SimpleMessage {
     aString     string;
     aBool       bool;

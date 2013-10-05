@@ -1,10 +1,19 @@
+/**
+Test pdef module with polymorphic messages.
+Multi-line comment.
+*/
 module pdef.test.inheritance;
 
 
+/** Enum with discriminator values. */
 enum PolymorphicType {
     SUBTYPE, SUBTYPE2, MULTILEVEL_SUBTYPE
 }
 
+/**
+Base polymorphic message.
+@field discriminator    Discriminator field set in all subclasses.
+*/
 message Base {
     type    PolymorphicType     @discriminator;
 }

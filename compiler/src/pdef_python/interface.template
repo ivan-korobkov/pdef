@@ -20,6 +20,10 @@
 {% endmacro -%}
 
 class {{ name }}({{ root_or_base }}):
+{% if doc %}
+    """{{ doc|indent(4) }}"""
+
+{% endif %}
 {% for method in declared_methods %}
     {% if method.args %}
     def {{ method.name }}(self, {% for arg in method.args -%}
@@ -29,6 +33,9 @@ class {{ name }}({{ root_or_base }}):
     {% else %}
     def {{ method.name }}(self):
     {% endif %}
+        {% if method.doc %}
+        """{{ method.doc|indent(8) }}"""
+        {% endif %}
         pass
 
 {% endfor %}

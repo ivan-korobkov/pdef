@@ -27,6 +27,10 @@
 
 
 class {{ name }}({{ root_or_base }}):
+{% if doc %}
+    """{{ doc|indent(4) }}"""
+
+{% endif %}
 {% if not fields %}
     def __init__(self):
 {% elif fields|length < 5 %}

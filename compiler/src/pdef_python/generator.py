@@ -59,6 +59,8 @@ class PythonModule(object):
         scope = lambda type0: pyreference(type0, module, mapper)
 
         self.name = mapper(module.name) if mapper else module.name
+        self.doc = pydoc(module.doc)
+
         self.imports = [pyimport(im, mapper) for im in module.imported_modules]
         self.definitions = [PythonDefinition.create(def0, scope) for def0 in module.definitions]
 
@@ -70,7 +72,8 @@ class PythonModule(object):
             defs.append(code)
 
         template = templates.get(MODULE_TEMPLATE)
-        return template.render(name=self.name, imports=self.imports, definitions=defs)
+        return template.render(name=self.name, doc=self.doc, imports=self.imports,
+                               definitions=defs)
 
 
 class PythonDefinition(object):
@@ -93,9 +96,10 @@ class PythonDefinition(object):
 
 
 class PythonEnum(PythonDefinition):
-    def __init__(self, def0):
-        self.name = def0.name
-        self.values = [value.name for value in def0.values]
+    def __init__(self, enum):
+        self.name = enum.name
+        self.doc = pydoc(enum.doc)
+        self.values = [value.name for value in enum.values]
 
     def render(self, templates):
         template = templates.get(ENUM_TEMPLATE)
@@ -105,7 +109,7 @@ class PythonEnum(PythonDefinition):
 class PythonMessage(PythonDefinition):
     def __init__(self, msg, scope):
         self.name = msg.name
-        self.is_exception = msg.is_exception
+        self.doc = pydoc(msg.doc)
 
         self.base = scope(msg.base)
         self.subtypes = [(scope(stype.discriminator_value), scope(stype))
@@ -113,6 +117,7 @@ class PythonMessage(PythonDefinition):
         self.discriminator_value = scope(msg.discriminator_value)
         self.discriminator = PythonField(msg.discriminator, scope) if msg.discriminator else None
 
+        self.is_exception = msg.is_exception
         self.is_form = msg.is_form
 
         self.fields = [PythonField(field, scope) for field in msg.fields]
@@ -129,6 +134,7 @@ class PythonMessage(PythonDefinition):
 class PythonField(object):
     def __init__(self, field, scope):
         self.name = field.name
+        self.doc = pydoc(field.doc)
         self.type = scope(field.type)
         self.is_discriminator = field.is_discriminator
 
@@ -136,6 +142,7 @@ class PythonField(object):
 class PythonInterface(PythonDefinition):
     def __init__(self, iface, scope):
         self.name = iface.name
+        self.doc = pydoc(iface.doc)
         self.exc = scope(iface.exc) if iface.exc else None
         self.declared_methods = [PythonMethod(m, scope) for m in iface.declared_methods]
 
@@ -147,6 +154,7 @@ class PythonInterface(PythonDefinition):
 class PythonMethod(object):
     def __init__(self, method, scope):
         self.name = method.name
+        self.doc = pydoc(method.doc)
         self.result = scope(method.result)
         self.args = [PythonArg(arg, scope) for arg in method.args]
         self.is_index = method.is_index
@@ -239,6 +247,22 @@ def pyimport(imported_module, mapper=None):
     if not mapper:
         return imported_module.module.name
     return mapper(imported_module.module.name)
+
+
+def pydoc(doc):
+    if not doc:
+        return ''
+
+    # Escape the python docstrings delimiters,
+    # and strip empty characters.
+    s = doc.replace('"""', '\"\"\"').strip()
+
+    if '\n' not in s:
+        # It's a one-line comment.
+        return s
+
+    # It's a multi-line comment.
+    return '\n' + s + '\n\n'
 
 
 class DirectoryOrFile(object):

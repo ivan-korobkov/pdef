@@ -1,17 +1,28 @@
+/**
+Test pdef module with interfaces and exceptions.
+Multi-line comment.
+*/
 module pdef.test.interfaces;
 from pdef.test import messages;
 
 
-/** Test exception. */
+/**
+Test exception.
+Multi-line comment.
+*/
 exception TestException {
     text    string;
 }
 
 
-/** Test interface with method of all types. */
+/**
+Test interface with method of all types.
+Multi-line comment.
+*/
 @throws(TestException)
 interface TestInterface {
-    /** Index remote method. */
+    /** Index remote method.
+    Multi-line comment. */
     @index
     indexMethod(a int32, b int32) int32;
 

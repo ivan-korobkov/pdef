@@ -1,4 +1,8 @@
 # encoding: utf-8
+{% if doc %}
+"""{{ doc }}"""
+
+{% endif %}
 import pdef
 from pdef import descriptors
 {% if imports %}

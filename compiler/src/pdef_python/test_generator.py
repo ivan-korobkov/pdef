@@ -209,3 +209,14 @@ class TestPythonRefeference(unittest.TestCase):
         ref = pyreference(def0, mapper=mapper)
         assert ref.name == 'my_test.submodule.Message'
         assert ref.descriptor == 'my_test.submodule.Message.__descriptor__'
+
+
+class TestPythonDoc(unittest.TestCase):
+    def test_none(self):
+        assert pydoc(None) == ''
+
+    def test_one_line(self):
+        assert pydoc(' one-line ') == 'one-line'
+
+    def test_multi_line(self):
+        assert pydoc(' \n\nmulti-\nline\n\n\n ') == '\nmulti-\nline\n\n'

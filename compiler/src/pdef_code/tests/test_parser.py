@@ -170,13 +170,8 @@ class TestParser(unittest.TestCase):
 
             /** Doc. */
             enum Enum {
-                /** One. */
                 ONE,
-
-                /** Two. */
                 TWO,
-
-                /** Three. */
                 THREE;
             }
         '''
@@ -190,13 +185,7 @@ class TestParser(unittest.TestCase):
         assert enum.location == Location(5)
         assert len(values) == 3
         assert [v.name for v in values] == ['ONE', 'TWO', 'THREE']
-
-        assert values[0].doc == 'One.'
-        assert values[0].location == Location(7)
-        assert values[1].doc == 'Two.'
-        assert values[1].location == Location(10)
-        assert values[2].doc == 'Three.'
-        assert values[2].location == Location(13)
+        assert [v.location.lineno for v in values] == [6, 7, 8]
 
     def test_message(self):
         s = '''
@@ -244,11 +233,7 @@ class TestParser(unittest.TestCase):
             module hello.world;
 
             message Message {
-                /** Field zero. */
-                field0
-                    Type @discriminator;
-
-                /** Field one. */
+                field0 Type @discriminator;
                 field1 AnotherMessage;
             }
         '''
@@ -262,17 +247,15 @@ class TestParser(unittest.TestCase):
 
         field0 = fields[0]
         assert field0.name == 'field0'
-        assert field0.doc == 'Field zero.'
         assert field0._type.name == 'Type'
         assert field0.is_discriminator
-        assert field0.location == Location(6)
+        assert field0.location == Location(5)
 
         field1 = fields[1]
         assert field1.name == 'field1'
-        assert field1.doc == 'Field one.'
         assert field1._type.name == 'AnotherMessage'
         assert field1.is_discriminator is False
-        assert field1.location == Location(10)
+        assert field1.location == Location(6)
 
     def test_interface(self):
         s = '''

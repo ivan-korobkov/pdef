@@ -243,11 +243,10 @@ class Message(Definition):
 
 class Field(Located):
     '''Message field.'''
-    def __init__(self, name, type0, is_discriminator=False, doc=None, location=None):
+    def __init__(self, name, type0, is_discriminator=False, location=None):
         self.name = name
         self._type = references.reference(type0)
         self.is_discriminator = is_discriminator
-        self.doc = doc
         self.location = location
 
         self.message = None

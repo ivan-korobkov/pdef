@@ -134,7 +134,6 @@ class PythonMessage(PythonDefinition):
 class PythonField(object):
     def __init__(self, field, scope):
         self.name = field.name
-        self.doc = pydoc(field.doc)
         self.type = scope(field.type)
         self.is_discriminator = field.is_discriminator
 

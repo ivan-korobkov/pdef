@@ -361,12 +361,12 @@ class _GrammarRules(object):
         '''
         self._list(t, separated=1)
 
-    @_with_location(2)
+    @_with_location(1)
     def p_enum_value(self, t):
         '''
-        enum_value : doc IDENTIFIER
+        enum_value : IDENTIFIER
         '''
-        t[0] = pdef_code.ast.EnumValue(t[2], doc=t[1])
+        t[0] = pdef_code.ast.EnumValue(t[1])
 
     # Message definition
     @_with_location(3)
@@ -427,16 +427,15 @@ class _GrammarRules(object):
         self._list(t)
 
     # Single message field
-    @_with_location(2)
+    @_with_location(1)
     def p_field(self, t):
         '''
-        field : doc IDENTIFIER type field_discriminator SEMI
+        field : IDENTIFIER type field_discriminator SEMI
         '''
-        doc = t[1]
-        name = t[2]
-        type0 = t[3]
-        is_discriminator = t[4]
-        t[0] = pdef_code.ast.Field(name, type0, is_discriminator=is_discriminator, doc=doc)
+        name = t[1]
+        type0 = t[2]
+        is_discriminator = t[3]
+        t[0] = pdef_code.ast.Field(name, type0, is_discriminator=is_discriminator)
 
     def p_field_discriminator(self, t):
         '''

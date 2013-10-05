@@ -61,10 +61,9 @@ class Enum(Definition):
 
 class EnumValue(Type):
     '''Single enum value which has a name and a pointer to the declaring enum.'''
-    def __init__(self, name, doc=None, location=None):
+    def __init__(self, name, location=None):
         super(EnumValue, self).__init__(TypeEnum.ENUM_VALUE, location=location)
         self.name = name
-        self.doc = doc
         self.enum = None
 
     def __str__(self):

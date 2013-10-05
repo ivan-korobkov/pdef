@@ -66,14 +66,13 @@ RelativeImport  ::= from ModuleName import ModuleName (',' ModuleName)* ';'
 Definition      ::= doc? (Enum | Message | Interface)
 
 Enum            ::= 'enum' id '{' EnumValues? '}'
-EnumValues      ::= EnumValue (',' EnumValue)* ';'?
-EnumValue       ::= doc? id
+EnumValues      ::= id (',' id)* ';'?
 
 Message         ::= MessageForm? ('message' | 'exception') id (':' MessageBase)? '{' Field* '}'
 MessageBase     ::= Type ('(' Type ')')?  // Base with an optional polymorphic type.
 MessageForm     ::= '@form'
 
-Field           ::= doc? id Type FieldDiscriminator? ';'
+Field           ::= id Type FieldDiscriminator? ';'
 FieldDiscriminator ::= '@discriminator'
 
 Interface       ::= InterfaceExc? 'interface' id '{' Method* '}'

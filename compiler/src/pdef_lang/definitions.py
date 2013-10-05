@@ -126,8 +126,13 @@ class NativeType(object):
 
     @classmethod
     def get(cls, name):
-        '''Returns a value by its type or none.'''
+        '''Return a value by its type or none.'''
         return cls._BY_TYPE.get(name)
+
+    @classmethod
+    def all(cls):
+        '''Return all native types.'''
+        return list(cls._BY_TYPE.values())
 
 
 class Definition(Type):

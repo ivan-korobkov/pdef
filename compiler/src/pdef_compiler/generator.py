@@ -17,28 +17,10 @@ class Generator(object):
         raise NotImplementedError
 
 
-class JinjaGenerator(Generator):
-    '''Abstract source code generator based on Jinja2 templates.'''
-    def __init__(self):
-        self.env = Environment(trim_blocks=True, lstrip_blocks=True)
-
-    def read_template(self, name):
-        '''Read and return a Jinja template relative to this generator module file.'''
-        f = inspect.getfile(self.__class__)
-        path = os.path.join(os.path.dirname(f), name)
-        with open(path, 'r') as f:
-            text = f.read()
-        return self.env.from_string(text)
-
-
 class GeneratorModule(object):
     '''Generator module interface.'''
     def get_name(self):
         '''Return this generator module name.'''
-        module = self.__class__.__module__
-        if module.startswith(GENERATOR_MODULE_PREFIX):
-            return module[len(GENERATOR_MODULE_PREFIX):]
-
         raise NotImplementedError
 
     def fill_cli_group(self, group):
@@ -48,6 +30,64 @@ class GeneratorModule(object):
     def create_generator_from_cli_args(self, args):
         '''Create an optional generator for command-line arguments, and return it or None.'''
         raise NotImplementedError
+
+
+def list_generator_modules():
+    '''Dynamically load source code generator modules.'''
+    modules = []
+    for module_finder, name, ispkg in pkgutil.iter_modules():
+        if not name.startswith(GENERATOR_MODULE_PREFIX):
+            continue
+
+        try:
+            module = importlib.import_module(name)
+        except Exception as e:
+            logging.error('Failed to import a possible generator module %r' % name)
+            continue
+
+        if not hasattr(module, GENERATOR_MODULE_FACTORY_NAME):
+            continue
+
+        gmodule = getattr(module, GENERATOR_MODULE_FACTORY_NAME)()
+        if not isinstance(gmodule, GeneratorModule):
+            continue
+
+        modules.append(gmodule)
+    return modules
+
+
+class Templates(object):
+    '''Jinja templates relative to a class module.'''
+    def __init__(self, dir_or_file):
+        '''Create a templates loader relative to a directory or a file.
+        Usually, you will define a special function in a generator module:
+            >>> def pytemplates():
+            ...     return Templates(__file__)
+            >>>
+
+        '''
+        if os.path.isdir(dir_or_file):
+            self._dir = dir_or_file
+        else:
+            self._dir = os.path.dirname(dir_or_file)
+
+        self._env = Environment(trim_blocks=True, lstrip_blocks=True)
+        self._cache = {}
+
+    def get(self, name):
+        '''Read and return a Jinja template, the templates are cached.'''
+        if name in self._cache:
+            return self._cache[name]
+
+        # Get the template file.
+        path = os.path.join(self._dir, name)
+        with open(path, 'r') as module_file:
+            text = module_file.read()
+
+        template = self._env.from_string(text)
+        self._cache[name] = template
+
+        return template
 
 
 class NameMapper(object):
@@ -75,31 +115,6 @@ class NameMapper(object):
                 return mapped + module_name[len(name):]
 
         return module_name
-
-
-def list_generator_modules():
-    '''Dynamically load source code generator modules.'''
-    modules = []
-    for module_finder, name, ispkg in pkgutil.iter_modules():
-        if not name.startswith(GENERATOR_MODULE_PREFIX):
-            continue
-
-        try:
-            module = importlib.import_module(name)
-        except Exception as e:
-            logging.error('Failed to import a possible generator module %r' % name)
-            continue
-
-        if not hasattr(module, GENERATOR_MODULE_FACTORY_NAME):
-            continue
-
-        gmodule = getattr(module, GENERATOR_MODULE_FACTORY_NAME)()
-        if not isinstance(gmodule, GeneratorModule):
-            continue
-
-        modules.append(gmodule)
-    return modules
-
 
 def upper_first(s):
     '''Uppercase the first letter in a string.'''

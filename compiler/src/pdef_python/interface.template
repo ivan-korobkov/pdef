@@ -1,4 +1,3 @@
-
 {%- macro render_descriptor_method(method) %}
             descriptors.method('{{ method.name }}', lambda: {{ method.result.descriptor}}
             {%- if method.is_index -%}
@@ -17,26 +16,10 @@
 
                 {% endfor %}
             {% endif %}
+
 {% endmacro -%}
 
-
 class {{ name }}({{ root_or_base }}):
-    __descriptor__ = descriptors.interface(lambda: {{ name }},
-    {% if base %}
-        base={{ base.descriptor }},
-    {% endif %}
-    {% if exc %}
-        exc_supplier=lambda: {{ exc.descriptor }},
-    {% endif %}
-    {% if declared_methods %}
-        declared_methods=[
-        {% for method in declared_methods -%}
-            {{ render_descriptor_method(method) }}
-        {%- endfor %}
-        ]
-    {% endif %}
-    )
-
 {% for method in declared_methods %}
     {% if method.args %}
     def {{ method.name }}(self, {% for arg in method.args -%}
@@ -49,3 +32,15 @@ class {{ name }}({{ root_or_base }}):
         pass
 
 {% endfor %}
+    __descriptor__ = descriptors.interface(lambda: {{ name }},
+    {% if exc %}
+        exc_supplier=lambda: {{ exc.descriptor }},
+    {% endif %}
+    {% if declared_methods %}
+        declared_methods=[
+        {% for method in declared_methods -%}
+            {{ render_descriptor_method(method) }}
+        {%- endfor %}
+        ]
+    {% endif %}
+    )

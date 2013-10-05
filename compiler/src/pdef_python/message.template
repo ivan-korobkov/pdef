@@ -27,21 +27,6 @@
 
 
 class {{ name }}({{ root_or_base }}):
-    __descriptor__ = descriptors.message(lambda: {{ name }},
-    {% if base -%}
-        {{ render_descriptor_base() }}
-    {%- endif %}
-    {% if subtypes -%}
-        {{ render_descriptor_subtypes() }}
-    {%- endif %}
-    {% if declared_fields -%}
-        {{ render_descriptor_fields() }}
-    {%- endif %}
-    {% if is_form %}
-        is_form=True
-    {% endif %}
-    )
-
 {% if not fields %}
     def __init__(self):
 {% elif fields|length < 5 %}
@@ -86,3 +71,18 @@ class {{ name }}({{ root_or_base }}):
     {% if discriminator_value %}
         self.{{ discriminator.name }} = {{ discriminator_value }}
     {% endif %}
+
+    __descriptor__ = descriptors.message(lambda: {{ name }},
+    {% if base -%}
+        {{ render_descriptor_base() }}
+    {%- endif %}
+    {% if subtypes -%}
+        {{ render_descriptor_subtypes() }}
+    {%- endif %}
+    {% if declared_fields -%}
+        {{ render_descriptor_fields() }}
+    {%- endif %}
+    {% if is_form %}
+        is_form=True
+    {% endif %}
+    )

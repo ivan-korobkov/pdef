@@ -2,31 +2,250 @@
 import logging
 import os.path
 
-from pdef_compiler.lang import Type
-from pdef_compiler.generator import JinjaGenerator, NameMapper, mkdir_p
+import pdef_lang
+from pdef_compiler.generator import Generator, GeneratorModule, Templates, NameMapper, mkdir_p
 
 
-class PythonGenerator(JinjaGenerator):
+MODULE_TEMPLATE = 'module.template'
+ENUM_TEMPLATE = 'enum.template'
+MESSAGE_TEMPLATE = 'message.template'
+INTERFACE_TEMPLATE = 'interface.template'
+
+
+class PythonGeneratorModule(GeneratorModule):
+    '''PythonGeneratorModule is a command interface to a python generator.'''
+    def get_name(self):
+        return 'python'
+
+    def fill_cli_group(self, group):
+        '''Fill a python source code generator argparse group.'''
+        group.add_argument('--python', help='output directory for python files')
+        group.add_argument('--python-module', dest='python_modules', action='append',
+                           help='python package name mappings')
+
+    def create_generator_from_cli_args(self, args):
+        if not args.python:
+            return
+
+        out, module_name_map = self._parse_cli_args(args)
+        return PythonGenerator(out, module_name_map)
+
+    def _parse_cli_args(self, args):
+        modules = args.python_modules
+        module_name_map = dict(s.split(':') for s in modules) if modules else {}
+        out = args.python
+        return out, module_name_map
+
+
+class PythonGenerator(Generator):
+    '''Python source code generator.'''
     def __init__(self, out, module_name_map=None):
         super(PythonGenerator, self).__init__()
         self.out = out
         self.mapper = NameMapper(module_name_map)
-
-        self.module_template = self.read_template('module.template')
-        self.enum_template = self.read_template('enum.template')
-        self.message_template = self.read_template('message.template')
-        self.interface_template = self.read_template('interface.template')
+        self.templates = pytemplates()
 
     def generate(self, package):
-        pymodules = self._convert_package(package)
-        tree = self._build_tree(pymodules)
-        tree.write(self)
+        pymodules = [PythonModule(module, self.mapper) for module in package.modules]
+        tree = DirectoryOrFile.from_modules(self.out, pymodules)
+        tree.write(self.templates)
 
-    def _convert_package(self, package):
-        return [PythonModule(module, self.mapper) for module in package.modules]
 
-    def _build_tree(self, pymodules):
-        root = DirectoryOrFile(self.out, is_root=True)
+class PythonModule(object):
+    '''Python module.'''
+    def __init__(self, module, mapper=None):
+        # Create a local module scope, which correctly handles
+        # when definitions are referenced inside the declaring module.
+        scope = lambda type0: pyreference(type0, module, mapper)
+
+        self.name = mapper(module.name) if mapper else module.name
+        self.imports = [pyimport(im, mapper) for im in module.imported_modules]
+        self.definitions = [PythonDefinition.create(def0, scope) for def0 in module.definitions]
+
+    def render(self, templates):
+        '''Render a module and return a string.'''
+        defs = []
+        for def0 in self.definitions:
+            code = def0.render(templates)
+            defs.append(code)
+
+        template = templates.get(MODULE_TEMPLATE)
+        return template.render(name=self.name, imports=self.imports, definitions=defs)
+
+
+class PythonDefinition(object):
+    @classmethod
+    def create(cls, def0, scope):
+        '''Create a python definition.'''
+        if def0.is_message:
+            return PythonMessage(def0, scope)
+
+        elif def0.is_enum:
+            return PythonEnum(def0)
+
+        elif def0.is_interface:
+            return PythonInterface(def0, scope)
+
+        raise ValueError('Unsupported definition %s' % def0)
+
+    def render(self, templates):
+        raise NotImplementedError
+
+
+class PythonEnum(PythonDefinition):
+    def __init__(self, def0):
+        self.name = def0.name
+        self.values = [value.name for value in def0.values]
+
+    def render(self, templates):
+        template = templates.get(ENUM_TEMPLATE)
+        return template.render(**self.__dict__)
+
+
+class PythonMessage(PythonDefinition):
+    def __init__(self, msg, scope):
+        self.name = msg.name
+        self.is_exception = msg.is_exception
+
+        self.base = scope(msg.base)
+        self.subtypes = [(scope(stype.discriminator_value), scope(stype))
+                         for stype in msg.subtypes]
+        self.discriminator_value = scope(msg.discriminator_value)
+        self.discriminator = PythonField(msg.discriminator, scope) if msg.discriminator else None
+
+        self.is_form = msg.is_form
+
+        self.fields = [PythonField(field, scope) for field in msg.fields]
+        self.inherited_fields = [PythonField(field, scope) for field in msg.inherited_fields]
+        self.declared_fields = [PythonField(field, scope) for field in msg.declared_fields]
+
+        self.root_or_base = self.base or ('pdef.Exc' if self.is_exception else 'pdef.Message')
+
+    def render(self, templates):
+        template = templates.get(MESSAGE_TEMPLATE)
+        return template.render(**self.__dict__)
+
+
+class PythonField(object):
+    def __init__(self, field, scope):
+        self.name = field.name
+        self.type = scope(field.type)
+        self.is_discriminator = field.is_discriminator
+
+
+class PythonInterface(PythonDefinition):
+    def __init__(self, iface, scope):
+        self.name = iface.name
+        self.exc = scope(iface.exc) if iface.exc else None
+        self.declared_methods = [PythonMethod(m, scope) for m in iface.declared_methods]
+
+    def render(self, templates):
+        template = templates.get(INTERFACE_TEMPLATE)
+        return template.render(**self.__dict__)
+
+
+class PythonMethod(object):
+    def __init__(self, method, scope):
+        self.name = method.name
+        self.result = scope(method.result)
+        self.args = [PythonArg(arg, scope) for arg in method.args]
+        self.is_index = method.is_index
+        self.is_post = method.is_post
+
+
+class PythonArg(object):
+    def __init__(self, arg, scope):
+        self.name = arg.name
+        self.type = scope(arg.type)
+
+
+class PythonReference(object):
+    def __init__(self, name, descriptor):
+        self.name = name
+        self.descriptor = descriptor
+
+    def __str__(self):
+        return str(self.name)
+
+
+NATIVE_TYPES = {
+    pdef_lang.TypeEnum.BOOL: PythonReference('bool', 'descriptors.bool0'),
+    pdef_lang.TypeEnum.INT16: PythonReference('int', 'descriptors.int16'),
+    pdef_lang.TypeEnum.INT32: PythonReference('int', 'descriptors.int32'),
+    pdef_lang.TypeEnum.INT64: PythonReference('int', 'descriptors.int64'),
+    pdef_lang.TypeEnum.FLOAT: PythonReference('float', 'descriptors.float0'),
+    pdef_lang.TypeEnum.DOUBLE: PythonReference('float', 'descriptors.double0'),
+    pdef_lang.TypeEnum.STRING: PythonReference('unicode', 'descriptors.string'),
+    pdef_lang.TypeEnum.OBJECT: PythonReference('object', 'descriptors.object0'),
+    pdef_lang.TypeEnum.VOID: PythonReference('object', 'descriptors.void'),
+}
+
+
+def pytemplates():
+    '''Return python generator templates.'''
+    return Templates(__file__)
+
+
+def pyreference(type0, module=None, mapper=None):
+    '''Create a python reference.
+
+        @param type0:   pdef definition.
+        @param module:  pdef module in which the definition is referenced.
+        @param mapper:  optional module name mapper.
+        '''
+    if type0 is None:
+        return None
+
+    elif type0.is_native:
+        return NATIVE_TYPES[type0.type]
+
+    elif type0.is_list:
+        element = pyreference(type0.element, module, mapper)
+        descriptor = 'descriptors.list0(%s)' % element.descriptor
+        return PythonReference('list', descriptor)
+
+    elif type0.is_set:
+        element = pyreference(type0.element, module, mapper)
+        descriptor = 'descriptors.set0(%s)' % element.descriptor
+        return PythonReference('set', descriptor)
+
+    elif type0.is_map:
+        key = pyreference(type0.key, module, mapper)
+        value = pyreference(type0.value, module, mapper)
+        descriptor = 'descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
+        return PythonReference('dict', descriptor)
+
+    elif type0.is_enum_value:
+        enum = pyreference(type0.enum, module, mapper)
+        name = '%s.%s' % (enum.name, type0.name)
+        return PythonReference(name, None)
+
+    if type0.module == module:
+        # This definition is references from its own module.
+        name = type0.name
+    else:
+        module_name = type0.module.name
+        if mapper:
+            module_name = mapper(module_name)
+
+        name = '%s.%s' % (module_name, type0.name)
+
+    descriptor = '%s.__descriptor__' % name
+    return PythonReference(name, descriptor)
+
+
+def pyimport(imported_module, mapper=None):
+    '''Create a python import string.'''
+    if not mapper:
+        return imported_module.module.name
+    return mapper(imported_module.module.name)
+
+
+class DirectoryOrFile(object):
+    @classmethod
+    def from_modules(cls, out, pymodules):
+        '''Create a file/directory from pymodules.'''
+        root = DirectoryOrFile(out, is_root=True)
 
         for pm in pymodules:
             node = root
@@ -36,28 +255,18 @@ class PythonGenerator(JinjaGenerator):
 
         return root
 
-    def _write(self, pymodule):
-        relpath = pymodule.name.replace('.', os.path.sep) + '.py'
-        filepath = os.path.join(self.out, relpath)
-        dirpath = os.path.dirname(filepath)
-
-        mkdir_p(dirpath)
-        with open(filepath, 'wt') as f:
-            f.write(pymodule.render(self))
-            logging.info('Created %s', relpath)
-
-
-class DirectoryOrFile(object):
     def __init__(self, name, parent=None, is_root=False):
         self.name = name
         self.parent = parent
         self.children = {}
+
         self.is_directory = False
         self.is_root = is_root
 
         self.module = None
 
     def child(self, name):
+        '''Return or create a child directory or file.'''
         if name not in self.children:
             node = DirectoryOrFile(name, parent=self)
             self.children[name] = node
@@ -67,213 +276,44 @@ class DirectoryOrFile(object):
 
     @property
     def dirpath(self):
+        '''Return this directory path if a directory, else the parent directory path.'''
         if self.is_directory:
             return os.path.join(self.parent.dirpath, self.name) if self.parent else self.name
         return self.parent.dirpath if self.parent else ''
 
     @property
-    def filepath(self):
+    def modulepath(self):
+        '''Return the dirpath/__init__.py if a directory or parentpath/modulename.py if a module.'''
         if self.is_directory:
             return os.path.join(self.dirpath, '__init__.py')
         return os.path.join(self.dirpath, self.name + '.py')
 
-    def write(self, translator):
+    def code(self, templates):
+        '''Return an empty python code if a directory or rendered module module code if a module.'''
+        if self.module:
+            return self.module.render(templates)
+        elif self.is_directory:
+            return '# encoding: utf-8\n'
+
+        raise AssertionError('Not a directory or a module')
+
+    def write(self, templates):
+        '''Write this directory or module and its children to the filesystem.'''
+        self._write_module(templates)
+        self._write_children(templates)
+
+    def _write_module(self, templates):
+        if self.is_root:
+            return
+
+        code = self.code(templates)
         mkdir_p(self.dirpath)
 
-        if not self.is_root:
-            self._write_file(translator)
-
-        for child in self.children.values():
-            child.write(translator)
-
-    def _write_file(self, translator):
-        if self.module:
-            code = self.module.render(translator)
-        elif self.is_directory:
-            code = '# encoding: utf-8\n'
-        else:
-            raise AssertionError
-
-        filepath = self.filepath
-        with open(filepath, 'wt') as f:
+        modulepath = self.modulepath
+        with open(modulepath, 'wt') as f:
             f.write(code)
-            logging.info('Created %s', filepath)
+            logging.info('Created %s', modulepath)
 
-
-class PythonModule(object):
-    def __init__(self, module, mapper=None, generator=None):
-        # Create a module local reference lookup, which correctly handles
-        # when definitions are referenced inside declaring modules.
-        ref = lambda def0: pyref(def0, module, mapper)
-
-        self.name = mapper(module.name) if mapper else module.name
-        self.imports = [pyimport(import0, mapper) for import0 in module.imports]
-        self.definitions = [pydef(def0, ref) for def0 in module.definitions]
-        self.generator = generator
-
-    def render(self, translator):
-        defs = []
-        for def0 in self.definitions:
-            code = def0.render(translator)
-            defs.append(code)
-
-        return translator.module_template.render(
-            name=self.name,
-            imports=list(self.imports),
-            definitions=defs)
-
-
-class PythonEnum(object):
-    def __init__(self, def0):
-        self.name = def0.name
-        self.values = [value.name for value in def0.values]
-
-    def render(self, translator):
-        return translator.enum_template.render(**self.__dict__)
-
-
-class PythonMessage(object):
-    def __init__(self, msg, ref):
-        self.name = msg.name
-        self.is_exception = msg.is_exception
-
-        self.base = ref(msg.base) if msg.base else None
-        self.subtypes = [(ref(stype.discriminator_value), ref(stype)) for stype in msg.subtypes]
-        self.discriminator_value = ref(msg.discriminator_value) if msg.discriminator_value else None
-        self.discriminator = PythonField(msg.discriminator, ref) if msg.discriminator else None
-
-        self.is_form = msg.is_form
-
-        self.fields = [PythonField(field, ref) for field in msg.fields]
-        self.inherited_fields = [PythonField(field, ref) for field in msg.inherited_fields]
-        self.declared_fields = [PythonField(field, ref) for field in msg.declared_fields]
-
-        self.root_or_base = self.base if self.base else \
-            'pdef.Exc' if self.is_exception else 'pdef.Message'
-
-    def render(self, translator):
-        return translator.message_template.render(**self.__dict__)
-
-
-class PythonField(object):
-    def __init__(self, field, ref):
-        self.name = field.name
-        self.type = ref(field.type)
-        self.is_discriminator = field.is_discriminator
-
-
-class PythonInterface(object):
-    def __init__(self, iface, ref):
-        self.name = iface.name
-        self.base = ref(iface.base) if iface.base else None
-        self.exc = ref(iface.exc) if iface.exc else None
-        self.methods = [PythonMethod(m, ref) for m in iface.methods]
-        self.declared_methods = [PythonMethod(m, ref) for m in iface.declared_methods]
-        self.inherited_methods = [PythonMethod(m, ref)for m in iface.inherited_methods]
-
-        self.root_or_base = self.base if self.base else 'pdef.Interface'
-
-    def render(self, translator):
-        return translator.interface_template.render(**self.__dict__)
-
-
-class PythonMethod(object):
-    def __init__(self, method, ref):
-        self.name = method.name
-        self.result = ref(method.result)
-        self.args = [PythonArg(arg, ref) for arg in method.args]
-        self.is_index = method.is_index
-        self.is_post = method.is_post
-
-
-class PythonArg(object):
-    def __init__(self, arg, ref):
-        self.name = arg.name
-        self.type = ref(arg.type)
-        self.is_query = arg.is_query
-
-
-class PythonRef(object):
-    def __init__(self, name, descriptor):
-        self.name = name
-        self.descriptor = descriptor
-
-    def __str__(self):
-        return str(self.name)
-
-
-def pydef(def0, ref):
-    '''Create a python definition.'''
-    if def0.is_message or def0.is_exception:
-        return PythonMessage(def0, ref)
-    elif def0.is_enum:
-        return PythonEnum(def0)
-    elif def0.is_interface:
-        return PythonInterface(def0, ref)
-    raise ValueError('Unsupported definition %s' % def0)
-
-
-def pyimport(import0, mapper=None):
-    '''Create a python import string.'''
-    if not mapper:
-        return import0.module.name
-    return mapper(import0.module.name)
-
-
-def pyref(def0, module=None, mapper=None):
-    '''Create a python reference.
-
-    @param def0:    pdef definition.
-    @param module:  pdef module in which the definition is referenced.
-    @param mapper:  optional module name mapper.
-    '''
-    type0 = def0.type
-    if type0 in NATIVE:
-        return NATIVE[type0]
-
-    if def0.is_list:
-        element = pyref(def0.element, module, mapper)
-        descriptor = 'descriptors.list0(%s)' % element.descriptor
-        return PythonRef('list', descriptor)
-
-    elif def0.is_set:
-        element = pyref(def0.element, module, mapper)
-        descriptor = 'descriptors.set0(%s)' % element.descriptor
-        return PythonRef('set', descriptor)
-
-    elif def0.is_map:
-        key = pyref(def0.key, module, mapper)
-        value = pyref(def0.value, module, mapper)
-        descriptor = 'descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
-        return PythonRef('dict', descriptor)
-
-    elif def0.is_enum_value:
-        enum = pyref(def0.enum, module, mapper)
-        name = '%s.%s' % (enum.name, def0.name)
-        return PythonRef(name, None)
-
-    if def0.module == module:
-        # This definition is references from its own module.
-        name = def0.name
-    else:
-        module_name = def0.module.name
-        if mapper:
-            module_name = mapper(module_name)
-
-        name = '%s.%s' % (module_name, def0.name)
-
-    descriptor = '%s.__descriptor__' % name
-    return PythonRef(name, descriptor)
-
-
-NATIVE = {
-    Type.BOOL: PythonRef('bool', 'descriptors.bool0'),
-    Type.INT16: PythonRef('int', 'descriptors.int16'),
-    Type.INT32: PythonRef('int', 'descriptors.int32'),
-    Type.INT64: PythonRef('int', 'descriptors.int64'),
-    Type.FLOAT: PythonRef('float', 'descriptors.float0'),
-    Type.DOUBLE: PythonRef('float', 'descriptors.double0'),
-    Type.STRING: PythonRef('unicode', 'descriptors.string'),
-    Type.OBJECT: PythonRef('object', 'descriptors.object0'),
-    Type.VOID: PythonRef('object', 'descriptors.void'),
-}
+    def _write_children(self, templates):
+        for child in self.children.values():
+            child.write(templates)

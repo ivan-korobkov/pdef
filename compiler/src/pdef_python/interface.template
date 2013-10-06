@@ -10,8 +10,7 @@
             {% else %}
 
                 {% for arg in method.args %}
-                .add_arg('{{ arg.name }}', lambda: {{ arg.type.descriptor }}
-                    {%- if arg.is_query %}, is_query=True{% endif -%})
+                .add_arg('{{ arg.name }}', lambda: {{ arg.type.descriptor }})
                     {%- if loop.last %}, {% endif %}
 
                 {% endfor %}

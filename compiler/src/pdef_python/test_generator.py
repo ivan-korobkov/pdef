@@ -89,7 +89,7 @@ class TestPythonMessage(unittest.TestCase):
 
 
 class TestPythonInterface(unittest.TestCase):
-    def create(self):
+    def _fixture(self):
         exc = Message('Exception', is_exception=True)
 
         iface = Interface('Interface', exc=exc)
@@ -99,19 +99,19 @@ class TestPythonInterface(unittest.TestCase):
         return PythonDefinition.create(iface, scope=pyreference)
 
     def test_constructor(self):
-        pyiface = self.create()
+        pyiface = self._fixture()
         assert pyiface.name == 'Interface'
         assert pyiface.exc.name == 'Exception'
         assert len(pyiface.declared_methods) == 2
 
     def test_render(self):
         templates = pytemplates()
-        pyiface = self.create()
+        pyiface = self._fixture()
         code = pyiface.render(templates)
         assert code
 
 
-class TestPythoImport(unittest.TestCase):
+class TestPythonImport(unittest.TestCase):
     def test(self):
         module = Module('my.test')
         imodule = ImportedModule('alias', module)
@@ -121,7 +121,7 @@ class TestPythoImport(unittest.TestCase):
     def test_mapper(self):
         module = Module('my.test.module')
         imodule = ImportedModule('alias', module)
-        mapper = NameMapper({'my.test': 'my_test'})
+        mapper = generator.NameMapper({'my.test': 'my_test'})
 
         assert pyimport(imodule, mapper) == 'my_test.module'
 
@@ -205,7 +205,7 @@ class TestPythonRefeference(unittest.TestCase):
         module = Module('my.test.submodule')
         module.add_definition(def0)
 
-        mapper = NameMapper({'my.test': 'my_test'})
+        mapper = generator.NameMapper({'my.test': 'my_test'})
         ref = pyreference(def0, mapper=mapper)
         assert ref.name == 'my_test.submodule.Message'
         assert ref.descriptor == 'my_test.submodule.Message.__descriptor__'

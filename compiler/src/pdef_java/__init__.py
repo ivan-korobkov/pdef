@@ -4,6 +4,9 @@ from pdef_java.generator import JavaGenerator
 
 
 class JavaGeneratorModule(GeneratorModule):
+    def get_name(self):
+        return 'java'
+
     def fill_cli_group(self, group):
         '''Fill a java source code generator argparse group.'''
         group.add_argument('--java', help='output directory for java files')
@@ -15,7 +18,7 @@ class JavaGeneratorModule(GeneratorModule):
             return
 
         out, module_name_map = self._parse_cli_args(args)
-        return JavaGenerator(out, module_name_map)
+        return JavaGenerator(out)
 
     def _parse_cli_args(self, args):
         modules = args.java_modules

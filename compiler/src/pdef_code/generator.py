@@ -21,15 +21,15 @@ class GeneratorModule(object):
     '''Generator module interface.'''
     def get_name(self):
         '''Return this generator module name.'''
-        raise NotImplementedError
+        raise NotImplementedError(self.__class__)
 
     def fill_cli_group(self, group):
         '''Add generator-specific arguments to an argparse group.'''
-        raise NotImplementedError
+        raise NotImplementedError(self.__class__)
 
     def create_generator_from_cli_args(self, args):
         '''Create an optional generator for command-line arguments, and return it or None.'''
-        raise NotImplementedError
+        raise NotImplementedError(self.__class__)
 
 
 def list_generator_modules():

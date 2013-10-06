@@ -12,7 +12,7 @@ setup(
     author_email='ivan.korobkov@gmail.com',
 
     package_dir={'': 'src'},
-    packages=['pdef_compiler', 'pdef_lang', 'pdef_java', 'pdef_python'],
+    packages=['pdef_code', 'pdef_code.ast', 'pdef_java', 'pdef_python'],
     package_data={
         'pdef_java': ['*.template'],
         'pdef_python': ['*.template']},

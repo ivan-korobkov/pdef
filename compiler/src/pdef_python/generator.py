@@ -2,47 +2,15 @@
 import logging
 import os.path
 
-import pdef_code.ast
-from pdef_code.generator import Generator, GeneratorModule, Templates, NameMapper, mkdir_p
+from pdef_code import generator
+from pdef_code.ast import TypeEnum
 
 
-MODULE_TEMPLATE = 'module.template'
-ENUM_TEMPLATE = 'enum.template'
-MESSAGE_TEMPLATE = 'message.template'
-INTERFACE_TEMPLATE = 'interface.template'
-
-
-class PythonGeneratorModule(GeneratorModule):
-    '''PythonGeneratorModule is a command interface to a python generator.'''
-    def get_name(self):
-        return 'python'
-
-    def fill_cli_group(self, group):
-        '''Fill a python source code generator argparse group.'''
-        group.add_argument('--python', help='output directory for python files')
-        group.add_argument('--python-module', dest='python_modules', action='append',
-                           help='python package name mappings')
-
-    def create_generator_from_cli_args(self, args):
-        if not args.python:
-            return
-
-        out, module_name_map = self._parse_cli_args(args)
-        return PythonGenerator(out, module_name_map)
-
-    def _parse_cli_args(self, args):
-        modules = args.python_modules
-        module_name_map = dict(s.split(':') for s in modules) if modules else {}
-        out = args.python
-        return out, module_name_map
-
-
-class PythonGenerator(Generator):
+class PythonGenerator(generator.Generator):
     '''Python source code generator.'''
     def __init__(self, out, module_name_map=None):
-        super(PythonGenerator, self).__init__()
         self.out = out
-        self.mapper = NameMapper(module_name_map)
+        self.mapper = generator.NameMapper(module_name_map)
         self.templates = pytemplates()
 
     def generate(self, package):
@@ -53,6 +21,8 @@ class PythonGenerator(Generator):
 
 class PythonModule(object):
     '''Python module.'''
+    template_name = 'module.template'
+
     def __init__(self, module, mapper=None):
         # Create a local module scope, which correctly handles
         # when definitions are referenced inside the declaring module.
@@ -71,12 +41,14 @@ class PythonModule(object):
             code = def0.render(templates)
             defs.append(code)
 
-        template = templates.get(MODULE_TEMPLATE)
+        template = templates.get(self.template_name)
         return template.render(name=self.name, doc=self.doc, imports=self.imports,
                                definitions=defs)
 
 
 class PythonDefinition(object):
+    template_name = None
+
     @classmethod
     def create(cls, def0, scope):
         '''Create a python definition.'''
@@ -92,21 +64,22 @@ class PythonDefinition(object):
         raise ValueError('Unsupported definition %s' % def0)
 
     def render(self, templates):
-        raise NotImplementedError
+        template = templates.get(self.template_name)
+        return template.render(**self.__dict__)
 
 
 class PythonEnum(PythonDefinition):
+    template_name = 'enum.template'
+
     def __init__(self, enum):
         self.name = enum.name
         self.doc = pydoc(enum.doc)
         self.values = [value.name for value in enum.values]
 
-    def render(self, templates):
-        template = templates.get(ENUM_TEMPLATE)
-        return template.render(**self.__dict__)
-
 
 class PythonMessage(PythonDefinition):
+    template_name = 'message.template'
+
     def __init__(self, msg, scope):
         self.name = msg.name
         self.doc = pydoc(msg.doc)
@@ -126,10 +99,6 @@ class PythonMessage(PythonDefinition):
 
         self.root_or_base = self.base or ('pdef.Exc' if self.is_exception else 'pdef.Message')
 
-    def render(self, templates):
-        template = templates.get(MESSAGE_TEMPLATE)
-        return template.render(**self.__dict__)
-
 
 class PythonField(object):
     def __init__(self, field, scope):
@@ -139,23 +108,23 @@ class PythonField(object):
 
 
 class PythonInterface(PythonDefinition):
+    template_name = 'interface.template'
+
     def __init__(self, iface, scope):
         self.name = iface.name
         self.doc = pydoc(iface.doc)
         self.exc = scope(iface.exc) if iface.exc else None
         self.declared_methods = [PythonMethod(m, scope) for m in iface.declared_methods]
 
-    def render(self, templates):
-        template = templates.get(INTERFACE_TEMPLATE)
-        return template.render(**self.__dict__)
-
 
 class PythonMethod(object):
     def __init__(self, method, scope):
         self.name = method.name
         self.doc = pydoc(method.doc)
+
         self.result = scope(method.result)
         self.args = [PythonArg(arg, scope) for arg in method.args]
+
         self.is_index = method.is_index
         self.is_post = method.is_post
 
@@ -167,6 +136,48 @@ class PythonArg(object):
 
 
 class PythonReference(object):
+    @classmethod
+    def list(cls, type0, module, mapper):
+        element = pyreference(type0.element, module, mapper)
+        descriptor = 'descriptors.list0(%s)' % element.descriptor
+
+        return PythonReference('list', descriptor)
+
+    @classmethod
+    def set(cls, type0, module, mapper):
+        element = pyreference(type0.element, module, mapper)
+        descriptor = 'descriptors.set0(%s)' % element.descriptor
+
+        return PythonReference('set', descriptor)
+
+    @classmethod
+    def map(cls, type0, module, mapper):
+        key = pyreference(type0.key, module, mapper)
+        value = pyreference(type0.value, module, mapper)
+        descriptor = 'descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
+
+        return PythonReference('dict', descriptor)
+
+    @classmethod
+    def enum_value(cls, type0, module, mapper):
+        enum = pyreference(type0.enum, module, mapper)
+        name = '%s.%s' % (enum.name, type0.name)
+
+        return PythonReference(name, None)
+
+    @classmethod
+    def definition(cls, type0, module, mapper):
+        if type0.module == module:
+            # The definition is referenced from the declaring module.
+            name = type0.name
+        else:
+            module_name = type0.module.name
+            module_name = mapper(module_name) if mapper else module_name
+            name = '%s.%s' % (module_name, type0.name)
+
+        descriptor = '%s.__descriptor__' % name
+        return PythonReference(name, descriptor)
+
     def __init__(self, name, descriptor):
         self.name = name
         self.descriptor = descriptor
@@ -176,21 +187,21 @@ class PythonReference(object):
 
 
 NATIVE_TYPES = {
-    pdef_code.ast.TypeEnum.BOOL: PythonReference('bool', 'descriptors.bool0'),
-    pdef_code.ast.TypeEnum.INT16: PythonReference('int', 'descriptors.int16'),
-    pdef_code.ast.TypeEnum.INT32: PythonReference('int', 'descriptors.int32'),
-    pdef_code.ast.TypeEnum.INT64: PythonReference('int', 'descriptors.int64'),
-    pdef_code.ast.TypeEnum.FLOAT: PythonReference('float', 'descriptors.float0'),
-    pdef_code.ast.TypeEnum.DOUBLE: PythonReference('float', 'descriptors.double0'),
-    pdef_code.ast.TypeEnum.STRING: PythonReference('unicode', 'descriptors.string'),
-    pdef_code.ast.TypeEnum.OBJECT: PythonReference('object', 'descriptors.object0'),
-    pdef_code.ast.TypeEnum.VOID: PythonReference('object', 'descriptors.void'),
+    TypeEnum.BOOL: PythonReference('bool', 'descriptors.bool0'),
+    TypeEnum.INT16: PythonReference('int', 'descriptors.int16'),
+    TypeEnum.INT32: PythonReference('int', 'descriptors.int32'),
+    TypeEnum.INT64: PythonReference('int', 'descriptors.int64'),
+    TypeEnum.FLOAT: PythonReference('float', 'descriptors.float0'),
+    TypeEnum.DOUBLE: PythonReference('float', 'descriptors.double0'),
+    TypeEnum.STRING: PythonReference('unicode', 'descriptors.string'),
+    TypeEnum.OBJECT: PythonReference('object', 'descriptors.object0'),
+    TypeEnum.VOID: PythonReference('object', 'descriptors.void'),
 }
 
 
 def pytemplates():
     '''Return python generator templates.'''
-    return Templates(__file__)
+    return generator.Templates(__file__)
 
 
 def pyreference(type0, module=None, mapper=None):
@@ -207,38 +218,18 @@ def pyreference(type0, module=None, mapper=None):
         return NATIVE_TYPES[type0.type]
 
     elif type0.is_list:
-        element = pyreference(type0.element, module, mapper)
-        descriptor = 'descriptors.list0(%s)' % element.descriptor
-        return PythonReference('list', descriptor)
+        return PythonReference.list(type0, module, mapper)
 
     elif type0.is_set:
-        element = pyreference(type0.element, module, mapper)
-        descriptor = 'descriptors.set0(%s)' % element.descriptor
-        return PythonReference('set', descriptor)
+        return PythonReference.set(type0, module, mapper)
 
     elif type0.is_map:
-        key = pyreference(type0.key, module, mapper)
-        value = pyreference(type0.value, module, mapper)
-        descriptor = 'descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
-        return PythonReference('dict', descriptor)
+        return PythonReference.map(type0, module, mapper)
 
     elif type0.is_enum_value:
-        enum = pyreference(type0.enum, module, mapper)
-        name = '%s.%s' % (enum.name, type0.name)
-        return PythonReference(name, None)
+        return PythonReference.enum_value(type0, module, mapper)
 
-    if type0.module == module:
-        # This definition is references from its own module.
-        name = type0.name
-    else:
-        module_name = type0.module.name
-        if mapper:
-            module_name = mapper(module_name)
-
-        name = '%s.%s' % (module_name, type0.name)
-
-    descriptor = '%s.__descriptor__' % name
-    return PythonReference(name, descriptor)
+    return PythonReference.definition(type0, module, mapper)
 
 
 def pyimport(imported_module, mapper=None):
@@ -330,7 +321,7 @@ class DirectoryOrFile(object):
             return
 
         code = self.code(templates)
-        mkdir_p(self.dirpath)
+        generator.mkdir_p(self.dirpath)
 
         modulepath = self.modulepath
         with open(modulepath, 'wt') as f:

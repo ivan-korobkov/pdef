@@ -1,115 +1,128 @@
 # encoding: utf-8
 import unittest
-from pdef_code.lang import *
+from pdef_code.ast import *
 from pdef_java.generator import *
 
 
 class TestJavaEnum(unittest.TestCase):
-    def test(self):
-        enum = Enum('Number')
-        enum.create_value('ONE')
-        enum.create_value('TWO')
+    def _fixture(self):
+        enum = Enum('Number', value_names=['ONE', 'TWO'])
         module = Module('test.module')
         module.add_definition(enum)
 
-        translator = JavaGenerator('/tmp')
-        jenum = JavaEnum(enum, translator)
-        assert jenum.code
+        return JavaEnum(enum)
 
+    def test_constructor(self):
+        jenum = self._fixture()
+        assert jenum.name == 'Number'
+        assert jenum.values == ['ONE', 'TWO']
 
-class TestInterface(unittest.TestCase):
-    def setUp(self):
-        base0 = Interface('Base0')
-        base1 = Interface('Base1')
-
-        iface = Interface('Interface')
-        iface.set_base(base0)
-        iface.set_base(base1)
-        iface.create_method('ping')
-        iface.create_method('pong')
-        iface.create_method('echo', NativeTypes.STRING, ('text', NativeTypes.STRING))
-        iface.create_method('sum', NativeTypes.INT32, ('z', NativeTypes.INT32),
-                            ('a', NativeTypes.INT32))
-        iface.create_method('abc', NativeTypes.STRING, ('a', NativeTypes.STRING),
-                            ('b', NativeTypes.STRING), ('c', NativeTypes.STRING))
-
-        iface.create_method('base0', base0)
-        iface.create_method('base1', base1)
-
-        module0 = Module('test.module0')
-        module0.add_definition(base0)
-        module0.add_definition(base1)
-
-        module1 = Module('test.module1')
-        module1.add_definition(iface)
-
-        translator = JavaGenerator('/tmp')
-        self.jiface = JavaInterface(iface, translator)
-
-    def test(self):
-        assert self.jiface.code
+    def test_render(self):
+        jenum = self._fixture()
+        templates = jtemplates()
+        assert jenum.render(templates)
 
 
 class TestMessage(unittest.TestCase):
-    def test(self):
+    def _fixture(self):
         enum = Enum('Type')
-        enum.create_value('MSG')
+        subtype = enum.create_value('SUBTYPE')
 
         base = Message('Base')
         base.create_field('type', enum, is_discriminator=True)
-        base.create_field('field0', NativeTypes.BOOL)
-        base.create_field('field1', NativeTypes.INT16)
-        msg0 = Message('Message0')
 
-        msg = Message('Message')
-        msg.set_base(base, enum.get_value('MSG'))
-        msg.create_field('field2', NativeTypes.INT32)
-        msg.create_field('field3', NativeTypes.STRING)
-        msg.create_field('field4', msg0)
-        msg.create_field('field5', base)
-        msg.create_field('field6', List(msg))
+        msg = Message('Message', base=base, discriminator_value=subtype)
+        msg.create_field('field', NativeType.BOOL)
 
-        module0 = Module('test.module0')
-        module0.add_definitions(enum, base, msg0)
+        module = Module('test.module')
+        module.add_definition(enum)
+        module.add_definition(base)
+        module.add_definition(msg)
 
-        module1 = Module('test.module1')
-        module1.add_definition(msg)
+        return JavaDefinition.create(msg)
 
-        translator = JavaGenerator('/tmp')
-        jmsg = JavaMessage(msg, translator)
-        jbase = JavaMessage(base, translator)
-        assert jbase.code
-        assert jmsg.code
+    def test_constructor(self):
+        jmsg = self._fixture()
+        assert jmsg.name == 'Message'
+        assert jmsg.is_exception is False
+        assert jmsg.base.name == 'test.module.Base'
+        assert jmsg.discriminator_value.name == 'test.module.Type.SUBTYPE'
+        assert jmsg.subtypes == ()
+
+        assert len(jmsg.declared_fields) == 1
+        assert len(jmsg.inherited_fields) == 1
+        assert len(jmsg.fields) == 2
+
+    def test_render(self):
+        jmsg = self._fixture()
+        templates = jtemplates()
+        assert jmsg.render(templates)
+
+
+class TestInterface(unittest.TestCase):
+    def _fixture(self):
+        exc = Message('Exception', is_exception=True)
+
+        iface = Interface('Interface', exc=exc)
+        iface.create_method('method0', NativeType.INT32, ('arg', NativeType.INT32))
+        iface.create_method('method1', NativeType.STRING, ('name', NativeType.STRING))
+
+        module0 = Module('test.module')
+        module0.add_definition(exc)
+        module0.add_definition(iface)
+
+        return JavaDefinition.create(iface)
+
+    def test_constructor(self):
+        jiface = self._fixture()
+        assert jiface.name == 'Interface'
+        assert jiface.exc.name == 'test.module.Exception'
+        assert len(jiface.declared_methods) == 2
+
+    def test_render(self):
+        jiface = self._fixture()
+        templates = jtemplates()
+        assert jiface.render(templates)
 
 
 class TestRef(unittest.TestCase):
-    def setUp(self):
-        self.translator = JavaGenerator('/tmp')
+    def test_native(self):
+        for ntype in NativeType.all():
+            ref = jreference(ntype)
+            assert ref is NATIVE_TYPES[ntype.type]
 
     def test_list(self):
-        obj = List(NativeTypes.INT32)
-        jobj = self.translator.ref(obj)
-        assert str(jobj) == 'java.util.List<Integer>'
-        assert jobj.is_list
+        list0 = List(NativeType.INT32)
+        ref = jreference(list0)
+
+        assert ref.name == 'java.util.List<Integer>'
+        assert ref.descriptor == 'Descriptors.list(Descriptors.int32)'
+        assert ref.is_list
 
     def test_set(self):
-        obj = Set(NativeTypes.BOOL)
-        jobj = self.translator.ref(obj)
-        assert str(jobj) == 'java.util.Set<Boolean>'
-        assert jobj.is_set
+        set0 = Set(NativeType.BOOL)
+        ref = jreference(set0)
+
+        assert ref.name == 'java.util.Set<Boolean>'
+        assert ref.descriptor == 'Descriptors.set(Descriptors.bool)'
+        assert ref.is_set
 
     def test_map(self):
-        obj = Map(NativeTypes.STRING, NativeTypes.FLOAT)
-        jobj = self.translator.ref(obj)
-        assert str(jobj) == 'java.util.Map<String, Float>'
-        assert jobj.is_map
+        map0 = Map(NativeType.STRING, NativeType.FLOAT)
+        ref = jreference(map0)
 
-    def test_native(self):
-        jobj = self.translator.ref(NativeTypes.INT64)
-        assert jobj.name == 'Long'
-        assert jobj.unboxed == 'long'
-        assert jobj.default == '0L'
-        assert jobj.is_primitive
+        assert ref.name == 'java.util.Map<String, Float>'
+        assert ref.descriptor == 'Descriptors.map(Descriptors.string, Descriptors.float0)'
+        assert ref.is_map
+
+    def test_enum(self):
+        enum = Enum('Number')
+        module = Module('test.module')
+        module.add_definition(enum)
+        ref = jreference(enum)
+
+        assert ref.name == 'test.module.Number'
+        assert ref.descriptor == 'test.module.Number.descriptor()'
 
     def test_enum_value(self):
         enum = Enum('Number')
@@ -118,23 +131,26 @@ class TestRef(unittest.TestCase):
         module = Module('test.module')
         module.add_definition(enum)
 
-        jone = self.translator.ref(one)
-        assert str(jone) == 'test.module.Number.ONE'
-
-    def test_interface(self):
-        iface = Interface('Interface')
-        module = Module('test.module')
-        module.add_definition(iface)
-
-        jface = self.translator.ref(iface)
-        assert str(jface) == 'test.module.Interface'
-        assert jface.is_interface
+        ref = jreference(one)
+        assert ref.name == 'test.module.Number.ONE'
+        assert ref.descriptor is None
 
     def test_message(self):
         msg = Message('Message')
         module = Module('test.module')
         module.add_definition(msg)
+        ref = jreference(msg)
 
-        jmsg = self.translator.ref(msg)
-        assert str(jmsg) == 'test.module.Message'
-        assert jmsg.default == 'test.module.Message.instance()'
+        assert ref.name == 'test.module.Message'
+        assert ref.default == 'test.module.Message.instance()'
+        assert ref.descriptor == 'test.module.Message.descriptor()'
+
+    def test_interface(self):
+        iface = Interface('Interface')
+        module = Module('test.module')
+        module.add_definition(iface)
+        ref = jreference(iface)
+
+        assert ref.name == 'test.module.Interface'
+        assert ref.descriptor == 'test.module.Interface.DESCRIPTOR'
+        assert ref.default is None

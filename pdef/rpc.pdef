@@ -1,11 +1,13 @@
 module pdef.rpc;
 
 
-enum RpcStatus {
-    /** Successful response. */
-    OK,
+/** RPC status.
 
-    /** Successful response, expected application exception. */
+OK - successful response.
+EXCEPTION - successful response, expected application exception.
+*/
+enum RpcStatus {
+    OK,
     EXCEPTION
 }
 

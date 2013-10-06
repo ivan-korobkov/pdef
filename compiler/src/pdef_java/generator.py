@@ -37,7 +37,6 @@ class JavaDefinition(object):
 
     def __init__(self, def0):
         self.name = def0.name
-        self.type = def0.type
         self.package = def0.module.name
         self.doc = def0.doc
 
@@ -50,7 +49,7 @@ class JavaDefinition(object):
         code = self.render(templates)
 
         # Create all module directories.
-        dirs = self.name.split('.')
+        dirs = self.package.split('.')
         fulldir = os.path.join(out, os.path.join(*dirs))
         generator.mkdir_p(fulldir)
 

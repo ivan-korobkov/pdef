@@ -203,7 +203,7 @@ NATIVE_TYPES = {
     TypeEnum.DOUBLE: JavaReference('Double', 'double', '0.0', 'Descriptors.double0'),
     TypeEnum.STRING: JavaReference('String', default='""', descriptor='Descriptors.string'),
     TypeEnum.OBJECT: JavaReference('Object', descriptor='Descriptors.object'),
-    TypeEnum.VOID: JavaReference('Void', 'void', descriptor='Descriptors.void0')
+    TypeEnum.VOID: JavaReference('void', 'void', descriptor='Descriptors.void0')
 }
 
 

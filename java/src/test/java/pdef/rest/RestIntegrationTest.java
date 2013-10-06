@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.junit.After;
+import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
 import pdef.Clients;
@@ -23,8 +24,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.fail;
 
 public class RestIntegrationTest {
 	Server server;
@@ -85,7 +84,7 @@ public class RestIntegrationTest {
 				ImmutableList.of(1, 2, 3, 4, 5));
 		assert client.messageMethod(message).equals(message);
 		assert client.formMethod(form).equals(form);
-		assert client.voidMethod() == null;
+		client.voidMethod(); // No Exception.
 		assert client.stringMethod("Привет").equals("Привет");
 		assert client.interfaceMethod(1, 2).indexMethod().equals("chained call 1 2");
 
@@ -156,12 +155,10 @@ public class RestIntegrationTest {
 		}
 
 		@Override
-		public Void voidMethod() {
-			return null;
-		}
+		public void voidMethod() {}
 
 		@Override
-		public Void excMethod() {
+		public void excMethod() {
 			throw TestException.builder()
 					.setText("Application exception")
 					.build();

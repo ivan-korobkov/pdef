@@ -68,7 +68,7 @@ public class MethodDescriptorTest {
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
-		when(object.excMethod()).thenThrow(TestException.builder().build());
+		doThrow(TestException.builder().build()).when(object).excMethod();
 
 		method.invoke(object, null);
 	}

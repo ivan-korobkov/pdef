@@ -1,12 +1,10 @@
 # encoding: utf-8
 import httplib
 import logging
+import requests
 import urllib
 import urlparse
 
-import requests
-
-import pdef.classes
 import pdef.invocation
 from pdef_rpc import *
 

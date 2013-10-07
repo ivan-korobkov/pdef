@@ -49,17 +49,24 @@ class JavaDefinition(object):
         code = self.render(templates)
 
         # Create all module directories.
-        dirs = self.package.split('.')
-        fulldir = os.path.join(out, os.path.join(*dirs))
-        generator.mkdir_p(fulldir)
+        dirpath = self.dirpath(out)
+        generator.mkdir_p(dirpath)
 
         # Write a file.
-        filename = '%s.java' % self.name
-        path = os.path.join(fulldir, filename)
-        with open(path, 'wt') as f:
+        filepath = self.filepath(out)
+        with open(filepath, 'wt') as f:
             f.write(code)
 
-        logging.debug('Created %s', path)
+        logging.debug('Created %s', filepath)
+
+    def dirpath(self, out):
+        dirs = self.package.split('.')
+        return os.path.join(out, os.path.join(*dirs))
+
+    def filepath(self, out):
+        dirpath = self.dirpath(out)
+        filename = '%s.java' % self.name
+        return os.path.join(dirpath, filename)
 
 
 class JavaEnum(JavaDefinition):

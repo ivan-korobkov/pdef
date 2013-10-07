@@ -1,6 +1,5 @@
 # encoding: utf-8
 import importlib
-import inspect
 import logging
 import os
 import pkgutil
@@ -17,12 +16,12 @@ class Generator(object):
         raise NotImplementedError
 
 
-def generators():
+def generators(module_prefix=GENERATOR_MODULE_PREFIX, func_name=GENERATOR_NAME):
     '''Dynamically load the source code generators, return a dict {name: generator}.'''
     generators = {}
 
     for module_finder, module_name, ispkg in pkgutil.iter_modules():
-        if not module_name.startswith(GENERATOR_MODULE_PREFIX):
+        if not module_name.startswith(module_prefix):
             continue
 
         try:
@@ -32,11 +31,11 @@ def generators():
                           % (module_name, e))
             continue
 
-        if not hasattr(module, GENERATOR_NAME):
+        if not hasattr(module, func_name):
             continue
 
-        name = module_name[len(GENERATOR_MODULE_PREFIX):]
-        generator = getattr(module, GENERATOR_NAME)
+        name = module_name[len(module_prefix):]
+        generator = getattr(module, func_name)
         generators[name] = generator
         logging.debug('Loaded a source code generator %r', name)
 
@@ -44,15 +43,14 @@ def generators():
 
 
 class Templates(object):
-    '''Jinja templates relative to a class module.'''
-    def __init__(self, dir_or_file):
-        '''Create a templates loader relative to a directory or a file.
-        Usually, you will define a special function in a generator module:
-            >>> def pytemplates():
-            ...     return Templates(__file__)
-            >>>
+    '''Templates class is a default Jinja templates loader relative to a directory or a file.
 
-        '''
+    Example::
+        >>> templates = Templates(__file__)
+        >>> templates.get('my_jinja.template')
+    '''
+    def __init__(self, dir_or_file):
+        '''Create a templates loader relative to a directory or a file.'''
         if os.path.isdir(dir_or_file):
             self._dir = dir_or_file
         else:
@@ -77,23 +75,24 @@ class Templates(object):
         return template
 
 
-class NameMapper(object):
-    '''Utility class which maps module names to prefix names.
+class Namespaces(object):
+    '''Namespaces class is a default namespace mapper, which maps pdef modules names to
+    prefix names.
 
     Example::
-        >>> mapper = NameMapper({'pdef.tests': 'pdef_tests'})
-        >>> mapper.map('pdef.tests.messages')
+        >>> namespaces = Namespaces({'pdef.tests': 'pdef_tests'})
+        >>> namespaces.map('pdef.tests.messages')
         >>> 'pdef_tests.messages'
     '''
-    def __init__(self, name_map=None):
-        self.name_map = dict(name_map) if name_map else {}
+    def __init__(self, namespaces=None):
+        self._namespaces = dict(namespaces) if namespaces else {}
 
     def __call__(self, module_name):
         return self.map(module_name)
 
     def map(self, module_name):
         '''Returns a new module name.'''
-        for name, mapped in self.name_map.items():
+        for name, mapped in self._namespaces.items():
             if module_name == name:
                 # Full match, service.module => service_module.
                 return mapped
@@ -103,6 +102,7 @@ class NameMapper(object):
 
         return module_name
 
+
 def upper_first(s):
     '''Uppercase the first letter in a string.'''
     if not s:
@@ -110,8 +110,8 @@ def upper_first(s):
     return s[0].upper() + s[1:]
 
 
-
 def mkdir_p(dirname):
+    '''Make directories, ignore errors'''
     if os.path.exists(dirname):
         return
     os.makedirs(dirname)

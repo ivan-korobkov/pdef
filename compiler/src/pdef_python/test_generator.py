@@ -4,6 +4,17 @@ from pdef_compiler.ast import *
 from pdef_python.generator import *
 
 
+class TestPythonGenerator(generator.Generator):
+    def test_modules_with_children(self):
+        mnames = ['service.server',
+                  'service.client',
+                  'service.client.submodule',
+                  'service2.server',
+                  'service3']
+
+        parent_names = PythonGenerator._modules_with_children(mnames)
+        assert parent_names == {'service', 'service.client', 'service2'}
+
 class TestPythonModule(unittest.TestCase):
     def _fixture(self):
         msg = Message('Message')
@@ -26,12 +37,42 @@ class TestPythonModule(unittest.TestCase):
         assert len(pymodule.imports) == 1
         assert len(pymodule.definitions) == 3
 
-    def test_code(self):
+    def test_render(self):
         templates = pytemplates()
         pymodule = self._fixture()
         code = pymodule.render(templates)
 
         assert code
+
+    def test_filename_dirname__directory(self):
+        module = Module('module')
+        pymodule = PythonModule(module)
+        pymodule.is_directory = True
+
+        assert pymodule.filename == '__init__.py'
+        assert pymodule.dirname == 'module'
+
+    def test_filename_dirname__directory_with_children(self):
+        module = Module('test.service.module')
+        pymodule = PythonModule(module)
+        pymodule.is_directory = True
+
+        assert pymodule.filename == '__init__.py'
+        assert pymodule.dirname == os.path.join('test', 'service', 'module')
+
+    def test_filename_dirname__file(self):
+        module = Module('module')
+        pymodule = PythonModule(module)
+
+        assert pymodule.filename == 'module.py'
+        assert pymodule.dirname is None
+
+    def test_filename_dirname__file_with_children(self):
+        module = Module('test.service.module')
+        pymodule = PythonModule(module)
+
+        assert pymodule.filename == 'module.py'
+        assert pymodule.dirname == os.path.join('test', 'service')
 
 
 class TestPythonEnum(unittest.TestCase):
@@ -118,12 +159,12 @@ class TestPythonImport(unittest.TestCase):
 
         assert pyimport(imodule) == 'my.test'
 
-    def test_mapper(self):
+    def test_namespaces(self):
         module = Module('my.test.module')
         imodule = ImportedModule('alias', module)
-        mapper = generator.NameMapper({'my.test': 'my_test'})
+        namespaces = pynamespaces({'my.test': 'my_test'})
 
-        assert pyimport(imodule, mapper) == 'my_test.module'
+        assert pyimport(imodule, namespaces) == 'my_test.module'
 
 
 class TestPythonRefeference(unittest.TestCase):
@@ -205,8 +246,8 @@ class TestPythonRefeference(unittest.TestCase):
         module = Module('my.test.submodule')
         module.add_definition(def0)
 
-        mapper = generator.NameMapper({'my.test': 'my_test'})
-        ref = pyreference(def0, mapper=mapper)
+        namespaces = generator.Namespaces({'my.test': 'my_test'})
+        ref = pyreference(def0, namespaces=namespaces)
         assert ref.name == 'my_test.submodule.Message'
         assert ref.descriptor == 'my_test.submodule.Message.__descriptor__'
 

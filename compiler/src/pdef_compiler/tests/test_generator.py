@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
 
-from pdef_code.generator import NameMapper
+from pdef_compiler.generator import NameMapper
 
 
 class TestNameMapper(unittest.TestCase):

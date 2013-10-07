@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdef_code.ast.enums import *
+from pdef_compiler.ast.enums import *
 
 
 class TestEnum(unittest.TestCase):

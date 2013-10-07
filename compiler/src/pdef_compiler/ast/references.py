@@ -1,6 +1,6 @@
 # encoding: utf-8
-import pdef_code.ast.collects
-from pdef_code.ast.definitions import Located, Type
+import pdef_compiler.ast.collects
+from pdef_compiler.ast.definitions import Located, Type
 
 
 def reference(name_ref_def):
@@ -77,7 +77,7 @@ class ListReference(Reference):
     def _init_type(self):
         if not self.element:
             return
-        self._type = pdef_code.ast.collects.List(self.element.dereference(), location=self.location)
+        self._type = pdef_compiler.ast.collects.List(self.element.dereference(), location=self.location)
 
     def link(self, scope):
         errors = self.element.link(scope)
@@ -103,7 +103,7 @@ class SetReference(Reference):
     def _init_type(self):
         if not self.element:
             return
-        self._type = pdef_code.ast.collects.Set(self.element.dereference(), location=self.location)
+        self._type = pdef_compiler.ast.collects.Set(self.element.dereference(), location=self.location)
 
     def link(self, scope):
         errors = self.element.link(scope)
@@ -130,7 +130,7 @@ class MapReference(Reference):
     def _init_type(self):
         if not self.key or not self.value:
             return
-        self._type = pdef_code.ast.collects.Map(self.key.dereference(), self.value.dereference(),
+        self._type = pdef_compiler.ast.collects.Map(self.key.dereference(), self.value.dereference(),
                                             location=self.location)
 
     def link(self, scope):

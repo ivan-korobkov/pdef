@@ -2,8 +2,8 @@
 import logging
 import os.path
 
-from pdef_code import generator
-from pdef_code.ast import TypeEnum
+from pdef_compiler import generator
+from pdef_compiler.ast import TypeEnum
 
 
 class JavaGenerator(generator.Generator):

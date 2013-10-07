@@ -2,8 +2,8 @@
 import logging
 import time
 
-import pdef_code
-from pdef_code import ast
+import pdef_compiler
+from pdef_compiler import ast
 
 
 def create_compiler():
@@ -54,7 +54,7 @@ class Compiler(object):
         '''Parse a package from paths, return a package and a list of errors.'''
         t0 = time.time()
 
-        parser = pdef_code.create_parser()
+        parser = pdef_compiler.create_parser()
         package = ast.Package()
         errors = []
 
@@ -82,4 +82,4 @@ class Compiler(object):
 
     def _load_generator_modules(self):
         '''Dynamically load source code generator modules.'''
-        return pdef_code.list_generator_modules()
+        return pdef_compiler.list_generator_modules()

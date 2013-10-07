@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdef_code.generator import GeneratorModule
+from pdef_compiler.generator import GeneratorModule
 from pdef_python.generator import PythonGenerator
 
 

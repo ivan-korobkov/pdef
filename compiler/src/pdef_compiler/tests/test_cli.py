@@ -2,7 +2,7 @@
 import os
 import tempfile
 import unittest
-import pdef_code
+import pdef_compiler
 
 
 class TestCli(unittest.TestCase):
@@ -21,14 +21,14 @@ class TestCli(unittest.TestCase):
 
         args = ['check']
         args += paths
-        pdef_code.main(args)
+        pdef_compiler.main(args)
 
     def test_generate(self):
         paths = self._fixture_files()
 
         args = ['generate']
         args += paths
-        pdef_code.main(args)
+        pdef_compiler.main(args)
 
     def _tempfile(self):
         fd, path = tempfile.mkstemp('.pdef', text=True)

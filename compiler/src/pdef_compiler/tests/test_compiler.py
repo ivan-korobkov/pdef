@@ -37,7 +37,7 @@ class TestCompiler(unittest.TestCase):
         with open(path1, 'wt') as f:
             f.write(s1)
 
-        package = self.compiler.compile(path0, path1)
+        package = self.compiler.compile([path0, path1])
         assert len(package.modules) == 2
         assert package.modules[0].name == 'hello.world'
         assert package.modules[1].name == 'goodbye.world'
@@ -53,7 +53,7 @@ class TestCompiler(unittest.TestCase):
             f.write(s)
 
         try:
-            self.compiler.compile(path)
+            self.compiler.compile([path])
             self.fail()
         except pdef_compiler.CompilerException as e:
             pass

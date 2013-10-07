@@ -1,13 +1,17 @@
 # encoding: utf-8
+import argparse
 import os
+import shutil
 import tempfile
 import unittest
-import pdef_compiler
+from mock import Mock
+from pdef_compiler.cli import main, Cli
 
 
 class TestCli(unittest.TestCase):
     def setUp(self):
         self.tempfiles = []
+        self.tempdirs = []
 
     def tearDown(self):
         for tf in self.tempfiles:
@@ -16,23 +20,61 @@ class TestCli(unittest.TestCase):
             except OSError:
                 pass
 
+        for d in self.tempdirs:
+            shutil.rmtree(d, ignore_errors=True)
+
     def test_check(self):
         paths = self._fixture_files()
 
         args = ['check']
         args += paths
-        pdef_compiler.main(args)
+        main(args)
 
     def test_generate(self):
         paths = self._fixture_files()
+        java = self._tempdir()
+        python = self._tempdir()
 
-        args = ['generate']
+        args = ['generate', '--java=' + java, '--python=' + python]
         args += paths
-        pdef_compiler.main(args)
+        main(args)
+
+        assert os.path.exists(os.path.join(java, 'hello/world/Message.java'))
+        assert os.path.exists(os.path.join(python, 'hello/world.py'))
+
+    def test_generate_parse_outs(self):
+        compiler = Mock()
+        compiler.generators = {'java': 'generator0', 'python': 'generator1'}
+
+        args = Mock()
+        args.outs = {'java': 'generated-sources', 'python': 'src/generated',
+                     'unsupported': '/dev/null'}
+
+        cli = Cli()
+        outs = cli._generate_parse_outs(args, compiler)
+
+        assert outs == {'java': 'generated-sources', 'python': 'src/generated'}
+
+    def test_generate_parse_namespaces(self):
+        compiler = Mock()
+        compiler.generators = {'java': 'generator0', 'python': 'generator1'}
+
+        args = Mock()
+        args.namespaces = ['java:pdef:io.pdef', 'java:test:tests', 'python:pdef.rpc:pdef_rpc']
+
+        cli = Cli()
+        namespaces = cli._generate_parse_namespaces(args, compiler)
+        assert namespaces == {'java': {'pdef': 'io.pdef', 'test': 'tests'},
+                              'python': {'pdef.rpc': 'pdef_rpc'}}
 
     def _tempfile(self):
         fd, path = tempfile.mkstemp('.pdef', text=True)
         self.tempfiles.append(path)
+        return path
+
+    def _tempdir(self):
+        path = tempfile.mkdtemp('_pdef_test')
+        self.tempdirs.append(path)
         return path
 
     def _fixture_files(self):

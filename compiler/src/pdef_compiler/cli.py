@@ -34,10 +34,9 @@ def _create_arg_parser(compiler):
                           help='Path to pdef files and directories')
     generate.set_defaults(command_func=_generate)
 
-    for gm in compiler.generator_modules:
-        name = gm.get_name()
-        group = generate.add_argument_group(name)
-        gm.fill_cli_group(group)
+    for gname, gfactory in compiler.generators.items():
+        gdoc = gfactory.__doc__
+        generate.add_argument('--' + gname, help='output directory for ' + gdoc)
 
     return parser
 
@@ -68,9 +67,14 @@ def _check(compiler, args):
 
 def _generate(compiler, args):
     paths = args.paths
-    package = compiler.compile(*paths)
 
-    for gm in compiler.generator_modules:
-        generator = gm.create_generator_from_cli_args(args)
-        if generator:
-            generator.generate(package)
+    outs = {}
+    argd = vars(args)
+
+    for gname in compiler.generators.keys():
+        out = argd.get(gname)
+        if out is None:
+            continue
+        outs[gname] = argd[gname]
+
+    compiler.generate(paths, outs=outs, namespaces=None)

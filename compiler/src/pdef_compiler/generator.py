@@ -9,7 +9,7 @@ from jinja2 import Environment
 
 
 GENERATOR_MODULE_PREFIX = 'pdef_'
-GENERATOR_MODULE_FACTORY_NAME = 'create_generator_module'
+GENERATOR_NAME = 'generate_source_code'
 
 
 class Generator(object):
@@ -17,43 +17,30 @@ class Generator(object):
         raise NotImplementedError
 
 
-class GeneratorModule(object):
-    '''Generator module interface.'''
-    def get_name(self):
-        '''Return this generator module name.'''
-        raise NotImplementedError(self.__class__)
+def generators():
+    '''Dynamically load the source code generators, return a dict {name: generator}.'''
+    generators = {}
 
-    def fill_cli_group(self, group):
-        '''Add generator-specific arguments to an argparse group.'''
-        raise NotImplementedError(self.__class__)
-
-    def create_generator_from_cli_args(self, args):
-        '''Create an optional generator for command-line arguments, and return it or None.'''
-        raise NotImplementedError(self.__class__)
-
-
-def list_generator_modules():
-    '''Dynamically load source code generator modules.'''
-    modules = []
-    for module_finder, name, ispkg in pkgutil.iter_modules():
-        if not name.startswith(GENERATOR_MODULE_PREFIX):
+    for module_finder, module_name, ispkg in pkgutil.iter_modules():
+        if not module_name.startswith(GENERATOR_MODULE_PREFIX):
             continue
 
         try:
-            module = importlib.import_module(name)
+            module = importlib.import_module(module_name)
         except Exception as e:
-            logging.error('Failed to import a possible generator module %r' % name)
+            logging.error('Failed to import a possible source code generator module %r, e=%s'
+                          % (module_name, e))
             continue
 
-        if not hasattr(module, GENERATOR_MODULE_FACTORY_NAME):
+        if not hasattr(module, GENERATOR_NAME):
             continue
 
-        gmodule = getattr(module, GENERATOR_MODULE_FACTORY_NAME)()
-        if not isinstance(gmodule, GeneratorModule):
-            continue
+        name = module_name[len(GENERATOR_MODULE_PREFIX):]
+        generator = getattr(module, GENERATOR_NAME)
+        generators[name] = generator
+        logging.debug('Loaded a source code generator %r', name)
 
-        modules.append(gmodule)
-    return modules
+    return generators
 
 
 class Templates(object):

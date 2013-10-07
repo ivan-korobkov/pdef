@@ -1,5 +1,2 @@
 #!/bin/bash
-pdefc $@ generate --python src/ \
-    --python-module=pdef.test:pdef_test \
-    --python-module=pdef.rpc:pdef_rpc \
-   ../pdef/
+pdefc $@ generate --python=src/ ../pdef/

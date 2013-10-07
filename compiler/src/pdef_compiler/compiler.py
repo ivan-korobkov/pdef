@@ -31,16 +31,24 @@ class Compiler(object):
     '''Compiler parses and compiles paths into a valid package.
     It is reusable but not thread-safe.'''
     def __init__(self):
-        self._generator_modules = None
+        self._generators = None
 
     @property
-    def generator_modules(self):
-        if self._generator_modules is None:
-            self._generator_modules = list(self._load_generator_modules())
-        return self._generator_modules
+    def generators(self):
+        if self._generators is None:
+            self._generators = dict(pdef_compiler.generators())
+        return self._generators
 
-    def compile(self, *paths):
-        '''Parse paths into a package, link, validate and return it.'''
+    def check(self, paths):
+        '''Parse and validate a package, then return True or throw CompilerException.'''
+        package, errors = self._parse(paths)
+        if errors:
+            raise CompilerException('Parsing errors', errors)
+
+        return True
+
+    def compile(self, paths):
+        '''Parse paths into a package, then link, validate and return it.'''
         package, errors = self._parse(paths)
         if errors:
             raise CompilerException('Parsing errors', errors)
@@ -49,6 +57,15 @@ class Compiler(object):
         if errors:
             raise CompilerException('Compilation errors', errors)
         return package
+
+    def generate(self, paths, outs, namespaces=None):
+        '''Parse a package and generate source code.'''
+        namespaces = namespaces or {}
+        package = self.compile(paths)
+
+        for gname, gout in outs.items():
+            gnamespaces = namespaces.get(gname)
+            self._generate(package, gname, out=gout, namespaces=gnamespaces)
 
     def _parse(self, paths):
         '''Parse a package from paths, return a package and a list of errors.'''
@@ -80,6 +97,12 @@ class Compiler(object):
         logging.info('Compiled a package in %dms', t)
         return []
 
-    def _load_generator_modules(self):
-        '''Dynamically load source code generator modules.'''
-        return pdef_compiler.list_generator_modules()
+    def _generate(self, package, name, out, namespaces=None):
+        logging.debug('Running %s generator' % name)
+        generator = self.generators.get(name)
+        if not generator:
+            logging.error('Source code generator is not found %r' % name)
+            return
+
+        generator(package, out, namespaces=namespaces)
+        logging.debug('Generated the source by %s generator' % name)

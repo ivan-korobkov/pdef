@@ -103,7 +103,7 @@ class JavaMessage(JavaDefinition):
         self.is_form = msg.is_form
 
         self.base_or_root = self.base or \
-            ('pdef.GeneratedException' if msg.is_exception else 'pdef.GeneratedMessage')
+            ('io.pdef.GeneratedException' if msg.is_exception else 'io.pdef.GeneratedMessage')
 
 
 class JavaField(object):

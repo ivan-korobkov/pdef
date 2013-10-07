@@ -1,7 +1,7 @@
 package {{package}};
 
-import pdef.descriptors.Descriptor;
-import pdef.descriptors.EnumDescriptor;
+import io.pdef.descriptors.Descriptor;
+import io.pdef.descriptors.EnumDescriptor;
 
 {% if doc %}
 /** {{ doc }} */

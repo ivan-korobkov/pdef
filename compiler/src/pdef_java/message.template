@@ -2,10 +2,10 @@ package {{ package }};
 
 import com.google.common.base.Supplier;
 
-import pdef.descriptors.Descriptor;
-import pdef.descriptors.Descriptors;
-import pdef.descriptors.FieldDescriptor;
-import pdef.descriptors.MessageDescriptor;
+import io.pdef.descriptors.Descriptor;
+import io.pdef.descriptors.Descriptors;
+import io.pdef.descriptors.FieldDescriptor;
+import io.pdef.descriptors.MessageDescriptor;
 
 {% macro message_field_from_builder(field) -%}
         {% if field.type.is_list -%}
@@ -64,7 +64,7 @@ public class {{ name }} extends {{ base_or_root }} {
             {% endif %}
         }
 
-        public Builder merge(final pdef.Message message) {
+        public Builder merge(final io.pdef.Message message) {
             super.merge(message);
             {{ name }} msg = ({{ name }}) message;
             {% for field in declared_fields %}

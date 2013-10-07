@@ -10,7 +10,7 @@ class TestJavaEnum(unittest.TestCase):
         module = Module('test.module')
         module.add_definition(enum)
 
-        return JavaEnum(enum)
+        return JavaEnum(enum, jreference)
 
     def test_constructor(self):
         jenum = self._fixture()
@@ -39,7 +39,7 @@ class TestMessage(unittest.TestCase):
         module.add_definition(base)
         module.add_definition(msg)
 
-        return JavaDefinition.create(msg)
+        return JavaDefinition.create(msg, jreference)
 
     def test_constructor(self):
         jmsg = self._fixture()
@@ -71,7 +71,7 @@ class TestInterface(unittest.TestCase):
         module0.add_definition(exc)
         module0.add_definition(iface)
 
-        return JavaDefinition.create(iface)
+        return JavaDefinition.create(iface, jreference)
 
     def test_constructor(self):
         jiface = self._fixture()
@@ -154,3 +154,21 @@ class TestRef(unittest.TestCase):
         assert ref.name == 'test.module.Interface'
         assert ref.descriptor == 'test.module.Interface.DESCRIPTOR'
         assert ref.default is None
+
+    def test_namespace__string(self):
+        namespace = jnamespace({'service': 'com.company.service'})
+        ref = jreference('service.client.tests', namespace)
+
+        assert ref == 'com.company.service.client.tests'
+
+    def test_namespace__definition(self):
+        msg = Message('Message')
+        module = Module('test.module')
+        module.add_definition(msg)
+
+        namespace = jnamespace({'test': 'com.company.test'})
+        ref = jreference(msg, namespace)
+
+        assert ref.name == 'com.company.test.module.Message'
+        assert ref.descriptor == 'com.company.test.module.Message.descriptor()'
+        assert ref.default == 'com.company.test.module.Message.instance()'

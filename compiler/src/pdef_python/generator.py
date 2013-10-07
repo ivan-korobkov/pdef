@@ -1,5 +1,4 @@
 # encoding: utf-8
-import logging
 import os.path
 
 from pdef_compiler import generator
@@ -10,13 +9,15 @@ class PythonGenerator(generator.Generator):
     '''Python source code generator.'''
     def __init__(self, out, namespaces=None):
         self.out = out
-        self.namespaces = pynamespaces(namespaces)
+        self.namespace = pynamespace(namespaces)
         self.templates = pytemplates()
 
     def generate(self, package):
-        pymodules = [PythonModule(module, self.namespaces) for module in package.modules]
-        tree = DirectoryOrFile.from_modules(self.out, pymodules)
-        tree.write(self.templates)
+        pymodules = [PythonModule(module, self.namespace) for module in package.modules]
+        self._mark_modules_as_dirs(pymodules)
+
+        for pm in pymodules:
+            pm.write(self.out, self.templates)
 
     @staticmethod
     def _mark_modules_as_dirs(pymodules):
@@ -54,15 +55,15 @@ class PythonModule(object):
     '''Python module.'''
     template_name = 'module.template'
 
-    def __init__(self, module, namespaces=None):
+    def __init__(self, module, namespace=None):
         # Create a local module scope, which correctly handles
         # when definitions are referenced inside the declaring module.
-        scope = lambda type0: pyreference(type0, module, namespaces)
+        scope = lambda type0: pyreference(type0, module, namespace)
 
-        self.name = namespaces(module.name) if namespaces else module.name
+        self.name = namespace(module.name) if namespace else module.name
         self.doc = pydoc(module.doc)
 
-        self.imports = [pyimport(im, namespaces) for im in module.imported_modules]
+        self.imports = [pyimport(im, namespace) for im in module.imported_modules]
         self.definitions = [PythonDefinition.create(def0, scope) for def0 in module.definitions]
 
         # The flag distinguishes between mymodule.py and mymodule/__init__.py.
@@ -225,42 +226,42 @@ class PythonArg(object):
 
 class PythonReference(object):
     @classmethod
-    def list(cls, type0, module, namespaces):
-        element = pyreference(type0.element, module, namespaces)
+    def list(cls, type0, module, namespace):
+        element = pyreference(type0.element, module, namespace)
         descriptor = 'descriptors.list0(%s)' % element.descriptor
 
         return PythonReference('list', descriptor)
 
     @classmethod
-    def set(cls, type0, module, namespaces):
-        element = pyreference(type0.element, module, namespaces)
+    def set(cls, type0, module, namespace):
+        element = pyreference(type0.element, module, namespace)
         descriptor = 'descriptors.set0(%s)' % element.descriptor
 
         return PythonReference('set', descriptor)
 
     @classmethod
-    def map(cls, type0, module, namespaces):
-        key = pyreference(type0.key, module, namespaces)
-        value = pyreference(type0.value, module, namespaces)
+    def map(cls, type0, module, namespace):
+        key = pyreference(type0.key, module, namespace)
+        value = pyreference(type0.value, module, namespace)
         descriptor = 'descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
 
         return PythonReference('dict', descriptor)
 
     @classmethod
-    def enum_value(cls, type0, module, namespaces):
-        enum = pyreference(type0.enum, module, namespaces)
+    def enum_value(cls, type0, module, namespace):
+        enum = pyreference(type0.enum, module, namespace)
         name = '%s.%s' % (enum.name, type0.name)
 
         return PythonReference(name, None)
 
     @classmethod
-    def definition(cls, type0, module, namespaces):
+    def definition(cls, type0, module, namespace):
         if type0.module == module:
             # The definition is referenced from the declaring module.
             name = type0.name
         else:
             module_name = type0.module.name
-            module_name = namespaces(module_name) if namespaces else module_name
+            module_name = namespace(module_name) if namespace else module_name
             name = '%s.%s' % (module_name, type0.name)
 
         descriptor = '%s.__descriptor__' % name
@@ -292,12 +293,12 @@ def pytemplates():
     return generator.Templates(__file__)
 
 
-def pyreference(type0, module=None, namespaces=None):
+def pyreference(type0, module=None, namespace=None):
     '''Create a python reference.
 
         @param type0:   pdef definition.
         @param module:  pdef module in which the definition is referenced.
-        @param namespaces:  optional module name namespaces.
+        @param namespace:  optional module name namespace.
         '''
     if type0 is None:
         return None
@@ -306,29 +307,29 @@ def pyreference(type0, module=None, namespaces=None):
         return NATIVE_TYPES[type0.type]
 
     elif type0.is_list:
-        return PythonReference.list(type0, module, namespaces)
+        return PythonReference.list(type0, module, namespace)
 
     elif type0.is_set:
-        return PythonReference.set(type0, module, namespaces)
+        return PythonReference.set(type0, module, namespace)
 
     elif type0.is_map:
-        return PythonReference.map(type0, module, namespaces)
+        return PythonReference.map(type0, module, namespace)
 
     elif type0.is_enum_value:
-        return PythonReference.enum_value(type0, module, namespaces)
+        return PythonReference.enum_value(type0, module, namespace)
 
-    return PythonReference.definition(type0, module, namespaces)
+    return PythonReference.definition(type0, module, namespace)
 
 
-def pyimport(imported_module, namespaces=None):
+def pyimport(imported_module, namespace=None):
     '''Create a python import string.'''
-    if not namespaces:
+    if not namespace:
         return imported_module.module.name
-    return namespaces(imported_module.module.name)
+    return namespace(imported_module.module.name)
 
 
-def pynamespaces(namespaces):
-    return generator.Namespaces(namespaces)
+def pynamespace(namespaces=None):
+    return generator.Namespace(namespaces)
 
 
 def pydoc(doc):
@@ -345,81 +346,3 @@ def pydoc(doc):
 
     # It's a multi-line comment.
     return '\n' + s + '\n\n'
-
-
-class DirectoryOrFile(object):
-    @classmethod
-    def from_modules(cls, out, pymodules):
-        '''Create a file/directory from pymodules.'''
-        root = DirectoryOrFile(out, is_root=True)
-
-        for pm in pymodules:
-            node = root
-            for name in pm.name.split('.'):
-                node = node.child(name)
-            node.module = pm
-
-        return root
-
-    def __init__(self, name, parent=None, is_root=False):
-        self.name = name
-        self.parent = parent
-        self.children = {}
-
-        self.is_directory = False
-        self.is_root = is_root
-
-        self.module = None
-
-    def child(self, name):
-        '''Return or create a child directory or file.'''
-        if name not in self.children:
-            node = DirectoryOrFile(name, parent=self)
-            self.children[name] = node
-            self.is_directory = True
-
-        return self.children[name]
-
-    @property
-    def dirpath(self):
-        '''Return this directory path if a directory, else the parent directory path.'''
-        if self.is_directory:
-            return os.path.join(self.parent.dirpath, self.name) if self.parent else self.name
-        return self.parent.dirpath if self.parent else ''
-
-    @property
-    def modulepath(self):
-        '''Return the dirpath/__init__.py if a directory or parentpath/modulename.py if a module.'''
-        if self.is_directory:
-            return os.path.join(self.dirpath, '__init__.py')
-        return os.path.join(self.dirpath, self.name + '.py')
-
-    def code(self, templates):
-        '''Return an empty python code if a directory or rendered module module code if a module.'''
-        if self.module:
-            return self.module.render(templates)
-        elif self.is_directory:
-            return '# encoding: utf-8\n'
-
-        raise AssertionError('Not a directory or a module')
-
-    def write(self, templates):
-        '''Write this directory or module and its children to the filesystem.'''
-        self._write_module(templates)
-        self._write_children(templates)
-
-    def _write_module(self, templates):
-        if self.is_root:
-            return
-
-        code = self.code(templates)
-        generator.mkdir_p(self.dirpath)
-
-        modulepath = self.modulepath
-        with open(modulepath, 'wt') as f:
-            f.write(code)
-            logging.info('Created %s', modulepath)
-
-    def _write_children(self, templates):
-        for child in self.children.values():
-            child.write(templates)

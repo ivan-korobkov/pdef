@@ -75,13 +75,13 @@ class Templates(object):
         return template
 
 
-class Namespaces(object):
-    '''Namespaces class is a default namespace mapper, which maps pdef modules names to
+class Namespace(object):
+    '''Namespace class is a default namespace mapper, which maps pdef modules names to
     prefix names.
 
     Example::
-        >>> namespaces = Namespaces({'pdef.tests': 'pdef_tests'})
-        >>> namespaces.map('pdef.tests.messages')
+        >>> namespace = Namespace({'pdef.tests': 'pdef_tests'})
+        >>> namespace.map('pdef.tests.messages')
         >>> 'pdef_tests.messages'
     '''
     def __init__(self, namespaces=None):

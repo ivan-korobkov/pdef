@@ -162,7 +162,7 @@ class TestPythonImport(unittest.TestCase):
     def test_namespaces(self):
         module = Module('my.test.module')
         imodule = ImportedModule('alias', module)
-        namespaces = pynamespaces({'my.test': 'my_test'})
+        namespaces = pynamespace({'my.test': 'my_test'})
 
         assert pyimport(imodule, namespaces) == 'my_test.module'
 
@@ -246,8 +246,8 @@ class TestPythonRefeference(unittest.TestCase):
         module = Module('my.test.submodule')
         module.add_definition(def0)
 
-        namespaces = generator.Namespaces({'my.test': 'my_test'})
-        ref = pyreference(def0, namespaces=namespaces)
+        namespaces = generator.Namespace({'my.test': 'my_test'})
+        ref = pyreference(def0, namespace=namespaces)
         assert ref.name == 'my_test.submodule.Message'
         assert ref.descriptor == 'my_test.submodule.Message.__descriptor__'
 

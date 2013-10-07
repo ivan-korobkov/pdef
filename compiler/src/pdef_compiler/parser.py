@@ -77,12 +77,11 @@ class Parser(object):
         if not os.path.isdir(path):
             return None, ['Not a directory %r' % path]
 
-        logging.info('Walking %s' % path)
-
         modules = []
         errors = []
 
         for root, dirs, files in os.walk(path):
+            logging.info('Walking %s' % root)
             for file0 in files:
                 ext = os.path.splitext(file0)[1]
                 if ext.lower() != self.extension:

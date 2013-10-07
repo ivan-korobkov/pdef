@@ -1,2 +1,7 @@
 #!/bin/bash
-pdefc $@ generate --python=src/ ../pdef/
+pdefc $@ generate \
+    --ns="python:pdef.rpc:pdef_rpc" \
+    --ns="python:pdef.test:pdef_test" \
+    --python=src/ \
+    ../pdef
+

@@ -39,23 +39,10 @@ class Compiler(object):
             self._generators = dict(pdef_compiler.generators())
         return self._generators
 
-    def check(self, paths):
-        '''Parse and validate a package, then return True or throw CompilerException.'''
-        package, errors = self._parse(paths)
-        if errors:
-            raise CompilerException('Parsing errors', errors)
-
-        return True
-
     def compile(self, paths):
         '''Parse paths into a package, then link, validate and return it.'''
-        package, errors = self._parse(paths)
-        if errors:
-            raise CompilerException('Parsing errors', errors)
-
-        errors = self._compile(package)
-        if errors:
-            raise CompilerException('Compilation errors', errors)
+        package = self._parse(paths)
+        self._compile(package)
         return package
 
     def generate(self, paths, outs, namespaces=None):
@@ -63,12 +50,16 @@ class Compiler(object):
         namespaces = namespaces or {}
         package = self.compile(paths)
 
+        self.generate_package(package, outs, namespaces=namespaces)
+
+    def generate_package(self, package, outs, namespaces=None):
+        '''Generate source code for a package.'''
         for gname, gout in outs.items():
             gnamespaces = namespaces.get(gname)
             self._generate(package, gname, out=gout, namespaces=gnamespaces)
 
     def _parse(self, paths):
-        '''Parse a package from paths, return a package and a list of errors.'''
+        '''Parse a package and return it.'''
         t0 = time.time()
 
         parser = pdef_compiler.create_parser()
@@ -84,7 +75,11 @@ class Compiler(object):
 
         t = (time.time() - t0) * 1000
         logging.info('Parsed files in %dms', t)
-        return package, errors
+
+        if errors:
+            raise CompilerException('Parsing errors', errors)
+
+        return package
 
     def _compile(self, package):
         t0 = time.time()
@@ -95,14 +90,20 @@ class Compiler(object):
 
         t = (time.time() - t0) * 1000
         logging.info('Compiled a package in %dms', t)
-        return []
+
+        if errors:
+            raise CompilerException('Compilation errors', errors)
 
     def _generate(self, package, name, out, namespaces=None):
-        logging.debug('Running %s generator' % name)
+        t0 = time.time()
+
+        logging.info('Running a %s generator...' % name)
         generator = self.generators.get(name)
         if not generator:
             logging.error('Source code generator is not found %r' % name)
             return
 
         generator(package, out, namespaces=namespaces)
-        logging.debug('Generated the source by %s generator' % name)
+
+        t = (time.time() - t0) * 1000
+        logging.info('Generated %s code in %dms' % (name, t))

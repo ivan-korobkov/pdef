@@ -14,18 +14,32 @@ class PythonGenerator(generator.Generator):
 
     def generate(self, package):
         pymodules = [PythonModule(module, self.namespace) for module in package.modules]
-        self._mark_modules_as_dirs(pymodules)
+        parent_names = self._modules_with_children([pm.name for pm in pymodules])
 
-        for pm in pymodules:
-            pm.write(self.out, self.templates)
+        self._mark_modules_as_dirs(pymodules, parent_names)
+        self._write_modules(pymodules)
+        self._write_init_files(parent_names, pymodules)
 
-    @staticmethod
-    def _mark_modules_as_dirs(pymodules):
-        parent_names = PythonGenerator._modules_with_children([pm.name for pm in pymodules])
-
+    def _mark_modules_as_dirs(self, pymodules, parent_names):
         for pm in pymodules:
             if pm.name in parent_names:
                 pm.is_directory = True
+
+    def _write_modules(self, pymodules):
+        for pm in pymodules:
+            pm.write(self.out, self.templates)
+
+    def _write_init_files(self, parent_names, pymodules):
+        module_names = set(pm.name for pm in pymodules)
+        init_names = parent_names - module_names
+
+        for init_name in init_names:
+            parts = init_name.split('.')
+            parts.append('__init__.py')
+            initpath = os.path.join(self.out, os.path.join(*parts))
+
+            with open(initpath, 'wt') as f:
+                f.write(PythonModule.INIT_CONTENT)
 
     @staticmethod
     def _modules_with_children(module_names):
@@ -53,6 +67,7 @@ class PythonGenerator(generator.Generator):
 
 class PythonModule(object):
     '''Python module.'''
+    INIT_CONTENT = '# encoding: utf-8\n'
     template_name = 'module.template'
 
     def __init__(self, module, namespace=None):

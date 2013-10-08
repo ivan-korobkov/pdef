@@ -1,19 +1,25 @@
 # encoding: utf-8
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    import ez_setup
+    ez_setup.use_setuptools()
+    from setuptools import setup
+
 
 setup(
     name='pdef',
     version='1.0-dev',
-    url='http://github.com/ivan-korobkov/pdef',
-    description='Protocol definition language',
     license='Apache License 2.0',
+    description='Protocol definition language',
+    url='http://github.com/ivan-korobkov/pdef',
 
     author='Ivan Korobkov',
     author_email='ivan.korobkov@gmail.com',
 
-    package_dir={'': 'src'},
     packages=['pdef'],
-    py_modules=['pdef_rpc'],
+    package_dir={'': 'src'},
+    py_modules=['pdef.rpc'],
 
-    requires=['requests']
+    install_requires=['requests>=1.2']
 )

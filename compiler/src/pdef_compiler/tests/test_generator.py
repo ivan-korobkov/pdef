@@ -4,7 +4,7 @@ import unittest
 from pdef_compiler.generator import Namespace
 
 
-class TestNameMapper(unittest.TestCase):
+class TestNamespace(unittest.TestCase):
     def test_map(self):
         mapper = Namespace({'module.name': 'module_name'})
         print mapper.map('module.name')

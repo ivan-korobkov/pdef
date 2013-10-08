@@ -1,14 +1,11 @@
 # encoding: utf-8
-import importlib
 import logging
 import os
-import pkgutil
-
+import pkg_resources
 from jinja2 import Environment
 
 
-GENERATOR_MODULE_PREFIX = 'pdef_'
-GENERATOR_NAME = 'generate_source_code'
+GENERATORS_ENTRY_POINT = 'pdef_compiler.generators'
 
 
 class Generator(object):
@@ -16,30 +13,16 @@ class Generator(object):
         raise NotImplementedError
 
 
-def generators(module_prefix=GENERATOR_MODULE_PREFIX, func_name=GENERATOR_NAME):
+def generators(entry_point=GENERATORS_ENTRY_POINT):
     '''Dynamically load the source code generators, return a dict {name: generator}.'''
-    generators = {}
-
-    for module_finder, module_name, ispkg in pkgutil.iter_modules():
-        if not module_name.startswith(module_prefix):
-            continue
-
-        try:
-            module = importlib.import_module(module_name)
-        except Exception as e:
-            logging.error('Failed to import a possible source code generator module %r, e=%s'
-                          % (module_name, e))
-            continue
-
-        if not hasattr(module, func_name):
-            continue
-
-        name = module_name[len(module_prefix):]
-        generator = getattr(module, func_name)
-        generators[name] = generator
+    result = {}
+    for entry_point in pkg_resources.iter_entry_points(group=entry_point):
+        name = entry_point.name
+        generator = entry_point.load()
+        result[name] = generator
         logging.debug('Loaded a source code generator %r', name)
 
-    return generators
+    return result
 
 
 class Templates(object):

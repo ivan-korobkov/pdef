@@ -6,7 +6,7 @@ import urllib
 import urlparse
 
 import pdef.invocation
-from pdef_rpc import *
+from pdef.rpc import *
 
 
 GET = 'GET'

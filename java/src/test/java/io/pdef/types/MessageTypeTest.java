@@ -1,16 +1,18 @@
-package io.pdef.descriptors;
+package io.pdef.types;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Test;
+import io.pdef.test.inheritance.Base;
+import io.pdef.test.inheritance.MultiLevelSubtype;
+import io.pdef.test.inheritance.Subtype;
+import io.pdef.test.inheritance.Subtype2;
 import io.pdef.test.messages.SimpleMessage;
-import io.pdef.test.inheritance.*;
+import static org.junit.Assert.*;
+import org.junit.Test;
 
 import java.util.Map;
 
-import static org.junit.Assert.*;
-
-public class MessageDescriptorTest {
-	private MessageDescriptor descriptor = SimpleMessage.descriptor();
+public class MessageTypeTest {
+	private MessageType descriptor = SimpleMessage.classType();
 
 	@Test
 	public void testGetJavaClass() throws Exception {
@@ -28,24 +30,9 @@ public class MessageDescriptorTest {
 	}
 
 	@Test
-	public void testGetSubtype() throws Exception {
-		assertNull(descriptor.getSubtype(null));
-	}
-
-	@Test
-	public void testToBuilder() throws Exception {
+	public void testToNative() throws Exception {
 		SimpleMessage message = fixture();
-		SimpleMessage.Builder builder = (SimpleMessage.Builder) descriptor.toBuilder(message);
-
-		assertEquals(message.getABool(), builder.getABool());
-		assertEquals(message.getAnInt16(), builder.getAnInt16());
-		assertEquals(message.getAString(), builder.getAString());
-	}
-
-	@Test
-	public void testToObject() throws Exception {
-		SimpleMessage message = fixture();
-		Map<String, Object> map = descriptor.toObject(message);
+		Object map = descriptor.toNative(message);
 		Map<String, Object> expected = fixtureMap();
 
 		assertEquals(expected, map);
@@ -54,7 +41,7 @@ public class MessageDescriptorTest {
 	@Test
 	public void testParseObject() throws Exception {
 		Map<String, Object> map = fixtureMap();
-		SimpleMessage message = (SimpleMessage) descriptor.parseObject(map);
+		SimpleMessage message = (SimpleMessage) descriptor.parseNative(map);
 		SimpleMessage expected = fixture();
 
 		assertEquals(expected, message);
@@ -76,11 +63,10 @@ public class MessageDescriptorTest {
 	}
 
 	private SimpleMessage fixture() {
-		return SimpleMessage.builder()
+		return new SimpleMessage()
 				.setABool(Boolean.TRUE)
 				.setAnInt16((short) 123)
-				.setAString("hello")
-				.build();
+				.setAString("hello");
 	}
 
 	private Map<String, Object> fixtureMap() {
@@ -96,15 +82,15 @@ public class MessageDescriptorTest {
 
 	// Polymorphic message tests.
 
-	@Test
-	public void testSubtype_polymorphic() throws Exception {
-		MessageDescriptor descriptor = Base.descriptor();
-
-		assertTrue(descriptor.getSubtype(PolymorphicType.SUBTYPE) == Subtype.descriptor());
-		assertTrue(descriptor.getSubtype(PolymorphicType.SUBTYPE2) == Subtype2.descriptor());
-		assertTrue(descriptor.getSubtype(PolymorphicType.MULTILEVEL_SUBTYPE) == MultiLevelSubtype
-				.descriptor());
-	}
+//	@Test
+//	public void testSubtype_polymorphic() throws Exception {
+//		MessageType descriptor = Base.classType();
+//
+//		assertTrue(descriptor.getSubtype(PolymorphicType.SUBTYPE) == Subtype.descriptor());
+//		assertTrue(descriptor.getSubtype(PolymorphicType.SUBTYPE2) == Subtype2.descriptor());
+//		assertTrue(descriptor.getSubtype(PolymorphicType.MULTILEVEL_SUBTYPE) == MultiLevelSubtype
+//				.descriptor());
+//	}
 
 	@Test
 	public void testParseObject_polymorphic() throws Exception {
@@ -115,21 +101,16 @@ public class MessageDescriptorTest {
 		Map<String, Object> mlevelSubtypeMap = ImmutableMap.<String, Object>of("type",
 				"multilevel_subtype", "subfield", "hello", "mfield", "bye");
 
-		MessageDescriptor descriptor = Base.descriptor();
+		MessageType descriptor = Base.classType();
 
-		Subtype subtype = Subtype.builder()
+		Subtype subtype = new Subtype().setSubfield("hello");
+		Subtype2 subtype2 = new Subtype2().setSubfield2("hello");
+		MultiLevelSubtype mlevelSubtype = new MultiLevelSubtype()
 				.setSubfield("hello")
-				.build();
-		Subtype2 subtype2 = Subtype2.builder()
-				.setSubfield2("hello")
-				.build();
-		MultiLevelSubtype mlevelSubtype = MultiLevelSubtype.builder()
-				.setSubfield("hello")
-				.setMfield("bye")
-				.build();
+				.setMfield("bye");
 
-		assertEquals(subtype, descriptor.parseObject(subtypeMap));
-		assertEquals(subtype2, descriptor.parseObject(subtype2Map));
-		assertEquals(mlevelSubtype, descriptor.parseObject(mlevelSubtypeMap));
+		assertEquals(subtype, descriptor.parseNative(subtypeMap));
+		assertEquals(subtype2, descriptor.parseNative(subtype2Map));
+		assertEquals(mlevelSubtype, descriptor.parseNative(mlevelSubtypeMap));
 	}
 }

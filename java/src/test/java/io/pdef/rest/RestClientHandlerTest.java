@@ -7,10 +7,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Atomics;
 import io.pdef.Clients;
-import io.pdef.descriptors.ArgDescriptor;
-import io.pdef.descriptors.DataDescriptor;
-import io.pdef.descriptors.Descriptors;
-import io.pdef.descriptors.MessageDescriptor;
+import io.pdef.types.InterfaceMethodArg;
+import io.pdef.types.DataType;
+import io.pdef.types.Types;
+import io.pdef.types.MessageType;
 import io.pdef.invocation.Invocation;
 import io.pdef.invocation.InvocationResult;
 import io.pdef.rpc.*;
@@ -47,10 +47,7 @@ public class RestClientHandlerTest {
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()
-				.setContent(RpcResult.builder()
-						.setStatus(RpcStatus.OK)
-						.setData(3)
-						.build()
+				.setContent(new RpcResult().setStatus(RpcStatus.OK).setData(3)
 						.toJson());
 
 		when(sender.apply(request)).thenReturn(response);
@@ -159,9 +156,9 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializePositionalArg() throws Exception {
-		ArgDescriptor argd = ArgDescriptor.builder()
+		InterfaceMethodArg argd = InterfaceMethodArg.builder()
 				.setName("arg")
-				.setType(Suppliers.<DataDescriptor>ofInstance(Descriptors.string))
+				.setType(Suppliers.<DataType>ofInstance(Types.string))
 				.build();
 
 		String value = handler.serializePositionalArg(argd, "Привет");
@@ -170,9 +167,9 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializeQueryArg() throws Exception {
-		ArgDescriptor argd = ArgDescriptor.builder()
+		InterfaceMethodArg argd = InterfaceMethodArg.builder()
 				.setName("arg")
-				.setType(Suppliers.<DataDescriptor>ofInstance(Descriptors.int32))
+				.setType(Suppliers.<DataType>ofInstance(Types.int32))
 				.build();
 
 		Map<String, String> dst = Maps.newHashMap();
@@ -182,17 +179,16 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializeQueryArg_form() throws Exception {
-		ArgDescriptor argd = ArgDescriptor.builder()
+		InterfaceMethodArg argd = InterfaceMethodArg.builder()
 				.setName("arg")
-				.setType(SimpleForm.descriptor())
+				.setType(SimpleForm.classType())
 				.build();
 
 		Map<String, String> dst = Maps.newHashMap();
-		SimpleForm msg = SimpleForm.builder()
+		SimpleForm msg = new SimpleForm()
 				.setText("Привет, как дела?")
 				.setNumbers(ImmutableList.of(1, 2, 3))
-				.setFlag(false)
-				.build();
+				.setFlag(false);
 		handler.serializeQueryArg(argd, msg, dst);
 
 		assert dst.equals(ImmutableMap.of(
@@ -203,33 +199,32 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializeArgToString_primitive() throws Exception {
-		String result = handler.serializeArgToString(Descriptors.int32, 123);
+		String result = handler.serializeArgToString(Types.int32, 123);
 
 		assert result.equals("123");
 	}
 
 	@Test
 	public void testSerializeArgToString_primitiveNullToEmptyString() throws Exception {
-		String result = handler.serializeArgToString(Descriptors.int32, null);
+		String result = handler.serializeArgToString(Types.int32, null);
 
 		assert result.equals("");
 	}
 
 	@Test
 	public void testSerializeArgToString_string() throws Exception {
-		String result = handler.serializeArgToString(Descriptors.string, "привет+ромашки");
+		String result = handler.serializeArgToString(Types.string, "привет+ромашки");
 
 		assert result.equals("привет+ромашки");
 	}
 
 	@Test
 	public void testSerializeArgToString_message() throws Exception {
-		MessageDescriptor descriptor = SimpleMessage.descriptor();
-		SimpleMessage msg = SimpleMessage.builder()
+		MessageType descriptor = SimpleMessage.classType();
+		SimpleMessage msg = new SimpleMessage()
 				.setABool(true)
 				.setAnInt16((short) 256)
-				.setAString("hello")
-				.build();
+				.setAString("hello");
 
 		String result = handler.serializeArgToString(descriptor, msg);
 		assert result.equals("{\"aString\":\"hello\",\"aBool\":true,\"anInt16\":256}");
@@ -259,15 +254,13 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testParseResponse_ok() throws Exception {
-		SimpleMessage msg = SimpleMessage.builder()
+		SimpleMessage msg = new SimpleMessage()
 				.setAString("hello")
 				.setABool(true)
-				.setAnInt16((short) 1)
-				.build();
-		String content = RpcResult.builder()
+				.setAnInt16((short) 1);
+		String content = new RpcResult()
 				.setStatus(RpcStatus.OK)
 				.setData(msg.toMap())
-				.build()
 				.toJson();
 		RestResponse response = new RestResponse()
 				.setOkStatus()
@@ -284,13 +277,11 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testParseResponse_exc() throws Exception {
-		TestException exc = TestException.builder()
-				.setText("Application exception")
-				.build();
-		String content = RpcResult.builder()
+		TestException exc = new TestException()
+				.setText("Application exception");
+		String content = new RpcResult()
 				.setStatus(RpcStatus.EXCEPTION)
 				.setData(exc.toMap())
-				.build()
 				.toJson();
 		RestResponse response = new RestResponse()
 				.setOkStatus()
@@ -314,9 +305,8 @@ public class RestClientHandlerTest {
 				.setContent("Bad request");
 
 		RpcError error = handler.parseError(response);
-		RpcError expected = ClientError.builder()
-				.setText("Bad request")
-				.build();
+		RpcError expected = new ClientError()
+				.setText("Bad request");
 
 		assert error.equals(expected);
 	}
@@ -328,9 +318,8 @@ public class RestClientHandlerTest {
 				.setContent("Method not found");
 
 		RpcError error = handler.parseError(response);
-		RpcError expected = MethodNotFoundError.builder()
-				.setText("Method not found")
-				.build();
+		RpcError expected = new MethodNotFoundError()
+				.setText("Method not found");
 
 		assert error.equals(expected);
 	}
@@ -342,9 +331,8 @@ public class RestClientHandlerTest {
 				.setContent("Method not allowed");
 
 		RpcError error = handler.parseError(response);
-		RpcError expected = MethodNotAllowedError.builder()
-				.setText("Method not allowed")
-				.build();
+		RpcError expected = new MethodNotAllowedError()
+				.setText("Method not allowed");
 
 		assert error.equals(expected);
 	}
@@ -356,9 +344,8 @@ public class RestClientHandlerTest {
 				.setContent("Service unavailable");
 
 		RpcError error = handler.parseError(response);
-		RpcError expected = ServiceUnavailableError.builder()
-				.setText("Service unavailable")
-				.build();
+		RpcError expected = new ServiceUnavailableError()
+				.setText("Service unavailable");
 
 		assert error.equals(expected);
 	}
@@ -370,9 +357,8 @@ public class RestClientHandlerTest {
 				.setContent("Strange error");
 
 		RpcError error = handler.parseError(response);
-		RpcError expected = ServerError.builder()
-				.setText("Server error, status=12345, text=Strange error")
-				.build();
+		RpcError expected = new ServerError()
+				.setText("Server error, status=12345, text=Strange error");
 
 		assert error.equals(expected);
 	}

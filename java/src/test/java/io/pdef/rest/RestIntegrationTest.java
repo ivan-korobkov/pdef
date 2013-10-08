@@ -65,16 +65,14 @@ public class RestIntegrationTest {
 
 	@Test
 	public void test() throws Exception {
-		SimpleMessage message = SimpleMessage.builder()
+		SimpleMessage message = new SimpleMessage()
 				.setAString("Привет, как дела?")
 				.setABool(false)
-				.setAnInt16((short) 123)
-				.build();
-		SimpleForm form = SimpleForm.builder()
+				.setAnInt16((short) 123);
+		SimpleForm form = new SimpleForm()
 				.setText("Привет, как дела?")
 				.setNumbers(ImmutableList.of(1, 2, 3))
-				.setFlag(true)
-				.build();
+				.setFlag(true);
 
 		TestInterface client = client();
 
@@ -92,9 +90,8 @@ public class RestIntegrationTest {
 			client.excMethod();
 			fail();
 		} catch (TestException e) {
-			TestException exc = TestException.builder()
-					.setText("Application exception")
-					.build();
+			TestException exc = new TestException()
+					.setText("Application exception");
 			assert e.equals(exc);
 		}
 	}
@@ -159,9 +156,7 @@ public class RestIntegrationTest {
 
 		@Override
 		public void excMethod() {
-			throw TestException.builder()
-					.setText("Application exception")
-					.build();
+			throw new TestException().setText("Application exception");
 		}
 
 		@Override
@@ -179,11 +174,10 @@ public class RestIntegrationTest {
 
 				@Override
 				public SimpleMessage remoteMethod() {
-					return SimpleMessage.builder()
+					return new SimpleMessage()
 							.setAString("hello")
 							.setABool(true)
-							.setAnInt16((short) 123)
-							.build();
+							.setAnInt16((short) 123);
 				}
 
 				@Override

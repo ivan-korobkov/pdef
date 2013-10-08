@@ -1,57 +1,56 @@
-package io.pdef.descriptors;
+package io.pdef.types;
 
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import io.pdef.TypeEnum;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
-public class MethodDescriptor {
+public class InterfaceMethod {
 	private final String name;
-	private final Supplier<Descriptor> result;
+	private final Supplier<Type> result;
 	private final boolean index;
 	private final boolean post;
-	private final List<ArgDescriptor> args;
-	private final InterfaceDescriptor anInterface;
+	private final List<InterfaceMethodArg> args;
+	private final InterfaceType anInterface;
 	private final Method reflexMethod;
 
-	private MethodDescriptor(final Builder builder, final InterfaceDescriptor anInterface) {
+	private InterfaceMethod(final Builder builder, final InterfaceType anInterface) {
 		this.anInterface = checkNotNull(anInterface);
 		name = checkNotNull(builder.name);
 		result = checkNotNull(builder.result);
 		index = builder.index;
 		post = builder.post;
 
-		ImmutableList.Builder<ArgDescriptor> temp = ImmutableList.builder();
-		for (ArgDescriptor.Builder ab : builder.args) {
+		ImmutableList.Builder<InterfaceMethodArg> temp = ImmutableList.builder();
+		for (InterfaceMethodArg.Builder ab : builder.args) {
 			temp.add(ab.build(this));
 		}
 		args = temp.build();
 
-		reflexMethod = getReflexMethod(anInterface.getCls(), name);
+		reflexMethod = getReflexMethod(anInterface.getJavaClass(), name);
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public Descriptor getResult() {
+	public Type getResult() {
 		return result.get();
 	}
 
-	public MessageDescriptor getExc() {
+	public MessageType getExc() {
 		return anInterface.getExc();
 	}
 
-	public List<ArgDescriptor> getArgs() {
+	public List<InterfaceMethodArg> getArgs() {
 		return args;
 	}
 
-	public InterfaceDescriptor getInterface() {
+	public InterfaceType getInterface() {
 		return anInterface;
 	}
 
@@ -88,10 +87,10 @@ public class MethodDescriptor {
 
 	public static class Builder {
 		private String name;
-		private Supplier<Descriptor> result;
+		private Supplier<Type> result;
 		private boolean index;
 		private boolean post;
-		private final List<ArgDescriptor.Builder> args;
+		private final List<InterfaceMethodArg.Builder> args;
 
 		public Builder() {
 			args = Lists.newArrayList();
@@ -102,7 +101,7 @@ public class MethodDescriptor {
 			return this;
 		}
 
-		public Builder setResult(final Supplier<Descriptor> result) {
+		public Builder setResult(final Supplier<Type> result) {
 			this.result = result;
 			return this;
 		}
@@ -117,19 +116,19 @@ public class MethodDescriptor {
 			return this;
 		}
 
-		public Builder addArg(final String name, final Supplier<DataDescriptor> type) {
-			return addArg(ArgDescriptor.builder()
+		public Builder addArg(final String name, final Supplier<DataType> type) {
+			return addArg(InterfaceMethodArg.builder()
 					.setName(name)
 					.setType(type));
 		}
 
-		public Builder addArg(final ArgDescriptor.Builder arg) {
+		public Builder addArg(final InterfaceMethodArg.Builder arg) {
 			args.add(arg);
 			return this;
 		}
 
-		public MethodDescriptor build(final InterfaceDescriptor anInterface) {
-			return new MethodDescriptor(this, anInterface);
+		public InterfaceMethod build(final InterfaceType anInterface) {
+			return new InterfaceMethod(this, anInterface);
 		}
 	}
 

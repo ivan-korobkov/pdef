@@ -1,9 +1,10 @@
-package io.pdef.json;
+package io.pdef.internal;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -14,30 +15,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public class Json {
+public class InternalJson {
 	private static final JsonFactory FACTORY = new JsonFactory()
 			.enable(JsonParser.Feature.ALLOW_COMMENTS)
 			.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
 
-	private Json() {}
+	private InternalJson() {}
 
-	/** Parses a string and returns a primitive or a collection.
-	 * @throws JsonException if wrong json or any another exception. */
-	public static Object parse(final String s) throws JsonException {
+	/** Parses a string and returns a primitive or a collection. */
+	public static Object parse(final String s) throws IOException {
 		checkNotNull(s);
+		JsonParser parser = FACTORY.createParser(s);
 		try {
-			JsonParser parser = FACTORY.createParser(s);
-			try {
-				parser.nextToken();
-				return parseObject(parser);
-			} finally {
-				parser.close();
-			}
-		} catch (Exception e) {
-			if (e instanceof JsonException) throw (JsonException) e;
-			throw new JsonException(e);
+			parser.nextToken();
+			return parseObject(parser);
+		} finally {
+			parser.close();
 		}
 	}
 
@@ -54,13 +47,15 @@ public class Json {
 			case VALUE_NUMBER_FLOAT: return parser.getDoubleValue();
 			case START_ARRAY: return parseArray(parser);
 			case START_OBJECT: return parseMap(parser);
-			default: throw new JsonException("Bad json");
+			default: throw new IOException("Bad JSON string");
 		}
 	}
 
 	private static List<?> parseArray(final JsonParser parser) throws IOException {
 		JsonToken token = parser.getCurrentToken();
-		if (token != JsonToken.START_ARRAY) throw new IOException("Expected an array start");
+		if (token != JsonToken.START_ARRAY) {
+			throw new IOException("Expected an array start");
+		}
 
 		List<Object> list = Lists.newArrayList();
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
@@ -86,28 +81,21 @@ public class Json {
 		return map;
 	}
 
-	/** Serializes a primitive or a collection into a JSON string w/o indentation.
-	 * @throws JsonException if any exception. */
-	public static String serialize(final Object o) throws JsonException {
+	/** Serializes a primitive or a collection into a JSON string w/o indentation. */
+	public static String serialize(final Object o) throws IOException {
 		return serialize(o, true);
 	}
 
-	/** Serializes a primitive or a collection into a JSON string with an optional indentation.
-	 * @throws JsonException if any exception. */
-	public static String serialize(final Object o, boolean indent) {
-		try {
-			StringWriter out = new StringWriter();
-			JsonGenerator generator = FACTORY.createGenerator(out);
-			if (indent) generator.useDefaultPrettyPrinter();
+	/** Serializes a primitive or a collection into a JSON string with an optional indentation. */
+	public static String serialize(final Object o, boolean indent) throws IOException {
+		StringWriter out = new StringWriter();
+		JsonGenerator generator = FACTORY.createGenerator(out);
+		if (indent) generator.useDefaultPrettyPrinter();
 
-			writeObject(generator, o);
-			generator.flush();
+		writeObject(generator, o);
+		generator.flush();
 
-			return out.toString();
-		} catch (Exception e) {
-			if (e instanceof JsonException) throw (JsonException) e;
-			throw new JsonException(e);
-		}
+		return out.toString();
 	}
 
 	private static void writeObject(final JsonGenerator generator, final Object o)

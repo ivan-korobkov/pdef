@@ -109,14 +109,15 @@ class JavaMessage(JavaDefinition):
         self.is_form = msg.is_form
 
         self.base_or_root = self.base or \
-                            ('io.pdef.GeneratedException' if msg.is_exception else 'io.pdef.GeneratedMessage')
+            ('io.pdef.types.AbstractException' if msg.is_exception else
+             'io.pdef.types.AbstractMessage')
 
 
 class JavaField(object):
     def __init__(self, field, ref):
         self.name = field.name
         self.type = ref(field.type)
-        self.is_discriminator = field.is_discriminator
+        self.is_discriminator = "true" if field.is_discriminator else "false"
 
         self.get = 'get%s' % generators.upper_first(self.name)
         self.set = 'set%s' % generators.upper_first(self.name)
@@ -157,7 +158,7 @@ class JavaReference(object):
 
         name = 'java.util.List<%s>' % element
         default = 'com.google.common.collect.ImmutableList.<%s>of()' % element
-        descriptor = 'Descriptors.list(%s)' % element.descriptor
+        descriptor = 'Types.list(%s)' % element.descriptor
 
         return JavaReference(name, default=default, descriptor=descriptor, is_list=True)
 
@@ -167,7 +168,7 @@ class JavaReference(object):
 
         name = 'java.util.Set<%s>' % element
         default = 'com.google.common.collect.ImmutableSet.<%s>of()' % element
-        descriptor = 'Descriptors.set(%s)' % element.descriptor
+        descriptor = 'Types.set(%s)' % element.descriptor
 
         return JavaReference(name, default=default, descriptor=descriptor, is_set=True)
 
@@ -178,7 +179,7 @@ class JavaReference(object):
 
         name = 'java.util.Map<%s, %s>' % (key, value)
         default = 'com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key, value)
-        descriptor = 'Descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
+        descriptor = 'Types.map(%s, %s)' % (key.descriptor, value.descriptor)
 
         return JavaReference(name, default=default, descriptor=descriptor, is_map=True)
 
@@ -194,10 +195,13 @@ class JavaReference(object):
 
         if type0.is_interface:
             default = None
-            descriptor = '%s.DESCRIPTOR' % name
+            descriptor = '%s.TYPE' % name
+        elif type0.is_enum:
+            default = 'null'
+            descriptor = '%s.classType()' % name
         else:
-            default = '%s.instance()' % name
-            descriptor = '%s.descriptor()' % name
+            default = 'new %s()' % name
+            descriptor = '%s.classType()' % name
 
         return JavaReference(name, default=default, descriptor=descriptor)
 
@@ -217,15 +221,15 @@ class JavaReference(object):
 
 
 NATIVE_TYPES = {
-    TypeEnum.BOOL: JavaReference('Boolean', 'boolean', 'false', 'Descriptors.bool'),
-    TypeEnum.INT16: JavaReference('Short', 'short', '(short) 0', 'Descriptors.int16'),
-    TypeEnum.INT32: JavaReference('Integer', 'int', '0', 'Descriptors.int32'),
-    TypeEnum.INT64: JavaReference('Long', 'long', '0L', 'Descriptors.int64'),
-    TypeEnum.FLOAT: JavaReference('Float', 'float', '0f', 'Descriptors.float0'),
-    TypeEnum.DOUBLE: JavaReference('Double', 'double', '0.0', 'Descriptors.double0'),
-    TypeEnum.STRING: JavaReference('String', default='""', descriptor='Descriptors.string'),
-    TypeEnum.OBJECT: JavaReference('Object', descriptor='Descriptors.object'),
-    TypeEnum.VOID: JavaReference('void', 'void', descriptor='Descriptors.void0')
+    TypeEnum.BOOL: JavaReference('Boolean', 'boolean', 'false', 'Types.bool'),
+    TypeEnum.INT16: JavaReference('Short', 'short', '(short) 0', 'Types.int16'),
+    TypeEnum.INT32: JavaReference('Integer', 'int', '0', 'Types.int32'),
+    TypeEnum.INT64: JavaReference('Long', 'long', '0L', 'Types.int64'),
+    TypeEnum.FLOAT: JavaReference('Float', 'float', '0f', 'Types.float0'),
+    TypeEnum.DOUBLE: JavaReference('Double', 'double', '0.0', 'Types.double0'),
+    TypeEnum.STRING: JavaReference('String', default='""', descriptor='Types.string'),
+    TypeEnum.OBJECT: JavaReference('Object', descriptor='Types.object'),
+    TypeEnum.VOID: JavaReference('void', 'void', descriptor='Types.void0')
 }
 
 

@@ -3,16 +3,15 @@ package {{ package }};
 
 import com.google.common.base.Supplier;
 
-import io.pdef.descriptors.ArgDescriptor;
-import io.pdef.descriptors.DataDescriptor;
-import io.pdef.descriptors.Descriptor;
-import io.pdef.descriptors.Descriptors;
-import io.pdef.descriptors.InterfaceDescriptor;
-import io.pdef.descriptors.MethodDescriptor;
-import io.pdef.descriptors.MessageDescriptor;
+import io.pdef.types.DataType;
+import io.pdef.types.Type;
+import io.pdef.types.Types;
+import io.pdef.types.InterfaceType;
+import io.pdef.types.InterfaceMethod;
+import io.pdef.types.MessageType;
 
 {% macro render_method(method) %}
-            .addMethod(MethodDescriptor.builder()
+            .addMethod(InterfaceMethod.builder()
                     .setName("{{ method.name }}")
                     {% if method.is_index %}
                     .setIndex(true)
@@ -20,12 +19,12 @@ import io.pdef.descriptors.MessageDescriptor;
                     {% if method.is_post %}
                     .setPost(true)
                     {% endif %}
-                    .setResult(new Supplier<Descriptor>() {
-                        public Descriptor get() { return {{ method.result.descriptor }}; }
+                    .setResult(new Supplier<Type>() {
+                        public Type get() { return {{ method.result.descriptor }}; }
                     })
                     {% for arg in method.args %}
-                    .addArg("{{ arg.name }}", new Supplier<DataDescriptor>() {
-                        public DataDescriptor get () { return {{ arg.type.descriptor }}; }
+                    .addArg("{{ arg.name }}", new Supplier<DataType>() {
+                        public DataType get () { return {{ arg.type.descriptor }}; }
                     })
                     {% endfor %}
             )
@@ -51,16 +50,14 @@ import io.pdef.descriptors.MessageDescriptor;
         {%- endfor %});
 
 {% endfor %}
-    static InterfaceDescriptor DESCRIPTOR = InterfaceDescriptor.builder()
-            .setCls({{ name }}.class)
+    static InterfaceType TYPE = InterfaceType.builder()
+            .setJavaClass({{ name }}.class)
             {% if exc %}
-            .setExc(new Supplier<MessageDescriptor>() {
-                public MessageDescriptor get() { return {{ exc.descriptor }}; }
+            .setExc(new Supplier<MessageType>() {
+                public MessageType get() { return {{ exc.descriptor }}; }
             })
             {% endif %}
-            {% for method in declared_methods -%}
-            {{ render_method(method) }}
-            {% endfor %}
+            {% for method in declared_methods -%}{{ render_method(method) }}{% endfor %}
             .build();
 }
 

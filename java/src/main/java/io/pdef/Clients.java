@@ -3,7 +3,7 @@ package io.pdef;
 import com.google.common.base.Function;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
-import io.pdef.descriptors.InterfaceDescriptor;
+import io.pdef.types.InterfaceType;
 import io.pdef.invocation.Invocation;
 import io.pdef.invocation.InvocationProxy;
 import io.pdef.invocation.InvocationResult;
@@ -46,8 +46,8 @@ public class Clients {
 		checkNotNull(cls);
 		checkNotNull(invocationHandler);
 
-		InterfaceDescriptor descriptor = InterfaceDescriptor.findDescriptor(cls);
-		checkArgument(descriptor != null, "Cannot find an interface descriptor in " + cls);
+		InterfaceType descriptor = InterfaceType.findDescriptor(cls);
+		checkArgument(descriptor != null, "Cannot find an interface type in " + cls);
 
 		return InvocationProxy.create(cls, descriptor, invocationHandler);
 	}

@@ -3,8 +3,8 @@ package io.pdef.rest;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import io.pdef.descriptors.ArgDescriptor;
-import io.pdef.descriptors.Descriptors;
+import io.pdef.types.InterfaceMethodArg;
+import io.pdef.types.Types;
 import io.pdef.invocation.Invocation;
 import io.pdef.invocation.InvocationResult;
 import io.pdef.rpc.*;
@@ -44,10 +44,9 @@ public class RestServerHandlerTest {
 		RestRequest request = new RestRequest()
 				.setPath("/remoteMethod")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
-		String content = RpcResult.builder()
+		String content = new RpcResult()
 				.setStatus(RpcStatus.OK)
 				.setData(3)
-				.build()
 				.toJson();
 
 		RestResponse response = handler.handle(request);
@@ -58,9 +57,8 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testHandle_exc() throws Exception {
-		final TestException exc = TestException.builder()
-				.setText("Hello, world")
-				.build();
+		final TestException exc = new TestException()
+				.setText("Hello, world");
 		handler = new RestServerHandler(TestInterface.class,
 				new Function<Invocation, InvocationResult>() {
 					@Override
@@ -72,10 +70,9 @@ public class RestServerHandlerTest {
 		RestRequest request = new RestRequest()
 				.setPath("/remoteMethod")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
-		String content = RpcResult.builder()
+		String content = new RpcResult()
 				.setStatus(RpcStatus.EXCEPTION)
 				.setData(exc.toMap())
-				.build()
 				.toJson();
 
 		RestResponse response = handler.handle(request);
@@ -198,9 +195,9 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParsePositionalArg() throws Exception {
-		ArgDescriptor argd = ArgDescriptor.builder()
+		InterfaceMethodArg argd = InterfaceMethodArg.builder()
 				.setName("arg")
-				.setType(Descriptors.string)
+				.setType(Types.string)
 				.build();
 		String part = "%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82";
 
@@ -210,15 +207,14 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParseQueryArg() throws Exception {
-		ArgDescriptor argd = ArgDescriptor.builder()
+		InterfaceMethodArg argd = InterfaceMethodArg.builder()
 				.setName("arg")
-				.setType(SimpleMessage.descriptor())
+				.setType(SimpleMessage.classType())
 				.build();
-		SimpleMessage expected = SimpleMessage.builder()
+		SimpleMessage expected = new SimpleMessage()
 				.setAString("Привет")
 				.setABool(true)
-				.setAnInt16((short) 123)
-				.build();
+				.setAnInt16((short) 123);
 		Map<String, String> query = ImmutableMap.of("arg", expected.toJson());
 
 		Object result = handler.parseQueryArg(argd, query);
@@ -227,16 +223,15 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParseQueryArg_form() throws Exception {
-		ArgDescriptor argd = ArgDescriptor.builder()
+		InterfaceMethodArg argd = InterfaceMethodArg.builder()
 				.setName("arg")
-				.setType(SimpleForm.descriptor())
+				.setType(SimpleForm.classType())
 				.build();
 
-		SimpleForm expected = SimpleForm.builder()
+		SimpleForm expected = new SimpleForm()
 				.setText("Привет, как дела?")
 				.setNumbers(ImmutableList.of(1, 2, 3))
-				.setFlag(false)
-				.build();
+				.setFlag(false);
 		Map<String, String> src = ImmutableMap.of(
 				"text", "Привет, как дела?",
 				"numbers", "[1,2,3]",
@@ -247,33 +242,32 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParseArgFromString_primitive() throws Exception {
-		Integer value = (Integer) handler.parseArgFromString(Descriptors.int32, "123");
+		Integer value = (Integer) handler.parseArgFromString(Types.int32, "123");
 		assert value == 123;
 	}
 
 	@Test
 	public void testParseArgFromString_primitiveEmptyStringToNull() throws Exception {
-		Integer value = (Integer) handler.parseArgFromString(Descriptors.int32, "");
+		Integer value = (Integer) handler.parseArgFromString(Types.int32, "");
 		assert value == null;
 	}
 
 	@Test
 	public void testParseArgFromString_string() throws Exception {
-		String value = (String) handler.parseArgFromString(Descriptors.string, "Привет");
+		String value = (String) handler.parseArgFromString(Types.string, "Привет");
 		assert value.equals("Привет");
 	}
 
 	@Test
 	public void testParseArgFromString_message() throws Exception {
-		SimpleMessage msg = SimpleMessage.builder()
+		SimpleMessage msg = new SimpleMessage()
 				.setAString("Привет")
 				.setABool(true)
-				.setAnInt16((short) 123)
-				.build();
+				.setAnInt16((short) 123);
 
 		String json = msg.toJson();
 		SimpleMessage result = (SimpleMessage) handler
-				.parseArgFromString(msg.descriptorForType(), json);
+				.parseArgFromString(msg.classType(), json);
 		assert result.equals(msg);
 	}
 
@@ -283,17 +277,15 @@ public class RestServerHandlerTest {
 	public void testOkResponse() throws Exception {
 		RestRequest request = new RestRequest().setPath("/messageMethod");
 		Invocation invocation = handler.parseRequest(request);
-		SimpleMessage msg = SimpleMessage.builder()
+		SimpleMessage msg = new SimpleMessage()
 				.setAString("hello")
 				.setABool(true)
-				.setAnInt16((short) 123)
-				.build();
+				.setAnInt16((short) 123);
 
 		InvocationResult result = InvocationResult.ok(msg);
-		String content = RpcResult.builder()
+		String content = new RpcResult()
 				.setStatus(RpcStatus.OK)
 				.setData(msg.toMap())
-				.build()
 				.toJson();
 
 		RestResponse response = handler.okResponse(result, invocation);
@@ -306,15 +298,13 @@ public class RestServerHandlerTest {
 	public void testOkResponse_exception() throws Exception {
 		RestRequest request = new RestRequest().setPath("/");
 		Invocation invocation = handler.parseRequest(request);
-		TestException exc = TestException.builder()
-				.setText("hello, world")
-				.build();
+		TestException exc = new TestException()
+				.setText("hello, world");
 
 		InvocationResult result = InvocationResult.exc(exc);
-		String content = RpcResult.builder()
+		String content = new RpcResult()
 				.setStatus(RpcStatus.EXCEPTION)
 				.setData(exc.toMap())
-				.build()
 				.toJson();
 
 		RestResponse response = handler.okResponse(result, invocation);
@@ -327,9 +317,8 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testErrorResponse_wrongMethodArgs() throws Exception {
-		WrongMethodArgsError error = WrongMethodArgsError.builder()
-				.setText("Wrong method args")
-				.build();
+		WrongMethodArgsError error = new WrongMethodArgsError()
+				.setText("Wrong method args");
 
 		RestResponse response = handler.errorResponse(error);
 		assert response.getStatus() == HttpURLConnection.HTTP_BAD_REQUEST;
@@ -339,9 +328,8 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testErrorResponse_methodNotFound() throws Exception {
-		MethodNotFoundError error = MethodNotFoundError.builder()
-				.setText("Method not found")
-				.build();
+		MethodNotFoundError error = new MethodNotFoundError()
+				.setText("Method not found");
 
 		RestResponse response = handler.errorResponse(error);
 		assert response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND;
@@ -351,9 +339,8 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testErrorResponse_methodNotAllowed() throws Exception {
-		MethodNotAllowedError error = MethodNotAllowedError.builder()
-				.setText("Method not allowed")
-				.build();
+		MethodNotAllowedError error = new MethodNotAllowedError()
+				.setText("Method not allowed");
 
 		RestResponse response = handler.errorResponse(error);
 		assert response.getStatus() == HttpURLConnection.HTTP_BAD_METHOD;
@@ -363,9 +350,8 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testErrorResponse_clientError() throws Exception {
-		ClientError error = ClientError.builder()
-				.setText("Bad request")
-				.build();
+		ClientError error = new ClientError()
+				.setText("Bad request");
 
 		RestResponse response = handler.errorResponse(error);
 		assert response.getStatus() == HttpURLConnection.HTTP_BAD_REQUEST;
@@ -375,9 +361,8 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testErrorResponse_serviceUnavailable() throws Exception {
-		ServiceUnavailableError error = ServiceUnavailableError.builder()
-				.setText("Service unavailable")
-				.build();
+		ServiceUnavailableError error = new ServiceUnavailableError()
+				.setText("Service unavailable");
 
 		RestResponse response = handler.errorResponse(error);
 		assert response.getStatus() == HttpURLConnection.HTTP_UNAVAILABLE;
@@ -387,9 +372,7 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testErrorResponse_serverError() throws Exception {
-		ServerError error = ServerError.builder()
-				.setText("Internal server error")
-				.build();
+		ServerError error = new ServerError().setText("Internal server error");
 
 		RestResponse response = handler.errorResponse(error);
 		assert response.getStatus() == HttpURLConnection.HTTP_INTERNAL_ERROR;

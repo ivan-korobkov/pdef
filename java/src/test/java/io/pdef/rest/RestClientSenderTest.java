@@ -68,11 +68,11 @@ public class RestClientSenderTest {
 
 	@Test
 	public void testParseHttpResponse() throws Exception {
-		String content = RpcResult.builder()
+		String content = new RpcResult()
 				.setStatus(RpcStatus.OK)
 				.setData("привет")
-				.build()
 				.toJson();
+
 		HttpResponse resp = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 0), 200, "OK");
 		resp.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON));
 

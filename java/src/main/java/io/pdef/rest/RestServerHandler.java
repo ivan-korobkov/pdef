@@ -5,8 +5,8 @@ import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import io.pdef.TypeEnum;
-import io.pdef.descriptors.*;
+import io.pdef.types.TypeEnum;
+import io.pdef.types.*;
 import io.pdef.invocation.Invocation;
 import io.pdef.invocation.InvocationResult;
 import io.pdef.rpc.*;
@@ -18,16 +18,16 @@ import java.util.List;
 import java.util.Map;
 
 public class RestServerHandler implements Function<RestRequest, RestResponse> {
-	private final InterfaceDescriptor descriptor;
+	private final InterfaceType descriptor;
 	private final Function<Invocation, InvocationResult> invoker;
 
 	/** Creates a REST server handler. */
 	public RestServerHandler(final Class<?> cls,
 			final Function<Invocation, InvocationResult> invoker) {
-		this.descriptor = InterfaceDescriptor.findDescriptor(cls);
+		this.descriptor = InterfaceType.findDescriptor(cls);
 		this.invoker = checkNotNull(invoker);
 
-		checkArgument(descriptor != null, "Cannot find an interface descriptor in %s", cls);
+		checkArgument(descriptor != null, "Cannot find an interface type in %s", cls);
 	}
 
 	@Override
@@ -68,17 +68,15 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 
 		// Parse the parts as method invocations.
 		Invocation invocation = Invocation.root();
-		InterfaceDescriptor descriptor = this.descriptor;
+		InterfaceType descriptor = this.descriptor;
 		while (!parts.isEmpty()) {
 			String part = parts.removeFirst();
 
 			// Find a method by name or get an index method.
-			MethodDescriptor method = descriptor.findMethod(part);
+			InterfaceMethod method = descriptor.findMethod(part);
 			if (method == null) method = descriptor.getIndexMethod();
 			if (method == null) {
-				throw MethodNotFoundError.builder()
-						.setText("Method not found")
-						.build();
+				throw new MethodNotFoundError().setText("Method not found");
 			}
 
 			// If an index method, prepend the part back,
@@ -92,28 +90,24 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 			if (method.isPost()) {
 				// Parse arguments from the post body.
 				if (!request.isPost()) {
-					throw MethodNotAllowedError.builder()
-							.setText("Method not allowed, POST required")
-							.build();
+					throw new MethodNotAllowedError().setText("Method not allowed, POST required");
 				}
 
-				for (ArgDescriptor argd : method.getArgs()) {
+				for (InterfaceMethodArg argd : method.getArgs()) {
 					args.add(parseQueryArg(argd, post));
 				}
 
 			} else if (method.isRemote()) {
 				// Parse arguments from the query string.
-				for (ArgDescriptor argd : method.getArgs()) {
+				for (InterfaceMethodArg argd : method.getArgs()) {
 					args.add(parseQueryArg(argd, query));
 				}
 
 			} else {
 				// Parse arguments as positional params.
-				for (ArgDescriptor argd : method.getArgs()) {
+				for (InterfaceMethodArg argd : method.getArgs()) {
 					if (parts.isEmpty()) {
-						throw WrongMethodArgsError.builder()
-								.setText("Wrong number of method args")
-								.build();
+						throw new WrongMethodArgsError().setText("Wrong number of method args");
 					}
 
 					args.add(parsePositionalArg(argd, parts.removeFirst()));
@@ -126,16 +120,14 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 			// Parse a next method or return an invocation chain.
 			if (!method.isRemote()) {
 				// Get the next interface and proceed parsing the parts.
-				descriptor = (InterfaceDescriptor) method.getResult();
+				descriptor = (InterfaceType) method.getResult();
 				continue;
 			}
 
 			// It's a remote method. Stop parsing the parts.
 			if (!parts.isEmpty()) {
 				// Cannot have any more parts here, bad url.
-				throw MethodNotFoundError.builder()
-						.setText("Method not found")
-						.build();
+				throw new MethodNotFoundError().setText("Method not found");
 			}
 
 			return invocation;
@@ -143,21 +135,19 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 
 		// The parts are empty.
 		// No method invocations.
-		throw MethodNotFoundError.builder()
-				.setText("Method not found")
-				.build();
+		throw new MethodNotFoundError().setText("Method not found");
 	}
 
 	@VisibleForTesting
-	Object parsePositionalArg(final ArgDescriptor argd, final String s) {
+	Object parsePositionalArg(final InterfaceMethodArg argd, final String s) {
 		String value = Rest.urldecode(s);
 		return parseArgFromString(argd.getType(), value);
 	}
 
 	@VisibleForTesting
-	Object parseQueryArg(final ArgDescriptor argd, final Map<String, String> src) {
-		DataDescriptor d = argd.getType();
-		MessageDescriptor md = d.asMessageDescriptor();
+	Object parseQueryArg(final InterfaceMethodArg argd, final Map<String, String> src) {
+		DataType d = argd.getType();
+		MessageType md = (MessageType) d;
 		boolean isForm = md != null && md.isForm();
 
 		if (!isForm) {
@@ -172,7 +162,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 
 		// Parse as expanded form fields.
 		Map<String, Object> fields = Maps.newHashMap();
-		for (FieldDescriptor fd : md.getFields()) {
+		for (MessageField fd : md.getFields()) {
 			String fvalue = src.get(fd.getName());
 			if (fvalue == null) {
 				continue;
@@ -181,11 +171,11 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 			fields.put(fd.getName(), parseArgFromString(fd.getType(), fvalue));
 		}
 
-		return md.parseObject(fields);
+		return md.parseNative(fields);
 	}
 
 	@VisibleForTesting
-	Object parseArgFromString(final DataDescriptor descriptor, final String value) {
+	Object parseArgFromString(final DataType descriptor, final String value) {
 		TypeEnum type = descriptor.getType();
 
 		if (value == null) {
@@ -196,11 +186,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 			return type == TypeEnum.STRING ? "" : null;
 		}
 
-		if (type.isPrimitive()) {
-			return ((PrimitiveDescriptor) descriptor).parseString(value);
-		}
-
-		return descriptor.parseJson(value);
+		return descriptor.parseString(value);
 	}
 
 	@VisibleForTesting
@@ -210,25 +196,25 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 
 	@VisibleForTesting
 	RestResponse okResponse(final InvocationResult result, final Invocation invocation) {
-		RpcResult.Builder rpc = RpcResult.builder();
+		RpcResult rpc = new RpcResult();
 
 		Object data = result.getData();
 		if (result.isOk()) {
 			// It's a successful method result.
-			DataDescriptor d = (DataDescriptor) invocation.getResult();
+			DataType d = (DataType) invocation.getResult();
 
 			rpc.setStatus(RpcStatus.OK);
-			rpc.setData(d.toObject(data));
+			rpc.setData(d.toNative(data));
 		} else {
 			// It's an expected application exception.
-			DataDescriptor d = invocation.getExc();
+			DataType d = invocation.getExc();
 			assert d != null;
 
 			rpc.setStatus(RpcStatus.EXCEPTION);
-			rpc.setData(d.toObject(data));
+			rpc.setData(d.toNative(data));
 		}
 
-		String content = rpc.build().toJson();
+		String content = rpc.toJson();
 		return new RestResponse()
 				.setOkStatus()
 				.setContent(content)

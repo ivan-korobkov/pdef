@@ -4,11 +4,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Strings;
-import io.pdef.TypeEnum;
-import io.pdef.descriptors.*;
 import io.pdef.invocation.Invocation;
 import io.pdef.invocation.InvocationResult;
 import io.pdef.rpc.*;
+import io.pdef.types.*;
 
 import java.net.HttpURLConnection;
 import java.util.List;
@@ -61,14 +60,14 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 	/** Adds a single invocation to a rest request. */
 	@VisibleForTesting
 	void serializeInvocation(final RestRequest request, final Invocation invocation) {
-		MethodDescriptor method = invocation.getMethod();
+		InterfaceMethod method = invocation.getMethod();
 		request.appendPath("/");
 		if (!method.isIndex()) {
 			request.appendPath(Rest.urlencode(method.getName()));
 		}
 
 		Object[] args = invocation.getArgs();
-		List<ArgDescriptor> argds = invocation.getMethod().getArgs();
+		List<InterfaceMethodArg> argds = invocation.getMethod().getArgs();
 		assert args.length == argds.size();  // Must be checked in Invocation constructor.
 
 		if (method.isPost()) {
@@ -76,7 +75,7 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 			// Post methods are remote.
 			for (int i = 0; i < args.length; i++) {
 				Object arg = args[i];
-				ArgDescriptor argd = argds.get(i);
+				InterfaceMethodArg argd = argds.get(i);
 
 				serializeQueryArg(argd, arg, request.getPost());
 			}
@@ -85,7 +84,7 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 			// Add arguments as query params.
 			for (int i = 0; i < args.length; i++) {
 				Object arg = args[i];
-				ArgDescriptor argd = argds.get(i);
+				InterfaceMethodArg argd = argds.get(i);
 
 				serializeQueryArg(argd, arg, request.getQuery());
 			}
@@ -94,7 +93,7 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 			// Positionally prepend all arguments to the path;
 			for (int i = 0; i < args.length; i++) {
 				Object arg = args[i];
-				ArgDescriptor argd = argds.get(i);
+				InterfaceMethodArg argd = argds.get(i);
 
 				request.appendPath("/");
 				request.appendPath(serializePositionalArg(argd, arg));
@@ -104,21 +103,21 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 
 	/** Serializes a positional arg and urlencodes it. */
 	@VisibleForTesting
-	String serializePositionalArg(final ArgDescriptor argd, final Object arg) {
+	String serializePositionalArg(final InterfaceMethodArg argd, final Object arg) {
 		String serialized = serializeArgToString(argd.getType(), arg);
 		return Rest.urlencode(serialized);
 	}
 
 	/** Serializes a query/post argument and puts it into a dst map. */
 	@VisibleForTesting
-	void serializeQueryArg(final ArgDescriptor argd, final Object arg,
+	void serializeQueryArg(final InterfaceMethodArg argd, final Object arg,
 			final Map<String, String> dst) {
 		if (arg == null) {
 			return;
 		}
 
-		DataDescriptor d = argd.getType();
-		MessageDescriptor md = d.asMessageDescriptor();
+		DataType d = argd.getType();
+		MessageType md = (MessageType) d;
 		boolean isForm = md != null && md.isForm();
 
 		if (!isForm) {
@@ -129,7 +128,7 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 		}
 
 		// It's a form, expand its fields into distinct arguments.
-		for (FieldDescriptor fd : md.getFields()) {
+		for (MessageField fd : md.getFields()) {
 			Object fvalue = fd.get(arg);
 			if (fvalue == null) {
 				continue;
@@ -142,21 +141,12 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 
 	/** Serializes primitives and enums to strings and other types to json. */
 	@VisibleForTesting
-	String serializeArgToString(final DataDescriptor descriptor, final Object arg) {
+	String serializeArgToString(final DataType descriptor, final Object arg) {
 		if (arg == null) {
 			return "";
 		}
 
-		TypeEnum type = descriptor.getType();
-		if (type.isPrimitive()) {
-			return ((PrimitiveDescriptor) descriptor).toString(arg);
-		}
-
-		if (type == TypeEnum.ENUM) {
-			return ((EnumDescriptor) descriptor).toString(arg);
-		}
-
-		return descriptor.toJson(arg, false);
+		return descriptor.toString(arg);
 	}
 
 	/** Sends a rest request and returns a rest response. */
@@ -178,30 +168,26 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 
 		if (status == RpcStatus.OK) {
 			// It's a successful result.
-			// Parse it using the invocation method result descriptor.
-			DataDescriptor d = (DataDescriptor) invocation.getResult();
-			Object r = d.parseObject(result);
+			// Parse it using the invocation method result type.
+			DataType d = (DataType) invocation.getResult();
+			Object r = d.parseNative(result);
 			return InvocationResult.ok(r);
 
 		} else if (status == RpcStatus.EXCEPTION) {
 			// It's an expected application exception.
-			// Parse it using the invocation exception descriptor.
+			// Parse it using the invocation exception type.
 
-			MessageDescriptor d = invocation.getExc();
+			MessageType d = invocation.getExc();
 			if (d == null) {
-				throw ClientError.builder()
-						.setText("Unsupported application exception")
-						.build();
+				throw new ClientError().setText("Unsupported application exception");
 			}
 
 			// All application exceptions are runtime.
-			RuntimeException r = (RuntimeException) d.parseObject(result);
+			RuntimeException r = (RuntimeException) d.parseNative(result);
 			return InvocationResult.exc(r);
 		}
 
-		throw ClientError.builder()
-				.setText("Unsupported rpc response status=" + status)
-				.build();
+		throw new ClientError().setText("Unsupported rpc response status=" + status);
 	}
 
 	/** Parses an rpc error from a rest response via its status. */
@@ -218,35 +204,24 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 		// Map status to exception classes.
 		switch (status) {
 			case HttpURLConnection.HTTP_BAD_REQUEST:	// 400
-				return ClientError.builder()
-						.setText(text)
-						.build();
+				return new ClientError().setText(text);
 
 			case HttpURLConnection.HTTP_NOT_FOUND:		// 404
-				return MethodNotFoundError.builder()
-						.setText(text)
-						.build();
+				return new MethodNotFoundError().setText(text);
 
 			case HttpURLConnection.HTTP_BAD_METHOD:		// 405
-				return MethodNotAllowedError.builder()
-						.setText(text)
-						.build();
+				return new MethodNotAllowedError().setText(text);
 
 			case HttpURLConnection.HTTP_BAD_GATEWAY: 	// 502
 			case HttpURLConnection.HTTP_UNAVAILABLE:	// 503
-				return ServiceUnavailableError.builder()
-						.setText(text)
-						.build();
+				return new ServiceUnavailableError().setText(text);
 
 			case HttpURLConnection.HTTP_INTERNAL_ERROR:	// 500
-				return ServerError.builder()
-						.setText(text)
-						.build();
+				return new ServerError().setText(text);
 
 			default:
-				return ServerError.builder()
-						.setText("Server error, status=" + status + ", text=" + text)
-						.build();
+				return new ServerError()
+						.setText("Server error, status=" + status + ", text=" + text);
 		}
 	}
 }

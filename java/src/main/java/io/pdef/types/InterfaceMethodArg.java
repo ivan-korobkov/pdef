@@ -1,16 +1,16 @@
-package io.pdef.descriptors;
+package io.pdef.types;
 
 import com.google.common.annotations.VisibleForTesting;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 
-public class ArgDescriptor {
+public class InterfaceMethodArg {
 	private final String name;
-	private final Supplier<DataDescriptor> type;
-	private final MethodDescriptor method;
+	private final Supplier<DataType> type;
+	private final InterfaceMethod method;
 
-	private ArgDescriptor(final Builder builder, final MethodDescriptor method) {
+	private InterfaceMethodArg(final Builder builder, final InterfaceMethod method) {
 		this.method = method;
 		name = checkNotNull(builder.name);
 		type = checkNotNull(builder.type);
@@ -20,11 +20,11 @@ public class ArgDescriptor {
 		return name;
 	}
 
-	public DataDescriptor getType() {
+	public DataType getType() {
 		return type.get();
 	}
 
-	public MethodDescriptor getMethod() {
+	public InterfaceMethod getMethod() {
 		return method;
 	}
 
@@ -34,7 +34,7 @@ public class ArgDescriptor {
 
 	public static class Builder {
 		private String name;
-		private Supplier<DataDescriptor> type;
+		private Supplier<DataType> type;
 
 		private Builder() {}
 
@@ -43,23 +43,23 @@ public class ArgDescriptor {
 			return this;
 		}
 
-		public Builder setType(final Supplier<DataDescriptor> type) {
+		public Builder setType(final Supplier<DataType> type) {
 			this.type = type;
 			return this;
 		}
 
 		@VisibleForTesting
-		public Builder setType(final DataDescriptor type) {
+		public Builder setType(final DataType type) {
 			return setType(Suppliers.ofInstance(checkNotNull(type)));
 		}
 
-		public ArgDescriptor build(final MethodDescriptor method) {
-			return new ArgDescriptor(this, method);
+		public InterfaceMethodArg build(final InterfaceMethod method) {
+			return new InterfaceMethodArg(this, method);
 		}
 
 		@VisibleForTesting
-		public ArgDescriptor build() {
-			return new ArgDescriptor(this, null);
+		public InterfaceMethodArg build() {
+			return new InterfaceMethodArg(this, null);
 		}
 	}
 }

@@ -1,16 +1,15 @@
-package io.pdef;
+package io.pdef.types;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.junit.Test;
 import io.pdef.test.messages.ComplexMessage;
 import io.pdef.test.messages.TestEnum;
-
-import java.util.Map;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import org.junit.Test;
+
+import java.util.Map;
 
 public class MessageTest {
 	@Test
@@ -43,10 +42,10 @@ public class MessageTest {
 	}
 
 	private ComplexMessage createComplexMessage() {
-		return ComplexMessage.builder()
+		return new ComplexMessage()
 				.setAnEnum(TestEnum.THREE)
 				.setABool(true)
-				.setAnInt16((short)16)
+				.setAnInt16((short) 16)
 				.setAnInt32(32)
 				.setAnInt64(64L)
 				.setAFloat(1f)
@@ -56,11 +55,10 @@ public class MessageTest {
 				.setASet(ImmutableSet.of(1, 2))
 				.setAMap(ImmutableMap.<Integer, Float>of(1, 1.5f))
 				.setAMessage(null)
-				.setAnObject("object")
-				.build();
+				.setAnObject("object");
 	}
 
-	private ImmutableMap<String, Object> createComplexMessageMap() {
+	private Map<String, Object> createComplexMessageMap() {
 		return ImmutableMap.<String, Object>builder()
 				.put("anEnum", "three")
 				.put("aBool", true)

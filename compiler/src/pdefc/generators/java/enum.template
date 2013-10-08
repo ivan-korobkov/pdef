@@ -1,37 +1,29 @@
 // {{ generated_by }}
 package {{package}};
 
-import io.pdef.descriptors.Descriptor;
-import io.pdef.descriptors.EnumDescriptor;
+import io.pdef.types.Type;
+import io.pdef.types.EnumType;
 
 {% if doc %}
 /** {{ doc }} */
 {% endif %}
-public enum {{name}} {
+public enum {{ name }} {
 {{ "    " }}{% for value in values -%}
     {{ value }}{% if not loop.last and loop.length > 1 %}, {% endif %}
     {%- endfor %};
 
     public static {{ name }} parseString(final String s) {
-        return ({{ name }}) descriptor().parseString(s);
+        return ({{ name }}) classType().parseString(s);
     }
 
     public static {{ name }} parseJson(final String s) {
-        return ({{ name }}) descriptor().parseJson(s);
+        return ({{ name }}) classType().parseJson(s);
     }
 
-    public static {{ name }} instance() {
-        return {{ values[0] }};
+    public static EnumType classType() {
+        return TYPE;
     }
 
-    public static EnumDescriptor descriptor() {
-        return DESCRIPTOR;
-    }
-
-    private static final EnumDescriptor DESCRIPTOR = EnumDescriptor.builder()
-            {% for value in values %}
-            .addValue({{ value }})
-            {% endfor %}
-            .build();
+    private static final EnumType TYPE = new EnumType({{ name }}.class);
 }
 

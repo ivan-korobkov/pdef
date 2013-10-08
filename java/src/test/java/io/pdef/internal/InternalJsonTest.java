@@ -1,26 +1,26 @@
-package io.pdef.json;
+package io.pdef.internal;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-
-public class JsonTest {
+public class InternalJsonTest {
 	@Test
 	public void testParse_map() throws Exception {
 		String s = "{\"hello\": \"world\", \"float\": 1.23, \"int\": 123}";
-		Object result = Json.parse(s);
+		Object result = InternalJson.parse(s);
 		assertEquals(ImmutableMap.of("hello", "world", "float", 1.23d, "int", 123L), result);
 	}
 
 	@Test
 	public void testParse_array() throws Exception {
 		String s = "[123, 456, 5.5, \"hello\"]";
-		Object result = Json.parse(s);
+		Object result = InternalJson.parse(s);
 		assertEquals(ImmutableList.of(123L, 456L, 5.5d, "hello"), result);
 	}
 
@@ -36,7 +36,7 @@ public class JsonTest {
 				+ "    \"object\": {\"emptyArray\": []},\n"
 				+ "    \"emptyObject\": {}\n"
 				+ "}]";
-		Object result = Json.parse(s);
+		Object result = InternalJson.parse(s);
 		Map<String, Object> map = Maps.newLinkedHashMap();
 		map.put("null", null);
 		map.put("true", true);
@@ -49,21 +49,21 @@ public class JsonTest {
 		assertEquals(ImmutableList.of(map), result);
 	}
 
-	@Test(expected = JsonException.class)
+	@Test(expected = IOException.class)
 	public void testParse_wrongJson() throws Exception {
-		Json.parse("hello, world");
+		InternalJson.parse("hello, world");
 	}
 
 	@Test
 	public void testSerialize_map() throws Exception {
 		Map<?, ?> map = ImmutableMap.of("hello", "world", "float", 1.23d, "int", 123L);
-		String s = Json.serialize(map, false);
+		String s = InternalJson.serialize(map, false);
 		assertEquals("{\"hello\":\"world\",\"float\":1.23,\"int\":123}", s);
 	}
 
 	@Test
 	public void testSerialize_array() throws Exception {
-		Object result = Json.serialize(ImmutableList.of(123L, 456L, 5.5d, "hello"), false);
+		Object result = InternalJson.serialize(ImmutableList.of(123L, 456L, 5.5d, "hello"), false);
 		assertEquals("[123,456,5.5,\"hello\"]", result);
 	}
 
@@ -79,22 +79,22 @@ public class JsonTest {
 		map.put("object", ImmutableMap.of("emptyArray", ImmutableList.of()));
 		map.put("emptyObject", ImmutableMap.of());
 
-		String s = Json.serialize(ImmutableList.of(map), false);
+		String s = InternalJson.serialize(ImmutableList.of(map), false);
 		String expected = "[{\"null\":null,\"true\":true,\"false\":false,\"string\":\"hello\","
 				+ "\"int\":123,\"float\":0.5,\"object\":{\"emptyArray\":[]},\"emptyObject\":{}}]";
 		assertEquals(expected, s);
 	}
 
-	@Test(expected = JsonException.class)
+	@Test(expected = IllegalStateException.class)
 	public void testSerialize_unsupported() throws Exception {
 		Object object = new Object();
-		Json.serialize(object);
+		InternalJson.serialize(object);
 	}
 
 	@Test
 	public void testSerialize_indent() throws Exception {
 		Map<String, String> map = ImmutableMap.of("key", "value");
-		String s = Json.serialize(map, true);
+		String s = InternalJson.serialize(map, true);
 		assertEquals("{\n  \"key\" : \"value\"\n}", s);
 	}
 }

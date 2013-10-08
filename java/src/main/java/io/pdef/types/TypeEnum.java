@@ -1,4 +1,4 @@
-package io.pdef;
+package io.pdef.types;
 
 import java.util.EnumSet;
 

@@ -1,10 +1,10 @@
 package io.pdef.invocation;
 
+import io.pdef.types.InterfaceMethod;
 import static org.junit.Assert.*;
 import org.junit.Test;
 import static org.mockito.Mockito.*;
-import io.pdef.descriptors.InterfaceDescriptor;
-import io.pdef.descriptors.MethodDescriptor;
+import io.pdef.types.InterfaceType;
 import io.pdef.test.interfaces.NextTestInterface;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
@@ -12,11 +12,11 @@ import io.pdef.test.interfaces.TestInterface;
 import java.util.List;
 
 public class InvocationTest {
-	private final InterfaceDescriptor iface = TestInterface.DESCRIPTOR;
-	private final MethodDescriptor excMethod = iface.findMethod("excMethod");
-	private final MethodDescriptor indexMethod = iface.findMethod("indexMethod");
-	private final MethodDescriptor interfaceMethod = iface.findMethod( "interfaceMethod");
-	private final MethodDescriptor nextStringMethod = NextTestInterface.DESCRIPTOR
+	private final InterfaceType iface = TestInterface.TYPE;
+	private final InterfaceMethod excMethod = iface.findMethod("excMethod");
+	private final InterfaceMethod indexMethod = iface.findMethod("indexMethod");
+	private final InterfaceMethod interfaceMethod = iface.findMethod( "interfaceMethod");
+	private final InterfaceMethod nextStringMethod = NextTestInterface.TYPE
 			.findMethod("stringMethod");
 
 	@Test
@@ -99,13 +99,13 @@ public class InvocationTest {
 	@Test
 	public void testInvoke_exc() throws Exception {
 		TestInterface iface = mock(TestInterface.class);
-		doThrow(TestException.instance()).when(iface).excMethod();
+		doThrow(new TestException()).when(iface).excMethod();
 
 		Invocation invocation = Invocation.root()
 				.next(excMethod, new Object[]{});
 
 		InvocationResult result = invocation.invoke(iface);
-		assertEquals(TestException.instance(), result.getData());
+		assertEquals(new TestException(), result.getData());
 	}
 
 	@Test

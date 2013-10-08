@@ -1,4 +1,4 @@
-package io.pdef.descriptors;
+package io.pdef.types;
 
 import org.junit.Test;
 import io.pdef.test.interfaces.TestException;
@@ -7,54 +7,54 @@ import io.pdef.test.interfaces.TestInterface;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-public class MethodDescriptorTest {
-	private final InterfaceDescriptor iface = TestInterface.DESCRIPTOR;
+public class InterfaceMethodTest {
+	private final InterfaceType iface = TestInterface.TYPE;
 
 	@Test
 	public void testGetName() throws Exception {
-		MethodDescriptor method = iface.findMethod("indexMethod");
+		InterfaceMethod method = iface.findMethod("indexMethod");
 		assertNotNull(method);
 		assertEquals("indexMethod", method.getName());
 	}
 
 	@Test
 	public void testGetExc() throws Exception {
-		MethodDescriptor method = iface.findMethod("indexMethod");
+		InterfaceMethod method = iface.findMethod("indexMethod");
 		assertNotNull(method);
 		assertTrue(method.getExc() == iface.getExc());
 	}
 
 	@Test
 	public void testIsIndex() throws Exception {
-		MethodDescriptor method = iface.findMethod("indexMethod");
+		InterfaceMethod method = iface.findMethod("indexMethod");
 		assertNotNull(method);
 		assertTrue(method.isIndex());
 	}
 
 	@Test
 	public void testIsPost() throws Exception {
-		MethodDescriptor method = iface.findMethod("indexMethod");
+		InterfaceMethod method = iface.findMethod("indexMethod");
 		assertNotNull(method);
 		assertFalse(method.isPost());
 	}
 
 	@Test
 	public void testIsRemote() throws Exception {
-		MethodDescriptor method = iface.findMethod("indexMethod");
+		InterfaceMethod method = iface.findMethod("indexMethod");
 		assertNotNull(method);
 		assertTrue(method.isRemote());
 	}
 
 	@Test
 	public void testIsRemote_false() throws Exception {
-		MethodDescriptor method = iface.findMethod("interfaceMethod");
+		InterfaceMethod method = iface.findMethod("interfaceMethod");
 		assertNotNull(method);
 		assertFalse(method.isRemote());
 	}
 
 	@Test
 	public void testInvoke() throws Exception {
-		MethodDescriptor method = iface.findMethod("indexMethod");
+		InterfaceMethod method = iface.findMethod("indexMethod");
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
@@ -64,11 +64,11 @@ public class MethodDescriptorTest {
 
 	@Test(expected = TestException.class)
 	public void testInvoke_exception() throws Exception {
-		MethodDescriptor method = iface.findMethod("excMethod");
+		InterfaceMethod method = iface.findMethod("excMethod");
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
-		doThrow(TestException.builder().build()).when(object).excMethod();
+		doThrow(new TestException()).when(object).excMethod();
 
 		method.invoke(object, null);
 	}

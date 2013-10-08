@@ -1,18 +1,18 @@
-package io.pdef.descriptors;
+package io.pdef.types;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 
-public class FieldDescriptor {
-	private final MessageDescriptor message;
+public class MessageField {
+	private final MessageType message;
 	private final String name;
-	private final Supplier<Descriptor> type;
+	private final Supplier<Type> type;
 	private final boolean discriminator;
 	private final Getter getter;
 	private final Setter setter;
 
-	private FieldDescriptor(final Builder builder, final MessageDescriptor message) {
+	private MessageField(final Builder builder, final MessageType message) {
 		this.message = checkNotNull(message);
 		name = checkNotNull(builder.name);
 		type = checkNotNull(builder.type);
@@ -29,7 +29,7 @@ public class FieldDescriptor {
 				.toString();
 	}
 
-	public MessageDescriptor getMessage() {
+	public MessageType getMessage() {
 		return message;
 	}
 
@@ -37,8 +37,8 @@ public class FieldDescriptor {
 		return name;
 	}
 
-	public DataDescriptor getType() {
-		return (DataDescriptor) type.get();
+	public DataType getType() {
+		return (DataType) type.get();
 	}
 
 	public boolean isDiscriminator() {
@@ -49,17 +49,27 @@ public class FieldDescriptor {
 		return getter.get(message);
 	}
 
-	public void set(final Object builder, final Object value) {
-		setter.set(builder, value);
+	public void set(final Object message, final Object value) {
+		setter.set(message, value);
 	}
 
 	public static Builder builder() {
 		return new Builder();
 	}
 
+	public static interface Getter {
+		/** Gets this field value from a message. */
+		Object get(Object message);
+	}
+
+	public static interface Setter {
+		/** Sets this field value in a message. */
+		void set(Object message, Object value);
+	}
+
 	public static class Builder {
 		private String name;
-		private Supplier<Descriptor> type;
+		private Supplier<Type> type;
 		private boolean discriminator;
 		private Getter getter;
 		private Setter setter;
@@ -71,7 +81,7 @@ public class FieldDescriptor {
 			return this;
 		}
 
-		public Builder setType(final Supplier<Descriptor> type) {
+		public Builder setType(final Supplier<Type> type) {
 			this.type = type;
 			return this;
 		}
@@ -91,16 +101,8 @@ public class FieldDescriptor {
 			return this;
 		}
 
-		public FieldDescriptor build(final MessageDescriptor message) {
-			return new FieldDescriptor(this, message);
+		public MessageField build(final MessageType message) {
+			return new MessageField(this, message);
 		}
-	}
-
-	public static interface Getter {
-		Object get(Object message);
-	}
-
-	public static interface Setter {
-		void set(Object builder, Object value);
 	}
 }

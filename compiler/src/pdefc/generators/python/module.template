@@ -1,4 +1,5 @@
 # encoding: utf-8
+{{ generated_by }}
 {% if doc %}
 """{{ doc }}"""
 

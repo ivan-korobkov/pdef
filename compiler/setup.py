@@ -1,4 +1,5 @@
 # encoding: utf-8
+import os.path
 try:
     from setuptools import setup
 except ImportError:
@@ -7,9 +8,15 @@ except ImportError:
     from setuptools import setup
 
 
+# Load the version.
+__version__ = None
+with open(os.path.join('src', 'pdefc', 'version.py')) as f:
+    exec(f.read())
+
+
 setup(
     name='pdef-compiler',
-    version='1.0-dev',
+    version=__version__,
     license='Apache License 2.0',
     description='Pdef compiler',
     url='http://github.com/ivan-korobkov/pdef',

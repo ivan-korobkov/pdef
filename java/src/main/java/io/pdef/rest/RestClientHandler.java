@@ -109,28 +109,23 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 	}
 
 	/** Serializes a query/post argument and puts it into a dst map. */
+	@SuppressWarnings("unchecked")
 	@VisibleForTesting
 	void serializeQueryArg(final InterfaceMethodArg argd, final Object arg,
 			final Map<String, String> dst) {
 		if (arg == null) {
 			return;
 		}
-		DataType type = argd.getType();
 
+		DataType<Object> type = argd.getType();
 		if (type instanceof MessageType && ((MessageType) type).isForm()) {
 			// It's a form, expand its fields into distinct arguments.
 
-			MessageType messageType = (MessageType) type;
-			for (MessageField field : messageType.getFields()) {
-				Object fvalue = field.get(arg);
-				if (fvalue == null) {
-					continue;
-				}
+			Message message = (Message) arg;
 
-				String serialized = serializeArgToString(field.getType(), fvalue);
-				dst.put(field.getName(), serialized);
-			}
-
+			// Mind polymorphic messages.
+			MessageType<Message> messageType = (MessageType<Message>) message.type();
+			serializeQueryForm(messageType, (Message) arg, dst);
 			return;
 		}
 
@@ -139,9 +134,23 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 		dst.put(argd.getName(), serialized);
 	}
 
+	private <M extends Message> void serializeQueryForm(final MessageType<M> type, final M message,
+			final Map<String, String> dst) {
+
+		for (MessageField<? super M, ?> field : type.getFields()) {
+			Object fvalue = field.get(message);
+			if (fvalue == null) {
+				continue;
+			}
+
+			String serialized = serializeArgToString(field.getType(), fvalue);
+			dst.put(field.getName(), serialized);
+		}
+	}
+
 	/** Serializes primitives and enums to strings and other types to json. */
 	@VisibleForTesting
-	String serializeArgToString(final DataType type, final Object arg) {
+	String serializeArgToString(final DataType<Object> type, final Object arg) {
 		if (arg == null) {
 			return "";
 		}

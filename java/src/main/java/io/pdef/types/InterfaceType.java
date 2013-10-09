@@ -1,6 +1,7 @@
 package io.pdef.types;
 
 import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -11,13 +12,15 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 
 public class InterfaceType extends Type {
+	private final Class<?> javaClass;
 	private final Supplier<MessageType> exc;
 	private final List<InterfaceMethod> declaredMethods;
 	private final InterfaceMethod indexMethod;
 
 	private InterfaceType(final Builder builder) {
-		super(TypeEnum.INTERFACE, builder.javaClass);
+		super(TypeEnum.INTERFACE);
 
+		javaClass = checkNotNull(builder.javaClass);
 		exc = builder.exc;
 		declaredMethods = buildDeclaredMethods(builder, this);
 		indexMethod = findIndexMethod(declaredMethods);
@@ -30,13 +33,12 @@ public class InterfaceType extends Type {
 	@Override
 	public String toString() {
 		return Objects.toStringHelper(this)
-				.addValue(getJavaClass().getSimpleName())
+				.addValue(javaClass.getSimpleName())
 				.toString();
 	}
 
-	@Override
-	public TypeEnum getType() {
-		return TypeEnum.INTERFACE;
+	public Class<?> getJavaClass() {
+		return javaClass;
 	}
 
 	@Nullable

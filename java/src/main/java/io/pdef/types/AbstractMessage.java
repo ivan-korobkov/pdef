@@ -9,33 +9,41 @@ import java.util.Map;
 public abstract class AbstractMessage implements Message, Serializable {
 	protected AbstractMessage() {}
 
+	@SuppressWarnings("unchecked")
+	private MessageType<Message> uncheckedType() {
+		return (MessageType<Message>) type();
+	}
+
 	@Override
 	public Message copy() {
-		return type().copy(this);
+		return uncheckedType().copy(this);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> toMap() {
-		return (Map<String, Object>) type().toNative(this);
+		return (Map<String, Object>) uncheckedType().toNative(this);
 	}
 
 	@Override
 	public String toJson() {
-		return type().toJson(this);
+		return uncheckedType().toJson(this);
 	}
 
 	@Override
 	public String toJson(final boolean indent) {
-		return type().toJson(this, indent);
+		return uncheckedType().toJson(this, indent);
 	}
 
 	@Override
 	public String toString() {
 		Objects.ToStringHelper helper = Objects.toStringHelper(this);
-		for (MessageField field : type().getFields()) {
+
+		MessageType<Message> type = uncheckedType();
+		for (MessageField<? super Message, ?> field : type.descriptor().getFields()) {
 			helper.add(field.getName(), field.get(this));
 		}
+
 		return helper.omitNullValues().toString();
 	}
 
@@ -45,7 +53,8 @@ public abstract class AbstractMessage implements Message, Serializable {
 		if (o == null || getClass() != o.getClass()) return false;
 
 		AbstractMessage cast = (AbstractMessage) o;
-		for (MessageField field : type().getFields()) {
+		MessageType<Message> type = uncheckedType();
+		for (MessageField<? super Message, ?> field : type.descriptor().getFields()) {
 			Object value0 = field.get(this);
 			Object value1 = field.get(cast);
 			if (value0 != null ? !value0.equals(value1) : value1 != null) {
@@ -59,9 +68,11 @@ public abstract class AbstractMessage implements Message, Serializable {
 	@Override
 	public int hashCode() {
 		int result = 0;
-		for (MessageField field : type().getFields()) {
+
+		MessageType<Message> type = uncheckedType();
+		for (MessageField<? super Message, ?> field : type.descriptor().getFields()) {
 			Object value = field.get(this);
-			result = 31 * result + (value != null ? value.hashCode() : 0);
+			result = 31 * result + (value == null ? 0 : value.hashCode());
 		}
 
 		return result;

@@ -4,23 +4,16 @@ import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 
 /** Data type type. */
-public class Type {
+public abstract class Type<T> {
 	private final TypeEnum type;
-	private final Class<?> javaClass;
 
-	protected Type(final TypeEnum type, final Class<?> javaClass) {
+	protected Type(final TypeEnum type) {
 		this.type = checkNotNull(type);
-		this.javaClass = checkNotNull(javaClass);
 	}
 
 	/** Returns this type type. */
-	public TypeEnum getType() {
+	public TypeEnum type() {
 		return type;
-	}
-
-	/** Returns this type Java class. */
-	public Class<?> getJavaClass() {
-		return javaClass;
 	}
 
 	@Override

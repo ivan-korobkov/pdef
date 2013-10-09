@@ -1,63 +1,79 @@
 package io.pdef.types;
 
 import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
-public class EnumType extends DataType {
-	private final List<Enum<?>> values;
-	private final BiMap<Enum<?>, String> valuesToNames;
+public class EnumType<T extends Enum<?>> extends DataType<T> {
+	private final Class<T> javaClass;
+	private final List<T> values;
+	private final BiMap<T, String> valuesToNames;
 
-	public EnumType(final Class<? extends Enum<?>> javaClass) {
-		super(TypeEnum.ENUM, javaClass);
-		Enum<?>[] vv =javaClass.getEnumConstants();
-		this.values = ImmutableList.copyOf(vv);
+	public EnumType(final Class<T> javaClass) {
+		super(TypeEnum.ENUM);
+
+		this.javaClass = checkNotNull(javaClass);
+		this.values = ImmutableList.copyOf(javaClass.getEnumConstants());
 		this.valuesToNames = buildValuesToNames(values);
+	}
+
+	private static <T extends Enum<?>> ImmutableBiMap<T, String> buildValuesToNames(
+			final Iterable<T> values) {
+		ImmutableBiMap.Builder<T, String> builder = ImmutableBiMap.builder();
+		for (T value : values) {
+			builder.put(value, value.name().toLowerCase());
+		}
+		return builder.build();
 	}
 
 	@Override
 	public String toString() {
 		return Objects.toStringHelper(this)
-				.addValue(getJavaClass().getSimpleName())
+				.addValue(javaClass.getSimpleName())
 				.toString();
 	}
 
-	public List<Enum<?>> getValues() {
+	public Class<T> getJavaClass() {
+		return javaClass;
+	}
+
+	public List<T> getValues() {
 		return values;
 	}
 
 	// Native format.
 
 	@Override
-	public Object copy(final Object object) {
+	public T copy(final T object) {
 		return object;
 	}
 
 	@Override
-	protected Enum<?> doParseNative(final Object o) throws Exception {
-		if (o == null) {
+	protected T doParseNative(final Object object) throws Exception {
+		if (object == null) {
 			return null;
 		}
 
-		if (o instanceof String) {
-			return doParseString((String) o);
+		if (object instanceof String) {
+			return doParseString((String) object);
 		}
 
-		return ((Enum<?>) o);
+		return javaClass.cast(object);
 	}
 
 	@Override
-	protected String doToNative(final Object o) throws Exception {
-		return o == null ? null : doToString(o);
+	protected String doToNative(final T value) throws Exception {
+		return value == null ? null : doToString(value);
 	}
 
 	// String format.
 
 	@Override
-	protected Enum<?> doParseString(final String s) throws Exception {
+	protected T doParseString(final String s) throws Exception {
 		if (s == null) {
 			return null;
 		}
@@ -67,23 +83,11 @@ public class EnumType extends DataType {
 	}
 
 	@Override
-	protected String doToString(final Object o) throws Exception {
-		if (o == null) {
+	protected String doToString(final T value) throws Exception {
+		if (value == null) {
 			return null;
 		}
 
-		Enum<?> e = (Enum<?>) o;
-		return valuesToNames.get(e).toLowerCase();
-	}
-
-	// Static utility methods.
-
-	private static ImmutableBiMap<Enum<?>, String> buildValuesToNames(
-			final Iterable<Enum<?>> values) {
-		ImmutableBiMap.Builder<Enum<?>, String> builder = ImmutableBiMap.builder();
-		for (Enum<?> value : values) {
-			builder.put(value, value.name().toLowerCase());
-		}
-		return builder.build();
+		return valuesToNames.get(value).toLowerCase();
 	}
 }

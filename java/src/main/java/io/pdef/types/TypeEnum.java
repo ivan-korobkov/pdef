@@ -18,14 +18,26 @@ public enum TypeEnum {
 	EXCEPTION,
 	INTERFACE;
 
-	private static final EnumSet<TypeEnum> PRIMITIVES = EnumSet.of(
-			BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING);
+	private static final EnumSet<TypeEnum> PRIMITIVES;
+	private static final EnumSet<TypeEnum> DATA_TYPES;
+
+	static {
+		PRIMITIVES = EnumSet.of(BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING);
+		DATA_TYPES = EnumSet.copyOf(PRIMITIVES);
+		DATA_TYPES.add(OBJECT);
+		DATA_TYPES.add(LIST);
+		DATA_TYPES.add(SET);
+		DATA_TYPES.add(MAP);
+		DATA_TYPES.add(ENUM);
+		DATA_TYPES.add(MESSAGE);
+		DATA_TYPES.add(EXCEPTION);
+	}
 
 	public boolean isPrimitive() {
 		return PRIMITIVES.contains(this);
 	}
 
 	public boolean isDataType() {
-		return this != INTERFACE;
+		return DATA_TYPES.contains(this);
 	}
 }

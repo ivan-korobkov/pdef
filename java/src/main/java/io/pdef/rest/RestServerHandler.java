@@ -182,7 +182,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 		}
 
 		if (value.equals("")) {
-			return type.getType() == TypeEnum.STRING ? "" : null;
+			return type.type() == TypeEnum.STRING ? "" : null;
 		}
 
 		return type.parseString(value);

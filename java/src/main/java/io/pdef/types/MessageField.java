@@ -2,107 +2,60 @@ package io.pdef.types;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
-import com.google.common.base.Supplier;
 
-public class MessageField {
-	private final MessageType message;
+public abstract class MessageField<M, V> {
 	private final String name;
-	private final Supplier<Type> type;
 	private final boolean discriminator;
-	private final Getter getter;
-	private final Setter setter;
 
-	private MessageField(final Builder builder, final MessageType message) {
-		this.message = checkNotNull(message);
-		name = checkNotNull(builder.name);
-		type = checkNotNull(builder.type);
-		getter = checkNotNull(builder.getter);
-		setter = checkNotNull(builder.setter);
-		discriminator = checkNotNull(builder.discriminator);
+	public MessageField(final String name, final boolean discriminator) {
+		this.name = checkNotNull(name);
+		this.discriminator = discriminator;
 	}
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
+		return Objects.toStringHelper("MessageField")
 				.addValue(name)
-				.addValue(type.get())
 				.toString();
-	}
-
-	public MessageType getMessage() {
-		return message;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public DataType getType() {
-		return (DataType) type.get();
-	}
-
 	public boolean isDiscriminator() {
 		return discriminator;
 	}
 
-	public Object get(final Object message) {
-		return getter.get(message);
+	public abstract DataType<V> getType();
+
+	public abstract V get(final M message);
+
+	public abstract void set(final M message, final V value);
+
+	public void copy(final M src, final M dst) {
+		V value = get(src);
+		V copied = getType().copy(value);
+		set(dst, copied);
 	}
 
-	public void set(final Object message, final Object value) {
-		setter.set(message, value);
+	/** Sets this field in a message to a value parsed from a native object. */
+	public void setNative(final M message, final Object value) {
+		if (value == null) {
+			return;
+		}
+
+		V parsed = getType().parseNative(value);
+		set(message, parsed);
 	}
 
-	public static Builder builder() {
-		return new Builder();
-	}
-
-	public static interface Getter {
-		/** Gets this field value from a message. */
-		Object get(Object message);
-	}
-
-	public static interface Setter {
-		/** Sets this field value in a message. */
-		void set(Object message, Object value);
-	}
-
-	public static class Builder {
-		private String name;
-		private Supplier<Type> type;
-		private boolean discriminator;
-		private Getter getter;
-		private Setter setter;
-
-		private Builder() {}
-
-		public Builder setName(final String name) {
-			this.name = name;
-			return this;
+	/** Returns this field in a message converted to a native object. */
+	public Object getNative(final M message) {
+		V value = get(message);
+		if (value == null) {
+			return null;
 		}
 
-		public Builder setType(final Supplier<Type> type) {
-			this.type = type;
-			return this;
-		}
-
-		public Builder setDiscriminator(final boolean discriminator) {
-			this.discriminator = discriminator;
-			return this;
-		}
-
-		public Builder setGetter(final Getter getter) {
-			this.getter = getter;
-			return this;
-		}
-
-		public Builder setSetter(final Setter setter) {
-			this.setter = setter;
-			return this;
-		}
-
-		public MessageField build(final MessageType message) {
-			return new MessageField(this, message);
-		}
+		return getType().toNative(value);
 	}
 }

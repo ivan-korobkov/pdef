@@ -13,7 +13,7 @@ public class MessageTypeTest {
 
 	@Test
 	public void testGetJavaClass() throws Exception {
-		assertTrue(type.getJavaClass() == SimpleMessage.class);
+		assertTrue(type.javaClass() == SimpleMessage.class);
 	}
 
 	@Test
@@ -83,9 +83,9 @@ public class MessageTypeTest {
 	public void testSubtype_polymorphic() throws Exception {
 		MessageType type = Base.classType();
 
-		assertTrue(type.getSubtype(PolymorphicType.SUBTYPE) == Subtype.classType());
-		assertTrue(type.getSubtype(PolymorphicType.SUBTYPE2) == Subtype2.classType());
-		assertTrue(type.getSubtype(PolymorphicType.MULTILEVEL_SUBTYPE) == MultiLevelSubtype
+		assertTrue(type.findSubtype(PolymorphicType.SUBTYPE) == Subtype.classType());
+		assertTrue(type.findSubtype(PolymorphicType.SUBTYPE2) == Subtype2.classType());
+		assertTrue(type.findSubtype(PolymorphicType.MULTILEVEL_SUBTYPE) == MultiLevelSubtype
 				.classType());
 	}
 

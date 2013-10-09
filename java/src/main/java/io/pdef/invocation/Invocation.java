@@ -60,7 +60,7 @@ public class Invocation {
 
 	/** Returns the method exception or the parent exception. */
 	@Nullable
-	public MessageType getExc() {
+	public MessageType<?> getExc() {
 		if (method != null) return method.getExc();
 		if (parent != null) return parent.getExc();
 		return null;
@@ -110,7 +110,7 @@ public class Invocation {
 	}
 
 	private InvocationResult handleException(final Throwable t) {
-		MessageType excd = getExc();
+		MessageType<?> excd = getExc();
 		if (excd == null || !excd.getJavaClass().isInstance(t)) {
 			// It is not an expected application exception.
 			throw Throwables.propagate(t);

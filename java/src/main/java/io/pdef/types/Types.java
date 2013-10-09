@@ -9,31 +9,31 @@ import java.util.*;
 public class Types {
 	private Types() {}
 
-	private abstract static class PrimitiveType extends DataType {
-		protected PrimitiveType(final TypeEnum type, final Class<?> javaClass) {
-			super(type, javaClass);
+	private abstract static class PrimitiveType<T> extends DataType<T> {
+		protected PrimitiveType(final TypeEnum type) {
+			super(type);
 		}
 
 		@Override
-		public Object copy(final Object object) {
+		public T copy(final T object) {
 			return object;
 		}
 
 		@Override
-		public String doToString(final Object o) {
-			return o == null ? null : o.toString();
+		public String doToString(final T object) {
+			return object == null ? null : object.toString();
+		}
+
+		@Override
+		protected Object doToNative(final T object) throws Exception {
+			return object;
 		}
 	}
 
-	public static PrimitiveType bool = new PrimitiveType(TypeEnum.BOOL, Boolean.class) {
+	public static DataType<Boolean> bool = new PrimitiveType<Boolean>(TypeEnum.BOOL) {
 		@Override
-		public Boolean doParseNative(final Object o) throws Exception {
-			return o instanceof String ? doParseString((String) o) : doToNative(o);
-		}
-
-		@Override
-		public Boolean doToNative(final Object o) {
-			return (Boolean) o;
+		public Boolean doParseNative(final Object object) throws Exception {
+			return object instanceof String ? doParseString((String) object) : (Boolean) object;
 		}
 
 		@Override
@@ -42,16 +42,17 @@ public class Types {
 		}
 	};
 
-	public static PrimitiveType int16 = new PrimitiveType(TypeEnum.INT16, Short.class) {
+	public static DataType<Short> int16 = new PrimitiveType<Short>(TypeEnum.INT16) {
 		@Override
-		public Short doParseNative(final Object o) throws Exception {
-			return o instanceof String ? doParseString((String) o) : doToNative(o);
-		}
+		public Short doParseNative(final Object object) throws Exception {
+			if (object == null) {
+				return null;
+			}
+			if (object instanceof String) {
+				return doParseString((String) object);
+			}
 
-		@Override
-		public Short doToNative(final Object o) {
-			if (o == null) return null;
-			return o instanceof Short ? (Short) o : ((Number) o).shortValue();
+			return object instanceof Short ? (Short) object : ((Number) object).shortValue();
 		}
 
 		@Override
@@ -60,16 +61,17 @@ public class Types {
 		}
 	};
 
-	public static PrimitiveType int32 = new PrimitiveType(TypeEnum.INT32, Integer.class) {
+	public static DataType<Integer> int32 = new PrimitiveType<Integer>(TypeEnum.INT32) {
 		@Override
-		public Integer doParseNative(final Object o) throws Exception {
-			return o instanceof String ? doParseString((String) o) : doToNative(o);
-		}
+		public Integer doParseNative(final Object object) throws Exception {
+			if (object == null) {
+				return null;
+			}
+			if (object instanceof String) {
+				return doParseString((String) object);
+			}
 
-		@Override
-		public Integer doToNative(final Object o) {
-			if (o == null) return null;
-			return o instanceof Integer ? (Integer) o : ((Number) o).intValue();
+			return object instanceof Integer ? (Integer) object : ((Number) object).intValue();
 		}
 
 		@Override
@@ -78,16 +80,17 @@ public class Types {
 		}
 	};
 
-	public static PrimitiveType int64 = new PrimitiveType(TypeEnum.INT64, Long.class) {
+	public static DataType<Long> int64 = new PrimitiveType<Long>(TypeEnum.INT64) {
 		@Override
-		public Long doParseNative(final Object o) throws Exception {
-			return o instanceof String ? doParseString((String) o) : doToNative(o);
-		}
+		public Long doParseNative(final Object object) throws Exception {
+			if (object == null) {
+				return null;
+			}
+			if (object instanceof String) {
+				return doParseString((String) object);
+			}
 
-		@Override
-		public Long doToNative(final Object o) {
-			if (o == null) return null;
-			return o instanceof Long ? (Long) o : ((Number) o).longValue();
+			return object instanceof Long ? (Long) object : ((Number) object).longValue();
 		}
 
 		@Override
@@ -96,16 +99,17 @@ public class Types {
 		}
 	};
 
-	public static PrimitiveType float0 = new PrimitiveType(TypeEnum.FLOAT, Float.class) {
+	public static DataType<Float> float0 = new PrimitiveType<Float>(TypeEnum.FLOAT) {
 		@Override
-		public Object doParseNative(final Object o) throws Exception {
-			return o instanceof String ? doParseString((String) o) : doToNative(o);
-		}
+		public Float doParseNative(final Object object) throws Exception {
+			if (object == null) {
+				return null;
+			}
+			if (object instanceof String) {
+				return doParseString((String) object);
+			}
 
-		@Override
-		public Float doToNative(final Object o) {
-			if (o == null) return null;
-			return o instanceof Float ? (Float) o : ((Number) o).floatValue();
+			return object instanceof Float ? (Float) object : ((Number) object).floatValue();
 		}
 
 		@Override
@@ -114,16 +118,17 @@ public class Types {
 		}
 	};
 
-	public static PrimitiveType double0 = new PrimitiveType(TypeEnum.DOUBLE, Double.class) {
+	public static DataType<Double> double0 = new PrimitiveType<Double>(TypeEnum.DOUBLE) {
 		@Override
-		public Object doParseNative(final Object o) throws Exception {
-			return o instanceof String ? doParseString((String) o) : doToNative(o);
-		}
+		public Double doParseNative(final Object object) throws Exception {
+			if (object == null) {
+				return null;
+			}
+			if (object instanceof String) {
+				return doParseString((String) object);
+			}
 
-		@Override
-		public Double doToNative(final Object o) {
-			if (o == null) return null;
-			return o instanceof Double ? (Double) o : ((Number) o).doubleValue();
+			return object instanceof Double ? (Double) object : ((Number) object).doubleValue();
 		}
 
 		@Override
@@ -132,15 +137,10 @@ public class Types {
 		}
 	};
 
-	public static PrimitiveType string = new PrimitiveType(TypeEnum.STRING, String.class) {
+	public static DataType<String> string = new PrimitiveType<String>(TypeEnum.STRING) {
 		@Override
-		public String doParseNative(final Object o) {
-			return (String) o;
-		}
-
-		@Override
-		public String doToNative(final Object o) {
-			return (String) o;
+		public String doParseNative(final Object object) {
+			return (String) object;
 		}
 
 		@Override
@@ -149,71 +149,69 @@ public class Types {
 		}
 	};
 
-	public static DataType void0 = new DataType(TypeEnum.VOID, Void.class) {
+	public static DataType<Void> void0 = new DataType<Void>(TypeEnum.VOID) {
+		@Override
+		public Void copy(final Void object) {
+			return null;
+		}
+
+		@Override
+		public Void doParseNative(final Object object) {
+			return null;
+		}
+
+		@Override
+		protected Object doToNative(final Void object) throws Exception {
+			return null;
+		}
+	};
+
+	public static DataType<Object> object = new DataType<Object>(TypeEnum.OBJECT) {
 		@Override
 		public Object copy(final Object object) {
 			return object;
 		}
 
 		@Override
-		public Void doParseNative(final Object o) {
-			return null;
-		}
-
-		@Override
-		public Void doToNative(final Object o) {
-			return null;
-		}
-	};
-
-	public static DataType object = new DataType(TypeEnum.OBJECT, Object.class) {
-		@Override
-		public Object copy(final Object object) {
+		public Object doParseNative(final Object object) {
 			return object;
 		}
 
 		@Override
-		public Object doParseNative(final Object o) {
-			return o;
-		}
-
-		@Override
-		public Object doToNative(final Object o) {
-			return o;
+		public Object doToNative(final Object object) {
+			return object;
 		}
 	};
 
-	public static DataType list(final DataType element) {
-		return new ListType(element);
+	public static <T> DataType<List<T>> list(final DataType<T> element) {
+		return new ListType<T>(element);
 	}
 
-	public static DataType set(final DataType element) {
-		return new SetType(element);
+	public static <T> DataType<Set<T>> set(final DataType<T> element) {
+		return new SetType<T>(element);
 	}
 
-	public static DataType map(final DataType key, final DataType value) {
-		return new MapType(key, value);
+	public static <K, V> DataType<Map<K, V>> map(final DataType<K> key, final DataType<V> value) {
+		return new MapType<K, V>(key, value);
 	}
 
-	private static class ListType extends DataType {
-		private final DataType element;
+	private static class ListType<T> extends DataType<List<T>> {
+		private final DataType<T> element;
 
-		public ListType(final DataType element) {
-			super(TypeEnum.LIST, List.class);
+		public ListType(final DataType<T> element) {
+			super(TypeEnum.LIST);
 			this.element = checkNotNull(element);
 		}
 
 		@Override
-		public Object copy(final Object object) {
-			if (object == null) {
+		public List<T> copy(final List<T> list) {
+			if (list == null) {
 				return null;
 			}
 
-			List<?> list = (List<?>) object;
-			List<Object> copy = Lists.newArrayList();
-
-			for (Object e : list) {
-				Object copied = element.copy(e);
+			List<T> copy = Lists.newArrayList();
+			for (T e : list) {
+				T copied = element.copy(e);
 				copy.add(copied);
 			}
 
@@ -221,55 +219,53 @@ public class Types {
 		}
 
 		@Override
-		public List<?> doParseNative(final Object o) throws Exception {
-			if (o == null) {
+		public List<T> doParseNative(final Object object) throws Exception {
+			if (object == null) {
 				return null;
 			}
 
-			Collection<?> collection = (Collection<?>) o;
-			List<Object> result = Lists.newArrayList();
+			Collection<?> collection = (Collection<?>) object;
+			List<T> result = Lists.newArrayList();
 
-			for (Object e : collection) {
-				Object r = element.doParseNative(e);
-				result.add(r);
+			for (Object elem : collection) {
+				T parsed = element.parseNative(elem);
+				result.add(parsed);
 			}
 
-			return ImmutableList.copyOf(result);
+			return result;
 		}
 
 		@Override
-		public List<Object> doToNative(final Object o) throws Exception {
-			if (o == null) return null;
+		public List<Object> doToNative(final List<T> list) throws Exception {
+			if (list == null) return null;
 
-			List<?> list = (List<?>) o;
 			List<Object> result = Lists.newArrayList();
-			for (Object e : list) {
-				result.add(element.doToNative(e));
+			for (T elem : list) {
+				Object serialized = element.toNative(elem);
+				result.add(serialized);
 			}
 
 			return result;
 		}
 	}
 
-	private static class SetType extends DataType {
-		private final DataType element;
+	private static class SetType<T> extends DataType<Set<T>> {
+		private final DataType<T> element;
 
-		public SetType(final DataType element) {
-			super(TypeEnum.SET, Set.class);
+		public SetType(final DataType<T> element) {
+			super(TypeEnum.SET);
 			this.element = checkNotNull(element);
 		}
 
 		@Override
-		public Object copy(final Object object) {
-			if (object == null) {
+		public Set<T> copy(final Set<T> set) {
+			if (set == null) {
 				return null;
 			}
 
-			Set<?> set = (Set<?>) object;
-			Set<Object> copy = Sets.newHashSet();
-
-			for (Object e : set) {
-				Object copied = element.copy(e);
+			Set<T> copy = Sets.newHashSet();
+			for (T elem : set) {
+				T copied = element.copy(elem);
 				copy.add(copied);
 			}
 
@@ -277,60 +273,58 @@ public class Types {
 		}
 
 		@Override
-		public Set<?> doParseNative(final Object o) throws Exception {
-			if (o == null) {
+		public Set<T> doParseNative(final Object object) throws Exception {
+			if (object == null) {
 				return null;
 			}
 
-			Collection<?> collection = (Collection<?>) o;
-			List<Object> result = Lists.newArrayList();
+			Collection<?> collection = (Collection<?>) object;
+			Set<T> result = Sets.newHashSet();
 
-			for (Object e : collection) {
-				Object r = element.doParseNative(e);
-				result.add(r);
+			for (Object elem : collection) {
+				T parsed = element.parseNative(elem);
+				result.add(parsed);
 			}
 
-			return ImmutableSet.copyOf(result);
+			return result;
 		}
 
 		@Override
-		public Set<Object> doToNative(final Object o) throws Exception {
-			if (o == null) {
+		public Set<Object> doToNative(final Set<T> set) throws Exception {
+			if (set == null) {
 				return null;
 			}
 
-			Set<?> set = (Set<?>) o;
 			Set<Object> result = Sets.newHashSet();
-			for (Object e : set) {
-				result.add(element.doToNative(e));
+			for (T elem : set) {
+				Object serialized = element.toNative(elem);
+				result.add(serialized);
 			}
 
 			return result;
 		}
 	}
 
-	private static class MapType extends DataType {
-		private final DataType key;
-		private final DataType value;
+	private static class MapType<K, V> extends DataType<Map<K, V>> {
+		private final DataType<K> key;
+		private final DataType<V> value;
 
-		public MapType(final DataType key, final DataType value) {
-			super(TypeEnum.MAP, Map.class);
+		public MapType(final DataType<K> key, final DataType<V> value) {
+			super(TypeEnum.MAP);
 			this.key = checkNotNull(key);
 			this.value = checkNotNull(value);
 		}
 
 		@Override
-		public Object copy(final Object object) {
-			if (object == null) {
+		public Map<K, V> copy(final Map<K, V> map) {
+			if (map == null) {
 				return null;
 			}
 
-			Map<?, ?> map = (Map<?, ?>) object;
-			Map<Object, Object> copy = Maps.newHashMap();
-
-			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				Object ck = key.copy(entry.getKey());
-				Object cv = value.copy(entry.getValue());
+			Map<K, V> copy = Maps.newHashMap();
+			for (Map.Entry<K, V> entry : map.entrySet()) {
+				K ck = key.copy(entry.getKey());
+				V cv = value.copy(entry.getValue());
 				copy.put(ck, cv);
 			}
 
@@ -338,31 +332,33 @@ public class Types {
 		}
 
 		@Override
-		public Map<?, ?> doParseNative(final Object o) throws Exception {
-			if (o == null) return null;
-
-			Map<?, ?> map = (Map<?, ?>) o;
-			Map<Object, Object> result = Maps.newHashMap();
-			for (Map.Entry<?, ?> e : map.entrySet()) {
-				Object k = key.doParseNative(e.getKey());
-				Object v = value.doParseNative(e.getValue());
-				result.put(k, v);
-			}
-
-			return ImmutableMap.copyOf(result);
-		}
-
-		@Override
-		public Map<Object, Object> doToNative(final Object o) throws Exception {
-			if (o == null) {
+		public Map<K, V> doParseNative(final Object object) throws Exception {
+			if (object == null) {
 				return null;
 			}
 
-			Map<?, ?> map = (Map<?, ?>) o;
-			Map<Object, Object> result = Maps.newHashMap();
+			Map<?, ?> map = (Map<?, ?>) object;
+			Map<K, V> result = Maps.newHashMap();
+
 			for (Map.Entry<?, ?> e : map.entrySet()) {
-				Object k = key.doToNative(e.getKey());
-				Object v = value.doToNative(e.getValue());
+				K k = key.doParseNative(e.getKey());
+				V v = value.doParseNative(e.getValue());
+				result.put(k, v);
+			}
+
+			return result;
+		}
+
+		@Override
+		public Map<Object, Object> doToNative(final Map<K, V> map) throws Exception {
+			if (map == null) {
+				return null;
+			}
+
+			Map<Object, Object> result = Maps.newHashMap();
+			for (Map.Entry<K, V> e : map.entrySet()) {
+				Object k = key.toNative(e.getKey());
+				Object v = value.toNative(e.getValue());
 				result.put(k, v);
 			}
 

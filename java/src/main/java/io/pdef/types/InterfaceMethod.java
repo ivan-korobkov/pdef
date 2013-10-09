@@ -71,7 +71,7 @@ public class InterfaceMethod {
 	}
 
 	public boolean isRemote() {
-		return getResult().getType() != TypeEnum.INTERFACE;
+		return getResult().type() != TypeEnum.INTERFACE;
 	}
 
 	public static Builder builder() {

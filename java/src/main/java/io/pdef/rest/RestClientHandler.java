@@ -63,11 +63,11 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 		InterfaceMethod method = invocation.getMethod();
 		request.appendPath("/");
 		if (!method.isIndex()) {
-			request.appendPath(Rest.urlencode(method.getName()));
+			request.appendPath(Rest.urlencode(method.name()));
 		}
 
 		Object[] args = invocation.getArgs();
-		List<InterfaceMethodArg> argds = invocation.getMethod().getArgs();
+		List<InterfaceMethodArg> argds = invocation.getMethod().args();
 		assert args.length == argds.size();  // Must be checked in Invocation constructor.
 
 		if (method.isPost()) {
@@ -117,7 +117,7 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 			return;
 		}
 
-		DataType<Object> type = argd.getType();
+		DataType<?> type = argd.getType();
 		if (type instanceof MessageType && ((MessageType) type).isForm()) {
 			// It's a form, expand its fields into distinct arguments.
 
@@ -150,12 +150,14 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 
 	/** Serializes primitives and enums to strings and other types to json. */
 	@VisibleForTesting
-	String serializeArgToString(final DataType<Object> type, final Object arg) {
+	String serializeArgToString(final DataType<?> type, final Object arg) {
 		if (arg == null) {
 			return "";
 		}
 
-		return type.toString(arg);
+		@SuppressWarnings("unchecked")
+		DataType<Object> unchecked = (DataType<Object>) type;
+		return unchecked.toString(arg);
 	}
 
 	/** Sends a rest request and returns a rest response. */

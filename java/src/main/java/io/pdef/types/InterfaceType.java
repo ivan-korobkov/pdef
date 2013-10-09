@@ -1,7 +1,7 @@
 package io.pdef.types;
 
 import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -11,69 +11,174 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
-public class InterfaceType extends Type {
-	private final Class<?> javaClass;
-	private final Supplier<MessageType> exc;
-	private final List<InterfaceMethod> declaredMethods;
-	private final InterfaceMethod indexMethod;
-
-	private InterfaceType(final Builder builder) {
+public abstract class InterfaceType<T> extends Type<T> {
+	protected InterfaceType() {
 		super(TypeEnum.INTERFACE);
-
-		javaClass = checkNotNull(builder.javaClass);
-		exc = builder.exc;
-		declaredMethods = buildDeclaredMethods(builder, this);
-		indexMethod = findIndexMethod(declaredMethods);
 	}
 
-	public static Builder builder() {
-		return new Builder();
-	}
+	/** Return this interface Java class. */
+	public abstract Class<?> getJavaClass();
+
+	/** Return a list of interface methods or an empty list. */
+	public abstract List<InterfaceMethod> getMethods();
+
+	/** Return an exception or null. */
+	@Nullable
+	public abstract MessageType<?> getExc();
+
+	/** Return an index method or null. */
+	@Nullable
+	public abstract InterfaceMethod getIndexMethod();
+
+	/** Find a method by name and return it or null. */
+	@Nullable
+	public abstract InterfaceMethod findMethod(String name);
 
 	@Override
 	public String toString() {
 		return Objects.toStringHelper(this)
-				.addValue(javaClass.getSimpleName())
+				.addValue(getJavaClass().getSimpleName())
 				.toString();
 	}
 
-	public Class<?> getJavaClass() {
-		return javaClass;
-	}
+	public static abstract class Forwarding<T> extends InterfaceType<T> {
+		protected abstract InterfaceType<T> delegate();
 
-	@Nullable
-	public MessageType getExc() {
-		return exc == null ? null : exc.get();
-	}
-
-	public List<InterfaceMethod> getDeclaredMethods() {
-		return declaredMethods;
-	}
-
-	public List<InterfaceMethod> getMethods() {
-		return declaredMethods;
-	}
-
-	@Nullable
-	public InterfaceMethod getIndexMethod() {
-		return indexMethod;
-	}
-
-	@Nullable
-	public InterfaceMethod findMethod(final String name) {
-		for (InterfaceMethod method : getMethods()) {
-			if (method.getName().equals(name)) {
-				return method;
-			}
+		@Override
+		public Class<?> getJavaClass() {
+			return delegate().getJavaClass();
 		}
 
-		return null;
+		@Override
+		public List<InterfaceMethod> getMethods() {
+			return delegate().getMethods();
+		}
+
+		@Nullable
+		@Override
+		public MessageType<?> getExc() {
+			return delegate().getExc();
+		}
+
+		@Nullable
+		@Override
+		public InterfaceMethod getIndexMethod() {
+			return delegate().getIndexMethod();
+		}
+
+		@Nullable
+		@Override
+		public InterfaceMethod findMethod(final String name) {
+			return delegate().findMethod(name);
+		}
+	}
+
+	private static class Immutable<T> extends InterfaceType<T> {
+		private final Class<T> javaClass;
+		private final List<InterfaceMethod> methods;
+		private final Supplier<MessageType<?>> exc;
+		private final InterfaceMethod indexMethod;
+
+		private Immutable(final Builder<T> builder) {
+			this.javaClass = checkNotNull(builder.javaClass);
+			this.exc = builder.exc; // Must be set before building methods.
+			this.methods = buildMethods(this, builder.methods);
+			this.indexMethod = findIndexMethod(methods);
+		}
+
+		private static List<InterfaceMethod> buildMethods(final Immutable<?> type,
+				final List<InterfaceMethod.Builder> builders) {
+			ImmutableList.Builder<InterfaceMethod> methods = ImmutableList.builder();
+
+			for (InterfaceMethod.Builder builder : builders) {
+				builder.setExc(type.exc);
+				builder.reflectionInvoker(type.javaClass);
+				methods.add(builder.build());
+			}
+
+			return methods.build();
+		}
+
+		private static InterfaceMethod findIndexMethod(final List<InterfaceMethod> methods) {
+			for (InterfaceMethod method : methods) {
+				if (method.isIndex()) {
+					return method;
+				}
+			}
+
+			return null;
+		}
+
+		@Override
+		public Class<?> getJavaClass() {
+			return javaClass;
+		}
+
+		@Override
+		public List<InterfaceMethod> getMethods() {
+			return methods;
+		}
+
+		@Nullable
+		@Override
+		public MessageType<?> getExc() {
+			return exc.get();
+		}
+
+		@Nullable
+		@Override
+		public InterfaceMethod getIndexMethod() {
+			return indexMethod;
+		}
+
+		@Nullable
+		@Override
+		public InterfaceMethod findMethod(final String name) {
+			for (InterfaceMethod method : getMethods()) {
+				if (method.name().equals(name)) {
+					return method;
+				}
+			}
+
+			return null;
+		}
+	}
+
+	public static class Builder<T> {
+		private Class<T> javaClass;
+		private Supplier<MessageType<?>> exc;
+		private List<InterfaceMethod.Builder> methods;
+
+		public Builder() {
+			methods = Lists.newArrayList();
+		}
+
+		public Builder<T> setJavaClass(final Class<T> javaClass) {
+			this.javaClass = javaClass;
+			return this;
+		}
+
+		public Builder<T> setExc(final Supplier<MessageType<?>> exc) {
+			this.exc = exc;
+			return this;
+		}
+
+		public Builder<T> addMethod(final InterfaceMethod.Builder method) {
+			this.methods.add(method);
+			return this;
+		}
+
+		public InterfaceType<T> build() {
+			return new Immutable<T>(this);
+		}
 	}
 
 	/** Returns an interface type or null. */
 	@Nullable
-	public static <T> InterfaceType findType(final Class<T> cls) {
-		if (!cls.isInterface()) return null;
+	public static <T> InterfaceType<T> findType(final Class<T> cls) {
+		if (!cls.isInterface()) {
+			return null;
+		}
 
 		Field field;
 		try {
@@ -91,56 +196,11 @@ public class InterfaceType extends Type {
 
 		try {
 			// Get the static TYPE field.
-			return (InterfaceType) field.get(null);
+			@SuppressWarnings("unchecked")
+			InterfaceType<T> type = (InterfaceType<T>) field.get(null);
+			return type;
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	public static class Builder {
-		private Class<?> javaClass;
-		private Supplier<MessageType> exc;
-		private final List<InterfaceMethod.Builder> declaredMethods;
-
-		private Builder() {
-			declaredMethods = Lists.newArrayList();
-		}
-
-		public Builder setJavaClass(final Class<?> javaClass) {
-			this.javaClass = javaClass;
-			return this;
-		}
-
-		public Builder setExc(final Supplier<MessageType> exc) {
-			this.exc = exc;
-			return this;
-		}
-
-		public Builder addMethod(final InterfaceMethod.Builder method) {
-			declaredMethods.add(method);
-			return this;
-		}
-
-		public InterfaceType build() {
-			return new InterfaceType(this);
-		}
-	}
-
-	private static ImmutableList<InterfaceMethod> buildDeclaredMethods(final Builder builder,
-			final InterfaceType iface) {
-		ImmutableList.Builder<InterfaceMethod> temp = ImmutableList.builder();
-		for (InterfaceMethod.Builder mb : builder.declaredMethods) {
-			temp.add(mb.build(iface));
-		}
-		return temp.build();
-	}
-
-	private static InterfaceMethod findIndexMethod(final List<InterfaceMethod> methods) {
-		for (InterfaceMethod method : methods) {
-			if (method.isIndex()) {
-				return method;
-			}
-		}
-		return null;
 	}
 }

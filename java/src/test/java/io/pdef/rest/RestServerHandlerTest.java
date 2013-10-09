@@ -109,7 +109,7 @@ public class RestServerHandlerTest {
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
 
 		Invocation invocation = handler.parseRequest(request);
-		assert invocation.getMethod().getName().equals("indexMethod");
+		assert invocation.getMethod().name().equals("indexMethod");
 		assert Arrays.equals(invocation.getArgs(), new Object[]{1, 2});
 	}
 
@@ -122,7 +122,7 @@ public class RestServerHandlerTest {
 						"aMap", "{\"1\": 2}"));
 
 		Invocation invocation = handler.parseRequest(request);
-		assert invocation.getMethod().getName().equals("postMethod");
+		assert invocation.getMethod().name().equals("postMethod");
 		assert Arrays.equals(invocation.getArgs(), new Object[]{
 				ImmutableList.of(1, 2, 3),
 				ImmutableMap.of(1, 2)
@@ -144,7 +144,7 @@ public class RestServerHandlerTest {
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
 
 		Invocation invocation = handler.parseRequest(request);
-		assert invocation.getMethod().getName().equals("remoteMethod");
+		assert invocation.getMethod().name().equals("remoteMethod");
 		assert Arrays.equals(invocation.getArgs(), new Object[]{1, 2});
 	}
 
@@ -157,11 +157,11 @@ public class RestServerHandlerTest {
 		assert chain.size() == 2;
 
 		Invocation invocation0 = chain.get(0);
-		assert invocation0.getMethod().getName().equals("interfaceMethod");
+		assert invocation0.getMethod().name().equals("interfaceMethod");
 		assert Arrays.equals(invocation0.getArgs(), new Object[]{1, 2});
 
 		Invocation invocation1 = chain.get(1);
-		assert invocation1.getMethod().getName().equals("indexMethod");
+		assert invocation1.getMethod().name().equals("indexMethod");
 		assert Arrays.equals(invocation1.getArgs(), new Object[0]);
 	}
 
@@ -175,11 +175,11 @@ public class RestServerHandlerTest {
 		assert chain.size() == 2;
 
 		Invocation invocation0 = chain.get(0);
-		assert invocation0.getMethod().getName().equals("interfaceMethod");
+		assert invocation0.getMethod().name().equals("interfaceMethod");
 		assert Arrays.equals(invocation0.getArgs(), new Object[]{1, 2});
 
 		Invocation invocation1 = chain.get(1);
-		assert invocation1.getMethod().getName().equals("stringMethod");
+		assert invocation1.getMethod().name().equals("stringMethod");
 		assert Arrays.equals(invocation1.getArgs(), new Object[]{"Привет"});
 	}
 

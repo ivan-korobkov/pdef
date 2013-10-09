@@ -13,137 +13,122 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class MessageType<M extends Message> extends DataType<M> {
-	private final Class<M> javaClass;
-
-	protected MessageType(final Class<M> javaClass) {
+	protected MessageType() {
 		super(TypeEnum.MESSAGE);
-		this.javaClass = checkNotNull(javaClass);
 	}
+
+	/** Returns a Java class. */
+	public abstract Class<M> getJavaClass();
+
+	/** Returns a base type. */
+	@Nullable
+	public abstract MessageType getBase();
+
+	/** Returns a discriminator value. */
+	@Nullable
+	public abstract Enum<?> getDiscriminatorValue();
+
+	/** Returns a discriminator field. */
+	@Nullable
+	public abstract MessageField<? super M, ?> getDiscriminator();
+
+	/** Returns a list of subtypes. */
+	public abstract List<Supplier<MessageType<? extends M>>> getSubtypes();
+
+	/** Returns declared fields. */
+	public abstract List<MessageField<M, ?>> getDeclaredFields();
+
+	/** Returns inherited + declared fields. */
+	public abstract List<MessageField<? super M, ?>> getFields();
+
+	/** Returns whether this message is a form. */
+	public abstract boolean isForm();
+
+	/** Creates a new message instance. */
+	public abstract M newInstance();
+
+	/** Copies one message fields into another. */
+	public abstract void copy(M src, M dst);
 
 	@Override
 	public String toString() {
 		return Objects.toStringHelper(this)
-				.addValue(javaClass.getSimpleName())
+				.addValue(getJavaClass().getSimpleName())
 				.toString();
 	}
+	
+	public abstract static class Forwarding<M extends Message> extends MessageType<M> {
+		protected abstract MessageType<M> delegate();
 
-	public Class<M> getJavaClass() {
-		return javaClass;
+		@Override
+		public Class<M> getJavaClass() {
+			return delegate().getJavaClass();
+		}
+
+		@Override
+		public MessageType getBase() {
+			return delegate().getBase();
+		}
+
+		@Override
+		public Enum<?> getDiscriminatorValue() {
+			return delegate().getDiscriminatorValue();
+		}
+
+		@Override
+		public MessageField<? super M, ?> getDiscriminator() {
+			return delegate().getDiscriminator();
+		}
+
+		@Override
+		public List<Supplier<MessageType<? extends M>>> getSubtypes() {
+			return delegate().getSubtypes();
+		}
+
+		@Override
+		public List<MessageField<M, ?>> getDeclaredFields() {
+			return delegate().getDeclaredFields();
+		}
+
+		@Override
+		public List<MessageField<? super M, ?>> getFields() {
+			return delegate().getFields();
+		}
+
+		@Override
+		public boolean isForm() {
+			return delegate().isForm();
+		}
+
+		@Override
+		public M newInstance() {
+			return delegate().newInstance();
+		}
+
+		@Override
+		public void copy(final M src, final M dst) {
+			delegate().copy(src, dst);
+		}
+
+		@Override
+		public M copy(final M object) {
+			return delegate().copy(object);
+		}
+
+		@Override
+		protected M doParseNative(final Object object) throws Exception {
+			return delegate().doParseNative(object);
+		}
+
+		@Override
+		protected Object doToNative(final M object) throws Exception {
+			return delegate().doToNative(object);
+		}
 	}
 
-	public abstract M newInstance();
-
-	public abstract Descriptor<M> descriptor();
-
-	public boolean isForm() {
-		return descriptor().form;
-	}
-
-	public List<MessageField<? super M, ?>> getFields() {
-		return descriptor().fields;
-	}
-
-	// Methods.
-
-	@Override
-	public M copy(final M src) {
-		if (src == null) {
-			return null;
-		}
-
-		M dst = newInstance();
-		copy(src, dst);
-		return dst;
-	}
-
-	public void copy(final M src, final M dst) {
-		for (MessageField<? super M, ?> field : descriptor().getFields()) {
-			field.copy(src, dst);
-		}
-	}
-
-	// Native format.
-
-	@Override
-	protected M doParseNative(final Object object) throws Exception {
-		if (object == null) {
-			return null;
-		}
-
-		Map<?, ?> map = (Map<?, ?>) object;
-		Enum<?> discriminatorValue = parseNativeDiscriminator(map);
-		MessageType<M> type = findSubtype(discriminatorValue);
-		Descriptor<M> descriptor = type.descriptor();
-
-		M message = type.newInstance();
-		for (MessageField<? super M, ?> field : descriptor.getFields()) {
-			Object value = map.get(field.getName());
-			field.setNative(message, value);
-		}
-
-		return message;
-	}
-
-	@Nullable
-	@VisibleForTesting
-	Enum<?> parseNativeDiscriminator(final Map<?, ?> map) throws Exception {
-		MessageField<? super M, ?> discriminator = descriptor().getDiscriminator();
-		if (discriminator == null) {
-			// This is not a polymorphic message.
-			return null;
-		}
-
-		Object value = map.get(discriminator.getName());
-		if (value == null) {
-			// No polymorphic discriminator value.
-			return null;
-		}
-
-		return (Enum<?>) discriminator.getType().doParseNative(value);
-	}
-
-	@SuppressWarnings("unchecked")
-	@VisibleForTesting
-	MessageType<M> findSubtype(@Nullable final Enum<?> discriminatorValue) {
-		if (discriminatorValue == null) {
-			return this;
-		}
-
-		for (Supplier<MessageType<? extends M>> supplier : descriptor().getSubtypes()) {
-			MessageType<? extends M> subtype = supplier.get();
-			if (discriminatorValue.equals(subtype.descriptor().getDiscriminatorValue())) {
-				return (MessageType<M>) subtype;
-			}
-		}
-
-		return this;
-	}
-
-	@Override
-	protected Map<String, Object> doToNative(final M message) throws Exception {
-		if (message == null) {
-			return null;
-		}
-
-		// Mind polymorphic messages.
-		@SuppressWarnings("unchecked")
-		MessageType<Message> type = (MessageType<Message>) message.type();
-		Descriptor<Message> descriptor = type.descriptor();
-
-		Map<String, Object> result = Maps.newLinkedHashMap();
-		for (MessageField<? super M, ?> field : descriptor.getFields()) {
-			Object value = field.getNative(message);
-			if (value == null) {
-				continue;
-			}
-
-			result.put(field.getName(), value);
-		}
-
-		return result;
-	}
-
-	public static class Descriptor<M extends Message> {
+	private static class Simple<M extends Message> extends MessageType<M> {
+		private final Class<M> javaClass;
+		private final Supplier<M> supplier;
 		private final MessageType<? super M> base;
 		private final List<MessageField<M, ?>> declaredFields;
 		private final List<MessageField<? super M, ?>> fields;
@@ -154,7 +139,10 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 
 		private final boolean form;
 
-		public Descriptor(final DescriptorBuilder<M> builder) {
+		protected Simple(final Builder<M> builder) {
+			this.javaClass = checkNotNull(builder.javaClass);
+			this.supplier = checkNotNull(builder.supplier);
+
 			base = builder.base;
 
 			declaredFields = ImmutableList.copyOf(builder.declaredFields);
@@ -172,7 +160,7 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 				@Nullable final MessageType<? super M> base) {
 			ImmutableList.Builder<MessageField<? super M, ?>> result = ImmutableList.builder();
 			if (base != null) {
-				result.addAll(base.descriptor().getFields());
+				result.addAll(base.getFields());
 			}
 			result.addAll(declaredFields);
 			return result.build();
@@ -186,6 +174,16 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 				}
 			}
 			return null;
+		}
+
+		@Override
+		public Class<M> getJavaClass() {
+			return javaClass;
+		}
+
+		@Override
+		public M newInstance() {
+			return supplier.get();
 		}
 
 		public MessageType getBase() {
@@ -215,47 +213,157 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 		public List<MessageField<? super M, ?>> getFields() {
 			return fields;
 		}
+
+		// Methods.
+
+		@Override
+		public M copy(final M src) {
+			if (src == null) {
+				return null;
+			}
+
+			M dst = newInstance();
+			copy(src, dst);
+			return dst;
+		}
+
+		public void copy(final M src, final M dst) {
+			for (MessageField<? super M, ?> field : getFields()) {
+				field.copy(src, dst);
+			}
+		}
+
+		// Native format.
+
+		@Override
+		protected M doParseNative(final Object object) throws Exception {
+			if (object == null) {
+				return null;
+			}
+
+			Map<?, ?> map = (Map<?, ?>) object;
+			Enum<?> discriminatorValue = parseNativeDiscriminator(map);
+			MessageType<M> type = findSubtype(discriminatorValue);
+
+			M message = type.newInstance();
+			for (MessageField<? super M, ?> field : getFields()) {
+				Object value = map.get(field.getName());
+				field.setNative(message, value);
+			}
+
+			return message;
+		}
+
+		@Nullable
+		@VisibleForTesting
+		Enum<?> parseNativeDiscriminator(final Map<?, ?> map) throws Exception {
+			MessageField<? super M, ?> discriminator = getDiscriminator();
+			if (discriminator == null) {
+				// This is not a polymorphic message.
+				return null;
+			}
+
+			Object value = map.get(discriminator.getName());
+			if (value == null) {
+				// No polymorphic discriminator value.
+				return null;
+			}
+
+			return (Enum<?>) discriminator.getType().doParseNative(value);
+		}
+
+		@SuppressWarnings("unchecked")
+		@VisibleForTesting
+		MessageType<M> findSubtype(@Nullable final Enum<?> discriminatorValue) {
+			if (discriminatorValue == null) {
+				return this;
+			}
+
+			for (Supplier<MessageType<? extends M>> supplier : getSubtypes()) {
+				MessageType<? extends M> subtype = supplier.get();
+				if (discriminatorValue.equals(subtype.getDiscriminatorValue())) {
+					return (MessageType<M>) subtype;
+				}
+			}
+
+			return this;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		protected Map<String, Object> doToNative(final M message) throws Exception {
+			if (message == null) {
+				return null;
+			}
+
+			// Mind polymorphic messages.
+			MessageType<?> type = message.type();
+			Map<String, Object> result = Maps.newLinkedHashMap();
+
+			for (MessageField field : type.getFields()) {
+				Object value = field.getNative(message);
+				if (value == null) {
+					continue;
+				}
+
+				result.put(field.getName(), value);
+			}
+
+			return result;
+		}
 	}
 
-	public static class DescriptorBuilder<M extends Message> {
+	public static class Builder<M extends Message> {
+		private Class<M> javaClass;
+		private Supplier<M> supplier;
 		private MessageType<? super M> base;
 		private Enum<?> discriminatorValue;
 		private final List<MessageField<M, ?>> declaredFields;
 		private final List<Supplier<MessageType<? extends M>>> subtypes;
 		private boolean form;
 
-		public DescriptorBuilder() {
+		public Builder() {
 			declaredFields = Lists.newArrayList();
 			subtypes = Lists.newArrayList();
 		}
 
-		public DescriptorBuilder<M> setBase(final MessageType<? super M> base) {
+		public Builder<M> setJavaClass(final Class<M> javaClass) {
+			this.javaClass = javaClass;
+			return this;
+		}
+
+		public Builder<M> setSupplier(final Supplier<M> supplier) {
+			this.supplier = supplier;
+			return this;
+		}
+
+		public Builder<M> setBase(final MessageType<? super M> base) {
 			this.base = base;
 			return this;
 		}
 
-		public DescriptorBuilder<M> setForm(final boolean form) {
+		public Builder<M> setForm(final boolean form) {
 			this.form = form;
 			return this;
 		}
 
-		public DescriptorBuilder<M> setDiscriminatorValue(final Enum<?> value) {
+		public Builder<M> setDiscriminatorValue(final Enum<?> value) {
 			this.discriminatorValue = value;
 			return this;
 		}
 
-		public DescriptorBuilder<M> addField(final MessageField<M, ?> field) {
+		public Builder<M> addField(final MessageField<M, ?> field) {
 			declaredFields.add(field);
 			return this;
 		}
 
-		public DescriptorBuilder<M> addSubtype(final Supplier<MessageType<? extends M>> subtype) {
+		public Builder<M> addSubtype(final Supplier<MessageType<? extends M>> subtype) {
 			subtypes.add(subtype);
 			return this;
 		}
 
-		public Descriptor<M> build() {
-			return new Descriptor<M>(this);
+		public MessageType<M> build() {
+			return new Simple<M>(this);
 		}
 	}
 }

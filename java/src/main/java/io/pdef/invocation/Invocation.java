@@ -30,7 +30,7 @@ public class Invocation {
 
 		if (method != null) {
 			// It is not a root sentinel invocation.
-			checkArgument(this.args.length == method.getArgs().size(), "Wrong number of args");
+			checkArgument(this.args.length == method.args().size(), "Wrong number of args");
 		}
 	}
 
@@ -55,13 +55,13 @@ public class Invocation {
 	}
 
 	public Type getResult() {
-		return method == null ? null : method.getResult();
+		return method == null ? null : method.result();
 	}
 
 	/** Returns the method exception or the parent exception. */
 	@Nullable
 	public MessageType<?> getExc() {
-		if (method != null) return method.getExc();
+		if (method != null) return method.exc();
 		if (parent != null) return parent.getExc();
 		return null;
 	}

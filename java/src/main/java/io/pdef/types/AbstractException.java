@@ -40,7 +40,7 @@ public abstract class AbstractException extends RuntimeException implements Mess
 		Objects.ToStringHelper helper = Objects.toStringHelper(this);
 
 		MessageType<Message> type = uncheckedType();
-		for (MessageField<? super Message, ?> field : type.descriptor().getFields()) {
+		for (MessageField<? super Message, ?> field : type.getFields()) {
 			helper.add(field.getName(), field.get(this));
 		}
 
@@ -54,7 +54,7 @@ public abstract class AbstractException extends RuntimeException implements Mess
 
 		AbstractMessage cast = (AbstractMessage) o;
 		MessageType<Message> type = uncheckedType();
-		for (MessageField<? super Message, ?> field : type.descriptor().getFields()) {
+		for (MessageField<? super Message, ?> field : type.getFields()) {
 			Object value0 = field.get(this);
 			Object value1 = field.get(cast);
 			if (value0 != null ? !value0.equals(value1) : value1 != null) {
@@ -70,7 +70,7 @@ public abstract class AbstractException extends RuntimeException implements Mess
 		int result = 0;
 
 		MessageType<Message> type = uncheckedType();
-		for (MessageField<? super Message, ?> field : type.descriptor().getFields()) {
+		for (MessageField<? super Message, ?> field : type.getFields()) {
 			Object value = field.get(this);
 			result = 31 * result + (value == null ? 0 : value.hashCode());
 		}

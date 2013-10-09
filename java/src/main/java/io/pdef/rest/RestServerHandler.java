@@ -93,19 +93,19 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 					throw new MethodNotAllowedError().setText("Method not allowed, POST required");
 				}
 
-				for (InterfaceMethodArg argd : method.getArgs()) {
+				for (InterfaceMethodArg argd : method.args()) {
 					args.add(parseQueryArg(argd, post));
 				}
 
 			} else if (method.isRemote()) {
 				// Parse arguments from the query string.
-				for (InterfaceMethodArg argd : method.getArgs()) {
+				for (InterfaceMethodArg argd : method.args()) {
 					args.add(parseQueryArg(argd, query));
 				}
 
 			} else {
 				// Parse arguments as positional params.
-				for (InterfaceMethodArg argd : method.getArgs()) {
+				for (InterfaceMethodArg argd : method.args()) {
 					if (parts.isEmpty()) {
 						throw new WrongMethodArgsError().setText("Wrong number of method args");
 					}
@@ -120,7 +120,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 			// Parse a next method or return an invocation chain.
 			if (!method.isRemote()) {
 				// Get the next interface and proceed parsing the parts.
-				type = (InterfaceType) method.getResult();
+				type = (InterfaceType) method.result();
 				continue;
 			}
 
@@ -151,7 +151,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 		if ((type instanceof MessageType) && ((MessageType) type).isForm()) {
 			// Parse as expanded form fields.
 
-			MessageType messageType = (MessageType) type;
+			MessageType<?> messageType = (MessageType) type;
 			Map<String, Object> fields = Maps.newHashMap();
 			for (MessageField field : messageType.getFields()) {
 				String fvalue = src.get(field.getName());

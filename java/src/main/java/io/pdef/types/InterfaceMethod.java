@@ -12,27 +12,25 @@ import java.util.List;
 
 public class InterfaceMethod {
 	private final String name;
-	private final Supplier<Type> result;
+	private final Supplier<Type<?>> result;
+	private final ImmutableList<InterfaceMethodArg> args;
+	private final Supplier<MessageType<?>> exc;
+	private final Invoker invoker;
 	private final boolean index;
 	private final boolean post;
-	private final List<InterfaceMethodArg> args;
-	private final InterfaceType anInterface;
-	private final Method reflexMethod;
 
-	private InterfaceMethod(final Builder builder, final InterfaceType anInterface) {
-		this.anInterface = checkNotNull(anInterface);
-		name = checkNotNull(builder.name);
-		result = checkNotNull(builder.result);
-		index = builder.index;
-		post = builder.post;
+	public InterfaceMethod(final Builder builder) {
+		this.name = checkNotNull(builder.name);
+		this.result = checkNotNull(builder.result);
+		this.args = ImmutableList.copyOf(builder.args);
+		this.exc = builder.exc;
+		this.invoker = checkNotNull(builder.invoker);
+		this.index = builder.index;
+		this.post = builder.post;
+	}
 
-		ImmutableList.Builder<InterfaceMethodArg> temp = ImmutableList.builder();
-		for (InterfaceMethodArg.Builder ab : builder.args) {
-			temp.add(ab.build(this));
-		}
-		args = temp.build();
-
-		reflexMethod = getReflexMethod(anInterface.getJavaClass(), name);
+	public static Builder builder() {
+		return new Builder();
 	}
 
 	@Override
@@ -42,24 +40,8 @@ public class InterfaceMethod {
 				.toString();
 	}
 
-	public String getName() {
+	public String name() {
 		return name;
-	}
-
-	public Type getResult() {
-		return result.get();
-	}
-
-	public MessageType getExc() {
-		return anInterface.getExc();
-	}
-
-	public List<InterfaceMethodArg> getArgs() {
-		return args;
-	}
-
-	public InterfaceType getInterface() {
-		return anInterface;
 	}
 
 	public boolean isIndex() {
@@ -70,35 +52,39 @@ public class InterfaceMethod {
 		return post;
 	}
 
+	public Type<?> result() {
+		return result.get();
+	}
+
+	public List<InterfaceMethodArg> args() {
+		return args;
+	}
+
+	public MessageType<?> exc() {
+		return exc.get();
+	}
+
 	public boolean isRemote() {
-		return getResult().type() != TypeEnum.INTERFACE;
+		return result().type().isDataType();
 	}
 
-	public static Builder builder() {
-		return new Builder();
-	}
-
-	/** Invokes this method an object with arguments. */
+	/** Invokes this method. */
 	public Object invoke(final Object object, final Object[] args) throws Exception {
-		checkNotNull(object);
+		return invoker.invoke(object, args);
+	}
 
-		try {
-			return reflexMethod.invoke(object, args);
-		} catch (InvocationTargetException e) {
-			Throwable t = e.getCause();
-			if (t instanceof Error) {
-				throw (Error) t;
-			}
-			throw (Exception) t;
-		}
+	public static interface Invoker {
+		Object invoke(Object object, Object[] args) throws Exception;
 	}
 
 	public static class Builder {
 		private String name;
-		private Supplier<Type> result;
+		private Supplier<Type<?>> result;
+		private List<InterfaceMethodArg> args;
+		private Supplier<MessageType<?>> exc;
+		private Invoker invoker;
 		private boolean index;
 		private boolean post;
-		private final List<InterfaceMethodArg.Builder> args;
 
 		public Builder() {
 			args = Lists.newArrayList();
@@ -109,8 +95,28 @@ public class InterfaceMethod {
 			return this;
 		}
 
-		public Builder setResult(final Supplier<Type> result) {
+		public Builder setResult(final Supplier<Type<?>> result) {
 			this.result = result;
+			return this;
+		}
+
+		public Builder addArg(final String name, final Supplier<DataType<?>> type) {
+			this.args.add(new InterfaceMethodArg(name, type));
+			return this;
+		}
+
+		public Builder setExc(final Supplier<MessageType<?>> exc) {
+			this.exc = exc;
+			return this;
+		}
+
+		public Builder setInvoker(final Invoker invoker) {
+			this.invoker = invoker;
+			return this;
+		}
+
+		public Builder reflectionInvoker(final Class<?> interfaceClass) {
+			this.invoker = new ReflectionInvoker(interfaceClass, name);
 			return this;
 		}
 
@@ -124,29 +130,43 @@ public class InterfaceMethod {
 			return this;
 		}
 
-		public Builder addArg(final String name, final Supplier<DataType> type) {
-			return addArg(InterfaceMethodArg.builder()
-					.setName(name)
-					.setType(type));
-		}
-
-		public Builder addArg(final InterfaceMethodArg.Builder arg) {
-			args.add(arg);
-			return this;
-		}
-
-		public InterfaceMethod build(final InterfaceType anInterface) {
-			return new InterfaceMethod(this, anInterface);
+		public InterfaceMethod build() {
+			return new InterfaceMethod(this);
 		}
 	}
 
-	private static Method getReflexMethod(final Class<?> cls, final String name) {
-		for (Method method : cls.getMethods()) {
-			if (method.getName().equals(name)) {
-				return method;
+	private static class ReflectionInvoker implements Invoker {
+		private final Method method;
+
+		private ReflectionInvoker(final Class<?> cls, final String name) {
+			Method m = null;
+			for (Method method : cls.getMethods()) {
+				if (method.getName().equals(name)) {
+					m = method;
+					break;
+				}
 			}
+
+			if (m == null) {
+				throw new IllegalArgumentException("Method is not found " + name);
+			}
+
+			method = m;
 		}
 
-		throw new AssertionError("Method is not found " + name);
+		@Override
+		public Object invoke(final Object object, final Object[] args) throws Exception{
+			checkNotNull(object);
+
+			try {
+				return method.invoke(object, args);
+			} catch (InvocationTargetException e) {
+				Throwable t = e.getCause();
+				if (t instanceof Error) {
+					throw (Error) t;
+				}
+				throw (Exception) t;
+			}
+		}
 	}
 }

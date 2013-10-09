@@ -43,13 +43,13 @@ public class InvocationTest {
 	@Test
 	public void testGetResult() throws Exception {
 		Invocation invocation = Invocation.root().next(indexMethod, new Object[]{1, 2});
-		assertEquals(indexMethod.getResult(), invocation.getResult());
+		assertEquals(indexMethod.result(), invocation.getResult());
 	}
 
 	@Test
 	public void testGetExc() throws Exception {
 		Invocation invocation = Invocation.root().next(indexMethod, new Object[]{1, 2});
-		assertEquals(indexMethod.getExc(), invocation.getExc());
+		assertEquals(indexMethod.exc(), invocation.getExc());
 	}
 
 	@Test

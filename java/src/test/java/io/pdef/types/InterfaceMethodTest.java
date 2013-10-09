@@ -14,14 +14,14 @@ public class InterfaceMethodTest {
 	public void testGetName() throws Exception {
 		InterfaceMethod method = iface.findMethod("indexMethod");
 		assertNotNull(method);
-		assertEquals("indexMethod", method.getName());
+		assertEquals("indexMethod", method.name());
 	}
 
 	@Test
 	public void testGetExc() throws Exception {
 		InterfaceMethod method = iface.findMethod("indexMethod");
 		assertNotNull(method);
-		assertTrue(method.getExc() == iface.getExc());
+		assertTrue(method.exc() == iface.getExc());
 	}
 
 	@Test

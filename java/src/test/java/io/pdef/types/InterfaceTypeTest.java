@@ -19,7 +19,7 @@ public class InterfaceTypeTest {
 		InterfaceMethod method = type.findMethod("indexMethod");
 
 		assertNotNull(method);
-		assertEquals("indexMethod", method.getName());
+		assertEquals("indexMethod", method.name());
 	}
 
 	@Test

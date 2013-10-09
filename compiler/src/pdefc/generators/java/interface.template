@@ -3,33 +3,6 @@ package {{ package }};
 
 import com.google.common.base.Supplier;
 
-import io.pdef.types.DataType;
-import io.pdef.types.Type;
-import io.pdef.types.Types;
-import io.pdef.types.InterfaceType;
-import io.pdef.types.InterfaceMethod;
-import io.pdef.types.MessageType;
-
-{% macro render_method(method) %}
-            .addMethod(InterfaceMethod.builder()
-                    .setName("{{ method.name }}")
-                    {% if method.is_index %}
-                    .setIndex(true)
-                    {% endif %}
-                    {% if method.is_post %}
-                    .setPost(true)
-                    {% endif %}
-                    .setResult(new Supplier<Type>() {
-                        public Type get() { return {{ method.result.descriptor }}; }
-                    })
-                    {% for arg in method.args %}
-                    .addArg("{{ arg.name }}", new Supplier<DataType>() {
-                        public DataType get () { return {{ arg.type.descriptor }}; }
-                    })
-                    {% endfor %}
-            )
-{% endmacro %}
-
 {% if doc %}
 /** {{ doc }} */
 {% endif %}
@@ -50,14 +23,44 @@ import io.pdef.types.MessageType;
         {%- endfor %});
 
 {% endfor %}
-    static InterfaceType TYPE = InterfaceType.builder()
-            .setJavaClass({{ name }}.class)
-            {% if exc %}
-            .setExc(new Supplier<MessageType>() {
-                public MessageType get() { return {{ exc.descriptor }}; }
-            })
-            {% endif %}
-            {% for method in declared_methods -%}{{ render_method(method) }}{% endfor %}
-            .build();
+{% for method in declared_methods %}
+    static final io.pdef.types.InterfaceMethod {{ method.name|upper }}_METHOD =
+            io.pdef.types.InterfaceMethod.builder()
+                    .setName("{{ method.name }}")
+                    .setInvokerFrom({{ name }}.class)
+                {% if method.is_index %}
+                    .setIndex(true)
+                {% endif %}
+                {% if method.is_post %}
+                    .setPost(true)
+                {% endif %}
+                {% if method.result.is_interface %}
+                    .setResult(new Supplier<io.pdef.types.Type<?>>() {
+                        public io.pdef.types.Type<?> get() {
+                            return {{ method.result.descriptor }};
+                        }
+                    })
+                {% else %}
+                    .setResult({{ method.result.descriptor }})
+                {% endif %}
+                {% if exc %}
+                    .setExc({{ exc.descriptor }})
+                {% endif %}
+                {% for arg in method.args %}
+                    .addArg("{{ arg.name }}", {{ arg.type.descriptor }})
+                {% endfor %}
+                    .build();
+
+{% endfor %}
+    static io.pdef.types.InterfaceType<{{ name }}> TYPE =
+            new io.pdef.types.InterfaceType.Builder<{{ name }}>()
+                    .setJavaClass({{ name }}.class)
+                {% if exc %}
+                    .setExc({{ exc.descriptor }})
+                {% endif %}
+                {% for method in declared_methods %}
+                    .addMethod({{ method.name|upper }}_METHOD)
+                {% endfor %}
+                    .build();
 }
 

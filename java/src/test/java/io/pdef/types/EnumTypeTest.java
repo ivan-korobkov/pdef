@@ -8,18 +8,18 @@ import org.junit.Test;
 import java.util.List;
 
 public class EnumTypeTest {
-	private final EnumType type = TestEnum.classType();
+	private final EnumType<TestEnum> type = TestEnum.TYPE;
 
 	@Test
 	public void testGetValues() throws Exception {
-		List<Enum<?>> values = type.getValues();
-		assertEquals(ImmutableList.<Enum<?>>of(TestEnum.ONE, TestEnum.TWO, TestEnum.THREE), values);
+		List<TestEnum> values = type.getValues();
+		assertEquals(ImmutableList.<TestEnum>of(TestEnum.ONE, TestEnum.TWO, TestEnum.THREE), values);
 	}
 
 	@Test
 	public void testParseObject() throws Exception {
 		String s = "thrEE";
-		TestEnum result = (TestEnum) type.parseNative(s);
+		TestEnum result = type.parseNative(s);
 		assertEquals(TestEnum.THREE, result);
 	}
 
@@ -32,7 +32,7 @@ public class EnumTypeTest {
 	@Test
 	public void testParseString() throws Exception {
 		String s = "three";
-		TestEnum result = (TestEnum) type.parseString(s);
+		TestEnum result = type.parseString(s);
 		assertEquals(TestEnum.THREE, result);
 	}
 

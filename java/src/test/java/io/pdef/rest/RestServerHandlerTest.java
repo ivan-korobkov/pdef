@@ -3,8 +3,6 @@ package io.pdef.rest;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import io.pdef.types.InterfaceMethodArg;
-import io.pdef.types.Types;
 import io.pdef.invocation.Invocation;
 import io.pdef.invocation.InvocationResult;
 import io.pdef.rpc.*;
@@ -12,6 +10,8 @@ import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import io.pdef.test.messages.SimpleForm;
 import io.pdef.test.messages.SimpleMessage;
+import io.pdef.types.InterfaceMethodArg;
+import io.pdef.types.Types;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -195,10 +195,7 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParsePositionalArg() throws Exception {
-		InterfaceMethodArg argd = InterfaceMethodArg.builder()
-				.setName("arg")
-				.setType(Types.string)
-				.build();
+		InterfaceMethodArg<String> argd = InterfaceMethodArg.of("arg", Types.string);
 		String part = "%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82";
 
 		String value = (String) handler.parsePositionalArg(argd, part);
@@ -207,10 +204,8 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParseQueryArg() throws Exception {
-		InterfaceMethodArg argd = InterfaceMethodArg.builder()
-				.setName("arg")
-				.setType(SimpleMessage.classType())
-				.build();
+		InterfaceMethodArg<SimpleMessage> argd = InterfaceMethodArg.of("arg", SimpleMessage.TYPE);
+
 		SimpleMessage expected = new SimpleMessage()
 				.setAString("Привет")
 				.setABool(true)
@@ -223,10 +218,7 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParseQueryArg_form() throws Exception {
-		InterfaceMethodArg argd = InterfaceMethodArg.builder()
-				.setName("arg")
-				.setType(SimpleForm.classType())
-				.build();
+		InterfaceMethodArg<SimpleForm> argd = InterfaceMethodArg.of("arg", SimpleForm.TYPE);
 
 		SimpleForm expected = new SimpleForm()
 				.setText("Привет, как дела?")
@@ -266,8 +258,7 @@ public class RestServerHandlerTest {
 				.setAnInt16((short) 123);
 
 		String json = msg.toJson();
-		SimpleMessage result = (SimpleMessage) handler
-				.parseArgFromString(msg.classType(), json);
+		SimpleMessage result = (SimpleMessage) handler.parseArgFromString(msg.type(), json);
 		assert result.equals(msg);
 	}
 

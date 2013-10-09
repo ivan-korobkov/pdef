@@ -3,6 +3,7 @@ package io.pdef.types;
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -14,7 +15,7 @@ public class InterfaceMethod {
 	private final String name;
 	private final Supplier<Type<?>> result;
 	private final ImmutableList<InterfaceMethodArg> args;
-	private final Supplier<MessageType<?>> exc;
+	private final MessageType<?> exc;
 	private final Invoker invoker;
 	private final boolean index;
 	private final boolean post;
@@ -61,11 +62,12 @@ public class InterfaceMethod {
 	}
 
 	public MessageType<?> exc() {
-		return exc.get();
+		return exc;
 	}
 
 	public boolean isRemote() {
-		return result().type().isDataType();
+		TypeEnum type = result().type();
+		return type.isDataType() || type == TypeEnum.VOID;
 	}
 
 	/** Invokes this method. */
@@ -81,7 +83,7 @@ public class InterfaceMethod {
 		private String name;
 		private Supplier<Type<?>> result;
 		private List<InterfaceMethodArg> args;
-		private Supplier<MessageType<?>> exc;
+		private MessageType<?> exc;
 		private Invoker invoker;
 		private boolean index;
 		private boolean post;
@@ -95,18 +97,23 @@ public class InterfaceMethod {
 			return this;
 		}
 
+		public Builder setResult(final Type<?> result) {
+			checkNotNull(result);
+			return setResult(Suppliers.<Type<?>>ofInstance(result));
+		}
+
 		public Builder setResult(final Supplier<Type<?>> result) {
 			this.result = result;
 			return this;
 		}
 
-		public Builder addArg(final String name, final Supplier<DataType<?>> type) {
-			this.args.add(new InterfaceMethodArg(name, type));
+		public Builder setExc(final MessageType<?> exc) {
+			this.exc = exc;
 			return this;
 		}
 
-		public Builder setExc(final Supplier<MessageType<?>> exc) {
-			this.exc = exc;
+		public <V> Builder addArg(final String name, final DataType<V> type) {
+			this.args.add(new InterfaceMethodArg<V>(name, type));
 			return this;
 		}
 
@@ -115,7 +122,7 @@ public class InterfaceMethod {
 			return this;
 		}
 
-		public Builder reflectionInvoker(final Class<?> interfaceClass) {
+		public Builder setInvokerFrom(final Class<?> interfaceClass) {
 			this.invoker = new ReflectionInvoker(interfaceClass, name);
 			return this;
 		}

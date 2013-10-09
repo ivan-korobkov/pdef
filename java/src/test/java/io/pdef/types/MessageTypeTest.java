@@ -9,11 +9,11 @@ import org.junit.Test;
 import java.util.Map;
 
 public class MessageTypeTest {
-	private MessageType type = SimpleMessage.classType();
+	private MessageType<SimpleMessage> type = SimpleMessage.TYPE;
 
 	@Test
 	public void testGetJavaClass() throws Exception {
-		assertTrue(type.javaClass() == SimpleMessage.class);
+		assertTrue(type.getJavaClass() == SimpleMessage.class);
 	}
 
 	@Test
@@ -38,7 +38,7 @@ public class MessageTypeTest {
 	@Test
 	public void testParseObject() throws Exception {
 		Map<String, Object> map = fixtureMap();
-		SimpleMessage message = (SimpleMessage) type.parseNative(map);
+		SimpleMessage message = type.parseNative(map);
 		SimpleMessage expected = fixture();
 
 		assertEquals(expected, message);
@@ -48,13 +48,13 @@ public class MessageTypeTest {
 	public void testToJson() throws Exception {
 		SimpleMessage message = fixture();
 		String s = type.toJson(message);
-		SimpleMessage parsed = (SimpleMessage) type.parseJson(s);
+		SimpleMessage parsed = type.parseJson(s);
 		assertEquals(message, parsed);
 	}
 
 	@Test
 	public void testParseJson() throws Exception {
-		SimpleMessage message = (SimpleMessage) type.parseJson(fixtureJson());
+		SimpleMessage message = type.parseJson(fixtureJson());
 		SimpleMessage expected = fixture();
 		assertEquals(expected, message);
 	}
@@ -80,16 +80,6 @@ public class MessageTypeTest {
 	// Polymorphic message tests.
 
 	@Test
-	public void testSubtype_polymorphic() throws Exception {
-		MessageType type = Base.classType();
-
-		assertTrue(type.findSubtype(PolymorphicType.SUBTYPE) == Subtype.classType());
-		assertTrue(type.findSubtype(PolymorphicType.SUBTYPE2) == Subtype2.classType());
-		assertTrue(type.findSubtype(PolymorphicType.MULTILEVEL_SUBTYPE) == MultiLevelSubtype
-				.classType());
-	}
-
-	@Test
 	public void testParseObject_polymorphic() throws Exception {
 		Map<String, Object> subtypeMap = ImmutableMap.<String, Object>of("type",
 				"subtype", "subfield", "hello");
@@ -98,7 +88,7 @@ public class MessageTypeTest {
 		Map<String, Object> mlevelSubtypeMap = ImmutableMap.<String, Object>of("type",
 				"multilevel_subtype", "subfield", "hello", "mfield", "bye");
 
-		MessageType type = Base.classType();
+		MessageType type = Base.TYPE;
 
 		Subtype subtype = new Subtype().setSubfield("hello");
 		Subtype2 subtype2 = new Subtype2().setSubfield2("hello");

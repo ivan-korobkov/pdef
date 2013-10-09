@@ -13,17 +13,14 @@ public enum {{ name }} {
     {%- endfor %};
 
     public static {{ name }} parseString(final String s) {
-        return ({{ name }}) classType().parseString(s);
+        return TYPE.parseString(s);
     }
 
     public static {{ name }} parseJson(final String s) {
-        return ({{ name }}) classType().parseJson(s);
+        return TYPE.parseJson(s);
     }
 
-    public static EnumType classType() {
-        return TYPE;
-    }
-
-    private static final EnumType TYPE = new EnumType({{ name }}.class);
+    public static final EnumType<{{ name }}> TYPE =
+            new EnumType<{{ name }}>({{ name }}.class);
 }
 

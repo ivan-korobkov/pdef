@@ -3,7 +3,7 @@ package io.pdef.types;
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 
-/** Data type type. */
+/** Base pdef type. */
 public abstract class Type<T> {
 	private final TypeEnum type;
 

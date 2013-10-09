@@ -7,7 +7,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class InterfaceTypeTest {
-	private InterfaceType type = TestInterface.TYPE;
+	private InterfaceType<TestInterface> type = TestInterface.TYPE;
 
 	@Test
 	public void testGetMethods() throws Exception {

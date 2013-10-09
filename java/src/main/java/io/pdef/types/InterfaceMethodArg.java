@@ -1,14 +1,17 @@
 package io.pdef.types;
 
 import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
-import com.google.common.base.Supplier;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-public class InterfaceMethodArg {
+public class InterfaceMethodArg<V> {
 	private final String name;
-	private final Supplier<DataType<?>> type;
+	private final DataType<V> type;
 
-	public InterfaceMethodArg(final String name, final Supplier<DataType<?>> type) {
+	public static <V> InterfaceMethodArg<V> of(final String name, final DataType<V> type) {
+		return new InterfaceMethodArg<V>(name, type);
+	}
+
+	public InterfaceMethodArg(final String name, final DataType<V> type) {
 		this.name = checkNotNull(name);
 		this.type = checkNotNull(type);
 	}
@@ -25,7 +28,7 @@ public class InterfaceMethodArg {
 		return name;
 	}
 
-	public DataType<?> getType() {
-		return type.get();
+	public DataType<V> getType() {
+		return type;
 	}
 }

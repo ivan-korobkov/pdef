@@ -1,16 +1,11 @@
 package io.pdef.rest;
 
 import com.google.common.base.Function;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Atomics;
 import io.pdef.Clients;
-import io.pdef.types.InterfaceMethodArg;
-import io.pdef.types.DataType;
-import io.pdef.types.Types;
-import io.pdef.types.MessageType;
 import io.pdef.invocation.Invocation;
 import io.pdef.invocation.InvocationResult;
 import io.pdef.rpc.*;
@@ -18,6 +13,9 @@ import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import io.pdef.test.messages.SimpleForm;
 import io.pdef.test.messages.SimpleMessage;
+import io.pdef.types.InterfaceMethodArg;
+import io.pdef.types.MessageType;
+import io.pdef.types.Types;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -47,8 +45,7 @@ public class RestClientHandlerTest {
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()
-				.setContent(new RpcResult().setStatus(RpcStatus.OK).setData(3)
-						.toJson());
+				.setContent(new RpcResult().setStatus(RpcStatus.OK).setData(3).toJson());
 
 		when(sender.apply(request)).thenReturn(response);
 		int result = proxy(handler).indexMethod(1, 2);
@@ -156,10 +153,7 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializePositionalArg() throws Exception {
-		InterfaceMethodArg argd = InterfaceMethodArg.builder()
-				.setName("arg")
-				.setType(Suppliers.<DataType>ofInstance(Types.string))
-				.build();
+		InterfaceMethodArg<String> argd = InterfaceMethodArg.of("arg", Types.string);
 
 		String value = handler.serializePositionalArg(argd, "Привет");
 		assert value.equals("%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82");
@@ -167,10 +161,7 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializeQueryArg() throws Exception {
-		InterfaceMethodArg argd = InterfaceMethodArg.builder()
-				.setName("arg")
-				.setType(Suppliers.<DataType>ofInstance(Types.int32))
-				.build();
+		InterfaceMethodArg<Integer> argd = InterfaceMethodArg.of("arg", Types.int32);
 
 		Map<String, String> dst = Maps.newHashMap();
 		handler.serializeQueryArg(argd, 123, dst);
@@ -179,10 +170,7 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializeQueryArg_form() throws Exception {
-		InterfaceMethodArg argd = InterfaceMethodArg.builder()
-				.setName("arg")
-				.setType(SimpleForm.classType())
-				.build();
+		InterfaceMethodArg<SimpleForm> argd = InterfaceMethodArg.of("arg", SimpleForm.TYPE);
 
 		Map<String, String> dst = Maps.newHashMap();
 		SimpleForm msg = new SimpleForm()
@@ -220,7 +208,7 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializeArgToString_message() throws Exception {
-		MessageType type = SimpleMessage.classType();
+		MessageType type = SimpleMessage.TYPE;
 		SimpleMessage msg = new SimpleMessage()
 				.setABool(true)
 				.setAnInt16((short) 256)

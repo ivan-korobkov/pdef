@@ -52,7 +52,7 @@ public abstract class AbstractException extends RuntimeException implements Mess
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		AbstractMessage cast = (AbstractMessage) o;
+		AbstractException cast = (AbstractException) o;
 		MessageType<Message> type = uncheckedType();
 		for (MessageField<? super Message, ?> field : type.getFields()) {
 			Object value0 = field.get(this);

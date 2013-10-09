@@ -56,77 +56,8 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 				.addValue(getJavaClass().getSimpleName())
 				.toString();
 	}
-	
-	public abstract static class Forwarding<M extends Message> extends MessageType<M> {
-		protected abstract MessageType<M> delegate();
 
-		@Override
-		public Class<M> getJavaClass() {
-			return delegate().getJavaClass();
-		}
-
-		@Override
-		public MessageType getBase() {
-			return delegate().getBase();
-		}
-
-		@Override
-		public Enum<?> getDiscriminatorValue() {
-			return delegate().getDiscriminatorValue();
-		}
-
-		@Override
-		public MessageField<? super M, ?> getDiscriminator() {
-			return delegate().getDiscriminator();
-		}
-
-		@Override
-		public List<Supplier<MessageType<? extends M>>> getSubtypes() {
-			return delegate().getSubtypes();
-		}
-
-		@Override
-		public List<MessageField<M, ?>> getDeclaredFields() {
-			return delegate().getDeclaredFields();
-		}
-
-		@Override
-		public List<MessageField<? super M, ?>> getFields() {
-			return delegate().getFields();
-		}
-
-		@Override
-		public boolean isForm() {
-			return delegate().isForm();
-		}
-
-		@Override
-		public M newInstance() {
-			return delegate().newInstance();
-		}
-
-		@Override
-		public void copy(final M src, final M dst) {
-			delegate().copy(src, dst);
-		}
-
-		@Override
-		public M copy(final M object) {
-			return delegate().copy(object);
-		}
-
-		@Override
-		protected M doParseNative(final Object object) throws Exception {
-			return delegate().doParseNative(object);
-		}
-
-		@Override
-		protected Object doToNative(final M object) throws Exception {
-			return delegate().doToNative(object);
-		}
-	}
-
-	private static class Simple<M extends Message> extends MessageType<M> {
+	private static class Immutable<M extends Message> extends MessageType<M> {
 		private final Class<M> javaClass;
 		private final Supplier<M> supplier;
 		private final MessageType<? super M> base;
@@ -139,7 +70,7 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 
 		private final boolean form;
 
-		protected Simple(final Builder<M> builder) {
+		protected Immutable(final Builder<M> builder) {
 			this.javaClass = checkNotNull(builder.javaClass);
 			this.supplier = checkNotNull(builder.supplier);
 
@@ -363,7 +294,7 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 		}
 
 		public MessageType<M> build() {
-			return new Simple<M>(this);
+			return new Immutable<M>(this);
 		}
 	}
 }

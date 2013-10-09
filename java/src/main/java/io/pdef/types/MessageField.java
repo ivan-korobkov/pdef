@@ -58,4 +58,8 @@ public abstract class MessageField<M, V> {
 
 		return getType().toNative(value);
 	}
+
+	public static interface Getter<M, V> {
+		V get(M message);
+	}
 }

@@ -158,7 +158,7 @@ class JavaReference(object):
 
         name = 'java.util.List<%s>' % element
         default = 'com.google.common.collect.ImmutableList.<%s>of()' % element
-        descriptor = 'Types.list(%s)' % element.descriptor
+        descriptor = 'io.pdef.types.Types.list(%s)' % element.descriptor
 
         return JavaReference(name, default=default, descriptor=descriptor, is_list=True)
 
@@ -168,7 +168,7 @@ class JavaReference(object):
 
         name = 'java.util.Set<%s>' % element
         default = 'com.google.common.collect.ImmutableSet.<%s>of()' % element
-        descriptor = 'Types.set(%s)' % element.descriptor
+        descriptor = 'io.pdef.types.Types.set(%s)' % element.descriptor
 
         return JavaReference(name, default=default, descriptor=descriptor, is_set=True)
 
@@ -179,7 +179,7 @@ class JavaReference(object):
 
         name = 'java.util.Map<%s, %s>' % (key, value)
         default = 'com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key, value)
-        descriptor = 'Types.map(%s, %s)' % (key.descriptor, value.descriptor)
+        descriptor = 'io.pdef.types.Types.map(%s, %s)' % (key.descriptor, value.descriptor)
 
         return JavaReference(name, default=default, descriptor=descriptor, is_map=True)
 
@@ -193,20 +193,26 @@ class JavaReference(object):
         name = '%s.%s' % (type0.module.name, type0.name)
         name = ref(name)
 
+        is_interface = False
+        is_message = False
+
         if type0.is_interface:
             default = None
-            descriptor = '%s.TYPE' % name
+            is_interface = True
         elif type0.is_enum:
             default = 'null'
-            descriptor = '%s.classType()' % name
-        else:
+        elif type0.is_message:
             default = 'new %s()' % name
-            descriptor = '%s.classType()' % name
+            is_message = True
+        else:
+            raise ValueError('Unsupported definition %r' % type0)
 
-        return JavaReference(name, default=default, descriptor=descriptor)
+        descriptor = '%s.TYPE' % name
+        return JavaReference(name, default=default, descriptor=descriptor,
+                             is_interface=is_interface, is_message=is_message)
 
     def __init__(self, name, unboxed=None, default='null', descriptor=None,
-                 is_list=False, is_set=False, is_map=False):
+                 is_list=False, is_set=False, is_map=False, is_interface=False, is_message=False):
         self.name = name
         self.unboxed = unboxed or self
         self.default = default
@@ -216,20 +222,23 @@ class JavaReference(object):
         self.is_set = is_set
         self.is_map = is_map
 
+        self.is_interface = is_interface
+        self.is_message = is_message
+
     def __str__(self):
         return self.name
 
 
 NATIVE_TYPES = {
-    TypeEnum.BOOL: JavaReference('Boolean', 'boolean', 'false', 'Types.bool'),
-    TypeEnum.INT16: JavaReference('Short', 'short', '(short) 0', 'Types.int16'),
-    TypeEnum.INT32: JavaReference('Integer', 'int', '0', 'Types.int32'),
-    TypeEnum.INT64: JavaReference('Long', 'long', '0L', 'Types.int64'),
-    TypeEnum.FLOAT: JavaReference('Float', 'float', '0f', 'Types.float0'),
-    TypeEnum.DOUBLE: JavaReference('Double', 'double', '0.0', 'Types.double0'),
-    TypeEnum.STRING: JavaReference('String', default='""', descriptor='Types.string'),
-    TypeEnum.OBJECT: JavaReference('Object', descriptor='Types.object'),
-    TypeEnum.VOID: JavaReference('void', 'void', descriptor='Types.void0')
+    TypeEnum.BOOL: JavaReference('Boolean', 'boolean', 'false', 'io.pdef.types.Types.bool'),
+    TypeEnum.INT16: JavaReference('Short', 'short', '(short) 0', 'io.pdef.types.Types.int16'),
+    TypeEnum.INT32: JavaReference('Integer', 'int', '0', 'io.pdef.types.Types.int32'),
+    TypeEnum.INT64: JavaReference('Long', 'long', '0L', 'io.pdef.types.Types.int64'),
+    TypeEnum.FLOAT: JavaReference('Float', 'float', '0f', 'io.pdef.types.Types.float0'),
+    TypeEnum.DOUBLE: JavaReference('Double', 'double', '0.0', 'io.pdef.types.Types.double0'),
+    TypeEnum.STRING: JavaReference('String', default='""', descriptor='io.pdef.types.Types.string'),
+    TypeEnum.OBJECT: JavaReference('Object', descriptor='io.pdef.types.Types.object'),
+    TypeEnum.VOID: JavaReference('void', 'void', descriptor='io.pdef.types.Types.void0')
 }
 
 

@@ -3,12 +3,6 @@ package {{ package }};
 
 import com.google.common.base.Supplier;
 
-import io.pdef.types.Type;
-import io.pdef.types.Types;
-import io.pdef.types.Message;
-import io.pdef.types.MessageField;
-import io.pdef.types.MessageType;
-
 
 {% if doc %}
 /** {{ doc }} */
@@ -27,14 +21,15 @@ public class {{ name }} extends {{ base_or_root }} {
 {% endif %}
 
     public static {{ name }} parseMap(final java.util.Map<String, Object> map) {
-        return ({{ name }}) classType().parseNative(map);
+        return TYPE.parseNative(map);
     }
 
     public static {{ name }} parseJson(final String s) {
-        return ({{ name }}) classType().parseJson(s);
+        return TYPE.parseJson(s);
     }
 
 {% for field in declared_fields %}
+    // {{ field.name }}
     public {{ field.type.unboxed }} {{ field.get }}() {
         return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
     }
@@ -50,6 +45,7 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% endfor %}
 {% for field in inherited_fields %}
+    // {{ field.name }}
     @Override
     public {{ name }} {{ field.set }}(final {{ field.type }} value) {
         super.{{ field.set }}(value);
@@ -58,56 +54,55 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% endfor %}
     @Override
-    public MessageType type() {
+    public io.pdef.types.MessageType<? extends {{ name }}> type() {
         return TYPE;
     }
 
-    /** Returns a message type. */
-    public static MessageType classType() {
-        return TYPE;
-    }
-    
-    private static final MessageType TYPE = MessageType.builder()
-            .setJavaClass({{ name }}.class)
-		    .setSupplier(new Supplier<Message>() {
-			    public Message get() {
-				    return new {{ name }}();
-			    }
-		    })
-            {% if base %}
-            .setBase({{ base.descriptor }})
-            {% endif %}
-            {% if is_form %}
-            .setForm(true)
-            {% endif %}
-            {% if discriminator_value %}
-            .setDiscriminatorValue({{ discriminator_value }})
-            {% endif %}
-            {% for subtype in subtypes %}
-            .addSubtype(new Supplier<MessageType>() {
-                public MessageType get() { return {{ subtype.descriptor }}; }
-            })
-            {% endfor %}
-            {% for field in declared_fields %}
-            .addField("{{ field.name }}", {{ field.is_discriminator }},
-				    new Supplier<Type>() {
-					    public Type get() {
-						    return {{ field.type.descriptor }};
-					    }
-				    },
-				    new MessageField.Getter() {
-					    public Object get(final Object message) {
-                            return (({{ name }}) message).{{ field.name }};
-					    }
-				    },
-				    new MessageField.Setter() {
-                        @SuppressWarnings("unchecked")
-					    public void set(final Object message, final Object value) {
-                            (({{ name }}) message).{{ field.name }} = ({{ field.type }}) value;
-					    }
-				    }
-            )
-            {% endfor %}
-            .build();
+{% for field in declared_fields %}
+    public static final io.pdef.types.MessageField<{{ name }}, {{ field.type }}> {{ field.name|upper }}_FIELD =
+            new io.pdef.types.MessageField<{{ name }}, {{ field.type }}>("{{ field.name }}", {{ field.is_discriminator }}) {
+                public io.pdef.types.DataType<{{ field.type }}> getType() {
+                    return {{ field.type.descriptor }};
+                }
+
+                public {{ field.type }} get({{ name }} m) {
+                    return m.{{ field.name }};
+                }
+
+                public void set({{ name }} m, {{ field.type }} v) {
+                    m.{{ field.name }} = v;
+                }
+            };
+
+{% endfor %}
+
+    public static final io.pdef.types.MessageType<{{ name }}> TYPE =
+            new io.pdef.types.MessageType.Builder<{{ name }}>()
+                    .setJavaClass({{ name }}.class)
+                    .setSupplier(new Supplier<{{ name }}>() {
+                        public {{ name }} get() {
+                            return new {{ name }}();
+                        }
+                    })
+                    {% if base %}
+                    .setBase({{ base.descriptor }})
+                    {% endif %}
+                    {% if is_form %}
+                    .setForm(true)
+                    {% endif %}
+                    {% if discriminator_value %}
+                    .setDiscriminatorValue({{ discriminator_value }})
+                    {% endif %}
+                    {% for subtype in subtypes %}
+                    .addSubtype(new Supplier<io.pdef.types.MessageType<? extends {{ name }}>>() {
+                        public io.pdef.types.MessageType<? extends {{ name }}> get() {
+                            return {{ subtype.descriptor }};
+                        }
+                    })
+                    {% endfor %}
+                    {% for field in declared_fields %}
+                    .addField({{ field.name|upper }}_FIELD)
+                    {% endfor %}
+                    .build();
 }
 

@@ -10,42 +10,41 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 public class InvocationProxy implements InvocationHandler {
-	private final InterfaceType descriptor;
+	private final InterfaceType type;
 	private final Function<Invocation, InvocationResult> handler;
 	private final Invocation parent;
 
 	/** Creates a Java invocation proxy. */
-	public static <T> T create(final Class<T> cls, final InterfaceType descriptor,
+	public static <T> T create(final Class<T> cls, final InterfaceType type,
 			final Function<Invocation, InvocationResult> handler) {
 		checkNotNull(cls);
-		checkNotNull(descriptor);
+		checkNotNull(type);
 		checkNotNull(handler);
-		checkArgument(cls == descriptor.getJavaClass(), "Class/type do not match, %s, %s", cls,
-				descriptor);
+		checkArgument(cls == type.getJavaClass(), "Class/type do not match, %s, %s", cls, type);
 
-		InvocationProxy invocationProxy = new InvocationProxy(descriptor, handler, Invocation.root());
+		InvocationProxy invocationProxy = new InvocationProxy(type, handler, Invocation.root());
 		Object proxy = invocationProxy.toProxy();
 		return cls.cast(proxy);
 	}
 
-	private InvocationProxy(final InterfaceType descriptor,
+	private InvocationProxy(final InterfaceType type,
 			final Function<Invocation, InvocationResult> handler,
 			final Invocation parent) {
-		this.descriptor = descriptor;
+		this.type = type;
 		this.handler = handler;
 		this.parent = parent;
 	}
 
 	private Object toProxy() {
-		Class<?> type = descriptor.getJavaClass();
-		return Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type}, this);
+		Class<?> cls = type.getJavaClass();
+		return Proxy.newProxyInstance(cls.getClassLoader(), new Class<?>[]{cls}, this);
 	}
 
 	@Override
 	public Object invoke(final Object proxy, final Method method, final Object[] args)
 			throws Throwable {
 		String name = method.getName();
-		InterfaceMethod md = descriptor.findMethod(name);
+		InterfaceMethod md = type.findMethod(name);
 		if (md == null) {
 			// It must be the equals, hashCode, etc. method.
 			return method.invoke(this, args);
@@ -75,8 +74,8 @@ public class InvocationProxy implements InvocationHandler {
 	}
 
 	private Object nextProxy(final Invocation invocation) {
-		InterfaceType ndescriptor = (InterfaceType) invocation.getResult();
-		InvocationProxy nproxy = new InvocationProxy(ndescriptor, handler, invocation);
+		InterfaceType ntype = (InterfaceType) invocation.getResult();
+		InvocationProxy nproxy = new InvocationProxy(ntype, handler, invocation);
 		return nproxy.toProxy();
 	}
 }

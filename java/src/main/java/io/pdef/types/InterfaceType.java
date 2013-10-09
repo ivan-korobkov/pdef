@@ -1,5 +1,6 @@
 package io.pdef.types;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -24,6 +25,13 @@ public class InterfaceType extends Type {
 
 	public static Builder builder() {
 		return new Builder();
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(getJavaClass().getSimpleName())
+				.toString();
 	}
 
 	@Override
@@ -62,7 +70,7 @@ public class InterfaceType extends Type {
 
 	/** Returns an interface type or null. */
 	@Nullable
-	public static <T> InterfaceType findDescriptor(final Class<T> cls) {
+	public static <T> InterfaceType findType(final Class<T> cls) {
 		if (!cls.isInterface()) return null;
 
 		Field field;

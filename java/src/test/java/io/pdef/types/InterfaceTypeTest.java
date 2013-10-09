@@ -7,16 +7,16 @@ import org.junit.Test;
 import java.util.List;
 
 public class InterfaceTypeTest {
-	private InterfaceType descriptor = TestInterface.TYPE;
+	private InterfaceType type = TestInterface.TYPE;
 
 	@Test
 	public void testGetMethods() throws Exception {
-		List<InterfaceMethod> methods = descriptor.getMethods();
+		List<InterfaceMethod> methods = type.getMethods();
 	}
 
 	@Test
 	public void testFindMethod() throws Exception {
-		InterfaceMethod method = descriptor.findMethod("indexMethod");
+		InterfaceMethod method = type.findMethod("indexMethod");
 
 		assertNotNull(method);
 		assertEquals("indexMethod", method.getName());
@@ -24,20 +24,20 @@ public class InterfaceTypeTest {
 
 	@Test
 	public void testGetIndexMethod() throws Exception {
-		InterfaceMethod method = descriptor.getIndexMethod();
-		InterfaceMethod expected = descriptor.findMethod("indexMethod");
+		InterfaceMethod method = type.getIndexMethod();
+		InterfaceMethod expected = type.findMethod("indexMethod");
 		assertTrue(method == expected);
 	}
 
 	@Test
-	public void testFindDescriptor() throws Exception {
-		InterfaceType descriptor = InterfaceType.findDescriptor(TestInterface.class);
-		assertTrue(descriptor == TestInterface.TYPE);
+	public void testFindType() throws Exception {
+		InterfaceType type = InterfaceType.findType(TestInterface.class);
+		assertTrue(type == TestInterface.TYPE);
 	}
 
 	@Test
-	public void testFindDescriptor_notFound() throws Exception {
-		InterfaceType descriptor = InterfaceType.findDescriptor(Runnable.class);
-		assertNull(descriptor);
+	public void testFindType_notFound() throws Exception {
+		InterfaceType type = InterfaceType.findType(Runnable.class);
+		assertNull(type);
 	}
 }

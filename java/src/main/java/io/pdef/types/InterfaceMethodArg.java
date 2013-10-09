@@ -1,6 +1,7 @@
 package io.pdef.types;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -14,6 +15,14 @@ public class InterfaceMethodArg {
 		this.method = method;
 		name = checkNotNull(builder.name);
 		type = checkNotNull(builder.type);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(name)
+				.addValue(type.get())
+				.toString();
 	}
 
 	public String getName() {

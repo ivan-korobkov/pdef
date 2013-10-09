@@ -48,29 +48,29 @@ public class TypesTest {
 		testPrimitive(Types.double0, "2.5", 2.5d, "2.5");
 	}
 
-	private void testData(final DataType descriptor, final Object objectToParse,
+	private void testData(final DataType type, final Object objectToParse,
 			final Object expected) {
-		assert descriptor.parseNative(objectToParse).equals(expected);
-		assert descriptor.parseNative(null) == null;
-		assert descriptor.toNative(null) == null;
-		assert descriptor.toNative(expected).equals(expected);
+		assert type.parseNative(objectToParse).equals(expected);
+		assert type.parseNative(null) == null;
+		assert type.toNative(null) == null;
+		assert type.toNative(expected).equals(expected);
 	}
 
 	@Test
 	public void testList() throws Exception {
-		DataType descriptor = Types.list(Types.int32);
-		testData(descriptor, ImmutableList.of("123", "456"), ImmutableList.of(123, 456));
+		DataType type = Types.list(Types.int32);
+		testData(type, ImmutableList.of("123", "456"), ImmutableList.of(123, 456));
 	}
 
 	@Test
 	public void testSet() throws Exception {
-		DataType descriptor = Types.set(Types.int32);
-		testData(descriptor, ImmutableSet.of("123", "456"), ImmutableSet.of(123, 456));
+		DataType type = Types.set(Types.int32);
+		testData(type, ImmutableSet.of("123", "456"), ImmutableSet.of(123, 456));
 	}
 
 	@Test
 	public void testMap() throws Exception {
-		DataType descriptor = Types.map(Types.int32, Types.int32);
-		testData(descriptor, ImmutableMap.of("123", "456"), ImmutableMap.of(123, 456));
+		DataType type = Types.map(Types.int32, Types.int32);
+		testData(type, ImmutableMap.of("123", "456"), ImmutableMap.of(123, 456));
 	}
 }

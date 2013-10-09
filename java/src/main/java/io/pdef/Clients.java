@@ -1,9 +1,7 @@
 package io.pdef;
 
 import com.google.common.base.Function;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
-import io.pdef.types.InterfaceType;
+import static com.google.common.base.Preconditions.*;
 import io.pdef.invocation.Invocation;
 import io.pdef.invocation.InvocationProxy;
 import io.pdef.invocation.InvocationResult;
@@ -11,11 +9,11 @@ import io.pdef.rest.RestClientHandler;
 import io.pdef.rest.RestClientSender;
 import io.pdef.rest.RestRequest;
 import io.pdef.rest.RestResponse;
+import io.pdef.types.InterfaceType;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.client.fluent.Response;
 
 import javax.annotation.Nullable;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Pdef client constructors. */
 public class Clients {
@@ -46,10 +44,10 @@ public class Clients {
 		checkNotNull(cls);
 		checkNotNull(invocationHandler);
 
-		InterfaceType descriptor = InterfaceType.findDescriptor(cls);
-		checkArgument(descriptor != null, "Cannot find an interface type in " + cls);
+		InterfaceType type = InterfaceType.findType(cls);
+		checkArgument(type != null, "Cannot find an interface type in " + cls);
 
-		return InvocationProxy.create(cls, descriptor, invocationHandler);
+		return InvocationProxy.create(cls, type, invocationHandler);
 	}
 
 	/** Creates a REST client invocation handler with a custom sender. */

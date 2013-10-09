@@ -18,16 +18,16 @@ import java.util.List;
 import java.util.Map;
 
 public class RestServerHandler implements Function<RestRequest, RestResponse> {
-	private final InterfaceType descriptor;
+	private final InterfaceType type;
 	private final Function<Invocation, InvocationResult> invoker;
 
 	/** Creates a REST server handler. */
 	public RestServerHandler(final Class<?> cls,
 			final Function<Invocation, InvocationResult> invoker) {
-		this.descriptor = InterfaceType.findDescriptor(cls);
+		this.type = InterfaceType.findType(cls);
 		this.invoker = checkNotNull(invoker);
 
-		checkArgument(descriptor != null, "Cannot find an interface type in %s", cls);
+		checkArgument(type != null, "Cannot find an interface type in %s", cls);
 	}
 
 	@Override
@@ -68,13 +68,13 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 
 		// Parse the parts as method invocations.
 		Invocation invocation = Invocation.root();
-		InterfaceType descriptor = this.descriptor;
+		InterfaceType type = this.type;
 		while (!parts.isEmpty()) {
 			String part = parts.removeFirst();
 
 			// Find a method by name or get an index method.
-			InterfaceMethod method = descriptor.findMethod(part);
-			if (method == null) method = descriptor.getIndexMethod();
+			InterfaceMethod method = type.findMethod(part);
+			if (method == null) method = type.getIndexMethod();
 			if (method == null) {
 				throw new MethodNotFoundError().setText("Method not found");
 			}
@@ -120,7 +120,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 			// Parse a next method or return an invocation chain.
 			if (!method.isRemote()) {
 				// Get the next interface and proceed parsing the parts.
-				descriptor = (InterfaceType) method.getResult();
+				type = (InterfaceType) method.getResult();
 				continue;
 			}
 
@@ -146,47 +146,46 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 
 	@VisibleForTesting
 	Object parseQueryArg(final InterfaceMethodArg argd, final Map<String, String> src) {
-		DataType d = argd.getType();
-		MessageType md = (MessageType) d;
-		boolean isForm = md != null && md.isForm();
+		DataType type = argd.getType();
 
-		if (!isForm) {
-			// Parse as a string argument.
-			String value = src.get(argd.getName());
-			if (value == null) {
-				return null;
+		if ((type instanceof MessageType) && ((MessageType) type).isForm()) {
+			// Parse as expanded form fields.
+
+			MessageType messageType = (MessageType) type;
+			Map<String, Object> fields = Maps.newHashMap();
+			for (MessageField field : messageType.getFields()) {
+				String fvalue = src.get(field.getName());
+				if (fvalue == null) {
+					continue;
+				}
+
+				Object parsed = parseArgFromString(field.getType(), fvalue);
+				fields.put(field.getName(), parsed);
 			}
 
-			return parseArgFromString(d, value);
+			return messageType.parseNative(fields);
 		}
 
-		// Parse as expanded form fields.
-		Map<String, Object> fields = Maps.newHashMap();
-		for (MessageField fd : md.getFields()) {
-			String fvalue = src.get(fd.getName());
-			if (fvalue == null) {
-				continue;
-			}
-
-			fields.put(fd.getName(), parseArgFromString(fd.getType(), fvalue));
+		// Parse from a string.
+		String value = src.get(argd.getName());
+		if (value == null) {
+			return null;
 		}
 
-		return md.parseNative(fields);
+		return parseArgFromString(type, value);
 	}
 
 	@VisibleForTesting
-	Object parseArgFromString(final DataType descriptor, final String value) {
-		TypeEnum type = descriptor.getType();
-
+	Object parseArgFromString(final DataType type, final String value) {
 		if (value == null) {
 			return null;
 		}
 
 		if (value.equals("")) {
-			return type == TypeEnum.STRING ? "" : null;
+			return type.getType() == TypeEnum.STRING ? "" : null;
 		}
 
-		return descriptor.parseString(value);
+		return type.parseString(value);
 	}
 
 	@VisibleForTesting

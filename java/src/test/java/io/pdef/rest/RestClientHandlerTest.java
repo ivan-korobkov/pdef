@@ -220,13 +220,13 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializeArgToString_message() throws Exception {
-		MessageType descriptor = SimpleMessage.classType();
+		MessageType type = SimpleMessage.classType();
 		SimpleMessage msg = new SimpleMessage()
 				.setABool(true)
 				.setAnInt16((short) 256)
 				.setAString("hello");
 
-		String result = handler.serializeArgToString(descriptor, msg);
+		String result = handler.serializeArgToString(type, msg);
 		assert result.equals("{\"aString\":\"hello\",\"aBool\":true,\"anInt16\":256}");
 	}
 

@@ -18,7 +18,13 @@ public class {{ name }} extends {{ base_or_root }} {
     private {{ field.type }} {{ field.name }};
     {% endfor %}
 
+{% if discriminator_value %}
+    public {{ name }}() {
+        this.{{ discriminator.set }}({{ discriminator_value }});
+    }
+{% else %}
     public {{ name }}() {}
+{% endif %}
 
     public static {{ name }} parseMap(final java.util.Map<String, Object> map) {
         return ({{ name }}) classType().parseNative(map);

@@ -115,38 +115,38 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 		if (arg == null) {
 			return;
 		}
+		DataType type = argd.getType();
 
-		DataType d = argd.getType();
-		MessageType md = (MessageType) d;
-		boolean isForm = md != null && md.isForm();
+		if (type instanceof MessageType && ((MessageType) type).isForm()) {
+			// It's a form, expand its fields into distinct arguments.
 
-		if (!isForm) {
-			// Serialize as a normal argument.
-			String serialized = serializeArgToString(d, arg);
-			dst.put(argd.getName(), serialized);
+			MessageType messageType = (MessageType) type;
+			for (MessageField field : messageType.getFields()) {
+				Object fvalue = field.get(arg);
+				if (fvalue == null) {
+					continue;
+				}
+
+				String serialized = serializeArgToString(field.getType(), fvalue);
+				dst.put(field.getName(), serialized);
+			}
+
 			return;
 		}
 
-		// It's a form, expand its fields into distinct arguments.
-		for (MessageField fd : md.getFields()) {
-			Object fvalue = fd.get(arg);
-			if (fvalue == null) {
-				continue;
-			}
-
-			String serialized = serializeArgToString(fd.getType(), fvalue);
-			dst.put(fd.getName(), serialized);
-		}
+		// Serialize to a string.
+		String serialized = serializeArgToString(type, arg);
+		dst.put(argd.getName(), serialized);
 	}
 
 	/** Serializes primitives and enums to strings and other types to json. */
 	@VisibleForTesting
-	String serializeArgToString(final DataType descriptor, final Object arg) {
+	String serializeArgToString(final DataType type, final Object arg) {
 		if (arg == null) {
 			return "";
 		}
 
-		return descriptor.toString(arg);
+		return type.toString(arg);
 	}
 
 	/** Sends a rest request and returns a rest response. */

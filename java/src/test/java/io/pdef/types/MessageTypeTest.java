@@ -1,10 +1,7 @@
 package io.pdef.types;
 
 import com.google.common.collect.ImmutableMap;
-import io.pdef.test.inheritance.Base;
-import io.pdef.test.inheritance.MultiLevelSubtype;
-import io.pdef.test.inheritance.Subtype;
-import io.pdef.test.inheritance.Subtype2;
+import io.pdef.test.inheritance.*;
 import io.pdef.test.messages.SimpleMessage;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -12,27 +9,27 @@ import org.junit.Test;
 import java.util.Map;
 
 public class MessageTypeTest {
-	private MessageType descriptor = SimpleMessage.classType();
+	private MessageType type = SimpleMessage.classType();
 
 	@Test
 	public void testGetJavaClass() throws Exception {
-		assertTrue(descriptor.getJavaClass() == SimpleMessage.class);
+		assertTrue(type.getJavaClass() == SimpleMessage.class);
 	}
 
 	@Test
 	public void testGetBase() throws Exception {
-		assertNull(descriptor.getBase());
+		assertNull(type.getBase());
 	}
 
 	@Test
 	public void testGetSubtypes() throws Exception {
-		assertTrue(descriptor.getSubtypes().isEmpty());
+		assertTrue(type.getSubtypes().isEmpty());
 	}
 
 	@Test
 	public void testToNative() throws Exception {
 		SimpleMessage message = fixture();
-		Object map = descriptor.toNative(message);
+		Object map = type.toNative(message);
 		Map<String, Object> expected = fixtureMap();
 
 		assertEquals(expected, map);
@@ -41,7 +38,7 @@ public class MessageTypeTest {
 	@Test
 	public void testParseObject() throws Exception {
 		Map<String, Object> map = fixtureMap();
-		SimpleMessage message = (SimpleMessage) descriptor.parseNative(map);
+		SimpleMessage message = (SimpleMessage) type.parseNative(map);
 		SimpleMessage expected = fixture();
 
 		assertEquals(expected, message);
@@ -50,14 +47,14 @@ public class MessageTypeTest {
 	@Test
 	public void testToJson() throws Exception {
 		SimpleMessage message = fixture();
-		String s = descriptor.toJson(message);
-		SimpleMessage parsed = (SimpleMessage) descriptor.parseJson(s);
+		String s = type.toJson(message);
+		SimpleMessage parsed = (SimpleMessage) type.parseJson(s);
 		assertEquals(message, parsed);
 	}
 
 	@Test
 	public void testParseJson() throws Exception {
-		SimpleMessage message = (SimpleMessage) descriptor.parseJson(fixtureJson());
+		SimpleMessage message = (SimpleMessage) type.parseJson(fixtureJson());
 		SimpleMessage expected = fixture();
 		assertEquals(expected, message);
 	}
@@ -82,15 +79,15 @@ public class MessageTypeTest {
 
 	// Polymorphic message tests.
 
-//	@Test
-//	public void testSubtype_polymorphic() throws Exception {
-//		MessageType descriptor = Base.classType();
-//
-//		assertTrue(descriptor.getSubtype(PolymorphicType.SUBTYPE) == Subtype.descriptor());
-//		assertTrue(descriptor.getSubtype(PolymorphicType.SUBTYPE2) == Subtype2.descriptor());
-//		assertTrue(descriptor.getSubtype(PolymorphicType.MULTILEVEL_SUBTYPE) == MultiLevelSubtype
-//				.descriptor());
-//	}
+	@Test
+	public void testSubtype_polymorphic() throws Exception {
+		MessageType type = Base.classType();
+
+		assertTrue(type.getSubtype(PolymorphicType.SUBTYPE) == Subtype.classType());
+		assertTrue(type.getSubtype(PolymorphicType.SUBTYPE2) == Subtype2.classType());
+		assertTrue(type.getSubtype(PolymorphicType.MULTILEVEL_SUBTYPE) == MultiLevelSubtype
+				.classType());
+	}
 
 	@Test
 	public void testParseObject_polymorphic() throws Exception {
@@ -101,7 +98,7 @@ public class MessageTypeTest {
 		Map<String, Object> mlevelSubtypeMap = ImmutableMap.<String, Object>of("type",
 				"multilevel_subtype", "subfield", "hello", "mfield", "bye");
 
-		MessageType descriptor = Base.classType();
+		MessageType type = Base.classType();
 
 		Subtype subtype = new Subtype().setSubfield("hello");
 		Subtype2 subtype2 = new Subtype2().setSubfield2("hello");
@@ -109,8 +106,8 @@ public class MessageTypeTest {
 				.setSubfield("hello")
 				.setMfield("bye");
 
-		assertEquals(subtype, descriptor.parseNative(subtypeMap));
-		assertEquals(subtype2, descriptor.parseNative(subtype2Map));
-		assertEquals(mlevelSubtype, descriptor.parseNative(mlevelSubtypeMap));
+		assertEquals(subtype, type.parseNative(subtypeMap));
+		assertEquals(subtype2, type.parseNative(subtype2Map));
+		assertEquals(mlevelSubtype, type.parseNative(mlevelSubtypeMap));
 	}
 }

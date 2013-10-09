@@ -1,5 +1,6 @@
 package io.pdef.types;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
@@ -15,6 +16,13 @@ public class EnumType extends DataType {
 		Enum<?>[] vv =javaClass.getEnumConstants();
 		this.values = ImmutableList.copyOf(vv);
 		this.valuesToNames = buildValuesToNames(values);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(getJavaClass().getSimpleName())
+				.toString();
 	}
 
 	public List<Enum<?>> getValues() {

@@ -1,12 +1,14 @@
 package io.pdef.types;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +42,13 @@ public class MessageType extends DataType {
 		subtypes = ImmutableList.copyOf(builder.subtypes);
 
 		form = builder.form;
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(getJavaClass().getSimpleName())
+				.toString();
 	}
 
 	public MessageType getBase() {
@@ -110,9 +119,14 @@ public class MessageType extends DataType {
 		}
 
 		Map<?, ?> map = (Map<?, ?>) o;
-		MessageType type = parsePolymorphicMessageType(map);
+		Enum<?> discriminatorValue = parseNativeDiscriminator(map);
+		MessageType type = getSubtype(discriminatorValue);
+		return doParseNative(type, map);
+	}
 
-		Message result = newInstance();
+	private static Object doParseNative(final MessageType type, final Map<?, ?> map)
+			throws Exception {
+		Message result = type.newInstance();
 		for (MessageField field : type.fields) {
 			Object nvalue = map.get(field.getName());
 			if (nvalue == null) {
@@ -126,28 +140,32 @@ public class MessageType extends DataType {
 		return result;
 	}
 
+	@Nullable
 	@VisibleForTesting
-	MessageType parsePolymorphicMessageType(final Map<?, ?> map) throws Exception {
+	Enum<?> parseNativeDiscriminator(final Map<?, ?> map) throws Exception {
 		if (discriminator == null) {
 			// This is not a polymorphic message.
-			return this;
+			return null;
 		}
 
-		Object dvalue = map.get(discriminator.getName());
-		if (dvalue == null) {
+		Object value = map.get(discriminator.getName());
+		if (value == null) {
 			// No polymorphic discriminator value.
-			return this;
+			return null;
 		}
 
-		Object denum = discriminator.getType().doParseNative(dvalue);
-		if (denum == null) {
-			// Unsupported polymorphic discriminator value.
+		return (Enum<?>) discriminator.getType().doParseNative(value);
+	}
+
+	@VisibleForTesting
+	MessageType getSubtype(@Nullable final Enum<?> discriminatorValue) {
+		if (discriminatorValue == null) {
 			return this;
 		}
 
 		for (Supplier<MessageType> supplier : subtypes) {
 			MessageType subtype = supplier.get();
-			if (denum.equals(subtype.getDiscriminatorValue())) {
+			if (discriminatorValue.equals(subtype.getDiscriminatorValue())) {
 				return subtype;
 			}
 		}
@@ -162,9 +180,15 @@ public class MessageType extends DataType {
 		}
 
 		Message message = (Message) o;
+		MessageType type = message.type();
+		return doToNative(type, message);
+	}
+
+	private static Map<String, Object> doToNative(final MessageType type, final Message message)
+			throws Exception {
 		Map<String, Object> result = Maps.newLinkedHashMap();
 
-		for (MessageField field : fields) {
+		for (MessageField field : type.getFields()) {
 			Object value = field.get(message);
 			if (value == null) {
 				continue;

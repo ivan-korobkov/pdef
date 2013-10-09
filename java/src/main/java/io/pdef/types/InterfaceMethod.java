@@ -1,5 +1,6 @@
 package io.pdef.types;
 
+import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -32,6 +33,13 @@ public class InterfaceMethod {
 		args = temp.build();
 
 		reflexMethod = getReflexMethod(anInterface.getJavaClass(), name);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.addValue(name)
+				.toString();
 	}
 
 	public String getName() {

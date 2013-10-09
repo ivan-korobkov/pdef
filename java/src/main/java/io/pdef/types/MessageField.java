@@ -25,7 +25,7 @@ public class MessageField {
 	public String toString() {
 		return Objects.toStringHelper(this)
 				.addValue(name)
-				.addValue(type)
+				.addValue(type.get())
 				.toString();
 	}
 

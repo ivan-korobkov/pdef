@@ -1,6 +1,8 @@
 package io.pdef;
 
 import com.google.common.base.Objects;
+import io.pdef.format.JsonFormat;
+import io.pdef.format.NativeFormat;
 import io.pdef.meta.MessageField;
 import io.pdef.meta.MessageType;
 
@@ -26,19 +28,19 @@ public abstract class AbstractException extends RuntimeException implements Mess
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> serializeToMap() {
-		return (Map<String, Object>) uncheckedType().serializeToNative(this);
+		return (Map<String, Object>) NativeFormat.instance().serialize(uncheckedType(), this);
 	}
 
 	@Override
 	public String serializeToJson() {
-		return uncheckedType().serializeToJson(this);
+		return JsonFormat.instance().serialize(uncheckedType(), this);
 	}
 
 	@Override
 	public String serializeToJson(final boolean indent) {
-		return uncheckedType().serializeToJson(this, indent);
+		return JsonFormat.instance().serialize(uncheckedType(), this, indent);
 	}
-
+	
 	@Override
 	public String toString() {
 		Objects.ToStringHelper helper = Objects.toStringHelper(this);

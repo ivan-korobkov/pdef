@@ -62,26 +62,6 @@ public class MessageField<M, V> {
 		set(dst, copied);
 	}
 
-	/** Sets this field in a message to a value parsed from a native object. */
-	public void setNative(final M message, final Object value) {
-		if (value == null) {
-			return;
-		}
-
-		V parsed = getType().parseFromNative(value);
-		set(message, parsed);
-	}
-
-	/** Returns this field in a message converted to a native object. */
-	public Object getNative(final M message) {
-		V value = get(message);
-		if (value == null) {
-			return null;
-		}
-
-		return getType().serializeToNative(value);
-	}
-
 	public static class Builder<M, V> {
 		private String name;
 		private boolean discriminator;
@@ -123,8 +103,8 @@ public class MessageField<M, V> {
 		}
 
 		public Builder<M, V> setAccessor(final MessageFieldAccessor<M, V> accessor) {
-			this.getter = accessor;
-			this.setter = accessor;
+			setGetter(accessor);
+			setSetter(accessor);
 			return this;
 		}
 

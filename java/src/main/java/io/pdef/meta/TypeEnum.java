@@ -27,13 +27,13 @@ public enum TypeEnum {
 	static {
 		PRIMITIVES = EnumSet.of(BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING);
 		DATA_TYPES = EnumSet.copyOf(PRIMITIVES);
-		DATA_TYPES.add(OBJECT);
 		DATA_TYPES.add(LIST);
 		DATA_TYPES.add(SET);
 		DATA_TYPES.add(MAP);
 		DATA_TYPES.add(ENUM);
 		DATA_TYPES.add(MESSAGE);
 		DATA_TYPES.add(EXCEPTION);
+		DATA_TYPES.add(OBJECT);
 	}
 
 	public boolean isPrimitive() {

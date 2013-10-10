@@ -6,15 +6,21 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 
 public class MetaTypesTest {
-	private void testPrimitive(final DataType type, final String stringToParse,
-			final Object expected, final String expectedString) {
+	private <T> void testPrimitive(final DataType<T> type, final String stringToParse,
+			final T expected, final String expectedString) {
 		assert type.parseFromNative(stringToParse).equals(expected);
-		assert type.parseFromNative(stringToParse).getClass() == expected.getClass();
 		assert type.parseFromNative(expected).equals(expected);
-		assert type.parseFromNative(expected).getClass() == expected.getClass();
 		assert type.parseFromNative(null) == null;
-		assert type.serializeToString(null) == null;
+		assert type.parseFromNative(stringToParse).getClass() == expected.getClass();
+		assert type.parseFromNative(expected).getClass() == expected.getClass();
+
+		assert type.serializeToNative(expected).equals(expected);
+		assert type.serializeToNative(null) == null;
+
+		assert type.serializeToString(null).equals("");
 		assert type.serializeToString(expected).equals(expectedString);
+		assert type.parseFromString("") == null;
+		assert type.parseFromString(expectedString).equals(expected);
 	}
 
 	@Test
@@ -48,8 +54,8 @@ public class MetaTypesTest {
 		testPrimitive(MetaTypes.double0, "2.5", 2.5d, "2.5");
 	}
 
-	private void testData(final DataType type, final Object objectToParse,
-			final Object expected) {
+	private <T> void testData(final DataType<T> type, final T objectToParse,
+			final T expected) {
 		assert type.parseFromNative(objectToParse).equals(expected);
 		assert type.parseFromNative(null) == null;
 		assert type.serializeToNative(null) == null;

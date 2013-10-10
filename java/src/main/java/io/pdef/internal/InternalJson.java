@@ -100,11 +100,17 @@ public class InternalJson {
 
 	private static void writeObject(final JsonGenerator generator, final Object o)
 			throws IOException {
-		if (o == null) generator.writeNull();
-		else if (o instanceof List) writeList(generator, (Collection<?>) o);
-		else if (o instanceof Set) writeList(generator, (Collection<?>) o);
-		else if (o instanceof Map) writeMap(generator, (Map<?, ?>) o);
-		else generator.writeObject(o); // It's smart enough to correctly write all other values.
+		if (o == null) {
+			generator.writeNull();
+		} else if (o instanceof List) {
+			writeList(generator, (Collection<?>) o);
+		} else if (o instanceof Set) {
+			writeList(generator, (Collection<?>) o);
+		} else if (o instanceof Map) {
+			writeMap(generator, (Map<?, ?>) o);
+		} else {
+			generator.writeObject(o); // It's smart enough to correctly write all other values.
+		}
 	}
 
 	private static void writeList(final JsonGenerator generator, final Collection<?> list)

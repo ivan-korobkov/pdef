@@ -17,28 +17,8 @@ public class EnumTypeTest {
 	}
 
 	@Test
-	public void testParseObject() throws Exception {
-		String s = "thrEE";
-		TestEnum result = metaType.parseFromNative(s);
-		assertEquals(TestEnum.THREE, result);
-	}
-
-	@Test
-	public void testToObject() throws Exception {
-		Object object = metaType.serializeToNative(TestEnum.THREE);
-		assertEquals("three", object);
-	}
-
-	@Test
-	public void testParseString() throws Exception {
-		String s = "three";
-		TestEnum result = metaType.parseFromString(s);
-		assertEquals(TestEnum.THREE, result);
-	}
-
-	@Test
-	public void testToString() throws Exception {
-		String s = metaType.serializeToString(TestEnum.THREE);
-		assertEquals("three", s);
+	public void testCopy() throws Exception {
+		TestEnum value = TestEnum.ONE;
+		assert metaType.copy(value) == value;
 	}
 }

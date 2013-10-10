@@ -3,6 +3,10 @@ package io.pdef.types;
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * InterfaceMethodArg provides a method argument name and type.
+ * @param <V> Argument class.
+ */
 public class InterfaceMethodArg<V> {
 	private final String name;
 	private final DataType<V> type;

@@ -12,11 +12,11 @@ import io.pdef.test.interfaces.TestInterface;
 import java.util.List;
 
 public class InvocationTest {
-	private final InterfaceType iface = TestInterface.TYPE;
+	private final InterfaceType iface = TestInterface.META_TYPE;
 	private final InterfaceMethod excMethod = iface.findMethod("excMethod");
 	private final InterfaceMethod indexMethod = iface.findMethod("indexMethod");
 	private final InterfaceMethod interfaceMethod = iface.findMethod( "interfaceMethod");
-	private final InterfaceMethod nextStringMethod = NextTestInterface.TYPE
+	private final InterfaceMethod nextStringMethod = NextTestInterface.META_TYPE
 			.findMethod("stringMethod");
 
 	@Test

@@ -77,10 +77,10 @@ public class InvocationProxyTest {
 	}
 
 	private TestInterface createProxy() {
-		return InvocationProxy.create(TestInterface.class, TestInterface.TYPE, handler);
+		return InvocationProxy.create(TestInterface.class, TestInterface.META_TYPE, handler);
 	}
 
 	private InterfaceMethod getIndexMethod() {
-		return TestInterface.TYPE.findMethod("indexMethod");
+		return TestInterface.META_TYPE.findMethod("indexMethod");
 	}
 }

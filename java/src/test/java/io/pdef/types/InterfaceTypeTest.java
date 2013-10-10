@@ -4,19 +4,12 @@ import io.pdef.test.interfaces.TestInterface;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-import java.util.List;
-
 public class InterfaceTypeTest {
-	private InterfaceType<TestInterface> type = TestInterface.TYPE;
-
-	@Test
-	public void testGetMethods() throws Exception {
-		List<InterfaceMethod> methods = type.getMethods();
-	}
+	private InterfaceType<TestInterface> metaType = TestInterface.META_TYPE;
 
 	@Test
 	public void testFindMethod() throws Exception {
-		InterfaceMethod method = type.findMethod("indexMethod");
+		InterfaceMethod method = metaType.findMethod("indexMethod");
 
 		assertNotNull(method);
 		assertEquals("indexMethod", method.name());
@@ -24,20 +17,20 @@ public class InterfaceTypeTest {
 
 	@Test
 	public void testGetIndexMethod() throws Exception {
-		InterfaceMethod method = type.getIndexMethod();
-		InterfaceMethod expected = type.findMethod("indexMethod");
+		InterfaceMethod method = metaType.getIndexMethod();
+		InterfaceMethod expected = metaType.findMethod("indexMethod");
 		assertTrue(method == expected);
 	}
 
 	@Test
 	public void testFindType() throws Exception {
-		InterfaceType type = InterfaceType.findType(TestInterface.class);
-		assertTrue(type == TestInterface.TYPE);
+		InterfaceType type = InterfaceType.findMetaType(TestInterface.class);
+		assertTrue(type == TestInterface.META_TYPE);
 	}
 
 	@Test
 	public void testFindType_notFound() throws Exception {
-		InterfaceType type = InterfaceType.findType(Runnable.class);
+		InterfaceType type = InterfaceType.findMetaType(Runnable.class);
 		assertNull(type);
 	}
 }

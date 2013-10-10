@@ -15,7 +15,7 @@ import io.pdef.test.messages.SimpleForm;
 import io.pdef.test.messages.SimpleMessage;
 import io.pdef.types.InterfaceMethodArg;
 import io.pdef.types.MessageType;
-import io.pdef.types.Types;
+import io.pdef.types.MetaTypes;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -153,7 +153,7 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializePositionalArg() throws Exception {
-		InterfaceMethodArg<String> argd = InterfaceMethodArg.of("arg", Types.string);
+		InterfaceMethodArg<String> argd = InterfaceMethodArg.of("arg", MetaTypes.string);
 
 		String value = handler.serializePositionalArg(argd, "Привет");
 		assert value.equals("%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82");
@@ -161,7 +161,7 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializeQueryArg() throws Exception {
-		InterfaceMethodArg<Integer> argd = InterfaceMethodArg.of("arg", Types.int32);
+		InterfaceMethodArg<Integer> argd = InterfaceMethodArg.of("arg", MetaTypes.int32);
 
 		Map<String, String> dst = Maps.newHashMap();
 		handler.serializeQueryArg(argd, 123, dst);
@@ -170,7 +170,7 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializeQueryArg_form() throws Exception {
-		InterfaceMethodArg<SimpleForm> argd = InterfaceMethodArg.of("arg", SimpleForm.TYPE);
+		InterfaceMethodArg<SimpleForm> argd = InterfaceMethodArg.of("arg", SimpleForm.META_TYPE);
 
 		Map<String, String> dst = Maps.newHashMap();
 		SimpleForm msg = new SimpleForm()
@@ -187,28 +187,28 @@ public class RestClientHandlerTest {
 
 	@Test
 	public void testSerializeArgToString_primitive() throws Exception {
-		String result = handler.serializeArgToString(Types.int32, 123);
+		String result = handler.serializeArgToString(MetaTypes.int32, 123);
 
 		assert result.equals("123");
 	}
 
 	@Test
 	public void testSerializeArgToString_primitiveNullToEmptyString() throws Exception {
-		String result = handler.serializeArgToString(Types.int32, null);
+		String result = handler.serializeArgToString(MetaTypes.int32, null);
 
 		assert result.equals("");
 	}
 
 	@Test
 	public void testSerializeArgToString_string() throws Exception {
-		String result = handler.serializeArgToString(Types.string, "привет+ромашки");
+		String result = handler.serializeArgToString(MetaTypes.string, "привет+ромашки");
 
 		assert result.equals("привет+ромашки");
 	}
 
 	@Test
 	public void testSerializeArgToString_message() throws Exception {
-		MessageType type = SimpleMessage.TYPE;
+		MessageType type = SimpleMessage.META_TYPE;
 		SimpleMessage msg = new SimpleMessage()
 				.setABool(true)
 				.setAnInt16((short) 256)

@@ -5,6 +5,11 @@ import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 
+/**
+ * MessageField holds a field name, type, setters and getters.
+ * @param <M> Message class.
+ * @param <V> Field value class.
+ */
 public class MessageField<M, V> {
 	private final String name;
 	private final Supplier<DataType<V>> type;

@@ -2,11 +2,16 @@ package io.pdef.types;
 
 import io.pdef.internal.InternalJson;
 
-public abstract class DataType<T> extends Type<T> {
+/**
+ * DataType is base a metatype for data classes. These include primitives, collections,
+ * enums an messages. DataType provides parsing/serializing methods.
+ * */
+public abstract class DataType<T> extends MetaType {
 	protected DataType(final TypeEnum type) {
 		super(type);
 	}
 
+	/** Returns a deep copy of an object. */
 	public abstract T copy(final T object);
 
 	// Native format.

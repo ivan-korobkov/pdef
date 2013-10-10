@@ -2,6 +2,9 @@ package io.pdef.types;
 
 import java.util.EnumSet;
 
+/**
+ * TypeEnum enumerates Pdef types.
+ * */
 public enum TypeEnum {
 	// Primitives.
 	BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING,

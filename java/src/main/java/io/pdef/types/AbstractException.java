@@ -5,13 +5,15 @@ import com.google.common.base.Objects;
 import java.io.Serializable;
 import java.util.Map;
 
-/** Abstract class for a generated exception. */
+/**
+ * Abstract class for a generated Pdef exception.
+ * */
 public abstract class AbstractException extends RuntimeException implements Message, Serializable {
 	protected AbstractException() {}
 
 	@SuppressWarnings("unchecked")
 	private MessageType<Message> uncheckedType() {
-		return (MessageType<Message>) type();
+		return (MessageType<Message>) metaType();
 	}
 
 	@Override

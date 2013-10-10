@@ -1,6 +1,8 @@
 package io.pdef.types;
 
-/** TypeFormatException wraps all parsing/serialization exceptions. */
+/**
+ * TypeFormatException wraps all parsing/serialization exceptions.
+ * */
 public class TypeFormatException extends RuntimeException {
 	public TypeFormatException() {}
 

@@ -124,7 +124,7 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 			Message message = (Message) arg;
 
 			// Mind polymorphic messages.
-			MessageType<Message> messageType = (MessageType<Message>) message.type();
+			MessageType<Message> messageType = (MessageType<Message>) message.metaType();
 			serializeQueryForm(messageType, (Message) arg, dst);
 			return;
 		}
@@ -150,13 +150,13 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 
 	/** Serializes primitives and enums to strings and other types to json. */
 	@VisibleForTesting
-	String serializeArgToString(final DataType<?> type, final Object arg) {
+	String serializeArgToString(final DataType<?> metatype, final Object arg) {
 		if (arg == null) {
 			return "";
 		}
 
 		@SuppressWarnings("unchecked")
-		DataType<Object> unchecked = (DataType<Object>) type;
+		DataType<Object> unchecked = (DataType<Object>) metatype;
 		return unchecked.serializeToString(arg);
 	}
 

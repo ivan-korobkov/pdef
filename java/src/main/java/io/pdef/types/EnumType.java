@@ -8,6 +8,9 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
+/**
+ * EnumType holds enum values and parsing/serialization methods.
+ * */
 public class EnumType<T extends Enum<?>> extends DataType<T> {
 	private final Class<T> javaClass;
 	private final List<T> values;

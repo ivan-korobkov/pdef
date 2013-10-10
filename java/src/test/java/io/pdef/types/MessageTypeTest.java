@@ -9,27 +9,27 @@ import org.junit.Test;
 import java.util.Map;
 
 public class MessageTypeTest {
-	private MessageType<SimpleMessage> type = SimpleMessage.TYPE;
+	private MessageType<SimpleMessage> metaType = SimpleMessage.META_TYPE;
 
 	@Test
 	public void testGetJavaClass() throws Exception {
-		assertTrue(type.getJavaClass() == SimpleMessage.class);
+		assertTrue(metaType.getJavaClass() == SimpleMessage.class);
 	}
 
 	@Test
 	public void testGetBase() throws Exception {
-		assertNull(type.getBase());
+		assertNull(metaType.getBase());
 	}
 
 	@Test
 	public void testGetSubtypes() throws Exception {
-		assertTrue(type.getSubtypes().isEmpty());
+		assertTrue(metaType.getSubtypes().isEmpty());
 	}
 
 	@Test
 	public void testToNative() throws Exception {
 		SimpleMessage message = fixture();
-		Object map = type.serializeToNative(message);
+		Object map = metaType.serializeToNative(message);
 		Map<String, Object> expected = fixtureMap();
 
 		assertEquals(expected, map);
@@ -38,7 +38,7 @@ public class MessageTypeTest {
 	@Test
 	public void testParseObject() throws Exception {
 		Map<String, Object> map = fixtureMap();
-		SimpleMessage message = type.parseFromNative(map);
+		SimpleMessage message = metaType.parseFromNative(map);
 		SimpleMessage expected = fixture();
 
 		assertEquals(expected, message);
@@ -47,14 +47,14 @@ public class MessageTypeTest {
 	@Test
 	public void testToJson() throws Exception {
 		SimpleMessage message = fixture();
-		String s = type.serializeToJson(message);
-		SimpleMessage parsed = type.parseFromJson(s);
+		String s = metaType.serializeToJson(message);
+		SimpleMessage parsed = metaType.parseFromJson(s);
 		assertEquals(message, parsed);
 	}
 
 	@Test
 	public void testParseJson() throws Exception {
-		SimpleMessage message = type.parseFromJson(fixtureJson());
+		SimpleMessage message = metaType.parseFromJson(fixtureJson());
 		SimpleMessage expected = fixture();
 		assertEquals(expected, message);
 	}
@@ -88,16 +88,15 @@ public class MessageTypeTest {
 		Map<String, Object> mlevelSubtypeMap = ImmutableMap.<String, Object>of("type",
 				"multilevel_subtype", "subfield", "hello", "mfield", "bye");
 
-		MessageType type = Base.TYPE;
-
 		Subtype subtype = new Subtype().setSubfield("hello");
 		Subtype2 subtype2 = new Subtype2().setSubfield2("hello");
 		MultiLevelSubtype mlevelSubtype = new MultiLevelSubtype()
 				.setSubfield("hello")
 				.setMfield("bye");
 
-		assertEquals(subtype, type.parseFromNative(subtypeMap));
-		assertEquals(subtype2, type.parseFromNative(subtype2Map));
-		assertEquals(mlevelSubtype, type.parseFromNative(mlevelSubtypeMap));
+		MessageType metaType = Base.META_TYPE;
+		assertEquals(subtype, metaType.parseFromNative(subtypeMap));
+		assertEquals(subtype2, metaType.parseFromNative(subtype2Map));
+		assertEquals(mlevelSubtype, metaType.parseFromNative(mlevelSubtypeMap));
 	}
 }

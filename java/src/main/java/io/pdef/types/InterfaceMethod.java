@@ -11,12 +11,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
+/**
+ * InterfaceMethod holds a method name, result, arguments, exception, flags, and its invoker.
+ * */
 public class InterfaceMethod {
 	private final String name;
-	private final Supplier<Type<?>> result;
+	private final Supplier<MetaType> result;
 	private final ImmutableList<InterfaceMethodArg> args;
 	private final MessageType<?> exc;
-	private final Invoker invoker;
+	private final InterfaceMethodInvoker invoker;
 	private final boolean index;
 	private final boolean post;
 
@@ -53,7 +56,7 @@ public class InterfaceMethod {
 		return post;
 	}
 
-	public Type<?> result() {
+	public MetaType result() {
 		return result.get();
 	}
 
@@ -66,7 +69,7 @@ public class InterfaceMethod {
 	}
 
 	public boolean isRemote() {
-		TypeEnum type = result().type();
+		TypeEnum type = result().getType();
 		return type.isDataType() || type == TypeEnum.VOID;
 	}
 
@@ -75,16 +78,12 @@ public class InterfaceMethod {
 		return invoker.invoke(object, args);
 	}
 
-	public static interface Invoker {
-		Object invoke(Object object, Object[] args) throws Exception;
-	}
-
 	public static class Builder {
 		private String name;
-		private Supplier<Type<?>> result;
+		private Supplier<MetaType> result;
 		private List<InterfaceMethodArg> args;
 		private MessageType<?> exc;
-		private Invoker invoker;
+		private InterfaceMethodInvoker invoker;
 		private boolean index;
 		private boolean post;
 
@@ -97,12 +96,12 @@ public class InterfaceMethod {
 			return this;
 		}
 
-		public Builder setResult(final Type<?> result) {
+		public Builder setResult(final MetaType result) {
 			checkNotNull(result);
-			return setResult(Suppliers.<Type<?>>ofInstance(result));
+			return setResult(Suppliers.<MetaType>ofInstance(result));
 		}
 
-		public Builder setResult(final Supplier<Type<?>> result) {
+		public Builder setResult(final Supplier<MetaType> result) {
 			this.result = result;
 			return this;
 		}
@@ -117,7 +116,7 @@ public class InterfaceMethod {
 			return this;
 		}
 
-		public Builder setInvoker(final Invoker invoker) {
+		public Builder setInvoker(final InterfaceMethodInvoker invoker) {
 			this.invoker = invoker;
 			return this;
 		}
@@ -142,7 +141,7 @@ public class InterfaceMethod {
 		}
 	}
 
-	private static class ReflectionInvoker implements Invoker {
+	private static class ReflectionInvoker implements InterfaceMethodInvoker {
 		private final Method method;
 
 		private ReflectionInvoker(final Class<?> cls, final String name) {

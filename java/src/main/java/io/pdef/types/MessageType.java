@@ -12,236 +12,213 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public abstract class MessageType<M extends Message> extends DataType<M> {
-	protected MessageType() {
+/**
+ * MessageType is a metatype for Pdef messages.
+ * */
+public class MessageType<M extends Message> extends DataType<M> {
+	private final Class<M> javaClass;
+	private final Supplier<M> supplier;
+	private final MessageType<? super M> base;
+	private final List<MessageField<M, ?>> declaredFields;
+	private final List<MessageField<? super M, ?>> fields;
+
+	private final Enum<?> discriminatorValue;
+	private final MessageField<? super M, ?> discriminator;
+	private final List<Supplier<MessageType<? extends M>>> subtypes;
+
+	private final boolean form;
+
+	private MessageType(final Builder<M> builder) {
 		super(TypeEnum.MESSAGE);
+		this.javaClass = checkNotNull(builder.javaClass);
+		this.supplier = checkNotNull(builder.supplier);
+
+		base = builder.base;
+
+		declaredFields = ImmutableList.copyOf(builder.declaredFields);
+		fields = joinFields(declaredFields, base);
+
+		discriminator = findDiscriminator(fields);
+		discriminatorValue = builder.discriminatorValue;
+		subtypes = ImmutableList.copyOf(builder.subtypes);
+
+		form = builder.form;
+	}
+
+	public static <M extends Message> Builder<M> builder() {
+		return new Builder<M>();
+	}
+
+	private static <M extends Message> ImmutableList<MessageField<? super M, ?>> joinFields(
+			final Iterable<MessageField<M, ?>> declaredFields,
+			@Nullable final MessageType<? super M> base) {
+		ImmutableList.Builder<MessageField<? super M, ?>> result = ImmutableList.builder();
+		if (base != null) {
+			result.addAll(base.getFields());
+		}
+		result.addAll(declaredFields);
+		return result.build();
+	}
+
+	private static <M> MessageField<? super M, ?> findDiscriminator(
+			final Iterable<MessageField<? super M, ?>> fields) {
+		for (MessageField<? super M, ?> field : fields) {
+			if (field.isDiscriminator()) {
+				return field;
+			}
+		}
+		return null;
 	}
 
 	/** Returns a Java class. */
-	public abstract Class<M> getJavaClass();
+	public Class<M> getJavaClass() {
+		return javaClass;
+	}
 
 	/** Returns a base type. */
-	@Nullable
-	public abstract MessageType getBase();
+	public MessageType getBase() {
+		return base;
+	}
 
 	/** Returns a discriminator value. */
-	@Nullable
-	public abstract Enum<?> getDiscriminatorValue();
+	public Enum<?> getDiscriminatorValue() {
+		return discriminatorValue;
+	}
 
 	/** Returns a discriminator field. */
-	@Nullable
-	public abstract MessageField<? super M, ?> getDiscriminator();
+	public MessageField<? super M, ?> getDiscriminator() {
+		return discriminator;
+	}
 
 	/** Returns a list of subtypes. */
-	public abstract List<Supplier<MessageType<? extends M>>> getSubtypes();
+	public List<Supplier<MessageType<? extends M>>> getSubtypes() {
+		return subtypes;
+	}
 
 	/** Returns declared fields. */
-	public abstract List<MessageField<M, ?>> getDeclaredFields();
+	public List<MessageField<M, ?>> getDeclaredFields() {
+		return declaredFields;
+	}
 
 	/** Returns inherited + declared fields. */
-	public abstract List<MessageField<? super M, ?>> getFields();
+	public List<MessageField<? super M, ?>> getFields() {
+		return fields;
+	}
 
 	/** Returns whether this message is a form. */
-	public abstract boolean isForm();
+	public boolean isForm() {
+		return form;
+	}
+
+	// Message methods.
 
 	/** Creates a new message instance. */
-	public abstract M newInstance();
+	public M newInstance() {
+		return supplier.get();
+	}
+
+	@Override
+	public M copy(final M src) {
+		if (src == null) {
+			return null;
+		}
+
+		M dst = newInstance();
+		copy(src, dst);
+		return dst;
+	}
 
 	/** Copies one message fields into another. */
-	public abstract void copy(M src, M dst);
+	public void copy(final M src, final M dst) {
+		for (MessageField<? super M, ?> field : getFields()) {
+			field.copy(src, dst);
+		}
+	}
+
+	// Native message format.
+
+	@Override
+	protected M fromNative(final Object object) throws Exception {
+		if (object == null) {
+			return null;
+		}
+
+		Map<?, ?> map = (Map<?, ?>) object;
+		Enum<?> discriminatorValue = parseNativeDiscriminator(map);
+		MessageType<M> polymorphicType = findSubtype(discriminatorValue);
+
+		M message = polymorphicType.newInstance();
+		for (MessageField<? super M, ?> field : polymorphicType.getFields()) {
+			Object value = map.get(field.getName());
+			field.setNative(message, value);
+		}
+
+		return message;
+	}
+
+	@Nullable
+	@VisibleForTesting
+	Enum<?> parseNativeDiscriminator(final Map<?, ?> map) throws Exception {
+		MessageField<? super M, ?> discriminator = getDiscriminator();
+		if (discriminator == null) {
+			// This is not a polymorphic message.
+			return null;
+		}
+
+		Object value = map.get(discriminator.getName());
+		if (value == null) {
+			// No polymorphic discriminator value.
+			return null;
+		}
+
+		return (Enum<?>) discriminator.getType().fromNative(value);
+	}
+
+	@SuppressWarnings("unchecked")
+	@VisibleForTesting
+	MessageType<M> findSubtype(@Nullable final Enum<?> discriminatorValue) {
+		if (discriminatorValue == null) {
+			return this;
+		}
+
+		for (Supplier<MessageType<? extends M>> supplier : getSubtypes()) {
+			MessageType<? extends M> subtype = supplier.get();
+			if (discriminatorValue.equals(subtype.getDiscriminatorValue())) {
+				return (MessageType<M>) subtype;
+			}
+		}
+
+		return this;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Map<String, Object> toNative(final M message) throws Exception {
+		if (message == null) {
+			return null;
+		}
+
+		// Mind polymorphic messages.
+		MessageType<?> polymorphicType = message.metaType();
+		Map<String, Object> result = Maps.newLinkedHashMap();
+
+		for (MessageField field : polymorphicType.getFields()) {
+			Object value = field.getNative(message);
+			if (value == null) {
+				continue;
+			}
+
+			result.put(field.getName(), value);
+		}
+
+		return result;
+	}
 
 	@Override
 	public String toString() {
 		return Objects.toStringHelper(this)
 				.addValue(getJavaClass().getSimpleName())
 				.toString();
-	}
-
-	private static class Immutable<M extends Message> extends MessageType<M> {
-		private final Class<M> javaClass;
-		private final Supplier<M> supplier;
-		private final MessageType<? super M> base;
-		private final List<MessageField<M, ?>> declaredFields;
-		private final List<MessageField<? super M, ?>> fields;
-
-		private final Enum<?> discriminatorValue;
-		private final MessageField<? super M, ?> discriminator;
-		private final List<Supplier<MessageType<? extends M>>> subtypes;
-
-		private final boolean form;
-
-		protected Immutable(final Builder<M> builder) {
-			this.javaClass = checkNotNull(builder.javaClass);
-			this.supplier = checkNotNull(builder.supplier);
-
-			base = builder.base;
-
-			declaredFields = ImmutableList.copyOf(builder.declaredFields);
-			fields = joinFields(declaredFields, base);
-
-			discriminator = findDiscriminator(fields);
-			discriminatorValue = builder.discriminatorValue;
-			subtypes = ImmutableList.copyOf(builder.subtypes);
-
-			form = builder.form;
-		}
-
-		private static <M extends Message> ImmutableList<MessageField<? super M, ?>> joinFields(
-				final Iterable<MessageField<M, ?>> declaredFields,
-				@Nullable final MessageType<? super M> base) {
-			ImmutableList.Builder<MessageField<? super M, ?>> result = ImmutableList.builder();
-			if (base != null) {
-				result.addAll(base.getFields());
-			}
-			result.addAll(declaredFields);
-			return result.build();
-		}
-
-		private static <M> MessageField<? super M, ?> findDiscriminator(
-				final Iterable<MessageField<? super M, ?>> fields) {
-			for (MessageField<? super M, ?> field : fields) {
-				if (field.isDiscriminator()) {
-					return field;
-				}
-			}
-			return null;
-		}
-
-		@Override
-		public Class<M> getJavaClass() {
-			return javaClass;
-		}
-
-		@Override
-		public M newInstance() {
-			return supplier.get();
-		}
-
-		public MessageType getBase() {
-			return base;
-		}
-
-		public boolean isForm() {
-			return form;
-		}
-
-		public Enum<?> getDiscriminatorValue() {
-			return discriminatorValue;
-		}
-
-		public MessageField<? super M, ?> getDiscriminator() {
-			return discriminator;
-		}
-
-		public List<Supplier<MessageType<? extends M>>> getSubtypes() {
-			return subtypes;
-		}
-
-		public List<MessageField<M, ?>> getDeclaredFields() {
-			return declaredFields;
-		}
-
-		public List<MessageField<? super M, ?>> getFields() {
-			return fields;
-		}
-
-		// Methods.
-
-		@Override
-		public M copy(final M src) {
-			if (src == null) {
-				return null;
-			}
-
-			M dst = newInstance();
-			copy(src, dst);
-			return dst;
-		}
-
-		public void copy(final M src, final M dst) {
-			for (MessageField<? super M, ?> field : getFields()) {
-				field.copy(src, dst);
-			}
-		}
-
-		// Native format.
-
-		@Override
-		protected M fromNative(final Object object) throws Exception {
-			if (object == null) {
-				return null;
-			}
-
-			Map<?, ?> map = (Map<?, ?>) object;
-			Enum<?> discriminatorValue = parseNativeDiscriminator(map);
-			MessageType<M> type = findSubtype(discriminatorValue);
-
-			M message = type.newInstance();
-			for (MessageField<? super M, ?> field : getFields()) {
-				Object value = map.get(field.getName());
-				field.setNative(message, value);
-			}
-
-			return message;
-		}
-
-		@Nullable
-		@VisibleForTesting
-		Enum<?> parseNativeDiscriminator(final Map<?, ?> map) throws Exception {
-			MessageField<? super M, ?> discriminator = getDiscriminator();
-			if (discriminator == null) {
-				// This is not a polymorphic message.
-				return null;
-			}
-
-			Object value = map.get(discriminator.getName());
-			if (value == null) {
-				// No polymorphic discriminator value.
-				return null;
-			}
-
-			return (Enum<?>) discriminator.getType().fromNative(value);
-		}
-
-		@SuppressWarnings("unchecked")
-		@VisibleForTesting
-		MessageType<M> findSubtype(@Nullable final Enum<?> discriminatorValue) {
-			if (discriminatorValue == null) {
-				return this;
-			}
-
-			for (Supplier<MessageType<? extends M>> supplier : getSubtypes()) {
-				MessageType<? extends M> subtype = supplier.get();
-				if (discriminatorValue.equals(subtype.getDiscriminatorValue())) {
-					return (MessageType<M>) subtype;
-				}
-			}
-
-			return this;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		protected Map<String, Object> toNative(final M message) throws Exception {
-			if (message == null) {
-				return null;
-			}
-
-			// Mind polymorphic messages.
-			MessageType<?> type = message.type();
-			Map<String, Object> result = Maps.newLinkedHashMap();
-
-			for (MessageField field : type.getFields()) {
-				Object value = field.getNative(message);
-				if (value == null) {
-					continue;
-				}
-
-				result.put(field.getName(), value);
-			}
-
-			return result;
-		}
 	}
 
 	public static class Builder<M extends Message> {
@@ -253,7 +230,7 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 		private final List<Supplier<MessageType<? extends M>>> subtypes;
 		private boolean form;
 
-		public Builder() {
+		private Builder() {
 			declaredFields = Lists.newArrayList();
 			subtypes = Lists.newArrayList();
 		}
@@ -294,7 +271,7 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 		}
 
 		public MessageType<M> build() {
-			return new Immutable<M>(this);
+			return new MessageType<M>(this);
 		}
 	}
 }

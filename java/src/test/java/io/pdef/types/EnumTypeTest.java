@@ -8,37 +8,37 @@ import org.junit.Test;
 import java.util.List;
 
 public class EnumTypeTest {
-	private final EnumType<TestEnum> type = TestEnum.TYPE;
+	private final EnumType<TestEnum> metaType = TestEnum.META_TYPE;
 
 	@Test
 	public void testGetValues() throws Exception {
-		List<TestEnum> values = type.getValues();
+		List<TestEnum> values = metaType.getValues();
 		assertEquals(ImmutableList.<TestEnum>of(TestEnum.ONE, TestEnum.TWO, TestEnum.THREE), values);
 	}
 
 	@Test
 	public void testParseObject() throws Exception {
 		String s = "thrEE";
-		TestEnum result = type.parseFromNative(s);
+		TestEnum result = metaType.parseFromNative(s);
 		assertEquals(TestEnum.THREE, result);
 	}
 
 	@Test
 	public void testToObject() throws Exception {
-		Object object = type.serializeToNative(TestEnum.THREE);
+		Object object = metaType.serializeToNative(TestEnum.THREE);
 		assertEquals("three", object);
 	}
 
 	@Test
 	public void testParseString() throws Exception {
 		String s = "three";
-		TestEnum result = type.parseFromString(s);
+		TestEnum result = metaType.parseFromString(s);
 		assertEquals(TestEnum.THREE, result);
 	}
 
 	@Test
 	public void testToString() throws Exception {
-		String s = type.serializeToString(TestEnum.THREE);
+		String s = metaType.serializeToString(TestEnum.THREE);
 		assertEquals("three", s);
 	}
 }

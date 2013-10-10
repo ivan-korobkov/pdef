@@ -6,7 +6,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import io.pdef.types.InterfaceMethod;
 import io.pdef.types.MessageType;
-import io.pdef.types.Type;
+import io.pdef.types.MetaType;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
@@ -54,7 +54,7 @@ public class Invocation {
 		return method;
 	}
 
-	public Type getResult() {
+	public MetaType getResult() {
 		return method == null ? null : method.result();
 	}
 

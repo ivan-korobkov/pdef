@@ -21,11 +21,11 @@ public class {{ name }} extends {{ base_or_root }} {
 {% endif %}
 
     public static {{ name }} parseFromMap(final java.util.Map<String, Object> map) {
-        return TYPE.parseFromNative(map);
+        return META_TYPE.parseFromNative(map);
     }
 
     public static {{ name }} parseFromJson(final String s) {
-        return TYPE.parseFromJson(s);
+        return META_TYPE.parseFromJson(s);
     }
 
 {% for field in declared_fields %}
@@ -54,8 +54,8 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% endfor %}
     @Override
-    public io.pdef.types.MessageType<? extends {{ name }}> type() {
-        return TYPE;
+    public io.pdef.types.MessageType<? extends {{ name }}> metaType() {
+        return META_TYPE;
     }
 
 {% for field in declared_fields %}
@@ -68,11 +68,11 @@ public class {{ name }} extends {{ base_or_root }} {
                 {% if field.type.is_message %}
                     .setType(new Supplier<io.pdef.types.DataType<{{ field.type }}>>() {
                         public io.pdef.types.DataType<{{ field.type }}> get() {
-                            return {{ field.type.descriptor }};
+                            return {{ field.type.meta }};
                         }
                     })
                 {% else %}
-                    .setType({{ field.type.descriptor }})
+                    .setType({{ field.type.meta }})
                 {% endif %}
                     .setAccessor(new io.pdef.types.MessageFieldAccessor<{{ name }}, {{ field.type }}>() {
                         public {{ field.type }} get({{ name }} message) {
@@ -87,8 +87,8 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% endfor %}
 
-    public static final io.pdef.types.MessageType<{{ name }}> TYPE =
-            new io.pdef.types.MessageType.Builder<{{ name }}>()
+    public static final io.pdef.types.MessageType<{{ name }}> META_TYPE =
+            io.pdef.types.MessageType.<{{ name }}>builder()
                     .setJavaClass({{ name }}.class)
                     .setSupplier(new Supplier<{{ name }}>() {
                         public {{ name }} get() {
@@ -96,7 +96,7 @@ public class {{ name }} extends {{ base_or_root }} {
                         }
                     })
                     {% if base %}
-                    .setBase({{ base.descriptor }})
+                    .setBase({{ base.meta }})
                     {% endif %}
                     {% if is_form %}
                     .setForm(true)
@@ -107,7 +107,7 @@ public class {{ name }} extends {{ base_or_root }} {
                     {% for subtype in subtypes %}
                     .addSubtype(new Supplier<io.pdef.types.MessageType<? extends {{ name }}>>() {
                         public io.pdef.types.MessageType<? extends {{ name }}> get() {
-                            return {{ subtype.descriptor }};
+                            return {{ subtype.meta }};
                         }
                     })
                     {% endfor %}

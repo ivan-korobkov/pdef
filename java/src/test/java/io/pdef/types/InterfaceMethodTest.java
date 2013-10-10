@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class InterfaceMethodTest {
-	private final InterfaceType iface = TestInterface.TYPE;
+	private final InterfaceType iface = TestInterface.META_TYPE;
 
 	@Test
 	public void testGetName() throws Exception {

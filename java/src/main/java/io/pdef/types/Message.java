@@ -7,7 +7,7 @@ public interface Message {
 	Message copy();
 
 	/** Returns this message type. */
-	MessageType<? extends Message> type();
+	MessageType<? extends Message> metaType();
 	
 	/** Serializes this message to a map. */
 	Map<String, Object> serializeToMap();

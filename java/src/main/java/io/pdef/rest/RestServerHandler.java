@@ -24,7 +24,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 	/** Creates a REST server handler. */
 	public RestServerHandler(final Class<?> cls,
 			final Function<Invocation, InvocationResult> invoker) {
-		this.type = InterfaceType.findType(cls);
+		this.type = InterfaceType.findMetaType(cls);
 		this.invoker = checkNotNull(invoker);
 
 		checkArgument(type != null, "Cannot find an interface type in %s", cls);
@@ -182,7 +182,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 		}
 
 		if (value.equals("")) {
-			return type.type() == TypeEnum.STRING ? "" : null;
+			return type.getType() == TypeEnum.STRING ? "" : null;
 		}
 
 		return type.parseFromString(value);

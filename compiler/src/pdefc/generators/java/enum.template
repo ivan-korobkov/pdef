@@ -1,9 +1,6 @@
 // {{ generated_by }}
 package {{package}};
 
-import io.pdef.types.Type;
-import io.pdef.types.EnumType;
-
 {% if doc %}
 /** {{ doc }} */
 {% endif %}
@@ -13,13 +10,14 @@ public enum {{ name }} {
     {%- endfor %};
 
     public static {{ name }} parseString(final String s) {
-        return TYPE.parseFromString(s);
+        return META_TYPE.parseFromString(s);
     }
 
     public static {{ name }} parseJson(final String s) {
-        return TYPE.parseFromJson(s);
+        return META_TYPE.parseFromJson(s);
     }
 
-    public static final EnumType<{{ name }}> TYPE = EnumType.of({{ name }}.class);
+    public static final io.pdef.types.EnumType<{{ name }}> META_TYPE =
+            io.pdef.types.EnumType.of({{ name }}.class);
 }
 

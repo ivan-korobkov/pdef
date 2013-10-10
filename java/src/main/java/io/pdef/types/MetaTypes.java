@@ -5,9 +5,11 @@ import com.google.common.collect.*;
 
 import java.util.*;
 
-/** Primitive types and collection type factories. */
-public class Types {
-	private Types() {}
+/**
+ * Primitive metatypes and collection metatype factories.
+ * */
+public class MetaTypes {
+	private MetaTypes() {}
 
 	private abstract static class PrimitiveType<T> extends DataType<T> {
 		protected PrimitiveType(final TypeEnum type) {

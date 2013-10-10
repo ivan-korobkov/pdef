@@ -44,7 +44,7 @@ public class Clients {
 		checkNotNull(cls);
 		checkNotNull(invocationHandler);
 
-		InterfaceType type = InterfaceType.findType(cls);
+		InterfaceType type = InterfaceType.findMetaType(cls);
 		checkArgument(type != null, "Cannot find an interface type in " + cls);
 
 		return InvocationProxy.create(cls, type, invocationHandler);

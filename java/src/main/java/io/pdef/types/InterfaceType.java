@@ -10,28 +10,33 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
-public abstract class InterfaceType<T> extends Type<T> {
-	protected InterfaceType() {
+public class InterfaceType<T> extends MetaType {
+	private final Class<T> javaClass;
+	private final List<InterfaceMethod> methods;
+	private final MessageType<?> exc;
+	private final InterfaceMethod indexMethod;
+
+	private InterfaceType(final Builder<T> builder) {
 		super(TypeEnum.INTERFACE);
+		this.javaClass = checkNotNull(builder.javaClass);
+		this.exc = builder.exc; // Must be set before building methods.
+		this.methods = ImmutableList.copyOf(builder.methods);
+		this.indexMethod = findIndexMethod(methods);
 	}
 
-	/** Return this interface Java class. */
-	public abstract Class<?> getJavaClass();
+	public static <T> Builder<T> builder() {
+		return new Builder<T>();
+	}
 
-	/** Return a list of interface methods or an empty list. */
-	public abstract List<InterfaceMethod> getMethods();
+	private static InterfaceMethod findIndexMethod(final List<InterfaceMethod> methods) {
+		for (InterfaceMethod method : methods) {
+			if (method.isIndex()) {
+				return method;
+			}
+		}
 
-	/** Return an exception or null. */
-	@Nullable
-	public abstract MessageType<?> getExc();
-
-	/** Return an index method or null. */
-	@Nullable
-	public abstract InterfaceMethod getIndexMethod();
-
-	/** Find a method by name and return it or null. */
-	@Nullable
-	public abstract InterfaceMethod findMethod(String name);
+		return null;
+	}
 
 	@Override
 	public String toString() {
@@ -40,62 +45,38 @@ public abstract class InterfaceType<T> extends Type<T> {
 				.toString();
 	}
 
-	private static class Immutable<T> extends InterfaceType<T> {
-		private final Class<T> javaClass;
-		private final List<InterfaceMethod> methods;
-		private final MessageType<?> exc;
-		private final InterfaceMethod indexMethod;
+	/** Return this interface Java class. */
+	public Class<?> getJavaClass() {
+		return javaClass;
+	}
 
-		private Immutable(final Builder<T> builder) {
-			this.javaClass = checkNotNull(builder.javaClass);
-			this.exc = builder.exc; // Must be set before building methods.
-			this.methods = ImmutableList.copyOf(builder.methods);
-			this.indexMethod = findIndexMethod(methods);
-		}
+	/** Return a list of interface methods or an empty list. */
+	public List<InterfaceMethod> getMethods() {
+		return methods;
+	}
 
-		private static InterfaceMethod findIndexMethod(final List<InterfaceMethod> methods) {
-			for (InterfaceMethod method : methods) {
-				if (method.isIndex()) {
-					return method;
-				}
+	/** Return an exception or null. */
+	@Nullable
+	public MessageType<?> getExc() {
+		return exc;
+	}
+
+	/** Return an index method or null. */
+	@Nullable
+	public InterfaceMethod getIndexMethod() {
+		return indexMethod;
+	}
+
+	/** Find a method by name and return it or null. */
+	@Nullable
+	public InterfaceMethod findMethod(final String name) {
+		for (InterfaceMethod method : getMethods()) {
+			if (method.name().equals(name)) {
+				return method;
 			}
-
-			return null;
 		}
 
-		@Override
-		public Class<?> getJavaClass() {
-			return javaClass;
-		}
-
-		@Override
-		public List<InterfaceMethod> getMethods() {
-			return methods;
-		}
-
-		@Nullable
-		@Override
-		public MessageType<?> getExc() {
-			return exc;
-		}
-
-		@Nullable
-		@Override
-		public InterfaceMethod getIndexMethod() {
-			return indexMethod;
-		}
-
-		@Nullable
-		@Override
-		public InterfaceMethod findMethod(final String name) {
-			for (InterfaceMethod method : getMethods()) {
-				if (method.name().equals(name)) {
-					return method;
-				}
-			}
-
-			return null;
-		}
+		return null;
 	}
 
 	public static class Builder<T> {
@@ -123,20 +104,20 @@ public abstract class InterfaceType<T> extends Type<T> {
 		}
 
 		public InterfaceType<T> build() {
-			return new Immutable<T>(this);
+			return new InterfaceType<T>(this);
 		}
 	}
 
-	/** Returns an interface type or null. */
+	/** Returns an interface metatype or null. */
 	@Nullable
-	public static <T> InterfaceType<T> findType(final Class<T> cls) {
+	public static <T> InterfaceType<T> findMetaType(final Class<T> cls) {
 		if (!cls.isInterface()) {
 			return null;
 		}
 
 		Field field;
 		try {
-			field = cls.getField("TYPE");
+			field = cls.getField("META_TYPE");
 		} catch (NoSuchFieldException e) {
 			return null;
 		}

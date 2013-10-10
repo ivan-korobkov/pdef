@@ -35,28 +35,28 @@ import com.google.common.base.Supplier;
                     .setPost(true)
                 {% endif %}
                 {% if method.result.is_interface %}
-                    .setResult(new Supplier<io.pdef.types.Type<?>>() {
-                        public io.pdef.types.Type<?> get() {
-                            return {{ method.result.descriptor }};
+                    .setResult(new Supplier<io.pdef.types.MetaType>() {
+                        public io.pdef.types.MetaType get() {
+                            return {{ method.result.meta }};
                         }
                     })
                 {% else %}
-                    .setResult({{ method.result.descriptor }})
+                    .setResult({{ method.result.meta }})
                 {% endif %}
                 {% if exc %}
-                    .setExc({{ exc.descriptor }})
+                    .setExc({{ exc.meta }})
                 {% endif %}
                 {% for arg in method.args %}
-                    .addArg("{{ arg.name }}", {{ arg.type.descriptor }})
+                    .addArg("{{ arg.name }}", {{ arg.type.meta }})
                 {% endfor %}
                     .build();
 
 {% endfor %}
-    static io.pdef.types.InterfaceType<{{ name }}> TYPE =
-            new io.pdef.types.InterfaceType.Builder<{{ name }}>()
+    static io.pdef.types.InterfaceType<{{ name }}> META_TYPE =
+            io.pdef.types.InterfaceType.<{{ name }}>builder()
                     .setJavaClass({{ name }}.class)
                 {% if exc %}
-                    .setExc({{ exc.descriptor }})
+                    .setExc({{ exc.meta }})
                 {% endif %}
                 {% for method in declared_methods %}
                     .addMethod({{ method.name|upper }}_METHOD)

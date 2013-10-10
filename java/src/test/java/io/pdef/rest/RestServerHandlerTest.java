@@ -11,7 +11,7 @@ import io.pdef.test.interfaces.TestInterface;
 import io.pdef.test.messages.SimpleForm;
 import io.pdef.test.messages.SimpleMessage;
 import io.pdef.types.InterfaceMethodArg;
-import io.pdef.types.Types;
+import io.pdef.types.MetaTypes;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -195,7 +195,7 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParsePositionalArg() throws Exception {
-		InterfaceMethodArg<String> argd = InterfaceMethodArg.of("arg", Types.string);
+		InterfaceMethodArg<String> argd = InterfaceMethodArg.of("arg", MetaTypes.string);
 		String part = "%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82";
 
 		String value = (String) handler.parsePositionalArg(argd, part);
@@ -204,7 +204,8 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParseQueryArg() throws Exception {
-		InterfaceMethodArg<SimpleMessage> argd = InterfaceMethodArg.of("arg", SimpleMessage.TYPE);
+		InterfaceMethodArg<SimpleMessage> argd = InterfaceMethodArg.of("arg",
+				SimpleMessage.META_TYPE);
 
 		SimpleMessage expected = new SimpleMessage()
 				.setAString("Привет")
@@ -218,7 +219,7 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParseQueryArg_form() throws Exception {
-		InterfaceMethodArg<SimpleForm> argd = InterfaceMethodArg.of("arg", SimpleForm.TYPE);
+		InterfaceMethodArg<SimpleForm> argd = InterfaceMethodArg.of("arg", SimpleForm.META_TYPE);
 
 		SimpleForm expected = new SimpleForm()
 				.setText("Привет, как дела?")
@@ -234,19 +235,19 @@ public class RestServerHandlerTest {
 
 	@Test
 	public void testParseArgFromString_primitive() throws Exception {
-		Integer value = (Integer) handler.parseArgFromString(Types.int32, "123");
+		Integer value = (Integer) handler.parseArgFromString(MetaTypes.int32, "123");
 		assert value == 123;
 	}
 
 	@Test
 	public void testParseArgFromString_primitiveEmptyStringToNull() throws Exception {
-		Integer value = (Integer) handler.parseArgFromString(Types.int32, "");
+		Integer value = (Integer) handler.parseArgFromString(MetaTypes.int32, "");
 		assert value == null;
 	}
 
 	@Test
 	public void testParseArgFromString_string() throws Exception {
-		String value = (String) handler.parseArgFromString(Types.string, "Привет");
+		String value = (String) handler.parseArgFromString(MetaTypes.string, "Привет");
 		assert value.equals("Привет");
 	}
 
@@ -258,7 +259,7 @@ public class RestServerHandlerTest {
 				.setAnInt16((short) 123);
 
 		String json = msg.serializeToJson();
-		SimpleMessage result = (SimpleMessage) handler.parseArgFromString(msg.type(), json);
+		SimpleMessage result = (SimpleMessage) handler.parseArgFromString(msg.metaType(), json);
 		assert result.equals(msg);
 	}
 

@@ -96,7 +96,7 @@ class TestRef(unittest.TestCase):
         ref = jreference(list0)
 
         assert ref.name == 'java.util.List<Integer>'
-        assert ref.descriptor == 'Descriptors.list(Descriptors.int32)'
+        assert ref.meta == 'io.pdef.types.MetaTypes.list(io.pdef.types.MetaTypes.int32)'
         assert ref.is_list
 
     def test_set(self):
@@ -104,7 +104,7 @@ class TestRef(unittest.TestCase):
         ref = jreference(set0)
 
         assert ref.name == 'java.util.Set<Boolean>'
-        assert ref.descriptor == 'Descriptors.set(Descriptors.bool)'
+        assert ref.meta == 'io.pdef.types.MetaTypes.set(io.pdef.types.MetaTypes.bool)'
         assert ref.is_set
 
     def test_map(self):
@@ -112,7 +112,7 @@ class TestRef(unittest.TestCase):
         ref = jreference(map0)
 
         assert ref.name == 'java.util.Map<String, Float>'
-        assert ref.descriptor == 'Descriptors.map(Descriptors.string, Descriptors.float0)'
+        assert ref.meta == 'io.pdef.types.MetaTypes.map(io.pdef.types.MetaTypes.string, io.pdef.types.MetaTypes.float0)'
         assert ref.is_map
 
     def test_enum(self):
@@ -122,7 +122,7 @@ class TestRef(unittest.TestCase):
         ref = jreference(enum)
 
         assert ref.name == 'test.module.Number'
-        assert ref.descriptor == 'test.module.Number.descriptor()'
+        assert ref.meta == 'test.module.Number.META_TYPE'
 
     def test_enum_value(self):
         enum = Enum('Number')
@@ -133,7 +133,7 @@ class TestRef(unittest.TestCase):
 
         ref = jreference(one)
         assert ref.name == 'test.module.Number.ONE'
-        assert ref.descriptor is None
+        assert ref.meta is None
 
     def test_message(self):
         msg = Message('Message')
@@ -142,8 +142,8 @@ class TestRef(unittest.TestCase):
         ref = jreference(msg)
 
         assert ref.name == 'test.module.Message'
-        assert ref.default == 'test.module.Message.instance()'
-        assert ref.descriptor == 'test.module.Message.descriptor()'
+        assert ref.default == 'new test.module.Message()'
+        assert ref.meta == 'test.module.Message.META_TYPE'
 
     def test_interface(self):
         iface = Interface('Interface')
@@ -152,7 +152,7 @@ class TestRef(unittest.TestCase):
         ref = jreference(iface)
 
         assert ref.name == 'test.module.Interface'
-        assert ref.descriptor == 'test.module.Interface.DESCRIPTOR'
+        assert ref.meta == 'test.module.Interface.META_TYPE'
         assert ref.default is None
 
     def test_namespace__string(self):
@@ -170,5 +170,5 @@ class TestRef(unittest.TestCase):
         ref = jreference(msg, namespace)
 
         assert ref.name == 'com.company.test.module.Message'
-        assert ref.descriptor == 'com.company.test.module.Message.descriptor()'
-        assert ref.default == 'com.company.test.module.Message.instance()'
+        assert ref.meta == 'com.company.test.module.Message.META_TYPE'
+        assert ref.default == 'new com.company.test.module.Message()'

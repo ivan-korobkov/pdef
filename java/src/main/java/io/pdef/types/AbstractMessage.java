@@ -5,13 +5,15 @@ import com.google.common.base.Objects;
 import java.io.Serializable;
 import java.util.Map;
 
-/** Abstract class for a generated message. */
+/**
+ * Abstract class for a generated Pdef message.
+ * */
 public abstract class AbstractMessage implements Message, Serializable {
 	protected AbstractMessage() {}
 
 	@SuppressWarnings("unchecked")
 	private MessageType<Message> uncheckedType() {
-		return (MessageType<Message>) type();
+		return (MessageType<Message>) metaType();
 	}
 
 	@Override

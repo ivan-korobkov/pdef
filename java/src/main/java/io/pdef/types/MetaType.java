@@ -3,16 +3,20 @@ package io.pdef.types;
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 
-/** Base pdef type. */
-public abstract class Type<T> {
+/**
+ * MetaType is a base class for Pdef metatypes. Metatype provides structural information about a
+ * Java type in runtime. For example, a message metatype allows to explore declared fields,
+ * inherited fields, etc.
+ * */
+public class MetaType {
 	private final TypeEnum type;
 
-	protected Type(final TypeEnum type) {
+	protected MetaType(final TypeEnum type) {
 		this.type = checkNotNull(type);
 	}
 
 	/** Returns this type type. */
-	public TypeEnum type() {
+	public TypeEnum getType() {
 		return type;
 	}
 

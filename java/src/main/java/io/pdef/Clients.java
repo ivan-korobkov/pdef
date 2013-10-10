@@ -2,14 +2,14 @@ package io.pdef;
 
 import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
-import io.pdef.invocation.Invocation;
-import io.pdef.invocation.InvocationProxy;
-import io.pdef.invocation.InvocationResult;
+import io.pdef.invoke.Invocation;
+import io.pdef.invoke.InvocationProxy;
+import io.pdef.invoke.InvocationResult;
 import io.pdef.rest.RestClientHandler;
 import io.pdef.rest.RestClientSender;
 import io.pdef.rest.RestRequest;
 import io.pdef.rest.RestResponse;
-import io.pdef.types.InterfaceType;
+import io.pdef.meta.InterfaceType;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 

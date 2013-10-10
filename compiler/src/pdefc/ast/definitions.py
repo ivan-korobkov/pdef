@@ -69,6 +69,27 @@ class TypeEnum(object):
     PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
     DATA_TYPES = PRIMITIVES + (OBJECT, LIST, SET, MAP, ENUM, MESSAGE, EXCEPTION)
     NATIVE = PRIMITIVES + (OBJECT, VOID)
+    COLLECTION_TYPES = (LIST, SET, MAP)
+
+    @classmethod
+    def is_message(cls, type_enum):
+        return type_enum in (cls.MESSAGE, cls.EXCEPTION)
+
+    @classmethod
+    def is_interface(cls, type_enum):
+        return type_enum == cls.INTERFACE
+
+    @classmethod
+    def is_primitive(cls, type_enum):
+        return type_enum in cls.PRIMITIVES
+
+    @classmethod
+    def is_data_type(cls, type_enum):
+        return type_enum in cls.is_data_type(type_enum)
+
+    @classmethod
+    def is_collection(cls, type_enum):
+        return type_enum in cls.COLLECTION_TYPES
 
 
 class Type(Located):

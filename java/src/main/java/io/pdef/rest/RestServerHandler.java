@@ -5,10 +5,9 @@ import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import io.pdef.types.TypeEnum;
-import io.pdef.types.*;
-import io.pdef.invocation.Invocation;
-import io.pdef.invocation.InvocationResult;
+import io.pdef.meta.*;
+import io.pdef.invoke.Invocation;
+import io.pdef.invoke.InvocationResult;
 import io.pdef.rpc.*;
 
 import java.net.HttpURLConnection;

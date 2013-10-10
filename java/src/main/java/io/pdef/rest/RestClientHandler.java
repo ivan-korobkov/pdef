@@ -4,10 +4,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Strings;
-import io.pdef.invocation.Invocation;
-import io.pdef.invocation.InvocationResult;
+import io.pdef.Message;
+import io.pdef.invoke.Invocation;
+import io.pdef.invoke.InvocationResult;
+import io.pdef.meta.*;
 import io.pdef.rpc.*;
-import io.pdef.types.*;
 
 import java.net.HttpURLConnection;
 import java.util.List;

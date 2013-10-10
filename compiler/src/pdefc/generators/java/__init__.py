@@ -109,8 +109,8 @@ class JavaMessage(JavaDefinition):
         self.is_form = msg.is_form
 
         self.base_or_root = self.base or \
-            ('io.pdef.types.AbstractException' if msg.is_exception else
-             'io.pdef.types.AbstractMessage')
+            ('io.pdef.AbstractException' if msg.is_exception else
+             'io.pdef.AbstractMessage')
 
 
 class JavaField(object):
@@ -158,9 +158,9 @@ class JavaReference(object):
 
         name = 'java.util.List<%s>' % element
         default = 'com.google.common.collect.ImmutableList.<%s>of()' % element
-        meta = 'io.pdef.types.MetaTypes.list(%s)' % element.meta
+        meta = 'io.pdef.meta.MetaTypes.list(%s)' % element.meta
 
-        return JavaReference(name, default=default, meta=meta, is_list=True)
+        return JavaReference(type0.type, name, default=default, meta=meta)
 
     @classmethod
     def set(cls, type0, ref):
@@ -168,9 +168,9 @@ class JavaReference(object):
 
         name = 'java.util.Set<%s>' % element
         default = 'com.google.common.collect.ImmutableSet.<%s>of()' % element
-        meta = 'io.pdef.types.MetaTypes.set(%s)' % element.meta
+        meta = 'io.pdef.meta.MetaTypes.set(%s)' % element.meta
 
-        return JavaReference(name, default=default, meta=meta, is_set=True)
+        return JavaReference(type0.type, name, default=default, meta=meta)
 
     @classmethod
     def map(cls, type0, ref):
@@ -179,66 +179,74 @@ class JavaReference(object):
 
         name = 'java.util.Map<%s, %s>' % (key, value)
         default = 'com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key, value)
-        meta = 'io.pdef.types.MetaTypes.map(%s, %s)' % (key.meta, value.meta)
+        meta = 'io.pdef.meta.MetaTypes.map(%s, %s)' % (key.meta, value.meta)
 
-        return JavaReference(name, default=default, meta=meta, is_map=True)
+        return JavaReference(type0.type, name, default=default, meta=meta)
 
     @classmethod
     def enum_value(cls, type0, ref):
         name = '%s.%s' % (ref(type0.enum), type0.name)
-        return JavaReference(name)
+        return JavaReference(type0.type, name)
 
     @classmethod
     def definition(cls, type0, ref):
         name = '%s.%s' % (type0.module.name, type0.name)
         name = ref(name)
 
-        is_interface = False
-        is_message = False
-
         if type0.is_interface:
             default = None
-            is_interface = True
         elif type0.is_enum:
             default = 'null'
         elif type0.is_message:
             default = 'new %s()' % name
-            is_message = True
         else:
             raise ValueError('Unsupported definition %r' % type0)
 
         meta = '%s.META_TYPE' % name
-        return JavaReference(name, default=default, meta=meta,
-                             is_interface=is_interface, is_message=is_message)
+        return JavaReference(type0.type, name, default=default, meta=meta)
 
-    def __init__(self, name, unboxed=None, default='null', meta=None,
-                 is_list=False, is_set=False, is_map=False, is_interface=False, is_message=False):
+    def __init__(self, type_enum, name, unboxed=None, default='null', meta=None):
+        self.type_enum = type_enum
         self.name = name
         self.unboxed = unboxed or self
         self.default = default
         self.meta = meta
 
-        self.is_list = is_list
-        self.is_set = is_set
-        self.is_map = is_map
-
-        self.is_interface = is_interface
-        self.is_message = is_message
+        self.is_primitive = TypeEnum.is_primitive(type_enum)
+        self.is_message = TypeEnum.is_message(type_enum)
+        self.is_interface = TypeEnum.is_interface(type_enum)
 
     def __str__(self):
         return self.name
 
 
 NATIVE_TYPES = {
-    TypeEnum.BOOL: JavaReference('Boolean', 'boolean', 'false', 'io.pdef.types.MetaTypes.bool'),
-    TypeEnum.INT16: JavaReference('Short', 'short', '(short) 0', 'io.pdef.types.MetaTypes.int16'),
-    TypeEnum.INT32: JavaReference('Integer', 'int', '0', 'io.pdef.types.MetaTypes.int32'),
-    TypeEnum.INT64: JavaReference('Long', 'long', '0L', 'io.pdef.types.MetaTypes.int64'),
-    TypeEnum.FLOAT: JavaReference('Float', 'float', '0f', 'io.pdef.types.MetaTypes.float0'),
-    TypeEnum.DOUBLE: JavaReference('Double', 'double', '0.0', 'io.pdef.types.MetaTypes.double0'),
-    TypeEnum.STRING: JavaReference('String', default='""', meta='io.pdef.types.MetaTypes.string'),
-    TypeEnum.OBJECT: JavaReference('Object', meta='io.pdef.types.MetaTypes.object'),
-    TypeEnum.VOID: JavaReference('void', 'void', meta='io.pdef.types.MetaTypes.void0')
+    TypeEnum.BOOL: JavaReference(TypeEnum.BOOL, 'Boolean', 'boolean', default='false',
+            meta='io.pdef.meta.MetaTypes.bool'),
+
+    TypeEnum.INT16: JavaReference(TypeEnum.INT16, 'Short', default='(short) 0',
+            meta='io.pdef.meta.MetaTypes.int16'),
+
+    TypeEnum.INT32: JavaReference(TypeEnum.INT32, 'Integer', 'int', default='0',
+            meta='io.pdef.meta.MetaTypes.int32'),
+
+    TypeEnum.INT64: JavaReference(TypeEnum.INT64, 'Long', 'long', default='0L',
+            meta='io.pdef.meta.MetaTypes.int64'),
+
+    TypeEnum.FLOAT: JavaReference(TypeEnum.FLOAT, 'Float', 'float', default='0f',
+            meta='io.pdef.meta.MetaTypes.float0'),
+
+    TypeEnum.DOUBLE: JavaReference(TypeEnum.DOUBLE, 'Double', 'double', default='0.0',
+            meta='io.pdef.meta.MetaTypes.double0'),
+
+    TypeEnum.STRING: JavaReference(TypeEnum.STRING, 'String', default='""',
+            meta='io.pdef.meta.MetaTypes.string'),
+
+    TypeEnum.OBJECT: JavaReference(TypeEnum.OBJECT, 'Object',
+            meta='io.pdef.meta.MetaTypes.object'),
+
+    TypeEnum.VOID: JavaReference(TypeEnum.VOID, 'void', 'void',
+            meta='io.pdef.meta.MetaTypes.void0')
 }
 
 

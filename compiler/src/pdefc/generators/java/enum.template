@@ -17,7 +17,7 @@ public enum {{ name }} {
         return META_TYPE.parseFromJson(s);
     }
 
-    public static final io.pdef.types.EnumType<{{ name }}> META_TYPE =
-            io.pdef.types.EnumType.of({{ name }}.class);
+    public static final io.pdef.meta.EnumType<{{ name }}> META_TYPE =
+            io.pdef.meta.EnumType.of({{ name }}.class);
 }
 

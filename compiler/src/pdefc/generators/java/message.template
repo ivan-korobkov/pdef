@@ -54,27 +54,27 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% endfor %}
     @Override
-    public io.pdef.types.MessageType<? extends {{ name }}> metaType() {
+    public io.pdef.meta.MessageType<? extends {{ name }}> metaType() {
         return META_TYPE;
     }
 
 {% for field in declared_fields %}
-    public static final io.pdef.types.MessageField<{{ name }}, {{ field.type }}> {{ field.name|upper }}_FIELD =
-            io.pdef.types.MessageField.<{{ name }}, {{ field.type }}>builder()
+    public static final io.pdef.meta.MessageField<{{ name }}, {{ field.type }}> {{ field.name|upper }}_FIELD =
+            io.pdef.meta.MessageField.<{{ name }}, {{ field.type }}>builder()
                     .setName("{{ field.name }}")
                 {% if field.is_discriminator %}
                     .setDiscriminator(true)
                 {% endif %}
-                {% if field.type.is_message %}
-                    .setType(new Supplier<io.pdef.types.DataType<{{ field.type }}>>() {
-                        public io.pdef.types.DataType<{{ field.type }}> get() {
+                {% if field.type.is_primitive %}
+                    .setType({{ field.type.meta }})
+                {% else %}
+                    .setType(new Supplier<io.pdef.meta.DataType<{{ field.type }}>>() {
+                        public io.pdef.meta.DataType<{{ field.type }}> get() {
                             return {{ field.type.meta }};
                         }
                     })
-                {% else %}
-                    .setType({{ field.type.meta }})
                 {% endif %}
-                    .setAccessor(new io.pdef.types.MessageFieldAccessor<{{ name }}, {{ field.type }}>() {
+                    .setAccessor(new io.pdef.meta.MessageFieldAccessor<{{ name }}, {{ field.type }}>() {
                         public {{ field.type }} get({{ name }} message) {
                             return message.{{ field.name }};
                         }
@@ -87,8 +87,8 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% endfor %}
 
-    public static final io.pdef.types.MessageType<{{ name }}> META_TYPE =
-            io.pdef.types.MessageType.<{{ name }}>builder()
+    public static final io.pdef.meta.MessageType<{{ name }}> META_TYPE =
+            io.pdef.meta.MessageType.<{{ name }}>builder()
                     .setJavaClass({{ name }}.class)
                     .setSupplier(new Supplier<{{ name }}>() {
                         public {{ name }} get() {
@@ -105,8 +105,8 @@ public class {{ name }} extends {{ base_or_root }} {
                     .setDiscriminatorValue({{ discriminator_value }})
                     {% endif %}
                     {% for subtype in subtypes %}
-                    .addSubtype(new Supplier<io.pdef.types.MessageType<? extends {{ name }}>>() {
-                        public io.pdef.types.MessageType<? extends {{ name }}> get() {
+                    .addSubtype(new Supplier<io.pdef.meta.MessageType<? extends {{ name }}>>() {
+                        public io.pdef.meta.MessageType<? extends {{ name }}> get() {
                             return {{ subtype.meta }};
                         }
                     })

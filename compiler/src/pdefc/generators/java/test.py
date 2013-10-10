@@ -96,24 +96,21 @@ class TestRef(unittest.TestCase):
         ref = jreference(list0)
 
         assert ref.name == 'java.util.List<Integer>'
-        assert ref.meta == 'io.pdef.types.MetaTypes.list(io.pdef.types.MetaTypes.int32)'
-        assert ref.is_list
+        assert ref.meta == 'io.pdef.meta.MetaTypes.list(io.pdef.meta.MetaTypes.int32)'
 
     def test_set(self):
         set0 = Set(NativeType.BOOL)
         ref = jreference(set0)
 
         assert ref.name == 'java.util.Set<Boolean>'
-        assert ref.meta == 'io.pdef.types.MetaTypes.set(io.pdef.types.MetaTypes.bool)'
-        assert ref.is_set
+        assert ref.meta == 'io.pdef.meta.MetaTypes.set(io.pdef.meta.MetaTypes.bool)'
 
     def test_map(self):
         map0 = Map(NativeType.STRING, NativeType.FLOAT)
         ref = jreference(map0)
 
         assert ref.name == 'java.util.Map<String, Float>'
-        assert ref.meta == 'io.pdef.types.MetaTypes.map(io.pdef.types.MetaTypes.string, io.pdef.types.MetaTypes.float0)'
-        assert ref.is_map
+        assert ref.meta == 'io.pdef.meta.MetaTypes.map(io.pdef.meta.MetaTypes.string, io.pdef.meta.MetaTypes.float0)'
 
     def test_enum(self):
         enum = Enum('Number')

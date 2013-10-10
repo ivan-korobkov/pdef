@@ -8,13 +8,13 @@ import org.junit.Test;
 public class TypesTest {
 	private void testPrimitive(final DataType type, final String stringToParse,
 			final Object expected, final String expectedString) {
-		assert type.parseNative(stringToParse).equals(expected);
-		assert type.parseNative(stringToParse).getClass() == expected.getClass();
-		assert type.parseNative(expected).equals(expected);
-		assert type.parseNative(expected).getClass() == expected.getClass();
-		assert type.parseNative(null) == null;
-		assert type.toString(null) == null;
-		assert type.toString(expected).equals(expectedString);
+		assert type.parseFromNative(stringToParse).equals(expected);
+		assert type.parseFromNative(stringToParse).getClass() == expected.getClass();
+		assert type.parseFromNative(expected).equals(expected);
+		assert type.parseFromNative(expected).getClass() == expected.getClass();
+		assert type.parseFromNative(null) == null;
+		assert type.serializeToString(null) == null;
+		assert type.serializeToString(expected).equals(expectedString);
 	}
 
 	@Test
@@ -50,10 +50,10 @@ public class TypesTest {
 
 	private void testData(final DataType type, final Object objectToParse,
 			final Object expected) {
-		assert type.parseNative(objectToParse).equals(expected);
-		assert type.parseNative(null) == null;
-		assert type.toNative(null) == null;
-		assert type.toNative(expected).equals(expected);
+		assert type.parseFromNative(objectToParse).equals(expected);
+		assert type.parseFromNative(null) == null;
+		assert type.serializeToNative(null) == null;
+		assert type.serializeToNative(expected).equals(expected);
 	}
 
 	@Test

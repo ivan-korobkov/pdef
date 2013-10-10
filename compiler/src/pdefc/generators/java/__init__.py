@@ -117,7 +117,7 @@ class JavaField(object):
     def __init__(self, field, ref):
         self.name = field.name
         self.type = ref(field.type)
-        self.is_discriminator = "true" if field.is_discriminator else "false"
+        self.is_discriminator = field.is_discriminator
 
         self.get = 'get%s' % generators.upper_first(self.name)
         self.set = 'set%s' % generators.upper_first(self.name)

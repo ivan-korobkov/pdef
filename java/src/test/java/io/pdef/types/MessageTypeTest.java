@@ -29,7 +29,7 @@ public class MessageTypeTest {
 	@Test
 	public void testToNative() throws Exception {
 		SimpleMessage message = fixture();
-		Object map = type.toNative(message);
+		Object map = type.serializeToNative(message);
 		Map<String, Object> expected = fixtureMap();
 
 		assertEquals(expected, map);
@@ -38,7 +38,7 @@ public class MessageTypeTest {
 	@Test
 	public void testParseObject() throws Exception {
 		Map<String, Object> map = fixtureMap();
-		SimpleMessage message = type.parseNative(map);
+		SimpleMessage message = type.parseFromNative(map);
 		SimpleMessage expected = fixture();
 
 		assertEquals(expected, message);
@@ -47,14 +47,14 @@ public class MessageTypeTest {
 	@Test
 	public void testToJson() throws Exception {
 		SimpleMessage message = fixture();
-		String s = type.toJson(message);
-		SimpleMessage parsed = type.parseJson(s);
+		String s = type.serializeToJson(message);
+		SimpleMessage parsed = type.parseFromJson(s);
 		assertEquals(message, parsed);
 	}
 
 	@Test
 	public void testParseJson() throws Exception {
-		SimpleMessage message = type.parseJson(fixtureJson());
+		SimpleMessage message = type.parseFromJson(fixtureJson());
 		SimpleMessage expected = fixture();
 		assertEquals(expected, message);
 	}
@@ -96,8 +96,8 @@ public class MessageTypeTest {
 				.setSubfield("hello")
 				.setMfield("bye");
 
-		assertEquals(subtype, type.parseNative(subtypeMap));
-		assertEquals(subtype2, type.parseNative(subtype2Map));
-		assertEquals(mlevelSubtype, type.parseNative(mlevelSubtypeMap));
+		assertEquals(subtype, type.parseFromNative(subtypeMap));
+		assertEquals(subtype2, type.parseFromNative(subtype2Map));
+		assertEquals(mlevelSubtype, type.parseFromNative(mlevelSubtypeMap));
 	}
 }

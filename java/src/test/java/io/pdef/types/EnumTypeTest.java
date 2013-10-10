@@ -19,26 +19,26 @@ public class EnumTypeTest {
 	@Test
 	public void testParseObject() throws Exception {
 		String s = "thrEE";
-		TestEnum result = type.parseNative(s);
+		TestEnum result = type.parseFromNative(s);
 		assertEquals(TestEnum.THREE, result);
 	}
 
 	@Test
 	public void testToObject() throws Exception {
-		Object object = type.toNative(TestEnum.THREE);
+		Object object = type.serializeToNative(TestEnum.THREE);
 		assertEquals("three", object);
 	}
 
 	@Test
 	public void testParseString() throws Exception {
 		String s = "three";
-		TestEnum result = type.parseString(s);
+		TestEnum result = type.parseFromString(s);
 		assertEquals(TestEnum.THREE, result);
 	}
 
 	@Test
 	public void testToString() throws Exception {
-		String s = type.toString(TestEnum.THREE);
+		String s = type.serializeToString(TestEnum.THREE);
 		assertEquals("three", s);
 	}
 }

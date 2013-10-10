@@ -45,7 +45,7 @@ public class RestClientHandlerTest {
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()
-				.setContent(new RpcResult().setStatus(RpcStatus.OK).setData(3).toJson());
+				.setContent(new RpcResult().setStatus(RpcStatus.OK).setData(3).serializeToJson());
 
 		when(sender.apply(request)).thenReturn(response);
 		int result = proxy(handler).indexMethod(1, 2);
@@ -248,8 +248,8 @@ public class RestClientHandlerTest {
 				.setAnInt16((short) 1);
 		String content = new RpcResult()
 				.setStatus(RpcStatus.OK)
-				.setData(msg.toMap())
-				.toJson();
+				.setData(msg.serializeToMap())
+				.serializeToJson();
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()
@@ -269,8 +269,8 @@ public class RestClientHandlerTest {
 				.setText("Application exception");
 		String content = new RpcResult()
 				.setStatus(RpcStatus.EXCEPTION)
-				.setData(exc.toMap())
-				.toJson();
+				.setData(exc.serializeToMap())
+				.serializeToJson();
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()

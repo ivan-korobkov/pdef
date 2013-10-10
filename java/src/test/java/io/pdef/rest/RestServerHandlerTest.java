@@ -47,7 +47,7 @@ public class RestServerHandlerTest {
 		String content = new RpcResult()
 				.setStatus(RpcStatus.OK)
 				.setData(3)
-				.toJson();
+				.serializeToJson();
 
 		RestResponse response = handler.handle(request);
 		assert response.hasOkStatus();
@@ -72,8 +72,8 @@ public class RestServerHandlerTest {
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
 		String content = new RpcResult()
 				.setStatus(RpcStatus.EXCEPTION)
-				.setData(exc.toMap())
-				.toJson();
+				.setData(exc.serializeToMap())
+				.serializeToJson();
 
 		RestResponse response = handler.handle(request);
 		assert response.hasOkStatus();
@@ -210,7 +210,7 @@ public class RestServerHandlerTest {
 				.setAString("Привет")
 				.setABool(true)
 				.setAnInt16((short) 123);
-		Map<String, String> query = ImmutableMap.of("arg", expected.toJson());
+		Map<String, String> query = ImmutableMap.of("arg", expected.serializeToJson());
 
 		Object result = handler.parseQueryArg(argd, query);
 		assert result.equals(expected);
@@ -257,7 +257,7 @@ public class RestServerHandlerTest {
 				.setABool(true)
 				.setAnInt16((short) 123);
 
-		String json = msg.toJson();
+		String json = msg.serializeToJson();
 		SimpleMessage result = (SimpleMessage) handler.parseArgFromString(msg.type(), json);
 		assert result.equals(msg);
 	}
@@ -276,8 +276,8 @@ public class RestServerHandlerTest {
 		InvocationResult result = InvocationResult.ok(msg);
 		String content = new RpcResult()
 				.setStatus(RpcStatus.OK)
-				.setData(msg.toMap())
-				.toJson();
+				.setData(msg.serializeToMap())
+				.serializeToJson();
 
 		RestResponse response = handler.okResponse(result, invocation);
 		assert response.hasOkStatus();
@@ -295,8 +295,8 @@ public class RestServerHandlerTest {
 		InvocationResult result = InvocationResult.exc(exc);
 		String content = new RpcResult()
 				.setStatus(RpcStatus.EXCEPTION)
-				.setData(exc.toMap())
-				.toJson();
+				.setData(exc.serializeToMap())
+				.serializeToJson();
 
 		RestResponse response = handler.okResponse(result, invocation);
 		assert response.hasOkStatus();

@@ -21,18 +21,18 @@ public abstract class AbstractMessage implements Message, Serializable {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Map<String, Object> toMap() {
-		return (Map<String, Object>) uncheckedType().toNative(this);
+	public Map<String, Object> serializeToMap() {
+		return (Map<String, Object>) uncheckedType().serializeToNative(this);
 	}
 
 	@Override
-	public String toJson() {
-		return uncheckedType().toJson(this);
+	public String serializeToJson() {
+		return uncheckedType().serializeToJson(this);
 	}
 
 	@Override
-	public String toJson(final boolean indent) {
-		return uncheckedType().toJson(this, indent);
+	public String serializeToJson(final boolean indent) {
+		return uncheckedType().serializeToJson(this, indent);
 	}
 
 	@Override

@@ -167,7 +167,7 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 		// Native format.
 
 		@Override
-		protected M doParseNative(final Object object) throws Exception {
+		protected M fromNative(final Object object) throws Exception {
 			if (object == null) {
 				return null;
 			}
@@ -200,7 +200,7 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 				return null;
 			}
 
-			return (Enum<?>) discriminator.getType().doParseNative(value);
+			return (Enum<?>) discriminator.getType().fromNative(value);
 		}
 
 		@SuppressWarnings("unchecked")
@@ -222,7 +222,7 @@ public abstract class MessageType<M extends Message> extends DataType<M> {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		protected Map<String, Object> doToNative(final M message) throws Exception {
+		protected Map<String, Object> toNative(final M message) throws Exception {
 			if (message == null) {
 				return null;
 			}

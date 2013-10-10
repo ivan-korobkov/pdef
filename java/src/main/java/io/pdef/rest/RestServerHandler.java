@@ -163,7 +163,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 				fields.put(field.getName(), parsed);
 			}
 
-			return messageType.parseNative(fields);
+			return messageType.parseFromNative(fields);
 		}
 
 		// Parse from a string.
@@ -185,7 +185,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 			return type.type() == TypeEnum.STRING ? "" : null;
 		}
 
-		return type.parseString(value);
+		return type.parseFromString(value);
 	}
 
 	@VisibleForTesting
@@ -203,17 +203,17 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 			DataType d = (DataType) invocation.getResult();
 
 			rpc.setStatus(RpcStatus.OK);
-			rpc.setData(d.toNative(data));
+			rpc.setData(d.serializeToNative(data));
 		} else {
 			// It's an expected application exception.
 			DataType d = invocation.getExc();
 			assert d != null;
 
 			rpc.setStatus(RpcStatus.EXCEPTION);
-			rpc.setData(d.toNative(data));
+			rpc.setData(d.serializeToNative(data));
 		}
 
-		String content = rpc.toJson();
+		String content = rpc.serializeToJson();
 		return new RestResponse()
 				.setOkStatus()
 				.setContent(content)

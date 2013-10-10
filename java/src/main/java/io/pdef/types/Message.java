@@ -10,11 +10,11 @@ public interface Message {
 	MessageType<? extends Message> type();
 	
 	/** Serializes this message to a map. */
-	Map<String, Object> toMap();
+	Map<String, Object> serializeToMap();
 
 	/** Serializes this message to a JSON string without indentation. */
-	String toJson();
+	String serializeToJson();
 
 	/** Serializes this method to a JSON string with optional indentation. */
-	String toJson(boolean indent);
+	String serializeToJson(boolean indent);
 }

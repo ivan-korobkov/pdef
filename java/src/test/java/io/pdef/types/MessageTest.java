@@ -28,7 +28,7 @@ public class MessageTest {
 	@Test
 	public void  testSerialize() throws Exception {
 		Message msg = createComplexMessage();
-		Map<String, Object> map = msg.toMap();
+		Map<String, Object> map = msg.serializeToMap();
 		Map<String, Object> expected = createComplexMessageMap();
 		assertEquals(expected, map);
 	}
@@ -36,7 +36,7 @@ public class MessageTest {
 	@Test
 	public void testParse() throws Exception {
 		Map<String, Object> map = createComplexMessageMap();
-		Message msg = ComplexMessage.parseMap(map);
+		Message msg = ComplexMessage.parseFromMap(map);
 		Message expected = createComplexMessage();
 		assertEquals(expected, msg);
 	}

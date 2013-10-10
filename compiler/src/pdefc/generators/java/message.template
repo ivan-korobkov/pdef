@@ -20,12 +20,12 @@ public class {{ name }} extends {{ base_or_root }} {
     public {{ name }}() {}
 {% endif %}
 
-    public static {{ name }} parseMap(final java.util.Map<String, Object> map) {
-        return TYPE.parseNative(map);
+    public static {{ name }} parseFromMap(final java.util.Map<String, Object> map) {
+        return TYPE.parseFromNative(map);
     }
 
-    public static {{ name }} parseJson(final String s) {
-        return TYPE.parseJson(s);
+    public static {{ name }} parseFromJson(final String s) {
+        return TYPE.parseFromJson(s);
     }
 
 {% for field in declared_fields %}
@@ -60,19 +60,30 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% for field in declared_fields %}
     public static final io.pdef.types.MessageField<{{ name }}, {{ field.type }}> {{ field.name|upper }}_FIELD =
-            new io.pdef.types.MessageField<{{ name }}, {{ field.type }}>("{{ field.name }}", {{ field.is_discriminator }}) {
-                public io.pdef.types.DataType<{{ field.type }}> getType() {
-                    return {{ field.type.descriptor }};
-                }
+            io.pdef.types.MessageField.<{{ name }}, {{ field.type }}>builder()
+                    .setName("{{ field.name }}")
+                {% if field.is_discriminator %}
+                    .setDiscriminator(true)
+                {% endif %}
+                {% if field.type.is_message %}
+                    .setType(new Supplier<io.pdef.types.DataType<{{ field.type }}>>() {
+                        public io.pdef.types.DataType<{{ field.type }}> get() {
+                            return {{ field.type.descriptor }};
+                        }
+                    })
+                {% else %}
+                    .setType({{ field.type.descriptor }})
+                {% endif %}
+                    .setAccessor(new io.pdef.types.MessageFieldAccessor<{{ name }}, {{ field.type }}>() {
+                        public {{ field.type }} get({{ name }} message) {
+                            return message.{{ field.name }};
+                        }
 
-                public {{ field.type }} get({{ name }} m) {
-                    return m.{{ field.name }};
-                }
-
-                public void set({{ name }} m, {{ field.type }} v) {
-                    m.{{ field.name }} = v;
-                }
-            };
+                        public void set({{ name }} message, {{ field.type }} value) {
+                            message.{{ field.name }} = value;
+                        }
+                    })
+                    .build();
 
 {% endfor %}
 

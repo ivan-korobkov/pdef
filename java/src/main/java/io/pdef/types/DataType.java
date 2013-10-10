@@ -12,9 +12,9 @@ public abstract class DataType<T> extends Type<T> {
 	// Native format.
 
 	/** Parse an object from a native Java primitive or collection. */
-	public final T parseNative(final Object object) throws TypeFormatException {
+	public final T parseFromNative(final Object object) throws TypeFormatException {
 		try {
-			return doParseNative(object);
+			return fromNative(object);
 		} catch (TypeFormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -23,9 +23,9 @@ public abstract class DataType<T> extends Type<T> {
 	}
 
 	/** Serialize an object to a native Java primitive or collection. */
-	public final Object toNative(final T object) throws TypeFormatException {
+	public final Object serializeToNative(final T object) throws TypeFormatException {
 		try {
-			return doToNative(object);
+			return toNative(object);
 		} catch (TypeFormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -35,9 +35,9 @@ public abstract class DataType<T> extends Type<T> {
 	// String format.
 
 	/** Parse an object from a string. */
-	public final T parseString(final String s) throws TypeFormatException {
+	public final T parseFromString(final String s) throws TypeFormatException {
 		try {
-			return doParseString(s);
+			return fromString(s);
 		} catch (TypeFormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -46,9 +46,9 @@ public abstract class DataType<T> extends Type<T> {
 	}
 
 	/** Serialize an object to a string. */
-	public final String toString(final T object) throws TypeFormatException {
+	public final String serializeToString(final T object) throws TypeFormatException {
 		try {
-			return doToString(object);
+			return toString(object);
 		} catch (TypeFormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -59,9 +59,9 @@ public abstract class DataType<T> extends Type<T> {
 	// Json format.
 
 	/** Parse an object from a JSON string. */
-	public final T parseJson(final String s) throws TypeFormatException {
+	public final T parseFromJson(final String s) throws TypeFormatException {
 		try {
-			return doParseJson(s);
+			return fromJson(s);
 		} catch (TypeFormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -70,9 +70,9 @@ public abstract class DataType<T> extends Type<T> {
 	}
 
 	/** Serialize an object to a JSON string. */
-	public final String toJson(final T object) throws TypeFormatException {
+	public final String serializeToJson(final T object) throws TypeFormatException {
 		try {
-			return doToJson(object, false);
+			return toJson(object, false);
 		} catch (TypeFormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -81,10 +81,10 @@ public abstract class DataType<T> extends Type<T> {
 	}
 
 	/** Serialize an object to a JSON string. */
-	public final String toJson(final T object, final boolean indent)
+	public final String serializeToJson(final T object, final boolean indent)
 			throws TypeFormatException {
 		try {
-			return doToJson(object, indent);
+			return toJson(object, indent);
 		} catch (TypeFormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -95,39 +95,39 @@ public abstract class DataType<T> extends Type<T> {
 	// Real parsing/serialization.
 
 	/** Parse an object from a native Java primitive or collection. */
-	protected abstract T doParseNative(final Object object) throws Exception;
+	protected abstract T fromNative(final Object object) throws Exception;
 
 	/** Serialize an object to a native Java primitive or collection. */
-	protected abstract Object doToNative(final T object) throws Exception;
+	protected abstract Object toNative(final T object) throws Exception;
 
 
 	/** Parse an object from a string. */
-	protected T doParseString(final String s) throws Exception {
-		return doParseJson(s);
+	protected T fromString(final String s) throws Exception {
+		return fromJson(s);
 	}
 
 	/** Serialize an object to a string. */
-	protected String doToString(final T object) throws Exception {
-		return doToJson(object, false);
+	protected String toString(final T object) throws Exception {
+		return toJson(object, false);
 	}
 
 	/** Parse an object from a JSON string. */
-	protected T doParseJson(final String s) throws Exception {
+	protected T fromJson(final String s) throws Exception {
 		if (s == null) {
 			return null;
 		}
 
 		Object n = InternalJson.parse(s);
-		return doParseNative(n);
+		return fromNative(n);
 	}
 
 	/** Serialize an object to a JSON string. */
-	protected String doToJson(final T object, final boolean indent) throws Exception {
+	protected String toJson(final T object, final boolean indent) throws Exception {
 		if (object == null) {
 			return "null";
 		}
 
-		Object n = doToNative(object);
+		Object n = toNative(object);
 		return InternalJson.serialize(n, indent);
 	}
 }

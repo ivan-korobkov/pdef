@@ -71,7 +71,7 @@ public class RestClientSenderTest {
 		String content = new RpcResult()
 				.setStatus(RpcStatus.OK)
 				.setData("привет")
-				.toJson();
+				.serializeToJson();
 
 		HttpResponse resp = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 0), 200, "OK");
 		resp.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON));

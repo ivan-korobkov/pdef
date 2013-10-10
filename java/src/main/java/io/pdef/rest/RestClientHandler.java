@@ -157,7 +157,7 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 
 		@SuppressWarnings("unchecked")
 		DataType<Object> unchecked = (DataType<Object>) type;
-		return unchecked.toString(arg);
+		return unchecked.serializeToString(arg);
 	}
 
 	/** Sends a rest request and returns a rest response. */
@@ -173,7 +173,7 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 
 	@VisibleForTesting
 	InvocationResult parseResult(final RestResponse response, final Invocation invocation) {
-		RpcResult rpc = RpcResult.parseJson(response.getContent());
+		RpcResult rpc = RpcResult.parseFromJson(response.getContent());
 		Object result = rpc.getData();
 		RpcStatus status = rpc.getStatus();
 
@@ -181,7 +181,7 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 			// It's a successful result.
 			// Parse it using the invocation method result type.
 			DataType d = (DataType) invocation.getResult();
-			Object r = d.parseNative(result);
+			Object r = d.parseFromNative(result);
 			return InvocationResult.ok(r);
 
 		} else if (status == RpcStatus.EXCEPTION) {
@@ -194,7 +194,7 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 			}
 
 			// All application exceptions are runtime.
-			RuntimeException r = (RuntimeException) d.parseNative(result);
+			RuntimeException r = (RuntimeException) d.parseFromNative(result);
 			return InvocationResult.exc(r);
 		}
 

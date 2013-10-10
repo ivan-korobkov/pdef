@@ -20,131 +20,131 @@ public class Types {
 		}
 
 		@Override
-		public String doToString(final T object) {
+		public String toString(final T object) {
 			return object == null ? null : object.toString();
 		}
 
 		@Override
-		protected Object doToNative(final T object) throws Exception {
+		protected Object toNative(final T object) throws Exception {
 			return object;
 		}
 	}
 
 	public static DataType<Boolean> bool = new PrimitiveType<Boolean>(TypeEnum.BOOL) {
 		@Override
-		public Boolean doParseNative(final Object object) throws Exception {
-			return object instanceof String ? doParseString((String) object) : (Boolean) object;
+		public Boolean fromNative(final Object object) throws Exception {
+			return object instanceof String ? fromString((String) object) : (Boolean) object;
 		}
 
 		@Override
-		public Boolean doParseString(final String s) {
+		public Boolean fromString(final String s) {
 			return s != null && Boolean.parseBoolean(s);
 		}
 	};
 
 	public static DataType<Short> int16 = new PrimitiveType<Short>(TypeEnum.INT16) {
 		@Override
-		public Short doParseNative(final Object object) throws Exception {
+		public Short fromNative(final Object object) throws Exception {
 			if (object == null) {
 				return null;
 			}
 			if (object instanceof String) {
-				return doParseString((String) object);
+				return fromString((String) object);
 			}
 
 			return object instanceof Short ? (Short) object : ((Number) object).shortValue();
 		}
 
 		@Override
-		public Short doParseString(final String s) {
+		public Short fromString(final String s) {
 			return s == null ? null : Short.parseShort(s);
 		}
 	};
 
 	public static DataType<Integer> int32 = new PrimitiveType<Integer>(TypeEnum.INT32) {
 		@Override
-		public Integer doParseNative(final Object object) throws Exception {
+		public Integer fromNative(final Object object) throws Exception {
 			if (object == null) {
 				return null;
 			}
 			if (object instanceof String) {
-				return doParseString((String) object);
+				return fromString((String) object);
 			}
 
 			return object instanceof Integer ? (Integer) object : ((Number) object).intValue();
 		}
 
 		@Override
-		public Integer doParseString(final String s) {
+		public Integer fromString(final String s) {
 			return s == null ? null : Integer.parseInt(s);
 		}
 	};
 
 	public static DataType<Long> int64 = new PrimitiveType<Long>(TypeEnum.INT64) {
 		@Override
-		public Long doParseNative(final Object object) throws Exception {
+		public Long fromNative(final Object object) throws Exception {
 			if (object == null) {
 				return null;
 			}
 			if (object instanceof String) {
-				return doParseString((String) object);
+				return fromString((String) object);
 			}
 
 			return object instanceof Long ? (Long) object : ((Number) object).longValue();
 		}
 
 		@Override
-		public Long doParseString(final String s) {
+		public Long fromString(final String s) {
 			return s == null ? null : Long.parseLong(s);
 		}
 	};
 
 	public static DataType<Float> float0 = new PrimitiveType<Float>(TypeEnum.FLOAT) {
 		@Override
-		public Float doParseNative(final Object object) throws Exception {
+		public Float fromNative(final Object object) throws Exception {
 			if (object == null) {
 				return null;
 			}
 			if (object instanceof String) {
-				return doParseString((String) object);
+				return fromString((String) object);
 			}
 
 			return object instanceof Float ? (Float) object : ((Number) object).floatValue();
 		}
 
 		@Override
-		public Float doParseString(final String s) {
+		public Float fromString(final String s) {
 			return s == null ? null : Float.parseFloat(s);
 		}
 	};
 
 	public static DataType<Double> double0 = new PrimitiveType<Double>(TypeEnum.DOUBLE) {
 		@Override
-		public Double doParseNative(final Object object) throws Exception {
+		public Double fromNative(final Object object) throws Exception {
 			if (object == null) {
 				return null;
 			}
 			if (object instanceof String) {
-				return doParseString((String) object);
+				return fromString((String) object);
 			}
 
 			return object instanceof Double ? (Double) object : ((Number) object).doubleValue();
 		}
 
 		@Override
-		public Double doParseString(final String s) {
+		public Double fromString(final String s) {
 			return s == null ? null : Double.parseDouble(s);
 		}
 	};
 
 	public static DataType<String> string = new PrimitiveType<String>(TypeEnum.STRING) {
 		@Override
-		public String doParseNative(final Object object) {
+		public String fromNative(final Object object) {
 			return (String) object;
 		}
 
 		@Override
-		public String doParseString(final String s) {
+		public String fromString(final String s) {
 			return s;
 		}
 	};
@@ -156,12 +156,12 @@ public class Types {
 		}
 
 		@Override
-		public Void doParseNative(final Object object) {
+		public Void fromNative(final Object object) {
 			return null;
 		}
 
 		@Override
-		protected Object doToNative(final Void object) throws Exception {
+		protected Object toNative(final Void object) throws Exception {
 			return null;
 		}
 	};
@@ -173,12 +173,12 @@ public class Types {
 		}
 
 		@Override
-		public Object doParseNative(final Object object) {
+		public Object fromNative(final Object object) {
 			return object;
 		}
 
 		@Override
-		public Object doToNative(final Object object) {
+		public Object toNative(final Object object) {
 			return object;
 		}
 	};
@@ -219,7 +219,7 @@ public class Types {
 		}
 
 		@Override
-		public List<T> doParseNative(final Object object) throws Exception {
+		public List<T> fromNative(final Object object) throws Exception {
 			if (object == null) {
 				return null;
 			}
@@ -228,7 +228,7 @@ public class Types {
 			List<T> result = Lists.newArrayList();
 
 			for (Object elem : collection) {
-				T parsed = element.parseNative(elem);
+				T parsed = element.parseFromNative(elem);
 				result.add(parsed);
 			}
 
@@ -236,12 +236,12 @@ public class Types {
 		}
 
 		@Override
-		public List<Object> doToNative(final List<T> list) throws Exception {
+		public List<Object> toNative(final List<T> list) throws Exception {
 			if (list == null) return null;
 
 			List<Object> result = Lists.newArrayList();
 			for (T elem : list) {
-				Object serialized = element.toNative(elem);
+				Object serialized = element.serializeToNative(elem);
 				result.add(serialized);
 			}
 
@@ -273,7 +273,7 @@ public class Types {
 		}
 
 		@Override
-		public Set<T> doParseNative(final Object object) throws Exception {
+		public Set<T> fromNative(final Object object) throws Exception {
 			if (object == null) {
 				return null;
 			}
@@ -282,7 +282,7 @@ public class Types {
 			Set<T> result = Sets.newHashSet();
 
 			for (Object elem : collection) {
-				T parsed = element.parseNative(elem);
+				T parsed = element.parseFromNative(elem);
 				result.add(parsed);
 			}
 
@@ -290,14 +290,14 @@ public class Types {
 		}
 
 		@Override
-		public Set<Object> doToNative(final Set<T> set) throws Exception {
+		public Set<Object> toNative(final Set<T> set) throws Exception {
 			if (set == null) {
 				return null;
 			}
 
 			Set<Object> result = Sets.newHashSet();
 			for (T elem : set) {
-				Object serialized = element.toNative(elem);
+				Object serialized = element.serializeToNative(elem);
 				result.add(serialized);
 			}
 
@@ -332,7 +332,7 @@ public class Types {
 		}
 
 		@Override
-		public Map<K, V> doParseNative(final Object object) throws Exception {
+		public Map<K, V> fromNative(final Object object) throws Exception {
 			if (object == null) {
 				return null;
 			}
@@ -341,8 +341,8 @@ public class Types {
 			Map<K, V> result = Maps.newHashMap();
 
 			for (Map.Entry<?, ?> e : map.entrySet()) {
-				K k = key.doParseNative(e.getKey());
-				V v = value.doParseNative(e.getValue());
+				K k = key.fromNative(e.getKey());
+				V v = value.fromNative(e.getValue());
 				result.put(k, v);
 			}
 
@@ -350,15 +350,15 @@ public class Types {
 		}
 
 		@Override
-		public Map<Object, Object> doToNative(final Map<K, V> map) throws Exception {
+		public Map<Object, Object> toNative(final Map<K, V> map) throws Exception {
 			if (map == null) {
 				return null;
 			}
 
 			Map<Object, Object> result = Maps.newHashMap();
 			for (Map.Entry<K, V> e : map.entrySet()) {
-				Object k = key.toNative(e.getKey());
-				Object v = value.toNative(e.getValue());
+				Object k = key.serializeToNative(e.getKey());
+				Object v = value.serializeToNative(e.getValue());
 				result.put(k, v);
 			}
 

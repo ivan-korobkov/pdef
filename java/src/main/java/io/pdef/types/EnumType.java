@@ -13,7 +13,11 @@ public class EnumType<T extends Enum<?>> extends DataType<T> {
 	private final List<T> values;
 	private final BiMap<T, String> valuesToNames;
 
-	public EnumType(final Class<T> javaClass) {
+	public static <T extends Enum<?>> EnumType<T> of(final Class<T> javaClass) {
+		return new EnumType<T>(javaClass);
+	}
+
+	private EnumType(final Class<T> javaClass) {
 		super(TypeEnum.ENUM);
 
 		this.javaClass = checkNotNull(javaClass);
@@ -53,27 +57,27 @@ public class EnumType<T extends Enum<?>> extends DataType<T> {
 	}
 
 	@Override
-	protected T doParseNative(final Object object) throws Exception {
+	protected T fromNative(final Object object) throws Exception {
 		if (object == null) {
 			return null;
 		}
 
 		if (object instanceof String) {
-			return doParseString((String) object);
+			return fromString((String) object);
 		}
 
 		return javaClass.cast(object);
 	}
 
 	@Override
-	protected String doToNative(final T value) throws Exception {
-		return value == null ? null : doToString(value);
+	protected String toNative(final T value) throws Exception {
+		return value == null ? null : toString(value);
 	}
 
 	// String format.
 
 	@Override
-	protected T doParseString(final String s) throws Exception {
+	protected T fromString(final String s) throws Exception {
 		if (s == null) {
 			return null;
 		}
@@ -83,7 +87,7 @@ public class EnumType<T extends Enum<?>> extends DataType<T> {
 	}
 
 	@Override
-	protected String doToString(final T value) throws Exception {
+	protected String toString(final T value) throws Exception {
 		if (value == null) {
 			return null;
 		}

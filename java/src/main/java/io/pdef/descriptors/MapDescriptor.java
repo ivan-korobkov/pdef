@@ -1,25 +1,25 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
 
-public class MapType<K, V> extends DataType<Map<K, V>> {
-	private final DataType<K> key;
-	private final DataType<V> value;
+public class MapDescriptor<K, V> extends DataDescriptor<Map<K, V>> {
+	private final DataDescriptor<K> key;
+	private final DataDescriptor<V> value;
 
-	public MapType(final DataType<K> key, final DataType<V> value) {
+	public MapDescriptor(final DataDescriptor<K> key, final DataDescriptor<V> value) {
 		super(TypeEnum.MAP);
 		this.key = checkNotNull(key);
 		this.value = checkNotNull(value);
 	}
 
-	public DataType<K> getKey() {
+	public DataDescriptor<K> getKey() {
 		return key;
 	}
 
-	public DataType<V> getValue() {
+	public DataDescriptor<V> getValue() {
 		return value;
 	}
 

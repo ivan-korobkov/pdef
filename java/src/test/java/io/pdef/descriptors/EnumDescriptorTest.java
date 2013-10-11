@@ -1,4 +1,4 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableList;
 import io.pdef.test.messages.TestEnum;
@@ -7,18 +7,18 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class EnumTypeTest {
-	private final EnumType<TestEnum> metaType = TestEnum.META_TYPE;
+public class EnumDescriptorTest {
+	private final EnumDescriptor<TestEnum> descriptor = TestEnum.DESCRIPTOR;
 
 	@Test
 	public void testGetValues() throws Exception {
-		List<TestEnum> values = metaType.getValues();
+		List<TestEnum> values = descriptor.getValues();
 		assertEquals(ImmutableList.<TestEnum>of(TestEnum.ONE, TestEnum.TWO, TestEnum.THREE), values);
 	}
 
 	@Test
 	public void testCopy() throws Exception {
 		TestEnum value = TestEnum.ONE;
-		assert metaType.copy(value) == value;
+		assert descriptor.copy(value) == value;
 	}
 }

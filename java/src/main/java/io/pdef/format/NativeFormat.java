@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.pdef.Message;
-import io.pdef.meta.*;
+import io.pdef.descriptors.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -58,13 +58,13 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <E> List<Object> serializeList(final ListType<E> metaType, final List<E> list)
+	protected <E> List<Object> serializeList(final ListDescriptor<E> descriptor, final List<E> list)
 			throws Exception {
 		if (list == null) {
 			return null;
 		}
 
-		DataType<E> element = metaType.getElement();
+		DataDescriptor<E> element = descriptor.getElement();
 		List<Object> result = Lists.newArrayList();
 
 		for (E elem : list) {
@@ -76,13 +76,13 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <E> Set<Object> serializeSet(final SetType<E> metaType, final Set<E> set)
+	protected <E> Set<Object> serializeSet(final SetDescriptor<E> descriptor, final Set<E> set)
 			throws Exception {
 		if (set == null) {
 			return null;
 		}
 
-		DataType<E> element = metaType.getElement();
+		DataDescriptor<E> element = descriptor.getElement();
 		Set<Object> result = Sets.newHashSet();
 		for (E elem : set) {
 			Object serialized = doSerialize(element, elem);
@@ -93,14 +93,14 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <K, V> Map<Object, Object> serializeMap(final MapType<K, V> metaType,
+	protected <K, V> Map<Object, Object> serializeMap(final MapDescriptor<K, V> descriptor,
 			final Map<K, V> map) throws Exception {
 		if (map == null) {
 			return null;
 		}
 
-		DataType<K> key = metaType.getKey();
-		DataType<V> value = metaType.getValue();
+		DataDescriptor<K> key = descriptor.getKey();
+		DataDescriptor<V> value = descriptor.getValue();
 		Map<Object, Object> result = Maps.newHashMap();
 
 		for (Map.Entry<K, V> e : map.entrySet()) {
@@ -113,32 +113,32 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <E extends Enum<E>> E serializeEnum(final EnumType<E> metaType, final E value) {
+	protected <E extends Enum<E>> E serializeEnum(final EnumDescriptor<E> descriptor, final E value) {
 		return value;
 	}
 
 	@Override
 	protected <M extends Message> Map<String, Object> serializeMessage(
-			final MessageType<M> metaType, final M message) throws Exception {
+			final MessageDescriptor<M> descriptor, final M message) throws Exception {
 		if (message == null) {
 			return null;
 		}
 
 		// Mind polymorphic messages.
 		@SuppressWarnings("unchecked")
-		MessageType<M> polymorphicType = (MessageType<M>) message.metaType();
+		MessageDescriptor<M> polymorphicType = (MessageDescriptor<M>) message.descriptor();
 		Map<String, Object> result = Maps.newLinkedHashMap();
 
-		for (MessageField<? super M, ?> field : polymorphicType.getFields()) {
+		for (FieldDescriptor<? super M, ?> field : polymorphicType.getFields()) {
 			@SuppressWarnings("unchecked")
-			MessageField<M, ?> uncheckedField = (MessageField<M, ?>) field;
+			FieldDescriptor<M, ?> uncheckedField = (FieldDescriptor<M, ?>) field;
 			serializeField(uncheckedField, message, result);
 		}
 
 		return result;
 	}
 
-	private <M extends Message, V> void serializeField(final MessageField<M, V> field,
+	private <M extends Message, V> void serializeField(final FieldDescriptor<M, V> field,
 			final M message, final Map<String, Object> map) throws Exception {
 		V value = field.get(message);
 		if (value == null) {
@@ -158,7 +158,14 @@ public class NativeFormat extends AbstractFormat<Object> {
 
 	@Override
 	protected Boolean parseBoolean(final Object input) {
-		return input instanceof String ? Boolean.parseBoolean((String) input) : (Boolean) input;
+		if (input == null) {
+			return null;
+		} else if (input instanceof Boolean) {
+			return (Boolean) input;
+		} else if (input instanceof String) {
+			return Boolean.parseBoolean((String) input);
+		}
+		throw new FormatException("Cannot parse a boolean from " + input);
 	}
 
 	@Override
@@ -232,7 +239,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <E> List<E> parseList(final ListType<E> metaType, final Object input)
+	protected <E> List<E> parseList(final ListDescriptor<E> descriptor, final Object input)
 			throws Exception {
 		if (input == null) {
 			return null;
@@ -241,7 +248,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		}
 
 		Collection<?> collection = (Collection<?>) input;
-		DataType<E> element = metaType.getElement();
+		DataDescriptor<E> element = descriptor.getElement();
 		List<E> result = Lists.newArrayList();
 
 		for (Object elem : collection) {
@@ -253,7 +260,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <E> Set<E> parseSet(final SetType<E> metaType, final Object input) throws Exception {
+	protected <E> Set<E> parseSet(final SetDescriptor<E> descriptor, final Object input) throws Exception {
 		if (input == null) {
 			return null;
 		} else if (!(input instanceof Collection)) {
@@ -262,7 +269,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 
 		Collection<?> collection = (Collection<?>) input;
 		Set<E> result = Sets.newHashSet();
-		DataType<E> element = metaType.getElement();
+		DataDescriptor<E> element = descriptor.getElement();
 
 		for (Object elem : collection) {
 			E parsed = doParse(element, elem);
@@ -273,7 +280,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <K, V> Map<K, V> parseMap(final MapType<K, V> metaType, final Object input)
+	protected <K, V> Map<K, V> parseMap(final MapDescriptor<K, V> descriptor, final Object input)
 			throws Exception {
 		if (input == null) {
 			return null;
@@ -283,8 +290,8 @@ public class NativeFormat extends AbstractFormat<Object> {
 
 		Map<?, ?> map = (Map<?, ?>) input;
 		Map<K, V> result = Maps.newHashMap();
-		DataType<K> key = metaType.getKey();
-		DataType<V> value = metaType.getValue();
+		DataDescriptor<K> key = descriptor.getKey();
+		DataDescriptor<V> value = descriptor.getValue();
 
 		for (Map.Entry<?, ?> e : map.entrySet()) {
 			K k = doParse(key, e.getKey());
@@ -296,19 +303,19 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <T extends Enum<T>> T parseEnum(final EnumType<T> metaType, final Object input) {
+	protected <T extends Enum<T>> T parseEnum(final EnumDescriptor<T> descriptor, final Object input) {
 		if (input == null) {
 			return null;
 		} else if (input instanceof Enum<?>) {
-			return metaType.getJavaClass().cast(input);
+			return descriptor.getJavaClass().cast(input);
 		} else if (input instanceof String) {
-			return metaType.getNamesToValues().get(((String) input).toUpperCase());
+			return descriptor.getNamesToValues().get(((String) input).toUpperCase());
 		}
 		throw new FormatException("Cannot parse an enum from " + input);
 	}
 
 	@Override
-	protected <M extends Message> M parseMessage(MessageType<M> metaType, final Object input)
+	protected <M extends Message> M parseMessage(MessageDescriptor<M> descriptor, final Object input)
 			throws Exception {
 		if (input == null) {
 			return null;
@@ -317,28 +324,28 @@ public class NativeFormat extends AbstractFormat<Object> {
 		}
 
 		Map<?, ?> map = (Map<?, ?>) input;
-		MessageField<? super M, ?> discriminator = metaType.getDiscriminator();
+		FieldDescriptor<? super M, ?> discriminator = descriptor.getDiscriminator();
 
 		// Mind polymorphic messages.
 		if (discriminator != null) {
 			Object fieldValue = map.get(discriminator.getName());
 			if (fieldValue != null) {
 				Object discriminatorValue = doParse(discriminator.getType(), fieldValue);
-				metaType = metaType.findSubtypeOrThis(discriminatorValue);
+				descriptor = descriptor.findSubtypeOrThis(discriminatorValue);
 			}
 		}
 
-		M message = metaType.newInstance();
-		for (MessageField<? super M, ?> field : metaType.getFields()) {
+		M message = descriptor.newInstance();
+		for (FieldDescriptor<? super M, ?> field : descriptor.getFields()) {
 			@SuppressWarnings("unchecked")
-			MessageField<M, ?> uncheckedField = (MessageField<M, ?>) field;
+			FieldDescriptor<M, ?> uncheckedField = (FieldDescriptor<M, ?>) field;
 			parseField(uncheckedField, message, map);
 		}
 
 		return message;
 	}
 
-	private <M extends Message, V> void parseField(final MessageField<M, V> field, final M message,
+	private <M extends Message, V> void parseField(final FieldDescriptor<M, V> field, final M message,
 			final Map<?, ?> map) throws Exception {
 		Object fieldInput = map.get(field.getName());
 		V value = doParse(field.getType(), fieldInput);

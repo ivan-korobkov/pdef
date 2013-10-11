@@ -1,5 +1,5 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
-public interface InterfaceMethodInvoker {
+public interface MethodInvoker {
 	Object invoke(Object object, Object[] args) throws Exception;
 }

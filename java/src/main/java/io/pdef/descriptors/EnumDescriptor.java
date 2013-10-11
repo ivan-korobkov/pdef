@@ -1,4 +1,4 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
@@ -9,18 +9,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * EnumType holds enum values and parsing/serialization methods.
+ * EnumDescriptor holds enum values and parsing/serialization methods.
  * */
-public class EnumType<T extends Enum<T>> extends DataType<T> {
+public class EnumDescriptor<T extends Enum<T>> extends DataDescriptor<T> {
 	private final Class<T> javaClass;
 	private final List<T> values;
 	private final Map<String, T> namesToValues;
 
-	public static <T extends Enum<T>> EnumType<T> of(final Class<T> javaClass) {
-		return new EnumType<T>(javaClass);
+	public static <T extends Enum<T>> EnumDescriptor<T> of(final Class<T> javaClass) {
+		return new EnumDescriptor<T>(javaClass);
 	}
 
-	private EnumType(final Class<T> javaClass) {
+	private EnumDescriptor(final Class<T> javaClass) {
 		super(TypeEnum.ENUM);
 
 		this.javaClass = checkNotNull(javaClass);

@@ -1,9 +1,9 @@
 package io.pdef.invoke;
 
 import com.google.common.base.Function;
+import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
-import io.pdef.meta.InterfaceMethod;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import org.junit.Before;
@@ -53,7 +53,7 @@ public class InvocationProxyTest {
 		verify(handler).apply(captor.capture());
 
 		Invocation invocation = captor.getValue();
-		InterfaceMethod method = getIndexMethod();
+		MethodDescriptor method = getIndexMethod();
 		assertEquals(method, invocation.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
@@ -77,10 +77,10 @@ public class InvocationProxyTest {
 	}
 
 	private TestInterface createProxy() {
-		return InvocationProxy.create(TestInterface.class, TestInterface.META_TYPE, handler);
+		return InvocationProxy.create(TestInterface.class, TestInterface.DESCRIPTOR, handler);
 	}
 
-	private InterfaceMethod getIndexMethod() {
-		return TestInterface.META_TYPE.findMethod("indexMethod");
+	private MethodDescriptor getIndexMethod() {
+		return TestInterface.DESCRIPTOR.findMethod("indexMethod");
 	}
 }

@@ -1,21 +1,22 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * InterfaceMethodArg provides a method argument name and type.
+ * ArgumentDescriptor provides a method argument name and type.
  * @param <V> Argument class.
  */
-public class InterfaceMethodArg<V> {
+public class ArgumentDescriptor<V> {
 	private final String name;
-	private final DataType<V> type;
+	private final DataDescriptor<V> type;
 
-	public static <V> InterfaceMethodArg<V> of(final String name, final DataType<V> type) {
-		return new InterfaceMethodArg<V>(name, type);
+	public static <V> ArgumentDescriptor<V> of(final String name,
+			final DataDescriptor<V> type) {
+		return new ArgumentDescriptor<V>(name, type);
 	}
 
-	public InterfaceMethodArg(final String name, final DataType<V> type) {
+	public ArgumentDescriptor(final String name, final DataDescriptor<V> type) {
 		this.name = checkNotNull(name);
 		this.type = checkNotNull(type);
 	}
@@ -32,7 +33,7 @@ public class InterfaceMethodArg<V> {
 		return name;
 	}
 
-	public DataType<V> getType() {
+	public DataDescriptor<V> getType() {
 		return type;
 	}
 }

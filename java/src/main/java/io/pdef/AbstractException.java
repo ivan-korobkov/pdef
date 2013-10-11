@@ -1,10 +1,10 @@
 package io.pdef;
 
 import com.google.common.base.Objects;
+import io.pdef.descriptors.FieldDescriptor;
+import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.format.JsonFormat;
 import io.pdef.format.NativeFormat;
-import io.pdef.meta.MessageField;
-import io.pdef.meta.MessageType;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -16,37 +16,37 @@ public abstract class AbstractException extends RuntimeException implements Mess
 	protected AbstractException() {}
 
 	@SuppressWarnings("unchecked")
-	private MessageType<Message> uncheckedType() {
-		return (MessageType<Message>) metaType();
+	private MessageDescriptor<Message> thisDescriptor() {
+		return (MessageDescriptor<Message>) descriptor();
 	}
 
 	@Override
 	public Message copy() {
-		return uncheckedType().copy(this);
+		return thisDescriptor().copy(this);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> serializeToMap() {
-		return (Map<String, Object>) NativeFormat.instance().serialize(uncheckedType(), this);
+		return (Map<String, Object>) NativeFormat.instance().serialize(thisDescriptor(), this);
 	}
 
 	@Override
 	public String serializeToJson() {
-		return JsonFormat.instance().serialize(uncheckedType(), this);
+		return JsonFormat.instance().serialize(thisDescriptor(), this);
 	}
 
 	@Override
 	public String serializeToJson(final boolean indent) {
-		return JsonFormat.instance().serialize(uncheckedType(), this, indent);
+		return JsonFormat.instance().serialize(thisDescriptor(), this, indent);
 	}
 	
 	@Override
 	public String toString() {
 		Objects.ToStringHelper helper = Objects.toStringHelper(this);
 
-		MessageType<Message> type = uncheckedType();
-		for (MessageField<? super Message, ?> field : type.getFields()) {
+		MessageDescriptor<Message> descriptor = thisDescriptor();
+		for (FieldDescriptor<? super Message, ?> field : descriptor.getFields()) {
 			helper.add(field.getName(), field.get(this));
 		}
 
@@ -59,8 +59,8 @@ public abstract class AbstractException extends RuntimeException implements Mess
 		if (o == null || getClass() != o.getClass()) return false;
 
 		AbstractException cast = (AbstractException) o;
-		MessageType<Message> type = uncheckedType();
-		for (MessageField<? super Message, ?> field : type.getFields()) {
+		MessageDescriptor<Message> descriptor = thisDescriptor();
+		for (FieldDescriptor<? super Message, ?> field : descriptor.getFields()) {
 			Object value0 = field.get(this);
 			Object value1 = field.get(cast);
 			if (value0 != null ? !value0.equals(value1) : value1 != null) {
@@ -75,8 +75,8 @@ public abstract class AbstractException extends RuntimeException implements Mess
 	public int hashCode() {
 		int result = 0;
 
-		MessageType<Message> type = uncheckedType();
-		for (MessageField<? super Message, ?> field : type.getFields()) {
+		MessageDescriptor<Message> descriptor = thisDescriptor();
+		for (FieldDescriptor<? super Message, ?> field : descriptor.getFields()) {
 			Object value = field.get(this);
 			result = 31 * result + (value == null ? 0 : value.hashCode());
 		}

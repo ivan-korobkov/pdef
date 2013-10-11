@@ -4,10 +4,10 @@ import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import io.pdef.meta.DataType;
-import io.pdef.meta.InterfaceMethod;
-import io.pdef.meta.MessageType;
-import io.pdef.meta.MetaType;
+import io.pdef.descriptors.DataDescriptor;
+import io.pdef.descriptors.Descriptor;
+import io.pdef.descriptors.MethodDescriptor;
+import io.pdef.descriptors.MessageDescriptor;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Invocation {
-	private final InterfaceMethod method;
+	private final MethodDescriptor method;
 	private final Invocation parent;
 	private final Object[] args;
 
@@ -23,7 +23,7 @@ public class Invocation {
 		return new Invocation(null, null, null);
 	}
 
-	private Invocation(final InterfaceMethod method, final Invocation parent,
+	private Invocation(final MethodDescriptor method, final Invocation parent,
 			final Object[] args) {
 		this.method = method;
 		this.parent = parent;
@@ -51,21 +51,21 @@ public class Invocation {
 		return args;
 	}
 
-	public InterfaceMethod getMethod() {
+	public MethodDescriptor getMethod() {
 		return method;
 	}
 
-	public MetaType getResult() {
+	public Descriptor getResult() {
 		return method == null ? null : method.getResult();
 	}
 
-	public DataType<?> getDataResult() {
-		return method == null ? null : (DataType<?>) method.getResult();
+	public DataDescriptor<?> getDataResult() {
+		return method == null ? null : (DataDescriptor<?>) method.getResult();
 	}
 
 	/** Returns the method exception or the parent exception. */
 	@Nullable
-	public MessageType<?> getExc() {
+	public MessageDescriptor<?> getExc() {
 		if (method != null) return method.getExc();
 		if (parent != null) return parent.getExc();
 		return null;
@@ -77,7 +77,7 @@ public class Invocation {
 	}
 
 	/** Creates a child invocation. */
-	public Invocation next(final InterfaceMethod method, final Object[] args) {
+	public Invocation next(final MethodDescriptor method, final Object[] args) {
 		return new Invocation(method, this, args);
 	}
 
@@ -115,7 +115,7 @@ public class Invocation {
 	}
 
 	private InvocationResult handleException(final Throwable t) {
-		MessageType<?> excd = getExc();
+		MessageDescriptor<?> excd = getExc();
 		if (excd == null || !excd.getJavaClass().isInstance(t)) {
 			// It is not an expected application exception.
 			throw Throwables.propagate(t);

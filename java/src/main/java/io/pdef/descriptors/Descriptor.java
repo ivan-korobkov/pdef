@@ -1,17 +1,17 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 
 /**
- * MetaType is a base class for Pdef metatypes. Metatype provides structural information about a
- * Java type in runtime. For example, a message metatype allows to explore declared fields,
+ * Descriptor is a base class for Pdef descriptors. Descriptors provides information about
+ * a Java type in runtime. For example, a message descriptor allows to explore declared fields,
  * inherited fields, etc.
  * */
-public class MetaType {
+public class Descriptor {
 	private final TypeEnum type;
 
-	protected MetaType(final TypeEnum type) {
+	protected Descriptor(final TypeEnum type) {
 		this.type = checkNotNull(type);
 	}
 

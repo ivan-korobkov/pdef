@@ -2,6 +2,7 @@ package io.pdef;
 
 import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
+import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationProxy;
 import io.pdef.invoke.InvocationResult;
@@ -9,7 +10,6 @@ import io.pdef.rest.RestClientHandler;
 import io.pdef.rest.RestClientSender;
 import io.pdef.rest.RestRequest;
 import io.pdef.rest.RestResponse;
-import io.pdef.meta.InterfaceType;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 
@@ -44,10 +44,10 @@ public class Clients {
 		checkNotNull(cls);
 		checkNotNull(invocationHandler);
 
-		InterfaceType type = InterfaceType.findMetaType(cls);
-		checkArgument(type != null, "Cannot find an interface type in " + cls);
+		InterfaceDescriptor descriptor = InterfaceDescriptor.findDescriptor(cls);
+		checkArgument(descriptor != null, "Cannot find an interface descriptor in " + cls);
 
-		return InvocationProxy.create(cls, type, invocationHandler);
+		return InvocationProxy.create(cls, descriptor, invocationHandler);
 	}
 
 	/** Creates a REST client invocation handler with a custom sender. */

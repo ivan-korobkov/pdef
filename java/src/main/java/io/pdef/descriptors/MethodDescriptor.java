@@ -1,4 +1,4 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
@@ -12,20 +12,22 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /**
- * InterfaceMethod holds a method name, result, arguments, exception, flags, and its invoker.
+ * MethodDescriptor holds a method name, result, arguments, exception, flags, and its invoker.
  * */
-public class InterfaceMethod {
+public class MethodDescriptor {
 	private final String name;
-	private final Supplier<MetaType> result;
-	private final ImmutableList<InterfaceMethodArg<?>> args;
-	private final MessageType<?> exc;
-	private final InterfaceMethodInvoker invoker;
+	private final Supplier<Descriptor> resultSupplier;
+	private final ImmutableList<ArgumentDescriptor<?>> args;
+	private final MessageDescriptor<?> exc;
+	private final MethodInvoker invoker;
 	private final boolean index;
 	private final boolean post;
 
-	public InterfaceMethod(final Builder builder) {
+	private Descriptor result;
+
+	public MethodDescriptor(final Builder builder) {
 		this.name = checkNotNull(builder.name);
-		this.result = checkNotNull(builder.result);
+		this.resultSupplier = checkNotNull(builder.result);
 		this.args = ImmutableList.copyOf(builder.args);
 		this.exc = builder.exc;
 		this.invoker = checkNotNull(builder.invoker);
@@ -56,15 +58,19 @@ public class InterfaceMethod {
 		return post;
 	}
 
-	public MetaType getResult() {
-		return result.get();
+	public Descriptor getResult() {
+		if (result != null) {
+			return result;
+		}
+		
+		return (result = resultSupplier.get());
 	}
 
-	public List<InterfaceMethodArg<?>> getArgs() {
+	public List<ArgumentDescriptor<?>> getArgs() {
 		return args;
 	}
 
-	public MessageType<?> getExc() {
+	public MessageDescriptor<?> getExc() {
 		return exc;
 	}
 
@@ -80,10 +86,10 @@ public class InterfaceMethod {
 
 	public static class Builder {
 		private String name;
-		private Supplier<MetaType> result;
-		private List<InterfaceMethodArg<?>> args;
-		private MessageType<?> exc;
-		private InterfaceMethodInvoker invoker;
+		private Supplier<Descriptor> result;
+		private List<ArgumentDescriptor<?>> args;
+		private MessageDescriptor<?> exc;
+		private MethodInvoker invoker;
 		private boolean index;
 		private boolean post;
 
@@ -96,27 +102,27 @@ public class InterfaceMethod {
 			return this;
 		}
 
-		public Builder setResult(final MetaType result) {
+		public Builder setResult(final Descriptor result) {
 			checkNotNull(result);
-			return setResult(Suppliers.<MetaType>ofInstance(result));
+			return setResult(Suppliers.<Descriptor>ofInstance(result));
 		}
 
-		public Builder setResult(final Supplier<MetaType> result) {
+		public Builder setResult(final Supplier<Descriptor> result) {
 			this.result = result;
 			return this;
 		}
 
-		public Builder setExc(final MessageType<?> exc) {
+		public Builder setExc(final MessageDescriptor<?> exc) {
 			this.exc = exc;
 			return this;
 		}
 
-		public <V> Builder addArg(final String name, final DataType<V> type) {
-			this.args.add(new InterfaceMethodArg<V>(name, type));
+		public <V> Builder addArg(final String name, final DataDescriptor<V> type) {
+			this.args.add(new ArgumentDescriptor<V>(name, type));
 			return this;
 		}
 
-		public Builder setInvoker(final InterfaceMethodInvoker invoker) {
+		public Builder setInvoker(final MethodInvoker invoker) {
 			this.invoker = invoker;
 			return this;
 		}
@@ -136,12 +142,12 @@ public class InterfaceMethod {
 			return this;
 		}
 
-		public InterfaceMethod build() {
-			return new InterfaceMethod(this);
+		public MethodDescriptor build() {
+			return new MethodDescriptor(this);
 		}
 	}
 
-	private static class ReflectionInvoker implements InterfaceMethodInvoker {
+	private static class ReflectionInvoker implements MethodInvoker {
 		private final Method method;
 
 		private ReflectionInvoker(final Class<?> cls, final String name) {

@@ -7,7 +7,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import io.pdef.meta.DataType;
+import io.pdef.descriptors.DataDescriptor;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -34,15 +34,15 @@ public class JsonFormat implements Format {
 
 	// Serialization.
 
-	public <T> String serialize(final DataType<T> metaType, final T object) throws FormatException {
-		return serialize(metaType, object, true);
+	public <T> String serialize(final DataDescriptor<T> descriptor, final T object) throws FormatException {
+		return serialize(descriptor, object, true);
 	}
 
-	public <T> String serialize(final DataType<T> metaType, final T object, final boolean indent) {
-		checkNotNull(metaType);
+	public <T> String serialize(final DataDescriptor<T> descriptor, final T object, final boolean indent) {
+		checkNotNull(descriptor);
 
 		try {
-			Object nativeObject = nativeFormat.serialize(metaType, object);
+			Object nativeObject = nativeFormat.serialize(descriptor, object);
 			return doSerialize(nativeObject, indent);
 		} catch (FormatException e) {
 			throw e;
@@ -123,8 +123,8 @@ public class JsonFormat implements Format {
 
 	// Parsing.
 
-	public <T> T parse(final DataType<T> metaType, final String input) throws FormatException {
-		checkNotNull(metaType);
+	public <T> T parse(final DataDescriptor<T> descriptor, final String input) throws FormatException {
+		checkNotNull(descriptor);
 		if (input == null) {
 			return null;
 		}
@@ -139,7 +139,7 @@ public class JsonFormat implements Format {
 				parser.close();
 			}
 
-			return nativeFormat.parse(metaType, nativeObject);
+			return nativeFormat.parse(descriptor, nativeObject);
 		} catch (FormatException e) {
 			throw e;
 		} catch (Exception e) {

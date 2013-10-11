@@ -1,4 +1,4 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import java.util.EnumSet;
 

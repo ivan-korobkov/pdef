@@ -1,4 +1,4 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableMap;
 import io.pdef.test.inheritance.Subtype;
@@ -9,21 +9,21 @@ import org.junit.Test;
 
 import java.util.Map;
 
-public class MessageTypeTest {
+public class MessageDescriptorTest {
 
 	@Test
 	public void testGetJavaClass() throws Exception {
-		assertTrue(SimpleMessage.META_TYPE.getJavaClass() == SimpleMessage.class);
+		assertTrue(SimpleMessage.DESCRIPTOR.getJavaClass() == SimpleMessage.class);
 	}
 
 	@Test
 	public void testGetBase() throws Exception {
-		assertNull(SimpleMessage.META_TYPE.getBase());
+		assertNull(SimpleMessage.DESCRIPTOR.getBase());
 	}
 
 	@Test
 	public void testGetSubtypes() throws Exception {
-		assertTrue(SimpleMessage.META_TYPE.getSubtypes().isEmpty());
+		assertTrue(SimpleMessage.DESCRIPTOR.getSubtypes().isEmpty());
 	}
 
 	// Fixtures.

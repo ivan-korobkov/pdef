@@ -1,10 +1,10 @@
 package io.pdef.invoke;
 
-import io.pdef.meta.InterfaceMethod;
+import io.pdef.descriptors.InterfaceDescriptor;
+import io.pdef.descriptors.MethodDescriptor;
 import static org.junit.Assert.*;
 import org.junit.Test;
 import static org.mockito.Mockito.*;
-import io.pdef.meta.InterfaceType;
 import io.pdef.test.interfaces.NextTestInterface;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
@@ -12,11 +12,11 @@ import io.pdef.test.interfaces.TestInterface;
 import java.util.List;
 
 public class InvocationTest {
-	private final InterfaceType iface = TestInterface.META_TYPE;
-	private final InterfaceMethod excMethod = iface.findMethod("excMethod");
-	private final InterfaceMethod indexMethod = iface.findMethod("indexMethod");
-	private final InterfaceMethod interfaceMethod = iface.findMethod( "interfaceMethod");
-	private final InterfaceMethod nextStringMethod = NextTestInterface.META_TYPE
+	private final InterfaceDescriptor iface = TestInterface.DESCRIPTOR;
+	private final MethodDescriptor excMethod = iface.findMethod("excMethod");
+	private final MethodDescriptor indexMethod = iface.findMethod("indexMethod");
+	private final MethodDescriptor interfaceMethod = iface.findMethod( "interfaceMethod");
+	private final MethodDescriptor nextStringMethod = NextTestInterface.DESCRIPTOR
 			.findMethod("stringMethod");
 
 	@Test

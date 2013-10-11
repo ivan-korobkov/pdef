@@ -1,4 +1,4 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
@@ -6,20 +6,21 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 
 /**
- * MessageField holds a field name, type, setters and getters.
+ * FieldDescriptor holds a field name, type, setters and getters.
  * @param <M> Message class.
  * @param <V> Field value class.
  */
-public class MessageField<M, V> {
+public class FieldDescriptor<M, V> {
 	private final String name;
-	private final Supplier<DataType<V>> type;
-	private final MessageFieldGetter<M, V> getter;
-	private final MessageFieldSetter<M, V> setter;
+	private final Supplier<DataDescriptor<V>> typeSupplier;
+	private final FieldGetter<M, V> getter;
+	private final FieldSetter<M, V> setter;
 	private final boolean discriminator;
+	private DataDescriptor<V> type;
 
-	protected MessageField(final Builder<M, V> builder) {
+	protected FieldDescriptor(final Builder<M, V> builder) {
 		name = checkNotNull(builder.name);
-		type = checkNotNull(builder.type);
+		typeSupplier = checkNotNull(builder.type);
 		getter = checkNotNull(builder.getter);
 		setter = checkNotNull(builder.setter);
 		discriminator = builder.discriminator;
@@ -44,8 +45,12 @@ public class MessageField<M, V> {
 		return discriminator;
 	}
 
-	public DataType<V> getType() {
-		return type.get();
+	public DataDescriptor<V> getType() {
+		if (type != null) {
+			return type;
+		}
+
+		return (type = typeSupplier.get());
 	}
 
 	public V get(final M message) {
@@ -65,9 +70,9 @@ public class MessageField<M, V> {
 	public static class Builder<M, V> {
 		private String name;
 		private boolean discriminator;
-		private Supplier<DataType<V>> type;
-		private MessageFieldGetter<M, V> getter;
-		private MessageFieldSetter<M, V> setter;
+		private Supplier<DataDescriptor<V>> type;
+		private FieldGetter<M, V> getter;
+		private FieldSetter<M, V> setter;
 
 		protected Builder() {}
 
@@ -81,35 +86,35 @@ public class MessageField<M, V> {
 			return this;
 		}
 
-		public Builder<M, V> setType(final Supplier<DataType<V>> type) {
+		public Builder<M, V> setType(final Supplier<DataDescriptor<V>> type) {
 			this.type = type;
 			return this;
 		}
 
-		public Builder<M, V> setType(final DataType<V> type) {
+		public Builder<M, V> setType(final DataDescriptor<V> type) {
 			checkNotNull(type);
 			this.type = Suppliers.ofInstance(type);
 			return this;
 		}
 
-		public Builder<M, V> setGetter(final MessageFieldGetter<M, V> getter) {
+		public Builder<M, V> setGetter(final FieldGetter<M, V> getter) {
 			this.getter = getter;
 			return this;
 		}
 
-		public Builder<M, V> setSetter(final MessageFieldSetter<M, V> setter) {
+		public Builder<M, V> setSetter(final FieldSetter<M, V> setter) {
 			this.setter = setter;
 			return this;
 		}
 
-		public Builder<M, V> setAccessor(final MessageFieldAccessor<M, V> accessor) {
+		public Builder<M, V> setAccessor(final FieldAccessor<M, V> accessor) {
 			setGetter(accessor);
 			setSetter(accessor);
 			return this;
 		}
 
-		public MessageField<M, V> build() {
-			return new MessageField<M, V>(this);
+		public FieldDescriptor<M, V> build() {
+			return new FieldDescriptor<M, V>(this);
 		}
 	}
 }

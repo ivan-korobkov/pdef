@@ -1,19 +1,19 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 
 import java.util.List;
 
-public class ListType<T> extends DataType<List<T>> {
-	private final DataType<T> element;
+public class ListDescriptor<T> extends DataDescriptor<List<T>> {
+	private final DataDescriptor<T> element;
 
-	public ListType(final DataType<T> element) {
+	public ListDescriptor(final DataDescriptor<T> element) {
 		super(TypeEnum.LIST);
 		this.element = checkNotNull(element);
 	}
 
-	public DataType<T> getElement() {
+	public DataDescriptor<T> getElement() {
 		return element;
 	}
 

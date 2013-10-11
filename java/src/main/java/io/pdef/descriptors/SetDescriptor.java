@@ -1,19 +1,19 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Sets;
 
 import java.util.Set;
 
-public class SetType<T> extends DataType<Set<T>> {
-	private final DataType<T> element;
+public class SetDescriptor<T> extends DataDescriptor<Set<T>> {
+	private final DataDescriptor<T> element;
 
-	public SetType(final DataType<T> element) {
+	public SetDescriptor(final DataDescriptor<T> element) {
 		super(TypeEnum.SET);
 		this.element = checkNotNull(element);
 	}
 
-	public DataType<T> getElement() {
+	public DataDescriptor<T> getElement() {
 		return element;
 	}
 

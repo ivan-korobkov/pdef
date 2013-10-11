@@ -21,11 +21,11 @@ public class {{ name }} extends {{ base_or_root }} {
 {% endif %}
 
     public static {{ name }} parseFromMap(final java.util.Map<String, Object> map) {
-        return io.pdef.format.NativeFormat.instance().parse(META_TYPE, map);
+        return io.pdef.format.NativeFormat.instance().parse(DESCRIPTOR, map);
     }
 
     public static {{ name }} parseFromJson(final String s) {
-        return io.pdef.format.JsonFormat.instance().parse(META_TYPE, s);
+        return io.pdef.format.JsonFormat.instance().parse(DESCRIPTOR, s);
     }
 
 {% for field in declared_fields %}
@@ -54,27 +54,27 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% endfor %}
     @Override
-    public io.pdef.meta.MessageType<? extends {{ name }}> metaType() {
-        return META_TYPE;
+    public io.pdef.descriptors.MessageDescriptor<? extends {{ name }}> descriptor() {
+        return DESCRIPTOR;
     }
 
 {% for field in declared_fields %}
-    public static final io.pdef.meta.MessageField<{{ name }}, {{ field.type }}> {{ field.name|upper }}_FIELD =
-            io.pdef.meta.MessageField.<{{ name }}, {{ field.type }}>builder()
+    public static final io.pdef.descriptors.FieldDescriptor<{{ name }}, {{ field.type }}> {{ field.name|upper }}_FIELD =
+            io.pdef.descriptors.FieldDescriptor.<{{ name }}, {{ field.type }}>builder()
                     .setName("{{ field.name }}")
                 {% if field.is_discriminator %}
                     .setDiscriminator(true)
                 {% endif %}
                 {% if field.type.is_primitive %}
-                    .setType({{ field.type.meta }})
+                    .setType({{ field.type.descriptor }})
                 {% else %}
-                    .setType(new Supplier<io.pdef.meta.DataType<{{ field.type }}>>() {
-                        public io.pdef.meta.DataType<{{ field.type }}> get() {
-                            return {{ field.type.meta }};
+                    .setType(new Supplier<io.pdef.descriptors.DataDescriptor<{{ field.type }}>>() {
+                        public io.pdef.descriptors.DataDescriptor<{{ field.type }}> get() {
+                            return {{ field.type.descriptor }};
                         }
                     })
                 {% endif %}
-                    .setAccessor(new io.pdef.meta.MessageFieldAccessor<{{ name }}, {{ field.type }}>() {
+                    .setAccessor(new io.pdef.descriptors.FieldAccessor<{{ name }}, {{ field.type }}>() {
                         public {{ field.type }} get({{ name }} message) {
                             return message.{{ field.name }};
                         }
@@ -87,8 +87,8 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% endfor %}
 
-    public static final io.pdef.meta.MessageType<{{ name }}> META_TYPE =
-            io.pdef.meta.MessageType.<{{ name }}>builder()
+    public static final io.pdef.descriptors.MessageDescriptor<{{ name }}> DESCRIPTOR =
+            io.pdef.descriptors.MessageDescriptor.<{{ name }}>builder()
                     .setJavaClass({{ name }}.class)
                     .setSupplier(new Supplier<{{ name }}>() {
                         public {{ name }} get() {
@@ -96,7 +96,7 @@ public class {{ name }} extends {{ base_or_root }} {
                         }
                     })
                     {% if base %}
-                    .setBase({{ base.meta }})
+                    .setBase({{ base.descriptor }})
                     {% endif %}
                     {% if is_form %}
                     .setForm(true)
@@ -105,9 +105,9 @@ public class {{ name }} extends {{ base_or_root }} {
                     .setDiscriminatorValue({{ discriminator_value }})
                     {% endif %}
                     {% for subtype in subtypes %}
-                    .addSubtype(new Supplier<io.pdef.meta.MessageType<? extends {{ name }}>>() {
-                        public io.pdef.meta.MessageType<? extends {{ name }}> get() {
-                            return {{ subtype.meta }};
+                    .addSubtype(new Supplier<io.pdef.descriptors.MessageDescriptor<? extends {{ name }}>>() {
+                        public io.pdef.descriptors.MessageDescriptor<? extends {{ name }}> get() {
+                            return {{ subtype.descriptor }};
                         }
                     })
                     {% endfor %}

@@ -1,4 +1,4 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
@@ -10,13 +10,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
-public class InterfaceType<T> extends MetaType {
+public class InterfaceDescriptor<T> extends Descriptor {
 	private final Class<T> javaClass;
-	private final List<InterfaceMethod> methods;
-	private final MessageType<?> exc;
-	private final InterfaceMethod indexMethod;
+	private final List<MethodDescriptor> methods;
+	private final MessageDescriptor<?> exc;
+	private final MethodDescriptor indexMethod;
 
-	private InterfaceType(final Builder<T> builder) {
+	private InterfaceDescriptor(final Builder<T> builder) {
 		super(TypeEnum.INTERFACE);
 		this.javaClass = checkNotNull(builder.javaClass);
 		this.exc = builder.exc; // Must be set before building methods.
@@ -28,8 +28,8 @@ public class InterfaceType<T> extends MetaType {
 		return new Builder<T>();
 	}
 
-	private static InterfaceMethod findIndexMethod(final List<InterfaceMethod> methods) {
-		for (InterfaceMethod method : methods) {
+	private static MethodDescriptor findIndexMethod(final List<MethodDescriptor> methods) {
+		for (MethodDescriptor method : methods) {
 			if (method.isIndex()) {
 				return method;
 			}
@@ -51,26 +51,26 @@ public class InterfaceType<T> extends MetaType {
 	}
 
 	/** Return a list of interface methods or an empty list. */
-	public List<InterfaceMethod> getMethods() {
+	public List<MethodDescriptor> getMethods() {
 		return methods;
 	}
 
 	/** Return an exception or null. */
 	@Nullable
-	public MessageType<?> getExc() {
+	public MessageDescriptor<?> getExc() {
 		return exc;
 	}
 
 	/** Return an index method or null. */
 	@Nullable
-	public InterfaceMethod getIndexMethod() {
+	public MethodDescriptor getIndexMethod() {
 		return indexMethod;
 	}
 
 	/** Find a method by name and return it or null. */
 	@Nullable
-	public InterfaceMethod findMethod(final String name) {
-		for (InterfaceMethod method : getMethods()) {
+	public MethodDescriptor findMethod(final String name) {
+		for (MethodDescriptor method : getMethods()) {
 			if (method.getName().equals(name)) {
 				return method;
 			}
@@ -81,8 +81,8 @@ public class InterfaceType<T> extends MetaType {
 
 	public static class Builder<T> {
 		private Class<T> javaClass;
-		private MessageType<?> exc;
-		private List<InterfaceMethod> methods;
+		private MessageDescriptor<?> exc;
+		private List<MethodDescriptor> methods;
 
 		public Builder() {
 			methods = Lists.newArrayList();
@@ -93,47 +93,46 @@ public class InterfaceType<T> extends MetaType {
 			return this;
 		}
 
-		public Builder<T> setExc(final MessageType<?> exc) {
+		public Builder<T> setExc(final MessageDescriptor<?> exc) {
 			this.exc = exc;
 			return this;
 		}
 
-		public Builder<T> addMethod(final InterfaceMethod method) {
+		public Builder<T> addMethod(final MethodDescriptor method) {
 			this.methods.add(method);
 			return this;
 		}
 
-		public InterfaceType<T> build() {
-			return new InterfaceType<T>(this);
+		public InterfaceDescriptor<T> build() {
+			return new InterfaceDescriptor<T>(this);
 		}
 	}
 
-	/** Returns an interface metatype or null. */
+	/** Returns an interface descriptor or null. */
 	@Nullable
-	public static <T> InterfaceType<T> findMetaType(final Class<T> cls) {
+	public static <T> InterfaceDescriptor<T> findDescriptor(final Class<T> cls) {
 		if (!cls.isInterface()) {
 			return null;
 		}
 
 		Field field;
 		try {
-			field = cls.getField("META_TYPE");
+			field = cls.getField("DESCRIPTOR");
 		} catch (NoSuchFieldException e) {
 			return null;
 		}
 
 		if (!Modifier.isStatic(field.getModifiers())) {
 			return null;
-		}
-		if (field.getType() != InterfaceType.class) {
+		} else if (field.getType() != InterfaceDescriptor.class) {
 			return null;
 		}
 
 		try {
 			// Get the static TYPE field.
 			@SuppressWarnings("unchecked")
-			InterfaceType<T> type = (InterfaceType<T>) field.get(null);
-			return type;
+			InterfaceDescriptor<T> descriptor = (InterfaceDescriptor<T>) field.get(null);
+			return descriptor;
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}

@@ -60,7 +60,7 @@ public class MessageTest {
 
 	private Map<String, Object> createComplexMessageMap() {
 		return ImmutableMap.<String, Object>builder()
-				.put("anEnum", "three")
+				.put("anEnum", TestEnum.THREE)
 				.put("aBool", true)
 				.put("anInt16", (short) 16)
 				.put("anInt32", 32)

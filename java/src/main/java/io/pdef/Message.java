@@ -1,6 +1,6 @@
 package io.pdef;
 
-import io.pdef.meta.MessageType;
+import io.pdef.descriptors.MessageDescriptor;
 
 import java.util.Map;
 
@@ -8,8 +8,8 @@ public interface Message {
 	/** Returns a deep copy of this message. */
 	Message copy();
 
-	/** Returns this message type. */
-	MessageType<? extends Message> metaType();
+	/** Returns this message descriptor. */
+	MessageDescriptor<? extends Message> descriptor();
 	
 	/** Serializes this message to a map. */
 	Map<String, Object> serializeToMap();

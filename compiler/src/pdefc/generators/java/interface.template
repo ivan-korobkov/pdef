@@ -24,8 +24,8 @@ import com.google.common.base.Supplier;
 
 {% endfor %}
 {% for method in declared_methods %}
-    static final io.pdef.meta.InterfaceMethod {{ method.name|upper }}_METHOD =
-            io.pdef.meta.InterfaceMethod.builder()
+    static final io.pdef.descriptors.MethodDescriptor {{ method.name|upper }}_METHOD =
+            io.pdef.descriptors.MethodDescriptor.builder()
                     .setName("{{ method.name }}")
                     .setInvokerFrom({{ name }}.class)
                 {% if method.is_index %}
@@ -35,28 +35,27 @@ import com.google.common.base.Supplier;
                     .setPost(true)
                 {% endif %}
                 {% if method.result.is_interface %}
-                    .setResult(new Supplier<io.pdef.meta.MetaType>() {
-                        public io.pdef.meta.MetaType get() {
-                            return {{ method.result.meta }};
-                        }
-                    })
+                    .setResult(new Supplier<io.pdef.descriptors.Descriptor>() {
+                        public io.pdef.descriptors.Descriptor get() {
+                            return {{ method.result.descriptor }}; }
+                        })
                 {% else %}
-                    .setResult({{ method.result.meta }})
+                    .setResult({{ method.result.descriptor }})
                 {% endif %}
                 {% if exc %}
-                    .setExc({{ exc.meta }})
+                    .setExc({{ exc.descriptor }})
                 {% endif %}
                 {% for arg in method.args %}
-                    .addArg("{{ arg.name }}", {{ arg.type.meta }})
+                    .addArg("{{ arg.name }}", {{ arg.type.descriptor }})
                 {% endfor %}
                     .build();
 
-{% endfor %}
-    static io.pdef.meta.InterfaceType<{{ name }}> META_TYPE =
-            io.pdef.meta.InterfaceType.<{{ name }}>builder()
+    {% endfor %}
+    static io.pdef.descriptors.InterfaceDescriptor<{{ name }}> DESCRIPTOR =
+            io.pdef.descriptors.InterfaceDescriptor.<{{ name }}>builder()
                     .setJavaClass({{ name }}.class)
                 {% if exc %}
-                    .setExc({{ exc.meta }})
+                    .setExc({{ exc.descriptor }})
                 {% endif %}
                 {% for method in declared_methods %}
                     .addMethod({{ method.name|upper }}_METHOD)

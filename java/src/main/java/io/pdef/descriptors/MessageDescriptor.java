@@ -1,4 +1,4 @@
-package io.pdef.meta;
+package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
@@ -11,22 +11,23 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 /**
- * MessageType is a metatype for Pdef messages.
+ * MessageDescriptor is a descriptor for Pdef messages.
  * */
-public class MessageType<M extends Message> extends DataType<M> {
+public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 	private final Class<M> javaClass;
 	private final Supplier<M> supplier;
-	private final MessageType<? super M> base;
-	private final List<MessageField<M, ?>> declaredFields;
-	private final List<MessageField<? super M, ?>> fields;
+	private final MessageDescriptor<? super M> base;
+	private final List<FieldDescriptor<M, ?>> declaredFields;
+	private final List<FieldDescriptor<? super M, ?>> fields;
 
 	private final Enum<?> discriminatorValue;
-	private final MessageField<? super M, ?> discriminator;
-	private final List<Supplier<MessageType<? extends M>>> subtypes;
+	private final FieldDescriptor<? super M, ?> discriminator;
+	private final List<Supplier<MessageDescriptor<? extends M>>> subtypeSuppliers;
+	private List<MessageDescriptor<? extends M>> subtypes;
 
 	private final boolean form;
 
-	private MessageType(final Builder<M> builder) {
+	private MessageDescriptor(final Builder<M> builder) {
 		super(TypeEnum.MESSAGE);
 		this.javaClass = checkNotNull(builder.javaClass);
 		this.supplier = checkNotNull(builder.supplier);
@@ -38,7 +39,7 @@ public class MessageType<M extends Message> extends DataType<M> {
 
 		discriminator = findDiscriminator(fields);
 		discriminatorValue = builder.discriminatorValue;
-		subtypes = ImmutableList.copyOf(builder.subtypes);
+		subtypeSuppliers = ImmutableList.copyOf(builder.subtypes);
 
 		form = builder.form;
 	}
@@ -52,9 +53,14 @@ public class MessageType<M extends Message> extends DataType<M> {
 		return javaClass;
 	}
 
-	/** Returns a base type. */
-	public MessageType getBase() {
+	/** Returns a base descriptor. */
+	public MessageDescriptor getBase() {
 		return base;
+	}
+
+	/** Returns true when a discriminator field is present. */
+	public boolean isPolymorphic() {
+		return discriminator != null;
 	}
 
 	/** Returns a discriminator value. */
@@ -63,22 +69,32 @@ public class MessageType<M extends Message> extends DataType<M> {
 	}
 
 	/** Returns a discriminator field. */
-	public MessageField<? super M, ?> getDiscriminator() {
+	public FieldDescriptor<? super M, ?> getDiscriminator() {
 		return discriminator;
 	}
 
-	/** Returns a list of subtypes. */
-	public List<Supplier<MessageType<? extends M>>> getSubtypes() {
-		return subtypes;
+	/** Returns a list of subtype descriptors. */
+	public List<MessageDescriptor<? extends M>> getSubtypes() {
+		if (subtypes != null) {
+			return subtypes;
+		}
+
+		ImmutableList.Builder<MessageDescriptor<? extends M>> builder = ImmutableList.builder();
+		for (Supplier<MessageDescriptor<? extends M>> supplier : subtypeSuppliers) {
+			MessageDescriptor<? extends M> subtype = supplier.get();
+			builder.add(subtype);
+		}
+
+		return (subtypes = builder.build());
 	}
 
 	/** Returns declared fields. */
-	public List<MessageField<M, ?>> getDeclaredFields() {
+	public List<FieldDescriptor<M, ?>> getDeclaredFields() {
 		return declaredFields;
 	}
 
 	/** Returns inherited + declared fields. */
-	public List<MessageField<? super M, ?>> getFields() {
+	public List<FieldDescriptor<? super M, ?>> getFields() {
 		return fields;
 	}
 
@@ -88,16 +104,15 @@ public class MessageType<M extends Message> extends DataType<M> {
 	}
 
 	/** Finds a subtype by a discriminator value or returns this type. */
-	public MessageType<M> findSubtypeOrThis(@Nullable final Object discriminatorValue) {
+	public MessageDescriptor<M> findSubtypeOrThis(@Nullable final Object discriminatorValue) {
 		if (discriminatorValue == null) {
 			return this;
 		}
 
-		for (Supplier<MessageType<? extends M>> supplier : getSubtypes()) {
-			MessageType<? extends M> subtype = supplier.get();
+		for (MessageDescriptor<? extends M> subtype : getSubtypes()) {
 			if (discriminatorValue.equals(subtype.getDiscriminatorValue())) {
 				@SuppressWarnings("unchecked")
-				MessageType<M> result = (MessageType<M>) subtype;
+				MessageDescriptor<M> result = (MessageDescriptor<M>) subtype;
 				return result;
 			}
 		}
@@ -125,7 +140,7 @@ public class MessageType<M extends Message> extends DataType<M> {
 
 	/** Copies one message fields into another. */
 	public void copy(final M src, final M dst) {
-		for (MessageField<? super M, ?> field : getFields()) {
+		for (FieldDescriptor<? super M, ?> field : getFields()) {
 			field.copy(src, dst);
 		}
 	}
@@ -140,10 +155,10 @@ public class MessageType<M extends Message> extends DataType<M> {
 	public static class Builder<M extends Message> {
 		private Class<M> javaClass;
 		private Supplier<M> supplier;
-		private MessageType<? super M> base;
+		private MessageDescriptor<? super M> base;
 		private Enum<?> discriminatorValue;
-		private final List<MessageField<M, ?>> declaredFields;
-		private final List<Supplier<MessageType<? extends M>>> subtypes;
+		private final List<FieldDescriptor<M, ?>> declaredFields;
+		private final List<Supplier<MessageDescriptor<? extends M>>> subtypes;
 		private boolean form;
 
 		private Builder() {
@@ -161,7 +176,7 @@ public class MessageType<M extends Message> extends DataType<M> {
 			return this;
 		}
 
-		public Builder<M> setBase(final MessageType<? super M> base) {
+		public Builder<M> setBase(final MessageDescriptor<? super M> base) {
 			this.base = base;
 			return this;
 		}
@@ -176,25 +191,25 @@ public class MessageType<M extends Message> extends DataType<M> {
 			return this;
 		}
 
-		public Builder<M> addField(final MessageField<M, ?> field) {
+		public Builder<M> addField(final FieldDescriptor<M, ?> field) {
 			declaredFields.add(field);
 			return this;
 		}
 
-		public Builder<M> addSubtype(final Supplier<MessageType<? extends M>> subtype) {
+		public Builder<M> addSubtype(final Supplier<MessageDescriptor<? extends M>> subtype) {
 			subtypes.add(subtype);
 			return this;
 		}
 
-		public MessageType<M> build() {
-			return new MessageType<M>(this);
+		public MessageDescriptor<M> build() {
+			return new MessageDescriptor<M>(this);
 		}
 	}
 
-	private static <M extends Message> ImmutableList<MessageField<? super M, ?>> joinFields(
-			final Iterable<MessageField<M, ?>> declaredFields,
-			@Nullable final MessageType<? super M> base) {
-		ImmutableList.Builder<MessageField<? super M, ?>> result = ImmutableList.builder();
+	private static <M extends Message> ImmutableList<FieldDescriptor<? super M, ?>> joinFields(
+			final Iterable<FieldDescriptor<M, ?>> declaredFields,
+			@Nullable final MessageDescriptor<? super M> base) {
+		ImmutableList.Builder<FieldDescriptor<? super M, ?>> result = ImmutableList.builder();
 		if (base != null) {
 			result.addAll(base.getFields());
 		}
@@ -202,9 +217,9 @@ public class MessageType<M extends Message> extends DataType<M> {
 		return result.build();
 	}
 
-	private static <M> MessageField<? super M, ?> findDiscriminator(
-			final Iterable<MessageField<? super M, ?>> fields) {
-		for (MessageField<? super M, ?> field : fields) {
+	private static <M> FieldDescriptor<? super M, ?> findDiscriminator(
+			final Iterable<FieldDescriptor<? super M, ?>> fields) {
+		for (FieldDescriptor<? super M, ?> field : fields) {
 			if (field.isDiscriminator()) {
 				return field;
 			}

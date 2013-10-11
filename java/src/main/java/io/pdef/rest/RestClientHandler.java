@@ -6,8 +6,6 @@ import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Strings;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
-import io.pdef.meta.DataType;
-import io.pdef.meta.MessageType;
 import io.pdef.rpc.*;
 
 import java.net.HttpURLConnection;
@@ -22,20 +20,24 @@ public class RestClientHandler implements Function<Invocation, InvocationResult>
 		format = new RestFormat();
 	}
 
+	/**
+	 * Serializes an invocation, sends a rest request, parses a rest response,
+	 * and returns the result or raises an exception.
+	 * */
 	@Override
 	public InvocationResult apply(final Invocation invocation) {
-		DataType<?> resultDataType = (DataType<?>) invocation.getResult();
-		MessageType<?> resultExcType = invocation.getExc();
-
+		checkNotNull(invocation);
 
 		RestRequest request = format.serializeInvocation(invocation);
 		RestResponse response = sender.apply(request);
 
-		if (!isOkJsonResponse(response)) {
-			throw parseRestError(response);
+		if (isOkJsonResponse(response)) {
+			return format.parseInvocationResult(response,
+					invocation.getDataResult(),
+					invocation.getExc());
 		}
 
-		return format.parseInvocationResult(response, resultDataType, resultExcType);
+		throw parseRestError(response);
 	}
 
 	@VisibleForTesting

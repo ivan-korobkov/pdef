@@ -3,7 +3,8 @@ package io.pdef.rest;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
-import io.pdef.meta.*;
+import io.pdef.descriptors.DataDescriptor;
+import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
 import io.pdef.rpc.*;
@@ -11,18 +12,18 @@ import io.pdef.rpc.*;
 import java.net.HttpURLConnection;
 
 public class RestServerHandler implements Function<RestRequest, RestResponse> {
-	private final InterfaceType type;
+	private final InterfaceDescriptor<?> descriptor;
 	private final Function<Invocation, InvocationResult> invoker;
 	private final RestFormat format;
 
 	/** Creates a REST server handler. */
 	public RestServerHandler(final Class<?> cls,
 			final Function<Invocation, InvocationResult> invoker) {
-		this.type = InterfaceType.findMetaType(cls);
+		this.descriptor = InterfaceDescriptor.findDescriptor(cls);
 		this.invoker = checkNotNull(invoker);
 		format = new RestFormat();
 
-		checkArgument(type != null, "Cannot find an interface type in %s", cls);
+		checkArgument(descriptor != null, "Cannot find an interface descriptor in %s", cls);
 	}
 
 	@Override
@@ -30,9 +31,13 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 		checkNotNull(request);
 
 		try {
-			Invocation invocation = format.parseInvocation(request, type);
+			Invocation invocation = format.parseInvocation(request, descriptor);
+			DataDescriptor<?> dataDescriptor = invocation.getDataResult();
+			DataDescriptor<?> excDescriptor = invocation.getExc();
+
 			InvocationResult result = invoker.apply(invocation);
-			return format.serializeInvocationResult(result, invocation);
+			return format.serializeInvocationResult(result, dataDescriptor, excDescriptor);
+
 		} catch (Exception e) {
 			// Catch any unhandled (not application-specific) exception and
 			// convert it into a server error response.

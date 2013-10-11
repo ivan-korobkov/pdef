@@ -6,11 +6,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Atomics;
 import io.pdef.Clients;
+import io.pdef.descriptors.ArgumentDescriptor;
+import io.pdef.descriptors.Descriptors;
+import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
-import io.pdef.meta.InterfaceMethodArg;
-import io.pdef.meta.MessageType;
-import io.pdef.meta.MetaTypes;
 import io.pdef.rpc.MethodNotAllowedError;
 import io.pdef.rpc.MethodNotFoundError;
 import io.pdef.rpc.RpcResult;
@@ -123,7 +123,8 @@ public class RestFormatTest {
 
 	@Test
 	public void testSerializePathArgument() throws Exception {
-		InterfaceMethodArg<String> argd = InterfaceMethodArg.of("arg", MetaTypes.string);
+		ArgumentDescriptor<String> argd = ArgumentDescriptor
+				.of("arg", Descriptors.string);
 
 		String value = format.serializePathArgument(argd, "Привет");
 		assertEquals("%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82", value);
@@ -131,7 +132,8 @@ public class RestFormatTest {
 
 	@Test
 	public void testSerializeParam() throws Exception {
-		InterfaceMethodArg<Integer> argd = InterfaceMethodArg.of("arg", MetaTypes.int32);
+		ArgumentDescriptor<Integer> argd = ArgumentDescriptor
+				.of("arg", Descriptors.int32);
 
 		Map<String, String> dst = Maps.newHashMap();
 		format.serializeParam(argd, 123, dst);
@@ -140,7 +142,8 @@ public class RestFormatTest {
 
 	@Test
 	public void testSerializeParam_form() throws Exception {
-		InterfaceMethodArg<SimpleForm> argd = InterfaceMethodArg.of("arg", SimpleForm.META_TYPE);
+		ArgumentDescriptor<SimpleForm> argd = ArgumentDescriptor
+				.of("arg", SimpleForm.DESCRIPTOR);
 
 		Map<String, String> dst = Maps.newHashMap();
 		SimpleForm msg = new SimpleForm()
@@ -157,28 +160,28 @@ public class RestFormatTest {
 
 	@Test
 	public void testSerializeToString_primitive() throws Exception {
-		String result = format.serializeToString(MetaTypes.int32, 123);
+		String result = format.serializeToString(Descriptors.int32, 123);
 
 		assertEquals("123", result);
 	}
 
 	@Test
 	public void testSerializeToString_primitiveNullToEmptyString() throws Exception {
-		String result = format.serializeToString(MetaTypes.int32, null);
+		String result = format.serializeToString(Descriptors.int32, null);
 
 		assertEquals("", result);
 	}
 
 	@Test
 	public void testSerializeToString_string() throws Exception {
-		String result = format.serializeToString(MetaTypes.string, "привет+ромашки");
+		String result = format.serializeToString(Descriptors.string, "привет+ромашки");
 
 		assertEquals("привет+ромашки", result);
 	}
 
 	@Test
 	public void testSerializeToString_message() throws Exception {
-		MessageType type = SimpleMessage.META_TYPE;
+		MessageDescriptor type = SimpleMessage.DESCRIPTOR;
 		SimpleMessage msg = new SimpleMessage()
 				.setABool(true)
 				.setAnInt16((short) 256)
@@ -246,7 +249,7 @@ public class RestFormatTest {
 				.setPath("/")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
 
-		Invocation invocation = format.parseInvocation(request, TestInterface.META_TYPE);
+		Invocation invocation = format.parseInvocation(request, TestInterface.DESCRIPTOR);
 		assertEquals("indexMethod", invocation.getMethod().getName());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
@@ -259,7 +262,7 @@ public class RestFormatTest {
 						"aList", "[1, 2, 3]",
 						"aMap", "{\"1\": 2}"));
 
-		Invocation invocation = format.parseInvocation(request, TestInterface.META_TYPE);
+		Invocation invocation = format.parseInvocation(request, TestInterface.DESCRIPTOR);
 		assertEquals("postMethod", invocation.getMethod().getName());
 		assertArrayEquals(new Object[]{ImmutableList.of(1, 2, 3), ImmutableMap.of(1, 2)},
 				invocation.getArgs());
@@ -270,7 +273,7 @@ public class RestFormatTest {
 		RestRequest request = RestRequest.get()
 				.setPath("/postMethod");
 
-		format.parseInvocation(request, TestInterface.META_TYPE);
+		format.parseInvocation(request, TestInterface.DESCRIPTOR);
 	}
 
 	@Test
@@ -279,7 +282,7 @@ public class RestFormatTest {
 				.setPath("/remoteMethod")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
 
-		Invocation invocation = format.parseInvocation(request, TestInterface.META_TYPE);
+		Invocation invocation = format.parseInvocation(request, TestInterface.DESCRIPTOR);
 		assertEquals("remoteMethod", invocation.getMethod().getName());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
@@ -289,7 +292,7 @@ public class RestFormatTest {
 		RestRequest request = new RestRequest()
 				.setPath("/interfaceMethod/1/2/");
 
-		List<Invocation> chain = format.parseInvocation(request, TestInterface.META_TYPE).toChain();
+		List<Invocation> chain = format.parseInvocation(request, TestInterface.DESCRIPTOR).toChain();
 		assertEquals(2, chain.size());
 
 		Invocation invocation0 = chain.get(0);
@@ -307,7 +310,7 @@ public class RestFormatTest {
 				.setPath("/interfaceMethod/1/2/stringMethod")
 				.setQuery(ImmutableMap.of("text", "Привет"));
 
-		List<Invocation> chain = format.parseInvocation(request, TestInterface.META_TYPE).toChain();
+		List<Invocation> chain = format.parseInvocation(request, TestInterface.DESCRIPTOR).toChain();
 		assertEquals(2, chain.size());
 
 		Invocation invocation0 = chain.get(0);
@@ -324,14 +327,15 @@ public class RestFormatTest {
 		RestRequest request = new RestRequest()
 				.setPath("/interfaceMethod/1/2");
 
-		format.parseInvocation(request, TestInterface.META_TYPE);
+		format.parseInvocation(request, TestInterface.DESCRIPTOR);
 	}
 
 	// Argument parsing.
 
 	@Test
 	public void testParsePathArgument() throws Exception {
-		InterfaceMethodArg<String> argd = InterfaceMethodArg.of("arg", MetaTypes.string);
+		ArgumentDescriptor<String> argd = ArgumentDescriptor
+				.of("arg", Descriptors.string);
 		String part = "%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82";
 
 		String value = format.parsePathArgument(argd, part);
@@ -340,8 +344,8 @@ public class RestFormatTest {
 
 	@Test
 	public void testParseParam() throws Exception {
-		InterfaceMethodArg<SimpleMessage> argd = InterfaceMethodArg.of("arg",
-				SimpleMessage.META_TYPE);
+		ArgumentDescriptor<SimpleMessage> argd = ArgumentDescriptor.of("arg",
+				SimpleMessage.DESCRIPTOR);
 
 		SimpleMessage expected = new SimpleMessage()
 				.setAString("Привет")
@@ -355,7 +359,8 @@ public class RestFormatTest {
 
 	@Test
 	public void testParseQueryArg_form() throws Exception {
-		InterfaceMethodArg<SimpleForm> argd = InterfaceMethodArg.of("arg", SimpleForm.META_TYPE);
+		ArgumentDescriptor<SimpleForm> argd = ArgumentDescriptor
+				.of("arg", SimpleForm.DESCRIPTOR);
 
 		SimpleForm expected = new SimpleForm()
 				.setText("Привет, как дела?")
@@ -371,19 +376,19 @@ public class RestFormatTest {
 
 	@Test
 	public void testParseFromString_primitive() throws Exception {
-		Integer value = format.parseFromString(MetaTypes.int32, "123");
+		Integer value = format.parseFromString(Descriptors.int32, "123");
 		assertEquals(123, (int) value);
 	}
 
 	@Test
 	public void testParseFromString_primitiveEmptyStringToNull() throws Exception {
-		Integer value = format.parseFromString(MetaTypes.int32, "");
+		Integer value = format.parseFromString(Descriptors.int32, "");
 		assertNull(value);
 	}
 
 	@Test
 	public void testParseFromString_string() throws Exception {
-		String value = format.parseFromString(MetaTypes.string, "Привет");
+		String value = format.parseFromString(Descriptors.string, "Привет");
 		assertEquals("Привет", value);
 	}
 
@@ -395,7 +400,7 @@ public class RestFormatTest {
 				.setAnInt16((short) 123);
 
 		String json = msg.serializeToJson();
-		SimpleMessage result = format.parseFromString(msg.metaType(), json);
+		SimpleMessage result = format.parseFromString(msg.descriptor(), json);
 		assertEquals(msg, result);
 	}
 
@@ -404,7 +409,7 @@ public class RestFormatTest {
 	@Test
 	public void testOkResponse() throws Exception {
 		RestRequest request = new RestRequest().setPath("/messageMethod");
-		Invocation invocation = format.parseInvocation(request, TestInterface.META_TYPE);
+		Invocation invocation = format.parseInvocation(request, TestInterface.DESCRIPTOR);
 		SimpleMessage msg = new SimpleMessage()
 				.setAString("hello")
 				.setABool(true)
@@ -416,7 +421,8 @@ public class RestFormatTest {
 				.setData(msg.serializeToMap())
 				.serializeToJson();
 
-		RestResponse response = format.serializeInvocationResult(result, invocation);
+		RestResponse response = format.serializeInvocationResult(result,
+				invocation.getDataResult(), invocation.getExc());
 		assertTrue(response.hasOkStatus());
 		assertTrue(response.hasJsonContentType());
 		assertEquals(content, response.getContent());
@@ -425,7 +431,7 @@ public class RestFormatTest {
 	@Test
 	public void testOkResponse_exception() throws Exception {
 		RestRequest request = new RestRequest().setPath("/");
-		Invocation invocation = format.parseInvocation(request, TestInterface.META_TYPE);
+		Invocation invocation = format.parseInvocation(request, TestInterface.DESCRIPTOR);
 		TestException exc = new TestException()
 				.setText("hello, world");
 
@@ -435,7 +441,8 @@ public class RestFormatTest {
 				.setData(exc.serializeToMap())
 				.serializeToJson();
 
-		RestResponse response = format.serializeInvocationResult(result, invocation);
+		RestResponse response = format.serializeInvocationResult(result,
+				invocation.getDataResult(), invocation.getExc());
 		assertTrue(response.hasOkStatus());
 		assertTrue(response.hasJsonContentType());
 		assertEquals(content, response.getContent());

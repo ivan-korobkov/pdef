@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.pdef.meta.DataType;
@@ -26,6 +26,12 @@ public class JsonFormat implements Format {
 		return INSTANCE;
 	}
 
+	private final NativeFormat nativeFormat;
+
+	private JsonFormat() {
+		nativeFormat = NativeFormat.instance();
+	}
+
 	// Serialization.
 
 	public <T> String serialize(final DataType<T> metaType, final T object) throws FormatException {
@@ -36,7 +42,7 @@ public class JsonFormat implements Format {
 		checkNotNull(metaType);
 
 		try {
-			Object nativeObject = NativeFormat.instance().serialize(metaType, object);
+			Object nativeObject = nativeFormat.serialize(metaType, object);
 			return doSerialize(nativeObject, indent);
 		} catch (FormatException e) {
 			throw e;
@@ -62,6 +68,8 @@ public class JsonFormat implements Format {
 			throws IOException {
 		if (o == null) {
 			generator.writeNull();
+		} else if (o instanceof Enum<?>) {
+			writeEnum(generator, (Enum<?>) o);
 		} else if (o instanceof List) {
 			writeList(generator, (Collection<?>) o);
 		} else if (o instanceof Set) {
@@ -71,6 +79,17 @@ public class JsonFormat implements Format {
 		} else {
 			generator.writeObject(o); // It's smart enough to correctly write all other values.
 		}
+	}
+
+	private static void writeEnum(final JsonGenerator generator, final Enum<?> o)
+			throws IOException {
+		if (o == null) {
+			generator.writeNull();
+			return;
+		}
+
+		String value = o.name().toLowerCase();
+		generator.writeString(value);
 	}
 
 	private static void writeList(final JsonGenerator generator, final Collection<?> list)
@@ -120,7 +139,7 @@ public class JsonFormat implements Format {
 				parser.close();
 			}
 
-			return NativeFormat.instance().parse(metaType, nativeObject);
+			return nativeFormat.parse(metaType, nativeObject);
 		} catch (FormatException e) {
 			throw e;
 		} catch (Exception e) {

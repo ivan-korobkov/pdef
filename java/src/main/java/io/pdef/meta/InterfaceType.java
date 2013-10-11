@@ -71,7 +71,7 @@ public class InterfaceType<T> extends MetaType {
 	@Nullable
 	public InterfaceMethod findMethod(final String name) {
 		for (InterfaceMethod method : getMethods()) {
-			if (method.name().equals(name)) {
+			if (method.getName().equals(name)) {
 				return method;
 			}
 		}

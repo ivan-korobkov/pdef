@@ -43,4 +43,16 @@ public enum TypeEnum {
 	public boolean isDataType() {
 		return DATA_TYPES.contains(this);
 	}
+
+	public boolean isMessage() {
+		return this == MESSAGE || this == EXCEPTION;
+	}
+
+	public boolean isCollection() {
+		return this == LIST || this == SET || this == MAP;
+	}
+
+	public boolean isEnum() {
+		return this == ENUM;
+	}
 }

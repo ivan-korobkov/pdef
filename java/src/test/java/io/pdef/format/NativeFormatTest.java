@@ -1,26 +1,31 @@
-package io.pdef.meta;
+package io.pdef.format;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.pdef.meta.DataType;
+import io.pdef.meta.MetaTypes;
 import org.junit.Test;
 
-public class MetaTypesTest {
+public class NativeFormatTest {
+	private NativeFormat format = NativeFormat.instance();
+
 	private <T> void testPrimitive(final DataType<T> type, final String stringToParse,
 			final T expected, final String expectedString) {
-		assert type.parseFromNative(stringToParse).equals(expected);
-		assert type.parseFromNative(expected).equals(expected);
-		assert type.parseFromNative(null) == null;
-		assert type.parseFromNative(stringToParse).getClass() == expected.getClass();
-		assert type.parseFromNative(expected).getClass() == expected.getClass();
+		assert format.parse(type, stringToParse).equals(expected);
+		assert format.parse(type, expected).equals(expected);
+		assert format.parse(type, null) == null;
+		assert format.parse(type, stringToParse).getClass() == expected.getClass();
+		assert format.parse(type, expected).getClass() == expected.getClass();
 
-		assert type.serializeToNative(expected).equals(expected);
-		assert type.serializeToNative(null) == null;
+		assert format.serialize(type, expected).equals(expected);
+		assert format.serialize(type, null) == null;
 
-		assert type.serializeToString(null).equals("");
-		assert type.serializeToString(expected).equals(expectedString);
-		assert type.parseFromString("") == null;
-		assert type.parseFromString(expectedString).equals(expected);
+		assert format.serialize(type, null).equals("");
+		assert format.serialize(type, expected).equals(expectedString);
+
+		assert format.parse(type, "") == null;
+		assert format.parse(type, expectedString).equals(expected);
 	}
 
 	@Test
@@ -56,10 +61,10 @@ public class MetaTypesTest {
 
 	private <T> void testData(final DataType<T> type, final T objectToParse,
 			final T expected) {
-		assert type.parseFromNative(objectToParse).equals(expected);
-		assert type.parseFromNative(null) == null;
-		assert type.serializeToNative(null) == null;
-		assert type.serializeToNative(expected).equals(expected);
+		assert format.parse(type, objectToParse).equals(expected);
+		assert format.parse(type, null) == null;
+		assert format.serialize(type, null) == null;
+		assert format.serialize(type, expected).equals(expected);
 	}
 
 	@Test

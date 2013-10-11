@@ -19,6 +19,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	private NativeFormat() {}
+
 	// Serializing.
 
 	@Override
@@ -129,7 +130,9 @@ public class NativeFormat extends AbstractFormat<Object> {
 		Map<String, Object> result = Maps.newLinkedHashMap();
 
 		for (MessageField<? super M, ?> field : polymorphicType.getFields()) {
-			serializeField(field, message, result);
+			@SuppressWarnings("unchecked")
+			MessageField<M, ?> uncheckedField = (MessageField<M, ?>) field;
+			serializeField(uncheckedField, message, result);
 		}
 
 		return result;
@@ -299,7 +302,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		} else if (input instanceof Enum<?>) {
 			return metaType.getJavaClass().cast(input);
 		} else if (input instanceof String) {
-			return metaType.getNamesToValues().get(input);
+			return metaType.getNamesToValues().get(((String) input).toUpperCase());
 		}
 		throw new FormatException("Cannot parse an enum from " + input);
 	}
@@ -327,7 +330,9 @@ public class NativeFormat extends AbstractFormat<Object> {
 
 		M message = metaType.newInstance();
 		for (MessageField<? super M, ?> field : metaType.getFields()) {
-			parseField(field, message, map);
+			@SuppressWarnings("unchecked")
+			MessageField<M, ?> uncheckedField = (MessageField<M, ?>) field;
+			parseField(uncheckedField, message, map);
 		}
 
 		return message;

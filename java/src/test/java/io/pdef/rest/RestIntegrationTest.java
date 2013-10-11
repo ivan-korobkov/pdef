@@ -115,7 +115,7 @@ public class RestIntegrationTest {
 
 		private void handle(final HttpServletRequest req, final HttpServletResponse resp)
 				throws IOException {
-			RestServer server = Servers.server(TestInterface.class, new TestService());
+			RestServerReceiver server = Servers.server(TestInterface.class, new TestService());
 			server.handle(req, resp);
 		}
 	}

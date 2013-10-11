@@ -12,14 +12,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.net.HttpURLConnection;
 
-public class RestServerTest {
+public class RestServerReceiverTest {
 	@Mock Function<RestRequest, RestResponse> handler;
-	RestServer server;
+	RestServerReceiver server;
 
 	@Before
 	public void setUp() throws Exception {
 		initMocks(this);
-		server = new RestServer(handler);
+		server = new RestServerReceiver(handler);
 	}
 
 	@Test

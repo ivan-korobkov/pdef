@@ -4,207 +4,48 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Strings;
-import io.pdef.Message;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
-import io.pdef.meta.*;
+import io.pdef.meta.DataType;
+import io.pdef.meta.MessageType;
 import io.pdef.rpc.*;
 
 import java.net.HttpURLConnection;
-import java.util.List;
-import java.util.Map;
 
 public class RestClientHandler implements Function<Invocation, InvocationResult> {
 	private final Function<RestRequest, RestResponse> sender;
+	private final RestFormat format;
 
 	/** Creates a REST client. */
 	public RestClientHandler(final Function<RestRequest, RestResponse> sender) {
 		this.sender = checkNotNull(sender);
+		format = new RestFormat();
 	}
 
 	@Override
 	public InvocationResult apply(final Invocation invocation) {
-		return invoke(invocation);
-	}
+		DataType<?> resultDataType = (DataType<?>) invocation.getResult();
+		MessageType<?> resultExcType = invocation.getExc();
 
-	/** Serializes an invocation, sends a rest request, parses a rest response,
-	 * and returns the result or raises an exception. */
-	public InvocationResult invoke(final Invocation invocation) {
-		RestRequest request = createRequest(invocation);
-		RestResponse response = sendRequest(request);
 
-		if (isSuccessful(response)) {
-			return parseResult(response, invocation);
+		RestRequest request = format.serializeInvocation(invocation);
+		RestResponse response = sender.apply(request);
+
+		if (!isOkJsonResponse(response)) {
+			throw parseRestError(response);
 		}
 
-		throw parseError(response);
-	}
-
-	/** Converts an invocation into a rest request. */
-	@VisibleForTesting
-	RestRequest createRequest(final Invocation invocation) {
-		RestRequest request;
-
-		if (invocation.getMethod().isPost()) {
-			request = RestRequest.post();
-		} else {
-			request = RestRequest.get();
-		}
-
-		for (Invocation inv : invocation.toChain()) {
-			serializeInvocation(request, inv);
-		}
-
-		return request;
-	}
-
-	/** Adds a single invocation to a rest request. */
-	@VisibleForTesting
-	void serializeInvocation(final RestRequest request, final Invocation invocation) {
-		InterfaceMethod method = invocation.getMethod();
-		request.appendPath("/");
-		if (!method.isIndex()) {
-			request.appendPath(Rest.urlencode(method.name()));
-		}
-
-		Object[] args = invocation.getArgs();
-		List<InterfaceMethodArg> argds = invocation.getMethod().args();
-		assert args.length == argds.size();  // Must be checked in Invocation constructor.
-
-		if (method.isPost()) {
-			// Add arguments as post params, serialize messages and collections into json.
-			// Post methods are remote.
-			for (int i = 0; i < args.length; i++) {
-				Object arg = args[i];
-				InterfaceMethodArg argd = argds.get(i);
-
-				serializeQueryArg(argd, arg, request.getPost());
-			}
-
-		} else if (method.isRemote()) {
-			// Add arguments as query params.
-			for (int i = 0; i < args.length; i++) {
-				Object arg = args[i];
-				InterfaceMethodArg argd = argds.get(i);
-
-				serializeQueryArg(argd, arg, request.getQuery());
-			}
-
-		} else {
-			// Positionally prepend all arguments to the path;
-			for (int i = 0; i < args.length; i++) {
-				Object arg = args[i];
-				InterfaceMethodArg argd = argds.get(i);
-
-				request.appendPath("/");
-				request.appendPath(serializePositionalArg(argd, arg));
-			}
-		}
-	}
-
-	/** Serializes a positional arg and urlencodes it. */
-	@VisibleForTesting
-	String serializePositionalArg(final InterfaceMethodArg argd, final Object arg) {
-		String serialized = serializeArgToString(argd.getType(), arg);
-		return Rest.urlencode(serialized);
-	}
-
-	/** Serializes a query/post argument and puts it into a dst map. */
-	@SuppressWarnings("unchecked")
-	@VisibleForTesting
-	void serializeQueryArg(final InterfaceMethodArg argd, final Object arg,
-			final Map<String, String> dst) {
-		if (arg == null) {
-			return;
-		}
-
-		DataType<?> type = argd.getType();
-		if (type instanceof MessageType && ((MessageType) type).isForm()) {
-			// It's a form, expand its fields into distinct arguments.
-
-			Message message = (Message) arg;
-
-			// Mind polymorphic messages.
-			MessageType<Message> messageType = (MessageType<Message>) message.metaType();
-			serializeQueryForm(messageType, (Message) arg, dst);
-			return;
-		}
-
-		// Serialize to a string.
-		String serialized = serializeArgToString(type, arg);
-		dst.put(argd.getName(), serialized);
-	}
-
-	private <M extends Message> void serializeQueryForm(final MessageType<M> type, final M message,
-			final Map<String, String> dst) {
-
-		for (MessageField<? super M, ?> field : type.getFields()) {
-			Object fvalue = field.get(message);
-			if (fvalue == null) {
-				continue;
-			}
-
-			String serialized = serializeArgToString(field.getType(), fvalue);
-			dst.put(field.getName(), serialized);
-		}
-	}
-
-	/** Serializes primitives and enums to strings and other types to json. */
-	@VisibleForTesting
-	String serializeArgToString(final DataType<?> metatype, final Object arg) {
-		if (arg == null) {
-			return "";
-		}
-
-		@SuppressWarnings("unchecked")
-		DataType<Object> unchecked = (DataType<Object>) metatype;
-		return unchecked.serializeToString(arg);
-	}
-
-	/** Sends a rest request and returns a rest response. */
-	@VisibleForTesting
-	RestResponse sendRequest(final RestRequest request) {
-		return sender.apply(request);
+		return format.parseInvocationResult(response, resultDataType, resultExcType);
 	}
 
 	@VisibleForTesting
-	boolean isSuccessful(final RestResponse response) {
+	boolean isOkJsonResponse(final RestResponse response) {
 		return (response.hasOkStatus() && response.hasJsonContentType());
-	}
-
-	@VisibleForTesting
-	InvocationResult parseResult(final RestResponse response, final Invocation invocation) {
-		RpcResult rpc = RpcResult.parseFromJson(response.getContent());
-		Object result = rpc.getData();
-		RpcStatus status = rpc.getStatus();
-
-		if (status == RpcStatus.OK) {
-			// It's a successful result.
-			// Parse it using the invocation method result type.
-			DataType d = (DataType) invocation.getResult();
-			Object r = d.parseFromNative(result);
-			return InvocationResult.ok(r);
-
-		} else if (status == RpcStatus.EXCEPTION) {
-			// It's an expected application exception.
-			// Parse it using the invocation exception type.
-
-			MessageType d = invocation.getExc();
-			if (d == null) {
-				throw new ClientError().setText("Unsupported application exception");
-			}
-
-			// All application exceptions are runtime.
-			RuntimeException r = (RuntimeException) d.parseFromNative(result);
-			return InvocationResult.exc(r);
-		}
-
-		throw new ClientError().setText("Unsupported rpc response status=" + status);
 	}
 
 	/** Parses an rpc error from a rest response via its status. */
 	@VisibleForTesting
-	RpcError parseError(final RestResponse response) {
+	RpcError parseRestError(final RestResponse response) {
 		int status = response.getStatus();
 		String text = Strings.nullToEmpty(response.getContent());
 

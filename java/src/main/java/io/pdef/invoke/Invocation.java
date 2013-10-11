@@ -4,6 +4,7 @@ import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import io.pdef.meta.DataType;
 import io.pdef.meta.InterfaceMethod;
 import io.pdef.meta.MessageType;
 import io.pdef.meta.MetaType;
@@ -30,7 +31,7 @@ public class Invocation {
 
 		if (method != null) {
 			// It is not a root sentinel invocation.
-			checkArgument(this.args.length == method.args().size(), "Wrong number of args");
+			checkArgument(this.args.length == method.getArgs().size(), "Wrong number of args");
 		}
 	}
 
@@ -55,13 +56,17 @@ public class Invocation {
 	}
 
 	public MetaType getResult() {
-		return method == null ? null : method.result();
+		return method == null ? null : method.getResult();
+	}
+
+	public DataType<?> getDataResult() {
+		return method == null ? null : (DataType<?>) method.getResult();
 	}
 
 	/** Returns the method exception or the parent exception. */
 	@Nullable
 	public MessageType<?> getExc() {
-		if (method != null) return method.exc();
+		if (method != null) return method.getExc();
 		if (parent != null) return parent.getExc();
 		return null;
 	}

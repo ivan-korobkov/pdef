@@ -8,7 +8,7 @@ import io.pdef.invoke.InvocationResult;
 import io.pdef.invoke.Invoker;
 import io.pdef.rest.RestRequest;
 import io.pdef.rest.RestResponse;
-import io.pdef.rest.RestServer;
+import io.pdef.rest.RestServerReceiver;
 import io.pdef.rest.RestServerHandler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -18,7 +18,7 @@ public class Servers {
 	private Servers() {}
 
 	/** Creates a default REST server. */
-	public static <T> RestServer server(final Class<T> cls, final T service) {
+	public static <T> RestServerReceiver server(final Class<T> cls, final T service) {
 		checkNotNull(cls);
 		checkNotNull(service);
 
@@ -26,7 +26,7 @@ public class Servers {
 	}
 
 	/** Creates a default REST server. */
-	public static <T> RestServer server(final Class<T> cls, final Supplier<T> serviceSupplier) {
+	public static <T> RestServerReceiver server(final Class<T> cls, final Supplier<T> serviceSupplier) {
 		checkNotNull(cls);
 		checkNotNull(serviceSupplier);
 
@@ -36,9 +36,9 @@ public class Servers {
 	}
 
 	/** Creates a REST server with a custom handler. */
-	public static RestServer server(final Function<RestRequest, RestResponse> handler) {
+	public static RestServerReceiver server(final Function<RestRequest, RestResponse> handler) {
 		checkNotNull(handler);
-		return new RestServer(handler);
+		return new RestServerReceiver(handler);
 	}
 
 	/** Creates a REST handler with a custom invoker. */

@@ -17,7 +17,7 @@ import java.util.List;
 public class InterfaceMethod {
 	private final String name;
 	private final Supplier<MetaType> result;
-	private final ImmutableList<InterfaceMethodArg> args;
+	private final ImmutableList<InterfaceMethodArg<?>> args;
 	private final MessageType<?> exc;
 	private final InterfaceMethodInvoker invoker;
 	private final boolean index;
@@ -44,7 +44,7 @@ public class InterfaceMethod {
 				.toString();
 	}
 
-	public String name() {
+	public String getName() {
 		return name;
 	}
 
@@ -56,20 +56,20 @@ public class InterfaceMethod {
 		return post;
 	}
 
-	public MetaType result() {
+	public MetaType getResult() {
 		return result.get();
 	}
 
-	public List<InterfaceMethodArg> args() {
+	public List<InterfaceMethodArg<?>> getArgs() {
 		return args;
 	}
 
-	public MessageType<?> exc() {
+	public MessageType<?> getExc() {
 		return exc;
 	}
 
 	public boolean isRemote() {
-		TypeEnum type = result().getType();
+		TypeEnum type = getResult().getType();
 		return type.isDataType() || type == TypeEnum.VOID;
 	}
 
@@ -81,7 +81,7 @@ public class InterfaceMethod {
 	public static class Builder {
 		private String name;
 		private Supplier<MetaType> result;
-		private List<InterfaceMethodArg> args;
+		private List<InterfaceMethodArg<?>> args;
 		private MessageType<?> exc;
 		private InterfaceMethodInvoker invoker;
 		private boolean index;

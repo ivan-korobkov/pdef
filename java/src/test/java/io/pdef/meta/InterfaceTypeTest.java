@@ -12,7 +12,7 @@ public class InterfaceTypeTest {
 		InterfaceMethod method = metaType.findMethod("indexMethod");
 
 		assertNotNull(method);
-		assertEquals("indexMethod", method.name());
+		assertEquals("indexMethod", method.getName());
 	}
 
 	@Test

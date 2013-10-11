@@ -11,12 +11,12 @@ import java.util.Map;
 /**
  * EnumType holds enum values and parsing/serialization methods.
  * */
-public class EnumType<T extends Enum<?>> extends DataType<T> {
+public class EnumType<T extends Enum<T>> extends DataType<T> {
 	private final Class<T> javaClass;
 	private final List<T> values;
 	private final Map<String, T> namesToValues;
 
-	public static <T extends Enum<?>> EnumType<T> of(final Class<T> javaClass) {
+	public static <T extends Enum<T>> EnumType<T> of(final Class<T> javaClass) {
 		return new EnumType<T>(javaClass);
 	}
 

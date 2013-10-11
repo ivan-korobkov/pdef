@@ -10,11 +10,11 @@ public enum {{ name }} {
     {%- endfor %};
 
     public static {{ name }} parseString(final String s) {
-        return META_TYPE.parseFromString(s);
+        return io.pdef.format.NativeFormat.instance().parse(META_TYPE, s);
     }
 
     public static {{ name }} parseJson(final String s) {
-        return META_TYPE.parseFromJson(s);
+        return io.pdef.format.JsonFormat.instance().parse(META_TYPE, s);
     }
 
     public static final io.pdef.meta.EnumType<{{ name }}> META_TYPE =

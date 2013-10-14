@@ -9,10 +9,22 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-public class InvocationProxy<T> implements InvocationHandler {
+public class InvocationClient<T> implements InvocationHandler {
 	private final InterfaceDescriptor<T> descriptor;
 	private final Function<Invocation, InvocationResult> handler;
 	private final Invocation parent;
+
+	/** Creates a custom client. */
+	public static <T> T create(final Class<T> cls,
+			final Function<Invocation, InvocationResult> invocationHandler) {
+		checkNotNull(cls);
+		checkNotNull(invocationHandler);
+
+		InterfaceDescriptor<T> descriptor = InterfaceDescriptor.findDescriptor(cls);
+		checkArgument(descriptor != null, "Cannot find an interface descriptor in " + cls);
+
+		return InvocationClient.create(cls, descriptor, invocationHandler);
+	}
 
 	/** Creates a Java invocation proxy. */
 	public static <T> T create(final Class<T> cls, final InterfaceDescriptor<T> descriptor,
@@ -23,12 +35,12 @@ public class InvocationProxy<T> implements InvocationHandler {
 		checkArgument(cls == descriptor.getJavaClass(), "Class/descriptor do not match, %s, %s",
 				cls, descriptor);
 
-		InvocationProxy<T> invocationProxy = new InvocationProxy<T>(descriptor, handler,
+		InvocationClient<T> invocationClient = new InvocationClient<T>(descriptor, handler,
 				Invocation.root());
-		return invocationProxy.toProxy();
+		return invocationClient.toProxy();
 	}
 
-	private InvocationProxy(final InterfaceDescriptor<T> descriptor,
+	private InvocationClient(final InterfaceDescriptor<T> descriptor,
 			final Function<Invocation, InvocationResult> handler,
 			final Invocation parent) {
 		this.descriptor = descriptor;
@@ -78,7 +90,7 @@ public class InvocationProxy<T> implements InvocationHandler {
 	private Object nextProxy(final Invocation invocation) {
 		@SuppressWarnings("unchecked")
 		InterfaceDescriptor<Object> next = (InterfaceDescriptor<Object>) invocation.getResult();
-		InvocationProxy<Object> nproxy = new InvocationProxy<Object>(next, handler, invocation);
+		InvocationClient<Object> nproxy = new InvocationClient<Object>(next, handler, invocation);
 		return nproxy.toProxy();
 	}
 }

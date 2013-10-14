@@ -22,12 +22,12 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.Arrays;
 
-public class RestClientSenderTest {
-	RestClientSender sender;
+public class RestClientHttpRequestHandlerTest {
+	RestClientHttpRequestHandler sender;
 
 	@Before
 	public void setUp() throws Exception {
-		sender = new RestClientSender("http://localhost:8080/", null);
+		sender = new RestClientHttpRequestHandler("http://localhost:8080/", null);
 	}
 
 	@Test
@@ -37,7 +37,7 @@ public class RestClientSenderTest {
 				.setQuery(ImmutableMap.of("a", "1"));
 
 		HttpRequest req = httpRequest(sender.createRequest(request));
-		assert req.getRequestLine().getMethod().equals(Rest.GET);
+		assert req.getRequestLine().getMethod().equals(RestRequest.GET);
 		assert req.getRequestLine().getUri().equals("http://localhost:8080/hello/world?a=1");
 	}
 
@@ -50,7 +50,7 @@ public class RestClientSenderTest {
 		HttpPost req = (HttpPost) httpRequest(sender.createRequest(request));
 
 		byte[] content = entityToBytes(req.getEntity());
-		assert req.getRequestLine().getMethod().equals(Rest.POST);
+		assert req.getRequestLine().getMethod().equals(RestRequest.POST);
 		assert req.getRequestLine().getUri().equals("http://localhost:8080/hello/world");
 		assert Arrays.equals(content, "a=1&text=%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82".getBytes());
 	}

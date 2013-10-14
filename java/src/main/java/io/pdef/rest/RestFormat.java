@@ -9,7 +9,6 @@ import io.pdef.format.JsonFormat;
 import io.pdef.format.NativeFormat;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
-import io.pdef.rpc.*;
 
 import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
@@ -161,11 +160,12 @@ public class RestFormat {
 		} else {
 			// It's an expected application exception.
 			E exc = result.getExc();
-			if (excd == null) {
-				throw new ClientError().setText("Unsupported application exception");
+			if (excd != null) {
+				return InvocationResult.exc((RuntimeException) exc);
 			}
 
-			return InvocationResult.exc((RuntimeException) exc);
+			String s = exc == null ? null : exc.toString();
+			throw RestException.badRequest("Server returned an unknown exception: " + s);
 		}
 	}
 
@@ -200,7 +200,7 @@ public class RestFormat {
 
 			if (method == null) {
 				// Method is not found.
-				throw new MethodNotFoundError().setText("Method not found");
+				throw RestException.methodNotFound("Method is not found: " + part);
 			}
 
 			if (method.isIndex() && !part.equals("")) {
@@ -211,7 +211,7 @@ public class RestFormat {
 
 			if (method.isPost() && !request.isPost()) {
 				// The method requires a POST HTTP request.
-				throw new MethodNotAllowedError().setText("Method not allowed, POST required");
+				throw RestException.methodNotAllowed("Method not allowed, POST required");
 			}
 
 			// Parse method arguments.
@@ -234,7 +234,7 @@ public class RestFormat {
 				} else {
 					// Parse a path argument.
 					if (parts.isEmpty()) {
-						throw new WrongMethodArgsError().setText("Wrong number of method args");
+						throw RestException.methodNotFound("Wrong number of method args");
 					}
 
 					args.add(parsePathArgument(argd, parts.removeFirst()));
@@ -250,7 +250,7 @@ public class RestFormat {
 
 				if (!parts.isEmpty()) {
 					// Cannot have any more parts here, bad url.
-					throw new MethodNotFoundError().setText("Method not found");
+					throw RestException.methodNotFound("Method not found");
 				}
 
 				return invocation;
@@ -262,7 +262,7 @@ public class RestFormat {
 		}
 
 		// The parts are empty, and we failed to parse a remote method invocation.
-		throw new MethodNotFoundError().setText("Method not found");
+		throw RestException.methodNotFound("Method not found");
 	}
 
 	@VisibleForTesting

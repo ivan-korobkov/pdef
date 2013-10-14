@@ -17,7 +17,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.List;
 
-public class InvocationProxyTest {
+public class InvocationClientTest {
 	@Mock Function<Invocation, InvocationResult> handler;
 
 	@Before
@@ -77,7 +77,7 @@ public class InvocationProxyTest {
 	}
 
 	private TestInterface createProxy() {
-		return InvocationProxy.create(TestInterface.class, TestInterface.DESCRIPTOR, handler);
+		return InvocationClient.create(TestInterface.class, TestInterface.DESCRIPTOR, handler);
 	}
 
 	private MethodDescriptor getIndexMethod() {

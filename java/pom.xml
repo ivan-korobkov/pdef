@@ -127,24 +127,6 @@
 				<version>1.4</version>
 				<executions>
 					<execution>
-						<id>generate-sources</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-						<configuration>
-							<tasks>
-								<exec executable="pdefc" failonerror="true">
-									<arg value="generate" />
-									<arg value="--ns=java:pdef:io.pdef" />
-									<arg value="--java=target/generated-sources/pdef" />
-									<arg value="../pdef/rpc.pdef" />
-								</exec>
-							</tasks>
-						</configuration>
-					</execution>
-
-					<execution>
 						<id>generate-test-sources</id>
 						<phase>generate-test-sources</phase>
 						<goals>
@@ -169,19 +151,6 @@
 				<artifactId>build-helper-maven-plugin</artifactId>
 				<version>1.5</version>
 				<executions>
-					<execution>
-						<id>add-sources</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>add-source</goal>
-						</goals>
-						<configuration>
-							<sources>
-								<source>${project.build.directory}/generated-sources/pdef/</source>
-							</sources>
-						</configuration>
-					</execution>
-
 					<execution>
 						<id>add-test-sources</id>
 						<phase>generate-test-sources</phase>

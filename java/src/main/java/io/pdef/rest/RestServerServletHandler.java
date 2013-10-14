@@ -11,11 +11,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
 
-public class RestServerReceiver {
+public class RestServerServletHandler {
 	private final Function<RestRequest, RestResponse> handler;
 
 	/** Creates a REST server. */
-	public RestServerReceiver(final Function<RestRequest, RestResponse> handler) {
+	RestServerServletHandler(final Function<RestRequest, RestResponse> handler) {
 		this.handler = checkNotNull(handler);
 	}
 

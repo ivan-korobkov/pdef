@@ -1,6 +1,7 @@
 package io.pdef.rest;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import org.apache.http.HttpEntity;
@@ -20,12 +21,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
-public class RestClientSender implements Function<RestRequest, RestResponse> {
+class RestClientHttpRequestHandler implements Function<RestRequest, RestResponse> {
 	private final String url;
 	private final Function<Request, Response> session;
 
 	/** Creates a REST client sender. */
-	public RestClientSender(final String url, @Nullable final Function<Request, Response> session) {
+	public RestClientHttpRequestHandler(final String url,
+			@Nullable final Function<Request, Response> session) {
 		this.url = checkNotNull(url);
 		this.session = session != null ? session : new DefaultSession();
 	}
@@ -51,7 +53,7 @@ public class RestClientSender implements Function<RestRequest, RestResponse> {
 			form.add(entry.getKey(), entry.getValue());
 		}
 
-		return Request.Post(uri).bodyForm(form.build(), Rest.CHARSET);
+		return Request.Post(uri).bodyForm(form.build(), Charsets.UTF_8);
 	}
 
 	/** Creates a URI from a rest request. */

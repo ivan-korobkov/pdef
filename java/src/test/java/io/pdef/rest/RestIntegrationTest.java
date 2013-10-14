@@ -3,19 +3,17 @@ package io.pdef.rest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import io.pdef.test.interfaces.NextTestInterface;
+import io.pdef.test.interfaces.TestException;
+import io.pdef.test.interfaces.TestInterface;
+import io.pdef.test.messages.SimpleForm;
+import io.pdef.test.messages.SimpleMessage;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.junit.After;
 import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
-import io.pdef.Clients;
-import io.pdef.Servers;
-import io.pdef.test.interfaces.NextTestInterface;
-import io.pdef.test.interfaces.TestException;
-import io.pdef.test.interfaces.TestInterface;
-import io.pdef.test.messages.SimpleForm;
-import io.pdef.test.messages.SimpleMessage;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -97,7 +95,7 @@ public class RestIntegrationTest {
 	}
 
 	private TestInterface client() {
-		return Clients.client(TestInterface.class, address);
+		return RestClient.httpClient(TestInterface.class, address);
 	}
 
 	public static class TestServlet extends HttpServlet {
@@ -115,7 +113,8 @@ public class RestIntegrationTest {
 
 		private void handle(final HttpServletRequest req, final HttpServletResponse resp)
 				throws IOException {
-			RestServerReceiver server = Servers.server(TestInterface.class, new TestService());
+			RestServerServletHandler server = RestServer.servletServer(TestInterface.class,
+					new TestService());
 			server.handle(req, resp);
 		}
 	}

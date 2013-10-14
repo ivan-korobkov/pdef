@@ -5,14 +5,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Atomics;
-import io.pdef.Clients;
 import io.pdef.descriptors.ArgumentDescriptor;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.invoke.Invocation;
+import io.pdef.invoke.InvocationClient;
 import io.pdef.invoke.InvocationResult;
-import io.pdef.rpc.MethodNotAllowedError;
-import io.pdef.rpc.MethodNotFoundError;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import io.pdef.test.messages.SimpleForm;
@@ -35,7 +33,7 @@ public class RestFormatTest {
 		proxy(ref).indexMethod(1, 2);
 
 		RestRequest request = format.serializeInvocation(ref.get());
-		assertEquals(Rest.GET, request.getMethod());
+		assertEquals(RestRequest.GET, request.getMethod());
 		assertEquals("/", request.getPath());
 		assertEquals(ImmutableMap.of("a", "1", "b", "2"), request.getQuery());
 		assertTrue(request.getPost().isEmpty());
@@ -47,7 +45,7 @@ public class RestFormatTest {
 		proxy(ref).postMethod(ImmutableList.of(1, 2, 3), ImmutableMap.of(4, 5));
 
 		RestRequest request = format.serializeInvocation(ref.get());
-		assertEquals(Rest.POST, request.getMethod());
+		assertEquals(RestRequest.POST, request.getMethod());
 		assertEquals("/postMethod", request.getPath());
 		assertTrue(request.getQuery().isEmpty());
 		assertEquals(ImmutableMap.of("aList", "[1,2,3]", "aMap", "{\"4\":5}"), request.getPost());
@@ -59,7 +57,7 @@ public class RestFormatTest {
 		proxy(ref).interfaceMethod(1, 2).stringMethod("hello");
 
 		RestRequest request = format.serializeInvocation(ref.get());
-		assertEquals(Rest.GET, request.getMethod());
+		assertEquals(RestRequest.GET, request.getMethod());
 		assertEquals("/interfaceMethod/1/2/stringMethod", request.getPath());
 		assertEquals(ImmutableMap.of("text", "hello"), request.getQuery());
 		assertTrue(request.getPost().isEmpty());
@@ -253,7 +251,7 @@ public class RestFormatTest {
 				invocation.getArgs());
 	}
 
-	@Test(expected = MethodNotAllowedError.class)
+	@Test(expected = RestException.class)
 	public void testParseInvocation_postMethodNotAllowed() throws Exception {
 		RestRequest request = RestRequest.get()
 				.setPath("/postMethod");
@@ -307,7 +305,7 @@ public class RestFormatTest {
 		assertArrayEquals(new Object[]{"Привет"}, invocation1.getArgs());
 	}
 
-	@Test(expected = MethodNotFoundError.class)
+	@Test(expected = RestException.class)
 	public void testParseInvocation_interfaceMethodNotRemote() throws Exception {
 		RestRequest request = new RestRequest()
 				.setPath("/interfaceMethod/1/2");
@@ -447,7 +445,7 @@ public class RestFormatTest {
 		return proxy(format);
 	}
 
-	private TestInterface proxy(final Function<Invocation, InvocationResult> format) {
-		return Clients.client(TestInterface.class, format);
+	private TestInterface proxy(final Function<Invocation, InvocationResult> handler) {
+		return InvocationClient.create(TestInterface.class, handler);
 	}
 }

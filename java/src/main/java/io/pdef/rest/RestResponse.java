@@ -8,6 +8,10 @@ import java.net.HttpURLConnection;
  * The response contains an HTTP status code, a decoded content string, and a content type.
  */
 public class RestResponse {
+	public static final String JSON_MIME_TYPE = "application/json";
+	public static final String TEXT_MIME_TYPE = "text/plain";
+	public static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
+	public static final String TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
 	private int status;
 	private String content;
 	private String contentType;
@@ -51,23 +55,23 @@ public class RestResponse {
 	}
 
 	public RestResponse setTextContentType() {
-		this.contentType = Rest.TEXT_CONTENT_TYPE;
+		this.contentType = TEXT_CONTENT_TYPE;
 		return this;
 	}
 
 	public RestResponse setJsonContentType() {
-		this.contentType = Rest.JSON_CONTENT_TYPE;
+		this.contentType = JSON_CONTENT_TYPE;
 		return this;
 	}
 
 	public boolean hasTextContentType() {
 		return contentType != null && contentType.toLowerCase()
-				.startsWith(Rest.TEXT_MIME_TYPE);
+				.startsWith(TEXT_MIME_TYPE);
 	}
 
 	public boolean hasJsonContentType() {
 		return contentType != null && contentType.toLowerCase()
-				.startsWith(Rest.JSON_MIME_TYPE);
+				.startsWith(JSON_MIME_TYPE);
 	}
 
 	@Override

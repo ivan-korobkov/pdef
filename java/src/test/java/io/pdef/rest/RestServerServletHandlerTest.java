@@ -12,20 +12,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.net.HttpURLConnection;
 
-public class RestServerReceiverTest {
+public class RestServerServletHandlerTest {
 	@Mock Function<RestRequest, RestResponse> handler;
-	RestServerReceiver server;
+	RestServerServletHandler server;
 
 	@Before
 	public void setUp() throws Exception {
 		initMocks(this);
-		server = new RestServerReceiver(handler);
+		server = new RestServerServletHandler(handler);
 	}
 
 	@Test
 	public void testParseRequest() throws Exception {
 		HttpServletRequest request = mock(HttpServletRequest.class);
-		when(request.getMethod()).thenReturn(Rest.GET);
+		when(request.getMethod()).thenReturn(RestRequest.GET);
 		when(request.getServletPath()).thenReturn("/my/app");
 		when(request.getPathInfo()).thenReturn("/method1/method2");
 		when(request.getParameterMap()).thenReturn(ImmutableMap.of(
@@ -33,7 +33,7 @@ public class RestServerReceiverTest {
 				"key1", new String[]{"value1", "value11"}));
 
 		RestRequest req = server.parseRequest(request);
-		assert req.getMethod().equals(Rest.GET);
+		assert req.getMethod().equals(RestRequest.GET);
 		assert req.getPath().equals("/my/app/method1/method2");
 		assert req.getQuery().equals(ImmutableMap.of("key0", "value0", "key1", "value1"));
 		assert req.getPost().equals(ImmutableMap.of("key0", "value0", "key1", "value1"));
@@ -50,7 +50,7 @@ public class RestServerReceiverTest {
 		server.writeResponse(resp, response);
 
 		verify(response).setStatus(HttpURLConnection.HTTP_OK);
-		verify(response).setContentType(Rest.TEXT_CONTENT_TYPE);
+		verify(response).setContentType(RestResponse.TEXT_CONTENT_TYPE);
 		verify(response.getWriter()).print(resp.getContent());
 	}
 }

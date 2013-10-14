@@ -12,6 +12,8 @@ import java.util.Map;
  * params. The params must be unicode not url-encoded strings.
  * */
 public class RestRequest {
+	public static final String GET = "GET";
+	public static final String POST = "POST";
 	private String method;
 	private String path = "";
 	private Map<String, String> query = Maps.newLinkedHashMap();
@@ -20,11 +22,11 @@ public class RestRequest {
 	public RestRequest() {}
 
 	public static RestRequest get() {
-		return new RestRequest().setMethod(Rest.GET);
+		return new RestRequest().setMethod(GET);
 	}
 
 	public static RestRequest post() {
-		return new RestRequest().setMethod(Rest.POST);
+		return new RestRequest().setMethod(POST);
 	}
 
 	@Override
@@ -36,7 +38,7 @@ public class RestRequest {
 	}
 
 	public boolean isPost() {
-		return Objects.equal(method, Rest.POST);
+		return Objects.equal(method, POST);
 	}
 
 	public String getMethod() {

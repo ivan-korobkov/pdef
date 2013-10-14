@@ -149,30 +149,24 @@ public class RestFormat {
 	// InvocationResult parsing.
 
 	public <T, E> InvocationResult parseInvocationResult(
-			final RestResponse response, final DataDescriptor<T> dataDescriptor,
-			@Nullable final DataDescriptor<E> excDescriptor) {
-		RpcResult rpc = RpcResult.parseFromJson(response.getContent());
-		RpcStatus status = rpc.getStatus();
+			final RestResponse response, final DataDescriptor<T> datad,
+			@Nullable final DataDescriptor<E> excd) {
+		MessageDescriptor<RestResult<T, E>> descriptor = resultDescriptor(datad, excd);
+		RestResult<T, E> result = jsonFormat.parse(response.getContent(), descriptor);
 
-		if (status == RpcStatus.OK) {
+		if (result.isSuccess()) {
 			// It's a successful result.
+			return InvocationResult.ok(result.getData());
 
-			T data = nativeFormat.parse(rpc.getData(), dataDescriptor);
-			return InvocationResult.ok(data);
-
-		} else if (status == RpcStatus.EXCEPTION) {
+		} else {
 			// It's an expected application exception.
-
-			if (excDescriptor == null) {
+			E exc = result.getExc();
+			if (excd == null) {
 				throw new ClientError().setText("Unsupported application exception");
 			}
 
-			// All application exceptions are runtime.
-			E exc = nativeFormat.parse(rpc.getData(), excDescriptor);
 			return InvocationResult.exc((RuntimeException) exc);
 		}
-
-		throw new ClientError().setText("Unsupported rpc response status=" + status);
 	}
 
 	// Invocation parsing.
@@ -349,35 +343,29 @@ public class RestFormat {
 	// InvocationResult serialization.
 
 	public <T, E> RestResponse serializeInvocationResult(final InvocationResult result,
-			final DataDescriptor<T> dataDescriptor, final DataDescriptor<E> excDescriptor) {
-		RpcResult rpc = new RpcResult();
+			final DataDescriptor<T> dataDescriptor,
+			@Nullable final DataDescriptor<E> excDescriptor) {
+		MessageDescriptor<RestResult<T, E>> descriptor = resultDescriptor(dataDescriptor,
+				excDescriptor);
 
-		if (result.isOk()) {
-			// It's a successful method result.
+		T data = dataDescriptor.cast(result.getData());
+		E exc = excDescriptor == null ? null : excDescriptor.cast(result.getExc());
 
-			@SuppressWarnings("unchecked")
-			T data = dataDescriptor.cast(result.getData());
-			Object serialized = nativeFormat.serialize(data, dataDescriptor);
+		RestResult<T, E> restResult = descriptor.newInstance()
+				.setSuccess(result.isOk())
+				.setData(data)
+				.setExc(exc);
 
-			rpc.setStatus(RpcStatus.OK);
-			rpc.setData(serialized);
-
-		} else {
-			// It's an expected application exception.
-
-			assert excDescriptor != null;
-			E exc = excDescriptor.cast(result.getExc());
-			Object serialized = nativeFormat.serialize(exc, excDescriptor);
-
-			rpc.setStatus(RpcStatus.EXCEPTION);
-			rpc.setData(serialized);
-		}
-
-		String content = rpc.serializeToJson();
+		String content = jsonFormat.serialize(restResult, descriptor, true);
 		return new RestResponse()
 				.setOkStatus()
 				.setContent(content)
 				.setJsonContentType();
+	}
+
+	static <T, E> MessageDescriptor<RestResult<T, E>> resultDescriptor(
+			final DataDescriptor<T> dataDescriptor, final DataDescriptor<E> excDescriptor) {
+		return RestResult.runtimeDescriptor(dataDescriptor, excDescriptor);
 	}
 
 	/** Url-encodes a string. */
@@ -396,5 +384,10 @@ public class RestFormat {
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static void main(String[] args) {
+		Integer i = Integer.class.cast(null);
+		System.out.println(i);
 	}
 }

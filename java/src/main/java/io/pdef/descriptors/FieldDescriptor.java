@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 
+import java.lang.reflect.Field;
+
 /**
  * FieldDescriptor holds a field name, type, setters and getters.
  * @param <M> Message class.
@@ -113,8 +115,50 @@ public class FieldDescriptor<M, V> {
 			return this;
 		}
 
+		public Builder<M, V> setReflexAccessor(final Class<M> cls) {
+			checkNotNull(name, "Name must be set before the reflex accessor");
+			FieldAccessor<M, V> accessor = new ReflexAccessor<M, V>(name, cls);
+			return setAccessor(accessor);
+		}
+
 		public FieldDescriptor<M, V> build() {
 			return new FieldDescriptor<M, V>(this);
+		}
+	}
+
+	private static class ReflexAccessor<M, V> implements FieldAccessor<M, V> {
+		private final Field field;
+
+		private ReflexAccessor(final String name, final Class<M> cls) {
+			Field field1 = null;
+			for (Field field0 : cls.getDeclaredFields()) {
+				if (field0.getName().equals(name)) {
+					field1 = field0;
+					break;
+				}
+			}
+
+			field = checkNotNull(field1, "Field not found: " + name);
+			field.setAccessible(true);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public V get(final M message) {
+			try {
+				return (V) field.get(message);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		@Override
+		public void set(final M message, final V value) {
+			try {
+				field.set(message, value);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 }

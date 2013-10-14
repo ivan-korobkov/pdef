@@ -149,11 +149,6 @@ public class NativeFormat extends AbstractFormat<Object> {
 		map.put(field.getName(), serialized);
 	}
 
-	@Override
-	protected Object serializeObject(final Object object) {
-		return object;
-	}
-
 	// Parsing.
 
 	@Override

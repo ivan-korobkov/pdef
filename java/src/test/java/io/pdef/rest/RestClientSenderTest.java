@@ -1,6 +1,7 @@
 package io.pdef.rest;
 
 import com.google.common.collect.ImmutableMap;
+import io.pdef.descriptors.Descriptors;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -12,8 +13,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHttpResponse;
 import org.junit.Before;
 import org.junit.Test;
-import io.pdef.rpc.RpcResult;
-import io.pdef.rpc.RpcStatus;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -68,10 +67,11 @@ public class RestClientSenderTest {
 
 	@Test
 	public void testParseHttpResponse() throws Exception {
-		String content = new RpcResult()
-				.setStatus(RpcStatus.OK)
+		String content = RestFormat.resultDescriptor(Descriptors.string, null)
+				.newInstance()
+				.setSuccess(true)
 				.setData("привет")
-				.serializeToJson();
+				.serializeToJson(true);
 
 		HttpResponse resp = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 0), 200, "OK");
 		resp.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON));

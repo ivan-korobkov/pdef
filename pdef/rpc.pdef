@@ -13,7 +13,6 @@ enum RpcStatus {
 
 message RpcResult {
     status  RpcStatus;
-    data    object;
 }
 
 

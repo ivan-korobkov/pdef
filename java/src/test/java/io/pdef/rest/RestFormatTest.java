@@ -13,8 +13,6 @@ import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
 import io.pdef.rpc.MethodNotAllowedError;
 import io.pdef.rpc.MethodNotFoundError;
-import io.pdef.rpc.RpcResult;
-import io.pdef.rpc.RpcStatus;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import io.pdef.test.messages.SimpleForm;
@@ -199,46 +197,33 @@ public class RestFormatTest {
 				.setAString("hello")
 				.setABool(true)
 				.setAnInt16((short) 1);
-		String content = new RpcResult()
-				.setStatus(RpcStatus.OK)
-				.setData(msg.serializeToMap())
-				.serializeToJson();
+
+		String content = fixtureRestResult(msg).serializeToJson();
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()
 				.setContent(content);
 
-		AtomicReference<Invocation> ref = Atomics.newReference();
-		proxy(ref).messageMethod(msg);
-
-		Invocation invocation = ref.get();
 		InvocationResult result = format.parseInvocationResult(response,
-				invocation.getDataResult(), invocation.getExc());
+				SimpleMessage.DESCRIPTOR, null);
 		assertTrue(result.isOk());
 		assertEquals(msg, result.getData());
 	}
 
 	@Test
 	public void testParseInvocationResult_exc() throws Exception {
-		TestException exc = new TestException()
-				.setText("Application exception");
-		String content = new RpcResult()
-				.setStatus(RpcStatus.EXCEPTION)
-				.setData(exc.serializeToMap())
-				.serializeToJson();
+		TestException exc = new TestException().setText("Application exception");
+
+		String content = fixtureExcRestResult(exc).serializeToJson();
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()
 				.setContent(content);
 
-		AtomicReference<Invocation> ref = Atomics.newReference();
-		proxy(ref).excMethod();
-
-		Invocation invocation = ref.get();
 		InvocationResult result = format.parseInvocationResult(response,
-				invocation.getDataResult(), invocation.getExc());
+				Descriptors.string, TestException.DESCRIPTOR);
 		assertFalse(result.isOk());
-		assertEquals(exc, result.getData());
+		assertEquals(exc, result.getExc());
 	}
 
 	// Invocation parsing.
@@ -407,45 +392,47 @@ public class RestFormatTest {
 	// Invocation result serialization.
 
 	@Test
-	public void testOkResponse() throws Exception {
-		RestRequest request = new RestRequest().setPath("/messageMethod");
-		Invocation invocation = format.parseInvocation(request, TestInterface.DESCRIPTOR);
+	public void testSerializeInvocationResult() throws Exception {
 		SimpleMessage msg = new SimpleMessage()
 				.setAString("hello")
 				.setABool(true)
 				.setAnInt16((short) 123);
 
 		InvocationResult result = InvocationResult.ok(msg);
-		String content = new RpcResult()
-				.setStatus(RpcStatus.OK)
-				.setData(msg.serializeToMap())
-				.serializeToJson();
+		String content = fixtureRestResult(msg).serializeToJson();
 
 		RestResponse response = format.serializeInvocationResult(result,
-				invocation.getDataResult(), invocation.getExc());
+				SimpleMessage.DESCRIPTOR, null);
 		assertTrue(response.hasOkStatus());
 		assertTrue(response.hasJsonContentType());
 		assertEquals(content, response.getContent());
 	}
 
 	@Test
-	public void testOkResponse_exception() throws Exception {
-		RestRequest request = new RestRequest().setPath("/");
-		Invocation invocation = format.parseInvocation(request, TestInterface.DESCRIPTOR);
-		TestException exc = new TestException()
-				.setText("hello, world");
-
+	public void testSerializeInvocationResult_exc() throws Exception {
+		TestException exc = new TestException().setText("hello, world");
 		InvocationResult result = InvocationResult.exc(exc);
-		String content = new RpcResult()
-				.setStatus(RpcStatus.EXCEPTION)
-				.setData(exc.serializeToMap())
-				.serializeToJson();
+		String content = fixtureExcRestResult(exc).serializeToJson();
 
 		RestResponse response = format.serializeInvocationResult(result,
-				invocation.getDataResult(), invocation.getExc());
+				Descriptors.string, TestException.DESCRIPTOR);
 		assertTrue(response.hasOkStatus());
 		assertTrue(response.hasJsonContentType());
 		assertEquals(content, response.getContent());
+	}
+
+	private RestResult<SimpleMessage, Object> fixtureRestResult(final SimpleMessage msg) {
+		return RestFormat.resultDescriptor(SimpleMessage.DESCRIPTOR, null)
+				.newInstance()
+				.setSuccess(true)
+				.setData(msg);
+	}
+
+	private RestResult<String, TestException> fixtureExcRestResult(final TestException exc) {
+		return RestFormat.resultDescriptor(Descriptors.string, TestException.DESCRIPTOR)
+				.newInstance()
+				.setSuccess(false)
+				.setExc(exc);
 	}
 
 	private TestInterface proxy(final AtomicReference<Invocation> ref) {

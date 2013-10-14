@@ -32,13 +32,6 @@ public class Descriptors {
 			return null;
 		}
 	};
-	public static DataDescriptor<Object> object = new DataDescriptor<Object>(TypeEnum.OBJECT,
-			Object.class) {
-		@Override
-		public Object copy(final Object object) {
-			return object;
-		}
-	};
 
 	public static <T> ListDescriptor<T> list(final DataDescriptor<T> element) {
 		return new ListDescriptor<T>(element);

@@ -17,8 +17,13 @@ public class RestServerHandler<T> implements Function<RestRequest, RestResponse>
 	private final Function<Invocation, InvocationResult> invoker;
 	private final RestFormat format;
 
+	public static <T> RestServerHandler<T> create(final Class<T> cls,
+			final Function<Invocation, InvocationResult> invoker) {
+		return new RestServerHandler<T>(cls, invoker);
+	}
+
 	/** Creates a REST server handler. */
-	public RestServerHandler(final Class<T> cls,
+	protected RestServerHandler(final Class<T> cls,
 			final Function<Invocation, InvocationResult> invoker) {
 		this.descriptor = InterfaceDescriptor.findDescriptor(cls);
 		this.invoker = checkNotNull(invoker);

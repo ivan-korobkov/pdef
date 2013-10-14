@@ -31,7 +31,7 @@ public class Servers {
 		checkNotNull(serviceSupplier);
 
 		Invoker<T> invoker = invoker(serviceSupplier);
-		RestServerHandler handler = handler(cls, invoker);
+		RestServerHandler<T> handler = handler(cls, invoker);
 		return server(handler);
 	}
 
@@ -42,11 +42,11 @@ public class Servers {
 	}
 
 	/** Creates a REST handler with a custom invoker. */
-	public static RestServerHandler handler(final Class<?> cls,
+	public static <T> RestServerHandler<T> handler(final Class<T> cls,
 			final Function<Invocation, InvocationResult> invoker) {
 		checkNotNull(cls);
 		checkNotNull(invoker);
-		return new RestServerHandler(cls, invoker);
+		return RestServerHandler.create(cls, invoker);
 	}
 
 	/** Creates a service invoker. */

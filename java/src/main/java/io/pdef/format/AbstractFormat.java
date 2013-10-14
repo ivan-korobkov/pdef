@@ -51,8 +51,6 @@ public abstract class AbstractFormat<F> implements Format {
 			case MESSAGE:
 			case EXCEPTION:
 				return (F) serializeMessage((Message) object, (MessageDescriptor) descriptor);
-			case OBJECT:
-				return serializeObject(object);
 			case VOID:
 				return null;
 			default:
@@ -88,8 +86,6 @@ public abstract class AbstractFormat<F> implements Format {
 
 	protected abstract <M extends Message> F serializeMessage(final M message,
 			final MessageDescriptor<M> descriptor) throws Exception;
-
-	protected abstract F serializeObject(final Object object);
 
 	public <T> T parse(final F input, final DataDescriptor<T> descriptor) throws FormatException {
 		checkNotNull(descriptor);
@@ -132,8 +128,6 @@ public abstract class AbstractFormat<F> implements Format {
 			case MESSAGE:
 			case EXCEPTION:
 				return (T) parseMessage(input, (MessageDescriptor<?>) descriptor);
-			case OBJECT:
-				return (T) parseObject(input);
 			case VOID:
 				return null;
 			default:

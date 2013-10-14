@@ -243,9 +243,6 @@ NATIVE_TYPES = {
     TypeEnum.STRING: JavaReference(TypeEnum.STRING, 'String', default='""',
             meta='io.pdef.descriptors.Descriptors.string'),
 
-    TypeEnum.OBJECT: JavaReference(TypeEnum.OBJECT, 'Object',
-            meta='io.pdef.descriptors.Descriptors.object'),
-
     TypeEnum.VOID: JavaReference(TypeEnum.VOID, 'void', 'void',
             meta='io.pdef.descriptors.Descriptors.void0', boxed='Void')
 }

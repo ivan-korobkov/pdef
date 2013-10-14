@@ -3,10 +3,14 @@ package io.pdef.rest;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import io.pdef.Clients;
+import io.pdef.descriptors.Descriptors;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
 import io.pdef.rpc.*;
 import io.pdef.test.interfaces.TestInterface;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -31,15 +35,20 @@ public class RestClientHandlerTest {
 				.setMethod(Rest.GET)
 				.setPath("/")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
+		RestResult<Integer, ?> result = RestFormat.resultDescriptor(Descriptors.int32, null)
+				.newInstance()
+				.setSuccess(true)
+				.setData(3);
+
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()
-				.setContent(new RpcResult().setStatus(RpcStatus.OK).setData(3).serializeToJson());
+				.setContent(result.serializeToJson(true));
 
 		when(sender.apply(request)).thenReturn(response);
-		int result = proxy(handler).indexMethod(1, 2);
+		int methodResult = proxy(handler).indexMethod(1, 2);
 
-		assert result == 3;
+		assertEquals(3, methodResult);
 	}
 
 	// isOkJsonResponse.
@@ -50,7 +59,7 @@ public class RestClientHandlerTest {
 				.setOkStatus()
 				.setJsonContentType();
 
-		assert handler.isOkJsonResponse(response);
+		assertTrue(handler.isOkJsonResponse(response));
 	}
 
 	@Test
@@ -59,7 +68,7 @@ public class RestClientHandlerTest {
 				.setStatus(123)
 				.setJsonContentType();
 
-		assert !handler.isOkJsonResponse(response);
+		assertFalse(handler.isOkJsonResponse(response));
 	}
 
 	// parseRestError.
@@ -74,7 +83,7 @@ public class RestClientHandlerTest {
 		RpcError expected = new ClientError()
 				.setText("Bad request");
 
-		assert error.equals(expected);
+		assertEquals(expected, error);
 	}
 
 	@Test
@@ -87,7 +96,7 @@ public class RestClientHandlerTest {
 		RpcError expected = new MethodNotFoundError()
 				.setText("Method not found");
 
-		assert error.equals(expected);
+		assertEquals(expected, error);
 	}
 
 	@Test
@@ -100,7 +109,7 @@ public class RestClientHandlerTest {
 		RpcError expected = new MethodNotAllowedError()
 				.setText("Method not allowed");
 
-		assert error.equals(expected);
+		assertEquals(expected, error);
 	}
 
 	@Test
@@ -113,7 +122,7 @@ public class RestClientHandlerTest {
 		RpcError expected = new ServiceUnavailableError()
 				.setText("Service unavailable");
 
-		assert error.equals(expected);
+		assertEquals(expected, error);
 	}
 
 	@Test
@@ -126,7 +135,7 @@ public class RestClientHandlerTest {
 		RpcError expected = new ServerError()
 				.setText("Server error, status=12345, text=Strange error");
 
-		assert error.equals(expected);
+		assertEquals(expected, error);
 	}
 
 	private TestInterface proxy(final Function<Invocation, InvocationResult> handler) {

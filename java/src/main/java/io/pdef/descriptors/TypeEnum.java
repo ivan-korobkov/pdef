@@ -12,8 +12,8 @@ public enum TypeEnum {
 	// Collections.
 	LIST, SET, MAP,
 
-	// Special types.
-	OBJECT, VOID,
+	// Void type (can be used only as a method result).
+	VOID,
 
 	// User-defined types.
 	ENUM,
@@ -33,7 +33,6 @@ public enum TypeEnum {
 		DATA_TYPES.add(ENUM);
 		DATA_TYPES.add(MESSAGE);
 		DATA_TYPES.add(EXCEPTION);
-		DATA_TYPES.add(OBJECT);
 	}
 
 	public boolean isPrimitive() {

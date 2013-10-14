@@ -1,7 +1,6 @@
 package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -12,7 +11,6 @@ import java.util.Map;
  * EnumDescriptor holds enum values and parsing/serialization methods.
  * */
 public class EnumDescriptor<T extends Enum<T>> extends DataDescriptor<T> {
-	private final Class<T> javaClass;
 	private final List<T> values;
 	private final Map<String, T> namesToValues;
 
@@ -21,9 +19,8 @@ public class EnumDescriptor<T extends Enum<T>> extends DataDescriptor<T> {
 	}
 
 	private EnumDescriptor(final Class<T> javaClass) {
-		super(TypeEnum.ENUM);
+		super(TypeEnum.ENUM, javaClass);
 
-		this.javaClass = checkNotNull(javaClass);
 		this.values = ImmutableList.copyOf(javaClass.getEnumConstants());
 
 		ImmutableMap.Builder<String, T> temp = ImmutableMap.builder();
@@ -36,13 +33,8 @@ public class EnumDescriptor<T extends Enum<T>> extends DataDescriptor<T> {
 	@Override
 	public String toString() {
 		return Objects.toStringHelper(this)
-				.addValue(javaClass.getSimpleName())
+				.addValue(getJavaClass().getSimpleName())
 				.toString();
-	}
-
-	/** Returns a java class. */
-	public Class<T> getJavaClass() {
-		return javaClass;
 	}
 
 	/** Returns an immutable list of values. */

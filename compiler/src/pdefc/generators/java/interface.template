@@ -24,8 +24,8 @@ import com.google.common.base.Supplier;
 
 {% endfor %}
 {% for method in declared_methods %}
-    static final io.pdef.descriptors.MethodDescriptor {{ method.name|upper }}_METHOD =
-            io.pdef.descriptors.MethodDescriptor.builder()
+    static final io.pdef.descriptors.MethodDescriptor<{{ name }}, {{ method.result.boxed }}> {{ method.name|upper }}_METHOD =
+            io.pdef.descriptors.MethodDescriptor.<{{ name }}, {{ method.result.boxed }}>builder()
                     .setName("{{ method.name }}")
                     .setInvokerFrom({{ name }}.class)
                 {% if method.is_index %}
@@ -35,10 +35,11 @@ import com.google.common.base.Supplier;
                     .setPost(true)
                 {% endif %}
                 {% if method.result.is_interface %}
-                    .setResult(new Supplier<io.pdef.descriptors.Descriptor>() {
-                        public io.pdef.descriptors.Descriptor get() {
-                            return {{ method.result.descriptor }}; }
-                        })
+                    .setResult(new Supplier<io.pdef.descriptors.Descriptor<{{ method.result }}>>() {
+                    public io.pdef.descriptors.Descriptor<{{ method.result }}> get() {
+                            return {{ method.result.descriptor }};
+                        }
+                    })
                 {% else %}
                     .setResult({{ method.result.descriptor }})
                 {% endif %}

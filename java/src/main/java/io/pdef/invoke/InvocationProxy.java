@@ -9,13 +9,13 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-public class InvocationProxy implements InvocationHandler {
-	private final InterfaceDescriptor<?> descriptor;
+public class InvocationProxy<T> implements InvocationHandler {
+	private final InterfaceDescriptor<T> descriptor;
 	private final Function<Invocation, InvocationResult> handler;
 	private final Invocation parent;
 
 	/** Creates a Java invocation proxy. */
-	public static <T> T create(final Class<T> cls, final InterfaceDescriptor<?> descriptor,
+	public static <T> T create(final Class<T> cls, final InterfaceDescriptor<T> descriptor,
 			final Function<Invocation, InvocationResult> handler) {
 		checkNotNull(cls);
 		checkNotNull(descriptor);
@@ -23,12 +23,12 @@ public class InvocationProxy implements InvocationHandler {
 		checkArgument(cls == descriptor.getJavaClass(), "Class/descriptor do not match, %s, %s",
 				cls, descriptor);
 
-		InvocationProxy invocationProxy = new InvocationProxy(descriptor, handler, Invocation.root());
-		Object proxy = invocationProxy.toProxy();
-		return cls.cast(proxy);
+		InvocationProxy<T> invocationProxy = new InvocationProxy<T>(descriptor, handler,
+				Invocation.root());
+		return invocationProxy.toProxy();
 	}
 
-	private InvocationProxy(final InterfaceDescriptor descriptor,
+	private InvocationProxy(final InterfaceDescriptor<T> descriptor,
 			final Function<Invocation, InvocationResult> handler,
 			final Invocation parent) {
 		this.descriptor = descriptor;
@@ -36,9 +36,10 @@ public class InvocationProxy implements InvocationHandler {
 		this.parent = parent;
 	}
 
-	private Object toProxy() {
-		Class<?> cls = descriptor.getJavaClass();
-		return Proxy.newProxyInstance(cls.getClassLoader(), new Class<?>[]{cls}, this);
+	private T toProxy() {
+		Class<T> cls = descriptor.getJavaClass();
+		Object proxy = Proxy.newProxyInstance(cls.getClassLoader(), new Class<?>[]{cls}, this);
+		return cls.cast(proxy);
 	}
 
 	@Override
@@ -70,13 +71,14 @@ public class InvocationProxy implements InvocationHandler {
 		if (result.isOk()) {
 			return result.getData();
 		} else {
-			throw (RuntimeException) result.getData();
+			throw result.getExc();
 		}
 	}
 
 	private Object nextProxy(final Invocation invocation) {
-		InterfaceDescriptor<?> next = (InterfaceDescriptor<?>) invocation.getResult();
-		InvocationProxy nproxy = new InvocationProxy(next, handler, invocation);
+		@SuppressWarnings("unchecked")
+		InterfaceDescriptor<Object> next = (InterfaceDescriptor<Object>) invocation.getResult();
+		InvocationProxy<Object> nproxy = new InvocationProxy<Object>(next, handler, invocation);
 		return nproxy.toProxy();
 	}
 }

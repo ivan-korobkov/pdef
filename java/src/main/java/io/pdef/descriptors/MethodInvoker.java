@@ -1,5 +1,5 @@
 package io.pdef.descriptors;
 
-public interface MethodInvoker {
-	Object invoke(Object object, Object[] args) throws Exception;
+public interface MethodInvoker<T, R> {
+	R invoke(T object, Object[] args) throws Exception;
 }

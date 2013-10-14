@@ -8,8 +8,9 @@ import java.util.List;
 public class ListDescriptor<T> extends DataDescriptor<List<T>> {
 	private final DataDescriptor<T> element;
 
-	public ListDescriptor(final DataDescriptor<T> element) {
-		super(TypeEnum.LIST);
+	@SuppressWarnings("unchecked")
+	ListDescriptor(final DataDescriptor<T> element) {
+		super(TypeEnum.LIST, (Class<List<T>>) (Class<?>) List.class);
 		this.element = checkNotNull(element);
 	}
 

@@ -1,7 +1,6 @@
 package io.pdef.descriptors;
 
 import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -10,15 +9,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
-public class InterfaceDescriptor<T> extends Descriptor {
-	private final Class<T> javaClass;
-	private final List<MethodDescriptor> methods;
+public class InterfaceDescriptor<T> extends Descriptor<T> {
+	private final List<MethodDescriptor<T, ?>> methods;
 	private final MessageDescriptor<?> exc;
-	private final MethodDescriptor indexMethod;
+	private final MethodDescriptor<T, ?> indexMethod;
 
 	private InterfaceDescriptor(final Builder<T> builder) {
-		super(TypeEnum.INTERFACE);
-		this.javaClass = checkNotNull(builder.javaClass);
+		super(TypeEnum.INTERFACE, builder.javaClass);
 		this.exc = builder.exc; // Must be set before building methods.
 		this.methods = ImmutableList.copyOf(builder.methods);
 		this.indexMethod = findIndexMethod(methods);
@@ -28,8 +25,9 @@ public class InterfaceDescriptor<T> extends Descriptor {
 		return new Builder<T>();
 	}
 
-	private static MethodDescriptor findIndexMethod(final List<MethodDescriptor> methods) {
-		for (MethodDescriptor method : methods) {
+	private static <T> MethodDescriptor<T, ?> findIndexMethod(
+			final List<MethodDescriptor<T, ?>> methods) {
+		for (MethodDescriptor<T, ?> method : methods) {
 			if (method.isIndex()) {
 				return method;
 			}
@@ -45,13 +43,8 @@ public class InterfaceDescriptor<T> extends Descriptor {
 				.toString();
 	}
 
-	/** Return this interface Java class. */
-	public Class<?> getJavaClass() {
-		return javaClass;
-	}
-
 	/** Return a list of interface methods or an empty list. */
-	public List<MethodDescriptor> getMethods() {
+	public List<MethodDescriptor<T, ?>> getMethods() {
 		return methods;
 	}
 
@@ -63,14 +56,14 @@ public class InterfaceDescriptor<T> extends Descriptor {
 
 	/** Return an index method or null. */
 	@Nullable
-	public MethodDescriptor getIndexMethod() {
+	public MethodDescriptor<T, ?> getIndexMethod() {
 		return indexMethod;
 	}
 
 	/** Find a method by name and return it or null. */
 	@Nullable
-	public MethodDescriptor findMethod(final String name) {
-		for (MethodDescriptor method : getMethods()) {
+	public MethodDescriptor<T, ?> findMethod(final String name) {
+		for (MethodDescriptor<T, ?> method : getMethods()) {
 			if (method.getName().equals(name)) {
 				return method;
 			}
@@ -82,7 +75,7 @@ public class InterfaceDescriptor<T> extends Descriptor {
 	public static class Builder<T> {
 		private Class<T> javaClass;
 		private MessageDescriptor<?> exc;
-		private List<MethodDescriptor> methods;
+		private List<MethodDescriptor<T, ?>> methods;
 
 		public Builder() {
 			methods = Lists.newArrayList();
@@ -98,7 +91,7 @@ public class InterfaceDescriptor<T> extends Descriptor {
 			return this;
 		}
 
-		public Builder<T> addMethod(final MethodDescriptor method) {
+		public Builder<T> addMethod(final MethodDescriptor<T, ?> method) {
 			this.methods.add(method);
 			return this;
 		}

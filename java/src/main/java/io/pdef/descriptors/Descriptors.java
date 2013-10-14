@@ -5,12 +5,8 @@ public class Descriptors {
 	private Descriptors() {}
 
 	private static class PrimitiveDescriptor<T> extends DataDescriptor<T> {
-		public static <T> PrimitiveDescriptor<T> of(final TypeEnum type) {
-			return new PrimitiveDescriptor<T>(type);
-		}
-
-		private PrimitiveDescriptor(final TypeEnum type) {
-			super(type);
+		private PrimitiveDescriptor(final TypeEnum type, final Class<T> javaClass) {
+			super(type, javaClass);
 		}
 
 		@Override
@@ -19,20 +15,25 @@ public class Descriptors {
 		}
 	}
 
-	public static DataDescriptor<Boolean> bool = PrimitiveDescriptor.of(TypeEnum.BOOL);
-	public static DataDescriptor<Short> int16 = PrimitiveDescriptor.of(TypeEnum.INT16);
-	public static DataDescriptor<Integer> int32 = PrimitiveDescriptor.of(TypeEnum.INT32);
-	public static DataDescriptor<Long> int64 = PrimitiveDescriptor.of(TypeEnum.INT64);
-	public static DataDescriptor<Float> float0 = PrimitiveDescriptor.of(TypeEnum.FLOAT);
-	public static DataDescriptor<Double> double0 = PrimitiveDescriptor.of(TypeEnum.DOUBLE);
-	public static DataDescriptor<String> string = PrimitiveDescriptor.of(TypeEnum.STRING);
-	public static DataDescriptor<Void> void0 = new DataDescriptor<Void>(TypeEnum.VOID) {
+	private static <T> PrimitiveDescriptor<T> primitive(final TypeEnum type, final Class<T> cls) {
+		return new PrimitiveDescriptor<T>(type, cls);
+	}
+
+	public static DataDescriptor<Boolean> bool = primitive(TypeEnum.BOOL, Boolean.class);
+	public static DataDescriptor<Short> int16 = primitive(TypeEnum.INT16, Short.class);
+	public static DataDescriptor<Integer> int32 = primitive(TypeEnum.INT32, Integer.class);
+	public static DataDescriptor<Long> int64 = primitive(TypeEnum.INT64, Long.class);
+	public static DataDescriptor<Float> float0 = primitive(TypeEnum.FLOAT, Float.class);
+	public static DataDescriptor<Double> double0 = primitive(TypeEnum.DOUBLE, Double.class);
+	public static DataDescriptor<String> string = primitive(TypeEnum.STRING, String.class);
+	public static DataDescriptor<Void> void0 = new DataDescriptor<Void>(TypeEnum.VOID, Void.class) {
 		@Override
 		public Void copy(final Void object) {
 			return null;
 		}
 	};
-	public static DataDescriptor<Object> object = new DataDescriptor<Object>(TypeEnum.OBJECT) {
+	public static DataDescriptor<Object> object = new DataDescriptor<Object>(TypeEnum.OBJECT,
+			Object.class) {
 		@Override
 		public Object copy(final Object object) {
 			return object;

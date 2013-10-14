@@ -9,8 +9,9 @@ public class MapDescriptor<K, V> extends DataDescriptor<Map<K, V>> {
 	private final DataDescriptor<K> key;
 	private final DataDescriptor<V> value;
 
-	public MapDescriptor(final DataDescriptor<K> key, final DataDescriptor<V> value) {
-		super(TypeEnum.MAP);
+	@SuppressWarnings("unchecked")
+	MapDescriptor(final DataDescriptor<K> key, final DataDescriptor<V> value) {
+		super(TypeEnum.MAP, (Class<Map<K, V>>) (Class<?>) Map.class);
 		this.key = checkNotNull(key);
 		this.value = checkNotNull(value);
 	}

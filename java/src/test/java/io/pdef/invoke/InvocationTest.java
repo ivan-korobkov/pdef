@@ -1,28 +1,19 @@
 package io.pdef.invoke;
 
-import io.pdef.descriptors.InterfaceDescriptor;
-import io.pdef.descriptors.MethodDescriptor;
-import static org.junit.Assert.*;
-import org.junit.Test;
-import static org.mockito.Mockito.*;
 import io.pdef.test.interfaces.NextTestInterface;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
+import static org.junit.Assert.*;
+import org.junit.Test;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
 public class InvocationTest {
-	private final InterfaceDescriptor iface = TestInterface.DESCRIPTOR;
-	private final MethodDescriptor excMethod = iface.findMethod("excMethod");
-	private final MethodDescriptor indexMethod = iface.findMethod("indexMethod");
-	private final MethodDescriptor interfaceMethod = iface.findMethod( "interfaceMethod");
-	private final MethodDescriptor nextStringMethod = NextTestInterface.DESCRIPTOR
-			.findMethod("stringMethod");
-
 	@Test
 	public void testIsRoot() throws Exception {
 		Invocation root = Invocation.root();
-		Invocation next = root.next(indexMethod, new Object[]{null, null});
+		Invocation next = root.next(TestInterface.INDEXMETHOD_METHOD, new Object[]{null, null});
 
 		assertTrue(root.isRoot());
 		assertFalse(next.isRoot());
@@ -30,33 +21,39 @@ public class InvocationTest {
 
 	@Test
 	public void testGetArgs() throws Exception {
-		Invocation invocation = Invocation.root().next(indexMethod, new Object[]{1, 2});
+		Invocation invocation = Invocation.root()
+				.next(TestInterface.INDEXMETHOD_METHOD, new Object[]{1, 2});
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
 
 	@Test
 	public void testGetMethod() throws Exception {
-		Invocation invocation = Invocation.root().next(indexMethod, new Object[]{1, 2});
-		assertEquals(indexMethod, invocation.getMethod());
+		Invocation invocation = Invocation.root()
+				.next(TestInterface.INDEXMETHOD_METHOD, new Object[]{1, 2});
+		assertEquals(TestInterface.INDEXMETHOD_METHOD, invocation.getMethod());
 	}
 
 	@Test
 	public void testGetResult() throws Exception {
-		Invocation invocation = Invocation.root().next(indexMethod, new Object[]{1, 2});
-		assertEquals(indexMethod.getResult(), invocation.getResult());
+		Invocation invocation = Invocation.root()
+				.next(TestInterface.INDEXMETHOD_METHOD, new Object[]{1, 2});
+		assertEquals(TestInterface.INDEXMETHOD_METHOD.getResult(), invocation.getResult());
 	}
 
 	@Test
 	public void testGetExc() throws Exception {
-		Invocation invocation = Invocation.root().next(indexMethod, new Object[]{1, 2});
-		assertEquals(indexMethod.getExc(), invocation.getExc());
+		Invocation invocation = Invocation.root()
+				.next(TestInterface.INDEXMETHOD_METHOD, new Object[]{1, 2});
+		assertEquals(TestInterface.INDEXMETHOD_METHOD.getExc(), invocation.getExc());
 	}
 
 	@Test
 	public void testIsRemote() throws Exception {
 		Invocation root = Invocation.root();
-		Invocation indexInvocation = root.next(indexMethod, new Object[]{1, 2});
-		Invocation interfaceInvocation = root.next(interfaceMethod, new Object[]{1, 2});
+		Invocation indexInvocation = root
+				.next(TestInterface.INDEXMETHOD_METHOD, new Object[]{1, 2});
+		Invocation interfaceInvocation = root
+				.next(TestInterface.INTERFACEMETHOD_METHOD, new Object[]{1, 2});
 
 		assertFalse(root.isRemote());
 		assertFalse(interfaceInvocation.isRemote());
@@ -66,8 +63,8 @@ public class InvocationTest {
 	@Test
 	public void testToChain() throws Exception {
 		List<Invocation> chain = Invocation.root()
-				.next(interfaceMethod, new Object[]{1, 2})
-				.next(nextStringMethod, new Object[]{"hello"})
+				.next(TestInterface.INTERFACEMETHOD_METHOD, new Object[]{1, 2})
+				.next(NextTestInterface.STRINGMETHOD_METHOD, new Object[]{"hello"})
 				.toChain();
 
 		assertEquals(2, chain.size());
@@ -78,7 +75,8 @@ public class InvocationTest {
 		TestInterface iface = mock(TestInterface.class);
 		when(iface.indexMethod(1, 2)).thenReturn(3);
 
-		Invocation invocation = Invocation.root().next(indexMethod, new Object[]{1, 2});
+		Invocation invocation = Invocation.root()
+				.next(TestInterface.INDEXMETHOD_METHOD, new Object[]{1, 2});
 		InvocationResult result = invocation.invoke(iface);
 		assertEquals(3, result.getData());
 	}
@@ -89,8 +87,8 @@ public class InvocationTest {
 		when(iface.interfaceMethod(1, 2).stringMethod("hello")).thenReturn("good bye");
 
 		Invocation invocation = Invocation.root()
-				.next(interfaceMethod, new Object[]{1, 2})
-				.next(nextStringMethod, new Object[]{"hello"});
+				.next(TestInterface.INTERFACEMETHOD_METHOD, new Object[]{1, 2})
+				.next(NextTestInterface.STRINGMETHOD_METHOD, new Object[]{"hello"});
 
 		InvocationResult result = invocation.invoke(iface);
 		assertEquals("good bye", result.getData());
@@ -101,11 +99,11 @@ public class InvocationTest {
 		TestInterface iface = mock(TestInterface.class);
 		doThrow(new TestException()).when(iface).excMethod();
 
-		Invocation invocation = Invocation.root()
-				.next(excMethod, new Object[]{});
+		Invocation invocation = Invocation.root().next(
+				TestInterface.EXCMETHOD_METHOD, new Object[]{});
 
 		InvocationResult result = invocation.invoke(iface);
-		assertEquals(new TestException(), result.getData());
+		assertEquals(new TestException(), result.getExc());
 	}
 
 	@Test
@@ -113,7 +111,8 @@ public class InvocationTest {
 		TestInterface iface = mock(TestInterface.class);
 		when(iface.indexMethod(1, 2)).thenReturn(3);
 
-		Invocation invocation = Invocation.root().next(indexMethod, new Object[]{1, 2});
+		Invocation invocation = Invocation.root()
+				.next(TestInterface.INDEXMETHOD_METHOD, new Object[]{1, 2});
 		Object result = invocation.invokeSingle(iface);
 		assertEquals(3, result);
 	}

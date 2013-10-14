@@ -8,8 +8,9 @@ import java.util.Set;
 public class SetDescriptor<T> extends DataDescriptor<Set<T>> {
 	private final DataDescriptor<T> element;
 
-	public SetDescriptor(final DataDescriptor<T> element) {
-		super(TypeEnum.SET);
+	@SuppressWarnings("unchecked")
+	SetDescriptor(final DataDescriptor<T> element) {
+		super(TypeEnum.SET, (Class<Set<T>>) (Class<?>) Set.class);
 		this.element = checkNotNull(element);
 	}
 

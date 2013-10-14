@@ -44,7 +44,7 @@ public class Clients {
 		checkNotNull(cls);
 		checkNotNull(invocationHandler);
 
-		InterfaceDescriptor descriptor = InterfaceDescriptor.findDescriptor(cls);
+		InterfaceDescriptor<T> descriptor = InterfaceDescriptor.findDescriptor(cls);
 		checkArgument(descriptor != null, "Cannot find an interface descriptor in " + cls);
 
 		return InvocationProxy.create(cls, descriptor, invocationHandler);

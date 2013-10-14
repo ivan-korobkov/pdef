@@ -43,7 +43,7 @@ public class RestFormat {
 	@VisibleForTesting
 	@SuppressWarnings("unchecked")
 	void serializeSingleInvocation(final RestRequest request, final Invocation invocation) {
-		MethodDescriptor method = invocation.getMethod();
+		MethodDescriptor<?, ?> method = invocation.getMethod();
 		if (method.isIndex()) {
 			request.appendPath("/");
 		} else {
@@ -148,8 +148,8 @@ public class RestFormat {
 
 	// InvocationResult parsing.
 
-	public <T, E> InvocationResult parseInvocationResult(final RestResponse response,
-			final DataDescriptor<T> dataDescriptor,
+	public <T, E> InvocationResult parseInvocationResult(
+			final RestResponse response, final DataDescriptor<T> dataDescriptor,
 			@Nullable final DataDescriptor<E> excDescriptor) {
 		RpcResult rpc = RpcResult.parseFromJson(response.getContent());
 		RpcStatus status = rpc.getStatus();
@@ -168,8 +168,8 @@ public class RestFormat {
 			}
 
 			// All application exceptions are runtime.
-			RuntimeException r = (RuntimeException) nativeFormat.parse(rpc.getData(), excDescriptor);
-			return InvocationResult.exc(r);
+			E exc = nativeFormat.parse(rpc.getData(), excDescriptor);
+			return InvocationResult.exc((RuntimeException) exc);
 		}
 
 		throw new ClientError().setText("Unsupported rpc response status=" + status);
@@ -177,8 +177,8 @@ public class RestFormat {
 
 	// Invocation parsing.
 
-	public Invocation parseInvocation(final RestRequest request,
-			InterfaceDescriptor<?> descriptor) throws Exception {
+	public Invocation parseInvocation(final RestRequest request, InterfaceDescriptor<?> descriptor)
+			throws Exception {
 		checkNotNull(request);
 
 		String path = request.getPath();
@@ -187,7 +187,8 @@ public class RestFormat {
 		}
 
 		// Split the path into a list of parts (method names and positions arguments).
-		String[] partsArray = path.split("/", -1); // -1 disables discarding trailing empty strings.
+		String[] partsArray = path.split("/", -1); // -1 disables discarding trailing empty
+		// strings.
 		LinkedList<String> parts = Lists.newLinkedList();
 		Collections.addAll(parts, partsArray);
 
@@ -197,7 +198,7 @@ public class RestFormat {
 			String part = parts.removeFirst();
 
 			// Find a method by name .
-			MethodDescriptor method = descriptor.findMethod(part);
+			MethodDescriptor<?, ?> method = descriptor.findMethod(part);
 			if (method == null) {
 				// Try to get an index method, if it is not found by a name.
 				method = descriptor.getIndexMethod();
@@ -263,7 +264,7 @@ public class RestFormat {
 
 			// It's an interface method.
 			// Get the next interface and proceed parsing the parts.
-			descriptor = (InterfaceDescriptor) method.getResult();
+			descriptor = (InterfaceDescriptor<?>) method.getResult();
 		}
 
 		// The parts are empty, and we failed to parse a remote method invocation.
@@ -348,15 +349,14 @@ public class RestFormat {
 	// InvocationResult serialization.
 
 	public <T, E> RestResponse serializeInvocationResult(final InvocationResult result,
-			final DataDescriptor<T> dataDescriptor,
-			final DataDescriptor<E> excDescriptor) {
+			final DataDescriptor<T> dataDescriptor, final DataDescriptor<E> excDescriptor) {
 		RpcResult rpc = new RpcResult();
 
 		if (result.isOk()) {
 			// It's a successful method result.
 
 			@SuppressWarnings("unchecked")
-			T data = (T) result.getData();
+			T data = dataDescriptor.cast(result.getData());
 			Object serialized = nativeFormat.serialize(data, dataDescriptor);
 
 			rpc.setStatus(RpcStatus.OK);
@@ -366,8 +366,7 @@ public class RestFormat {
 			// It's an expected application exception.
 
 			assert excDescriptor != null;
-			@SuppressWarnings("unchecked")
-			E exc = (E) result.getData();
+			E exc = excDescriptor.cast(result.getExc());
 			Object serialized = nativeFormat.serialize(exc, excDescriptor);
 
 			rpc.setStatus(RpcStatus.EXCEPTION);

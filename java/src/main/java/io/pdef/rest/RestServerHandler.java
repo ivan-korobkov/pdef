@@ -5,19 +5,20 @@ import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
 import io.pdef.descriptors.DataDescriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
+import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
 import io.pdef.rpc.*;
 
 import java.net.HttpURLConnection;
 
-public class RestServerHandler implements Function<RestRequest, RestResponse> {
-	private final InterfaceDescriptor<?> descriptor;
+public class RestServerHandler<T> implements Function<RestRequest, RestResponse> {
+	private final InterfaceDescriptor<T> descriptor;
 	private final Function<Invocation, InvocationResult> invoker;
 	private final RestFormat format;
 
 	/** Creates a REST server handler. */
-	public RestServerHandler(final Class<?> cls,
+	public RestServerHandler(final Class<T> cls,
 			final Function<Invocation, InvocationResult> invoker) {
 		this.descriptor = InterfaceDescriptor.findDescriptor(cls);
 		this.invoker = checkNotNull(invoker);
@@ -33,7 +34,7 @@ public class RestServerHandler implements Function<RestRequest, RestResponse> {
 		try {
 			Invocation invocation = format.parseInvocation(request, descriptor);
 			DataDescriptor<?> dataDescriptor = invocation.getDataResult();
-			DataDescriptor<?> excDescriptor = invocation.getExc();
+			MessageDescriptor<?> excDescriptor = invocation.getExc();
 
 			InvocationResult result = invoker.apply(invocation);
 			return format.serializeInvocationResult(result, dataDescriptor, excDescriptor);

@@ -1,21 +1,21 @@
 package io.pdef.invoke;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import io.pdef.descriptors.DataDescriptor;
 import io.pdef.descriptors.Descriptor;
-import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.descriptors.MessageDescriptor;
+import io.pdef.descriptors.MethodDescriptor;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 
 public class Invocation {
-	private final MethodDescriptor method;
+	private final MethodDescriptor<?, ?> method;
 	private final Invocation parent;
 	private final Object[] args;
 
@@ -23,7 +23,7 @@ public class Invocation {
 		return new Invocation(null, null, null);
 	}
 
-	private Invocation(final MethodDescriptor method, final Invocation parent,
+	private Invocation(final MethodDescriptor<?, ?> method, final Invocation parent,
 			final Object[] args) {
 		this.method = method;
 		this.parent = parent;
@@ -51,24 +51,38 @@ public class Invocation {
 		return args;
 	}
 
-	public MethodDescriptor getMethod() {
+	public MethodDescriptor<?, ?> getMethod() {
 		return method;
 	}
 
-	public Descriptor getResult() {
-		return method == null ? null : method.getResult();
+	public Descriptor<?> getResult() {
+		if (isRoot()) {
+			return null;
+		}
+		return method.getResult();
 	}
 
 	public DataDescriptor<?> getDataResult() {
-		return method == null ? null : (DataDescriptor<?>) method.getResult();
+		if (isRoot()) {
+			throw new UnsupportedOperationException();
+		}
+
+		return (DataDescriptor<?>) method.getResult();
 	}
 
 	/** Returns the method exception or the parent exception. */
 	@Nullable
 	public MessageDescriptor<?> getExc() {
-		if (method != null) return method.getExc();
-		if (parent != null) return parent.getExc();
-		return null;
+		if (isRoot()) {
+			return null;
+		}
+
+		MessageDescriptor<?> exc = method.getExc();
+		if (exc == null) {
+			exc = parent.getExc();
+		}
+
+		return exc;
 	}
 
 	/** Returns true when the method result is not an interface. */
@@ -77,52 +91,59 @@ public class Invocation {
 	}
 
 	/** Creates a child invocation. */
-	public Invocation next(final MethodDescriptor method, final Object[] args) {
+	public Invocation next(final MethodDescriptor<?, ?> method, final Object[] args) {
 		return new Invocation(method, this, args);
 	}
 
 	/** Returns a list of invocation. */
 	public List<Invocation> toChain() {
-		List<Invocation> chain = parent != null ? parent.toChain() : Lists.<Invocation>newArrayList();
-		if (!isRoot()) chain.add(this);
+		if (isRoot()) {
+			return Lists.newArrayList();
+		}
+
+		List<Invocation> chain = parent.toChain();
+		chain.add(this);
 
 		return chain;
 	}
 
 	/** Invokes this invocation chain on an object. */
+	@SuppressWarnings("unchecked")
 	public InvocationResult invoke(Object object) {
 		checkNotNull(object);
 
-		List<Invocation> chain = toChain();
-		for (Invocation invocation : chain) {
+		for (Invocation invocation : toChain()) {
 			try {
 				object = invocation.invokeSingle(object);
-			} catch (Throwable t) {
-				return handleException(t);
+			} catch (Exception e) {
+				return handleException(e);
 			}
 		}
 
 		return InvocationResult.ok(object);
 	}
 
-	/** Invokes only this invocation (not a chain) on an object. */
-	public Object invokeSingle(final Object object) throws Throwable {
-		try {
-			return method.invoke(object, args);
-		} catch (InvocationTargetException e) {
-			throw e.getCause();
-		}
+	@VisibleForTesting
+	Object invokeSingle(final Object object) throws Exception {
+		@SuppressWarnings("unchecked")
+		MethodDescriptor<Object, Object> unchecked = (MethodDescriptor<Object, Object>) method;
+		return unchecked.invoke(object, args);
 	}
 
-	private InvocationResult handleException(final Throwable t) {
+	private InvocationResult handleException(final Exception exc) {
 		MessageDescriptor<?> excd = getExc();
-		if (excd == null || !excd.getJavaClass().isInstance(t)) {
+		if (excd == null) {
 			// It is not an expected application exception.
-			throw Throwables.propagate(t);
+			throw Throwables.propagate(exc);
+		}
+
+		Class<?> excClass = excd.getJavaClass();
+		if (!excClass.isInstance(exc)) {
+			throw Throwables.propagate(exc);
 		}
 
 		// It is an expected application exception.
 		// All application exceptions are runtime.
-		return InvocationResult.exc((RuntimeException) t);
+		return InvocationResult.exc((RuntimeException) exc);
 	}
 }

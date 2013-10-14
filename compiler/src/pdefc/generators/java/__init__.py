@@ -205,9 +205,10 @@ class JavaReference(object):
         meta = '%s.DESCRIPTOR' % name
         return JavaReference(type0.type, name, default=default, meta=meta)
 
-    def __init__(self, type_enum, name, unboxed=None, default='null', meta=None):
+    def __init__(self, type_enum, name, unboxed=None, default='null', meta=None, boxed=None):
         self.type_enum = type_enum
         self.name = name
+        self.boxed = boxed or name
         self.unboxed = unboxed or self
         self.default = default
         self.descriptor = meta
@@ -246,7 +247,7 @@ NATIVE_TYPES = {
             meta='io.pdef.descriptors.Descriptors.object'),
 
     TypeEnum.VOID: JavaReference(TypeEnum.VOID, 'void', 'void',
-            meta='io.pdef.descriptors.Descriptors.void0')
+            meta='io.pdef.descriptors.Descriptors.void0', boxed='Void')
 }
 
 

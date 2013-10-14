@@ -9,7 +9,7 @@ public class InterfaceDescriptorTest {
 
 	@Test
 	public void testFindMethod() throws Exception {
-		MethodDescriptor method = descriptor.findMethod("indexMethod");
+		MethodDescriptor<TestInterface, ?> method = descriptor.findMethod("indexMethod");
 
 		assertNotNull(method);
 		assertEquals("indexMethod", method.getName());
@@ -17,8 +17,8 @@ public class InterfaceDescriptorTest {
 
 	@Test
 	public void testGetIndexMethod() throws Exception {
-		MethodDescriptor method = descriptor.getIndexMethod();
-		MethodDescriptor expected = descriptor.findMethod("indexMethod");
+		MethodDescriptor<TestInterface, ?> method = descriptor.getIndexMethod();
+		MethodDescriptor<TestInterface, ?> expected = descriptor.findMethod("indexMethod");
 		assertTrue(method == expected);
 	}
 

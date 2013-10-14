@@ -17,7 +17,6 @@ import java.util.Map;
  * MessageDescriptor is a descriptor for Pdef messages.
  * */
 public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
-	private final Class<M> javaClass;
 	private final Supplier<M> supplier;
 	private final MessageDescriptor<? super M> base;
 	private final List<FieldDescriptor<M, ?>> declaredFields;
@@ -32,8 +31,7 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 	private final boolean form;
 
 	private MessageDescriptor(final Builder<M> builder) {
-		super(TypeEnum.MESSAGE);
-		this.javaClass = checkNotNull(builder.javaClass);
+		super(TypeEnum.MESSAGE, builder.javaClass);
 		this.supplier = checkNotNull(builder.supplier);
 
 		base = builder.base;
@@ -56,11 +54,6 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 
 	public static <M extends Message> Builder<M> builder() {
 		return new Builder<M>();
-	}
-
-	/** Returns a Java class. */
-	public Class<M> getJavaClass() {
-		return javaClass;
 	}
 
 	/** Returns a base descriptor. */

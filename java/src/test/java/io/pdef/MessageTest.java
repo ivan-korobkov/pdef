@@ -54,8 +54,7 @@ public class MessageTest {
 				.setAList(ImmutableList.of(1, 2))
 				.setASet(ImmutableSet.of(1, 2))
 				.setAMap(ImmutableMap.<Integer, Float>of(1, 1.5f))
-				.setAMessage(null)
-				.setAnObject("object");
+				.setAMessage(null);
 	}
 
 	private Map<String, Object> createComplexMessageMap() {
@@ -71,7 +70,6 @@ public class MessageTest {
 				.put("aList", ImmutableList.of(1, 2))
 				.put("aSet", ImmutableSet.of(1, 2))
 				.put("aMap", ImmutableMap.of(1, 1.5f))
-				.put("anObject", "object")
 				.build();
 	}
 }

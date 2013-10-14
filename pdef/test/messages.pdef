@@ -3,6 +3,7 @@ Test pdef module with messages and forms.
 Multi-line comment.
 */
 module pdef.test.messages;
+from pdef.test import inheritance;
 
 
 /**
@@ -36,8 +37,8 @@ message ComplexMessage : SimpleMessage {
     aMap        map<int32, float>;
 
     anEnum      TestEnum;
-    aMessage    ComplexMessage;
-    anObject    object;
+    aMessage    SimpleMessage;
+    aPolymorphicMessage inheritance.Base;
 }
 
 @form

@@ -142,7 +142,7 @@ public class RestFormat {
 		} else if (typeEnum.isEnum()) {
 			return arg.toString().toLowerCase();
 		} else {
-			return jsonFormat.serialize(descriptor, arg, false);
+			return jsonFormat.serialize(arg, descriptor, false);
 		}
 	}
 
@@ -157,7 +157,7 @@ public class RestFormat {
 		if (status == RpcStatus.OK) {
 			// It's a successful result.
 
-			T data = nativeFormat.parse(dataDescriptor, rpc.getData());
+			T data = nativeFormat.parse(rpc.getData(), dataDescriptor);
 			return InvocationResult.ok(data);
 
 		} else if (status == RpcStatus.EXCEPTION) {
@@ -168,7 +168,7 @@ public class RestFormat {
 			}
 
 			// All application exceptions are runtime.
-			RuntimeException r = (RuntimeException) nativeFormat.parse(excDescriptor, rpc.getData());
+			RuntimeException r = (RuntimeException) nativeFormat.parse(rpc.getData(), excDescriptor);
 			return InvocationResult.exc(r);
 		}
 
@@ -337,11 +337,11 @@ public class RestFormat {
 
 		} else if (typeEnum.isPrimitive() || typeEnum.isEnum()) {
 			// Native format supports parsing from string.
-			return nativeFormat.parse(descriptor, value);
+			return nativeFormat.parse(value, descriptor);
 
 		} else {
 			// Parse messages and collections from a JSON string.
-			return jsonFormat.parse(descriptor, value);
+			return jsonFormat.parse(value, descriptor);
 		}
 	}
 
@@ -357,7 +357,7 @@ public class RestFormat {
 
 			@SuppressWarnings("unchecked")
 			T data = (T) result.getData();
-			Object serialized = nativeFormat.serialize(dataDescriptor, data);
+			Object serialized = nativeFormat.serialize(data, dataDescriptor);
 
 			rpc.setStatus(RpcStatus.OK);
 			rpc.setData(serialized);
@@ -368,7 +368,7 @@ public class RestFormat {
 			assert excDescriptor != null;
 			@SuppressWarnings("unchecked")
 			E exc = (E) result.getData();
-			Object serialized = nativeFormat.serialize(excDescriptor, exc);
+			Object serialized = nativeFormat.serialize(exc, excDescriptor);
 
 			rpc.setStatus(RpcStatus.EXCEPTION);
 			rpc.setData(serialized);

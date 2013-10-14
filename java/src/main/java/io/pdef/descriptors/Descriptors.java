@@ -1,9 +1,5 @@
 package io.pdef.descriptors;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /** Primitive descriptors and collection descriptor factories. */
 public class Descriptors {
 	private Descriptors() {}
@@ -43,15 +39,15 @@ public class Descriptors {
 		}
 	};
 
-	public static <T> DataDescriptor<List<T>> list(final DataDescriptor<T> element) {
+	public static <T> ListDescriptor<T> list(final DataDescriptor<T> element) {
 		return new ListDescriptor<T>(element);
 	}
 
-	public static <T> DataDescriptor<Set<T>> set(final DataDescriptor<T> element) {
+	public static <T> SetDescriptor<T> set(final DataDescriptor<T> element) {
 		return new SetDescriptor<T>(element);
 	}
 
-	public static <K, V> DataDescriptor<Map<K, V>> map(final DataDescriptor<K> key,
+	public static <K, V> MapDescriptor<K, V> map(final DataDescriptor<K> key,
 			final DataDescriptor<V> value) {
 		return new MapDescriptor<K, V>(key, value);
 	}

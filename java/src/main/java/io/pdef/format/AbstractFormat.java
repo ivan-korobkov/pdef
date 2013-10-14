@@ -10,11 +10,11 @@ import java.util.Set;
 
 public abstract class AbstractFormat<F> implements Format {
 
-	public <T> F serialize(final DataDescriptor<T> descriptor, final T object) throws FormatException {
+	public <T> F serialize(final T object, final DataDescriptor<T> descriptor) throws FormatException {
 		checkNotNull(descriptor);
 
 		try {
-			return doSerialize(descriptor, object);
+			return doSerialize(object, descriptor);
 		} catch (FormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -23,7 +23,7 @@ public abstract class AbstractFormat<F> implements Format {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected <T> F doSerialize(final DataDescriptor<T> descriptor, final T object) throws Exception {
+	protected <T> F doSerialize(final T object, final DataDescriptor<T> descriptor) throws Exception {
 		TypeEnum typeEnum = descriptor.getType();
 		switch (typeEnum) {
 			case BOOL:
@@ -41,16 +41,16 @@ public abstract class AbstractFormat<F> implements Format {
 			case STRING:
 				return serializeString((String) object);
 			case LIST:
-				return (F) serializeList((ListDescriptor) descriptor, (List) object);
+				return (F) serializeList((List) object, (ListDescriptor) descriptor);
 			case SET:
-				return (F) serializeSet((SetDescriptor) descriptor, (Set) object);
+				return (F) serializeSet((Set) object, (SetDescriptor) descriptor);
 			case MAP:
-				return (F) serializeMap((MapDescriptor) descriptor, (Map) object);
+				return (F) serializeMap((Map) object, (MapDescriptor) descriptor);
 			case ENUM:
-				return (F) serializeEnum((EnumDescriptor) descriptor, (Enum) object);
+				return (F) serializeEnum((Enum) object, (EnumDescriptor) descriptor);
 			case MESSAGE:
 			case EXCEPTION:
-				return (F) serializeMessage((MessageDescriptor) descriptor, (Message) object);
+				return (F) serializeMessage((Message) object, (MessageDescriptor) descriptor);
 			case OBJECT:
 				return serializeObject(object);
 			case VOID:
@@ -74,24 +74,24 @@ public abstract class AbstractFormat<F> implements Format {
 
 	protected abstract F serializeString(final String value) throws Exception;
 
-	protected abstract <E> F serializeList(final ListDescriptor<E> descriptor, final List<E> list)
+	protected abstract <E> F serializeList(final List<E> list, final ListDescriptor<E> descriptor)
 			throws Exception;
 
-	protected abstract <E> F serializeSet(final SetDescriptor<E> descriptor, final Set<E> set)
+	protected abstract <E> F serializeSet(final Set<E> set, final SetDescriptor<E> descriptor)
 			throws Exception;
 
-	protected abstract <K, V> F serializeMap(final MapDescriptor<K, V> descriptor, final Map<K, V> map)
-			throws Exception;
+	protected abstract <K, V> F serializeMap(final Map<K, V> map,
+			final MapDescriptor<K, V> descriptor) throws Exception;
 
-	protected abstract <E extends Enum<E>> F serializeEnum(final EnumDescriptor<E> descriptor,
-			final E value) throws Exception;
+	protected abstract <E extends Enum<E>> F serializeEnum(final E value,
+			final EnumDescriptor<E> descriptor) throws Exception;
 
-	protected abstract <M extends Message> F serializeMessage(final MessageDescriptor<M> descriptor,
-			final M message) throws Exception;
+	protected abstract <M extends Message> F serializeMessage(final M message,
+			final MessageDescriptor<M> descriptor) throws Exception;
 
 	protected abstract F serializeObject(final Object object);
 
-	public <T> T parse(final DataDescriptor<T> descriptor, final F input) throws FormatException {
+	public <T> T parse(final F input, final DataDescriptor<T> descriptor) throws FormatException {
 		checkNotNull(descriptor);
 
 		try {
@@ -122,16 +122,16 @@ public abstract class AbstractFormat<F> implements Format {
 			case STRING:
 				return (T) parseString(input);
 			case LIST:
-				return (T) parseList((ListDescriptor<?>) descriptor, input);
+				return (T) parseList(input, (ListDescriptor<?>) descriptor);
 			case SET:
-				return (T) parseSet((SetDescriptor<?>) descriptor, input);
+				return (T) parseSet(input, (SetDescriptor<?>) descriptor);
 			case MAP:
-				return (T) parseMap((MapDescriptor<?, ?>) descriptor, input);
+				return (T) parseMap(input, (MapDescriptor<?, ?>) descriptor);
 			case ENUM:
-				return (T) parseEnum((EnumDescriptor<?>) descriptor, input);
+				return (T) parseEnum(input, (EnumDescriptor<?>) descriptor);
 			case MESSAGE:
 			case EXCEPTION:
-				return (T) parseMessage((MessageDescriptor<?>) descriptor, input);
+				return (T) parseMessage(input, (MessageDescriptor<?>) descriptor);
 			case OBJECT:
 				return (T) parseObject(input);
 			case VOID:
@@ -155,20 +155,20 @@ public abstract class AbstractFormat<F> implements Format {
 
 	protected abstract Object parseString(final Object input) throws Exception;
 
-	protected abstract <E> List<E> parseList(final ListDescriptor<E> descriptor, final F input)
+	protected abstract <E> List<E> parseList(final F input, final ListDescriptor<E> descriptor)
 			throws Exception;
 
-	protected abstract <E> Set<E> parseSet(final SetDescriptor<E> descriptor, final F input)
+	protected abstract <E> Set<E> parseSet(final F input, final SetDescriptor<E> descriptor)
 			throws Exception;
 
-	protected abstract <K, V> Map<K, V> parseMap(final MapDescriptor<K, V> descriptor, final F input)
-			throws Exception;
+	protected abstract <K, V> Map<K, V> parseMap(final F input,
+			final MapDescriptor<K, V> descriptor) throws Exception;
 
-	protected abstract <T extends Enum<T>> T parseEnum(final EnumDescriptor<T> descriptor,
-			final F input) throws Exception;
+	protected abstract <T extends Enum<T>> T parseEnum(final F input,
+			final EnumDescriptor<T> descriptor) throws Exception;
 
-	protected abstract <M extends Message> M parseMessage(final MessageDescriptor<M> descriptor,
-			final F input) throws Exception;
+	protected abstract <M extends Message> M parseMessage(final F input,
+			final MessageDescriptor<M> descriptor) throws Exception;
 
 	protected abstract Object parseObject(final F input) throws Exception;
 }

@@ -10,11 +10,11 @@ public enum {{ name }} {
     {%- endfor %};
 
     public static {{ name }} parseString(final String s) {
-        return io.pdef.format.NativeFormat.instance().parse(DESCRIPTOR, s);
+        return io.pdef.format.NativeFormat.instance().parse(s, DESCRIPTOR);
     }
 
     public static {{ name }} parseJson(final String s) {
-        return io.pdef.format.JsonFormat.instance().parse(DESCRIPTOR, s);
+        return io.pdef.format.JsonFormat.instance().parse(s, DESCRIPTOR);
     }
 
     public static final io.pdef.descriptors.EnumDescriptor<{{ name }}> DESCRIPTOR =

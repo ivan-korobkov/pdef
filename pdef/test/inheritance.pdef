@@ -16,6 +16,7 @@ Base polymorphic message.
 */
 message Base {
     type    PolymorphicType     @discriminator;
+    field   string;
 }
 
 message Subtype : Base(PolymorphicType.SUBTYPE) {

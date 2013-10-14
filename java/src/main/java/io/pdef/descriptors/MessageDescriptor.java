@@ -1,14 +1,17 @@
 package io.pdef.descriptors;
 
+import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.pdef.Message;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * MessageDescriptor is a descriptor for Pdef messages.
@@ -19,6 +22,7 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 	private final MessageDescriptor<? super M> base;
 	private final List<FieldDescriptor<M, ?>> declaredFields;
 	private final List<FieldDescriptor<? super M, ?>> fields;
+	private final Map<String, FieldDescriptor<? super M, ?>> fieldMap;
 
 	private final Enum<?> discriminatorValue;
 	private final FieldDescriptor<? super M, ?> discriminator;
@@ -36,6 +40,12 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 
 		declaredFields = ImmutableList.copyOf(builder.declaredFields);
 		fields = joinFields(declaredFields, base);
+		fieldMap = Maps.uniqueIndex(fields, new Function<FieldDescriptor<? super M, ?>, String>() {
+			@Override
+			public String apply(final FieldDescriptor<? super M, ?> input) {
+				return input.getName();
+			}
+		});
 
 		discriminator = findDiscriminator(fields);
 		discriminatorValue = builder.discriminatorValue;
@@ -88,14 +98,19 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 		return (subtypes = builder.build());
 	}
 
-	/** Returns declared fields. */
+	/** Returns an immutable list of declared fields. */
 	public List<FieldDescriptor<M, ?>> getDeclaredFields() {
 		return declaredFields;
 	}
 
-	/** Returns inherited + declared fields. */
+	/** Returns an immutable list of inherited and declared fields. */
 	public List<FieldDescriptor<? super M, ?>> getFields() {
 		return fields;
+	}
+
+	/** Returns a immutable map of names to fields. */
+	public Map<String, FieldDescriptor<? super M, ?>> getFieldMap() {
+		return fieldMap;
 	}
 
 	/** Returns whether this message is a form. */

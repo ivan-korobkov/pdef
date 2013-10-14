@@ -28,17 +28,17 @@ public abstract class AbstractMessage implements Message, Serializable {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> serializeToMap() {
-		return (Map<String, Object>) NativeFormat.instance().serialize(thisDescriptor(), this);
+		return (Map<String, Object>) NativeFormat.instance().serialize(this, thisDescriptor());
 	}
 
 	@Override
 	public String serializeToJson() {
-		return JsonFormat.instance().serialize(thisDescriptor(), this);
+		return serializeToJson(true);
 	}
 
 	@Override
 	public String serializeToJson(final boolean indent) {
-		return JsonFormat.instance().serialize(thisDescriptor(), this, indent);
+		return JsonFormat.instance().serialize(this, thisDescriptor(), indent);
 	}
 
 	@Override

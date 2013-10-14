@@ -58,7 +58,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <E> List<Object> serializeList(final ListDescriptor<E> descriptor, final List<E> list)
+	protected <E> List<Object> serializeList(final List<E> list, final ListDescriptor<E> descriptor)
 			throws Exception {
 		if (list == null) {
 			return null;
@@ -68,7 +68,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		List<Object> result = Lists.newArrayList();
 
 		for (E elem : list) {
-			Object serialized = doSerialize(element, elem);
+			Object serialized = doSerialize(elem, element);
 			result.add(serialized);
 		}
 
@@ -76,7 +76,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <E> Set<Object> serializeSet(final SetDescriptor<E> descriptor, final Set<E> set)
+	protected <E> Set<Object> serializeSet(final Set<E> set, final SetDescriptor<E> descriptor)
 			throws Exception {
 		if (set == null) {
 			return null;
@@ -85,7 +85,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		DataDescriptor<E> element = descriptor.getElement();
 		Set<Object> result = Sets.newHashSet();
 		for (E elem : set) {
-			Object serialized = doSerialize(element, elem);
+			Object serialized = doSerialize(elem, element);
 			result.add(serialized);
 		}
 
@@ -93,8 +93,8 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <K, V> Map<Object, Object> serializeMap(final MapDescriptor<K, V> descriptor,
-			final Map<K, V> map) throws Exception {
+	protected <K, V> Map<Object, Object> serializeMap(final Map<K, V> map,
+			final MapDescriptor<K, V> descriptor) throws Exception {
 		if (map == null) {
 			return null;
 		}
@@ -104,8 +104,8 @@ public class NativeFormat extends AbstractFormat<Object> {
 		Map<Object, Object> result = Maps.newHashMap();
 
 		for (Map.Entry<K, V> e : map.entrySet()) {
-			Object k = doSerialize(key, e.getKey());
-			Object v = doSerialize(value, e.getValue());
+			Object k = doSerialize(e.getKey(), key);
+			Object v = doSerialize(e.getValue(), value);
 			result.put(k, v);
 		}
 
@@ -113,13 +113,13 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <E extends Enum<E>> E serializeEnum(final EnumDescriptor<E> descriptor, final E value) {
+	protected <E extends Enum<E>> E serializeEnum(final E value, final EnumDescriptor<E> descriptxr) {
 		return value;
 	}
 
 	@Override
 	protected <M extends Message> Map<String, Object> serializeMessage(
-			final MessageDescriptor<M> descriptor, final M message) throws Exception {
+			final M message, final MessageDescriptor<M> descriptor) throws Exception {
 		if (message == null) {
 			return null;
 		}
@@ -145,7 +145,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 			return;
 		}
 
-		Object serialized = doSerialize(field.getType(), value);
+		Object serialized = doSerialize(value, field.getType());
 		map.put(field.getName(), serialized);
 	}
 
@@ -239,7 +239,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <E> List<E> parseList(final ListDescriptor<E> descriptor, final Object input)
+	protected <E> List<E> parseList(final Object input, final ListDescriptor<E> descriptor)
 			throws Exception {
 		if (input == null) {
 			return null;
@@ -260,7 +260,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <E> Set<E> parseSet(final SetDescriptor<E> descriptor, final Object input) throws Exception {
+	protected <E> Set<E> parseSet(final Object input, final SetDescriptor<E> descriptor) throws Exception {
 		if (input == null) {
 			return null;
 		} else if (!(input instanceof Collection)) {
@@ -280,7 +280,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <K, V> Map<K, V> parseMap(final MapDescriptor<K, V> descriptor, final Object input)
+	protected <K, V> Map<K, V> parseMap(final Object input, final MapDescriptor<K, V> descriptor)
 			throws Exception {
 		if (input == null) {
 			return null;
@@ -303,7 +303,8 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <T extends Enum<T>> T parseEnum(final EnumDescriptor<T> descriptor, final Object input) {
+	protected <T extends Enum<T>> T parseEnum(final Object input,
+			final EnumDescriptor<T> descriptor) {
 		if (input == null) {
 			return null;
 		} else if (input instanceof Enum<?>) {
@@ -315,7 +316,8 @@ public class NativeFormat extends AbstractFormat<Object> {
 	}
 
 	@Override
-	protected <M extends Message> M parseMessage(MessageDescriptor<M> descriptor, final Object input)
+	protected <M extends Message> M parseMessage(final Object input,
+			MessageDescriptor<M> descriptor)
 			throws Exception {
 		if (input == null) {
 			return null;

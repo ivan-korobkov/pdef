@@ -21,11 +21,11 @@ public class {{ name }} extends {{ base_or_root }} {
 {% endif %}
 
     public static {{ name }} parseFromMap(final java.util.Map<String, Object> map) {
-        return io.pdef.format.NativeFormat.instance().parse(DESCRIPTOR, map);
+        return io.pdef.format.NativeFormat.instance().parse(map, DESCRIPTOR);
     }
 
     public static {{ name }} parseFromJson(final String s) {
-        return io.pdef.format.JsonFormat.instance().parse(DESCRIPTOR, s);
+        return io.pdef.format.JsonFormat.instance().parse(s, DESCRIPTOR);
     }
 
 {% for field in declared_fields %}

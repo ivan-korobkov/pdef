@@ -6,25 +6,38 @@ import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
 
-public class RestServerServletHandler {
-	private final Function<RestRequest, RestResponse> handler;
+class RestServerServlet extends HttpServlet {
+	private final Function<RestRequest, RestResponse> server;
 
-	/** Creates a REST server. */
-	RestServerServletHandler(final Function<RestRequest, RestResponse> handler) {
-		this.handler = checkNotNull(handler);
+	RestServerServlet(final Function<RestRequest, RestResponse> server) {
+		this.server = checkNotNull(server);
 	}
 
-	public void handle(final HttpServletRequest request, final HttpServletResponse response)
+	@Override
+	protected void doPost(final HttpServletRequest req, final HttpServletResponse resp)
+			throws ServletException, IOException {
+		doService(req, resp);
+	}
+
+	@Override
+	protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
+			throws ServletException, IOException {
+		doService(req, resp);
+	}
+
+	private void doService(final HttpServletRequest request, final HttpServletResponse response)
 			throws IOException {
 		checkNotNull(request);
 
 		RestRequest req = parseRequest(request);
-		RestResponse resp = handleRequest(req);
+		RestResponse resp = server.apply(req);
 		writeResponse(resp, response);
 	}
 
@@ -67,10 +80,6 @@ public class RestServerServletHandler {
 		}
 
 		return params;
-	}
-
-	private RestResponse handleRequest(final RestRequest req) {
-		return handler.apply(req);
 	}
 
 	@VisibleForTesting

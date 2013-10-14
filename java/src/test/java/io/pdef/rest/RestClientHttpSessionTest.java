@@ -22,12 +22,12 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.Arrays;
 
-public class RestClientHttpRequestHandlerTest {
-	RestClientHttpRequestHandler sender;
+public class RestClientHttpSessionTest {
+	RestClientHttpSession sender;
 
 	@Before
 	public void setUp() throws Exception {
-		sender = new RestClientHttpRequestHandler("http://localhost:8080/", null);
+		sender = new RestClientHttpSession("http://localhost:8080/", null);
 	}
 
 	@Test

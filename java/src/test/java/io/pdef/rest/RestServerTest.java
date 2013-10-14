@@ -8,32 +8,22 @@ import io.pdef.invoke.InvocationResult;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import static org.junit.Assert.*;
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import static org.mockito.MockitoAnnotations.initMocks;
 
+import javax.annotation.Nullable;
 import java.net.HttpURLConnection;
 
 public class RestServerTest {
-	RestServer<TestInterface> handler;
-	@Mock Function<Invocation, InvocationResult> invoker;
-
-	@Before
-	public void setUp() throws Exception {
-		initMocks(this);
-		handler = new RestServer<TestInterface>(TestInterface.class, invoker);
-	}
-
 	@Test
 	public void testHandle() throws Exception {
-		handler = RestServer.create(TestInterface.class,
-				new Function<Invocation, InvocationResult>() {
+		RestServer<TestInterface> server = RestServer.builder(TestInterface.class)
+				.setInvoker(new Function<Invocation, InvocationResult>() {
 					@Override
 					public InvocationResult apply(final Invocation input) {
 						return InvocationResult.ok(3);
 					}
-				});
+				})
+				.build();
 
 		RestRequest request = new RestRequest()
 				.setPath("/remoteMethod")
@@ -43,7 +33,7 @@ public class RestServerTest {
 				.setData(3)
 				.serializeToJson(true);
 
-		RestResponse response = handler.apply(request);
+		RestResponse response = server.apply(request);
 		assertNotNull(response);
 		assertTrue(response.hasOkStatus());
 		assertTrue(response.hasJsonContentType());
@@ -52,15 +42,15 @@ public class RestServerTest {
 
 	@Test
 	public void testHandle_exc() throws Exception {
-		final TestException exc = new TestException()
-				.setText("Hello, world");
-		handler = RestServer.create(TestInterface.class,
-				new Function<Invocation, InvocationResult>() {
+		final TestException exc = new TestException().setText("Hello, world");
+		RestServer<TestInterface> server = RestServer.builder(TestInterface.class)
+				.setInvoker(new Function<Invocation, InvocationResult>() {
 					@Override
 					public InvocationResult apply(final Invocation input) {
 						return InvocationResult.exc(exc);
 					}
-				});
+				})
+				.build();
 
 		RestRequest request = new RestRequest()
 				.setPath("/remoteMethod")
@@ -71,7 +61,7 @@ public class RestServerTest {
 				.setExc(exc)
 				.serializeToJson();
 
-		RestResponse response = handler.apply(request);
+		RestResponse response = server.apply(request);
 		assertNotNull(response);
 		assertTrue(response.hasOkStatus());
 		assertTrue(response.hasJsonContentType());
@@ -80,16 +70,17 @@ public class RestServerTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testHandle_restError() throws Exception {
-		handler = RestServer.create(TestInterface.class,
-				new Function<Invocation, InvocationResult>() {
+		RestServer<TestInterface> server = RestServer.builder(TestInterface.class)
+				.setInvoker(new Function<Invocation, InvocationResult>() {
 					@Override
 					public InvocationResult apply(final Invocation input) {
 						throw new IllegalArgumentException();
 					}
-				});
+				})
+				.build();
 
 		RestRequest request = new RestRequest().setPath("/");
-		handler.apply(request);
+		server.apply(request);
 	}
 
 	// errorResponse.
@@ -97,7 +88,16 @@ public class RestServerTest {
 	@Test
 	public void testErrorResponse() throws Exception {
 		RestException exc = RestException.serviceUnavailable("Test service unavailable");
-		RestResponse response = handler.errorResponse(exc);
+		RestResponse response = RestServer.builder(TestInterface.class)
+				.setInvoker(new Function<Invocation, InvocationResult>() {
+					@Nullable
+					@Override
+					public InvocationResult apply(@Nullable final Invocation input) {
+						return null;
+					}
+				})
+				.build()
+				.errorResponse(exc);
 
 		assertEquals(HttpURLConnection.HTTP_UNAVAILABLE, response.getStatus());
 		assertEquals(RestResponse.TEXT_CONTENT_TYPE, response.getContentType());

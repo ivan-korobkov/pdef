@@ -95,27 +95,20 @@ public class RestIntegrationTest {
 	}
 
 	private TestInterface client() {
-		return RestClient.httpClient(TestInterface.class, address);
+		return RestClient.builder()
+				.setUrl(address)
+				.buildProxy(TestInterface.class);
 	}
 
 	public static class TestServlet extends HttpServlet {
-		@Override
-		protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-				throws ServletException, IOException {
-			handle(req, resp);
-		}
+		private final HttpServlet delegate = RestServer.builder(TestInterface.class)
+				.setService(new TestService())
+				.buildServlet();
 
 		@Override
-		protected void doPost(final HttpServletRequest req, final HttpServletResponse resp)
+		protected void service(final HttpServletRequest req, final HttpServletResponse resp)
 				throws ServletException, IOException {
-			handle(req, resp);
-		}
-
-		private void handle(final HttpServletRequest req, final HttpServletResponse resp)
-				throws IOException {
-			RestServerServletHandler server = RestServer.servletServer(TestInterface.class,
-					new TestService());
-			server.handle(req, resp);
+			delegate.service(req, resp);
 		}
 	}
 

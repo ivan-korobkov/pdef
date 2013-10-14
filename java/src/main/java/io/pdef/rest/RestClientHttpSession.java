@@ -21,12 +21,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
-class RestClientHttpRequestHandler implements Function<RestRequest, RestResponse> {
+class RestClientHttpSession implements Function<RestRequest, RestResponse> {
 	private final String url;
 	private final Function<Request, Response> session;
 
 	/** Creates a REST client sender. */
-	public RestClientHttpRequestHandler(final String url,
+	public RestClientHttpSession(final String url,
 			@Nullable final Function<Request, Response> session) {
 		this.url = checkNotNull(url);
 		this.session = session != null ? session : new DefaultSession();

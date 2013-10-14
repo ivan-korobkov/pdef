@@ -17,13 +17,15 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.net.HttpURLConnection;
 
 public class RestClientTest {
-	@Mock Function<RestRequest, RestResponse> requestHandler;
+	@Mock Function<RestRequest, RestResponse> session;
 	RestClient handler;
 
 	@Before
 	public void setUp() throws Exception {
 		initMocks(this);
-		handler = RestClient.client(requestHandler);
+		handler = RestClient.builder()
+				.setRawSession(session)
+				.build();
 	}
 
 	@Test
@@ -42,7 +44,7 @@ public class RestClientTest {
 				.setJsonContentType()
 				.setContent(result.serializeToJson(true));
 
-		when(requestHandler.apply(request)).thenReturn(response);
+		when(session.apply(request)).thenReturn(response);
 		int methodResult = proxy(handler).indexMethod(1, 2);
 
 		assertEquals(3, methodResult);

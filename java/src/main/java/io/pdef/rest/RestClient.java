@@ -10,38 +10,16 @@ import io.pdef.invoke.InvocationResult;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 
-import javax.annotation.Nullable;
-
 public class RestClient implements Function<Invocation, InvocationResult> {
-	private final Function<RestRequest, RestResponse> requestHandler;
+	private final Function<RestRequest, RestResponse> session;
 	private final RestFormat format;
 
-	/** Creates a default REST client. */
-	public static <T> T httpClient(final Class<T> cls, final String url) {
-		checkNotNull(cls);
-		checkNotNull(url);
-
-		return httpClient(cls, url, null);
+	public static Builder builder() {
+		return new Builder();
 	}
 
-	/** Creates a default REST client with a custom session. */
-	public static <T> T httpClient(final Class<T> cls, final String url,
-			@Nullable final Function<Request, Response> session) {
-		checkNotNull(cls);
-		checkNotNull(url);
-
-		RestClientHttpRequestHandler sender = new RestClientHttpRequestHandler(url, session);
-		RestClient restClient = new RestClient(sender);
-		return InvocationClient.create(cls, restClient);
-	}
-
-	/** Creates a rest client. */
-	public static RestClient client(final Function<RestRequest, RestResponse> requestHandler) {
-		return new RestClient(requestHandler);
-	}
-
-	private RestClient(final Function<RestRequest, RestResponse> requestHandler) {
-		this.requestHandler = checkNotNull(requestHandler);
+	private RestClient(final Function<RestRequest, RestResponse> session) {
+		this.session = checkNotNull(session);
 		format = new RestFormat();
 	}
 
@@ -54,7 +32,7 @@ public class RestClient implements Function<Invocation, InvocationResult> {
 		checkNotNull(invocation);
 
 		RestRequest request = format.serializeInvocation(invocation);
-		RestResponse response = requestHandler.apply(request);
+		RestResponse response = session.apply(request);
 		assert response != null;
 
 		if (response.hasOkStatus() && response.hasJsonContentType()) {
@@ -78,5 +56,67 @@ public class RestClient implements Function<Invocation, InvocationResult> {
 		}
 
 		return new RestException(status, text);
+	}
+
+	public static class Builder {
+		private String url;
+		private Function<Request, Response> session;
+		private Function<RestRequest, RestResponse> rawSession;
+
+		private Builder() {}
+
+		public String getUrl() {
+			return url;
+		}
+
+		public Builder setUrl(final String url) {
+			checkState(rawSession == null, "Cannot set a url, a rawSession is already present");
+			this.url = checkNotNull(url);
+			return this;
+		}
+
+		public Function<Request, Response> getSession() {
+			return session;
+		}
+
+		public Builder setSession(final Function<Request, Response> session) {
+			checkState(rawSession == null, "Cannot set a session, a rawSession is already present");
+			this.session = checkNotNull(session);
+			return this;
+		}
+
+		public Function<RestRequest, RestResponse> getRawSession() {
+			return rawSession;
+		}
+
+		public Builder setRawSession(final Function<RestRequest, RestResponse> rawSession) {
+			checkState(url == null && session == null,
+					"Cannot set a rawSession, a url or a session is present");
+			this.rawSession = checkNotNull(rawSession);
+			return this;
+		}
+
+		private Function<RestRequest, RestResponse> buildSession() {
+			checkState(url != null || rawSession != null, "URL or rawSession must be present");
+
+			if (url != null) {
+				return new RestClientHttpSession(url, session);
+			} else {
+				return rawSession;
+			}
+		}
+
+		/** Creates a raw client. */
+		public RestClient build() {
+			Function<RestRequest, RestResponse> session = buildSession();
+			return new RestClient(session);
+		}
+
+		/** Creates a proxy client. */
+		public <T> T buildProxy(final Class<T> interfaceClass) {
+			checkNotNull(interfaceClass);
+			RestClient raw = build();
+			return InvocationClient.create(interfaceClass, raw);
+		}
 	}
 }

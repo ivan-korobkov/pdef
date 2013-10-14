@@ -1,25 +1,24 @@
 package io.pdef.rest;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
-import com.google.common.base.Strings;
+import io.pdef.Func;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationClient;
 import io.pdef.invoke.InvocationResult;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 
-public class RestClient implements Function<Invocation, InvocationResult> {
-	private final Function<RestRequest, RestResponse> session;
+public class RestClient implements Func<Invocation, InvocationResult> {
+	private final Func<RestRequest, RestResponse> session;
 	private final RestFormat format;
 
 	public static Builder builder() {
 		return new Builder();
 	}
 
-	private RestClient(final Function<RestRequest, RestResponse> session) {
-		this.session = checkNotNull(session);
+	private RestClient(final Func<RestRequest, RestResponse> session) {
+		if (session == null) throw new NullPointerException("session");
+
+		this.session = session;
 		format = new RestFormat();
 	}
 
@@ -29,7 +28,7 @@ public class RestClient implements Function<Invocation, InvocationResult> {
 	 * */
 	@Override
 	public InvocationResult apply(final Invocation invocation) {
-		checkNotNull(invocation);
+		if (invocation == null) throw new NullPointerException("invocation");
 
 		RestRequest request = format.serializeInvocation(invocation);
 		RestResponse response = session.apply(request);
@@ -44,11 +43,12 @@ public class RestClient implements Function<Invocation, InvocationResult> {
 		}
 	}
 
-	@VisibleForTesting
+	// VisibleForTesting
 	RestException parseErrorResponse(final RestResponse response) {
 		assert response != null;
 		int status = response.getStatus();
-		String text = Strings.nullToEmpty(response.getContent());
+		String text = response.getContent();
+		text = text != null ? text : "";
 
 		// Limit the text length to use it in an exception.
 		if (text.length() > 512) {
@@ -60,8 +60,8 @@ public class RestClient implements Function<Invocation, InvocationResult> {
 
 	public static class Builder {
 		private String url;
-		private Function<Request, Response> session;
-		private Function<RestRequest, RestResponse> rawSession;
+		private Func<Request, Response> session;
+		private Func<RestRequest, RestResponse> rawSession;
 
 		private Builder() {}
 
@@ -70,34 +70,48 @@ public class RestClient implements Function<Invocation, InvocationResult> {
 		}
 
 		public Builder setUrl(final String url) {
-			checkState(rawSession == null, "Cannot set a url, a rawSession is already present");
-			this.url = checkNotNull(url);
+			if (rawSession != null) {
+				throw new IllegalStateException(
+						"Cannot set a url, a rawSession is already present");
+			}
+			if (url == null) throw new IllegalArgumentException("url");
+
+			this.url = url;
 			return this;
 		}
 
-		public Function<Request, Response> getSession() {
+		public Func<Request, Response> getSession() {
 			return session;
 		}
 
-		public Builder setSession(final Function<Request, Response> session) {
-			checkState(rawSession == null, "Cannot set a session, a rawSession is already present");
-			this.session = checkNotNull(session);
+		public Builder setSession(final Func<Request, Response> session) {
+			if (rawSession != null) {
+				throw new IllegalStateException(
+						"Cannot set a session, a rawSession is already present");
+			}
+			if (session == null) throw new NullPointerException("session");
+			this.session = session;
 			return this;
 		}
 
-		public Function<RestRequest, RestResponse> getRawSession() {
+		public Func<RestRequest, RestResponse> getRawSession() {
 			return rawSession;
 		}
 
-		public Builder setRawSession(final Function<RestRequest, RestResponse> rawSession) {
-			checkState(url == null && session == null,
-					"Cannot set a rawSession, a url or a session is present");
-			this.rawSession = checkNotNull(rawSession);
+		public Builder setRawSession(final Func<RestRequest, RestResponse> rawSession) {
+			if (url != null || session != null) {
+				throw new IllegalStateException(
+						"Cannot set a rawSession, a url or a session is present");
+			}
+			if (rawSession == null) throw new NullPointerException("rawSession");
+			this.rawSession = rawSession;
 			return this;
 		}
 
-		private Function<RestRequest, RestResponse> buildSession() {
-			checkState(url != null || rawSession != null, "URL or rawSession must be present");
+		private Func<RestRequest, RestResponse> buildSession() {
+			if (url == null && rawSession == null) {
+				throw new IllegalStateException("URL or rawSession must be present");
+			}
 
 			if (url != null) {
 				return new RestClientHttpSession(url, session);
@@ -108,13 +122,13 @@ public class RestClient implements Function<Invocation, InvocationResult> {
 
 		/** Creates a raw client. */
 		public RestClient build() {
-			Function<RestRequest, RestResponse> session = buildSession();
+			Func<RestRequest, RestResponse> session = buildSession();
 			return new RestClient(session);
 		}
 
 		/** Creates a proxy client. */
 		public <T> T buildProxy(final Class<T> interfaceClass) {
-			checkNotNull(interfaceClass);
+			if (interfaceClass == null) throw new NullPointerException("interfaceClass");
 			RestClient raw = build();
 			return InvocationClient.create(interfaceClass, raw);
 		}

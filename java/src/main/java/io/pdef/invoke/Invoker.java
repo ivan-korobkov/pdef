@@ -1,31 +1,31 @@
 package io.pdef.invoke;
 
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import io.pdef.Func;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import io.pdef.Provider;
+import io.pdef.Providers;
 
-public class Invoker<T> implements Function<Invocation, InvocationResult> {
-	private final Supplier<T> serviceSupplier;
+
+public class Invoker<T> implements Func<Invocation, InvocationResult> {
+	private final Provider<T> serviceProvider;
 
 	public static <T> Invoker<T> of(final T service) {
-		checkNotNull(service);
-		return of(Suppliers.<T>ofInstance(service));
+		if (service == null) throw new NullPointerException("service");
+		return of(Providers.<T>ofInstance(service));
 	}
 
-	public static <T> Invoker<T> of(final Supplier<T> supplier) {
-		checkNotNull(supplier);
-		return new Invoker<T>(supplier);
+	public static <T> Invoker<T> of(final Provider<T> provider) {
+		return new Invoker<T>(provider);
 	}
 
-	Invoker(final Supplier<T> serviceSupplier) {
-		this.serviceSupplier = checkNotNull(serviceSupplier);
+	Invoker(final Provider<T> serviceProvider) {
+		if (serviceProvider == null) throw new NullPointerException("provider");
+		this.serviceProvider = serviceProvider;
 	}
 
 	@Override
 	public InvocationResult apply(final Invocation invocation) {
-		T service = serviceSupplier.get();
+		T service = serviceProvider.get();
 		return invocation.invoke(service);
 	}
 }

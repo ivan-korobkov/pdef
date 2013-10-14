@@ -1,9 +1,6 @@
 package io.pdef.rest;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
+import io.pdef.Func;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
@@ -19,16 +16,19 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.Map;
 
-class RestClientHttpSession implements Function<RestRequest, RestResponse> {
+class RestClientHttpSession implements Func<RestRequest, RestResponse> {
+	private static final Charset UTF_8 = Charset.forName("UTF-8");
 	private final String url;
-	private final Function<Request, Response> session;
+	private final Func<Request, Response> session;
 
 	/** Creates a REST client sender. */
 	public RestClientHttpSession(final String url,
-			@Nullable final Function<Request, Response> session) {
-		this.url = checkNotNull(url);
+			@Nullable final Func<Request, Response> session) {
+		if (url == null) throw new NullPointerException("url");
+		this.url = url;
 		this.session = session != null ? session : new DefaultSession();
 	}
 
@@ -41,7 +41,7 @@ class RestClientHttpSession implements Function<RestRequest, RestResponse> {
 	}
 
 	/** Creates a fluent http client request from a rest request. */
-	@VisibleForTesting
+	// VisibleForTesting
 	Request createRequest(final RestRequest request) {
 		URI uri = buildUri(request);
 		if (!request.isPost()) {
@@ -53,11 +53,11 @@ class RestClientHttpSession implements Function<RestRequest, RestResponse> {
 			form.add(entry.getKey(), entry.getValue());
 		}
 
-		return Request.Post(uri).bodyForm(form.build(), Charsets.UTF_8);
+		return Request.Post(uri).bodyForm(form.build(), UTF_8);
 	}
 
 	/** Creates a URI from a rest request. */
-	@VisibleForTesting
+	// VisibleForTesting
 	URI buildUri(final RestRequest request) {
 		String url = joinUrl(request.getPath());
 		try {
@@ -102,7 +102,7 @@ class RestClientHttpSession implements Function<RestRequest, RestResponse> {
 		}
 	}
 
-	@VisibleForTesting
+	// VisibleForTesting
 	RestResponse parseHttpResponse(final HttpResponse resp) throws IOException {
 		int status = resp.getStatusLine().getStatusCode();
 		String content = null;
@@ -120,7 +120,7 @@ class RestClientHttpSession implements Function<RestRequest, RestResponse> {
 				.setContent(content);
 	}
 
-	private static class DefaultSession implements Function<Request, Response> {
+	private static class DefaultSession implements Func<Request, Response> {
 		@Override
 		public Response apply(final Request request) {
 			try {

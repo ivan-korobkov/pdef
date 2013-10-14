@@ -1,6 +1,5 @@
 package io.pdef.rest;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.net.HttpURLConnection;
 
 public class RestServerServletTest {
-	@Mock Function<RestRequest, RestResponse> handler;
+	@Mock io.pdef.Func<RestRequest, RestResponse> handler;
 	RestServerServlet server;
 
 	@Before

@@ -1,8 +1,6 @@
 package io.pdef.rest;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Maps;
-
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Simple REST request, which decouples the REST client/server from the transport.
@@ -16,8 +14,8 @@ public class RestRequest {
 	public static final String POST = "POST";
 	private String method;
 	private String path = "";
-	private Map<String, String> query = Maps.newLinkedHashMap();
-	private Map<String, String> post = Maps.newLinkedHashMap();
+	private Map<String, String> query = new LinkedHashMap<String, String>();
+	private Map<String, String> post = new LinkedHashMap<String, String>();
 
 	public RestRequest() {}
 
@@ -29,16 +27,17 @@ public class RestRequest {
 		return new RestRequest().setMethod(POST);
 	}
 
-	@Override
-	public String toString() {
-		return Objects.toStringHelper(this)
-				.addValue(method)
-				.addValue(path)
-				.toString();
+
+
+	@Override public String toString() {
+	return "RestRequest{" +
+			"method='" + method + '\'' +
+			", path='" + path + '\'' +
+			'}';
 	}
 
 	public boolean isPost() {
-		return Objects.equal(method, POST);
+		return POST.equals(method);
 	}
 
 	public String getMethod() {

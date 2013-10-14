@@ -1,8 +1,6 @@
 // {{ generated_by }}
 package {{ package }};
 
-import com.google.common.base.Supplier;
-
 
 {% if doc %}
 /** {{ doc }} */
@@ -68,7 +66,7 @@ public class {{ name }} extends {{ base_or_root }} {
                 {% if field.type.is_primitive %}
                     .setType({{ field.type.descriptor }})
                 {% else %}
-                    .setType(new Supplier<io.pdef.descriptors.DataDescriptor<{{ field.type }}>>() {
+                    .setType(new io.pdef.Provider<io.pdef.descriptors.DataDescriptor<{{ field.type }}>>() {
                         public io.pdef.descriptors.DataDescriptor<{{ field.type }}> get() {
                             return {{ field.type.descriptor }};
                         }
@@ -90,7 +88,7 @@ public class {{ name }} extends {{ base_or_root }} {
     public static final io.pdef.descriptors.MessageDescriptor<{{ name }}> DESCRIPTOR =
             io.pdef.descriptors.MessageDescriptor.<{{ name }}>builder()
                     .setJavaClass({{ name }}.class)
-                    .setSupplier(new Supplier<{{ name }}>() {
+                    .setProvider(new io.pdef.Provider<{{ name }}>() {
                         public {{ name }} get() {
                             return new {{ name }}();
                         }
@@ -105,7 +103,7 @@ public class {{ name }} extends {{ base_or_root }} {
                     .setDiscriminatorValue({{ discriminator_value }})
                     {% endif %}
                     {% for subtype in subtypes %}
-                    .addSubtype(new Supplier<io.pdef.descriptors.MessageDescriptor<? extends {{ name }}>>() {
+                    .addSubtype(new io.pdef.Provider<io.pdef.descriptors.MessageDescriptor<? extends {{ name }}>>() {
                         public io.pdef.descriptors.MessageDescriptor<? extends {{ name }}> get() {
                             return {{ subtype.descriptor }};
                         }

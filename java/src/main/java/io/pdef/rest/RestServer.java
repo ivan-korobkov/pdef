@@ -1,11 +1,8 @@
 package io.pdef.rest;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.base.Throwables;
+import io.pdef.Func;
+import io.pdef.Provider;
+import io.pdef.Providers;
 import io.pdef.descriptors.DataDescriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.descriptors.MessageDescriptor;
@@ -15,23 +12,28 @@ import io.pdef.invoke.Invoker;
 
 import javax.servlet.http.HttpServlet;
 
-public class RestServer<T> implements Function<RestRequest, RestResponse> {
+public class RestServer<T> implements Func<RestRequest, RestResponse> {
 	private final InterfaceDescriptor<T> descriptor;
-	private final Function<Invocation, InvocationResult> invoker;
+	private final Func<Invocation, InvocationResult> invoker;
 	private final RestFormat format;
 
 	/** Creates a REST server handler. */
-	private RestServer(final Class<T> cls, final Function<Invocation, InvocationResult> invoker) {
+	private RestServer(final Class<T> cls, final Func<Invocation, InvocationResult> invoker) {
+		if (cls == null) throw new NullPointerException("cls");
+		if (invoker == null) throw new NullPointerException("invoker");
+
 		this.descriptor = InterfaceDescriptor.findDescriptor(cls);
-		this.invoker = checkNotNull(invoker);
+		this.invoker = invoker;
 		format = new RestFormat();
 
-		checkArgument(descriptor != null, "Cannot find an interface descriptor in %s", cls);
+		if (descriptor == null) {
+			throw new IllegalArgumentException("Cannot find an interface descriptor in " + cls);
+		}
 	}
 
 	@Override
 	public RestResponse apply(final RestRequest request) {
-		checkNotNull(request);
+		if (request == null) throw new NullPointerException("request");
 
 		Invocation invocation;
 		try {
@@ -39,7 +41,11 @@ public class RestServer<T> implements Function<RestRequest, RestResponse> {
 		} catch (RestException e) {
 			return errorResponse(e);
 		} catch (Exception e) {
-			throw Throwables.propagate(e);
+			if (e instanceof RuntimeException) {
+				throw (RuntimeException) e;
+			} else {
+				throw new RuntimeException(e);
+			}
 		}
 
 		try {
@@ -49,11 +55,15 @@ public class RestServer<T> implements Function<RestRequest, RestResponse> {
 			InvocationResult result = invoker.apply(invocation);
 			return format.serializeInvocationResult(result, dataDescriptor, excDescriptor);
 		} catch (Exception e) {
-			throw Throwables.propagate(e);
+			if (e instanceof RuntimeException) {
+				throw (RuntimeException) e;
+			} else {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
-	@VisibleForTesting
+	// VisibleForTesting
 	RestResponse errorResponse(final RestException e) {
 		return new RestResponse()
 				.setStatus(e.getStatus())
@@ -67,8 +77,8 @@ public class RestServer<T> implements Function<RestRequest, RestResponse> {
 
 	public static class Builder<T> {
 		private Class<T> cls;
-		private Supplier<T> serviceSupplier;
-		private Function<Invocation, InvocationResult> invoker;
+		private Provider<T> serviceProvider;
+		private Func<Invocation, InvocationResult> invoker;
 
 		public Class<T> getCls() {
 			return cls;
@@ -79,38 +89,44 @@ public class RestServer<T> implements Function<RestRequest, RestResponse> {
 			return this;
 		}
 
-		public Supplier<T> getServiceSupplier() {
-			return serviceSupplier;
+		public Provider<T> getServiceProvider() {
+			return serviceProvider;
 		}
 
-		public Builder<T> setServiceSupplier(final Supplier<T> serviceSupplier) {
-			checkState(invoker == null,
-					"Cannot set a service supplier, an invoker is already present");
-			this.serviceSupplier = serviceSupplier;
+		public Builder<T> setServiceProvider(final Provider<T> serviceProvider) {
+			if (invoker != null) {
+				throw new IllegalStateException(
+						"Cannot set a service provider, an invoker is already present");
+			}
+			this.serviceProvider = serviceProvider;
 			return this;
 		}
 
 		public Builder<T> setService(final T service) {
-			checkNotNull(service);
-			return setServiceSupplier(Suppliers.ofInstance(service));
+			if (service == null) throw new NullPointerException("service");
+			return setServiceProvider(Providers.ofInstance(service));
 		}
 
-		public Function<Invocation, InvocationResult> getInvoker() {
+		public Func<Invocation, InvocationResult> getInvoker() {
 			return invoker;
 		}
 
-		public Builder<T> setInvoker(final Function<Invocation, InvocationResult> invoker) {
-			checkState(serviceSupplier == null,
-					"Cannot set an invoker, a service supplier is already present");
+		public Builder<T> setInvoker(final Func<Invocation, InvocationResult> invoker) {
+			if (serviceProvider != null) {
+				throw new IllegalStateException(
+						"Cannot set an invoker, a service provider is already present");
+			}
 			this.invoker = invoker;
 			return this;
 		}
 
-		private Function<Invocation, InvocationResult> buildInvoker() {
-			checkState(serviceSupplier != null || invoker != null,
-					"Service/serviceSupplier or invoker must be present");
-			if (serviceSupplier != null) {
-				return Invoker.of(serviceSupplier);
+		private Func<Invocation, InvocationResult> buildInvoker() {
+			if (serviceProvider == null && invoker == null) {
+				throw new IllegalStateException(
+						"Service/serviceProvider or invoker must be present");
+			}
+			if (serviceProvider != null) {
+				return Invoker.of(serviceProvider);
 			} else {
 				return invoker;
 			}
@@ -118,8 +134,11 @@ public class RestServer<T> implements Function<RestRequest, RestResponse> {
 
 		/** Creates a raw REST server. */
 		public RestServer<T> build() {
-			checkState(cls != null, "Interface class must be set");
-			Function<Invocation, InvocationResult> invoker = buildInvoker();
+			if (cls == null) {
+				throw new IllegalStateException("Interface class must be set");
+			}
+
+			Func<Invocation, InvocationResult> invoker = buildInvoker();
 			return new RestServer<T>(cls, invoker);
 		}
 

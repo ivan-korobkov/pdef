@@ -1,12 +1,10 @@
 package io.pdef.descriptors;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class InterfaceDescriptor<T> extends Descriptor<T> {
@@ -17,7 +15,8 @@ public class InterfaceDescriptor<T> extends Descriptor<T> {
 	private InterfaceDescriptor(final Builder<T> builder) {
 		super(TypeEnum.INTERFACE, builder.javaClass);
 		this.exc = builder.exc; // Must be set before building methods.
-		this.methods = ImmutableList.copyOf(builder.methods);
+		this.methods = Collections.unmodifiableList(
+				new ArrayList<MethodDescriptor<T, ?>>(builder.methods));
 		this.indexMethod = findIndexMethod(methods);
 	}
 
@@ -38,9 +37,7 @@ public class InterfaceDescriptor<T> extends Descriptor<T> {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
-				.addValue(getJavaClass().getSimpleName())
-				.toString();
+		return "InterfaceDescriptor{" + getJavaClass().getSimpleName() + '}';
 	}
 
 	/** Return a list of interface methods or an empty list. */
@@ -78,7 +75,7 @@ public class InterfaceDescriptor<T> extends Descriptor<T> {
 		private List<MethodDescriptor<T, ?>> methods;
 
 		public Builder() {
-			methods = Lists.newArrayList();
+			methods = new ArrayList<MethodDescriptor<T, ?>>();
 		}
 
 		public Builder<T> setJavaClass(final Class<T> javaClass) {

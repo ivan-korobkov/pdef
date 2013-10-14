@@ -1,8 +1,5 @@
 package io.pdef.descriptors;
 
-import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * ArgumentDescriptor provides a method argument name and type.
  * @param <V> Argument class.
@@ -17,16 +14,16 @@ public class ArgumentDescriptor<V> {
 	}
 
 	public ArgumentDescriptor(final String name, final DataDescriptor<V> type) {
-		this.name = checkNotNull(name);
-		this.type = checkNotNull(type);
+		this.name = name;
+		this.type = type;
+
+		if (name == null) throw new NullPointerException("name");
+		if (type == null) throw new NullPointerException("type");
 	}
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
-				.addValue(name)
-				.addValue(getType())
-				.toString();
+		return "ArgumentDescriptor{'" + name + '\'' + ", " + type + '}';
 	}
 
 	public String getName() {

@@ -4,17 +4,12 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import io.pdef.Message;
 import io.pdef.descriptors.*;
 
 import javax.annotation.Nonnull;
 import java.io.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /** JsonFormat parses and serializes Pdef data types from/to JSON. */
 public class JsonFormat implements Format {
@@ -38,7 +33,7 @@ public class JsonFormat implements Format {
 	/** Serializes an object into a string. */
 	public <T> String serialize(final T object, final DataDescriptor<T> descriptor,
 			final boolean indent) throws FormatException {
-		checkNotNull(descriptor);
+		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
 			StringWriter out = new StringWriter();
@@ -61,8 +56,8 @@ public class JsonFormat implements Format {
 	/** Writes an object to an output stream as a JSON string, does not close the stream. */
 	public <T> void serialize(final OutputStream out, final T object,
 			final DataDescriptor<T> descriptor, final boolean indent) {
-		checkNotNull(out);
-		checkNotNull(descriptor);
+		if (out == null) throw new NullPointerException("out");
+		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
 			JsonGenerator generator = FACTORY.createGenerator(out);
@@ -82,8 +77,8 @@ public class JsonFormat implements Format {
 	/** Writes an object to a writer as a JSON string, does not close the write. */
 	public <T> void serialize(final PrintWriter writer, final T object,
 			final DataDescriptor<T> descriptor, final boolean indent) {
-		checkNotNull(writer);
-		checkNotNull(descriptor);
+		if (writer == null) throw new NullPointerException("writer");
+		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
 			JsonGenerator generator = FACTORY.createGenerator(writer);
@@ -255,7 +250,7 @@ public class JsonFormat implements Format {
 	/** Parses an object from a string. */
 	public <T> T parse(final String input, final DataDescriptor<T> descriptor)
 			throws FormatException {
-		checkNotNull(descriptor);
+		if (descriptor == null) throw new NullPointerException("descriptor");
 		if (input == null) {
 			return null;
 		}
@@ -272,8 +267,8 @@ public class JsonFormat implements Format {
 
 	/** Parses an object from an input stream, does not close the input stream. */
 	public <T> T parse(final InputStream input, final DataDescriptor<T> descriptor) {
-		checkNotNull(input);
-		checkNotNull(descriptor);
+		if (input == null) throw new NullPointerException("input");
+		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
 			JsonParser parser = FACTORY.createParser(input);
@@ -287,8 +282,8 @@ public class JsonFormat implements Format {
 
 	/** Parses an object from a reader, does not close the reader. */
 	public <T> T parse(final Reader reader, final DataDescriptor<T> descriptor) {
-		checkNotNull(reader);
-		checkNotNull(descriptor);
+		if (reader == null) throw new NullPointerException("reader");
+		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
 			JsonParser parser = FACTORY.createParser(reader);
@@ -348,7 +343,7 @@ public class JsonFormat implements Format {
 			throw new FormatException("Bad JSON string, failed to parse an array");
 		}
 
-		List<Object> list = Lists.newArrayList();
+		List<Object> list = new ArrayList<Object>();
 		while (true) {
 			JsonToken next = parser.nextToken();
 			if (next == null) {
@@ -370,7 +365,7 @@ public class JsonFormat implements Format {
 			throw new FormatException("Bad JSON string, failed to parse an object");
 		}
 
-		Map<String, Object> map = Maps.newLinkedHashMap();
+		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		while (true) {
 			JsonToken next = parser.nextToken();
 			if (next == null) {

@@ -1,17 +1,12 @@
 package io.pdef.invoke;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import io.pdef.descriptors.DataDescriptor;
 import io.pdef.descriptors.Descriptor;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Invocation {
@@ -31,16 +26,17 @@ public class Invocation {
 
 		if (method != null) {
 			// It is not a root sentinel invocation.
-			checkArgument(this.args.length == method.getArgs().size(), "Wrong number of args");
+			if (this.args.length != method.getArgs().size()) {
+				throw new IllegalArgumentException(
+						"Wrong number of arguments, " + method.getArgs().size() + " expected, got "
+								+ this.args.length);
+			}
 		}
 	}
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
-				.addValue(method)
-				.add("args", Arrays.toString(args))
-				.toString();
+		return "Invocation{" + method.getName() + ", args=" + args + '}';
 	}
 
 	public boolean isRoot() {
@@ -98,7 +94,7 @@ public class Invocation {
 	/** Returns a list of invocation. */
 	public List<Invocation> toChain() {
 		if (isRoot()) {
-			return Lists.newArrayList();
+			return new ArrayList<Invocation>();
 		}
 
 		List<Invocation> chain = parent.toChain();
@@ -110,7 +106,7 @@ public class Invocation {
 	/** Invokes this invocation chain on an object. */
 	@SuppressWarnings("unchecked")
 	public InvocationResult invoke(Object object) {
-		checkNotNull(object);
+		if (object == null) throw new NullPointerException("object");
 
 		for (Invocation invocation : toChain()) {
 			try {
@@ -123,7 +119,7 @@ public class Invocation {
 		return InvocationResult.ok(object);
 	}
 
-	@VisibleForTesting
+	// VisibleForTesting
 	Object invokeSingle(final Object object) throws Exception {
 		@SuppressWarnings("unchecked")
 		MethodDescriptor<Object, Object> unchecked = (MethodDescriptor<Object, Object>) method;
@@ -134,12 +130,20 @@ public class Invocation {
 		MessageDescriptor<?> excd = getExc();
 		if (excd == null) {
 			// It is not an expected application exception.
-			throw Throwables.propagate(exc);
+			if (exc instanceof RuntimeException) {
+				throw (RuntimeException) exc;
+			} else {
+				throw new RuntimeException(exc);
+			}
 		}
 
 		Class<?> excClass = excd.getJavaClass();
 		if (!excClass.isInstance(exc)) {
-			throw Throwables.propagate(exc);
+			if (exc instanceof RuntimeException) {
+				throw (RuntimeException) exc;
+			} else {
+				throw new RuntimeException(exc);
+			}
 		}
 
 		// It is an expected application exception.

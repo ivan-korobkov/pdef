@@ -1,10 +1,10 @@
 package io.pdef.rest;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Atomics;
+import io.pdef.Func;
 import io.pdef.descriptors.ArgumentDescriptor;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.descriptors.MessageDescriptor;
@@ -434,7 +434,7 @@ public class RestFormatTest {
 	}
 
 	private TestInterface proxy(final AtomicReference<Invocation> ref) {
-		Function<Invocation, InvocationResult> format = new Function<Invocation, InvocationResult>() {
+		Func<Invocation, InvocationResult> format = new Func<Invocation, InvocationResult>() {
 			@Override
 			public InvocationResult apply(final Invocation invocation) {
 				ref.set(invocation);
@@ -445,7 +445,7 @@ public class RestFormatTest {
 		return proxy(format);
 	}
 
-	private TestInterface proxy(final Function<Invocation, InvocationResult> handler) {
+	private TestInterface proxy(final Func<Invocation, InvocationResult> handler) {
 		return InvocationClient.create(TestInterface.class, handler);
 	}
 }

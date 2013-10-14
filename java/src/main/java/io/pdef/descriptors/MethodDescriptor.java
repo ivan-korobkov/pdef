@@ -1,14 +1,12 @@
 package io.pdef.descriptors;
 
-import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import io.pdef.Provider;
+import io.pdef.Providers;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,8 +14,8 @@ import java.util.List;
  * */
 public class MethodDescriptor<T, R> {
 	private final String name;
-	private final Supplier<Descriptor<R>> resultSupplier;
-	private final ImmutableList<ArgumentDescriptor<?>> args;
+	private final Provider<Descriptor<R>> resultProvider;
+	private final List<ArgumentDescriptor<?>> args;
 	private final MessageDescriptor<?> exc;
 	private final MethodInvoker<T, R> invoker;
 	private final boolean index;
@@ -26,13 +24,17 @@ public class MethodDescriptor<T, R> {
 	private Descriptor<R> result;
 
 	public MethodDescriptor(final Builder<T, R> builder) {
-		this.name = checkNotNull(builder.name);
-		this.resultSupplier = checkNotNull(builder.result);
-		this.args = ImmutableList.copyOf(builder.args);
-		this.exc = builder.exc;
-		this.invoker = checkNotNull(builder.invoker);
-		this.index = builder.index;
-		this.post = builder.post;
+		name = builder.name;
+		resultProvider = builder.result;
+		args = Collections.unmodifiableList(new ArrayList<ArgumentDescriptor<?>>(builder.args));
+		exc = builder.exc;
+		invoker = builder.invoker;
+		index = builder.index;
+		post = builder.post;
+
+		if (name == null) throw new NullPointerException("name");
+		if (resultProvider == null) throw new NullPointerException("result");
+		if (invoker == null) throw new NullPointerException("invoker");
 	}
 
 	public static <T, R> Builder<T, R> builder() {
@@ -41,9 +43,7 @@ public class MethodDescriptor<T, R> {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
-				.addValue(name)
-				.toString();
+		return "MethodDescriptor{" + name + '}';
 	}
 
 	public String getName() {
@@ -63,7 +63,7 @@ public class MethodDescriptor<T, R> {
 			return result;
 		}
 		
-		return (result = resultSupplier.get());
+		return (result = resultProvider.get());
 	}
 
 	public List<ArgumentDescriptor<?>> getArgs() {
@@ -86,7 +86,7 @@ public class MethodDescriptor<T, R> {
 
 	public static class Builder<T, R> {
 		private String name;
-		private Supplier<Descriptor<R>> result;
+		private Provider<Descriptor<R>> result;
 		private List<ArgumentDescriptor<?>> args;
 		private MessageDescriptor<?> exc;
 		private MethodInvoker<T, R> invoker;
@@ -94,7 +94,7 @@ public class MethodDescriptor<T, R> {
 		private boolean post;
 
 		public Builder() {
-			args = Lists.newArrayList();
+			args = new ArrayList<ArgumentDescriptor<?>>();
 		}
 
 		public Builder<T, R> setName(final String name) {
@@ -103,11 +103,11 @@ public class MethodDescriptor<T, R> {
 		}
 
 		public Builder<T, R> setResult(final Descriptor<R> result) {
-			checkNotNull(result);
-			return setResult(Suppliers.<Descriptor<R>>ofInstance(result));
+			if (result == null) throw new NullPointerException("result");
+			return setResult(Providers.<Descriptor<R>>ofInstance(result));
 		}
 
-		public Builder<T, R> setResult(final Supplier<Descriptor<R>> result) {
+		public Builder<T, R> setResult(final Provider<Descriptor<R>> result) {
 			this.result = result;
 			return this;
 		}
@@ -168,7 +168,7 @@ public class MethodDescriptor<T, R> {
 
 		@Override
 		public R invoke(final T object, final Object[] args) throws Exception{
-			checkNotNull(object);
+			if (object == null) throw new NullPointerException("object");
 
 			try {
 				@SuppressWarnings("unchecked")

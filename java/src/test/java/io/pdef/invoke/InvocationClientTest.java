@@ -1,6 +1,5 @@
 package io.pdef.invoke;
 
-import com.google.common.base.Function;
 import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
@@ -18,7 +17,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.util.List;
 
 public class InvocationClientTest {
-	@Mock Function<Invocation, InvocationResult> handler;
+	@Mock io.pdef.Func<Invocation, InvocationResult> handler;
 
 	@Before
 	public void setUp() throws Exception {

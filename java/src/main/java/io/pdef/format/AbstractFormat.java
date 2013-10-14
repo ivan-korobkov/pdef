@@ -1,6 +1,5 @@
 package io.pdef.format;
 
-import static com.google.common.base.Preconditions.*;
 import io.pdef.Message;
 import io.pdef.descriptors.*;
 
@@ -11,7 +10,7 @@ import java.util.Set;
 public abstract class AbstractFormat<F> implements Format {
 
 	public <T> F serialize(final T object, final DataDescriptor<T> descriptor) throws FormatException {
-		checkNotNull(descriptor);
+		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
 			return doSerialize(object, descriptor);
@@ -88,7 +87,7 @@ public abstract class AbstractFormat<F> implements Format {
 			final MessageDescriptor<M> descriptor) throws Exception;
 
 	public <T> T parse(final F input, final DataDescriptor<T> descriptor) throws FormatException {
-		checkNotNull(descriptor);
+		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
 			return doParse(descriptor, input);

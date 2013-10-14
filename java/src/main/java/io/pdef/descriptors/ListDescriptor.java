@@ -1,8 +1,6 @@
 package io.pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.Lists;
-
+import java.util.ArrayList;
 import java.util.List;
 
 public class ListDescriptor<T> extends DataDescriptor<List<T>> {
@@ -11,7 +9,8 @@ public class ListDescriptor<T> extends DataDescriptor<List<T>> {
 	@SuppressWarnings("unchecked")
 	ListDescriptor(final DataDescriptor<T> element) {
 		super(TypeEnum.LIST, (Class<List<T>>) (Class<?>) List.class);
-		this.element = checkNotNull(element);
+		this.element = element;
+		if (element == null) throw new NullPointerException("element");
 	}
 
 	public DataDescriptor<T> getElement() {
@@ -24,7 +23,7 @@ public class ListDescriptor<T> extends DataDescriptor<List<T>> {
 			return null;
 		}
 
-		List<T> copy = Lists.newArrayList();
+		List<T> copy = new ArrayList<T>();
 		for (T e : list) {
 			T copied = element.copy(e);
 			copy.add(copied);

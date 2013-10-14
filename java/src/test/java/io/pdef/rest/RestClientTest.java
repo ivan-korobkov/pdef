@@ -1,7 +1,7 @@
 package io.pdef.rest;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import io.pdef.Func;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationClient;
@@ -16,8 +16,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.net.HttpURLConnection;
 
+
 public class RestClientTest {
-	@Mock Function<RestRequest, RestResponse> session;
+	@Mock io.pdef.Func<RestRequest, RestResponse> session;
 	RestClient handler;
 
 	@Before
@@ -61,7 +62,7 @@ public class RestClientTest {
 		assertEquals("Bad request", exception.getMessage());
 	}
 
-	private TestInterface proxy(final Function<Invocation, InvocationResult> handler) {
+	private TestInterface proxy(final Func<Invocation, InvocationResult> handler) {
 		return InvocationClient.create(TestInterface.class, handler);
 	}
 }

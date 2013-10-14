@@ -1,7 +1,6 @@
 package io.pdef.invoke;
 
-import com.google.common.base.Function;
-import static com.google.common.base.Preconditions.*;
+import io.pdef.Func;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
 
@@ -11,29 +10,29 @@ import java.lang.reflect.Proxy;
 
 public class InvocationClient<T> implements InvocationHandler {
 	private final InterfaceDescriptor<T> descriptor;
-	private final Function<Invocation, InvocationResult> handler;
+	private final Func<Invocation, InvocationResult> handler;
 	private final Invocation parent;
 
 	/** Creates a custom client. */
 	public static <T> T create(final Class<T> cls,
-			final Function<Invocation, InvocationResult> invocationHandler) {
-		checkNotNull(cls);
-		checkNotNull(invocationHandler);
+			final Func<Invocation, InvocationResult> invocationHandler) {
+		if (cls == null) throw new NullPointerException("cls");
+		if (invocationHandler == null) throw new NullPointerException("invocationHandler");
 
 		InterfaceDescriptor<T> descriptor = InterfaceDescriptor.findDescriptor(cls);
-		checkArgument(descriptor != null, "Cannot find an interface descriptor in " + cls);
+		if (descriptor == null) {
+			throw new IllegalArgumentException("Cannot find an interface descriptor in " + cls);
+		}
 
 		return InvocationClient.create(cls, descriptor, invocationHandler);
 	}
 
 	/** Creates a Java invocation proxy. */
 	public static <T> T create(final Class<T> cls, final InterfaceDescriptor<T> descriptor,
-			final Function<Invocation, InvocationResult> handler) {
-		checkNotNull(cls);
-		checkNotNull(descriptor);
-		checkNotNull(handler);
-		checkArgument(cls == descriptor.getJavaClass(), "Class/descriptor do not match, %s, %s",
-				cls, descriptor);
+			final Func<Invocation, InvocationResult> handler) {
+		if (cls == null) throw new NullPointerException("cls");
+		if (descriptor == null) throw new NullPointerException("descriptor");
+		if (handler == null) throw new NullPointerException("handler");
 
 		InvocationClient<T> invocationClient = new InvocationClient<T>(descriptor, handler,
 				Invocation.root());
@@ -41,7 +40,7 @@ public class InvocationClient<T> implements InvocationHandler {
 	}
 
 	private InvocationClient(final InterfaceDescriptor<T> descriptor,
-			final Function<Invocation, InvocationResult> handler,
+			final Func<Invocation, InvocationResult> handler,
 			final Invocation parent) {
 		this.descriptor = descriptor;
 		this.handler = handler;
@@ -76,7 +75,7 @@ public class InvocationClient<T> implements InvocationHandler {
 		return parent.next(md, args);
 	}
 
-	private Object handle(final Invocation invocation) {
+	private Object handle(final Invocation invocation) throws Exception {
 		InvocationResult result = handler.apply(invocation);
 		assert result != null;
 

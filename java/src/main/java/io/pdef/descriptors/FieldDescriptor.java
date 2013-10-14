@@ -1,9 +1,7 @@
 package io.pdef.descriptors;
 
-import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import io.pdef.Provider;
+import io.pdef.Providers;
 
 import java.lang.reflect.Field;
 
@@ -14,18 +12,23 @@ import java.lang.reflect.Field;
  */
 public class FieldDescriptor<M, V> {
 	private final String name;
-	private final Supplier<DataDescriptor<V>> typeSupplier;
+	private final Provider<DataDescriptor<V>> typeProvider;
 	private final FieldGetter<M, V> getter;
 	private final FieldSetter<M, V> setter;
 	private final boolean discriminator;
 	private DataDescriptor<V> type;
 
 	protected FieldDescriptor(final Builder<M, V> builder) {
-		name = checkNotNull(builder.name);
-		typeSupplier = checkNotNull(builder.type);
-		getter = checkNotNull(builder.getter);
-		setter = checkNotNull(builder.setter);
+		name = builder.name;
+		typeProvider = builder.type;
+		getter = builder.getter;
+		setter = builder.setter;
 		discriminator = builder.discriminator;
+
+		if (name == null) throw new NullPointerException("name");
+		if (typeProvider == null) throw new NullPointerException("type");
+		if (getter == null) throw new NullPointerException("getter");
+		if (setter == null) throw new NullPointerException("setter");
 	}
 
 	public static <M, V> Builder<M, V> builder() {
@@ -34,9 +37,7 @@ public class FieldDescriptor<M, V> {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
-				.addValue(name)
-				.toString();
+		return "FieldDescriptor{'" + name + '\'' + '}';
 	}
 
 	public String getName() {
@@ -52,7 +53,7 @@ public class FieldDescriptor<M, V> {
 			return type;
 		}
 
-		return (type = typeSupplier.get());
+		return (type = typeProvider.get());
 	}
 
 	public V get(final M message) {
@@ -72,7 +73,7 @@ public class FieldDescriptor<M, V> {
 	public static class Builder<M, V> {
 		private String name;
 		private boolean discriminator;
-		private Supplier<DataDescriptor<V>> type;
+		private Provider<DataDescriptor<V>> type;
 		private FieldGetter<M, V> getter;
 		private FieldSetter<M, V> setter;
 
@@ -88,14 +89,14 @@ public class FieldDescriptor<M, V> {
 			return this;
 		}
 
-		public Builder<M, V> setType(final Supplier<DataDescriptor<V>> type) {
+		public Builder<M, V> setType(final Provider<DataDescriptor<V>> type) {
 			this.type = type;
 			return this;
 		}
 
 		public Builder<M, V> setType(final DataDescriptor<V> type) {
-			checkNotNull(type);
-			this.type = Suppliers.ofInstance(type);
+			if (type == null) throw new NullPointerException("type");
+			this.type = Providers.ofInstance(type);
 			return this;
 		}
 
@@ -116,7 +117,9 @@ public class FieldDescriptor<M, V> {
 		}
 
 		public Builder<M, V> setReflexAccessor(final Class<M> cls) {
-			checkNotNull(name, "Name must be set before the reflex accessor");
+			if (name == null) {
+				throw new NullPointerException("Name must be set before the reflex accessor");
+			}
 			FieldAccessor<M, V> accessor = new ReflexAccessor<M, V>(name, cls);
 			return setAccessor(accessor);
 		}
@@ -138,7 +141,8 @@ public class FieldDescriptor<M, V> {
 				}
 			}
 
-			field = checkNotNull(field1, "Field not found: " + name);
+			if (field1 == null) throw new IllegalArgumentException("Field not found: " + name);
+			field = field1;
 			field.setAccessible(true);
 		}
 

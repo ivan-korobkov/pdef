@@ -1,8 +1,6 @@
 package io.pdef.descriptors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import com.google.common.collect.Maps;
-
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class MapDescriptor<K, V> extends DataDescriptor<Map<K, V>> {
@@ -12,8 +10,10 @@ public class MapDescriptor<K, V> extends DataDescriptor<Map<K, V>> {
 	@SuppressWarnings("unchecked")
 	MapDescriptor(final DataDescriptor<K> key, final DataDescriptor<V> value) {
 		super(TypeEnum.MAP, (Class<Map<K, V>>) (Class<?>) Map.class);
-		this.key = checkNotNull(key);
-		this.value = checkNotNull(value);
+		this.key = key;
+		this.value = value;
+		if (key == null) throw new NullPointerException("key");
+		if (value == null) throw new NullPointerException("value");
 	}
 
 	public DataDescriptor<K> getKey() {
@@ -30,7 +30,7 @@ public class MapDescriptor<K, V> extends DataDescriptor<Map<K, V>> {
 			return null;
 		}
 
-		Map<K, V> copy = Maps.newHashMap();
+		Map<K, V> copy = new LinkedHashMap<K, V>();
 		for (Map.Entry<K, V> entry : map.entrySet()) {
 			K ck = key.copy(entry.getKey());
 			V cv = value.copy(entry.getValue());

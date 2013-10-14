@@ -1,8 +1,5 @@
 package io.pdef.descriptors;
 
-import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
-
 /**
  * Descriptor is a base class for Pdef descriptors. Descriptors provides information about
  * a Java type in runtime. For example, a message descriptor allows to explore declared fields,
@@ -13,8 +10,11 @@ public class Descriptor<T> {
 	private final Class<T> javaClass;
 
 	protected Descriptor(final TypeEnum type, final Class<T> javaClass) {
-		this.type = checkNotNull(type);
-		this.javaClass = checkNotNull(javaClass);
+		this.type = type;
+		this.javaClass = javaClass;
+
+		if (type == null) throw new NullPointerException("type");
+		if (javaClass == null) throw new NullPointerException("javaClass");
 	}
 
 	/** Returns a type. */
@@ -34,8 +34,6 @@ public class Descriptor<T> {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
-				.addValue(type)
-				.toString();
+		return "Descriptor{" + type + "," + javaClass.getSimpleName() + '}';
 	}
 }

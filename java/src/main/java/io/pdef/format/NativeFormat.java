@@ -1,15 +1,9 @@
 package io.pdef.format;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import io.pdef.Message;
 import io.pdef.descriptors.*;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class NativeFormat extends AbstractFormat<Object> {
 	private static final NativeFormat INSTANCE = new NativeFormat();
@@ -65,7 +59,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		}
 
 		DataDescriptor<E> element = descriptor.getElement();
-		List<Object> result = Lists.newArrayList();
+		List<Object> result = new ArrayList<Object>();
 
 		for (E elem : list) {
 			Object serialized = doSerialize(elem, element);
@@ -83,7 +77,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		}
 
 		DataDescriptor<E> element = descriptor.getElement();
-		Set<Object> result = Sets.newHashSet();
+		Set<Object> result = new HashSet<Object>();
 		for (E elem : set) {
 			Object serialized = doSerialize(elem, element);
 			result.add(serialized);
@@ -101,7 +95,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 
 		DataDescriptor<K> key = descriptor.getKey();
 		DataDescriptor<V> value = descriptor.getValue();
-		Map<Object, Object> result = Maps.newHashMap();
+		Map<Object, Object> result = new HashMap<Object, Object>();
 
 		for (Map.Entry<K, V> e : map.entrySet()) {
 			Object k = doSerialize(e.getKey(), key);
@@ -127,7 +121,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		// Mind polymorphic messages.
 		@SuppressWarnings("unchecked")
 		MessageDescriptor<M> polymorphicType = (MessageDescriptor<M>) message.descriptor();
-		Map<String, Object> result = Maps.newLinkedHashMap();
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
 
 		for (FieldDescriptor<? super M, ?> field : polymorphicType.getFields()) {
 			@SuppressWarnings("unchecked")
@@ -244,7 +238,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 
 		Collection<?> collection = (Collection<?>) input;
 		DataDescriptor<E> element = descriptor.getElement();
-		List<E> result = Lists.newArrayList();
+		List<E> result = new ArrayList<E>();
 
 		for (Object elem : collection) {
 			E parsed = doParse(element, elem);
@@ -263,7 +257,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		}
 
 		Collection<?> collection = (Collection<?>) input;
-		Set<E> result = Sets.newHashSet();
+		Set<E> result = new HashSet<E>();
 		DataDescriptor<E> element = descriptor.getElement();
 
 		for (Object elem : collection) {
@@ -284,7 +278,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		}
 
 		Map<?, ?> map = (Map<?, ?>) input;
-		Map<K, V> result = Maps.newHashMap();
+		Map<K, V> result = new HashMap<K, V>();
 		DataDescriptor<K> key = descriptor.getKey();
 		DataDescriptor<V> value = descriptor.getValue();
 

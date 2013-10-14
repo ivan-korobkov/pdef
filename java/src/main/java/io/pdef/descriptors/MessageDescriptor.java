@@ -1,23 +1,16 @@
 package io.pdef.descriptors;
 
-import com.google.common.base.Function;
-import com.google.common.base.Objects;
-import static com.google.common.base.Preconditions.*;
-import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import io.pdef.Message;
+import io.pdef.Provider;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * MessageDescriptor is a descriptor for Pdef messages.
  * */
 public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
-	private final Supplier<M> supplier;
+	private final Provider<M> provider;
 	private final MessageDescriptor<? super M> base;
 	private final List<FieldDescriptor<M, ?>> declaredFields;
 	private final List<FieldDescriptor<? super M, ?>> fields;
@@ -25,31 +18,29 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 
 	private final Enum<?> discriminatorValue;
 	private final FieldDescriptor<? super M, ?> discriminator;
-	private final List<Supplier<MessageDescriptor<? extends M>>> subtypeSuppliers;
+	private final List<Provider<MessageDescriptor<? extends M>>> subtypeProviders;
 	private List<MessageDescriptor<? extends M>> subtypes;
 
 	private final boolean form;
 
 	private MessageDescriptor(final Builder<M> builder) {
 		super(TypeEnum.MESSAGE, builder.javaClass);
-		this.supplier = checkNotNull(builder.supplier);
-
+		provider = builder.provider;
 		base = builder.base;
 
-		declaredFields = ImmutableList.copyOf(builder.declaredFields);
+		declaredFields = Collections.unmodifiableList(
+				new ArrayList<FieldDescriptor<M, ?>>(builder.declaredFields));
 		fields = joinFields(declaredFields, base);
-		fieldMap = Maps.uniqueIndex(fields, new Function<FieldDescriptor<? super M, ?>, String>() {
-			@Override
-			public String apply(final FieldDescriptor<? super M, ?> input) {
-				return input.getName();
-			}
-		});
+		fieldMap = fieldMap(fields);
 
 		discriminator = findDiscriminator(fields);
 		discriminatorValue = builder.discriminatorValue;
-		subtypeSuppliers = ImmutableList.copyOf(builder.subtypes);
+		subtypeProviders = Collections.unmodifiableList(
+				new ArrayList<Provider<MessageDescriptor<? extends M>>>(builder.subtypes));
 
 		form = builder.form;
+
+		if (provider == null) throw new NullPointerException("provider");
 	}
 
 	public static <M extends Message> Builder<M> builder() {
@@ -82,13 +73,13 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 			return subtypes;
 		}
 
-		ImmutableList.Builder<MessageDescriptor<? extends M>> builder = ImmutableList.builder();
-		for (Supplier<MessageDescriptor<? extends M>> supplier : subtypeSuppliers) {
-			MessageDescriptor<? extends M> subtype = supplier.get();
-			builder.add(subtype);
+		List<MessageDescriptor<? extends M>> list = new ArrayList<MessageDescriptor<? extends M>>();
+		for (Provider<MessageDescriptor<? extends M>> provider : subtypeProviders) {
+			MessageDescriptor<? extends M> subtype = provider.get();
+			list.add(subtype);
 		}
 
-		return (subtypes = builder.build());
+		return (subtypes = Collections.unmodifiableList(list));
 	}
 
 	/** Returns an immutable list of declared fields. */
@@ -132,7 +123,7 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 
 	/** Creates a new message instance. */
 	public M newInstance() {
-		return supplier.get();
+		return provider.get();
 	}
 
 	@Override
@@ -155,23 +146,21 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
-				.addValue(getJavaClass().getSimpleName())
-				.toString();
+		return "MessageDescriptor{" + getJavaClass().getSimpleName() + '}';
 	}
 
 	public static class Builder<M extends Message> {
 		private Class<M> javaClass;
-		private Supplier<M> supplier;
+		private Provider<M> provider;
 		private MessageDescriptor<? super M> base;
 		private Enum<?> discriminatorValue;
 		private final List<FieldDescriptor<M, ?>> declaredFields;
-		private final List<Supplier<MessageDescriptor<? extends M>>> subtypes;
+		private final List<Provider<MessageDescriptor<? extends M>>> subtypes;
 		private boolean form;
 
 		private Builder() {
-			declaredFields = Lists.newArrayList();
-			subtypes = Lists.newArrayList();
+			declaredFields = new ArrayList<FieldDescriptor<M, ?>>();
+			subtypes = new ArrayList<Provider<MessageDescriptor<? extends M>>>();
 		}
 
 		public Builder<M> setJavaClass(final Class<M> javaClass) {
@@ -179,8 +168,8 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 			return this;
 		}
 
-		public Builder<M> setSupplier(final Supplier<M> supplier) {
-			this.supplier = supplier;
+		public Builder<M> setProvider(final Provider<M> provider) {
+			this.provider = provider;
 			return this;
 		}
 
@@ -204,7 +193,7 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 			return this;
 		}
 
-		public Builder<M> addSubtype(final Supplier<MessageDescriptor<? extends M>> subtype) {
+		public Builder<M> addSubtype(final Provider<MessageDescriptor<? extends M>> subtype) {
 			subtypes.add(subtype);
 			return this;
 		}
@@ -214,15 +203,25 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 		}
 	}
 
-	private static <M extends Message> ImmutableList<FieldDescriptor<? super M, ?>> joinFields(
-			final Iterable<FieldDescriptor<M, ?>> declaredFields,
+	private static <M extends Message> List<FieldDescriptor<? super M, ?>> joinFields(
+			final List<FieldDescriptor<M, ?>> declaredFields,
 			@Nullable final MessageDescriptor<? super M> base) {
-		ImmutableList.Builder<FieldDescriptor<? super M, ?>> result = ImmutableList.builder();
+		List<FieldDescriptor<? super M, ?>> result = new ArrayList<FieldDescriptor<? super M, ?>>();
 		if (base != null) {
 			result.addAll(base.getFields());
 		}
 		result.addAll(declaredFields);
-		return result.build();
+		return Collections.unmodifiableList(result);
+	}
+
+	private static <M extends Message> Map<String, FieldDescriptor<? super M, ?>> fieldMap(
+			final List<FieldDescriptor<? super M, ?>> iterable) {
+		Map<String, FieldDescriptor<? super M, ?>> map = new HashMap<String,
+				FieldDescriptor<? super M, ?>>();
+		for (FieldDescriptor<? super M, ?> field : iterable) {
+			map.put(field.getName(), field);
+		}
+		return Collections.unmodifiableMap(map);
 	}
 
 	private static <M> FieldDescriptor<? super M, ?> findDiscriminator(

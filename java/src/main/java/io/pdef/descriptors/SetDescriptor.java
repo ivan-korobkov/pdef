@@ -1,8 +1,6 @@
 package io.pdef.descriptors;
 
-import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.Sets;
-
+import java.util.HashSet;
 import java.util.Set;
 
 public class SetDescriptor<T> extends DataDescriptor<Set<T>> {
@@ -11,7 +9,9 @@ public class SetDescriptor<T> extends DataDescriptor<Set<T>> {
 	@SuppressWarnings("unchecked")
 	SetDescriptor(final DataDescriptor<T> element) {
 		super(TypeEnum.SET, (Class<Set<T>>) (Class<?>) Set.class);
-		this.element = checkNotNull(element);
+		this.element = element;
+
+		if (element == null) throw new NullPointerException("element");
 	}
 
 	public DataDescriptor<T> getElement() {
@@ -24,7 +24,7 @@ public class SetDescriptor<T> extends DataDescriptor<Set<T>> {
 			return null;
 		}
 
-		Set<T> copy = Sets.newHashSet();
+		Set<T> copy = new HashSet<T>();
 		for (T elem : set) {
 			T copied = element.copy(elem);
 			copy.add(copied);

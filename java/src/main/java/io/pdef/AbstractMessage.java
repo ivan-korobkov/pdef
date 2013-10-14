@@ -1,6 +1,5 @@
 package io.pdef;
 
-import com.google.common.base.Objects;
 import io.pdef.descriptors.FieldDescriptor;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.format.JsonFormat;
@@ -43,14 +42,24 @@ public abstract class AbstractMessage implements Message, Serializable {
 
 	@Override
 	public String toString() {
-		Objects.ToStringHelper helper = Objects.toStringHelper(this);
+		StringBuilder sb = new StringBuilder(getClass().getSimpleName());
+		sb.append('{');
 
+		String nextSeparator = "";
 		MessageDescriptor<Message> descriptor = thisDescriptor();
 		for (FieldDescriptor<? super Message, ?> field : descriptor.getFields()) {
-			helper.add(field.getName(), field.get(this));
+			Object value = field.get(this);
+			if (value == null) {
+				continue;
+			}
+
+			sb.append(nextSeparator);
+			sb.append(field.getName()).append('=').append(value);
+			nextSeparator = ", ";
 		}
 
-		return helper.omitNullValues().toString();
+		sb.append('}');
+		return sb.toString();
 	}
 
 	@Override

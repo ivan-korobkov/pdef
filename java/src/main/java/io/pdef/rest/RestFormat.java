@@ -1,8 +1,5 @@
 package io.pdef.rest;
 
-import com.google.common.annotations.VisibleForTesting;
-import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.Lists;
 import io.pdef.Message;
 import io.pdef.descriptors.*;
 import io.pdef.format.JsonFormat;
@@ -14,10 +11,7 @@ import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class RestFormat {
 	public static final String CHARSET_NAME = "UTF-8";
@@ -39,9 +33,12 @@ public class RestFormat {
 	}
 
 	/** Adds a single invocation to a rest request. */
-	@VisibleForTesting
+	// VisibleForTesting
 	@SuppressWarnings("unchecked")
 	void serializeSingleInvocation(final RestRequest request, final Invocation invocation) {
+		if (request == null) throw new NullPointerException("request");
+		if (invocation == null) throw new NullPointerException("invocation");
+
 		MethodDescriptor<?, ?> method = invocation.getMethod();
 		if (method.isIndex()) {
 			request.appendPath("/");
@@ -75,14 +72,14 @@ public class RestFormat {
 	}
 
 	/** Serializes a positional arg and urlencodes it. */
-	@VisibleForTesting
+	// VisibleForTesting
 	<V> String serializePathArgument(final ArgumentDescriptor<V> argd, final V arg) {
 		String serialized = serializeToString(argd.getType(), arg);
 		return urlencode(serialized);
 	}
 
 	/** Serializes a query/post argument and puts it into a dst map. */
-	@VisibleForTesting
+	// VisibleForTesting
 	<V> void serializeParam(final ArgumentDescriptor<V> argd, final V arg,
 			final Map<String, String> dst) {
 		if (arg == null) {
@@ -130,7 +127,7 @@ public class RestFormat {
 	}
 
 	/** Serializes primitives and enums to strings and other types to json. */
-	@VisibleForTesting
+	// VisibleForTesting
 	<V> String serializeToString(final DataDescriptor<V> descriptor, final V arg) {
 		TypeEnum typeEnum = descriptor.getType();
 
@@ -150,7 +147,10 @@ public class RestFormat {
 	public <T, E> InvocationResult parseInvocationResult(
 			final RestResponse response, final DataDescriptor<T> datad,
 			@Nullable final DataDescriptor<E> excd) {
-		MessageDescriptor<RestResult<T, E>> descriptor = resultDescriptor(datad, excd);
+		if (response == null) throw new NullPointerException("response");
+		if (datad == null) throw new NullPointerException("datad");
+
+		MessageDescriptor <RestResult<T, E>> descriptor = resultDescriptor(datad, excd);
 		RestResult<T, E> result = jsonFormat.parse(response.getContent(), descriptor);
 
 		if (result.isSuccess()) {
@@ -173,7 +173,8 @@ public class RestFormat {
 
 	public Invocation parseInvocation(final RestRequest request, InterfaceDescriptor<?> descriptor)
 			throws Exception {
-		checkNotNull(request);
+		if (request == null) throw new NullPointerException("request");
+		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		String path = request.getPath();
 		if (path.startsWith("/")) {
@@ -183,7 +184,7 @@ public class RestFormat {
 		// Split the path into a list of parts (method names and positions arguments).
 		String[] partsArray = path.split("/", -1); // -1 disables discarding trailing empty
 		// strings.
-		LinkedList<String> parts = Lists.newLinkedList();
+		LinkedList<String> parts = new LinkedList<String>();
 		Collections.addAll(parts, partsArray);
 
 		// Parse the parts as method invocations.
@@ -218,7 +219,7 @@ public class RestFormat {
 			boolean isPost = method.isPost();
 			boolean isRemote = method.isRemote();
 
-			List<Object> args = Lists.newArrayList();
+			List<Object> args = new ArrayList<Object>();
 			Map<String, String> post = request.getPost();
 			Map<String, String> query = request.getQuery();
 
@@ -265,13 +266,13 @@ public class RestFormat {
 		throw RestException.methodNotFound("Method not found");
 	}
 
-	@VisibleForTesting
+	// VisibleForTesting
 	<V> V parsePathArgument(final ArgumentDescriptor<V> argd, final String s) {
 		String value = urldecode(s);
 		return parseFromString(argd.getType(), value);
 	}
 
-	@VisibleForTesting
+	// VisibleForTesting
 	<V> V parseParam(final ArgumentDescriptor<V> argd, final Map<String, String> src) {
 		DataDescriptor<V> descriptor = argd.getType();
 		boolean isForm = descriptor instanceof MessageDescriptor
@@ -320,7 +321,7 @@ public class RestFormat {
 		field.set(message, value);
 	}
 
-	@VisibleForTesting
+	// VisibleForTesting
 	<V> V parseFromString(final DataDescriptor<V> descriptor, final String value) {
 		TypeEnum typeEnum = descriptor.getType();
 
@@ -345,7 +346,10 @@ public class RestFormat {
 	public <T, E> RestResponse serializeInvocationResult(final InvocationResult result,
 			final DataDescriptor<T> dataDescriptor,
 			@Nullable final DataDescriptor<E> excDescriptor) {
-		MessageDescriptor<RestResult<T, E>> descriptor = resultDescriptor(dataDescriptor,
+		if (result == null) throw new NullPointerException("result");
+		if (dataDescriptor == null) throw new NullPointerException("dataDescriptor");
+
+		MessageDescriptor <RestResult<T, E>> descriptor = resultDescriptor(dataDescriptor,
 				excDescriptor);
 
 		T data = dataDescriptor.cast(result.getData());

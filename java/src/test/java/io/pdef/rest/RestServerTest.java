@@ -1,7 +1,7 @@
 package io.pdef.rest;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import io.pdef.Func;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
@@ -17,7 +17,7 @@ public class RestServerTest {
 	@Test
 	public void testHandle() throws Exception {
 		RestServer<TestInterface> server = RestServer.builder(TestInterface.class)
-				.setInvoker(new Function<Invocation, InvocationResult>() {
+				.setInvoker(new Func<Invocation, InvocationResult>() {
 					@Override
 					public InvocationResult apply(final Invocation input) {
 						return InvocationResult.ok(3);
@@ -44,7 +44,7 @@ public class RestServerTest {
 	public void testHandle_exc() throws Exception {
 		final TestException exc = new TestException().setText("Hello, world");
 		RestServer<TestInterface> server = RestServer.builder(TestInterface.class)
-				.setInvoker(new Function<Invocation, InvocationResult>() {
+				.setInvoker(new Func<Invocation, InvocationResult>() {
 					@Override
 					public InvocationResult apply(final Invocation input) {
 						return InvocationResult.exc(exc);
@@ -71,7 +71,7 @@ public class RestServerTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testHandle_restError() throws Exception {
 		RestServer<TestInterface> server = RestServer.builder(TestInterface.class)
-				.setInvoker(new Function<Invocation, InvocationResult>() {
+				.setInvoker(new Func<Invocation, InvocationResult>() {
 					@Override
 					public InvocationResult apply(final Invocation input) {
 						throw new IllegalArgumentException();
@@ -89,7 +89,7 @@ public class RestServerTest {
 	public void testErrorResponse() throws Exception {
 		RestException exc = RestException.serviceUnavailable("Test service unavailable");
 		RestResponse response = RestServer.builder(TestInterface.class)
-				.setInvoker(new Function<Invocation, InvocationResult>() {
+				.setInvoker(new Func<Invocation, InvocationResult>() {
 					@Nullable
 					@Override
 					public InvocationResult apply(@Nullable final Invocation input) {

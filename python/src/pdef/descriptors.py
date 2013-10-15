@@ -6,7 +6,7 @@ class Descriptor(object):
     '''Base type descriptor.'''
     def __init__(self, type0, pyclass):
         self.type = type0
-        self._pyclass_supplier = _supplier(type0)
+        self._pyclass_supplier = _supplier(pyclass)
         self._pyclass = None
 
         self.is_primitive = self.type in Type.PRIMITIVES
@@ -35,19 +35,32 @@ class MessageDescriptor(DataDescriptor):
         super(MessageDescriptor, self).__init__(Type.MESSAGE, pyclass)
         self.base = base
         self.discriminator_value = discriminator_value
-        self.subtypes = dict(subtypes) if subtypes else {}
-        self.is_form = is_form
 
         self.declared_fields = tuple(fields) if fields else ()
         self.inherited_fields = base.fields if base else ()
         self.fields = self.inherited_fields + self.declared_fields
         self.discriminator = self._find_discriminator(self.fields)
 
+        self._subtype_suppliers = tuple(_supplier(s) for s in subtypes) if subtypes else ()
+        self._subtypes = None
+        self._subtype_map = None
+
+        self.is_form = is_form
+        self.is_polymorphic = bool(self.discriminator)
+
     @classmethod
     def _find_discriminator(cls, fields):
         for field in fields:
             if field.is_discriminator:
                 return field
+
+    @property
+    def subtypes(self):
+        if self._subtypes is None:
+            self._subtypes = tuple(supplier() for supplier in self._subtype_suppliers)
+            self._subtype_map = {s.DESCRIPTOR.discriminator_value: s for s in self._subtypes}
+
+        return self._subtypes
 
     def find_field(self, name):
         '''Return a field by its name or None.'''
@@ -56,11 +69,11 @@ class MessageDescriptor(DataDescriptor):
                 return field
 
     def find_subtype(self, type0):
-        '''Get a subtype descriptor by a type enum value or self if not found.'''
-        subtype = self.subtypes.get(type0)
-        if subtype is None:
-            return self
-        return subtype() if callable(subtype) else subtype
+        '''Return a subtype descriptor by a type enum value or self if not found.'''
+        _ = self.subtypes # Force loading subtypes.
+
+        subtype = self._subtype_map.get(type0)
+        return subtype if subtype else self
 
 
 class FieldDescriptor(object):
@@ -99,7 +112,7 @@ class InterfaceDescriptor(Descriptor):
         self._exc_supplier = _supplier(exc)
         self._exc = None
 
-        self.methods = self.methods
+        self.methods = tuple(methods) if methods else ()
         self.index_method = self._find_index_method(self.methods)
 
     @classmethod
@@ -131,11 +144,10 @@ class MethodDescriptor(object):
         self._exc_supplier = _supplier(exc)
         self._exc = None
 
+        self.args = tuple(args) if args else ()
+
         self.is_index = is_index
         self.is_post = is_post
-        self.interface = None  # Set in the declaring interface.
-
-        self.args = tuple(args) if args else ()
 
     @property
     def result(self):
@@ -196,7 +208,7 @@ class EnumDescriptor(DataDescriptor):
     '''Enum descriptor.'''
     def __init__(self, pyclass, values):
         super(EnumDescriptor, self).__init__(Type.ENUM, pyclass)
-        self.values = tuple(values)
+        self.values = tuple(v.upper() for v in values)
 
     def find_value(self, name):
         if name is None:
@@ -273,17 +285,17 @@ def enum(pyclass, values):
 
 def interface(pyclass, exc=None, methods=None):
     '''Create an interface descriptor.'''
-    return InterfaceDescriptor(pyclass, exc=exc, methods=method)
+    return InterfaceDescriptor(pyclass, exc=exc, methods=methods)
 
 
-def method(name, result, args=None, is_index=False, is_post=False, *methods, **kwargs):
+def method(name, result, args=None, is_index=False, is_post=False):
     '''Create an interface method descriptor.'''
     return MethodDescriptor(name, result=result, args=None, is_index=is_index, is_post=is_post)
 
 
-def arg(name, descriptor_supplier):
+def arg(name, type0):
     '''Create a method argument descriptor.'''
-    return ArgDescriptor(name, descriptor_supplier)
+    return ArgDescriptor(name, type0)
 
 
 def _supplier(type_or_lambda):

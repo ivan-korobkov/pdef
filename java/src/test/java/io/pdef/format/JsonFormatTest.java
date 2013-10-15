@@ -109,8 +109,8 @@ public class JsonFormatTest {
 				.setAnInt16((short) 16)
 				.setAnInt32(32)
 				.setAnInt64(64L)
-				.setAFloat(1f)
-				.setADouble(2d)
+				.setAFloat(1.5f)
+				.setADouble(2.5d)
 				.setAString("hello")
 				.setAList(ImmutableList.of(1, 2))
 				.setASet(ImmutableSet.of(1, 2))
@@ -131,8 +131,8 @@ public class JsonFormatTest {
 			+ "\"anInt16\":16,"
 			+ "\"anInt32\":32,"
 			+ "\"anInt64\":64,"
-			+ "\"aFloat\":1.0,"
-			+ "\"aDouble\":2.0,"
+			+ "\"aFloat\":1.5,"
+			+ "\"aDouble\":2.5,"
 			+ "\"aList\":[1,2],"
 			+ "\"aSet\":[1,2],"
 			+ "\"aMap\":{\"1\":1.5},"

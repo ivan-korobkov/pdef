@@ -1,4 +1,5 @@
 # encoding: utf-8
+import pdef.formats
 
 
 class Type(object):
@@ -18,9 +19,6 @@ class Type(object):
     MAP = 'map'
     SET = 'set'
 
-    # Special data type.
-    OBJECT = 'object'
-
     # User defined data types.
     DEFINITION = 'definition' # Abstract definition type, used in references.
     ENUM = 'enum'
@@ -33,29 +31,38 @@ class Type(object):
     VOID = 'void'
 
     PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
-    DATA_TYPES = PRIMITIVES + (OBJECT, LIST, MAP, SET, DEFINITION, ENUM, MESSAGE, EXCEPTION)
+    DATA_TYPES = PRIMITIVES + (LIST, MAP, SET, DEFINITION, ENUM, MESSAGE, EXCEPTION)
 
 
 class Message(object):
-    __descriptor__ = None
+    DESCRIPTOR = None
 
     @classmethod
-    def parse_json(cls, s):
+    def parse_json(cls, s, **kwargs):
         '''Parse a message from a json string.'''
-        return cls.__descriptor__.parse_json(s)
+        return pdef.json.parse(s, cls.DESCRIPTOR, **kwargs)
+
+    @classmethod
+    def parse_json_stream(cls, fp, **kwargs):
+        '''Parse a message from a json file-like object.'''
+        return pdef.json.parse_stream(fp, cls.DESCRIPTOR, **kwargs)
 
     @classmethod
     def parse_dict(cls, d):
         '''Parse a message from a dictionary.'''
-        return cls.__descriptor__.parse_object(d)
+        return pdef.native.parse(d, cls.DESCRIPTOR)
 
-    def to_json(self, indent=None):
+    def to_json(self, indent=None, **kwargs):
         '''Convert this message to a json string.'''
-        return self.__descriptor__.to_json(self, indent)
+        return pdef.json.serialize(self, self.DESCRIPTOR, indent=indent)
+    
+    def to_json_stream(self, fp, indent=None, **kwargs):
+        '''Serialize this message as a json string to a file-like stream.'''
+        return pdef.json.serialize_to_stream(self, self.DESCRIPTOR, fp, indent=indent, **kwargs)
 
     def to_dict(self):
         '''Convert this message to a dictionary (serialize each field).'''
-        return self.__descriptor__.to_object(self)
+        return pdef.native.serialize(self, self.DESCRIPTOR)
 
     def __eq__(self, other):
         if other is None or self.__class__ is not other.__class__:
@@ -72,7 +79,7 @@ class Message(object):
         s = [u'<', self.__class__.__name__, u' ']
 
         first = True
-        for field in self.__descriptor__.fields:
+        for field in self.DESCRIPTOR.fields:
             value = field.get(self)
             if value is None:
                 continue
@@ -95,16 +102,12 @@ class Exc(Exception, Message):
 
 
 class Enum(object):
-    __descriptor__ = None
+    DESCRIPTOR = None
 
     @classmethod
     def parse_json(cls, s):
-        return cls.__descriptor__.parse_json(s)
-
-    @classmethod
-    def parse_string(cls, s):
-        return cls.__descriptor__.parse_string(s)
+        return pdef.json.parse(s, cls.DESCRIPTOR)
 
 
 class Interface(object):
-    __descriptor__ = None
+    DESCRIPTOR = None

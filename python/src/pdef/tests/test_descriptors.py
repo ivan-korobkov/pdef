@@ -8,7 +8,7 @@ from pdef_test import messages, inheritance, interfaces
 
 class TestMessageDescriptor(unittest.TestCase):
     cls = messages.SimpleMessage
-    descriptor = cls.__descriptor__
+    descriptor = cls.DESCRIPTOR
 
     def _fixture(self):
         return self.cls(aString='hello', aBool=True, anInt16=123)
@@ -58,7 +58,7 @@ class TestMessageDescriptor(unittest.TestCase):
 
 
 class TestPolymorphicMessageDescriptor(unittest.TestCase):
-    descriptor = inheritance.Base.__descriptor__
+    descriptor = inheritance.Base.DESCRIPTOR
 
     def test_subtype(self):
         d = self.descriptor
@@ -81,7 +81,7 @@ class TestPolymorphicMessageDescriptor(unittest.TestCase):
 
 class TestFieldDescriptor(unittest.TestCase):
     cls = messages.SimpleMessage
-    descriptor = cls.__descriptor__
+    descriptor = cls.DESCRIPTOR
     field = descriptor.find_field('aString')
 
     def test_set(self):
@@ -103,10 +103,10 @@ class TestFieldDescriptor(unittest.TestCase):
 
 
 class TestInterfaceDescriptor(unittest.TestCase):
-    descriptor = interfaces.TestInterface.__descriptor__
+    descriptor = interfaces.TestInterface.DESCRIPTOR
 
     def test_exc(self):
-        assert self.descriptor.exc is interfaces.TestException.__descriptor__
+        assert self.descriptor.exc is interfaces.TestException.DESCRIPTOR
 
     def test_methods(self):
         assert len(self.descriptor.methods) == 9
@@ -168,7 +168,7 @@ class TestPrimitiveDescriptors(unittest.TestCase):
 
 
 class TestEnumDescriptor(unittest.TestCase):
-    descriptor = messages.TestEnum.__descriptor__
+    descriptor = messages.TestEnum.DESCRIPTOR
 
     def _test(self, descriptor, objectToParse, expected, expected_object):
         assert descriptor.parse_object(objectToParse) == expected

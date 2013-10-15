@@ -58,7 +58,6 @@ public class RestProtocol {
 
 			if (isPost) {
 				// Serialize an argument as a post param.
-				// Post methods are remote.
 				serializeParam(argd, arg, request.getPost());
 
 			} else if (isRemote) {
@@ -75,7 +74,7 @@ public class RestProtocol {
 	/** Serializes a positional arg and urlencodes it. */
 	// VisibleForTesting
 	<V> String serializePathArgument(final ArgumentDescriptor<V> argd, final V arg) {
-		String serialized = serializeToString(argd.getType(), arg);
+		String serialized = serializeToJson(argd.getType(), arg);
 		return urlencode(serialized);
 	}
 
@@ -92,28 +91,28 @@ public class RestProtocol {
 				&& ((MessageDescriptor<?>) descriptor).isForm();
 
 		if (!isForm) {
-			// Serialize as a single string param.
-			String serialized = serializeToString(descriptor, arg);
+			// Serialize as a single json param.
+			String serialized = serializeToJson(descriptor, arg);
 			dst.put(argd.getName(), serialized);
+			return;
+		}
 
-		} else {
-			// It's a form, serialize each its field into a string param.
-			// Mind polymorphic messages.
+		// It's a form, serialize each its field into a json param.
+		// Mind polymorphic messages.
 
-			Message message = (Message) arg;
-			@SuppressWarnings("unchecked")
-			MessageDescriptor<Message> mdescriptor =
-					(MessageDescriptor<Message>) message.descriptor(); // Polymorphic.
+		Message message = (Message) arg;
+		@SuppressWarnings("unchecked")
+		MessageDescriptor<Message> mdescriptor =
+				(MessageDescriptor<Message>) message.descriptor(); // Polymorphic.
 
-			for (FieldDescriptor<? super Message, ?> field : mdescriptor.getFields()) {
-				String serialized = serializeFormField(field, message);
-				if (serialized == null) {
-					// Ignore null messages fields.
-					continue;
-				}
-
-				dst.put(field.getName(), serialized);
+		for (FieldDescriptor<? super Message, ?> field : mdescriptor.getFields()) {
+			String serialized = serializeFormField(field, message);
+			if (serialized == null) {
+				// Skip null fields.
+				continue;
 			}
+
+			dst.put(field.getName(), serialized);
 		}
 	}
 
@@ -124,12 +123,12 @@ public class RestProtocol {
 			return null;
 		}
 
-		return serializeToString(field.getType(), value);
+		return serializeToJson(field.getType(), value);
 	}
 
 	/** Serializes an argument to JSON, strips the quotes. */
 	// VisibleForTesting
-	<V> String serializeToString(final DataDescriptor<V> descriptor, final V arg) {
+	<V> String serializeToJson(final DataDescriptor<V> descriptor, final V arg) {
 		String s = jsonFormat.serialize(arg, descriptor, false);
 		if (descriptor.getType() != TypeEnum.STRING) {
 			return s;
@@ -247,7 +246,9 @@ public class RestProtocol {
 
 				if (!parts.isEmpty()) {
 					// Cannot have any more parts here, bad url.
-					throw RestException.methodNotFound("Method not found");
+					throw RestException.methodNotFound(
+							"Reached a remote method which returns a data type or is void. "
+							+ "Cannot have any more path parts. ");
 				}
 
 				return invocation;
@@ -259,13 +260,14 @@ public class RestProtocol {
 		}
 
 		// The parts are empty, and we failed to parse a remote method invocation.
-		throw RestException.methodNotFound("Method not found");
+		throw RestException.methodNotFound("The last method must be a remote one. It must return "
+				+ "a data type or be void.");
 	}
 
 	// VisibleForTesting
 	<V> V parsePathArgument(final ArgumentDescriptor<V> argd, final String s) {
 		String value = urldecode(s);
-		return parseFromString(argd.getType(), value);
+		return parseFromJson(argd.getType(), value);
 	}
 
 	// VisibleForTesting
@@ -275,23 +277,21 @@ public class RestProtocol {
 				&& ((MessageDescriptor) descriptor).isForm();
 
 		if (!isForm) {
-			// Parse as a single string format.
+			// Parse a single json string param.
 			String serialized = src.get(argd.getName());
-			return parseFromString(descriptor, serialized);
+			return parseFromJson(descriptor, serialized);
 
 		} else {
-			// It's a form. Parse each its field.
+			// It's a form. Parse each its field as a param.
 			// Mind polymorphic messages.
 
 			MessageDescriptor<Message> mdescriptor = (MessageDescriptor<Message>) descriptor;
 			if (mdescriptor.isPolymorphic()) {
-				FieldDescriptor<? super Message, ?> discriminator = mdescriptor.getDiscriminator();
-				String serialized = src.get(discriminator.getName());
-
-				if (serialized != null) {
-					Object value = parseFromString(discriminator.getType(), serialized);
-					mdescriptor = mdescriptor.findSubtypeOrThis(value);
-				}
+				// Parse the discriminator field and get the subtype descriptor.
+				FieldDescriptor<? super Message, ?> field = mdescriptor.getDiscriminator();
+				String serialized = src.get(field.getName());
+				Object value = parseFromJson(field.getType(), serialized);
+				mdescriptor = mdescriptor.findSubtypeOrThis(value);
 			}
 
 			Message message = mdescriptor.newInstance();
@@ -308,7 +308,7 @@ public class RestProtocol {
 
 	private <M, V> void parseFormField(final M message, final FieldDescriptor<M, V> field,
 			final String serialized) {
-		V value = parseFromString(field.getType(), serialized);
+		V value = parseFromJson(field.getType(), serialized);
 		if (value == null) {
 			// Skip null fields.
 			return;
@@ -319,7 +319,7 @@ public class RestProtocol {
 
 	// VisibleForTesting
 	/** Parses an argument from an unquoted JSON string. */
-	<V> V parseFromString(final DataDescriptor<V> descriptor, String value) {
+	<V> V parseFromJson(final DataDescriptor<V> descriptor, String value) {
 		if (value == null || value.equals("null")) {
 			return null;
 		}

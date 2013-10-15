@@ -1,12 +1,11 @@
 # encoding: utf-8
 import httplib
-import logging
 import requests
 import urllib
 import urlparse
 
-import pdef.invoke
-from pdef.rpc import *
+import pdef
+import pdef.descriptors
 
 
 GET = 'GET'
@@ -30,18 +29,18 @@ def client(interface, url, session=None):
 
 def client_handler(sender):
     '''Create a REST client handler.'''
-    return RestClientHandler(sender)
+    return RestClient(sender)
 
 
 def client_sender(url, session=None):
     '''Create a REST client sender.'''
-    return RestClientSender(url, session=session)
+    return RestSession(url, session=session)
 
 
 def server(interface, service_or_provider):
     '''Create a default REST server.
 
-    @param interface:           An interface class with a __descriptor__ field.
+    @param interface:           An interface class with a DESCRIPTOR field.
     @param service_or_provider: A service or a callable service provider.
     '''
     invoker = pdef.invoke.invoker(service_or_provider)
@@ -50,8 +49,8 @@ def server(interface, service_or_provider):
 
 def server_handler(interface, invoker):
     '''Create a REST server handler.'''
-    descriptor = interface.__descriptor__
-    return RestServerHandler(descriptor, invoker)
+    descriptor = interface.DESCRIPTOR
+    return RestServer(descriptor, invoker)
 
 
 def wsgi_server(rest_server):
@@ -117,165 +116,301 @@ class RestResponse(object):
         return self.content_type.lower().startswith(TEXT_MIME_TYPE)
 
 
-class RestClientHandler(object):
-    logger = logging.getLogger('pdef.rest.RestClientHandler')
+class RestException(Exception):
+    def __init__(self, message, status=None):
+        super(RestException, self).__init__(message)
+        self.status = status
 
-    def __init__(self, sender):
-        '''Create a rest client.'''
-        self.sender = sender
 
-    def __call__(self, invocation):
-        return self.invoke(invocation)
+class RestProtocol(object):
+    # Invocation serialization.
 
-    def invoke(self, invocation):
-        '''Serialize an invocation, send a request, parse a response and return the result.'''
-        self.logger.debug('Invoking %s', invocation)
-        request = self._create_request(invocation)
-        response = self._send_request(request)
-
-        if self._is_successful(response):
-            return self._parse_result(response, invocation)
-
-        # The method raise an error itself for better stack traces.
-        self._parse_raise_error(response)
-
-    def _create_request(self, invocation):
+    def serialize_invocation(self, invocation):
         '''Convert an invocation into a RestRequest.'''
         request = RestRequest()
         request.method = POST if invocation.method.is_post else GET
 
         # Append invocations from a chain.
         for inv in invocation.to_chain():
-            self._serialize_invocation(inv, request)
+            self._serialize_single_invocation(inv, request)
 
         return request
 
-    def _serialize_invocation(self, invocation, request):
+    def _serialize_single_invocation(self, invocation, request):
         '''Add an invocation to a path, query dict, and post dict.'''
         method = invocation.method
 
-        # Append the url-encoded method name to the path.
-        request.path += '/'
-        if not method.is_index:
-            request.path += urllib.quote(method.name)
+        if method.is_index:
+            request.path += '/'
+        else:
+            # Append the url-encoded method name to the path.
+            request.path += '/' + urllib.quote(method.name)
 
+        is_post = method.is_post
+        is_remote = method.is_remote
 
         # Add the method arguments to the request.
         args = invocation.args
-        if method.is_post:
-            # Serialize and put args to request.post.
+        for argd in method.args:
+            arg = args.get(argd.name)
 
-            for arg in method.args:
-                value = args.get(arg.name)
-                self._serialize_query_arg(arg, value, request.post)
+            if method.is_post:
+                # Serialize an argument as a post param.
+                self._serialize_param(argd, arg, request.post)
 
-        elif method.is_remote:
-            # Serialize and put args to request.query.
+            elif method.is_remote:
+                # Serialize an argument as a query param.
+                self._serialize_param(argd, arg, request.query)
 
-            for arg in method.args:
-                value = args.get(arg.name)
-                self._serialize_query_arg(arg, value, request.query)
+            else:
+                # Serialize an argument as a path part.
+                request.path += '/' + self._serialize_path_argument(argd, arg)
 
-        else:
-            # Prepend args to request.path.
-
-            for arg in method.args:
-                value = args.get(arg.name)
-                request.path += '/' + self._serialize_positional_arg(arg, value)
-
-    def _serialize_positional_arg(self, arg, value):
+    def _serialize_path_argument(self, argd, arg):
         '''Serialize a positional argument and percent-encode it.'''
-        serialized = self._serialize_arg_to_string(arg.type, value)
-        return urllib.quote(serialized.encode('utf-8'), safe='[],{}-')
+        s = self._serialize_to_json(argd.type, arg)
+        return self._urlencode(s)
 
-    def _serialize_query_arg(self, arg, value, dst):
+    def _serialize_param(self, argd, arg, dst):
         '''Serialize a query/post argument and put into a dst dict.'''
-        if value is None:
+        if arg is None:
             # Skip none arguments.
             return
 
-        descriptor = arg.type
+        descriptor = argd.type
         is_form = descriptor.is_message and descriptor.is_form
         if not is_form:
-            dst[arg.name] = self._serialize_arg_to_string(descriptor, value)
+            # Serialize as a single json param.
+            dst[argd.name] = self._serialize_to_json(descriptor, arg)
             return
 
-        # It's a form, expand its fields into distinct arguments.
+        # It's a form, serialize each its field into a json param.
+        # Mind polymorphic messages.
+
+        message = arg
+        descriptor = message.DESCRIPTOR  # Polymorphic.
+
         for field in descriptor.fields:
-            fvalue = field.get(value)
-            if fvalue is None:
+            value = field.get(message)
+            if value is None:
+                # Skip null fields.
                 continue
 
-            dst[field.name] = self._serialize_arg_to_string(field.type, fvalue)
+            dst[field.name] = self._serialize_to_json(field.type, value)
 
-    def _serialize_arg_to_string(self, descriptor, value):
-        if value is None:
-            return ''
+    def _serialize_to_json(self, descriptor, value):
+        s = pdef.json.serialize(value, descriptor, indent=None)
+        if descriptor.type == pdef.Type.STRING:
+            s = s.strip('"')
+        return s
 
-        if descriptor.is_primitive or descriptor.is_enum:
-            return descriptor.to_string(value)
+    # InvocationResult parsing.
 
-        return descriptor.to_json(value)
+    def parse_invocation_result(self, response, datad, excd=None):
+        '''Parse an invocation result from a RestResponse.'''
+        result_class = self._result_class(datad, excd)
+        result = result_class.parse_json(response.content)
 
-    def _send_request(self, request):
-        '''Send a request and return a response.'''
-        return self.sender(request)
-
-    def _is_successful(self, response):
-        return response.is_ok and response.is_application_json
-
-    def _parse_result(self, response, invocation):
-        '''Parse a RestResponse into an invocation result'''
-
-        rpc = RpcResult.parse_json(response.content)
-        status = rpc.status
-        data = rpc.data
-
-        if status == RpcStatus.OK:
+        if result.success:
             # It's a successful result.
-            # Parse it using the invocation method result descriptor.
+            # Return the data.
+            return pdef.invoke.InvocationResult.ok(result.data)
 
-            r = invocation.result.parse_object(data)
-            return pdef.invoke.InvocationResult(r)
-
-        elif status == RpcStatus.EXCEPTION:
+        else:
             # It's an expected exception.
-            # Parse it using the invocation exception descriptor.
+            if not excd:
+                # The server returned an application exception,
+                # but the client does not support them.
+                raise RestException('Unsupported application exception')
 
-            exc = invocation.exc
-            if not exc:
-                raise ClientError('Unsupported application exception')
+            return pdef.invoke.InvocationResult.exception(result.exc)
 
-            r = exc.parse_object(data)
-            return pdef.invoke.InvocationResult(r, ok=False)
+    # Invocation parsing.
 
-        raise ClientError('Unsupported rpc response status=%s' % status)
+    def parse_invocation(self, request, descriptor):
+        '''Parse an invocation chain from a RestRequest.'''
 
-    def _parse_raise_error(self, response):
-        '''Parse an error from a RestResponse.'''
+        path = request.path
+        if path.startswith('/'):
+            path = path[1:]
+
+        parts = path.split('/')
+        query = request.query
+        post = request.post
+
+        invocation = pdef.invoke.Invocation.root()
+        while parts:
+            part = parts.pop(0)
+
+            # Find a method by a name or get an index method.
+            method = descriptor.find_method(part) or descriptor.index_method
+            if not method:
+                raise RestException('Method not found', httplib.NOT_FOUND)
+
+            if method.is_index and part != '':
+                # It's an index method, and the part does not equal
+                # the method name. Prepend the part back, it's an argument.
+                parts.insert(0, part)
+
+            if method.is_post and not request.is_post:
+                # The method requires a POST HTTP request.
+                raise RestException('Method not allowed, POST required. The method is %r'
+                                    % method.name, httplib.METHOD_NOT_ALLOWED)
+
+            # Parse method arguments.
+            args = {}
+            for argd in method.args:
+                if method.is_post:
+                    # Parse a post param.
+                    arg = self._parse_param(argd, post)
+
+                elif method.is_remote:
+                    # Parse a query param.
+                    arg = self._parse_param(argd, query)
+
+                else:
+                    # Remote the first part from the path,
+                    # and parse an argument from it.
+                    if not parts:
+                        raise RestException('Wrong number of arguments. The method is %r'
+                                            % method.name, httplib.NOT_FOUND)
+
+                    arg = self._parse_path_argument(argd, parts.pop(0))
+
+                args[argd.name] = arg
+
+            # Create a next invocation in a chain with the parsed arguments.
+            invocation = invocation.next(method, **args)
+
+            if method.is_remote:
+                # It's the last method which returns a data type.
+                # Stop parsing.
+
+                if parts:
+                    # Cannot have any more parts here, bad url.
+                    raise RestException('Reached a remote method which returns a data type '
+                                        'or is void. Cannot have any more path parts. '
+                                        'The method is %r' % method.name, httplib.NOT_FOUND)
+
+                return invocation
+
+            # It's an interface method.
+            # Get the next interface and proceed parsing the parts.
+            descriptor = method.result
+
+        # The parts are empty but we failed to get a remote invocation
+        # (the last invocation in a chain, which returns a data type).
+        raise RestException('The last method must be a remote one. '
+                            'It must return a data type or be void.', httplib.NOT_FOUND)
+
+    def _parse_path_argument(self, argd, s):
+        s = self._urldecode(s)
+        return self._parse_from_json(argd.type, s)
+
+    def _parse_param(self, argd, src):
+        descriptor = argd.type
+        is_form = descriptor.is_message and descriptor.is_form
+
+        if not is_form:
+            # Parse a single json string param.
+            serialized = src.get(argd.name)
+            return self._parse_from_json(argd.type, serialized)
+
+        # It's a form. Parse each field as a param.
+        # Mind polymorphic messages.
+
+        descriptor = argd.type
+        if descriptor.is_polymorphic:
+            # Parse the discriminator field and get the subtype descriptor.
+            field = descriptor.discriminator
+            serialized = src.get(field.name)
+            parsed = self._parse_from_json(field.type, serialized)
+            subtype = descriptor.find_subtype(parsed)
+            descriptor = subtype.DESCRIPTOR
+
+        message = descriptor.pyclass()
+        for field in descriptor.fields:
+            serialized = src.get(field.name)
+            if serialized is None:
+                continue
+
+            value = self._parse_from_json(field.type, serialized)
+            field.set(message, value)
+
+        return message
+
+    def _parse_from_json(self, descriptor, s):
+        if s is None:
+            return None
+        if descriptor.type == pdef.Type.STRING:
+            s = '"' + s + '"'
+        return pdef.json.parse(s, descriptor)
+
+    # InvocationResult serialization.
+
+    def serialize_invocation_result(self, invocation_result, datad, excd=None):
+        '''Serialize an InvocationResult into a RestResponse.'''
+        result_class = self._result_class(datad, excd)
+        result = result_class(success=invocation_result.success,
+                              data=invocation_result.data,
+                              exc=invocation_result.exc)
+
+        content = result.to_json(indent=True)
+        return RestResponse(status=httplib.OK, content=content, content_type=JSON_CONTENT_TYPE)
+
+    def _result_class(self, datad, excd=None):
+        '''Create a runtime rest result class with the given data and exception fields.'''
+        fields = [pdef.descriptors.field('success', pdef.descriptors.bool0),
+                  pdef.descriptors.field('data', datad)]
+        if excd:
+            fields.append(pdef.descriptors.field('exc', excd))
+
+        class RestResult(pdef.Message):
+            def __init__(self, success=False, data=None, exc=None):
+                self.success = success
+                self.data = data
+                self.exc = exc
+            DESCRIPTOR = pdef.descriptors.message(lambda: RestResult, fields=fields)
+
+        return RestResult
+
+    def _urlencode(self, s):
+        return urllib.quote(s.encode('utf-8'), safe='[],{}-')
+
+    def _urldecode(self, s):
+        return urllib.unquote(s).decode('utf-8')
+
+
+class RestClient(object):
+    def __init__(self, sender):
+        '''Create a rest client.'''
+        self.sender = sender
+        self.protocol = RestProtocol()
+
+    def __call__(self, invocation):
+        return self.invoke(invocation)
+
+    def invoke(self, invocation):
+        '''Serialize an invocation, send a request, parse a response and return the result.'''
+        request = self.protocol.serialize_invocation(invocation)
+        response = self.sender(request)
+
+        if response.is_ok and response.is_application_json:
+            datad = invocation.result
+            excd = invocation.exc
+            return self.protocol.parse_invocation_result(response, datad, excd)
+
+        raise self._rest_error(response)
+
+    def _rest_error(self, response):
+        '''Create a RestError from a RestResponse.'''
         status = response.status
         text = response.content or 'No text'
         text = text if len(text) < 255 else text[:255]  # Limit the length for the exception.
-
-        if status == httplib.BAD_REQUEST:               # 400
-            raise ClientError(text)
-
-        elif status == httplib.NOT_FOUND:               # 404
-            raise MethodNotFoundError(text)
-
-        elif status == httplib.METHOD_NOT_ALLOWED:      # 405
-            raise MethodNotAllowedError(text)
-
-        elif status in (httplib.BAD_GATEWAY, httplib.SERVICE_UNAVAILABLE):  # 502, 503
-            raise ServiceUnavailableError(text)
-
-        elif status == httplib.INTERNAL_SERVER_ERROR:   # 500
-            raise ServerError(text)
-
-        raise ServerError('Server error, status=%s, text=%s' % (status, text))
+        return RestException(text, status)
 
 
-class RestClientSender(object):
+class RestSession(object):
     '''The requests-based sender for RestClient.'''
     def __init__(self, url, session=None):
         self.url = url
@@ -312,175 +447,32 @@ class RestClientSender(object):
         return url + path
 
 
-class RestServerHandler(object):
-    logger = logging.getLogger('pdef.rest.RestServerHandler')
-
+class RestServer(object):
     def __init__(self, descriptor, invoker):
         '''Create a WSGI server.'''
         self.descriptor = descriptor
-        self.invoker = invoker
+        self.invocation_handler = invoker
+        self.protocol = RestProtocol()
 
     def __call__(self, request):
         return self.handle(request)
 
     def handle(self, request):
-        self.logger.debug('Incoming request %s', request)
-
         try:
-            invocation = self._parse_request(request)
-            result = self._invoke(invocation)
-            return self._ok_response(result, invocation)
-        except Exception, e:
-            self.logger.exception('Error, e=%s, request=%s', e, request)
-
-            # Create a rest response from an unhandled exception.
+            invocation = self.protocol.parse_invocation(request, self.descriptor)
+        except RestException as e:
             return self._error_response(e)
 
-    def _parse_request(self, request):
-        '''Parse a request and return a chained invocation.'''
-        path = request.path
-        query = request.query
-        post = request.post
+        datad = invocation.result
+        excd = invocation.exc
 
-        if path.startswith('/'):
-            path = path[1:]
-        parts = path.split('/')
-
-        descriptor = self.descriptor
-        invocation = pdef.invoke.Invocation.root()
-        while parts:
-            part = parts.pop(0)
-            # Find a method by a name or get an index method.
-            if not descriptor:
-                raise MethodNotFoundError('Method not found')
-
-            method = descriptor.find_method(part) or descriptor.index_method
-            if not method:
-                raise MethodNotFoundError('Method not found')
-
-            # If an index method, prepend the part back,
-            # because index methods do not have names.
-            if method.is_index and part != '':
-                parts.insert(0, part)
-
-            # Parse method arguments.
-            args = {}
-            if method.is_post:
-                if not request.is_post:
-                    raise MethodNotAllowedError('Method not allowed, POST required')
-
-                # Post methods are remote.
-                # Parse arguments as post params.
-                for arg in method.args:
-                    args[arg.name] = self._parse_query_arg(arg, post)
-
-            elif method.is_remote:
-                # Parse arguments as query params.
-                for arg in method.args:
-                    args[arg.name] = self._parse_query_arg(arg, query)
-
-            else:
-                # Parse arguments as positional params.
-                for arg in method.args:
-                    if not parts:
-                        raise WrongMethodArgsError('Wrong number of method args')
-
-                    args[arg.name] = self._parse_positional_arg(arg, parts.pop(0))
-
-            invocation = invocation.next(method, **args)
-            descriptor = None if method.is_remote else method.result
-
-        if not invocation.is_remote:
-            raise MethodNotFoundError('Method not found')
-
-        return invocation
-
-    def _parse_positional_arg(self, arg, value):
-        value = urllib.unquote(value).decode('utf-8')
-        return self._parse_arg_from_string(arg.type, value)
-
-    def _parse_query_arg(self, arg, src):
-        descriptor = arg.type
-        is_form = descriptor.is_message and descriptor.is_form
-
-        if not is_form:
-            # Parse as a string argument.
-            value = src.get(arg.name)
-            if value is None:
-                return None
-            return self._parse_arg_from_string(arg.type, value)
-
-        # Parse as an expanded form fields.
-        form = {}
-        for field in descriptor.fields:
-            fvalue = src.get(field.name)
-            if fvalue is None:
-                continue
-
-            form[field.name] = self._parse_arg_from_string(field.type, fvalue)
-
-        return descriptor.parse_object(form)
-
-    def _parse_arg_from_string(self, descriptor, value):
-        if value is None:
-            return
-
-        if value == '':
-            return '' if descriptor.is_string else None
-
-        if descriptor.is_primitive or descriptor.is_enum:
-            return descriptor.parse_string(value)
-
-        return descriptor.parse_json(value)
-
-    def _invoke(self, invocation):
-        '''Invoke an invocation and return InvocationResult.'''
-        return self.invoker.invoke(invocation)
-
-    def _ok_response(self, result, invocation):
-        '''Create a successful REST response from an invocation result.'''
-        data = result.data
-        method = invocation.method
-
-        rpc = RpcResult()
-        if result.ok:
-            # It's a successful method result.
-            rpc.status = RpcStatus.OK
-            rpc.data = method.result.to_object(data)
-
-        else:
-            # It's an expected application exception.
-            rpc.status = RpcStatus.EXCEPTION
-            rpc.data = method.exc.to_object(data)
-
-        content = rpc.to_json(indent=True)
-        return RestResponse(status=httplib.OK, content=content, content_type=JSON_CONTENT_TYPE)
+        invocation_result = self.invocation_handler(invocation)
+        return self.protocol.serialize_invocation_result(invocation_result, datad, excd)
 
     def _error_response(self, e):
-        '''Create an error REST response from an unhandled exception.'''
-        if isinstance(e, WrongMethodArgsError):
-            http_status = httplib.BAD_REQUEST           # 400
-            result = e.text
-        elif isinstance(e, MethodNotFoundError):
-            http_status = httplib.NOT_FOUND             # 404
-            result = e.text
-        elif isinstance(e, MethodNotAllowedError):
-            http_status = httplib.METHOD_NOT_ALLOWED    # 405
-            result = e.text
-        elif isinstance(e, ClientError):
-            http_status = httplib.BAD_REQUEST           # 400
-            result = e.text
-        elif isinstance(e, ServiceUnavailableError):
-            http_status = httplib.SERVICE_UNAVAILABLE   # 503
-            result = e.text
-        elif isinstance(e, ServerError):
-            http_status = httplib.INTERNAL_SERVER_ERROR # 500
-            result = e.text
-        else:
-            http_status = httplib.INTERNAL_SERVER_ERROR # 500
-            result = 'Internal server error'
-
-        return RestResponse(http_status, content=result, content_type=TEXT_CONTENT_TYPE)
+        '''Serialize a RestException into an error RestResponse.'''
+        status = e.status or httplib.INTERNAL_SERVER_ERROR
+        return RestResponse(status, content=e.message, content_type=TEXT_CONTENT_TYPE)
 
 
 class WsgiRestServer(object):

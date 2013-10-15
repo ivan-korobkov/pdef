@@ -5,10 +5,10 @@ from collections import deque
 def proxy(interface, handler):
     '''Create a interface proxy using a callable invocation handler.
 
-    @param interface:   Class with a __descriptor__.
+    @param interface:   Class with a DESCRIPTOR.
     @param handler:     Callable(Invocation) => InvocationResult.
     '''
-    descriptor = interface.__descriptor__
+    descriptor = interface.DESCRIPTOR
     return InvocationProxy(descriptor, handler)
 
 
@@ -25,7 +25,7 @@ class Invocation(object):
         '''Create an empty root invocation.'''
         return Invocation(None, None, None)
 
-    def __init__(self, method, parent, args=None, kwargs=None):
+    def __init__(self, method, args=None, kwargs=None, parent=None):
         '''Create an rpc invocation.
 
         @param method: The method descriptor this invocation has been invoked on.
@@ -40,21 +40,6 @@ class Invocation(object):
         self.exc = method.exc if method else (parent.exc if parent else None)
 
         self.is_root = method is None
-        self.__unicode = None  # Cache invocation unicode repr.
-
-        self._check_arg_types()
-
-    def _check_arg_types(self):
-        if self.is_root:
-            return
-
-        method = self.method
-        for arg in method.args:
-            value = self.args.get(arg.name)
-            descriptor = arg.type
-
-            if not descriptor.is_valid_type(value):
-                raise TypeError('Wrong method arguments, method=%s, args=%r' % (method, self.args))
 
     @property
     def is_remote(self):
@@ -81,54 +66,16 @@ class Invocation(object):
 
         try:
             for inv in chain:
-                obj = inv.invoke_single(obj)
+                obj = inv.method.invoke(obj, **inv.args)
         except exc_class, e:
             # Catch the expected application exception.
             # It's valid to write 'except None, e' when no application exception.
-            return InvocationResult(e, ok=False)
+            return InvocationResult.exception(e)
 
-        return InvocationResult(obj)
+        return InvocationResult.ok(obj)
 
-    def invoke_single(self, obj):
-        '''Invoke only this invocation (not a chain) on an object.'''
-        method = self.method
-        result = method.invoke(obj, **self.args)
-
-        if not method.result.is_valid_type(result):
-            raise TypeError('Wrong method result, method=%s, result=%r' % (method, result))
-
-        return result
-
-    def __str__(self):
-        return unicode(self).encode('utf-8', 'replace')
-
-    def __unicode__(self):
-        if self.__unicode:
-            return self.__unicode
-
-        s = []
-        first = True
-        for inv in self.to_chain():
-            if first:
-                first = False
-            else:
-                s.append(u'.')
-            s.append(inv.method.name)
-            s.append(u'(')
-
-            first_arg = True
-            for arg in inv.method.args:
-                if first_arg:
-                    first_arg = False
-                else:
-                    s.append(u', ')
-                value = inv.args.get(arg.name)
-                s.append(arg.name)
-                s.append(u'=')
-                s.append(unicode(value))
-            s.append(u')')
-        self.__unicode = u''.join(s)
-        return self.__unicode
+    def __repr__(self):
+        return '<Invocation %r args=%r>' % (self.method.name, self.args)
 
     @staticmethod
     def _build_args(method, args=None, kwargs=None):
@@ -170,58 +117,67 @@ class Invocation(object):
 
 
 class InvocationResult(object):
-    '''Combines success and exception invocation results.'''
-    def __init__(self, data, ok=True):
+    '''InvocationResult combines the returned value and the exception.'''
+    @classmethod
+    def ok(cls, data):
+        return InvocationResult(True, data=data)
+
+    @classmethod
+    def exception(cls, exc):
+        return InvocationResult(False, exc=exc)
+
+    def __init__(self, success, data=None, exc=None):
+        self.success = success
         self.data = data
-        self.ok = ok
+        self.exc = exc
 
 
 class InvocationProxy(object):
     '''Reflective client proxy.'''
-    def __init__(self, descriptor, callable_handler, parent_invocation=None):
+    def __init__(self, descriptor, handler, invocation=None):
         self._descriptor = descriptor
-        self._handler = callable_handler
-        self._invocation = parent_invocation or Invocation.root()
+        self._handler = handler
+        self._invocation = invocation
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.__interface)
+        return '<InvocationProxy %s>' % self._interface
 
     def __getattr__(self, name):
         '''Get a pdef method by name and return a callable which proxies its calls.'''
-        for m in self._descriptor.methods:
-            if m.name == name:
-                return lambda *args, **kwargs: self._invoke(m, *args, **kwargs)
+        method = self._descriptor.find_method(name)
+        if not method:
+            raise AttributeError('Method not found %r' % name)
 
-        raise AttributeError('Method not found: %s' % name)
+        return _ProxyMethod(self._invocation, self._handler, method)
 
-    def _invoke(self, method, *args, **kwargs):
-        '''Handle a pdef method invocation.
-        First, capture the invocation. Then, handle it if the method is remote,
-        and return the result if invocation_result is OK, or raise the result exception.
-        If the method is not remote, create a next proxy for the method result interface.
-        '''
-        invocation = self._capture(method, *args, **kwargs)
-        if method.is_remote:
-            # The method result is a data type or void.
-            return self._handle(invocation)
 
-        # The method result is an interface, so create a new client for it.
-        return self._next_proxy(invocation)
+class _ProxyMethod(object):
+    def __init__(self, invocation, handler, method):
+        self.invocation = invocation
+        self.handler = handler
+        self.method = method
 
-    def _capture(self, method, *args, **kwargs):
-        return self._invocation.next(method, *args, **kwargs)
+    def __repr__(self):
+        return '<ProxyMethod %r>' % self.method.name
 
-    def _handle(self, invocation):
-        result = self._handler(invocation)
-        assert result
+    def __call__(self, *args, **kwargs):
+        method = self.method
+        if self.invocation:
+            invocation = self.invocation.next(method, *args, **kwargs)
+        else:
+            invocation = Invocation(method, args=args, kwargs=kwargs)
 
-        if result.ok:
+        if not method.is_remote:
+            # This is a method, which returns an interface.
+            # Create a next invocation proxy.
+            return InvocationProxy(method.result, self.handler, invocation)
+
+        # The method result is a data type or void.
+        result = self.handler(invocation)
+        if result.success:
             return result.data
 
-        raise result.data
-
-    def _next_proxy(self, invocation):
-        return InvocationProxy(invocation.method.result, self._handler, invocation)
+        raise result.exc
 
 
 class Invoker(object):

@@ -115,6 +115,9 @@ class InterfaceDescriptor(Descriptor):
         self.methods = tuple(methods) if methods else ()
         self.index_method = self._find_index_method(self.methods)
 
+        for method in self.methods:
+            method._exc_supplier = self._exc_supplier
+
     @classmethod
     def _find_index_method(cls, methods):
         for method in methods:
@@ -136,7 +139,7 @@ class InterfaceDescriptor(Descriptor):
 
 class MethodDescriptor(object):
     '''Interface method descriptor.'''
-    def __init__(self, name, result, exc=None, args=None, is_index=False, is_post=False):
+    def __init__(self, name, result, args=None, exc=None, is_index=False, is_post=False):
         self.name = name
         self._result_supplier = _supplier(result)
         self._result = None
@@ -160,13 +163,13 @@ class MethodDescriptor(object):
     def exc(self):
         '''Return a expected interface exception.'''
         if self._exc is None:
-            self._exc = self._exc_supplier if self._exc_supplier else None
+            self._exc = self._exc_supplier() if self._exc_supplier else None
         return self._exc
 
     @property
     def is_remote(self):
         '''Method is remote when its result is not an interface.'''
-        return not self.result.is_interface
+        return self.result.type != Type.INTERFACE
 
     def invoke(self, obj, *args, **kwargs):
         '''Invoke this method on an object with a given arguments, return the result'''
@@ -288,9 +291,10 @@ def interface(pyclass, exc=None, methods=None):
     return InterfaceDescriptor(pyclass, exc=exc, methods=methods)
 
 
-def method(name, result, args=None, is_index=False, is_post=False):
+def method(name, result, args=None, exc=None, is_index=False, is_post=False):
     '''Create an interface method descriptor.'''
-    return MethodDescriptor(name, result=result, args=None, is_index=is_index, is_post=is_post)
+    return MethodDescriptor(name, result=result, args=args, exc=exc,
+                            is_index=is_index, is_post=is_post)
 
 
 def arg(name, type0):

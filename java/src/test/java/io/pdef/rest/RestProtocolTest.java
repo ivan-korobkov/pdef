@@ -156,21 +156,21 @@ public class RestProtocolTest {
 
 	@Test
 	public void testSerializeToString_primitive() throws Exception {
-		String result = format.serializeToString(Descriptors.int32, 123);
+		String result = format.serializeToJson(Descriptors.int32, 123);
 
 		assertEquals("123", result);
 	}
 
 	@Test
 	public void testSerializeToString_null() throws Exception {
-		String result = format.serializeToString(Descriptors.int32, null);
+		String result = format.serializeToJson(Descriptors.int32, null);
 
 		assertEquals("null", result);
 	}
 
 	@Test
 	public void testSerializeToString_string() throws Exception {
-		String result = format.serializeToString(Descriptors.string, "привет+ромашки");
+		String result = format.serializeToJson(Descriptors.string, "привет+ромашки");
 
 		assertEquals("привет+ромашки", result);
 	}
@@ -183,7 +183,7 @@ public class RestProtocolTest {
 				.setAnInt16((short) 256)
 				.setAString("hello");
 
-		String result = format.serializeToString(type, msg);
+		String result = format.serializeToJson(type, msg);
 		assertEquals("{\"aString\":\"hello\",\"aBool\":true,\"anInt16\":256}", result);
 	}
 
@@ -359,19 +359,19 @@ public class RestProtocolTest {
 
 	@Test
 	public void testParseFromString_primitive() throws Exception {
-		Integer value = format.parseFromString(Descriptors.int32, "123");
+		Integer value = format.parseFromJson(Descriptors.int32, "123");
 		assertEquals(123, (int) value);
 	}
 
 	@Test
 	public void testParseFromString_primitiveEmptyStringToNull() throws Exception {
-		Integer value = format.parseFromString(Descriptors.int32, "");
+		Integer value = format.parseFromJson(Descriptors.int32, "");
 		assertNull(value);
 	}
 
 	@Test
 	public void testParseFromString_string() throws Exception {
-		String value = format.parseFromString(Descriptors.string, "Привет");
+		String value = format.parseFromJson(Descriptors.string, "Привет");
 		assertEquals("Привет", value);
 	}
 
@@ -383,7 +383,7 @@ public class RestProtocolTest {
 				.setAnInt16((short) 123);
 
 		String json = msg.serializeToJson();
-		SimpleMessage result = format.parseFromString(msg.descriptor(), json);
+		SimpleMessage result = format.parseFromJson(msg.descriptor(), json);
 		assertEquals(msg, result);
 	}
 

@@ -1,24 +1,24 @@
 # encoding: utf-8
 import unittest
 
-from pdef.invocation import *
+from pdef.invoke import *
 from pdef_test.interfaces import TestInterface, TestException
 
 
 class TestInvocation(unittest.TestCase):
     def method(self):
-        return TestInterface.__descriptor__.find_method('indexMethod')
+        return TestInterface.DESCRIPTOR.find_method('indexMethod')
 
     def interface_method(self):
-        return TestInterface.__descriptor__.find_method('interfaceMethod')
+        return TestInterface.DESCRIPTOR.find_method('interfaceMethod')
 
     def test_init(self):
         method = self.method()
-        invocation = Invocation(method, None, args=[1, 2])
+        invocation = Invocation(method, args=[1, 2])
 
         assert invocation.method is method
         assert invocation.args == {'a': 1, 'b': 2}
-        assert invocation.exc is TestException.__descriptor__
+        assert invocation.exc is TestException.DESCRIPTOR
         assert invocation.result is method.result
 
     def test_init__check_arg_types(self):
@@ -70,8 +70,9 @@ class TestInvocation(unittest.TestCase):
         invocation = Invocation.root().next(method, 1, 2)
         result = invocation.invoke(Service())
 
-        assert result.ok
+        assert result.success
         assert result.data == 3
+        assert result.exc is None
 
     def test_invoke_exc(self):
         class Service(TestInterface):
@@ -82,13 +83,14 @@ class TestInvocation(unittest.TestCase):
         invocation = Invocation.root().next(method, 1, 2)
         result = invocation.invoke(Service())
 
-        assert result.ok is False
-        assert result.data == TestException('hello')
+        assert result.success is False
+        assert result.data is None
+        assert result.exc == TestException('hello')
 
 
 class TestInvocationProxy(unittest.TestCase):
     def proxy(self):
-        return proxy(TestInterface, lambda invocation: InvocationResult(invocation))
+        return proxy(TestInterface, lambda invocation: InvocationResult.ok(invocation))
 
     def test_invoke_capture(self):
         subproxy = self.proxy().interfaceMethod(1, 2)
@@ -109,14 +111,14 @@ class TestInvocationProxy(unittest.TestCase):
         assert invocation1.args == {}
 
     def test_invoke_handle_ok(self):
-        client = proxy(TestInterface, lambda inv: InvocationResult(3))
+        client = proxy(TestInterface, lambda inv: InvocationResult.ok(3))
         result = client.indexMethod(1, 2)
 
         assert result == 3
 
     def test_invoke_handle_exc(self):
         exc = TestException('hello')
-        client = proxy(TestInterface, lambda inv: InvocationResult(exc, ok=False))
+        client = proxy(TestInterface, lambda inv: InvocationResult.exception(exc))
 
         try:
             client.indexMethod(1, 2)

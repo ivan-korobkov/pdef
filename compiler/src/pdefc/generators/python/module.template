@@ -5,9 +5,8 @@
 
 {% endif %}
 import pdef
-from pdef import descriptors
+import pdef.descriptors
 {% if imports %}
-
 {% for import0 in imports %}
 import {{ import0 }}
 {% endfor %}

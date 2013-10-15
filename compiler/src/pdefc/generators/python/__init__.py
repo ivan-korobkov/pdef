@@ -254,14 +254,14 @@ class PythonReference(object):
     @classmethod
     def list(cls, type0, module, namespace):
         element = pyreference(type0.element, module, namespace)
-        descriptor = 'descriptors.list0(%s)' % element.descriptor
+        descriptor = 'pdef.descriptors.list0(%s)' % element.descriptor
 
         return PythonReference('list', descriptor)
 
     @classmethod
     def set(cls, type0, module, namespace):
         element = pyreference(type0.element, module, namespace)
-        descriptor = 'descriptors.set0(%s)' % element.descriptor
+        descriptor = 'pdef.descriptors.set0(%s)' % element.descriptor
 
         return PythonReference('set', descriptor)
 
@@ -269,7 +269,7 @@ class PythonReference(object):
     def map(cls, type0, module, namespace):
         key = pyreference(type0.key, module, namespace)
         value = pyreference(type0.value, module, namespace)
-        descriptor = 'descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
+        descriptor = 'pdef.descriptors.map0(%s, %s)' % (key.descriptor, value.descriptor)
 
         return PythonReference('dict', descriptor)
 
@@ -290,7 +290,7 @@ class PythonReference(object):
             module_name = namespace(module_name) if namespace else module_name
             name = '%s.%s' % (module_name, type0.name)
 
-        descriptor = '%s.__descriptor__' % name
+        descriptor = '%s.DESCRIPTOR' % name
         return PythonReference(name, descriptor)
 
     def __init__(self, name, descriptor):
@@ -302,16 +302,15 @@ class PythonReference(object):
 
 
 NATIVE_TYPES = {
-    TypeEnum.BOOL: PythonReference('bool', 'descriptors.bool0'),
-    TypeEnum.INT16: PythonReference('int', 'descriptors.int16'),
-    TypeEnum.INT32: PythonReference('int', 'descriptors.int32'),
-    TypeEnum.INT64: PythonReference('int', 'descriptors.int64'),
-    TypeEnum.FLOAT: PythonReference('float', 'descriptors.float0'),
-    TypeEnum.DOUBLE: PythonReference('float', 'descriptors.double0'),
-    TypeEnum.STRING: PythonReference('unicode', 'descriptors.string'),
-    TypeEnum.OBJECT: PythonReference('object', 'descriptors.object0'),
-    TypeEnum.VOID: PythonReference('object', 'descriptors.void'),
-    }
+    TypeEnum.BOOL: PythonReference('bool', 'pdef.descriptors.bool0'),
+    TypeEnum.INT16: PythonReference('int', 'pdef.descriptors.int16'),
+    TypeEnum.INT32: PythonReference('int', 'pdef.descriptors.int32'),
+    TypeEnum.INT64: PythonReference('int', 'pdef.descriptors.int64'),
+    TypeEnum.FLOAT: PythonReference('float', 'pdef.descriptors.float0'),
+    TypeEnum.DOUBLE: PythonReference('float', 'pdef.descriptors.double0'),
+    TypeEnum.STRING: PythonReference('unicode', 'pdef.descriptors.string0'),
+    TypeEnum.VOID: PythonReference('object', 'pdef.descriptors.void'),
+}
 
 
 def pytemplates():

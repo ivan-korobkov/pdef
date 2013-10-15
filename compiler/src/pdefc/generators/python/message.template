@@ -1,31 +1,3 @@
-
-{%- macro render_descriptor_base() %}
-        base={{ base.descriptor }},
-        discriminator_value={{ discriminator_value.name if discriminator_value else None }},
-{% endmacro %}
-
-{%- macro render_descriptor_subtypes() %}
-        subtypes={
-        {% for subtype, submessage in subtypes %}
-            {{ subtype.name }}: lambda: {{ submessage.name }},
-        {% endfor %}
-        },
-{% endmacro %}
-
-{%- macro render_descriptor_fields() %}
-        declared_fields=[
-        {% for field in declared_fields %}
-            descriptors.field('{{ field.name }}', lambda: {{ field.type.descriptor }}
-            {%- if field.is_discriminator -%}
-                , is_discriminator=True
-            {%- endif %})
-            {%- if not loop.last %}, {% endif %}
-
-        {% endfor %}
-        ],
-{% endmacro -%}
-
-
 class {{ name }}({{ root_or_base }}):
 {% if doc %}
     """{{ doc|indent(4) }}"""
@@ -76,17 +48,29 @@ class {{ name }}({{ root_or_base }}):
         self.{{ discriminator.name }} = {{ discriminator_value }}
     {% endif %}
 
-    __descriptor__ = descriptors.message(lambda: {{ name }},
-    {% if base -%}
-        {{ render_descriptor_base() }}
-    {%- endif %}
-    {% if subtypes -%}
-        {{ render_descriptor_subtypes() }}
-    {%- endif %}
-    {% if declared_fields -%}
-        {{ render_descriptor_fields() }}
-    {%- endif %}
+    DESCRIPTOR = pdef.descriptors.message(lambda: {{ name }},
+    {% if base %}
+        base={{ base.descriptor }},
+        discriminator_value={{ discriminator_value.name if discriminator_value else None }},
+    {% endif %}
     {% if is_form %}
-        is_form=True
+        is_form=True,
+    {% endif %}
+    {% if subtypes %}
+        subtypes=(
+        {% for subtype, submessage in subtypes %}
+            lambda: {{ submessage.name }},
+        {% endfor %}
+        ),
+    {% endif %}
+    {% if declared_fields %}
+        fields=(
+        {% for field in declared_fields %}
+            pdef.descriptors.field('{{ field.name }}', lambda: {{ field.type.descriptor }}
+            {%- if field.is_discriminator -%}
+                , is_discriminator=True
+            {%- endif %}),
+        {% endfor %}
+        ),
     {% endif %}
     )

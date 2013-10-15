@@ -7,7 +7,7 @@ class {{ name }}(pdef.Enum):
     {{ value }} = '{{ value }}'
 {% endfor %}
 
-    __descriptor__ = pdef.descriptors.enum(lambda: {{ name }},
+    DESCRIPTOR = pdef.descriptors.enum(lambda: {{ name }},
         values=[{% for value in values -%}
             {{ value }}
             {%- if not loop.last %}, {% endif %}

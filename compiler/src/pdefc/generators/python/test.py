@@ -202,7 +202,7 @@ class TestPythonRefeference(unittest.TestCase):
 
         ref = pyreference(enum)
         assert ref.name == 'test.Number'
-        assert ref.descriptor == 'test.Number.__descriptor__'
+        assert ref.descriptor == 'test.Number.DESCRIPTOR'
 
     def test_enum_value(self):
         enum = Enum('Number')
@@ -222,7 +222,7 @@ class TestPythonRefeference(unittest.TestCase):
 
         ref = pyreference(def0)
         assert ref.name == 'test.Message'
-        assert ref.descriptor == 'test.Message.__descriptor__'
+        assert ref.descriptor == 'test.Message.DESCRIPTOR'
 
     def test_interface(self):
         def0 = Interface('Interface')
@@ -231,7 +231,7 @@ class TestPythonRefeference(unittest.TestCase):
 
         ref = pyreference(def0)
         assert ref.name == 'test.Interface'
-        assert ref.descriptor == 'test.Interface.__descriptor__'
+        assert ref.descriptor == 'test.Interface.DESCRIPTOR'
 
     def test_in_module_scope(self):
         def0 = Message('Message')
@@ -240,7 +240,7 @@ class TestPythonRefeference(unittest.TestCase):
 
         ref = pyreference(def0, module)
         assert ref.name == 'Message'
-        assert ref.descriptor == 'Message.__descriptor__'
+        assert ref.descriptor == 'Message.DESCRIPTOR'
 
     def test_map_module_name(self):
         def0 = Message('Message')
@@ -250,7 +250,7 @@ class TestPythonRefeference(unittest.TestCase):
         namespaces = pynamespace({'my.test': 'my_test'})
         ref = pyreference(def0, namespace=namespaces)
         assert ref.name == 'my_test.submodule.Message'
-        assert ref.descriptor == 'my_test.submodule.Message.__descriptor__'
+        assert ref.descriptor == 'my_test.submodule.Message.DESCRIPTOR'
 
 
 class TestPythonDoc(unittest.TestCase):

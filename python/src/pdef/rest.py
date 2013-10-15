@@ -5,7 +5,7 @@ import requests
 import urllib
 import urlparse
 
-import pdef.invocation
+import pdef.invoke
 from pdef.rpc import *
 
 
@@ -25,7 +25,7 @@ def client(interface, url, session=None):
     '''Create a default REST client.'''
     sender = client_sender(url, session=session)
     handler = client_handler(sender)
-    return pdef.invocation.proxy(interface, handler)
+    return pdef.invoke.proxy(interface, handler)
 
 
 def client_handler(sender):
@@ -44,7 +44,7 @@ def server(interface, service_or_provider):
     @param interface:           An interface class with a __descriptor__ field.
     @param service_or_provider: A service or a callable service provider.
     '''
-    invoker = pdef.invocation.invoker(service_or_provider)
+    invoker = pdef.invoke.invoker(service_or_provider)
     return server_handler(interface, invoker)
 
 
@@ -236,7 +236,7 @@ class RestClientHandler(object):
             # Parse it using the invocation method result descriptor.
 
             r = invocation.result.parse_object(data)
-            return pdef.invocation.InvocationResult(r)
+            return pdef.invoke.InvocationResult(r)
 
         elif status == RpcStatus.EXCEPTION:
             # It's an expected exception.
@@ -247,7 +247,7 @@ class RestClientHandler(object):
                 raise ClientError('Unsupported application exception')
 
             r = exc.parse_object(data)
-            return pdef.invocation.InvocationResult(r, ok=False)
+            return pdef.invoke.InvocationResult(r, ok=False)
 
         raise ClientError('Unsupported rpc response status=%s' % status)
 
@@ -347,7 +347,7 @@ class RestServerHandler(object):
         parts = path.split('/')
 
         descriptor = self.descriptor
-        invocation = pdef.invocation.Invocation.root()
+        invocation = pdef.invoke.Invocation.root()
         while parts:
             part = parts.pop(0)
             # Find a method by a name or get an index method.

@@ -1,97 +1,53 @@
 # encoding: utf-8
-from pdef import Type, _json as json
+from pdef import Type
 
 
 class Descriptor(object):
     '''Base type descriptor.'''
-    def __init__(self, type0, pyclass_supplier):
+    def __init__(self, type0, pyclass):
         self.type = type0
-        self.pyclass_supplier = pyclass_supplier
+        self._pyclass_supplier = _supplier(type0)
+        self._pyclass = None
 
         self.is_primitive = self.type in Type.PRIMITIVES
-        self.is_datatype = self.type in Type.DATA_TYPES
-        self.is_string = self.type == Type.STRING
+        self.is_data_type = self.type in Type.DATA_TYPES
+        self.is_message = self.type == Type.MESSAGE or self.type == Type.EXCEPTION
 
-        self.is_enum = self.type == Type.ENUM
-        self.is_message = self.type == Type.MESSAGE
-        self.is_void = self.type == Type.VOID
-
-        self.is_interface = self.type == Type.INTERFACE
-
-        self.is_list = self.type == Type.LIST
-        self.is_set = self.type == Type.SET
-        self.is_map = self.type == Type.MAP
+    def __str__(self):
+        return str(self.pyclass)
 
     @property
     def pyclass(self):
-        return self.pyclass_supplier()
-
-    def check_type(self, obj):
-        '''Check the object type or raise a TypeError.'''
-        if self.is_valid_type(obj):
-            return
-        raise TypeError('Wrong type, expected=%r, actual=%r' % (self.pyclass, obj))
-
-    def is_valid_type(self, obj):
-        '''Return whether the object is of a valid type.'''
-        if obj is None:
-            return True
-
-        return isinstance(obj, self.pyclass)
+        if self._pyclass is None:
+            self._pyclass = self._pyclass_supplier()
+        return self._pyclass
 
 
-class DataTypeDescriptor(Descriptor):
-    def parse_object(self, obj):
-        '''Parse an object and return a value.'''
+class DataDescriptor(Descriptor):
+    def copy(self, x):
         raise NotImplementedError
 
-    def parse_json(self, s):
-        '''Parse an object from a json string.'''
-        if s is None:
-            return None
 
-        value = json.loads(s)
-        return self.parse_object(value)
-
-    def to_object(self, obj):
-        '''Serialize an object into a primitive or a collection.'''
-        raise NotImplementedError
-
-    def to_json(self, obj, indent=None):
-        '''Serialize an object into a json string.'''
-        value = self.to_object(obj)
-        return json.dumps(value, indent=indent)
-
-
-class MessageDescriptor(DataTypeDescriptor):
+class MessageDescriptor(DataDescriptor):
     '''Message descriptor.'''
-    def __init__(self, pyclass_supplier,
-                 base=None,
-                 discriminator_value=None,
-                 subtypes=None,
-                 declared_fields=None,
+    def __init__(self, pyclass, base=None, discriminator_value=None, fields=None, subtypes=None,
                  is_form=False):
-        super(MessageDescriptor, self).__init__(Type.MESSAGE, pyclass_supplier)
+        super(MessageDescriptor, self).__init__(Type.MESSAGE, pyclass)
         self.base = base
         self.discriminator_value = discriminator_value
         self.subtypes = dict(subtypes) if subtypes else {}
         self.is_form = is_form
 
-        self.declared_fields = tuple(declared_fields) if declared_fields else ()
+        self.declared_fields = tuple(fields) if fields else ()
         self.inherited_fields = base.fields if base else ()
         self.fields = self.inherited_fields + self.declared_fields
+        self.discriminator = self._find_discriminator(self.fields)
 
-        self.discriminator = None
-        for field in self.fields:
+    @classmethod
+    def _find_discriminator(cls, fields):
+        for field in fields:
             if field.is_discriminator:
-                self.discriminator = field
-                break
-
-        for field in self.declared_fields:
-            field.message = self
-
-    def __str__(self):
-        return self.pyclass.__class__.__name__
+                return field
 
     def find_field(self, name):
         '''Return a field by its name or None.'''
@@ -99,60 +55,21 @@ class MessageDescriptor(DataTypeDescriptor):
             if field.name == name:
                 return field
 
-    def subtype(self, type0):
-        '''Returns a subtype descriptor by a type enum value.'''
+    def find_subtype(self, type0):
+        '''Get a subtype descriptor by a type enum value or self if not found.'''
         subtype = self.subtypes.get(type0)
         if subtype is None:
-            return self.pyclass
+            return self
         return subtype() if callable(subtype) else subtype
-
-    def parse_object(self, d):
-        '''Parse a message from a dictionary.'''
-        if d is None:
-            return None
-
-        discriminator = self.discriminator
-        if discriminator:
-            type0 = discriminator.type.parse_object(d.get(discriminator.name))
-            subtype_supplier = self.subtypes.get(type0)
-            if subtype_supplier:
-                return subtype_supplier().parse_dict(d)
-
-        message = self.pyclass()
-        for field in self.fields:
-            if field.name not in d:
-                continue
-
-            data = d[field.name]
-            value = field.type.parse_object(data)
-            field.set(message, value)
-        return message
-
-    def to_object(self, message):
-        '''Serialize a message into a dict.'''
-        self.check_type(message)
-
-        if message is None:
-            return None
-
-        d = {}
-        for field in self.fields:
-            value = field.get(message)
-            data = field.type.to_object(value)
-            if data is None:
-                continue
-
-            d[field.name] = data
-        return d
 
 
 class FieldDescriptor(object):
     '''Message field descriptor.'''
-    def __init__(self, name, type_supplier, is_discriminator=False):
+    def __init__(self, name, type0, is_discriminator=False):
         self.name = name
-        self.type_supplier = type_supplier
+        self._type_supplier = _supplier(type0)
+        self._type = None
         self.is_discriminator = is_discriminator
-        self.message = None  # Set in the declaring message.
 
     def __str__(self):
         return self.name + ' ' + self.type
@@ -160,55 +77,45 @@ class FieldDescriptor(object):
     @property
     def type(self):
         '''Return field type descriptor.'''
-        return self.type_supplier()
-
-    def set(self, message, value):
-        '''Set this field in a message to a value, check the type of the value.'''
-        type0 = self.type
-        if not type0.is_valid_type(value):
-            raise TypeError('Wrong field type, field=%s, expected=%r, actual=%r'
-                            % (self.name, type0.pyclass, value))
-
-        setattr(message, self.name, value)
+        if self._type is None:
+            self._type = self._type_supplier()
+        return self._type
 
     def get(self, message):
         '''Get this field value in a message, check the type of the value.'''
         type0 = self.type
-        value = getattr(message, self.name)
+        return getattr(message, self.name)
 
-        if not type0.is_valid_type(value):
-            raise TypeError('Wrong field type, field=%s, expected=%r, actual=%r'
-                            % (self.name, type0.pyclass, value))
-
-        return value
+    def set(self, message, value):
+        '''Set this field in a message to a value, check the type of the value.'''
+        type0 = self.type
+        setattr(message, self.name, value)
 
 
 class InterfaceDescriptor(Descriptor):
     '''Interface descriptor.'''
-    def __init__(self, pyclass_supplier, exc_supplier=None, declared_methods=None):
-        super(InterfaceDescriptor, self).__init__(Type.INTERFACE, pyclass_supplier)
-        self.exc_supplier = exc_supplier
+    def __init__(self, pyclass, exc=None, methods=None):
+        super(InterfaceDescriptor, self).__init__(Type.INTERFACE, pyclass)
+        self._exc_supplier = _supplier(exc)
+        self._exc = None
 
-        self.declared_methods = tuple(declared_methods) if declared_methods else ()
-        self.methods = self.declared_methods
+        self.methods = self.methods
+        self.index_method = self._find_index_method(self.methods)
 
-        for method in self.declared_methods:
-            method.interface = self
-
-        self.index_method = None
-        for method in self.methods:
+    @classmethod
+    def _find_index_method(cls, methods):
+        for method in methods:
             if method.is_index:
-                self.index_method = method
-
-    def __str__(self):
-        return self.pyclass.__class__.__name__
+                return method
 
     @property
     def exc(self):
-        return self.exc_supplier() if self.exc_supplier else None
+        if self._exc is None:
+            self._exc = self._exc_supplier() if self._exc_supplier else None
+        return self._exc
 
     def find_method(self, name):
-        '''Find a method by its name.'''
+        '''Return a method by its name or None.'''
         for method in self.methods:
             if method.name == name:
                 return method
@@ -216,35 +123,38 @@ class InterfaceDescriptor(Descriptor):
 
 class MethodDescriptor(object):
     '''Interface method descriptor.'''
-    def __init__(self, name, result_supplier, is_index=False, is_post=False):
+    def __init__(self, name, result, exc=None, args=None, is_index=False, is_post=False):
         self.name = name
-        self.result_supplier = result_supplier
+        self._result_supplier = _supplier(result)
+        self._result = None
+
+        self._exc_supplier = _supplier(exc)
+        self._exc = None
+
         self.is_index = is_index
         self.is_post = is_post
         self.interface = None  # Set in the declaring interface.
 
-        self.args = []
+        self.args = tuple(args) if args else ()
 
     @property
     def result(self):
         '''Return a result descriptor.'''
-        return self.result_supplier()
+        if self._result is None:
+            self._result = self._result_supplier()
+        return self._result
 
     @property
     def exc(self):
         '''Return a expected interface exception.'''
-        return self.interface.exc if self.interface else None
+        if self._exc is None:
+            self._exc = self._exc_supplier if self._exc_supplier else None
+        return self._exc
 
     @property
     def is_remote(self):
         '''Method is remote when its result is not an interface.'''
         return not self.result.is_interface
-
-    def add_arg(self, name, type_supplier, is_query=False):
-        '''Create and add an argument to this method, return the method.'''
-        arg = ArgDescriptor(name, type_supplier, is_query=is_query)
-        self.args.append(arg)
-        return self
 
     def invoke(self, obj, *args, **kwargs):
         '''Invoke this method on an object with a given arguments, return the result'''
@@ -254,15 +164,13 @@ class MethodDescriptor(object):
         '''Return a method signature as a string.'''
         s = [self.name, '(']
 
-        aa = []
+        next_separator = ''
         for arg in self.args:
-            if aa:
-                aa.append(', ')
-            aa.append(arg.name)
-            aa.append(' ')
-            aa.append(str(arg.type))
+            s.append(next_separator)
+            s.append(arg.name)
+            s.append(' ')
+            s.append(str(arg.type))
 
-        s += aa
         s.append(')=')
         s.append(str(self.result))
 
@@ -271,209 +179,64 @@ class MethodDescriptor(object):
 
 class ArgDescriptor(object):
     '''Method argument descriptor.'''
-    def __init__(self, name, type_supplier, is_query=False, is_post=False):
+    def __init__(self, name, type0):
         self.name = name
-        self.type_supplier = type_supplier
-        self.is_query = is_query
-        self.is_post = is_post
-        self.is_expand = False
+        self._type_supplier = _supplier(type0)
+        self._type = None
 
     @property
     def type(self):
         '''Return argument type descriptor.'''
-        return self.type_supplier()
+        if self._type is None:
+            self._type = self._type_supplier()
+        return self._type
 
 
-class PrimitiveDescriptor(DataTypeDescriptor):
-    '''Primitive descriptors must support serializing to/parsing from strings.'''
-    def __init__(self, type0, pyclass):
-        super(PrimitiveDescriptor, self).__init__(type0, lambda: pyclass)
-        self._native = pyclass  # Just an optimization to get rid of the lambda in self.pyclass.
-
-    def __str__(self):
-        return self.type
-
-    def parse_object(self, obj):
-        if isinstance(obj, basestring):
-            return self.parse_string(obj)
-
-        return None if obj is None else self._native(obj)
-
-    def parse_string(self, s):
-        '''Parse a primitive from a string.'''
-        return None if s is None else self._native(s)
-
-    def to_object(self, obj):
-        self.check_type(obj)
-
-        return None if obj is None else self._native(obj)
-
-    def to_string(self, obj):
-        '''Serialize a primitive to a string, or return None when the primitive is None.'''
-        return None if obj is None else unicode(self.to_object(obj))
-
-
-class BoolDescriptor(PrimitiveDescriptor):
-    def __init__(self):
-        super(BoolDescriptor, self).__init__(Type.BOOL, bool)
-
-    def parse_string(self, s):
-        '''Parse a primitive from a string.'''
-        if s is None:
-            return None
-
-        s = s.lower()
-        if s == 'true':
-            return True
-        elif s == 'false':
-            return False
-
-        raise ValueError('Failed to parse a bool, %s' % s)
-
-    def to_string(self, obj):
-        '''Serialize a primitive to a string, or return None when the primitive is None.'''
-        return None if obj is None else unicode(self.to_object(obj)).lower()
-
-
-class StringDescriptor(PrimitiveDescriptor):
-    def __init__(self):
-        super(StringDescriptor, self).__init__(Type.STRING, unicode)
-
-    def is_valid_type(self, obj):
-        if obj is None:
-            return True
-
-        return isinstance(obj, basestring)
-
-
-class EnumDescriptor(PrimitiveDescriptor):
+class EnumDescriptor(DataDescriptor):
     '''Enum descriptor.'''
-    def __init__(self, pyclass_supplier, values):
-        super(EnumDescriptor, self).__init__(Type.ENUM, pyclass_supplier)
+    def __init__(self, pyclass, values):
+        super(EnumDescriptor, self).__init__(Type.ENUM, pyclass)
         self.values = tuple(values)
 
-    def __str__(self):
-        return self.pyclass.__class__.__name__
-
-    def is_valid_type(self, obj):
-        if obj is None:
-            return True
-
-        return isinstance(obj, basestring)
-
-    def parse_object(self, obj):
-        if obj is None:
+    def find_value(self, name):
+        if name is None:
             return None
-        s = unicode(obj).upper()
-        return s if s in self.values else None
+        name = name.upper()
 
-    def parse_string(self, s):
-        return self.parse_object(s)
-
-    def to_object(self, obj):
-        self.check_type(obj)
-
-        if obj is None:
+        if name not in self.values:
             return None
-        return unicode(obj).lower()
-
-    def to_string(self, obj):
-        return self.to_object(obj)
+        return name
 
 
-class ListDescriptor(DataTypeDescriptor):
+class ListDescriptor(DataDescriptor):
     '''Internal list descriptor.'''
     def __init__(self, element):
-        super(ListDescriptor, self).__init__(Type.LIST, lambda: list)
+        super(ListDescriptor, self).__init__(Type.LIST, list)
         self.element = element
 
     def __str__(self):
-        return 'list<%s>' % (self.element)
-
-    def parse_object(self, obj):
-        if obj is None:
-            return obj
-        return [self.element.parse_object(e) for e in obj]
-
-    def to_object(self, obj):
-        self.check_type(obj)
-
-        if obj is None:
-            return obj
-        return [self.element.to_object(e) for e in obj]
+        return 'list<%s>' % self.element
 
 
-class SetDescriptor(DataTypeDescriptor):
+class SetDescriptor(DataDescriptor):
     '''Internal set descriptor.'''
     def __init__(self, element):
-        super(SetDescriptor, self).__init__(Type.SET, lambda: set)
+        super(SetDescriptor, self).__init__(Type.SET, set)
         self.element = element
 
     def __str__(self):
-        return 'set<%s>' % (self.element)
-
-    def parse_object(self, obj):
-        if obj is None:
-            return None
-        return set(self.element.parse_object(e) for e in obj)
-
-    def to_object(self, obj):
-        self.check_type(obj)
-
-        if obj is None:
-            return None
-        return set(self.element.to_object(e) for e in obj)
+        return 'set<%s>' % self.element
 
 
-class MapDescriptor(DataTypeDescriptor):
+class MapDescriptor(DataDescriptor):
     '''Internal map/dict descriptor.'''
     def __init__(self, key, value):
-        super(MapDescriptor, self).__init__(Type.MAP, lambda: dict)
+        super(MapDescriptor, self).__init__(Type.MAP, dict)
         self.key = key
         self.value = value
 
     def __str__(self):
         return 'map<%s, %s>' % (self.key, self.value)
-
-    def parse_object(self, obj):
-        if obj is None:
-            return None
-        return {self.key.parse_object(k): self.value.parse_object(v) for k, v in obj.items()}
-
-    def to_object(self, obj):
-        self.check_type(obj)
-
-        if obj is None:
-            return None
-        return {self.key.to_object(k): self.value.to_object(v) for k, v in obj.items()}
-
-
-class ObjectDescriptor(DataTypeDescriptor):
-    def __init__(self):
-        super(ObjectDescriptor, self).__init__(Type.OBJECT, lambda: object)
-
-    def __str__(self):
-        return 'object'
-
-    def parse_object(self, obj):
-        return obj
-
-    def to_object(self, obj):
-        return obj
-
-
-class VoidDescriptor(DataTypeDescriptor):
-    def __init__(self):
-        super(VoidDescriptor, self).__init__(Type.VOID, lambda: object)
-
-    def __str__(self):
-        return 'void'
-
-    def parse_object(self, obj):
-        return None
-
-    def to_object(self, obj):
-        return None
 
 
 def list0(element):
@@ -491,16 +254,16 @@ def map0(key, value):
     return MapDescriptor(key, value)
 
 
-def message(pyclass_supplier, base=None, discriminator_value=None, subtypes=None,
-            declared_fields=None, is_form=False):
+def message(pyclass, base=None, discriminator_value=None, fields=None, subtypes=None,
+            is_form=False):
     '''Create a message descriptor.'''
-    return MessageDescriptor(pyclass_supplier, base=base, discriminator_value=discriminator_value,
-                             subtypes=subtypes, declared_fields=declared_fields, is_form=is_form)
+    return MessageDescriptor(pyclass, base=base, discriminator_value=discriminator_value,
+                             fields=fields, subtypes=subtypes, is_form=is_form)
 
 
-def field(name, descriptor_supplier, is_discriminator=False):
+def field(name, type0, is_discriminator=False):
     '''Create a field descriptor.'''
-    return FieldDescriptor(name, descriptor_supplier, is_discriminator=is_discriminator)
+    return FieldDescriptor(name, type0, is_discriminator=is_discriminator)
 
 
 def enum(pyclass, values):
@@ -508,29 +271,40 @@ def enum(pyclass, values):
     return EnumDescriptor(pyclass, values)
 
 
-def interface(pyclass_supplier, exc_supplier=None, declared_methods=None):
+def interface(pyclass, exc=None, methods=None):
     '''Create an interface descriptor.'''
-    return InterfaceDescriptor(pyclass_supplier, exc_supplier=exc_supplier,
-                               declared_methods=declared_methods)
+    return InterfaceDescriptor(pyclass, exc=exc, methods=method)
 
 
-def method(name, result_supplier, is_index=False, is_post=False):
+def method(name, result, args=None, is_index=False, is_post=False, *methods, **kwargs):
     '''Create an interface method descriptor.'''
-    return MethodDescriptor(name, result_supplier=result_supplier, is_index=is_index,
-                            is_post=is_post)
+    return MethodDescriptor(name, result=result, args=None, is_index=is_index, is_post=is_post)
 
 
-def arg(name, descriptor_supplier, is_query=False):
+def arg(name, descriptor_supplier):
     '''Create a method argument descriptor.'''
-    return ArgDescriptor(name, descriptor_supplier, is_query=is_query)
+    return ArgDescriptor(name, descriptor_supplier)
 
 
-bool0 = BoolDescriptor()
-int16 = PrimitiveDescriptor(Type.INT16, int)
-int32 = PrimitiveDescriptor(Type.INT32, int)
-int64 = PrimitiveDescriptor(Type.INT64, int)
-float0 = PrimitiveDescriptor(Type.FLOAT, float)
-double0 = PrimitiveDescriptor(Type.DOUBLE, float)
-string = StringDescriptor()
-object0 = ObjectDescriptor()
-void = VoidDescriptor()
+def _supplier(type_or_lambda):
+    if type_or_lambda is None:
+        return None
+
+    lambda0 = lambda: None
+    lambda_type = type(lambda0)
+
+    if isinstance(type_or_lambda, lambda_type) and type_or_lambda.__name__ == lambda0.__name__:
+        # It is already a supplier.
+        return type_or_lambda
+
+    return lambda: type_or_lambda
+
+
+bool0 = DataDescriptor(Type.BOOL, bool)
+int16 = DataDescriptor(Type.INT16, int)
+int32 = DataDescriptor(Type.INT32, int)
+int64 = DataDescriptor(Type.INT64, int)
+float0 = DataDescriptor(Type.FLOAT, float)
+double0 = DataDescriptor(Type.DOUBLE, float)
+string0 = DataDescriptor(Type.STRING, unicode)
+void = DataDescriptor(Type.VOID, type(None))

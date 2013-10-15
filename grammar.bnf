@@ -26,7 +26,6 @@
         float='float'
         double='double'
         string='string'
-        object='object'
         void='void'
         list='list'
         set='set'
@@ -91,7 +90,6 @@ ValueType       ::= bool
                     | float
                     | double
                     | string
-                    | object
                     | void
 ListType        ::= list '<' Type '>'
 SetType         ::= set '<' Type '>'

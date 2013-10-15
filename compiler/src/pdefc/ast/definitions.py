@@ -53,9 +53,6 @@ class TypeEnum(object):
     MAP = 'map'
     SET = 'set'
 
-    # Special data type.
-    OBJECT = 'object'
-
     # User defined data types.
     ENUM = 'enum'
     ENUM_VALUE = 'enum_value'
@@ -67,8 +64,8 @@ class TypeEnum(object):
     VOID = 'void'
 
     PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
-    DATA_TYPES = PRIMITIVES + (OBJECT, LIST, SET, MAP, ENUM, MESSAGE, EXCEPTION)
-    NATIVE = PRIMITIVES + (OBJECT, VOID)
+    DATA_TYPES = PRIMITIVES + (LIST, SET, MAP, ENUM, MESSAGE, EXCEPTION)
+    NATIVE = PRIMITIVES + (VOID, )
     COLLECTION_TYPES = (LIST, SET, MAP)
 
     @classmethod
@@ -129,8 +126,6 @@ class NativeType(object):
     FLOAT = Type(TypeEnum.FLOAT)
     DOUBLE = Type(TypeEnum.DOUBLE)
     STRING = Type(TypeEnum.STRING)
-
-    OBJECT = Type(TypeEnum.OBJECT)
     VOID = Type(TypeEnum.VOID)
 
     _BY_TYPE = {
@@ -141,7 +136,6 @@ class NativeType(object):
         TypeEnum.FLOAT: FLOAT,
         TypeEnum.DOUBLE: DOUBLE,
         TypeEnum.STRING: STRING,
-        TypeEnum.OBJECT: OBJECT,
         TypeEnum.VOID: VOID
     }
 

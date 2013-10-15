@@ -156,7 +156,7 @@ class _Tokens(object):
     # Simple reserved words.
     types = (
         'BOOL', 'INT16', 'INT32', 'INT64', 'FLOAT', 'DOUBLE',
-        'STRING', 'OBJECT', 'VOID', 'LIST', 'SET', 'MAP', 'ENUM',
+        'STRING', 'VOID', 'LIST', 'SET', 'MAP', 'ENUM',
         'MESSAGE', 'EXCEPTION', 'INTERFACE')
 
     reserved = types + ('MODULE', 'FROM', 'IMPORT')
@@ -538,7 +538,6 @@ class _GrammarRules(object):
                   | FLOAT
                   | DOUBLE
                   | STRING
-                  | OBJECT
                   | VOID
         '''
         t[0] = pdefc.ast.reference(t[1].lower())

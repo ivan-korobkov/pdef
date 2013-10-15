@@ -3,8 +3,6 @@ package io.pdef.descriptors;
 import io.pdef.Provider;
 import io.pdef.Providers;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +74,7 @@ public class MethodDescriptor<T, R> {
 
 	public boolean isRemote() {
 		TypeEnum type = getResult().getType();
-		return type.isDataType() || type == TypeEnum.VOID;
+		return type != TypeEnum.INTERFACE;
 	}
 
 	/** Invokes this method. */
@@ -128,7 +126,7 @@ public class MethodDescriptor<T, R> {
 		}
 
 		public Builder<T, R> setInvokerFrom(final Class<T> interfaceClass) {
-			this.invoker = new ReflectionInvoker<T, R>(interfaceClass, name);
+			this.invoker = new ReflexMethodInvoker<T, R>(interfaceClass, name);
 			return this;
 		}
 
@@ -144,43 +142,6 @@ public class MethodDescriptor<T, R> {
 
 		public MethodDescriptor<T, R> build() {
 			return new MethodDescriptor<T, R>(this);
-		}
-	}
-
-	private static class ReflectionInvoker<T, R> implements MethodInvoker<T, R> {
-		private final Method method;
-
-		private ReflectionInvoker(final Class<T> cls, final String name) {
-			Method m = null;
-			for (Method method : cls.getMethods()) {
-				if (method.getName().equals(name)) {
-					m = method;
-					break;
-				}
-			}
-
-			if (m == null) {
-				throw new IllegalArgumentException("Method is not found " + name);
-			}
-
-			method = m;
-		}
-
-		@Override
-		public R invoke(final T object, final Object[] args) throws Exception {
-			if (object == null) throw new NullPointerException("object");
-
-			try {
-				@SuppressWarnings("unchecked")
-				R result = (R) method.invoke(object, args);
-				return result;
-			} catch (InvocationTargetException e) {
-				Throwable t = e.getCause();
-				if (t instanceof Error) {
-					throw (Error) t;
-				}
-				throw (Exception) t;
-			}
 		}
 	}
 }

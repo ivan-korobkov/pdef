@@ -22,7 +22,7 @@ public class Invoker<T> implements Func<Invocation, InvocationResult> {
 	}
 
 	@Override
-	public InvocationResult apply(final Invocation invocation) throws RuntimeException {
+	public InvocationResult apply(final Invocation invocation) throws Exception {
 		T service = provider.get();
 		return invocation.invoke(service);
 	}

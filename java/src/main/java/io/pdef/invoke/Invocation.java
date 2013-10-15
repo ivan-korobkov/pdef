@@ -44,7 +44,7 @@ public class Invocation {
 	}
 
 	public Object[] getArgs() {
-		return args;
+		return args.clone();
 	}
 
 	public MethodDescriptor<?, ?> getMethod() {
@@ -102,17 +102,24 @@ public class Invocation {
 
 		return chain;
 	}
-
+	
 	/** Invokes this invocation chain on an object. */
 	@SuppressWarnings("unchecked")
-	public InvocationResult invoke(Object object) {
+	public InvocationResult invoke(Object object) throws Exception {
 		if (object == null) throw new NullPointerException("object");
 
 		for (Invocation invocation : toChain()) {
 			try {
 				object = invocation.invokeSingle(object);
 			} catch (Exception e) {
-				return handleException(e);
+				MessageDescriptor<?> excd = getExc();
+				Class<?> excClass = excd == null ? null : excd.getJavaClass();
+
+				if (excd == null || !excClass.isInstance(e)) {
+					throw e;
+				}
+
+				return InvocationResult.exc((RuntimeException) e);
 			}
 		}
 
@@ -124,30 +131,5 @@ public class Invocation {
 		@SuppressWarnings("unchecked")
 		MethodDescriptor<Object, Object> unchecked = (MethodDescriptor<Object, Object>) method;
 		return unchecked.invoke(object, args);
-	}
-
-	private InvocationResult handleException(final Exception exc) {
-		MessageDescriptor<?> excd = getExc();
-		if (excd == null) {
-			// It is not an expected application exception.
-			throw propagate(exc);
-		}
-
-		Class<?> excClass = excd.getJavaClass();
-		if (!excClass.isInstance(exc)) {
-			throw propagate(exc);
-		}
-
-		// It is an expected application exception.
-		// All application exceptions are runtime.
-		return InvocationResult.exc((RuntimeException) exc);
-	}
-
-	private RuntimeException propagate(final Exception exc) {
-		if (exc instanceof RuntimeException) {
-			throw (RuntimeException) exc;
-		} else {
-			throw new RuntimeException(exc);
-		}
 	}
 }

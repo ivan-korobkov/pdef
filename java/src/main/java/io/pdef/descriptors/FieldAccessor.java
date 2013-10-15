@@ -1,3 +1,7 @@
 package io.pdef.descriptors;
 
-public interface FieldAccessor<M, V> extends FieldGetter<M, V>, FieldSetter<M, V> {}
+public interface FieldAccessor<M, V> {
+	V get(M message);
+
+	void set(M message, V value);
+}

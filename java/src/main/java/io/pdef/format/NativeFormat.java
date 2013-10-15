@@ -5,7 +5,7 @@ import io.pdef.descriptors.*;
 
 import java.util.*;
 
-public class NativeFormat extends AbstractFormat<Object> {
+public class NativeFormat {
 	private static final NativeFormat INSTANCE = new NativeFormat();
 
 	public static NativeFormat instance() {
@@ -16,43 +16,53 @@ public class NativeFormat extends AbstractFormat<Object> {
 
 	// Serializing.
 
-	@Override
-	protected Boolean serializeBoolean(final Boolean object) {
-		return object;
+	public <T> Object serialize(final T object, final DataDescriptor<T> descriptor) throws FormatException {
+		if (descriptor == null) throw new NullPointerException("descriptor");
+
+		try {
+			return doSerialize(object, descriptor);
+		} catch (FormatException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new FormatException(e);
+		}
 	}
 
-	@Override
-	protected Short serializeShort(final Short object) {
-		return object;
+	@SuppressWarnings("unchecked")
+	protected <T> Object doSerialize(final T object, final DataDescriptor<T> descriptor) throws Exception {
+		if (object == null) {
+			return null;
+		}
+
+		TypeEnum typeEnum = descriptor.getType();
+		switch (typeEnum) {
+			case BOOL:
+			case INT16:
+			case INT32:
+			case INT64:
+			case FLOAT:
+			case DOUBLE:
+			case STRING:
+				return object;
+			case LIST:
+				return serializeList((List) object, (ListDescriptor) descriptor);
+			case SET:
+				return serializeSet((Set) object, (SetDescriptor) descriptor);
+			case MAP:
+				return serializeMap((Map) object, (MapDescriptor) descriptor);
+			case ENUM:
+				return serializeEnum((Enum) object);
+			case MESSAGE:
+			case EXCEPTION:
+				return serializeMessage((Message) object);
+			case VOID:
+				return null;
+			default:
+				throw new IllegalArgumentException("Unsupported descriptor " + descriptor);
+		}
 	}
 
-	@Override
-	protected Integer serializeInt(final Integer object) {
-		return object;
-	}
-
-	@Override
-	protected Long serializeLong(final Long object) {
-		return object;
-	}
-
-	@Override
-	protected Float serializeFloat(final Float object) {
-		return object;
-	}
-
-	@Override
-	protected Double serializeDouble(final Double object) {
-		return object;
-	}
-
-	@Override
-	protected String serializeString(final String object) {
-		return object;
-	}
-
-	@Override
-	protected <E> List<Object> serializeList(final List<E> list, final ListDescriptor<E> descriptor)
+	private <E> List<Object> serializeList(final List<E> list, final ListDescriptor<E> descriptor)
 			throws Exception {
 		if (list == null) {
 			return null;
@@ -69,8 +79,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		return result;
 	}
 
-	@Override
-	protected <E> Set<Object> serializeSet(final Set<E> set, final SetDescriptor<E> descriptor)
+	private <E> Set<Object> serializeSet(final Set<E> set, final SetDescriptor<E> descriptor)
 			throws Exception {
 		if (set == null) {
 			return null;
@@ -86,8 +95,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		return result;
 	}
 
-	@Override
-	protected <K, V> Map<Object, Object> serializeMap(final Map<K, V> map,
+	private <K, V> Map<Object, Object> serializeMap(final Map<K, V> map,
 			final MapDescriptor<K, V> descriptor) throws Exception {
 		if (map == null) {
 			return null;
@@ -106,14 +114,12 @@ public class NativeFormat extends AbstractFormat<Object> {
 		return result;
 	}
 
-	@Override
-	protected <E extends Enum<E>> E serializeEnum(final E value, final EnumDescriptor<E> descriptxr) {
+	protected <E extends Enum<E>> E serializeEnum(final E value) {
 		return value;
 	}
 
-	@Override
-	protected <M extends Message> Map<String, Object> serializeMessage(
-			final M message, final MessageDescriptor<M> descriptor) throws Exception {
+	private <M extends Message> Map<String, Object> serializeMessage(final M message)
+			throws Exception {
 		if (message == null) {
 			return null;
 		}
@@ -145,11 +151,60 @@ public class NativeFormat extends AbstractFormat<Object> {
 
 	// Parsing.
 
-	@Override
-	protected Boolean parseBoolean(final Object input) {
+	public <T> T parse(final Object input, final DataDescriptor<T> descriptor) throws FormatException {
+		if (descriptor == null) throw new NullPointerException("descriptor");
+
+		try {
+			return doParse(descriptor, input);
+		} catch (FormatException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new FormatException(e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	protected <T> T doParse(final DataDescriptor<T> descriptor, final Object input) throws Exception {
 		if (input == null) {
 			return null;
-		} else if (input instanceof Boolean) {
+		}
+
+		TypeEnum typeEnum = descriptor.getType();
+		switch (typeEnum) {
+			case BOOL:
+				return (T) parseBoolean(input);
+			case INT16:
+				return (T) parseShort(input);
+			case INT32:
+				return (T) parseInt(input);
+			case INT64:
+				return (T) parseLong(input);
+			case FLOAT:
+				return (T) parseFloat(input);
+			case DOUBLE:
+				return (T) parseDouble(input);
+			case STRING:
+				return (T) parseString(input);
+			case LIST:
+				return (T) parseList(input, (ListDescriptor<?>) descriptor);
+			case SET:
+				return (T) parseSet(input, (SetDescriptor<?>) descriptor);
+			case MAP:
+				return (T) parseMap(input, (MapDescriptor<?, ?>) descriptor);
+			case ENUM:
+				return (T) parseEnum(input, (EnumDescriptor<?>) descriptor);
+			case MESSAGE:
+			case EXCEPTION:
+				return (T) parseMessage(input, (MessageDescriptor<?>) descriptor);
+			case VOID:
+				return null;
+			default:
+				throw new IllegalArgumentException("Unsupported descriptor " + descriptor);
+		}
+	}
+
+	private Boolean parseBoolean(final Object input) {
+		if (input instanceof Boolean) {
 			return (Boolean) input;
 		} else if (input instanceof String) {
 			return Boolean.parseBoolean((String) input);
@@ -157,11 +212,8 @@ public class NativeFormat extends AbstractFormat<Object> {
 		throw new FormatException("Cannot parse a boolean from " + input);
 	}
 
-	@Override
-	protected Short parseShort(final Object input) {
-		if (input == null) {
-			return null;
-		} else if (input instanceof Number) {
+	private Short parseShort(final Object input) {
+		if (input instanceof Number) {
 			return ((Number) input).shortValue();
 		} else if (input instanceof String) {
 			return Short.parseShort((String) input);
@@ -169,11 +221,8 @@ public class NativeFormat extends AbstractFormat<Object> {
 		throw new FormatException("Cannot parse a short from " + input);
 	}
 
-	@Override
-	protected Integer parseInt(final Object input) {
-		if (input == null) {
-			return null;
-		} else if (input instanceof Number) {
+	private Integer parseInt(final Object input) {
+		if (input instanceof Number) {
 			return ((Number) input).intValue();
 		} else if (input instanceof String) {
 			return Integer.parseInt((String) input);
@@ -181,11 +230,8 @@ public class NativeFormat extends AbstractFormat<Object> {
 		throw new FormatException("Cannot parse an int from " + input);
 	}
 
-	@Override
-	protected Long parseLong(final Object input) {
-		if (input == null) {
-			return null;
-		} else if (input instanceof Number) {
+	private Long parseLong(final Object input) {
+		if (input instanceof Number) {
 			return ((Number) input).longValue();
 		} else if (input instanceof String) {
 			return Long.parseLong((String) input);
@@ -193,11 +239,8 @@ public class NativeFormat extends AbstractFormat<Object> {
 		throw new FormatException("Cannot parse a long from " + input);
 	}
 
-	@Override
-	protected Float parseFloat(final Object input) {
-		if (input == null) {
-			return null;
-		} else if (input instanceof Number) {
+	private Float parseFloat(final Object input) {
+		if (input instanceof Number) {
 			return ((Number) input).floatValue();
 		} else if (input instanceof String) {
 			return Float.parseFloat((String) input);
@@ -205,11 +248,8 @@ public class NativeFormat extends AbstractFormat<Object> {
 		throw new FormatException("Cannot parse a float from " + input);
 	}
 
-	@Override
-	protected Double parseDouble(final Object input) {
-		if (input == null) {
-			return null;
-		} else if (input instanceof Number) {
+	private Double parseDouble(final Object input) {
+		if (input instanceof Number) {
 			return ((Number) input).doubleValue();
 		} else if (input instanceof String) {
 			return Double.parseDouble((String) input);
@@ -217,8 +257,7 @@ public class NativeFormat extends AbstractFormat<Object> {
 		throw new FormatException("Cannot parse a double from " + input);
 	}
 
-	@Override
-	protected String parseString(final Object input) {
+	private String parseString(final Object input) {
 		if (input == null) {
 			return null;
 		} else if (input instanceof String) {
@@ -227,12 +266,9 @@ public class NativeFormat extends AbstractFormat<Object> {
 		throw new FormatException("Cannot parse a string from " + input);
 	}
 
-	@Override
-	protected <E> List<E> parseList(final Object input, final ListDescriptor<E> descriptor)
+	private <E> List<E> parseList(final Object input, final ListDescriptor<E> descriptor)
 			throws Exception {
-		if (input == null) {
-			return null;
-		} else if (!(input instanceof Collection)) {
+		if (!(input instanceof Collection)) {
 			throw new FormatException("Cannot parse a list from " + input);
 		}
 
@@ -248,11 +284,9 @@ public class NativeFormat extends AbstractFormat<Object> {
 		return result;
 	}
 
-	@Override
-	protected <E> Set<E> parseSet(final Object input, final SetDescriptor<E> descriptor) throws Exception {
-		if (input == null) {
-			return null;
-		} else if (!(input instanceof Collection)) {
+	private <E> Set<E> parseSet(final Object input, final SetDescriptor<E> descriptor)
+			throws Exception {
+		if (!(input instanceof Collection)) {
 			throw new FormatException("Cannot parse a set from " + input);
 		}
 
@@ -268,12 +302,9 @@ public class NativeFormat extends AbstractFormat<Object> {
 		return result;
 	}
 
-	@Override
-	protected <K, V> Map<K, V> parseMap(final Object input, final MapDescriptor<K, V> descriptor)
+	private <K, V> Map<K, V> parseMap(final Object input, final MapDescriptor<K, V> descriptor)
 			throws Exception {
-		if (input == null) {
-			return null;
-		} else if (!(input instanceof Map)) {
+		if (!(input instanceof Map)) {
 			throw new FormatException("Cannot parse a map from " + input);
 		}
 
@@ -291,12 +322,9 @@ public class NativeFormat extends AbstractFormat<Object> {
 		return result;
 	}
 
-	@Override
-	protected <T extends Enum<T>> T parseEnum(final Object input,
+	private <T extends Enum<T>> T parseEnum(final Object input,
 			final EnumDescriptor<T> descriptor) {
-		if (input == null) {
-			return null;
-		} else if (input instanceof Enum<?>) {
+		if (input instanceof Enum<?>) {
 			return descriptor.getJavaClass().cast(input);
 		} else if (input instanceof String) {
 			return descriptor.getNamesToValues().get(((String) input).toUpperCase());
@@ -304,13 +332,9 @@ public class NativeFormat extends AbstractFormat<Object> {
 		throw new FormatException("Cannot parse an enum from " + input);
 	}
 
-	@Override
-	protected <M extends Message> M parseMessage(final Object input,
-			MessageDescriptor<M> descriptor)
-			throws Exception {
-		if (input == null) {
-			return null;
-		} else if (!(input instanceof Map)) {
+	private <M extends Message> M parseMessage(final Object input,
+			MessageDescriptor<M> descriptor) throws Exception {
+		if (!(input instanceof Map)) {
 			throw new FormatException("Cannot parse a map from " + input);
 		}
 
@@ -341,10 +365,5 @@ public class NativeFormat extends AbstractFormat<Object> {
 		Object fieldInput = map.get(field.getName());
 		V value = doParse(field.getType(), fieldInput);
 		field.set(message, value);
-	}
-
-	@Override
-	protected Object parseObject(final Object input) {
-		return input;
 	}
 }

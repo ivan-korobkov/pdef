@@ -130,24 +130,24 @@ public class Invocation {
 		MessageDescriptor<?> excd = getExc();
 		if (excd == null) {
 			// It is not an expected application exception.
-			if (exc instanceof RuntimeException) {
-				throw (RuntimeException) exc;
-			} else {
-				throw new RuntimeException(exc);
-			}
+			throw propagate(exc);
 		}
 
 		Class<?> excClass = excd.getJavaClass();
 		if (!excClass.isInstance(exc)) {
-			if (exc instanceof RuntimeException) {
-				throw (RuntimeException) exc;
-			} else {
-				throw new RuntimeException(exc);
-			}
+			throw propagate(exc);
 		}
 
 		// It is an expected application exception.
 		// All application exceptions are runtime.
 		return InvocationResult.exc((RuntimeException) exc);
+	}
+
+	private RuntimeException propagate(final Exception exc) {
+		if (exc instanceof RuntimeException) {
+			throw (RuntimeException) exc;
+		} else {
+			throw new RuntimeException(exc);
+		}
 	}
 }

@@ -10,25 +10,23 @@ import io.pdef.test.interfaces.TestInterface;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.net.HttpURLConnection;
 
 public class RestServerTest {
 	@Test
 	public void testHandle() throws Exception {
-		RestServer<TestInterface> server = RestServer.builder(TestInterface.class)
-				.setInvoker(new Func<Invocation, InvocationResult>() {
+		RestServer<TestInterface> server = new RestServer<TestInterface>(TestInterface.class,
+				new Func<Invocation, InvocationResult>() {
 					@Override
-					public InvocationResult apply(final Invocation input) {
+					public InvocationResult apply(final Invocation invocation) {
 						return InvocationResult.ok(3);
 					}
-				})
-				.build();
+				});
 
 		RestRequest request = new RestRequest()
 				.setPath("/remoteMethod")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
-		String content = RestFormat.resultDescriptor(Descriptors.int32, null).newInstance()
+		String content = RestProtocol.resultDescriptor(Descriptors.int32, null).newInstance()
 				.setSuccess(true)
 				.setData(3)
 				.serializeToJson(true);
@@ -43,19 +41,18 @@ public class RestServerTest {
 	@Test
 	public void testHandle_exc() throws Exception {
 		final TestException exc = new TestException().setText("Hello, world");
-		RestServer<TestInterface> server = RestServer.builder(TestInterface.class)
-				.setInvoker(new Func<Invocation, InvocationResult>() {
+		RestServer<TestInterface> server = new RestServer<TestInterface>(TestInterface.class,
+				new Func<Invocation, InvocationResult>() {
 					@Override
-					public InvocationResult apply(final Invocation input) {
+					public InvocationResult apply(final Invocation invocation) {
 						return InvocationResult.exc(exc);
 					}
-				})
-				.build();
+				});
 
 		RestRequest request = new RestRequest()
 				.setPath("/remoteMethod")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
-		String content = RestFormat.resultDescriptor(Descriptors.int32, TestException.DESCRIPTOR)
+		String content = RestProtocol.resultDescriptor(Descriptors.int32, TestException.DESCRIPTOR)
 				.newInstance()
 				.setSuccess(false)
 				.setExc(exc)
@@ -70,14 +67,13 @@ public class RestServerTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testHandle_restError() throws Exception {
-		RestServer<TestInterface> server = RestServer.builder(TestInterface.class)
-				.setInvoker(new Func<Invocation, InvocationResult>() {
+		RestServer<TestInterface> server = new RestServer<TestInterface>(TestInterface.class,
+				new Func<Invocation, InvocationResult>() {
 					@Override
-					public InvocationResult apply(final Invocation input) {
+					public InvocationResult apply(final Invocation invocation) {
 						throw new IllegalArgumentException();
 					}
-				})
-				.build();
+				});
 
 		RestRequest request = new RestRequest().setPath("/");
 		server.apply(request);
@@ -88,15 +84,13 @@ public class RestServerTest {
 	@Test
 	public void testErrorResponse() throws Exception {
 		RestException exc = RestException.serviceUnavailable("Test service unavailable");
-		RestResponse response = RestServer.builder(TestInterface.class)
-				.setInvoker(new Func<Invocation, InvocationResult>() {
-					@Nullable
+		RestResponse response = new RestServer<TestInterface>(TestInterface.class,
+				new Func<Invocation, InvocationResult>() {
 					@Override
-					public InvocationResult apply(@Nullable final Invocation input) {
+					public InvocationResult apply(final Invocation invocation) {
 						return null;
 					}
 				})
-				.build()
 				.errorResponse(exc);
 
 		assertEquals(HttpURLConnection.HTTP_UNAVAILABLE, response.getStatus());

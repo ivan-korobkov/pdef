@@ -19,24 +19,28 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-class RestClientHttpSession implements Func<RestRequest, RestResponse> {
+class HttpRestSession implements Func<RestRequest, RestResponse> {
 	private static final Charset UTF_8 = Charset.forName("UTF-8");
 	private final String url;
 	private final Func<Request, Response> session;
 
-	/** Creates a REST client sender. */
-	public RestClientHttpSession(final String url,
-			@Nullable final Func<Request, Response> session) {
+	/** Creates a rest HTTP session. */
+	public HttpRestSession(final String url) {
+		this(url, null);
+	}
+
+	/** Creates a rest HTTP session. */
+	public HttpRestSession(final String url, @Nullable final Func<Request, Response> session) {
 		if (url == null) throw new NullPointerException("url");
 		this.url = url;
-		this.session = session != null ? session : new DefaultSession();
+		this.session = session != null ? session : new HttpSession();
 	}
 
 	@Override
-	public RestResponse apply(final RestRequest request) {
+	public RestResponse apply(final RestRequest request) throws Exception {
 		Request req = createRequest(request);
 		req.version(HttpVersion.HTTP_1_1);
-		Response resp = sendRequest(req);
+		Response resp = session.apply(req);
 		return parseResponse(resp);
 	}
 
@@ -83,23 +87,14 @@ class RestClientHttpSession implements Func<RestRequest, RestResponse> {
 		return path.startsWith("/") ? url + path : url + "/" + path;
 	}
 
-	/** Sends a fluent http client request and returns a response. */
-	private Response sendRequest(final Request req) {
-		return session.apply(req);
-	}
-
 	/** Parses a fluent http client response into a rest response. */
-	private RestResponse parseResponse(final Response resp) {
-		try {
-			return resp.handleResponse(new ResponseHandler<RestResponse>() {
-				@Override
-				public RestResponse handleResponse(final HttpResponse response) throws IOException {
-					return parseHttpResponse(response);
-				}
-			});
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+	private RestResponse parseResponse(final Response resp) throws IOException {
+		return resp.handleResponse(new ResponseHandler<RestResponse>() {
+			@Override
+			public RestResponse handleResponse(final HttpResponse response) throws IOException {
+				return parseHttpResponse(response);
+			}
+		});
 	}
 
 	// VisibleForTesting
@@ -118,16 +113,5 @@ class RestClientHttpSession implements Func<RestRequest, RestResponse> {
 				.setStatus(status)
 				.setContentType(contentType)
 				.setContent(content);
-	}
-
-	private static class DefaultSession implements Func<Request, Response> {
-		@Override
-		public Response apply(final Request request) {
-			try {
-				return request.execute();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
 	}
 }

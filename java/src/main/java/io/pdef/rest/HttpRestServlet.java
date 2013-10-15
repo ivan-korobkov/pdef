@@ -10,10 +10,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-class RestServerServlet extends HttpServlet {
+class HttpRestServlet extends HttpServlet {
 	private final Func<RestRequest, RestResponse> server;
 
-	RestServerServlet(final Func<RestRequest, RestResponse> server) {
+	HttpRestServlet(final Func<RestRequest, RestResponse> server) {
 		if (server == null) throw new NullPointerException("server");
 		this.server = server;
 	}
@@ -36,7 +36,15 @@ class RestServerServlet extends HttpServlet {
 		if (response == null) throw new NullPointerException("response");
 
 		RestRequest req = parseRequest(request);
-		RestResponse resp = server.apply(req);
+		RestResponse resp;
+		try {
+			resp = server.apply(req);
+		} catch (RuntimeException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
 		writeResponse(resp, response);
 	}
 

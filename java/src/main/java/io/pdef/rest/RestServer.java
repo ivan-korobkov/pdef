@@ -15,16 +15,16 @@ import javax.servlet.http.HttpServlet;
 public class RestServer<T> implements Func<RestRequest, RestResponse> {
 	private final InterfaceDescriptor<T> descriptor;
 	private final Func<Invocation, InvocationResult> invoker;
-	private final RestFormat format;
+	private final RestProtocol format;
 
 	/** Creates a REST server handler. */
-	private RestServer(final Class<T> cls, final Func<Invocation, InvocationResult> invoker) {
+	public RestServer(final Class<T> cls, final Func<Invocation, InvocationResult> invoker) {
 		if (cls == null) throw new NullPointerException("cls");
 		if (invoker == null) throw new NullPointerException("invoker");
 
 		this.descriptor = InterfaceDescriptor.findDescriptor(cls);
 		this.invoker = invoker;
-		format = new RestFormat();
+		format = new RestProtocol();
 
 		if (descriptor == null) {
 			throw new IllegalArgumentException("Cannot find an interface descriptor in " + cls);
@@ -32,7 +32,7 @@ public class RestServer<T> implements Func<RestRequest, RestResponse> {
 	}
 
 	@Override
-	public RestResponse apply(final RestRequest request) {
+	public RestResponse apply(final RestRequest request) throws Exception {
 		if (request == null) throw new NullPointerException("request");
 
 		Invocation invocation;
@@ -40,27 +40,13 @@ public class RestServer<T> implements Func<RestRequest, RestResponse> {
 			invocation = format.parseInvocation(request, descriptor);
 		} catch (RestException e) {
 			return errorResponse(e);
-		} catch (Exception e) {
-			if (e instanceof RuntimeException) {
-				throw (RuntimeException) e;
-			} else {
-				throw new RuntimeException(e);
-			}
 		}
 
-		try {
-			DataDescriptor<?> dataDescriptor = invocation.getDataResult();
-			MessageDescriptor<?> excDescriptor = invocation.getExc();
+		DataDescriptor<?> dataDescriptor = invocation.getDataResult();
+		MessageDescriptor<?> excDescriptor = invocation.getExc();
 
-			InvocationResult result = invoker.apply(invocation);
-			return format.serializeInvocationResult(result, dataDescriptor, excDescriptor);
-		} catch (Exception e) {
-			if (e instanceof RuntimeException) {
-				throw (RuntimeException) e;
-			} else {
-				throw new RuntimeException(e);
-			}
-		}
+		InvocationResult result = invoker.apply(invocation);
+		return format.serializeInvocationResult(result, dataDescriptor, excDescriptor);
 	}
 
 	// VisibleForTesting
@@ -145,7 +131,7 @@ public class RestServer<T> implements Func<RestRequest, RestResponse> {
 		/** Creates a servlet REST handler. */
 		public HttpServlet buildServlet() {
 			RestServer<T> server = build();
-			return new RestServerServlet(server);
+			return new HttpRestServlet(server);
 		}
 	}
 }

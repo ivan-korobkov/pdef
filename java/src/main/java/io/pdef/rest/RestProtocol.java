@@ -3,7 +3,6 @@ package io.pdef.rest;
 import io.pdef.Message;
 import io.pdef.descriptors.*;
 import io.pdef.format.JsonFormat;
-import io.pdef.format.NativeFormat;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
 
@@ -13,12 +12,13 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 
-public class RestFormat {
+public class RestProtocol {
 	public static final String CHARSET_NAME = "UTF-8";
-	private final NativeFormat nativeFormat = NativeFormat.instance();
 	private final JsonFormat jsonFormat = JsonFormat.instance();
 
 	// Invocation serialization.
+
+	public RestProtocol() {}
 
 	/** Converts an invocation into a rest request. */
 	public RestRequest serializeInvocation(final Invocation invocation) {
@@ -62,10 +62,11 @@ public class RestFormat {
 				serializeParam(argd, arg, request.getPost());
 
 			} else if (isRemote) {
-					// Serialize an argument as a query param.
-					serializeParam(argd, arg, request.getQuery());
+				// Serialize an argument as a query param.
+				serializeParam(argd, arg, request.getQuery());
 
 			} else {
+				// Serialize an argument as a path part.
 				request.appendPath("/" + serializePathArgument(argd, arg));
 			}
 		}
@@ -126,20 +127,16 @@ public class RestFormat {
 		return serializeToString(field.getType(), value);
 	}
 
-	/** Serializes primitives and enums to strings and other types to json. */
+	/** Serializes an argument to JSON, strips the quotes. */
 	// VisibleForTesting
 	<V> String serializeToString(final DataDescriptor<V> descriptor, final V arg) {
-		TypeEnum typeEnum = descriptor.getType();
-
-		if (arg == null) {
-			return "";
-		} else if (typeEnum.isPrimitive()) {
-			return arg.toString();
-		} else if (typeEnum.isEnum()) {
-			return arg.toString().toLowerCase();
-		} else {
-			return jsonFormat.serialize(arg, descriptor, false);
+		String s = jsonFormat.serialize(arg, descriptor, false);
+		if (descriptor.getType() != TypeEnum.STRING) {
+			return s;
 		}
+
+		// Remove the JSON quotes.
+		return s.substring(1, s.length() - 1);
 	}
 
 	// InvocationResult parsing.
@@ -171,8 +168,7 @@ public class RestFormat {
 
 	// Invocation parsing.
 
-	public Invocation parseInvocation(final RestRequest request, InterfaceDescriptor<?> descriptor)
-			throws Exception {
+	public Invocation parseInvocation(final RestRequest request, InterfaceDescriptor<?> descriptor) {
 		if (request == null) throw new NullPointerException("request");
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -322,23 +318,16 @@ public class RestFormat {
 	}
 
 	// VisibleForTesting
-	<V> V parseFromString(final DataDescriptor<V> descriptor, final String value) {
-		TypeEnum typeEnum = descriptor.getType();
-
-		if (value == null) {
+	/** Parses an argument from an unquoted JSON string. */
+	<V> V parseFromString(final DataDescriptor<V> descriptor, String value) {
+		if (value == null || value.equals("null")) {
 			return null;
-
-		} else if (value.equals("")) {
-			return null;
-
-		} else if (typeEnum.isPrimitive() || typeEnum.isEnum()) {
-			// Native format supports parsing from string.
-			return nativeFormat.parse(value, descriptor);
-
-		} else {
-			// Parse messages and collections from a JSON string.
-			return jsonFormat.parse(value, descriptor);
 		}
+
+		if (descriptor.getType() == TypeEnum.STRING) {
+			value = "\"" + value + "\"";
+		}
+		return jsonFormat.parse(value, descriptor);
 	}
 
 	// InvocationResult serialization.
@@ -388,10 +377,5 @@ public class RestFormat {
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	public static void main(String[] args) {
-		Integer i = Integer.class.cast(null);
-		System.out.println(i);
 	}
 }

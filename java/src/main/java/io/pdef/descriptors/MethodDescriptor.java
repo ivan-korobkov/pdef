@@ -167,7 +167,7 @@ public class MethodDescriptor<T, R> {
 		}
 
 		@Override
-		public R invoke(final T object, final Object[] args) throws Exception{
+		public R invoke(final T object, final Object[] args) throws Exception {
 			if (object == null) throw new NullPointerException("object");
 
 			try {

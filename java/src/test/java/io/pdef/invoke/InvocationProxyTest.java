@@ -1,5 +1,6 @@
 package io.pdef.invoke;
 
+import io.pdef.Func;
 import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
@@ -16,8 +17,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.List;
 
-public class InvocationClientTest {
-	@Mock io.pdef.Func<Invocation, InvocationResult> handler;
+public class InvocationProxyTest {
+	@Mock Func<Invocation, InvocationResult> handler;
 
 	@Before
 	public void setUp() throws Exception {
@@ -76,7 +77,7 @@ public class InvocationClientTest {
 	}
 
 	private TestInterface createProxy() {
-		return InvocationClient.create(TestInterface.class, TestInterface.DESCRIPTOR, handler);
+		return InvocationProxy.create(TestInterface.class, handler);
 	}
 
 	private MethodDescriptor getIndexMethod() {

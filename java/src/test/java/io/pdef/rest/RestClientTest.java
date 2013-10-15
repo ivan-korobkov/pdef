@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.pdef.Func;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.invoke.Invocation;
-import io.pdef.invoke.InvocationClient;
+import io.pdef.invoke.InvocationProxy;
 import io.pdef.invoke.InvocationResult;
 import io.pdef.test.interfaces.TestInterface;
 import static org.junit.Assert.assertEquals;
@@ -18,15 +18,13 @@ import java.net.HttpURLConnection;
 
 
 public class RestClientTest {
-	@Mock io.pdef.Func<RestRequest, RestResponse> session;
+	@Mock Func<RestRequest, RestResponse> session;
 	RestClient handler;
 
 	@Before
 	public void setUp() throws Exception {
 		initMocks(this);
-		handler = RestClient.builder()
-				.setRawSession(session)
-				.build();
+		handler = new RestClient(session);
 	}
 
 	@Test
@@ -35,7 +33,7 @@ public class RestClientTest {
 				.setMethod(RestRequest.GET)
 				.setPath("/")
 				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
-		RestResult<Integer, ?> result = RestFormat.resultDescriptor(Descriptors.int32, null)
+		RestResult<Integer, ?> result = RestProtocol.resultDescriptor(Descriptors.int32, null)
 				.newInstance()
 				.setSuccess(true)
 				.setData(3);
@@ -63,6 +61,6 @@ public class RestClientTest {
 	}
 
 	private TestInterface proxy(final Func<Invocation, InvocationResult> handler) {
-		return InvocationClient.create(TestInterface.class, handler);
+		return InvocationProxy.create(TestInterface.class, handler);
 	}
 }

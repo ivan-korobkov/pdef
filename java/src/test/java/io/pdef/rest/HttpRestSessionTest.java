@@ -22,12 +22,12 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.Arrays;
 
-public class RestClientHttpSessionTest {
-	RestClientHttpSession sender;
+public class HttpRestSessionTest {
+	HttpRestSession sender;
 
 	@Before
 	public void setUp() throws Exception {
-		sender = new RestClientHttpSession("http://localhost:8080/", null);
+		sender = new HttpRestSession("http://localhost:8080/", null);
 	}
 
 	@Test
@@ -67,7 +67,7 @@ public class RestClientHttpSessionTest {
 
 	@Test
 	public void testParseHttpResponse() throws Exception {
-		String content = RestFormat.resultDescriptor(Descriptors.string, null)
+		String content = RestProtocol.resultDescriptor(Descriptors.string, null)
 				.newInstance()
 				.setSuccess(true)
 				.setData("привет")
@@ -97,15 +97,10 @@ public class RestClientHttpSessionTest {
 		}
 	}
 
-	private byte[] entityToBytes(final HttpEntity entity) {
+	private byte[] entityToBytes(final HttpEntity entity) throws IOException {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		DataOutputStream out = new DataOutputStream(bout);
-		try {
-			entity.writeTo(out);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-
+		entity.writeTo(out);
 		return bout.toByteArray();
 	}
 }

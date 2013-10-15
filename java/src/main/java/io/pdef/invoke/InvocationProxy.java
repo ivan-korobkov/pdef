@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-public class InvocationClient<T> implements InvocationHandler {
+public class InvocationProxy<T> implements InvocationHandler {
 	private final InterfaceDescriptor<T> descriptor;
 	private final Func<Invocation, InvocationResult> handler;
 	private final Invocation parent;
@@ -24,22 +24,12 @@ public class InvocationClient<T> implements InvocationHandler {
 			throw new IllegalArgumentException("Cannot find an interface descriptor in " + cls);
 		}
 
-		return InvocationClient.create(cls, descriptor, invocationHandler);
-	}
-
-	/** Creates a Java invocation proxy. */
-	public static <T> T create(final Class<T> cls, final InterfaceDescriptor<T> descriptor,
-			final Func<Invocation, InvocationResult> handler) {
-		if (cls == null) throw new NullPointerException("cls");
-		if (descriptor == null) throw new NullPointerException("descriptor");
-		if (handler == null) throw new NullPointerException("handler");
-
-		InvocationClient<T> invocationClient = new InvocationClient<T>(descriptor, handler,
+		InvocationProxy<T> invocationProxy = new InvocationProxy<T>(descriptor, invocationHandler,
 				Invocation.root());
-		return invocationClient.toProxy();
+		return invocationProxy.toProxy();
 	}
 
-	private InvocationClient(final InterfaceDescriptor<T> descriptor,
+	private InvocationProxy(final InterfaceDescriptor<T> descriptor,
 			final Func<Invocation, InvocationResult> handler,
 			final Invocation parent) {
 		this.descriptor = descriptor;
@@ -75,8 +65,16 @@ public class InvocationClient<T> implements InvocationHandler {
 		return parent.next(md, args);
 	}
 
-	private Object handle(final Invocation invocation) throws Exception {
-		InvocationResult result = handler.apply(invocation);
+	private Object handle(final Invocation invocation) {
+		InvocationResult result = null;
+		try {
+			result = handler.apply(invocation);
+		} catch (RuntimeException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
 		assert result != null;
 
 		if (result.isOk()) {
@@ -89,7 +87,7 @@ public class InvocationClient<T> implements InvocationHandler {
 	private Object nextProxy(final Invocation invocation) {
 		@SuppressWarnings("unchecked")
 		InterfaceDescriptor<Object> next = (InterfaceDescriptor<Object>) invocation.getResult();
-		InvocationClient<Object> nproxy = new InvocationClient<Object>(next, handler, invocation);
+		InvocationProxy<Object> nproxy = new InvocationProxy<Object>(next, handler, invocation);
 		return nproxy.toProxy();
 	}
 }

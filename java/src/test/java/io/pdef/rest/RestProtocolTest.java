@@ -9,7 +9,7 @@ import io.pdef.descriptors.ArgumentDescriptor;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.invoke.Invocation;
-import io.pdef.invoke.InvocationClient;
+import io.pdef.invoke.InvocationProxy;
 import io.pdef.invoke.InvocationResult;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RestFormatTest {
-	private RestFormat format = new RestFormat();
+public class RestProtocolTest {
+	private RestProtocol format = new RestProtocol();
 
 	// Invocation serialization.
 
@@ -162,10 +162,10 @@ public class RestFormatTest {
 	}
 
 	@Test
-	public void testSerializeToString_primitiveNullToEmptyString() throws Exception {
+	public void testSerializeToString_null() throws Exception {
 		String result = format.serializeToString(Descriptors.int32, null);
 
-		assertEquals("", result);
+		assertEquals("null", result);
 	}
 
 	@Test
@@ -420,32 +420,30 @@ public class RestFormatTest {
 	}
 
 	private RestResult<SimpleMessage, Object> fixtureRestResult(final SimpleMessage msg) {
-		return RestFormat.resultDescriptor(SimpleMessage.DESCRIPTOR, null)
+		return RestProtocol.resultDescriptor(SimpleMessage.DESCRIPTOR, null)
 				.newInstance()
 				.setSuccess(true)
 				.setData(msg);
 	}
 
 	private RestResult<String, TestException> fixtureExcRestResult(final TestException exc) {
-		return RestFormat.resultDescriptor(Descriptors.string, TestException.DESCRIPTOR)
+		return RestProtocol.resultDescriptor(Descriptors.string, TestException.DESCRIPTOR)
 				.newInstance()
 				.setSuccess(false)
 				.setExc(exc);
 	}
 
 	private TestInterface proxy(final AtomicReference<Invocation> ref) {
-		Func<Invocation, InvocationResult> format = new Func<Invocation, InvocationResult>() {
+		return proxy(new Func<Invocation, InvocationResult>() {
 			@Override
 			public InvocationResult apply(final Invocation invocation) {
 				ref.set(invocation);
 				return InvocationResult.ok(null);
 			}
-		};
-
-		return proxy(format);
+		});
 	}
 
 	private TestInterface proxy(final Func<Invocation, InvocationResult> handler) {
-		return InvocationClient.create(TestInterface.class, handler);
+		return InvocationProxy.create(TestInterface.class, handler);
 	}
 }

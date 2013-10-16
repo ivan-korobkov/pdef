@@ -82,15 +82,15 @@ class PythonModule(object):
     init_content += generated_by
 
     def __init__(self, module, namespace=None):
-        # Create a local module scope, which correctly handles
+        # Create a local module ref, which correctly handles
         # when definitions are referenced inside the declaring module.
-        scope = lambda type0: pyreference(type0, module, namespace)
+        ref = lambda type0: pyreference(type0, module, namespace)
 
         self.name = namespace(module.name) if namespace else module.name
         self.doc = pydoc(module.doc)
 
         self.imports = [pyimport(im, namespace) for im in module.imported_modules]
-        self.definitions = [PythonDefinition.create(def0, scope) for def0 in module.definitions]
+        self.definitions = [PythonDefinition.create(def0, ref) for def0 in module.definitions]
 
         # The flag distinguishes between mymodule.py and mymodule/__init__.py.
         self.is_directory = False
@@ -165,16 +165,16 @@ class PythonDefinition(object):
     template_name = None
 
     @classmethod
-    def create(cls, def0, scope):
+    def create(cls, def0, ref):
         '''Create a python definition.'''
         if def0.is_message:
-            return PythonMessage(def0, scope)
+            return PythonMessage(def0, ref)
 
         elif def0.is_enum:
             return PythonEnum(def0)
 
         elif def0.is_interface:
-            return PythonInterface(def0, scope)
+            return PythonInterface(def0, ref)
 
         raise ValueError('Unsupported definition %s' % def0)
 
@@ -195,59 +195,58 @@ class PythonEnum(PythonDefinition):
 class PythonMessage(PythonDefinition):
     template_name = 'message.template'
 
-    def __init__(self, msg, scope):
+    def __init__(self, msg, ref):
         self.name = msg.name
         self.doc = pydoc(msg.doc)
 
-        self.base = scope(msg.base)
-        self.subtypes = [(scope(stype.discriminator_value), scope(stype))
-                         for stype in msg.subtypes]
-        self.discriminator_value = scope(msg.discriminator_value)
-        self.discriminator = PythonField(msg.discriminator, scope) if msg.discriminator else None
+        self.base = ref(msg.base)
+        self.subtypes = [ref(subtype) for subtype in msg.subtypes]
+        self.discriminator_value = ref(msg.discriminator_value)
+        self.discriminator = PythonField(msg.discriminator, ref) if msg.discriminator else None
 
         self.is_exception = msg.is_exception
         self.is_form = msg.is_form
 
-        self.fields = [PythonField(field, scope) for field in msg.fields]
-        self.inherited_fields = [PythonField(field, scope) for field in msg.inherited_fields]
-        self.declared_fields = [PythonField(field, scope) for field in msg.declared_fields]
+        self.fields = [PythonField(field, ref) for field in msg.fields]
+        self.inherited_fields = [PythonField(field, ref) for field in msg.inherited_fields]
+        self.declared_fields = [PythonField(field, ref) for field in msg.declared_fields]
 
         self.root_or_base = self.base or ('pdef.Exc' if self.is_exception else 'pdef.Message')
 
 
 class PythonField(object):
-    def __init__(self, field, scope):
+    def __init__(self, field, ref):
         self.name = field.name
-        self.type = scope(field.type)
+        self.type = ref(field.type)
         self.is_discriminator = field.is_discriminator
 
 
 class PythonInterface(PythonDefinition):
     template_name = 'interface.template'
 
-    def __init__(self, iface, scope):
+    def __init__(self, iface, ref):
         self.name = iface.name
         self.doc = pydoc(iface.doc)
-        self.exc = scope(iface.exc) if iface.exc else None
-        self.declared_methods = [PythonMethod(m, scope) for m in iface.declared_methods]
+        self.exc = ref(iface.exc) if iface.exc else None
+        self.declared_methods = [PythonMethod(m, ref) for m in iface.declared_methods]
 
 
 class PythonMethod(object):
-    def __init__(self, method, scope):
+    def __init__(self, method, ref):
         self.name = method.name
         self.doc = pydoc(method.doc)
 
-        self.result = scope(method.result)
-        self.args = [PythonArg(arg, scope) for arg in method.args]
+        self.result = ref(method.result)
+        self.args = [PythonArg(arg, ref) for arg in method.args]
 
         self.is_index = method.is_index
         self.is_post = method.is_post
 
 
 class PythonArg(object):
-    def __init__(self, arg, scope):
+    def __init__(self, arg, ref):
         self.name = arg.name
-        self.type = scope(arg.type)
+        self.type = ref(arg.type)
 
 
 class PythonReference(object):

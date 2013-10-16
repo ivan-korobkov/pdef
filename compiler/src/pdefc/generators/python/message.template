@@ -58,8 +58,8 @@ class {{ name }}({{ root_or_base }}):
     {% endif %}
     {% if subtypes %}
         subtypes=(
-        {% for subtype, submessage in subtypes %}
-            lambda: {{ submessage.name }},
+        {% for subtype in subtypes %}
+            lambda: {{ subtype.descriptor }},
         {% endfor %}
         ),
     {% endif %}

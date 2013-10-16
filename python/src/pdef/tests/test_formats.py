@@ -45,6 +45,14 @@ class TestJsonFormat(unittest.TestCase):
         message = self._complex_message()
         self._test(messages.ComplexMessage.DESCRIPTOR, message, self.MESSAGE_JSON)
 
+    def test_message__polymorphic(self):
+        message = self._polymorphic_message()
+        self._test(inheritance.Base.DESCRIPTOR, message, self.POLYMORPHIC_JSON)
+
+    def test_message__skip_null_fields(self):
+        message = messages.SimpleMessage(aString='hello')
+        assert json.serialize(message, messages.SimpleMessage.DESCRIPTOR) == '{"aString": "hello"}'
+
     def test_void(self):
         self._test(descriptors.void, None, 'null')
 
@@ -70,6 +78,12 @@ class TestJsonFormat(unittest.TestCase):
                 subfield='subfield',
                 mfield='mfield'))
 
+    def _polymorphic_message(self):
+        return inheritance.MultiLevelSubtype(
+            field='field',
+            subfield='subfield',
+            mfield='mfield')
+
     MESSAGE_JSON = u'{"aString": "hello", ' \
                    u'"aBool": true, ' \
                    u'"anInt16": 16, ' \
@@ -85,3 +99,8 @@ class TestJsonFormat(unittest.TestCase):
                    u'"aPolymorphicMessage": ' \
                    u'{"type": "multilevel_subtype", ' \
                    u'"field": "field", "subfield": "subfield", "mfield": "mfield"}}'
+
+    POLYMORPHIC_JSON = u'{"type": "multilevel_subtype", ' \
+                       u'"field": "field", ' \
+                       u'"subfield": "subfield", ' \
+                       u'"mfield": "mfield"}'

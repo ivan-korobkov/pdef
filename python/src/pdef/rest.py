@@ -325,8 +325,7 @@ class RestProtocol(object):
             field = descriptor.discriminator
             serialized = src.get(field.name)
             parsed = self._parse_from_json(field.type, serialized)
-            subtype = descriptor.find_subtype(parsed)
-            descriptor = subtype.DESCRIPTOR
+            descriptor = descriptor.find_subtype(parsed)
 
         message = descriptor.pyclass()
         for field in descriptor.fields:

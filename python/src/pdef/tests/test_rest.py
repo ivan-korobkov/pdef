@@ -336,7 +336,7 @@ class TestRestServer(unittest.TestCase):
 
         assert response.status == httplib.OK
         assert response.content_type == JSON_CONTENT_TYPE
-        assert json.loads(response.content) == {'success': True, 'data': 3, 'exc': None}
+        assert json.loads(response.content) == {'success': True, 'data': 3}
 
     def test_error_response(self):
         e = RestException(u'Метод не найден', httplib.NOT_FOUND)

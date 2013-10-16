@@ -51,6 +51,9 @@ class NativeFormat(object):
 
         for field in descriptor.fields:
             value = field.get(message)
+            if value is None:
+                # Skip null fields.
+                continue
             result[field.name] = serialize(value, field.type)
 
         return result
@@ -102,8 +105,7 @@ class NativeFormat(object):
             discriminator = descriptor.discriminator
             serialized = dict0.get(discriminator.name)
             parsed = parse(serialized, discriminator.type)
-            subtype = descriptor.find_subtype(parsed)
-            descriptor = subtype.DESCRIPTOR
+            descriptor = descriptor.find_subtype(parsed)
 
         message = descriptor.pyclass()
         for field in descriptor.fields:

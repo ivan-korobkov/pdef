@@ -3,215 +3,188 @@ import unittest
 from mock import Mock
 
 from pdef import descriptors
-from pdef_test import messages, inheritance, interfaces
+from pdef_test.messages import *
+from pdef_test.inheritance import *
+from pdef_test.interfaces import *
 
 
 class TestMessageDescriptor(unittest.TestCase):
-    cls = messages.SimpleMessage
+    cls = SimpleMessage
     descriptor = cls.DESCRIPTOR
 
-    def _fixture(self):
-        return self.cls(aString='hello', aBool=True, anInt16=123)
+    def test(self):
+        descriptor = SimpleMessage.DESCRIPTOR
 
-    def _fixture_dict(self):
-        return {'aString': 'hello', 'aBool': True, 'anInt16': 123}
+        assert descriptor.pyclass is SimpleMessage
+        assert descriptor.base is None
+        assert descriptor.discriminator is None
+        assert descriptor.discriminator_value is None
+        assert len(descriptor.subtypes) == 0
+        assert len(descriptor.fields) == 3
 
-    def _fixture_json(self):
-        return '{"aString": "hello", "aBool": true, "anInt16": 123}'
+    def test__form(self):
+        message = SimpleMessage.DESCRIPTOR
+        form = SimpleForm.DESCRIPTOR
 
-    def test_subtype(self):
-        subtype = self.descriptor.subtype(None)
-        assert subtype is self.cls
+        assert not message.is_form
+        assert form.is_form
 
-    def test_to_object(self):
-        msg = self._fixture()
-        d = self.descriptor.to_object(msg)
-        assert d == self._fixture_dict()
+    def test__nonpolymorphic_inheritance(self):
+        base = SimpleMessage.DESCRIPTOR
+        descriptor = ComplexMessage.DESCRIPTOR
 
-    def test_to_object__none(self):
-        assert self.descriptor.to_object(None) is None
+        assert descriptor.pyclass is ComplexMessage
+        assert descriptor.base is SimpleMessage.DESCRIPTOR
+        assert descriptor.inherited_fields == base.fields
+        assert descriptor.fields == base.fields + descriptor.declared_fields
+        assert len(descriptor.subtypes) == 0
 
-    def test_to_object__check_type(self):
-        msg = self._fixture()
-        msg.aString = True
+    def test__polymorphic_inheritance(self):
+        base = Base.DESCRIPTOR
+        subtype = Subtype.DESCRIPTOR
+        subtype2 = Subtype2.DESCRIPTOR
+        msubtype = MultiLevelSubtype.DESCRIPTOR
+        discriminator = base.find_field('type')
 
-        self.assertRaises(TypeError, self.descriptor.to_object, msg)
+        assert base.discriminator is discriminator
+        assert base.discriminator_value is None
+        assert set(base.subtypes) == {subtype, subtype2, msubtype}
 
-    def test_parse_object(self):
-        d = self._fixture_dict()
-        msg = self.descriptor.parse_object(d)
-        assert msg == self._fixture()
+        assert base.find_subtype(PolymorphicType.SUBTYPE) is subtype
+        assert base.find_subtype(PolymorphicType.SUBTYPE2) is subtype2
+        assert base.find_subtype(PolymorphicType.MULTILEVEL_SUBTYPE) is msubtype
 
-    def test_parse_object__none(self):
-        assert self.descriptor.parse_object(None) is None
+        assert subtype.discriminator is discriminator
+        assert subtype2.discriminator is discriminator
+        assert msubtype.discriminator is discriminator
 
-    def test_parse_json(self):
-        s = self._fixture_json()
-        msg = self.descriptor.parse_json(s)
-        assert msg == self._fixture()
+        assert subtype.base is base
+        assert subtype2.base is base
+        assert msubtype.base is subtype
 
-    def test_to_json(self):
-        msg = self._fixture()
-        s = self.descriptor.to_json(msg)
-        msg1 = self.descriptor.parse_json(s)
-        assert msg == msg1
+        assert subtype.discriminator_value is PolymorphicType.SUBTYPE
+        assert subtype2.discriminator_value is PolymorphicType.SUBTYPE2
+        assert msubtype.discriminator_value is PolymorphicType.MULTILEVEL_SUBTYPE
 
-
-class TestPolymorphicMessageDescriptor(unittest.TestCase):
-    descriptor = inheritance.Base.DESCRIPTOR
-
-    def test_subtype(self):
-        d = self.descriptor
-
-        assert d.subtype(inheritance.PolymorphicType.SUBTYPE) is inheritance.Subtype
-        assert d.subtype(inheritance.PolymorphicType.SUBTYPE2) is inheritance.Subtype2
-        assert d.subtype(inheritance.PolymorphicType.MULTILEVEL_SUBTYPE) \
-            is inheritance.MultiLevelSubtype
-
-    def test_parse_object(self):
-        subtype_d = {'type': 'subtype', 'subfield': 'hello'}
-        subtype2_d = {'type': 'subtype2', 'subfield2': 'hello'}
-        mlevel_subtype_d = {'type': 'multilevel_subtype', 'mfield': 'hello'}
-
-        d = self.descriptor
-        assert d.parse_object(subtype_d) == inheritance.Subtype(subfield='hello')
-        assert d.parse_object(subtype2_d) == inheritance.Subtype2(subfield2='hello')
-        assert d.parse_object(mlevel_subtype_d) == inheritance.MultiLevelSubtype(mfield='hello')
+        assert set(subtype.subtypes) == {msubtype}
 
 
 class TestFieldDescriptor(unittest.TestCase):
-    cls = messages.SimpleMessage
-    descriptor = cls.DESCRIPTOR
-    field = descriptor.find_field('aString')
+    field = SimpleMessage.DESCRIPTOR.find_field('aString')
+
+    def test(self):
+        aString = SimpleMessage.DESCRIPTOR.find_field('aString')
+        aBool = SimpleMessage.DESCRIPTOR.find_field('aBool')
+
+        assert aString.name == 'aString'
+        assert aString.type is descriptors.string0
+
+        assert aBool.name == 'aBool'
+        assert aBool.type is descriptors.bool0
+
+    def test_discriminator(self):
+        discriminator = Base.DESCRIPTOR.find_field('type')
+
+        assert discriminator.name == 'type'
+        assert discriminator.type is PolymorphicType.DESCRIPTOR
+        assert discriminator.is_discriminator
 
     def test_set(self):
-        msg = self.cls()
-        self.field.set(msg, 'hello')
-        assert msg.aString == 'hello'
-
-    def test_set__check_type(self):
-        msg = self.cls()
-        self.assertRaises(TypeError, self.field.set, msg, 123)
+        msg = SimpleMessage(aString='hello')
+        self.field.set(msg, 'goodbye')
+        assert msg.aString == 'goodbye'
 
     def test_get(self):
-        msg = self.cls(aString='hello')
+        msg = SimpleMessage(aString='hello')
         assert self.field.get(msg) == 'hello'
-
-    def test_get__check_type(self):
-        msg = self.cls(aString=123)
-        self.assertRaises(TypeError, self.field.get, msg)
 
 
 class TestInterfaceDescriptor(unittest.TestCase):
-    descriptor = interfaces.TestInterface.DESCRIPTOR
+    def test(self):
+        descriptor = TestInterface.DESCRIPTOR
+        index_method = descriptor.find_method('indexMethod')
 
-    def test_exc(self):
-        assert self.descriptor.exc is interfaces.TestException.DESCRIPTOR
-
-    def test_methods(self):
-        assert len(self.descriptor.methods) == 9
+        assert descriptor.pyclass is TestInterface
+        assert descriptor.exc is TestException.DESCRIPTOR
+        assert len(descriptor.methods) == 9
+        assert index_method
+        assert descriptor.index_method is index_method
 
 
 class TestMethodDescriptor(unittest.TestCase):
-    def test_result(self):
-        method = descriptors.method('method', lambda: descriptors.void)
-        assert method.result is descriptors.void
+    def test(self):
+        method = TestInterface.DESCRIPTOR.find_method('messageMethod')
 
-    def test_is_remote__datatype(self):
-        method = descriptors.method('method', lambda: descriptors.string)
-        assert method.is_remote
+        assert method.name == 'messageMethod'
+        assert method.result is SimpleMessage.DESCRIPTOR
+        assert len(method.args) == 1
+        assert method.args[0].name == 'msg'
+        assert method.args[0].type is SimpleMessage.DESCRIPTOR
 
-    def test_is_remote__void(self):
-        method = descriptors.method('method', lambda: descriptors.void)
-        assert method.is_remote
+    def test_args(self):
+        method = TestInterface.DESCRIPTOR.find_method('indexMethod')
 
-    def test_is_remote__interface(self):
-        method = descriptors.method('method', lambda: descriptors.interface(object))
-        assert method.is_remote is False
+        assert len(method.args) == 2
+        assert method.args[0].name == 'a'
+        assert method.args[1].name == 'b'
+        assert method.args[0].type is descriptors.int32
+        assert method.args[1].type is descriptors.int32
+
+    def test_index_post_remote(self):
+        descriptor = TestInterface.DESCRIPTOR
+        index = descriptor.find_method('indexMethod')
+        remote = descriptor.find_method('remoteMethod')
+        post = descriptor.find_method('postMethod')
+        interface = descriptor.find_method('interfaceMethod')
+
+        assert index.is_index
+        assert index.is_remote
+        assert not index.is_post
+
+        assert not remote.is_index
+        assert remote.is_remote
+        assert not remote.is_post
+
+        assert not post.is_index
+        assert post.is_remote
+        assert post.is_post
+
+        assert not interface.is_index
+        assert not interface.is_remote
+        assert not interface.is_post
 
     def test_invoke(self):
         service = Mock()
-        method = descriptors.method('method', lambda: descriptors.void)
-        method.invoke(service)
-        service.method.assert_called_with()
-
-
-class TestPrimitiveDescriptors(unittest.TestCase):
-    def _test(self, descriptor, string_to_parse, expected, expected_string):
-        assert descriptor.parse_object(string_to_parse) == expected
-        assert descriptor.parse_object(expected) == expected
-        assert descriptor.parse_object(None) is None
-        assert descriptor.to_string(None) is None
-        assert descriptor.to_string(expected) == expected_string
-
-    def test_bool(self):
-        self._test(descriptors.bool0, 'FALSE', False, 'false')
-        self._test(descriptors.bool0, 'TrUE', True, 'true')
-
-    def test_int16(self):
-        self._test(descriptors.int16, '16', 16, '16')
-
-    def test_int32(self):
-        self._test(descriptors.int32, '32', 32, '32')
-
-    def test_int64(self):
-        self._test(descriptors.int64, '64', 64, '64')
-
-    def test_float(self):
-        self._test(descriptors.float0, '1.5', 1.5, '1.5')
-
-    def test_double(self):
-        self._test(descriptors.double0, '2.5', 2.5, '2.5')
-
-    def test_string(self):
-        self._test(descriptors.string, 'hello', 'hello', 'hello')
+        method = TestInterface.DESCRIPTOR.find_method('indexMethod')
+        method.invoke(service, 1, b=2)
+        service.indexMethod.assert_called_with(1, b=2)
 
 
 class TestEnumDescriptor(unittest.TestCase):
-    descriptor = messages.TestEnum.DESCRIPTOR
-
-    def _test(self, descriptor, objectToParse, expected, expected_object):
-        assert descriptor.parse_object(objectToParse) == expected
-        assert descriptor.parse_object(None) is None
-        assert descriptor.to_object(None) is None
-        assert descriptor.to_object(expected) == expected_object
-
     def test(self):
-        self._test(self.descriptor, 'one', messages.TestEnum.ONE, 'one')
-        self._test(self.descriptor, 'TWO', messages.TestEnum.TWO, 'two')
-        self._test(self.descriptor, 'three', messages.TestEnum.THREE, 'three')
+        descriptor = TestEnum.DESCRIPTOR
+        assert descriptor.values == ('ONE', 'TWO', 'THREE')
 
-    def test_serialize_to_string(self):
-        assert self.descriptor.to_string(messages.TestEnum.THREE) == 'three'
-
-    def test_serialize_to_string__none(self):
-        assert self.descriptor.to_string(None) is None
+    def test_find_value(self):
+        descriptor = TestEnum.DESCRIPTOR
+        assert descriptor.find_value('one') == TestEnum.ONE
+        assert descriptor.find_value('TWO') == TestEnum.TWO
 
 
-class AbstractDataDescriptorTest(unittest.TestCase):
-    def _test(self, descriptor, objectToParse, expected):
-        assert descriptor.parse_object(objectToParse) == expected
-        assert descriptor.parse_object(None) is None
-        assert descriptor.to_object(None) is None
-        assert descriptor.to_object(expected) == expected
-
-
-class TestListDescriptor(AbstractDataDescriptorTest):
-    descriptor = descriptors.list0(descriptors.int32)
-
+class TestListDescriptor(unittest.TestCase):
     def test(self):
-        self._test(self.descriptor, ['1', '2', None], [1, 2, None])
+        list0 = descriptors.list0(descriptors.string0)
+        assert list0.element is descriptors.string0
 
 
-class TestSetDescriptor(AbstractDataDescriptorTest):
-    descriptor = descriptors.set0(descriptors.int32)
-
+class TestSetDescriptor(unittest.TestCase):
     def test(self):
-        self._test(self.descriptor, {'1', '2', None}, {1, 2, None})
+        set0 = descriptors.set0(descriptors.int32)
+        assert set0.element is descriptors.int32
 
 
-class TestMapDescriptor(AbstractDataDescriptorTest):
-    descriptor = descriptors.map0(descriptors.int32, descriptors.int32)
-
+class TestMapDescriptor(unittest.TestCase):
     def test(self):
-        self._test(self.descriptor, {'1': '2', '3': None}, {1: 2, 3: None})
+        map0 = descriptors.map0(descriptors.string0, descriptors.int32)
+        assert map0.key is descriptors.string0
+        assert map0.value is descriptors.int32

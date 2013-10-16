@@ -58,7 +58,7 @@ class MessageDescriptor(DataDescriptor):
     def subtypes(self):
         if self._subtypes is None:
             self._subtypes = tuple(supplier() for supplier in self._subtype_suppliers)
-            self._subtype_map = {s.DESCRIPTOR.discriminator_value: s for s in self._subtypes}
+            self._subtype_map = {s.discriminator_value: s for s in self._subtypes}
 
         return self._subtypes
 

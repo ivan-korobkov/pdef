@@ -4,12 +4,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.pdef.test.messages.ComplexMessage;
+import io.pdef.test.messages.SimpleMessage;
 import io.pdef.test.messages.TestEnum;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MessageTest {
 	@Test
@@ -39,6 +41,25 @@ public class MessageTest {
 		Message msg = ComplexMessage.parseFromMap(map);
 		Message expected = createComplexMessage();
 		assertEquals(expected, msg);
+	}
+
+	@Test
+	public void testInitNullFields() throws Exception {
+		ComplexMessage message = new ComplexMessage();
+		List<Integer> list = message.getAList();
+		Set<Integer> set = message.getASet();
+		Map<Integer, Float> map = message.getAMap();
+		SimpleMessage simpleMessage = message.getAMessage();
+
+		assertNotNull(list);
+		assertNotNull(set);
+		assertNotNull(map);
+		assertNotNull(simpleMessage);
+
+		assertSame(list, message.getAList());
+		assertSame(set, message.getASet());
+		assertSame(map, message.getAMap());
+		assertSame(simpleMessage, message.getAMessage());
 	}
 
 	private ComplexMessage createComplexMessage() {

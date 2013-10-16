@@ -157,7 +157,7 @@ class JavaReference(object):
         element = ref(type0.element)
 
         name = 'java.util.List<%s>' % element
-        default = 'com.google.common.collect.ImmutableList.<%s>of()' % element
+        default = 'new java.util.ArrayList<%s>()' % element
         meta = 'io.pdef.descriptors.Descriptors.list(%s)' % element.descriptor
 
         return JavaReference(type0.type, name, default=default, meta=meta)
@@ -167,7 +167,7 @@ class JavaReference(object):
         element = ref(type0.element)
 
         name = 'java.util.Set<%s>' % element
-        default = 'com.google.common.collect.ImmutableSet.<%s>of()' % element
+        default = 'new java.util.HashSet<%s>()' % element
         meta = 'io.pdef.descriptors.Descriptors.set(%s)' % element.descriptor
 
         return JavaReference(type0.type, name, default=default, meta=meta)
@@ -178,7 +178,7 @@ class JavaReference(object):
         value = ref(type0.value)
 
         name = 'java.util.Map<%s, %s>' % (key, value)
-        default = 'com.google.common.collect.ImmutableMap.<%s, %s>of()' % (key, value)
+        default = 'new java.util.HashMap<%s, %s>()' % (key, value)
         meta = 'io.pdef.descriptors.Descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
 
         return JavaReference(type0.type, name, default=default, meta=meta)
@@ -216,6 +216,7 @@ class JavaReference(object):
         self.is_primitive = TypeEnum.is_primitive(type_enum)
         self.is_message = TypeEnum.is_message(type_enum)
         self.is_interface = TypeEnum.is_interface(type_enum)
+        self.is_collection = TypeEnum.is_collection(type_enum)
 
     def __str__(self):
         return self.name

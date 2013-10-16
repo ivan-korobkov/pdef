@@ -96,6 +96,7 @@ class TestRef(unittest.TestCase):
         ref = jreference(list0)
 
         assert ref.name == 'java.util.List<Integer>'
+        assert ref.default == 'new java.util.ArrayList<Integer>()'
         assert ref.descriptor == 'io.pdef.descriptors.Descriptors.list(io.pdef.descriptors.Descriptors.int32)'
 
     def test_set(self):
@@ -103,6 +104,7 @@ class TestRef(unittest.TestCase):
         ref = jreference(set0)
 
         assert ref.name == 'java.util.Set<Boolean>'
+        assert ref.default == 'new java.util.HashSet<Boolean>()'
         assert ref.descriptor == 'io.pdef.descriptors.Descriptors.set(io.pdef.descriptors.Descriptors.bool)'
 
     def test_map(self):
@@ -110,6 +112,7 @@ class TestRef(unittest.TestCase):
         ref = jreference(map0)
 
         assert ref.name == 'java.util.Map<String, Float>'
+        assert ref.default == 'new java.util.HashMap<String, Float>()'
         assert ref.descriptor == 'io.pdef.descriptors.Descriptors.map(io.pdef.descriptors.Descriptors.string, io.pdef.descriptors.Descriptors.float0)'
 
     def test_enum(self):

@@ -29,7 +29,11 @@ public class {{ name }} extends {{ base_or_root }} {
 {% for field in declared_fields %}
     // {{ field.name }}
     public {{ field.type.unboxed }} {{ field.get }}() {
+    {% if field.type.is_collection or field.type.is_message %}
+        return {{ field.name }} != null ? {{ field.name }} : ({{ field.name }} = {{ field.type.default }});
+    {% else %}
         return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
+    {% endif %}
     }
 
     public {{ name }} {{ field.set }}(final {{ field.type }} value) {

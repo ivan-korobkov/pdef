@@ -4,6 +4,7 @@ import io.pdef.Func;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -11,6 +12,7 @@ import java.lang.reflect.Proxy;
 public class InvocationProxy<T> implements InvocationHandler {
 	private final InterfaceDescriptor<T> descriptor;
 	private final Func<Invocation, InvocationResult> handler;
+	@Nullable
 	private final Invocation parent;
 
 	/** Creates a custom client. */
@@ -25,7 +27,7 @@ public class InvocationProxy<T> implements InvocationHandler {
 		}
 
 		InvocationProxy<T> invocationProxy = new InvocationProxy<T>(descriptor, invocationHandler,
-				Invocation.root());
+				null);
 		return invocationProxy.toProxy();
 	}
 
@@ -62,11 +64,15 @@ public class InvocationProxy<T> implements InvocationHandler {
 	}
 
 	private Invocation capture(final MethodDescriptor md, final Object[] args) {
-		return parent.next(md, args);
+		if (parent == null) {
+			return Invocation.root(md, args);
+		} else {
+			return parent.next(md, args);
+		}
 	}
 
 	private Object handle(final Invocation invocation) {
-		InvocationResult result = null;
+		InvocationResult result;
 		try {
 			result = handler.apply(invocation);
 		} catch (RuntimeException e) {

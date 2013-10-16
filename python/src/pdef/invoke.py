@@ -74,8 +74,9 @@ class Invocation(object):
         try:
             for inv in chain:
                 obj = inv.method.invoke(obj, **inv.args)
-        except exc_class, e:
+        except exc_class as e:
             # Catch the expected application exception.
+            # Python support dynamic exceptions.
             # It's valid to write 'except None, e' when no application exception.
             return InvocationResult.exception(e)
 

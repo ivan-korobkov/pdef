@@ -183,7 +183,7 @@ public class RestProtocol {
 		Collections.addAll(parts, partsArray);
 
 		// Parse the parts as method invocations.
-		Invocation invocation = Invocation.root();
+		Invocation invocation = null;
 		while (!parts.isEmpty()) {
 			String part = parts.removeFirst();
 
@@ -238,7 +238,11 @@ public class RestProtocol {
 			}
 
 			// Create a next invocation in a chain with the parsed arguments.
-			invocation = invocation.next(method, args.toArray());
+			if (invocation == null) {
+				invocation = Invocation.root(method, args.toArray());
+			} else {
+				invocation = invocation.next(method, args.toArray());
+			}
 
 			if (method.isRemote()) {
 				// It's the last method which returns a data type.

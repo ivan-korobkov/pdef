@@ -3,6 +3,7 @@ import unittest
 
 from pdef.invoke import *
 from pdef import descriptors
+from pdef_test.messages import SimpleMessage
 from pdef_test.interfaces import TestInterface, TestException, NextTestInterface
 
 
@@ -89,6 +90,28 @@ class TestInvocation(unittest.TestCase):
         self.assertRaises(TypeError, build, [1, 2], {'a': 1, 'b': 2})
         self.assertRaises(TypeError, build, None, {'a': 1, 'b': 2, 'c': 3})
         self.assertRaises(TypeError, build, None, {'c': 3})
+
+    def test_deep_copy_args(self):
+        method = descriptors.method('method', descriptors.void,
+            args=(descriptors.arg('arg0', descriptors.list0(SimpleMessage.DESCRIPTOR)),
+                  descriptors.arg('arg1', descriptors.set0(descriptors.int32))
+            ))
+
+        list0 = [SimpleMessage('hello'), SimpleMessage('world')]
+        set0 = {1, 2, 3}
+
+        invocation = Invocation(method, args=(list0, set0))
+        arg0 = invocation.args['arg0']
+        arg1 = invocation.args['arg1']
+
+        assert arg0 == list0
+        assert arg1 == set0
+
+        assert arg0 is not list0
+        assert arg1 is not set0
+
+        assert arg0[0] is not list0[0]
+        assert arg0[1] is not list0[1]
 
 
 class TestInvocationProxy(unittest.TestCase):

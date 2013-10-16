@@ -1,4 +1,5 @@
 # encoding: utf-8
+import copy
 from collections import deque
 
 
@@ -37,6 +38,7 @@ class Invocation(object):
         self.method = method
         self.parent = parent
         self.args = self._build_args(method, args, kwargs) if method else {}
+        self.args = copy.deepcopy(self.args)    # Make defensive copies.
 
         self.result = method.result if method else None
         self.exc = method.exc if method else (parent.exc if parent else None)

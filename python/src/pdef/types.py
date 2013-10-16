@@ -1,4 +1,5 @@
 # encoding: utf-8
+import copy
 import pdef.formats
 
 
@@ -55,7 +56,7 @@ class Message(object):
     def to_json(self, indent=None, **kwargs):
         '''Convert this message to a json string.'''
         return pdef.json.serialize(self, self.DESCRIPTOR, indent=indent)
-    
+
     def to_json_stream(self, fp, indent=None, **kwargs):
         '''Serialize this message as a json string to a file-like stream.'''
         return pdef.json.serialize_to_stream(self, self.DESCRIPTOR, fp, indent=indent, **kwargs)
@@ -74,6 +75,16 @@ class Message(object):
 
     def __str__(self):
         return unicode(self).encode('utf-8', errors='replace')
+
+    def __copy__(self):
+        msg = self.__class__()
+        msg.__dict__ = copy.copy(self.__dict__)
+        return msg
+
+    def __deepcopy__(self, memo=None):
+        msg = self.__class__()
+        msg.__dict__ = copy.deepcopy(self.__dict__, memo)
+        return msg
 
     def __unicode__(self):
         s = [u'<', self.__class__.__name__, u' ']

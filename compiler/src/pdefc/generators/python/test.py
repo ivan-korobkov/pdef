@@ -109,7 +109,7 @@ class TestPythonMessage(unittest.TestCase):
         msg = Message('Message', base=base, discriminator_value=type0)
         msg.create_field('field', NativeType.BOOL)
 
-        return PythonDefinition.create(msg, scope=pyreference)
+        return PythonDefinition.create(msg, ref=pyreference)
 
     def test_constructor(self):
         pymsg = self._fixture()
@@ -138,7 +138,7 @@ class TestPythonInterface(unittest.TestCase):
         iface.create_method('method0', NativeType.INT32, ('arg', NativeType.INT32))
         iface.create_method('method1', NativeType.STRING, ('name', NativeType.STRING))
 
-        return PythonDefinition.create(iface, scope=pyreference)
+        return PythonDefinition.create(iface, ref=pyreference)
 
     def test_constructor(self):
         pyiface = self._fixture()

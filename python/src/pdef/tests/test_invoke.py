@@ -56,7 +56,7 @@ class TestInvocation(unittest.TestCase):
         service = Service()
         result = invocation.invoke(service)
 
-        assert result.success
+        assert result.ok
         assert result.data == 3
         assert result.exc is None
 
@@ -70,7 +70,7 @@ class TestInvocation(unittest.TestCase):
         service = Service()
         result = invocation.invoke(service)
 
-        assert result.success is False
+        assert result.ok is False
         assert result.data is None
         assert result.exc == TestException('hello')
 
@@ -116,17 +116,17 @@ class TestInvocation(unittest.TestCase):
 
 class TestInvocationProxy(unittest.TestCase):
     def proxy(self):
-        return proxy(TestInterface, lambda invocation: InvocationResult.ok(invocation))
+        return proxy(TestInterface, lambda invocation: InvocationResult.from_data(invocation))
 
     def test_ok(self):
-        proxy = InvocationProxy(TestInterface.DESCRIPTOR, lambda inv: InvocationResult.ok(3))
+        proxy = InvocationProxy(TestInterface.DESCRIPTOR, lambda inv: InvocationResult.from_data(3))
         result = proxy.indexMethod(1, 2)
 
         assert result == 3
 
     def test_exc(self):
         exc = TestException('hello')
-        client = proxy(TestInterface, lambda inv: InvocationResult.exception(exc))
+        client = proxy(TestInterface, lambda inv: InvocationResult.from_exc(exc))
 
         try:
             client.indexMethod(1, 2)
@@ -137,7 +137,7 @@ class TestInvocationProxy(unittest.TestCase):
     def test_proxy_method(self):
         interface = TestInterface.DESCRIPTOR
         method = interface.find_method('indexMethod')
-        handler = lambda inv: InvocationResult.ok(None)
+        handler = lambda inv: InvocationResult.from_data(None)
 
         proxy = InvocationProxy(interface, handler)
         proxy_method = proxy.indexMethod
@@ -151,7 +151,7 @@ class TestInvocationProxy(unittest.TestCase):
         interface1 = NextTestInterface.DESCRIPTOR
         method0 = interface0.find_method('interfaceMethod')
         method1 = interface1.find_method('indexMethod')
-        handler = lambda inv: InvocationResult.ok(None)
+        handler = lambda inv: InvocationResult.from_data(None)
 
         proxy = InvocationProxy(interface0, handler)
         proxy_method = proxy.interfaceMethod(1, 2).indexMethod
@@ -162,7 +162,7 @@ class TestInvocationProxy(unittest.TestCase):
         assert proxy_method.invocation.method is method0
 
     def test_invocation_chain(self):
-        handler = lambda inv: InvocationResult.ok(inv)
+        handler = lambda inv: InvocationResult.from_data(inv)
         proxy = InvocationProxy(TestInterface.DESCRIPTOR, handler)
 
         invocation = proxy.interfaceMethod(1, 2).remoteMethod()

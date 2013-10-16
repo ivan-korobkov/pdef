@@ -118,10 +118,10 @@ class RestProtocol(object):
         result_class = self._result_class(datad, excd)
         result = result_class.parse_json(response.content)
 
-        if result.success:
+        if result.ok:
             # It's a successful result.
             # Return the data.
-            return pdef.invoke.InvocationResult.ok(result.data)
+            return pdef.invoke.InvocationResult.from_data(result.data)
 
         else:
             # It's an expected exception.
@@ -130,7 +130,7 @@ class RestProtocol(object):
                 # but the client does not support them.
                 raise RestException('Unsupported application exception')
 
-            return pdef.invoke.InvocationResult.exception(result.exc)
+            return pdef.invoke.InvocationResult.from_exc(result.exc)
 
     # Invocation parsing.
 
@@ -260,7 +260,7 @@ class RestProtocol(object):
     def serialize_invocation_result(self, invocation_result, datad, excd=None):
         '''Serialize an InvocationResult into a RestResponse.'''
         result_class = self._result_class(datad, excd)
-        result = result_class(success=invocation_result.success,
+        result = result_class(ok=invocation_result.ok,
                               data=invocation_result.data,
                               exc=invocation_result.exc)
 
@@ -270,14 +270,14 @@ class RestProtocol(object):
 
     def _result_class(self, datad, excd=None):
         '''Create a runtime rest result class with the given data and exception fields.'''
-        fields = [pdef.descriptors.field('success', pdef.descriptors.bool0),
+        fields = [pdef.descriptors.field('ok', pdef.descriptors.bool0),
                   pdef.descriptors.field('data', datad)]
         if excd:
             fields.append(pdef.descriptors.field('exc', excd))
 
         class RestResult(pdef.Message):
-            def __init__(self, success=False, data=None, exc=None):
-                self.success = success
+            def __init__(self, ok=False, data=None, exc=None):
+                self.ok = ok
                 self.data = data
                 self.exc = exc
             DESCRIPTOR = pdef.descriptors.message(lambda: RestResult, fields=fields)

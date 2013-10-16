@@ -16,7 +16,7 @@ from pdef_test.interfaces import TestInterface, TestException, NextTestInterface
 
 class TestRestProtocol(unittest.TestCase):
     def setUp(self):
-        handler = lambda inv: pdef.invoke.InvocationResult.ok(inv)
+        handler = lambda inv: pdef.invoke.InvocationResult.from_data(inv)
         self.proxy = pdef.proxy(TestInterface, handler)
         self.protocol = RestProtocol()
 
@@ -134,7 +134,7 @@ class TestRestProtocol(unittest.TestCase):
         msg = SimpleMessage(aString='hello', aBool=False, anInt16=127)
 
         result_class = self.protocol._result_class(SimpleMessage.DESCRIPTOR)
-        result = result_class(success=True, data=msg)
+        result = result_class(ok=True, data=msg)
         content = result.to_json()
 
         response = RestResponse(content=content, content_type=RestResponse.JSON_CONTENT_TYPE)
@@ -148,14 +148,14 @@ class TestRestProtocol(unittest.TestCase):
         exc = TestException(text='Application exception!')
 
         result_class = self.protocol._result_class(descriptors.string0, TestException.DESCRIPTOR)
-        result = result_class(success=False, exc=exc)
+        result = result_class(ok=False, exc=exc)
         content = result.to_json()
 
         response = RestResponse(content=content, content_type=RestResponse.JSON_CONTENT_TYPE)
         inv_result = self.protocol.parse_invocation_result(response, descriptors.string0,
                                                            TestException.DESCRIPTOR)
 
-        assert inv_result.success is False
+        assert inv_result.ok is False
         assert inv_result.data is None
         assert inv_result.exc == exc
 
@@ -266,8 +266,8 @@ class TestRestProtocol(unittest.TestCase):
     def test_parse_from_json__string(self):
         descriptor = descriptors.string0
 
-        value = self.protocol._parse_from_json(descriptor, u'привет, мир?')
-        assert value == u'привет, мир?'
+        value = self.protocol._parse_from_json(descriptor, u'привет, мир!')
+        assert value == u'привет, мир!'
 
     def test_parse_from_json__message(self):
         descriptor = SimpleMessage.DESCRIPTOR
@@ -282,11 +282,11 @@ class TestRestProtocol(unittest.TestCase):
 
     def test_serialize_invocation_result(self):
         msg = SimpleMessage(aString=u'привет', aBool=False, anInt16=0)
-        inv_result = pdef.invoke.InvocationResult.ok(msg)
+        inv_result = pdef.invoke.InvocationResult.from_data(msg)
         response = self.protocol.serialize_invocation_result(inv_result, SimpleMessage.DESCRIPTOR)
 
         result_class = self.protocol._result_class(SimpleMessage.DESCRIPTOR)
-        content = result_class(success=True, data=msg).to_json(indent=True)
+        content = result_class(ok=True, data=msg).to_json(indent=True)
 
         assert response.status == httplib.OK
         assert response.content_type == RestResponse.JSON_CONTENT_TYPE
@@ -294,12 +294,12 @@ class TestRestProtocol(unittest.TestCase):
 
     def test_serialize_invocation_result_exc(self):
         exc = TestException(u'Привет, мир')
-        inv_result = pdef.invoke.InvocationResult.exception(exc)
+        inv_result = pdef.invoke.InvocationResult.from_exc(exc)
         response = self.protocol.serialize_invocation_result(inv_result, descriptors.string0,
                                                              TestException.DESCRIPTOR)
 
         result_class = self.protocol._result_class(descriptors.string0, TestException.DESCRIPTOR)
-        content = result_class(success=False, exc=exc).to_json(indent=True)
+        content = result_class(ok=False, exc=exc).to_json(indent=True)
 
         assert response.status == httplib.OK
         assert response.content_type == RestResponse.JSON_CONTENT_TYPE
@@ -319,7 +319,7 @@ class TestRestClient(unittest.TestCase):
 
 class TestRestServer(unittest.TestCase):
     def setUp(self):
-        invoker = lambda inv: pdef.invoke.InvocationResult.ok(inv)
+        invoker = lambda inv: pdef.invoke.InvocationResult.from_data(inv)
         self.server = RestServer(TestInterface.DESCRIPTOR, invoker)
 
     def get_request(self, path, query=None, post=None):
@@ -331,12 +331,12 @@ class TestRestServer(unittest.TestCase):
     def test_handle(self):
         request = RestRequest.get(path='/', query={'a': '1', 'b': '2'})
         server = RestServer(TestInterface.DESCRIPTOR,
-                            lambda invocation: pdef.invoke.InvocationResult.ok(3))
+                            lambda invocation: pdef.invoke.InvocationResult.from_data(3))
         response = server.handle(request)
 
         assert response.status == httplib.OK
         assert response.content_type == RestResponse.JSON_CONTENT_TYPE
-        assert json.loads(response.content) == {'success': True, 'data': 3}
+        assert json.loads(response.content) == {'ok': True, 'data': 3}
 
     def test_handle__unhandled_exception(self):
         def invoker(inv):

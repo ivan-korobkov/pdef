@@ -78,9 +78,9 @@ class Invocation(object):
             # Catch the expected application exception.
             # Python support dynamic exceptions.
             # It's valid to write 'except None, e' when no application exception.
-            return InvocationResult.exception(e)
+            return InvocationResult.from_exc(e)
 
-        return InvocationResult.ok(obj)
+        return InvocationResult.from_data(obj)
 
     @staticmethod
     def _build_args(method, args=None, kwargs=None):
@@ -123,15 +123,15 @@ class Invocation(object):
 class InvocationResult(object):
     '''InvocationResult combines the returned value and the exception.'''
     @classmethod
-    def ok(cls, data):
+    def from_data(cls, data):
         return InvocationResult(True, data=data)
 
     @classmethod
-    def exception(cls, exc):
+    def from_exc(cls, exc):
         return InvocationResult(False, exc=exc)
 
-    def __init__(self, success, data=None, exc=None):
-        self.success = success
+    def __init__(self, ok, data=None, exc=None):
+        self.ok = ok
         self.data = data
         self.exc = exc
 
@@ -178,7 +178,7 @@ class _ProxyMethod(object):
 
         # The method result is a data type or void.
         result = self.handler(invocation)
-        if result.success:
+        if result.ok:
             return result.data
 
         raise result.exc

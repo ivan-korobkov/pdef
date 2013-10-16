@@ -329,7 +329,7 @@ class TestRestServer(unittest.TestCase):
         return RestRequest.post(path, query=query, post=post)
 
     def test_handle(self):
-        request = RestRequest(path='/', query={'a': '1', 'b': '2'})
+        request = RestRequest.get(path='/', query={'a': '1', 'b': '2'})
         server = RestServer(TestInterface.DESCRIPTOR,
                             lambda invocation: pdef.invoke.InvocationResult.ok(3))
         response = server.handle(request)
@@ -337,6 +337,19 @@ class TestRestServer(unittest.TestCase):
         assert response.status == httplib.OK
         assert response.content_type == RestResponse.JSON_CONTENT_TYPE
         assert json.loads(response.content) == {'success': True, 'data': 3}
+
+    def test_handle__unhandled_exception(self):
+        def invoker(inv):
+            raise ValueError('Internal server error')
+
+        request = RestRequest.get(path='/', query={'a': '1', 'b': '2'})
+        server = RestServer(TestInterface.DESCRIPTOR, invoker)
+
+        try:
+            server.handle(request)
+            self.fail()
+        except ValueError as e:
+            assert e.message == 'Internal server error'
 
     def test_error_response(self):
         e = RestException(u'Метод не найден', httplib.NOT_FOUND)

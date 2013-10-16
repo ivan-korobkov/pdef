@@ -8,53 +8,47 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class MethodDescriptorTest {
-	private final InterfaceDescriptor<TestInterface> iface = TestInterface.DESCRIPTOR;
-
 	@Test
 	public void testGetName() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = iface.findMethod("indexMethod");
+		MethodDescriptor<TestInterface, ?> method = TestInterface.INDEXMETHOD_METHOD;
 		assertNotNull(method);
 		assertEquals("indexMethod", method.getName());
 	}
 
 	@Test
 	public void testGetExc() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = iface.findMethod("indexMethod");
+		MethodDescriptor<TestInterface, ?> method = TestInterface.INDEXMETHOD_METHOD;
 		assertNotNull(method);
-		assertTrue(method.getExc() == iface.getExc());
+		assertTrue(method.getExc() == TestException.DESCRIPTOR);
 	}
 
 	@Test
-	public void testIsIndex() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = iface.findMethod("indexMethod");
-		assertNotNull(method);
-		assertTrue(method.isIndex());
-	}
+	public void testIndexPostRemote() throws Exception {
+		MethodDescriptor<TestInterface, ?> index = TestInterface.INDEXMETHOD_METHOD;
+		MethodDescriptor<TestInterface, ?> remote = TestInterface.REMOTEMETHOD_METHOD;
+		MethodDescriptor<TestInterface, ?> post = TestInterface.POSTMETHOD_METHOD;
+		MethodDescriptor<TestInterface, ?> iface = TestInterface.INTERFACEMETHOD_METHOD;
 
-	@Test
-	public void testIsPost() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = iface.findMethod("indexMethod");
-		assertNotNull(method);
-		assertFalse(method.isPost());
-	}
+		assertTrue(index.isIndex());
+		assertTrue(index.isRemote());
+		assertFalse(index.isPost());
 
-	@Test
-	public void testIsRemote() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = iface.findMethod("indexMethod");
-		assertNotNull(method);
-		assertTrue(method.isRemote());
-	}
+		assertFalse(remote.isIndex());
+		assertTrue(remote.isRemote());
+		assertFalse(remote.isPost());
 
-	@Test
-	public void testIsRemote_false() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = iface.findMethod("interfaceMethod");
-		assertNotNull(method);
-		assertFalse(method.isRemote());
+		assertFalse(post.isIndex());
+		assertTrue(post.isRemote());
+		assertTrue(post.isPost());
+
+		assertFalse(iface.isIndex());
+		assertFalse(iface.isRemote());
+		assertFalse(iface.isPost());
 	}
 
 	@Test
 	public void testInvoke() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = iface.findMethod("indexMethod");
+		MethodDescriptor<TestInterface, ?> method = TestInterface.INDEXMETHOD_METHOD;
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
@@ -64,7 +58,7 @@ public class MethodDescriptorTest {
 
 	@Test(expected = TestException.class)
 	public void testInvoke_exception() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = iface.findMethod("excMethod");
+		MethodDescriptor<TestInterface, ?> method = TestInterface.EXCMETHOD_METHOD;
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);

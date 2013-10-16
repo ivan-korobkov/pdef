@@ -225,7 +225,7 @@ NATIVE_TYPES = {
     TypeEnum.BOOL: JavaReference(TypeEnum.BOOL, 'Boolean', 'boolean', default='false',
             meta='io.pdef.descriptors.Descriptors.bool'),
 
-    TypeEnum.INT16: JavaReference(TypeEnum.INT16, 'Short', default='(short) 0',
+    TypeEnum.INT16: JavaReference(TypeEnum.INT16, 'Short', 'short', default='(short) 0',
             meta='io.pdef.descriptors.Descriptors.int16'),
 
     TypeEnum.INT32: JavaReference(TypeEnum.INT32, 'Integer', 'int', default='0',

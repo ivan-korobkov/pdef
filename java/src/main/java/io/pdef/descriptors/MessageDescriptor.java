@@ -19,7 +19,7 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 	private final Enum<?> discriminatorValue;
 	private final FieldDescriptor<? super M, ?> discriminator;
 	private final List<Provider<MessageDescriptor<? extends M>>> subtypeProviders;
-	private List<MessageDescriptor<? extends M>> subtypes;
+	private Set<MessageDescriptor<? extends M>> subtypes;
 
 	private final boolean form;
 
@@ -68,18 +68,18 @@ public class MessageDescriptor<M extends Message> extends DataDescriptor<M> {
 	}
 
 	/** Returns a list of subtype descriptors. */
-	public List<MessageDescriptor<? extends M>> getSubtypes() {
+	public Set<MessageDescriptor<? extends M>> getSubtypes() {
 		if (subtypes != null) {
 			return subtypes;
 		}
 
-		List<MessageDescriptor<? extends M>> list = new ArrayList<MessageDescriptor<? extends M>>();
+		Set<MessageDescriptor<? extends M>> set = new HashSet<MessageDescriptor<? extends M>>();
 		for (Provider<MessageDescriptor<? extends M>> provider : subtypeProviders) {
 			MessageDescriptor<? extends M> subtype = provider.get();
-			list.add(subtype);
+			set.add(subtype);
 		}
 
-		return (subtypes = Collections.unmodifiableList(list));
+		return (subtypes = Collections.unmodifiableSet(set));
 	}
 
 	/** Returns an immutable list of declared fields. */

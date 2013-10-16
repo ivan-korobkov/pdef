@@ -46,27 +46,30 @@ class TestMessageDescriptor(unittest.TestCase):
         msubtype = MultiLevelSubtype.DESCRIPTOR
         discriminator = base.find_field('type')
 
-        assert base.discriminator is discriminator
-        assert base.discriminator_value is None
-        assert set(base.subtypes) == {subtype, subtype2, msubtype}
-
-        assert base.find_subtype(PolymorphicType.SUBTYPE) is subtype
-        assert base.find_subtype(PolymorphicType.SUBTYPE2) is subtype2
-        assert base.find_subtype(PolymorphicType.MULTILEVEL_SUBTYPE) is msubtype
-
-        assert subtype.discriminator is discriminator
-        assert subtype2.discriminator is discriminator
-        assert msubtype.discriminator is discriminator
-
+        assert base.base is None
         assert subtype.base is base
         assert subtype2.base is base
         assert msubtype.base is subtype
 
+        assert base.discriminator is discriminator
+        assert subtype.discriminator is discriminator
+        assert subtype2.discriminator is discriminator
+        assert msubtype.discriminator is discriminator
+
+        assert base.discriminator_value is None
         assert subtype.discriminator_value is PolymorphicType.SUBTYPE
         assert subtype2.discriminator_value is PolymorphicType.SUBTYPE2
         assert msubtype.discriminator_value is PolymorphicType.MULTILEVEL_SUBTYPE
 
+        assert set(base.subtypes) == {subtype, subtype2, msubtype}
         assert set(subtype.subtypes) == {msubtype}
+        assert not subtype2.subtypes
+        assert not msubtype.subtypes
+
+        assert base.find_subtype(None) is base
+        assert base.find_subtype(PolymorphicType.SUBTYPE) is subtype
+        assert base.find_subtype(PolymorphicType.SUBTYPE2) is subtype2
+        assert base.find_subtype(PolymorphicType.MULTILEVEL_SUBTYPE) is msubtype
 
 
 class TestFieldDescriptor(unittest.TestCase):

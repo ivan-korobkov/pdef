@@ -145,7 +145,7 @@ class RestProtocol(object):
         query = request.query
         post = request.post
 
-        invocation = pdef.invoke.Invocation.root()
+        invocation = None
         while parts:
             part = parts.pop(0)
 
@@ -165,7 +165,7 @@ class RestProtocol(object):
                                     % method.name, httplib.METHOD_NOT_ALLOWED)
 
             # Parse method arguments.
-            args = {}
+            kwargs = {}
             for argd in method.args:
                 if method.is_post:
                     # Parse a post param.
@@ -184,11 +184,14 @@ class RestProtocol(object):
 
                     arg = self._parse_path_argument(argd, parts.pop(0))
 
-                args[argd.name] = arg
+                kwargs[argd.name] = arg
 
             # Create a next invocation in a chain with the parsed arguments.
-            invocation = invocation.next(method, **args)
-
+            if invocation is None:
+                invocation = pdef.invoke.Invocation.root(method, **kwargs)
+            else:
+                invocation = invocation.next(method, **kwargs)
+            
             if method.is_remote:
                 # It's the last method which returns a data type.
                 # Stop parsing.

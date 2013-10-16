@@ -3,10 +3,13 @@ from collections import deque
 
 
 def proxy(interface, invocation_handler):
-    '''Create a interface proxy using a callable invocation handler.
+    '''Create a interface proxy.
 
-    @param interface:   Class with a DESCRIPTOR.
-    @param invocation_handler:     Callable(Invocation) => InvocationResult.
+    The proxy captures method calls into chained invocations, and passes them
+    to the handler on remote methods.
+
+    @param interface:               Interface with a class DESCRIPTOR field.
+    @param invocation_handler:      callable(Invocation): InvocationResult.
     '''
     descriptor = interface.DESCRIPTOR
     return InvocationProxy(descriptor, invocation_handler)
@@ -21,9 +24,8 @@ def invoker(service_or_provider):
 class Invocation(object):
     '''Immutable chained method invocation.'''
     @classmethod
-    def root(cls):
-        '''Create an empty root invocation.'''
-        return Invocation(None, None, None)
+    def root(cls, method, *args, **kwargs):
+        return Invocation(method, args=args, kwargs=kwargs)
 
     def __init__(self, method, args=None, kwargs=None, parent=None):
         '''Create an rpc invocation.
@@ -39,28 +41,31 @@ class Invocation(object):
         self.result = method.result if method else None
         self.exc = method.exc if method else (parent.exc if parent else None)
 
-        self.is_root = method is None
+    def __repr__(self):
+        return '<Invocation %r args=%r>' % (self.method.name, self.args)
 
     @property
     def is_remote(self):
-        return self.method.is_remote if self.method else False
+        return self.method.is_remote
 
     def next(self, method, *args, **kwargs):
         '''Create a child invocation.'''
         if self.method and self.method.is_remote:
-            raise TypeError('Cannot create next invocation for a remote method invocation: %s'
-                            % self)
-        return Invocation(method, parent=self, args=args, kwargs=kwargs)
+            raise ValueError('Cannot create next invocation for a remote method invocation: %s'
+                             % self)
+        return Invocation(method, args=args, kwargs=kwargs, parent=self)
 
     def to_chain(self):
         '''Return a list of invocations.'''
-        chain = [] if not self.parent else self.parent.to_chain()
-        if not self.is_root:
-            chain.append(self)
+        if not self.parent:
+            return [self]
+
+        chain = self.parent.to_chain()
+        chain.append(self)
         return chain
 
     def invoke(self, obj):
-        '''Invoke this invocation chain on an object.'''
+        '''Invoke this invocation chain on an object and return InvocationResult.'''
         chain = self.to_chain()
         exc_class = self.exc.pyclass if self.exc else None
 
@@ -73,9 +78,6 @@ class Invocation(object):
             return InvocationResult.exception(e)
 
         return InvocationResult.ok(obj)
-
-    def __repr__(self):
-        return '<Invocation %r args=%r>' % (self.method.name, self.args)
 
     @staticmethod
     def _build_args(method, args=None, kwargs=None):
@@ -94,20 +96,19 @@ class Invocation(object):
 
         # Consume all positional arguments.
         for value in args:
-            arg = method_args.popleft()
-            params[arg.name] = value
-
+            argd = method_args.popleft()
+            params[argd.name] = value
 
         # Add keyword arguments using the remaining method args.
         consumed_kwargs = {}
-        for arg in method_args:
-            if arg.name not in kwargs:
-                params[arg.name] = None
+        for argd in method_args:
+            if argd.name not in kwargs:
+                params[argd.name] = None
                 continue
 
-            value = kwargs.get(arg.name)
-            params[arg.name] = value
-            consumed_kwargs[arg.name] = value
+            value = kwargs.get(argd.name)
+            params[argd.name] = value
+            consumed_kwargs[argd.name] = value
 
         # Check that all kwargs have been consumed.
         if consumed_kwargs.keys() != kwargs.keys():
@@ -140,10 +141,10 @@ class InvocationProxy(object):
         self._invocation = invocation
 
     def __repr__(self):
-        return '<InvocationProxy %s>' % self._interface
+        return '<InvocationProxy %s>' % self._descriptor
 
     def __getattr__(self, name):
-        '''Get a pdef method by name and return a callable which proxies its calls.'''
+        '''Return a proxy method.'''
         method = self._descriptor.find_method(name)
         if not method:
             raise AttributeError('Method not found %r' % name)
@@ -181,7 +182,7 @@ class _ProxyMethod(object):
 
 
 class Invoker(object):
-    '''Executes an invocation and returns InvocationResult.'''
+    '''Invoker applies invocations to a service and returns InvocationResult.'''
     def __init__(self, provider):
         self.provider = provider
 

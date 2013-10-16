@@ -95,15 +95,12 @@ public class RestIntegrationTest {
 	}
 
 	private TestInterface client() {
-		return RestClient.builder()
-				.setUrl(address)
-				.buildProxy(TestInterface.class);
+		return RestClient.create(TestInterface.class, address);
 	}
 
 	public static class TestServlet extends HttpServlet {
-		private final HttpServlet delegate = RestServer.builder(TestInterface.class)
-				.setService(new TestService())
-				.buildServlet();
+		private final HttpServlet delegate = new RestServlet(
+				RestServer.create(TestInterface.class, new TestService()));
 
 		@Override
 		protected void service(final HttpServletRequest req, final HttpServletResponse resp)

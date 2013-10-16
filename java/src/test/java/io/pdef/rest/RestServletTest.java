@@ -1,7 +1,6 @@
 package io.pdef.rest;
 
 import com.google.common.collect.ImmutableMap;
-import io.pdef.Func;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -12,14 +11,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.net.HttpURLConnection;
 
-public class HttpRestServletTest {
-	@Mock Func<RestRequest, RestResponse> handler;
-	HttpRestServlet server;
+public class RestServletTest {
+	@Mock RestHandler handler;
+	RestServlet server;
 
 	@Before
 	public void setUp() throws Exception {
 		initMocks(this);
-		server = new HttpRestServlet(handler);
+		server = new RestServlet(handler);
 	}
 
 	@Test

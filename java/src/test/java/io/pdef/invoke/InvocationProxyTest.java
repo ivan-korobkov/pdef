@@ -1,6 +1,5 @@
 package io.pdef.invoke;
 
-import io.pdef.Func;
 import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
@@ -18,7 +17,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.util.List;
 
 public class InvocationProxyTest {
-	@Mock Func<Invocation, InvocationResult> handler;
+	@Mock Invoker invoker;
 
 	@Before
 	public void setUp() throws Exception {
@@ -28,7 +27,7 @@ public class InvocationProxyTest {
 	@Test
 	public void testInvoke_handle() throws Throwable {
 		TestInterface iface = createProxy();
-		when(handler.apply(any(Invocation.class))).thenReturn(InvocationResult.ok(3));
+		when(invoker.invoke(any(Invocation.class))).thenReturn(InvocationResult.ok(3));
 
 		Object result = iface.indexMethod(1, 2);
 		assertEquals(3, result);
@@ -37,7 +36,7 @@ public class InvocationProxyTest {
 	@Test(expected = TestException.class)
 	public void testInvoke_handleExc() throws Exception {
 		TestInterface iface = createProxy();
-		when(handler.apply(any(Invocation.class)))
+		when(invoker.invoke(any(Invocation.class)))
 				.thenReturn(InvocationResult.exc(new TestException()));
 
 		iface.excMethod();
@@ -47,10 +46,10 @@ public class InvocationProxyTest {
 	public void testInvoke_capture() throws Exception {
 		TestInterface iface = createProxy();
 		ArgumentCaptor<Invocation> captor = ArgumentCaptor.forClass(Invocation.class);
-		when(handler.apply(any(Invocation.class))).thenReturn(InvocationResult.ok(null));
+		when(invoker.invoke(any(Invocation.class))).thenReturn(InvocationResult.ok(null));
 
 		iface.indexMethod(1, 2);
-		verify(handler).apply(captor.capture());
+		verify(invoker).invoke(captor.capture());
 
 		Invocation invocation = captor.getValue();
 		MethodDescriptor method = getIndexMethod();
@@ -62,10 +61,10 @@ public class InvocationProxyTest {
 	public void testInvoke_captureChain() throws Exception {
 		TestInterface iface = createProxy();
 		ArgumentCaptor<Invocation> captor = ArgumentCaptor.forClass(Invocation.class);
-		when(handler.apply(any(Invocation.class))).thenReturn(InvocationResult.ok(null));
+		when(invoker.invoke(any(Invocation.class))).thenReturn(InvocationResult.ok(null));
 
 		iface.interfaceMethod(1, 2).stringMethod("hello");
-		verify(handler).apply(captor.capture());
+		verify(invoker).invoke(captor.capture());
 
 		List<Invocation> chain = captor.getValue().toChain();
 		assertEquals(2, chain.size());
@@ -77,7 +76,7 @@ public class InvocationProxyTest {
 	}
 
 	private TestInterface createProxy() {
-		return InvocationProxy.create(TestInterface.class, handler);
+		return InvocationProxy.create(TestInterface.class, invoker);
 	}
 
 	private MethodDescriptor getIndexMethod() {

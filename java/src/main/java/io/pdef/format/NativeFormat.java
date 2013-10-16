@@ -29,7 +29,7 @@ public class NativeFormat {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected <T> Object doSerialize(final T object, final DataDescriptor<T> descriptor) throws Exception {
+	private <T> Object doSerialize(final T object, final DataDescriptor<T> descriptor) throws Exception {
 		if (object == null) {
 			return null;
 		}
@@ -114,7 +114,7 @@ public class NativeFormat {
 		return result;
 	}
 
-	protected <E extends Enum<E>> E serializeEnum(final E value) {
+	private <E extends Enum<E>> E serializeEnum(final E value) {
 		return value;
 	}
 
@@ -164,7 +164,7 @@ public class NativeFormat {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected <T> T doParse(final DataDescriptor<T> descriptor, final Object input) throws Exception {
+	private <T> T doParse(final DataDescriptor<T> descriptor, final Object input) throws Exception {
 		if (input == null) {
 			return null;
 		}

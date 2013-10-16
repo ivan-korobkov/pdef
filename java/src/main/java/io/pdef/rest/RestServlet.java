@@ -1,7 +1,5 @@
 package io.pdef.rest;
 
-import io.pdef.Func;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -10,12 +8,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-class HttpRestServlet extends HttpServlet {
-	private final Func<RestRequest, RestResponse> server;
+public final class RestServlet extends HttpServlet {
+	private final RestHandler handler;
 
-	HttpRestServlet(final Func<RestRequest, RestResponse> server) {
-		if (server == null) throw new NullPointerException("server");
-		this.server = server;
+	public RestServlet(final RestHandler handler) {
+		if (handler == null) throw new NullPointerException("handler");
+		this.handler = handler;
 	}
 
 	@Override
@@ -38,7 +36,7 @@ class HttpRestServlet extends HttpServlet {
 		RestRequest req = parseRequest(request);
 		RestResponse resp;
 		try {
-			resp = server.apply(req);
+			resp = handler.handle(req);
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {

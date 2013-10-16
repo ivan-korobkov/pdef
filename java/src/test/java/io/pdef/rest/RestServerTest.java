@@ -1,10 +1,10 @@
 package io.pdef.rest;
 
 import com.google.common.collect.ImmutableMap;
-import io.pdef.Func;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
+import io.pdef.invoke.Invoker;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import static org.junit.Assert.*;
@@ -15,10 +15,10 @@ import java.net.HttpURLConnection;
 public class RestServerTest {
 	@Test
 	public void testHandle() throws Exception {
-		RestServer<TestInterface> server = new RestServer<TestInterface>(TestInterface.class,
-				new Func<Invocation, InvocationResult>() {
+		RestServer<TestInterface> server = RestServer.create(TestInterface.class,
+				new Invoker() {
 					@Override
-					public InvocationResult apply(final Invocation invocation) {
+					public InvocationResult invoke(final Invocation invocation) {
 						return InvocationResult.ok(3);
 					}
 				});
@@ -31,7 +31,7 @@ public class RestServerTest {
 				.setData(3)
 				.serializeToJson(true);
 
-		RestResponse response = server.apply(request);
+		RestResponse response = server.handle(request);
 		assertNotNull(response);
 		assertTrue(response.hasOkStatus());
 		assertTrue(response.hasJsonContentType());
@@ -41,10 +41,10 @@ public class RestServerTest {
 	@Test
 	public void testHandle_exc() throws Exception {
 		final TestException exc = new TestException().setText("Hello, world");
-		RestServer<TestInterface> server = new RestServer<TestInterface>(TestInterface.class,
-				new Func<Invocation, InvocationResult>() {
+		RestServer<TestInterface> server = RestServer.create(TestInterface.class,
+				new Invoker() {
 					@Override
-					public InvocationResult apply(final Invocation invocation) {
+					public InvocationResult invoke(final Invocation invocation) {
 						return InvocationResult.exc(exc);
 					}
 				});
@@ -58,7 +58,7 @@ public class RestServerTest {
 				.setExc(exc)
 				.serializeToJson();
 
-		RestResponse response = server.apply(request);
+		RestResponse response = server.handle(request);
 		assertNotNull(response);
 		assertTrue(response.hasOkStatus());
 		assertTrue(response.hasJsonContentType());
@@ -67,16 +67,16 @@ public class RestServerTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testHandle_restError() throws Exception {
-		RestServer<TestInterface> server = new RestServer<TestInterface>(TestInterface.class,
-				new Func<Invocation, InvocationResult>() {
+		RestServer<TestInterface> server = RestServer.create(TestInterface.class,
+				new Invoker() {
 					@Override
-					public InvocationResult apply(final Invocation invocation) {
+					public InvocationResult invoke(final Invocation invocation) {
 						throw new IllegalArgumentException();
 					}
 				});
 
 		RestRequest request = new RestRequest().setPath("/");
-		server.apply(request);
+		server.handle(request);
 	}
 
 	// errorResponse.
@@ -84,10 +84,10 @@ public class RestServerTest {
 	@Test
 	public void testErrorResponse() throws Exception {
 		RestException exc = RestException.serviceUnavailable("Test service unavailable");
-		RestResponse response = new RestServer<TestInterface>(TestInterface.class,
-				new Func<Invocation, InvocationResult>() {
+		RestResponse response = RestServer.create(TestInterface.class,
+				new Invoker() {
 					@Override
-					public InvocationResult apply(final Invocation invocation) {
+					public InvocationResult invoke(final Invocation invocation) {
 						return null;
 					}
 				})

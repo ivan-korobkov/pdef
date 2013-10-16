@@ -12,7 +12,7 @@ import java.io.*;
 import java.util.*;
 
 /** JsonFormat parses and serializes Pdef data types from/to JSON. */
-public class JsonFormat implements Format {
+public class JsonFormat {
 	private static final JsonFactory FACTORY = new JsonFactory()
 			.enable(JsonParser.Feature.ALLOW_COMMENTS)
 			.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);

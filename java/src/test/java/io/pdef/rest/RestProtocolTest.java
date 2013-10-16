@@ -4,13 +4,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Atomics;
-import io.pdef.Func;
 import io.pdef.descriptors.ArgumentDescriptor;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationProxy;
 import io.pdef.invoke.InvocationResult;
+import io.pdef.invoke.Invoker;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import io.pdef.test.messages.SimpleForm;
@@ -434,16 +434,16 @@ public class RestProtocolTest {
 	}
 
 	private TestInterface proxy(final AtomicReference<Invocation> ref) {
-		return proxy(new Func<Invocation, InvocationResult>() {
+		return proxy(new Invoker() {
 			@Override
-			public InvocationResult apply(final Invocation invocation) {
+			public InvocationResult invoke(final Invocation invocation) {
 				ref.set(invocation);
 				return InvocationResult.ok(null);
 			}
 		});
 	}
 
-	private TestInterface proxy(final Func<Invocation, InvocationResult> handler) {
+	private TestInterface proxy(final Invoker handler) {
 		return InvocationProxy.create(TestInterface.class, handler);
 	}
 }

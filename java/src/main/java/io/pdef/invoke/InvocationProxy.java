@@ -1,6 +1,5 @@
 package io.pdef.invoke;
 
-import io.pdef.Func;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
 
@@ -11,28 +10,25 @@ import java.lang.reflect.Proxy;
 
 public class InvocationProxy<T> implements InvocationHandler {
 	private final InterfaceDescriptor<T> descriptor;
-	private final Func<Invocation, InvocationResult> handler;
+	private final Invoker handler;
 	@Nullable
 	private final Invocation parent;
 
 	/** Creates a custom client. */
-	public static <T> T create(final Class<T> cls,
-			final Func<Invocation, InvocationResult> invocationHandler) {
+	public static <T> T create(final Class<T> cls, final Invoker invoker) {
 		if (cls == null) throw new NullPointerException("cls");
-		if (invocationHandler == null) throw new NullPointerException("invocationHandler");
+		if (invoker == null) throw new NullPointerException("invocationHandler");
 
 		InterfaceDescriptor<T> descriptor = InterfaceDescriptor.findDescriptor(cls);
 		if (descriptor == null) {
 			throw new IllegalArgumentException("Cannot find an interface descriptor in " + cls);
 		}
 
-		InvocationProxy<T> invocationProxy = new InvocationProxy<T>(descriptor, invocationHandler,
-				null);
+		InvocationProxy<T> invocationProxy = new InvocationProxy<T>(descriptor, invoker, null);
 		return invocationProxy.toProxy();
 	}
 
-	private InvocationProxy(final InterfaceDescriptor<T> descriptor,
-			final Func<Invocation, InvocationResult> handler,
+	private InvocationProxy(final InterfaceDescriptor<T> descriptor, final Invoker handler,
 			final Invocation parent) {
 		this.descriptor = descriptor;
 		this.handler = handler;
@@ -74,7 +70,7 @@ public class InvocationProxy<T> implements InvocationHandler {
 	private Object handle(final Invocation invocation) {
 		InvocationResult result;
 		try {
-			result = handler.apply(invocation);
+			result = handler.invoke(invocation);
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {

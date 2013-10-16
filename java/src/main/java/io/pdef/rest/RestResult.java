@@ -53,8 +53,8 @@ public class RestResult<T, E> extends AbstractMessage {
 	}
 
 	public static <T, E> MessageDescriptor<RestResult<T, E>> runtimeDescriptor(
-			final DataDescriptor<T> dataDescriptor, final DataDescriptor<E> excDescriptor) {
-		if (dataDescriptor == null) throw new NullPointerException("dataDescriptor");
+			final DataDescriptor<T> datad, final DataDescriptor<E> excd) {
+		if (datad == null) throw new NullPointerException("dataDescriptor");
 
 		@SuppressWarnings("unchecked")
 		Class<RestResult<T, E>> cls = (Class<RestResult<T, E>>) (Class<?>) RestResult.class;
@@ -78,14 +78,14 @@ public class RestResult<T, E> extends AbstractMessage {
 						.build())
 				.addField(FieldDescriptor.<RestResult<T, E>, T>builder()
 						.setName("data")
-						.setType(dataDescriptor)
+						.setType(datad)
 						.setReflexAccessor(cls)
 						.build());
 
-		if (excDescriptor != null) {
+		if (excd != null) {
 			builder.addField(FieldDescriptor.<RestResult<T, E>, E>builder()
 					.setName("exc")
-					.setType(excDescriptor)
+					.setType(excd)
 					.setReflexAccessor(cls)
 					.build());
 		}

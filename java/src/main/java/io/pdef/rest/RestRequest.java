@@ -27,13 +27,9 @@ public class RestRequest {
 		return new RestRequest().setMethod(POST);
 	}
 
-
-
-	@Override public String toString() {
-	return "RestRequest{" +
-			"method='" + method + '\'' +
-			", path='" + path + '\'' +
-			'}';
+	@Override
+	public String toString() {
+		return "RestRequest{" + method + ", path='" + path + '\'' + '}';
 	}
 
 	public boolean isPost() {

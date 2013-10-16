@@ -137,7 +137,7 @@ class TestRestProtocol(unittest.TestCase):
         result = result_class(success=True, data=msg)
         content = result.to_json()
 
-        response = RestResponse(content=content, content_type=JSON_CONTENT_TYPE)
+        response = RestResponse(content=content, content_type=RestResponse.JSON_CONTENT_TYPE)
         inv_result = self.protocol.parse_invocation_result(response, SimpleMessage.DESCRIPTOR)
 
         assert inv_result.ok
@@ -151,7 +151,7 @@ class TestRestProtocol(unittest.TestCase):
         result = result_class(success=False, exc=exc)
         content = result.to_json()
 
-        response = RestResponse(content=content, content_type=JSON_CONTENT_TYPE)
+        response = RestResponse(content=content, content_type=RestResponse.JSON_CONTENT_TYPE)
         inv_result = self.protocol.parse_invocation_result(response, descriptors.string0,
                                                            TestException.DESCRIPTOR)
 
@@ -289,7 +289,7 @@ class TestRestProtocol(unittest.TestCase):
         content = result_class(success=True, data=msg).to_json(indent=True)
 
         assert response.status == httplib.OK
-        assert response.content_type == JSON_CONTENT_TYPE
+        assert response.content_type == RestResponse.JSON_CONTENT_TYPE
         assert response.content == content
 
     def test_serialize_invocation_result_exc(self):
@@ -302,7 +302,7 @@ class TestRestProtocol(unittest.TestCase):
         content = result_class(success=False, exc=exc).to_json(indent=True)
 
         assert response.status == httplib.OK
-        assert response.content_type == JSON_CONTENT_TYPE
+        assert response.content_type == RestResponse.JSON_CONTENT_TYPE
         assert response.content == content
 
 
@@ -320,13 +320,13 @@ class TestRestClient(unittest.TestCase):
 class TestRestServer(unittest.TestCase):
     def setUp(self):
         invoker = lambda inv: pdef.invoke.InvocationResult.ok(inv)
-        self.server = server_handler(TestInterface, invoker)
+        self.server = RestServer(TestInterface.DESCRIPTOR, invoker)
 
     def get_request(self, path, query=None, post=None):
-        return RestRequest(GET, path, query=query, post=post)
+        return RestRequest.get(path, query=query, post=post)
 
     def post_request(self, path, query=None, post=None):
-        return RestRequest(POST, path, query=query, post=post)
+        return RestRequest.post(path, query=query, post=post)
 
     def test_handle(self):
         request = RestRequest(path='/', query={'a': '1', 'b': '2'})
@@ -335,7 +335,7 @@ class TestRestServer(unittest.TestCase):
         response = server.handle(request)
 
         assert response.status == httplib.OK
-        assert response.content_type == JSON_CONTENT_TYPE
+        assert response.content_type == RestResponse.JSON_CONTENT_TYPE
         assert json.loads(response.content) == {'success': True, 'data': 3}
 
     def test_error_response(self):
@@ -394,8 +394,7 @@ class TestIntegration(unittest.TestCase):
     def setUp(self):
         from wsgiref.simple_server import make_server
         service = IntegrationService()
-        server = pdef.rest.server(TestInterface, service)
-        app = pdef.wsgi_server(server)
+        app = rest_wsgi_server(TestInterface, service)
 
         self.server = make_server('localhost', 0, app)
         self.server_thread = Thread(target=self.server.serve_forever)
@@ -410,7 +409,7 @@ class TestIntegration(unittest.TestCase):
 
     def client(self):
         url = 'http://localhost:%s/' % self.server.server_port
-        return client(TestInterface, url)
+        return rest_client(TestInterface, url)
 
     def test(self):
         client = self.client()

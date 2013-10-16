@@ -8,127 +8,34 @@ import pdef
 import pdef.descriptors
 
 
-GET = 'GET'
-POST = 'POST'
-CHARSET = 'utf-8'
-
-JSON_MIME_TYPE = 'application/json'
-TEXT_MIME_TYPE = 'text/plain'
-FORM_MIME_TYPE = 'application/x-www-form-urlencoded'
-
-JSON_CONTENT_TYPE = 'application/json; charset=utf-8'
-TEXT_CONTENT_TYPE = 'text/plain; charset=utf-8'
+def rest_client(interface, url, session=None):
+    '''Create a REST client and return an interface proxy.'''
+    invocation_handler = RestClient(url, session=session)
+    return pdef.proxy(interface, invocation_handler)
 
 
-def client(interface, url, session=None):
-    '''Create a default REST client.'''
-    sender = client_sender(url, session=session)
-    handler = client_handler(sender)
-    return pdef.invoke.proxy(interface, handler)
-
-
-def client_handler(sender):
-    '''Create a REST client handler.'''
-    return RestClient(sender)
-
-
-def client_sender(url, session=None):
-    '''Create a REST client sender.'''
-    return RestSession(url, session=session)
-
-
-def server(interface, service_or_provider):
-    '''Create a default REST server.
-
-    @param interface:           An interface class with a DESCRIPTOR field.
-    @param service_or_provider: A service or a callable service provider.
-    '''
-    invoker = pdef.invoke.invoker(service_or_provider)
-    return server_handler(interface, invoker)
-
-
-def server_handler(interface, invoker):
-    '''Create a REST server handler.'''
+def rest_wsgi_server(interface, service_or_provider):
+    '''Create a REST WSGI server.'''
     descriptor = interface.DESCRIPTOR
-    return RestServer(descriptor, invoker)
-
-
-def wsgi_server(rest_server):
-    '''Create a WSGI REST server.'''
-    return WsgiRestServer(rest_server)
-
-
-class RestRequest(object):
-    '''Simple REST request which decouples the REST client/server from the transport libraries.
-
-    The result contains an HTTP method, a url-encoded path, and two dicts with query and post
-    params. The params must be unicode not url-encoded strings.
-    '''
-    def __init__(self, method=GET, path='', query=None, post=None):
-        self.method = method
-        self.path = path
-        self.query = dict(query) if query else {}
-        self.post = dict(post) if post else {}
-
-    def __repr__(self):
-        return '<RestRequest %s %s%s>' % (self.method, self.path,
-                                          '?%s' % self.query_string if self.query else '')
-
-    @property
-    def is_post(self):
-        return self.method.upper() == POST
-
-    @property
-    def query_string(self):
-        if not self.query:
-            return ''
-
-        q = {unicode(k).encode('utf-8'): unicode(v).encode('utf-8') for k, v in self.query.items()}
-        return urllib.urlencode(q)
-
-
-class RestResponse(object):
-    '''Simple REST response which decouples the REST client/server from the transport libraries.
-
-    The response contains an int HTTP status code, a decoded unicode string, and a content type.
-    The content type can be "application/json" or "text/plain".
-    '''
-    def __init__(self, status=httplib.OK, content=None, content_type=None):
-        self.status = status
-        self.content = content
-        self.content_type = content_type
-
-    @property
-    def is_ok(self):
-        return self.status == httplib.OK
-
-    @property
-    def is_application_json(self):
-        if not self.content_type:
-            return False
-
-        return self.content_type.lower().startswith(JSON_MIME_TYPE)
-
-    @property
-    def is_text_plain(self):
-        if not self.content_type:
-            return False
-        return self.content_type.lower().startswith(TEXT_MIME_TYPE)
-
-
-class RestException(Exception):
-    def __init__(self, message, status=None):
-        super(RestException, self).__init__(message)
-        self.status = status
+    invoker = pdef.invoker(service_or_provider)
+    server = RestServer(descriptor, invoker)
+    return WsgiRestServer(server)
 
 
 class RestProtocol(object):
+    '''
+    RestProtocol parses/serializes invocations and invocation results to/from
+    transport-agnostic RestRequest/RestResponse.
+    '''
+
     # Invocation serialization.
 
     def serialize_invocation(self, invocation):
         '''Convert an invocation into a RestRequest.'''
-        request = RestRequest()
-        request.method = POST if invocation.method.is_post else GET
+        if invocation.method.is_post:
+            request = RestRequest.post()
+        else:
+            request = RestRequest.get()
 
         # Append invocations from a chain.
         for inv in invocation.to_chain():
@@ -355,7 +262,8 @@ class RestProtocol(object):
                               exc=invocation_result.exc)
 
         content = result.to_json(indent=True)
-        return RestResponse(status=httplib.OK, content=content, content_type=JSON_CONTENT_TYPE)
+        return RestResponse(status=httplib.OK, content=content,
+                            content_type=RestResponse.JSON_CONTENT_TYPE)
 
     def _result_class(self, datad, excd=None):
         '''Create a runtime rest result class with the given data and exception fields.'''
@@ -380,10 +288,99 @@ class RestProtocol(object):
         return urllib.unquote(s).decode('utf-8')
 
 
+class RestRequest(object):
+    '''
+    Simple REST request which decouples the REST client/server from the transport layer.
+
+    The result contains an HTTP method, a url-encoded path, and two dicts with query and post
+    params. The params must be unicode non-url-encoded strings.
+    '''
+    GET = 'GET'
+    POST = 'POST'
+    CHARSET = 'utf-8'
+    FORM_MIME_TYPE = 'application/x-www-form-urlencoded'
+
+    @classmethod
+    def get(cls, path='', query=None, post=None):
+        return RestRequest(RestRequest.GET, path=path, query=query, post=post)
+
+    @classmethod
+    def post(cls, path='', query=None, post=None):
+        return RestRequest(RestRequest.POST, path=path, query=query, post=post)
+
+    def __init__(self, method=GET, path='', query=None, post=None):
+        self.method = method
+        self.path = path
+        self.query = dict(query) if query else {}
+        self.post = dict(post) if post else {}
+
+    def __repr__(self):
+        return '<RestRequest %s %s%s>' % (self.method, self.path,
+                                          '?%s' % self.query_string if self.query else '')
+
+    @property
+    def is_post(self):
+        return self.method.upper() == RestRequest.POST
+
+    @property
+    def query_string(self):
+        if not self.query:
+            return ''
+
+        q = {unicode(k).encode('utf-8', errors='replace'): unicode(v).encode('utf-8')
+             for k, v in self.query.items()}
+        return urllib.urlencode(q)
+
+
+class RestResponse(object):
+    '''
+    Simple REST response which decouples the REST client/server from the transport layer.
+
+    The response contains an int HTTP status code, a decoded unicode string, and a content type.
+    The content type can be "application/json; charset=utf-8" or "text/plain; charset=utf-8".
+    '''
+    CHARSET = 'utf-8'
+
+    JSON_MIME_TYPE = 'application/json'
+    TEXT_MIME_TYPE = 'text/plain'
+
+    JSON_CONTENT_TYPE = 'application/json; charset=utf-8'
+    TEXT_CONTENT_TYPE = 'text/plain; charset=utf-8'
+
+    def __init__(self, status=httplib.OK, content=None, content_type=None):
+        self.status = status
+        self.content = content
+        self.content_type = content_type
+
+    @property
+    def is_ok(self):
+        return self.status == httplib.OK
+
+    @property
+    def is_application_json(self):
+        if not self.content_type:
+            return False
+
+        return self.content_type.lower().startswith(RestResponse.JSON_MIME_TYPE)
+
+    @property
+    def is_text_plain(self):
+        if not self.content_type:
+            return False
+        return self.content_type.lower().startswith(RestResponse.TEXT_MIME_TYPE)
+
+
+class RestException(Exception):
+    def __init__(self, message, status=None):
+        super(RestException, self).__init__(message)
+        self.status = status
+
+
 class RestClient(object):
-    def __init__(self, sender):
+    def __init__(self, url, session=None):
         '''Create a rest client.'''
-        self.sender = sender
+        self.url = url
+        self.session = session or requests.session()
         self.protocol = RestProtocol()
 
     def __call__(self, invocation):
@@ -392,7 +389,7 @@ class RestClient(object):
     def invoke(self, invocation):
         '''Serialize an invocation, send a request, parse a response and return the result.'''
         request = self.protocol.serialize_invocation(invocation)
-        response = self.sender(request)
+        response = self._send_rest_request(request)
 
         if response.is_ok and response.is_application_json:
             datad = invocation.result
@@ -408,31 +405,19 @@ class RestClient(object):
         text = text if len(text) < 255 else text[:255]  # Limit the length for the exception.
         return RestException(text, status)
 
-
-class RestSession(object):
-    '''The requests-based sender for RestClient.'''
-    def __init__(self, url, session=None):
-        self.url = url
-        self.session = session
-
-    def __call__(self, request):
-        return self.send(request)
-
-    def send(self, request):
+    def _send_rest_request(self, request):
         '''Send a RestRequest and return a RestResponse.'''
         url = self._join_url_and_path(self.url, request.path)
         req = requests.Request(request.method, url=url, data=request.post, params=request.query)
         prepared = req.prepare()
+        http_response = self.session.send(prepared)
+        return self._parse_http_response(http_response)
 
-        session = self.session if self.session else requests.session()
-        resp = session.send(prepared)
-        return self._parse_response(resp)
-
-    def _parse_response(self, resp):
+    def _parse_http_response(self, resp):
         '''Parse a requests.Response into a RestResponse.'''
         status = resp.status_code
         content = resp.text
-        content_type = resp.headers.get('content-type') or TEXT_CONTENT_TYPE
+        content_type = resp.headers.get('content-type') or RestResponse.TEXT_CONTENT_TYPE
         return RestResponse(status, content=content, content_type=content_type)
 
     def _join_url_and_path(self, url, path):
@@ -471,7 +456,8 @@ class RestServer(object):
     def _error_response(self, e):
         '''Serialize a RestException into an error RestResponse.'''
         status = e.status or httplib.INTERNAL_SERVER_ERROR
-        return RestResponse(status, content=e.message, content_type=TEXT_CONTENT_TYPE)
+        return RestResponse(status, content=e.message,
+                            content_type=RestResponse.TEXT_CONTENT_TYPE)
 
 
 class WsgiRestServer(object):
@@ -490,7 +476,7 @@ class WsgiRestServer(object):
         status = '%s %s' % (response.status,  reason)
 
         content = response.content or ''
-        content = content.encode(CHARSET)
+        content = content.encode(RestResponse.CHARSET)
         headers = [('Content-Type', response.content_type),
                    ('Content-Length', str(len(content)))]
         start_response(status, headers)
@@ -508,7 +494,7 @@ class WsgiRestServer(object):
     def _read_wsgi_query(self, env):
         q = urlparse.parse_qs(env['QUERY_STRING']) if 'QUERY_STRING' in env else {}
 
-        decode = lambda s: s.decode(CHARSET)
+        decode = lambda s: s.decode(RestRequest.CHARSET)
         return {decode(k): decode(vv[0]) for k, vv in q.items()}
 
     def _read_wsgi_post(self, env):
@@ -516,12 +502,12 @@ class WsgiRestServer(object):
         clength = self._read_wsgi_clength(env)
 
         body = None
-        if clength > 0 and ctype.lower().startswith(FORM_MIME_TYPE):
+        if clength > 0 and ctype.lower().startswith(RestRequest.FORM_MIME_TYPE):
             body = env['wsgi.input'].read(clength)
 
         post = urlparse.parse_qs(body) if body else {}
 
-        decode = lambda s: s.decode(CHARSET)
+        decode = lambda s: s.decode(RestRequest.CHARSET)
         return {decode(k): decode(vv[0]) for k, vv in post.items()}
 
     def _read_wsgi_clength(self, env):

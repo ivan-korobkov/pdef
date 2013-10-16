@@ -2,14 +2,14 @@
 from collections import deque
 
 
-def proxy(interface, handler):
+def proxy(interface, invocation_handler):
     '''Create a interface proxy using a callable invocation handler.
 
     @param interface:   Class with a DESCRIPTOR.
-    @param handler:     Callable(Invocation) => InvocationResult.
+    @param invocation_handler:     Callable(Invocation) => InvocationResult.
     '''
     descriptor = interface.DESCRIPTOR
-    return InvocationProxy(descriptor, handler)
+    return InvocationProxy(descriptor, invocation_handler)
 
 
 def invoker(service_or_provider):

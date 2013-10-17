@@ -1,11 +1,11 @@
 # encoding: utf-8
+import io
 import functools
 import logging
 import re
 import os.path
 import ply.lex as lex
 import ply.yacc as yacc
-from io import open
 
 import pdefc.ast
 
@@ -61,21 +61,23 @@ class Parser(object):
     def parse_path(self, path):
         '''Parse a directory or a file and return a list of modules and a list of errors.'''
         if not os.path.exists(path):
-            return None, ['Path does not exist %r' % path]
+            return [], ['Path does not exist %r' % path]
 
         if os.path.isdir(path):
             return self.parse_directory(path)
 
         module, errors = self.parse_file(path)
-        return [module] if module else [], errors
+        if module:
+            return [module], errors
+        return [], errors
 
     def parse_directory(self, path):
         '''Recursively parse a directory, return a list of modules and a list of errors.'''
         if not os.path.exists(path):
-            return None, ['Directory does not exist %r' % path]
+            return [], ['Directory does not exist %r' % path]
 
         if not os.path.isdir(path):
-            return None, ['Not a directory %r' % path]
+            return [], ['Not a directory %r' % path]
 
         modules = []
         errors = []
@@ -103,7 +105,7 @@ class Parser(object):
         if not os.path.isfile(path):
             return None, ['Not a file %r' % path]
 
-        with open(path, 'r', encoding=self.encoding) as f:
+        with io.open(path, 'r', encoding=self.encoding) as f:
             s = f.read()
 
         return self.parse_string(s, path)
@@ -124,7 +126,10 @@ class Parser(object):
             if module:
                 module.path = path
 
-            return module, [FileErrors(path, self._errors)] if errors else []
+            if self._errors:
+                return None, [FileErrors(path, self._errors)]
+            return module, []
+
         finally:
             self._errors = None
             self._path = None

@@ -2,4 +2,4 @@
 pdefc $@ generate \
     --ns="python:pdef.test:pdef_test" \
     --python=src/ \
-    ../pdef
+    ../test

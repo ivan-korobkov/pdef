@@ -3,8 +3,8 @@ import unittest
 
 from pdef.invoke import *
 from pdef import descriptors
-from pdef_test.messages import SimpleMessage
-from pdef_test.interfaces import TestInterface, TestException, NextTestInterface
+from pdef_test.messages import TestMessage
+from pdef_test.interfaces import TestInterface, TestException
 
 
 class TestInvocation(unittest.TestCase):
@@ -93,11 +93,11 @@ class TestInvocation(unittest.TestCase):
 
     def test_deep_copy_args(self):
         method = descriptors.method('method', descriptors.void,
-            args=(descriptors.arg('arg0', descriptors.list0(SimpleMessage.DESCRIPTOR)),
+            args=(descriptors.arg('arg0', descriptors.list0(TestMessage.DESCRIPTOR)),
                   descriptors.arg('arg1', descriptors.set0(descriptors.int32))
             ))
 
-        list0 = [SimpleMessage('hello'), SimpleMessage('world')]
+        list0 = [TestMessage('hello'), TestMessage('world')]
         set0 = {1, 2, 3}
 
         invocation = Invocation(method, args=(list0, set0))
@@ -120,7 +120,7 @@ class TestInvocationProxy(unittest.TestCase):
 
     def test_ok(self):
         proxy = InvocationProxy(TestInterface.DESCRIPTOR, lambda inv: InvocationResult.from_data(3))
-        result = proxy.indexMethod(1, 2)
+        result = proxy.testIndex(1, 2)
 
         assert result == 3
 
@@ -129,18 +129,18 @@ class TestInvocationProxy(unittest.TestCase):
         client = proxy(TestInterface, lambda inv: InvocationResult.from_exc(exc))
 
         try:
-            client.indexMethod(1, 2)
+            client.testIndex(1, 2)
             self.fail()
         except TestException, e:
             assert e == exc
 
     def test_proxy_method(self):
         interface = TestInterface.DESCRIPTOR
-        method = interface.find_method('indexMethod')
+        method = interface.find_method('testIndex')
         handler = lambda inv: InvocationResult.from_data(None)
 
         proxy = InvocationProxy(interface, handler)
-        proxy_method = proxy.indexMethod
+        proxy_method = proxy.testIndex
 
         assert method
         assert proxy_method.method is method
@@ -148,13 +148,12 @@ class TestInvocationProxy(unittest.TestCase):
 
     def test_proxy_method_chain(self):
         interface0 = TestInterface.DESCRIPTOR
-        interface1 = NextTestInterface.DESCRIPTOR
-        method0 = interface0.find_method('interfaceMethod')
-        method1 = interface1.find_method('indexMethod')
+        method0 = interface0.find_method('testInterface')
+        method1 = interface0.find_method('testIndex')
         handler = lambda inv: InvocationResult.from_data(None)
 
         proxy = InvocationProxy(interface0, handler)
-        proxy_method = proxy.interfaceMethod(1, 2).indexMethod
+        proxy_method = proxy.testInterface(1, 2).testIndex
 
         assert proxy_method.method is method1
         assert proxy_method.handler is handler
@@ -165,13 +164,13 @@ class TestInvocationProxy(unittest.TestCase):
         handler = lambda inv: InvocationResult.from_data(inv)
         proxy = InvocationProxy(TestInterface.DESCRIPTOR, handler)
 
-        invocation = proxy.interfaceMethod(1, 2).remoteMethod()
+        invocation = proxy.testInterface(1, 2).testRemote()
         chain = invocation.to_chain()
         invocation0 = chain[0]
         invocation1 = chain[1]
 
-        assert invocation0.method.name == 'interfaceMethod'
-        assert invocation0.args == {'a': 1, 'b': 2}
+        assert invocation0.method.name == 'testInterface'
+        assert invocation0.args == {'arg0': 1, 'arg1': 2}
 
-        assert invocation1.method.name == 'remoteMethod'
-        assert invocation1.args == {}
+        assert invocation1.method.name == 'testRemote'
+        assert invocation1.args == {'arg0': None, 'arg1': None}

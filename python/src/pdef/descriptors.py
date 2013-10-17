@@ -14,7 +14,7 @@ class Descriptor(object):
         self.is_message = self.type == Type.MESSAGE or self.type == Type.EXCEPTION
 
     def __str__(self):
-        return str(self.pyclass)
+        return str(self.type)
 
     @property
     def pyclass(self):
@@ -47,6 +47,9 @@ class MessageDescriptor(DataDescriptor):
 
         self.is_form = is_form
         self.is_polymorphic = bool(self.discriminator)
+
+    def __str__(self):
+        return str(self.pyclass)
 
     @classmethod
     def _find_discriminator(cls, fields):
@@ -118,6 +121,9 @@ class InterfaceDescriptor(Descriptor):
         for method in self.methods:
             method._exc_supplier = self._exc_supplier
 
+    def __str__(self):
+        return str(self.pyclass)
+
     @classmethod
     def _find_index_method(cls, methods):
         for method in methods:
@@ -185,6 +191,7 @@ class MethodDescriptor(object):
             s.append(arg.name)
             s.append(' ')
             s.append(str(arg.type))
+            next_separator = ', '
 
         s.append(')=')
         s.append(str(self.result))

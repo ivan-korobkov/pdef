@@ -61,11 +61,11 @@ class RestProtocol(object):
         for argd in method.args:
             arg = args.get(argd.name)
 
-            if method.is_post:
+            if is_post:
                 # Serialize an argument as a post param.
                 self._serialize_param(argd, arg, request.post)
 
-            elif method.is_remote:
+            elif is_remote:
                 # Serialize an argument as a query param.
                 self._serialize_param(argd, arg, request.query)
 

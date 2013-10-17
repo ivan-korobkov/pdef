@@ -1,8 +1,8 @@
 # encoding: utf-8
 import unittest
 from pdef import descriptors
-from pdef.formats import native, json
-from pdef_test import inheritance, interfaces, messages
+from pdef.formats import json
+from pdef_test import inheritance, messages
 
 
 class TestJsonFormat(unittest.TestCase):
@@ -43,37 +43,37 @@ class TestJsonFormat(unittest.TestCase):
 
     def test_message(self):
         message = self._complex_message()
-        self._test(messages.ComplexMessage.DESCRIPTOR, message, self.MESSAGE_JSON)
+        self._test(messages.TestDataTypes.DESCRIPTOR, message, self.MESSAGE_JSON)
 
     def test_message__polymorphic(self):
         message = self._polymorphic_message()
         self._test(inheritance.Base.DESCRIPTOR, message, self.POLYMORPHIC_JSON)
 
     def test_message__skip_null_fields(self):
-        message = messages.SimpleMessage(aString='hello')
-        assert json.serialize(message, messages.SimpleMessage.DESCRIPTOR) == '{"aString": "hello"}'
+        message = messages.TestMessage(string0='hello')
+        assert json.serialize(message, messages.TestMessage.DESCRIPTOR) == '{"string0": "hello"}'
 
     def test_void(self):
         self._test(descriptors.void, None, 'null')
 
     def _complex_message(self):
-        return messages.ComplexMessage(
-            aString="hello",
-            aBool=True,
-            anInt16=16,
-            anEnum=messages.TestEnum.THREE,
-            anInt32=32,
-            anInt64=64L,
-            aFloat=1.5,
-            aDouble=2.5,
-            aList=[1, 2],
-            aSet={1, 2},
-            aMap={1: 1.5},
-            aMessage=messages.SimpleMessage(
-                aString='hello',
-                aBool=True,
-                anInt16=16),
-            aPolymorphicMessage=inheritance.MultiLevelSubtype(
+        return messages.TestDataTypes(
+            string0="hello",
+            bool0=True,
+            short0=16,
+            enum0=messages.TestEnum.THREE,
+            int0=32,
+            long0=64L,
+            float0=1.5,
+            double0=2.5,
+            list0=[1, 2],
+            set0={1, 2},
+            map0={1: 1.5},
+            message0=messages.TestMessage(
+                string0='hello',
+                bool0=True,
+                short0=16),
+            polymorphic=inheritance.MultiLevelSubtype(
                 field='field',
                 subfield='subfield',
                 mfield='mfield'))
@@ -84,19 +84,19 @@ class TestJsonFormat(unittest.TestCase):
             subfield='subfield',
             mfield='mfield')
 
-    MESSAGE_JSON = u'{"aString": "hello", ' \
-                   u'"aBool": true, ' \
-                   u'"anInt16": 16, ' \
-                   u'"anInt32": 32, ' \
-                   u'"anInt64": 64, ' \
-                   u'"aFloat": 1.5, ' \
-                   u'"aDouble": 2.5, ' \
-                   u'"aList": [1, 2], ' \
-                   u'"aSet": [1, 2], ' \
-                   u'"aMap": {"1": 1.5}, ' \
-                   u'"anEnum": "three", ' \
-                   u'"aMessage": {"aString": "hello", "aBool": true, "anInt16": 16}, ' \
-                   u'"aPolymorphicMessage": ' \
+    MESSAGE_JSON = u'{"string0": "hello", ' \
+                   u'"bool0": true, ' \
+                   u'"short0": 16, ' \
+                   u'"int0": 32, ' \
+                   u'"long0": 64, ' \
+                   u'"float0": 1.5, ' \
+                   u'"double0": 2.5, ' \
+                   u'"list0": [1, 2], ' \
+                   u'"set0": [1, 2], ' \
+                   u'"map0": {"1": 1.5}, ' \
+                   u'"enum0": "three", ' \
+                   u'"message0": {"string0": "hello", "bool0": true, "short0": 16}, ' \
+                   u'"polymorphic": ' \
                    u'{"type": "multilevel_subtype", ' \
                    u'"field": "field", "subfield": "subfield", "mfield": "mfield"}}'
 

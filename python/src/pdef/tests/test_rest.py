@@ -10,8 +10,8 @@ from threading import Thread
 import pdef
 from pdef import descriptors
 from pdef.rest import *
-from pdef_test.messages import SimpleMessage, SimpleForm
-from pdef_test.interfaces import TestInterface, TestException, NextTestInterface
+from pdef_test.messages import TestMessage, TestForm
+from pdef_test.interfaces import TestInterface, TestException
 
 
 class TestRestProtocol(unittest.TestCase):
@@ -23,65 +23,65 @@ class TestRestProtocol(unittest.TestCase):
     # Invocation serialization.
 
     def test_serialize_invocation(self):
-        invocation = self.proxy.indexMethod(a=1, b=2)
+        invocation = self.proxy.testIndex(arg0=1, arg1=2)
         request = self.protocol.serialize_invocation(invocation)
 
         assert request.method == 'GET'
         assert request.path == '/'
-        assert request.query == {'a': '1', 'b': '2'}
+        assert request.query == {'arg0': '1', 'arg1': '2'}
         assert request.post == {}
 
     def test_serialize_invocation__post(self):
-        invocation = self.proxy.postMethod(aList=[1, 2, 3], aMap={1: 2})
+        invocation = self.proxy.testPost(arg0=1, arg1=2)
         request = self.protocol.serialize_invocation(invocation)
 
         assert request.method == 'POST'
-        assert request.path == '/postMethod'
+        assert request.path == '/testPost'
         assert request.query == {}
-        assert request.post == {'aList': '[1, 2, 3]', 'aMap': '{"1": 2}'}
+        assert request.post == {'arg0': '1', 'arg1': '2'}
 
     def test_serialize_invocation__chained_methods(self):
-        invocation = self.proxy.interfaceMethod(1, 2).stringMethod('hello')
+        invocation = self.proxy.testInterface(1, 2).testString('hello')
         request = self.protocol.serialize_invocation(invocation)
 
         assert request.method == 'GET'
-        assert request.path == '/interfaceMethod/1/2/stringMethod'
+        assert request.path == '/testInterface/1/2/testString'
         assert request.query == {'text': 'hello'}
         assert request.post == {}
 
     def test_serialize_invocation__index_method(self):
         request = RestRequest()
-        invocation = self.proxy.indexMethod(a=1, b=2)
+        invocation = self.proxy.testIndex(arg0=1, arg1=2)
         self.protocol._serialize_single_invocation(invocation, request)
 
         assert request.path == '/'
-        assert request.query == {'a': '1', 'b': '2'}
+        assert request.query == {'arg0': '1', 'arg1': '2'}
         assert request.post == {}
 
     def test_serialize_invocation__post_method(self):
         request = RestRequest()
-        invocation = self.proxy.postMethod(aList=[1, 2, 3], aMap={1: 2})
+        invocation = self.proxy.testPost(arg0=1, arg1=2)
         self.protocol._serialize_single_invocation(invocation, request)
 
-        assert request.path == '/postMethod'
+        assert request.path == '/testPost'
         assert request.query == {}
-        assert request.post == {'aList': '[1, 2, 3]', 'aMap': '{"1": 2}'}
+        assert request.post == {'arg0': '1', 'arg1': '2'}
 
     def test_serialize_invocation__remote_method(self):
         request = RestRequest()
-        invocation = self.proxy.remoteMethod(a=10, b=100)
+        invocation = self.proxy.testRemote(arg0=10, arg1=100)
         self.protocol._serialize_single_invocation(invocation, request)
 
-        assert request.path == '/remoteMethod'
-        assert request.query == {'a': '10', 'b': '100'}
+        assert request.path == '/testRemote'
+        assert request.query == {'arg0': '10', 'arg1': '100'}
         assert request.post == {}
 
     def test_serialize_invocation__interface_method(self):
         request = RestRequest()
-        invocation = self.proxy.interfaceMethod(a=1, b=2)._invocation
+        invocation = self.proxy.testInterface(arg0=1, arg1=2)._invocation
         self.protocol._serialize_single_invocation(invocation, request)
 
-        assert request.path == '/interfaceMethod/1/2'
+        assert request.path == '/testInterface/1/2'
         assert request.query == {}
         assert request.post == {}
 
@@ -101,13 +101,13 @@ class TestRestProtocol(unittest.TestCase):
         assert dst == {'arg': '123'}
 
     def test_serialize_param__form(self):
-        arg = descriptors.arg('arg', SimpleForm.DESCRIPTOR)
+        arg = descriptors.arg('arg', TestForm.DESCRIPTOR)
 
         dst = {}
-        form = SimpleForm(text=u'Привет', numbers=[1, 2, 3], flag=False)
+        form = TestForm(formString=u'Привет', formList=[1, 2, 3], formBool=False)
         self.protocol._serialize_param(arg, form, dst)
         
-        assert dst == {'text': u'Привет', 'numbers': '[1, 2, 3]', 'flag': 'false'}
+        assert dst == {'formString': u'Привет', 'formList': '[1, 2, 3]', 'formBool': 'false'}
 
     def test_serialize_to_json__null(self):
         descriptor = descriptors.int32
@@ -122,23 +122,23 @@ class TestRestProtocol(unittest.TestCase):
         assert result == u'привет+ромашки'
 
     def test_serialize_to_json__message(self):
-        descriptor = SimpleMessage.DESCRIPTOR
-        msg = SimpleMessage(aString='hello', aBool=False, anInt16=256)
+        descriptor = TestMessage.DESCRIPTOR
+        msg = TestMessage(string0='hello', bool0=False, short0=256)
         result = self.protocol._serialize_to_json(descriptor, msg)
 
-        assert result == '{"aString": "hello", "aBool": false, "anInt16": 256}'
+        assert result == '{"string0": "hello", "bool0": false, "short0": 256}'
 
     # InvocationResult parsing.
 
     def test_parse_invocation_result__ok(self):
-        msg = SimpleMessage(aString='hello', aBool=False, anInt16=127)
+        msg = TestMessage(string0='hello', bool0=False, short0=127)
 
-        result_class = self.protocol._result_class(SimpleMessage.DESCRIPTOR)
+        result_class = self.protocol._result_class(TestMessage.DESCRIPTOR)
         result = result_class(ok=True, data=msg)
         content = result.to_json()
 
         response = RestResponse(content=content, content_type=RestResponse.JSON_CONTENT_TYPE)
-        inv_result = self.protocol.parse_invocation_result(response, SimpleMessage.DESCRIPTOR)
+        inv_result = self.protocol.parse_invocation_result(response, TestMessage.DESCRIPTOR)
 
         assert inv_result.ok
         assert inv_result.data == msg
@@ -162,22 +162,21 @@ class TestRestProtocol(unittest.TestCase):
     # Invocation parsing.
 
     def test_parse_invocation__index_method(self):
-        request = RestRequest(path='/', query={'a': '123', 'b': '456'})
+        request = RestRequest(path='/', query={'arg0': '123', 'arg1': '456'})
 
         invocation = self.protocol.parse_invocation(request, TestInterface.DESCRIPTOR)
-        assert invocation.method.name == 'indexMethod'
-        assert invocation.args == {'a': 123, 'b': 456}
+        assert invocation.method.name == 'testIndex'
+        assert invocation.args == {'arg0': 123, 'arg1': 456}
 
     def test_parse_invocation__post_method(self):
-        request = RestRequest('POST', path='/postMethod',
-                              post={'aList': '[1, 2, 3]','aMap': '{"1":2}'},)
+        request = RestRequest('POST', path='/testPost', post={'arg0': '1', 'arg1': '2'},)
 
         invocation = self.protocol.parse_invocation(request, TestInterface.DESCRIPTOR)
-        assert invocation.method.name == 'postMethod'
-        assert invocation.args == {'aList': [1, 2, 3], 'aMap': {1: 2}}
+        assert invocation.method.name == 'testPost'
+        assert invocation.args == {'arg0': 1, 'arg1': 2}
 
     def test_parse_invocation__post_method_not_allowed(self):
-        request = RestRequest(path='/postMethod', post={})
+        request = RestRequest(path='/testPost', post={})
         try:
             self.protocol.parse_invocation(request, TestInterface.DESCRIPTOR)
             self.fail()
@@ -185,40 +184,40 @@ class TestRestProtocol(unittest.TestCase):
             assert e.status == httplib.METHOD_NOT_ALLOWED
 
     def test_parse_invocation__remote_method(self):
-        request = RestRequest(path='/remoteMethod', query={'a': '1', 'b': '2'})
+        request = RestRequest(path='/testRemote', query={'arg0': '1', 'arg1': '2'})
 
         invocation = self.protocol.parse_invocation(request, TestInterface.DESCRIPTOR)
-        assert invocation.method.name == 'remoteMethod'
-        assert invocation.args == {'a': 1, 'b': 2}
+        assert invocation.method.name == 'testRemote'
+        assert invocation.args == {'arg0': 1, 'arg1': 2}
 
     def test_parse_invocation__chained_method_index(self):
-        request = RestRequest(path='/interfaceMethod/1/2/')
+        request = RestRequest(path='/testInterface/1/2/', query={'arg0': '3'})
 
         chain = self.protocol.parse_invocation(request, TestInterface.DESCRIPTOR).to_chain()
         invocation0 = chain[0]
         invocation1 = chain[1]
 
         assert len(chain) == 2
-        assert invocation0.method.name == 'interfaceMethod'
-        assert invocation0.args == {'a': 1, 'b': 2}
-        assert invocation1.method.name == 'indexMethod'
-        assert invocation1.args == {}
+        assert invocation0.method.name == 'testInterface'
+        assert invocation0.args == {'arg0': 1, 'arg1': 2}
+        assert invocation1.method.name == 'testIndex'
+        assert invocation1.args == {'arg0': 3, 'arg1': None}
 
     def test_parse_invocation__chained_method_remote(self):
-        request = RestRequest(path='/interfaceMethod/1/2/stringMethod', query={'text': u'привет'})
+        request = RestRequest(path='/testInterface/1/2/testString', query={'text': u'привет'})
 
         chain = self.protocol.parse_invocation(request, TestInterface.DESCRIPTOR).to_chain()
         invocation0 = chain[0]
         invocation1 = chain[1]
 
         assert len(chain) == 2
-        assert invocation0.method.name == 'interfaceMethod'
-        assert invocation0.args == {'a': 1, 'b': 2}
-        assert invocation1.method.name == 'stringMethod'
+        assert invocation0.method.name == 'testInterface'
+        assert invocation0.args == {'arg0': 1, 'arg1': 2}
+        assert invocation1.method.name == 'testString'
         assert invocation1.args == {'text': u'привет'}
 
     def test_parse_invocation__interface_method_not_remote(self):
-        request = RestRequest(path='/interfaceMethod/1/2')
+        request = RestRequest(path='/testInterface/1/2')
 
         try:
             self.protocol.parse_invocation(request, TestInterface.DESCRIPTOR)
@@ -236,10 +235,10 @@ class TestRestProtocol(unittest.TestCase):
         assert value == u'Привет'
 
     def test_parse_param__form(self):
-        arg = descriptors.arg('arg', SimpleForm.DESCRIPTOR)
+        arg = descriptors.arg('arg', TestForm.DESCRIPTOR)
 
-        expected = SimpleForm(text=u'Привет', numbers=[1, 2, 3], flag=True)
-        src = {'text': u'Привет', 'numbers': '[1,2,3]', 'flag': 'true'}
+        expected = TestForm(formString=u'Привет', formList=[1, 2, 3], formBool=True)
+        src = {'formString': u'Привет', 'formList': '[1,2,3]', 'formBool': 'true'}
 
         result = self.protocol._parse_param(arg, src)
         assert result == expected
@@ -270,9 +269,9 @@ class TestRestProtocol(unittest.TestCase):
         assert value == u'привет, мир!'
 
     def test_parse_from_json__message(self):
-        descriptor = SimpleMessage.DESCRIPTOR
+        descriptor = TestMessage.DESCRIPTOR
 
-        msg = SimpleMessage(aString=u'привет', aBool=True, anInt16=123)
+        msg = TestMessage(string0=u'привет', bool0=True, short0=123)
         value = msg.to_json()
 
         msg0 = self.protocol._parse_from_json(descriptor, value)
@@ -281,11 +280,11 @@ class TestRestProtocol(unittest.TestCase):
     # InvocationResult serialization.
 
     def test_serialize_invocation_result(self):
-        msg = SimpleMessage(aString=u'привет', aBool=False, anInt16=0)
+        msg = TestMessage(string0=u'привет', bool0=False, short0=0)
         inv_result = pdef.invoke.InvocationResult.from_data(msg)
-        response = self.protocol.serialize_invocation_result(inv_result, SimpleMessage.DESCRIPTOR)
+        response = self.protocol.serialize_invocation_result(inv_result, TestMessage.DESCRIPTOR)
 
-        result_class = self.protocol._result_class(SimpleMessage.DESCRIPTOR)
+        result_class = self.protocol._result_class(TestMessage.DESCRIPTOR)
         content = result_class(ok=True, data=msg).to_json(indent=True)
 
         assert response.status == httplib.OK
@@ -426,48 +425,50 @@ class TestIntegration(unittest.TestCase):
 
     def test(self):
         client = self.client()
-        msg = SimpleMessage(u'Привет', True, 0)
-        form = SimpleForm(u'Привет', [1, 2, 3], True)
+        msg = TestMessage(u'Привет', True, 0)
+        form = TestForm(formBool=True, formString=u'Привет', formList=[1, 2, 3])
 
-        assert client.indexMethod(1, 2) == 3
-        assert client.remoteMethod(10, 2) == 5
-        assert client.postMethod([1, 2, 3], {4: 5}) == [1, 2, 3, 4, 5]
-        assert client.messageMethod(msg) == msg
-        assert client.formMethod(form) == form
-        assert client.voidMethod() is None
-        assert client.stringMethod(u'Как дела?') == u'Как дела?'
-        assert client.interfaceMethod(1, 2).indexMethod() == 'chained call 1 2'
-        self.assertRaises(TestException, client.excMethod)
+        assert client.testIndex(1, 2) == 3
+        assert client.testRemote(1, 2) == 3
+        assert client.testPost(1, 2) == 3
+        assert client.testMessage(msg) == msg
+        assert client.testForm(form) == form
+        assert client.testVoid() is None
+        assert client.testString(u'Как дела?') == u'Как дела?'
+        assert client.testInterface(1, 2).testIndex(3, 4) == 7
+        self.assertRaises(TestException, client.testExc)
 
 
 class IntegrationService(TestInterface):
-    def indexMethod(self, a=None, b=None):
-        return a + b
+    def testIndex(self, arg0=None, arg1=None):
+        return arg0 + arg1
 
-    def remoteMethod(self, a=None, b=None):
-        return a / b
+    def testRemote(self, arg0=None, arg1=None):
+        return arg0 + arg1
 
-    def postMethod(self, aList=None, aMap=None):
-        return list(aList) + aMap.keys() + aMap.values()
+    def testPost(self, arg0=None, arg1=None):
+        return arg0 + arg1
 
-    def messageMethod(self, msg=None):
-        return msg
-
-    def formMethod(self, form=None):
-        return form
-
-    def voidMethod(self):
-        return 'void?'  # But should send None.
-
-    def excMethod(self):
-        raise TestException('Application exception')
-
-    def stringMethod(self, text=None):
+    def testString(self, text=None):
         return text
 
-    def interfaceMethod(self, a=None, b=None):
-        class Next(NextTestInterface):
-            def indexMethod(self):
-                return 'chained call %s %s' % (a, b)
+    def testMessage(self, msg=None):
+        return msg
 
-        return Next()
+    def testForm(self, form=None):
+        return form
+
+    def testPolymorphic(self, msg=None):
+        return msg
+
+    def testCollections(self, list0=None, set0=None, map0=None):
+        return len(list0) + len(set0) + len(map0)
+
+    def testVoid(self):
+        return
+
+    def testExc(self):
+        raise TestException('Test exception')
+
+    def testInterface(self, arg0=None, arg1=None):
+        return self

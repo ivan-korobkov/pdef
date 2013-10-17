@@ -9,8 +9,8 @@ import io.pdef.test.inheritance.Base;
 import io.pdef.test.inheritance.MultiLevelSubtype;
 import io.pdef.test.inheritance.Subtype;
 import io.pdef.test.inheritance.Subtype2;
-import io.pdef.test.messages.ComplexMessage;
-import io.pdef.test.messages.SimpleMessage;
+import io.pdef.test.messages.TestDataTypes;
+import io.pdef.test.messages.TestMessage;
 import io.pdef.test.messages.TestEnum;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -74,7 +74,7 @@ public class JsonFormatTest {
 
 	@Test
 	public void testMessage() throws Exception {
-		test(ComplexMessage.DESCRIPTOR, createComplexMessage(), MESSAGE_JSON);
+		test(TestDataTypes.DESCRIPTOR, createComplexMessage(), MESSAGE_JSON);
 	}
 
 	@Test
@@ -102,42 +102,42 @@ public class JsonFormatTest {
 						+ "\"mfield\":\"mfield\"}");
 	}
 
-	private ComplexMessage createComplexMessage() {
-		return new ComplexMessage()
-				.setAnEnum(TestEnum.THREE)
-				.setABool(true)
-				.setAnInt16((short) 16)
-				.setAnInt32(32)
-				.setAnInt64(64L)
-				.setAFloat(1.5f)
-				.setADouble(2.5d)
-				.setAString("hello")
-				.setAList(ImmutableList.of(1, 2))
-				.setASet(ImmutableSet.of(1, 2))
-				.setAMap(ImmutableMap.<Integer, Float>of(1, 1.5f))
-				.setAMessage(new SimpleMessage()
-						.setABool(true)
-						.setAnInt16((short) 16)
-						.setAString("hello"))
-				.setAPolymorphicMessage(new MultiLevelSubtype()
+	private TestDataTypes createComplexMessage() {
+		return new TestDataTypes()
+				.setEnum0(TestEnum.THREE)
+				.setBool0(true)
+				.setShort0((short) 16)
+				.setInt0(32)
+				.setLong0(64L)
+				.setFloat0(1.5f)
+				.setDouble0(2.5d)
+				.setString0("hello")
+				.setList0(ImmutableList.of(1, 2))
+				.setSet0(ImmutableSet.of(1, 2))
+				.setMap0(ImmutableMap.<Integer, Float>of(1, 1.5f))
+				.setMessage0(new TestMessage()
+						.setBool0(true)
+						.setShort0((short) 16)
+						.setString0("hello"))
+				.setPolymorphic(new MultiLevelSubtype()
 						.setField("field")
 						.setSubfield("subfield")
 						.setMfield("mfield"));
 	}
 
 	private final String MESSAGE_JSON = "{"
-			+ "\"aString\":\"hello\","
-			+ "\"aBool\":true,"
-			+ "\"anInt16\":16,"
-			+ "\"anInt32\":32,"
-			+ "\"anInt64\":64,"
-			+ "\"aFloat\":1.5,"
-			+ "\"aDouble\":2.5,"
-			+ "\"aList\":[1,2],"
-			+ "\"aSet\":[1,2],"
-			+ "\"aMap\":{\"1\":1.5},"
-			+ "\"anEnum\":\"three\","
-			+ "\"aMessage\":{\"aString\":\"hello\",\"aBool\":true,\"anInt16\":16},"
-			+ "\"aPolymorphicMessage\":{\"type\":\"multilevel_subtype\",\"field\":\"field\","
+			+ "\"string0\":\"hello\","
+			+ "\"bool0\":true,"
+			+ "\"short0\":16,"
+			+ "\"int0\":32,"
+			+ "\"long0\":64,"
+			+ "\"float0\":1.5,"
+			+ "\"double0\":2.5,"
+			+ "\"list0\":[1,2],"
+			+ "\"set0\":[1,2],"
+			+ "\"map0\":{\"1\":1.5},"
+			+ "\"enum0\":\"three\","
+			+ "\"message0\":{\"string0\":\"hello\",\"bool0\":true,\"short0\":16},"
+			+ "\"polymorphic\":{\"type\":\"multilevel_subtype\",\"field\":\"field\","
 			+ "\"subfield\":\"subfield\",\"mfield\":\"mfield\"}}";
 }

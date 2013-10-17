@@ -56,6 +56,11 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% endfor %}
     @Override
+    public {{ name }} copy() {
+        return ({{ name }}) super.copy();
+    }
+
+    @Override
     public io.pdef.descriptors.MessageDescriptor<? extends {{ name }}> descriptor() {
         return DESCRIPTOR;
     }

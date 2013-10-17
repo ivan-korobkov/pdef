@@ -1,7 +1,7 @@
 package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableMap;
-import io.pdef.test.messages.SimpleMessage;
+import io.pdef.test.messages.TestMessage;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -20,11 +20,11 @@ public class MapDescriptorTest {
 
 	@Test
 	public void testCopy() throws Exception {
-		MapDescriptor<String, SimpleMessage> descriptor = Descriptors
-				.map(Descriptors.string, SimpleMessage.DESCRIPTOR);
-		Map<String, SimpleMessage> map0 = ImmutableMap.of("hello",
-				new SimpleMessage().setAString("hello"));
-		Map<String, SimpleMessage> map1 = descriptor.copy(map0);
+		MapDescriptor<String, TestMessage> descriptor = Descriptors
+				.map(Descriptors.string, TestMessage.DESCRIPTOR);
+		Map<String, TestMessage> map0 = ImmutableMap.of("hello",
+				new TestMessage().setString0("hello"));
+		Map<String, TestMessage> map1 = descriptor.copy(map0);
 
 		assertNull(descriptor.copy(null));
 		assertEquals(map0, map1);

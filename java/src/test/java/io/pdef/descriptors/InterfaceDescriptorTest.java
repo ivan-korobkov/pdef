@@ -11,18 +11,18 @@ public class InterfaceDescriptorTest {
 	@Test
 	public void test() throws Exception {
 		InterfaceDescriptor<TestInterface> descriptor = TestInterface.DESCRIPTOR;
-		MethodDescriptor<TestInterface, Integer> indexMethod = TestInterface.INDEXMETHOD_METHOD;
+		MethodDescriptor<TestInterface, Integer> indexMethod = TestInterface.TESTINDEX_METHOD;
 
 		assertEquals(TestInterface.class, descriptor.getJavaClass());
 		assertEquals(TestException.DESCRIPTOR, descriptor.getExc());
-		assertEquals(9, descriptor.getMethods().size());
+		assertEquals(11, descriptor.getMethods().size());
 		assertEquals(indexMethod, descriptor.getIndexMethod());
 	}
 
 	@Test
 	public void testFindMethod() throws Exception {
-		MethodDescriptor<TestInterface, ?> expected = TestInterface.INDEXMETHOD_METHOD;
-		MethodDescriptor<TestInterface, ?> method = descriptor.findMethod("indexMethod");
+		MethodDescriptor<TestInterface, ?> expected = TestInterface.TESTINDEX_METHOD;
+		MethodDescriptor<TestInterface, ?> method = descriptor.findMethod("testIndex");
 
 		assertEquals(expected, method);
 	}
@@ -33,9 +33,8 @@ public class InterfaceDescriptorTest {
 		assertTrue(descriptor == TestInterface.DESCRIPTOR);
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testFindDescriptor_notFound() throws Exception {
-		InterfaceDescriptor descriptor = InterfaceDescriptor.findDescriptor(Runnable.class);
-		assertNull(descriptor);
+		InterfaceDescriptor.findDescriptor(Runnable.class);
 	}
 }

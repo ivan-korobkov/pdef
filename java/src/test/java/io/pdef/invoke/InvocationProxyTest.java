@@ -29,7 +29,7 @@ public class InvocationProxyTest {
 		TestInterface iface = createProxy();
 		when(invoker.invoke(any(Invocation.class))).thenReturn(InvocationResult.ok(3));
 
-		Object result = iface.indexMethod(1, 2);
+		Object result = iface.testIndex(1, 2);
 		assertEquals(3, result);
 	}
 
@@ -39,7 +39,7 @@ public class InvocationProxyTest {
 		when(invoker.invoke(any(Invocation.class)))
 				.thenReturn(InvocationResult.exc(new TestException()));
 
-		iface.excMethod();
+		iface.testExc();
 	}
 
 	@Test
@@ -48,11 +48,11 @@ public class InvocationProxyTest {
 		ArgumentCaptor<Invocation> captor = ArgumentCaptor.forClass(Invocation.class);
 		when(invoker.invoke(any(Invocation.class))).thenReturn(InvocationResult.ok(null));
 
-		iface.indexMethod(1, 2);
+		iface.testIndex(1, 2);
 		verify(invoker).invoke(captor.capture());
 
 		Invocation invocation = captor.getValue();
-		MethodDescriptor method = getIndexMethod();
+		MethodDescriptor<TestInterface, ?> method = TestInterface.TESTINDEX_METHOD;
 		assertEquals(method, invocation.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
@@ -63,7 +63,7 @@ public class InvocationProxyTest {
 		ArgumentCaptor<Invocation> captor = ArgumentCaptor.forClass(Invocation.class);
 		when(invoker.invoke(any(Invocation.class))).thenReturn(InvocationResult.ok(null));
 
-		iface.interfaceMethod(1, 2).stringMethod("hello");
+		iface.testInterface(1, 2).testIndex(3, 4);
 		verify(invoker).invoke(captor.capture());
 
 		List<Invocation> chain = captor.getValue().toChain();
@@ -72,14 +72,10 @@ public class InvocationProxyTest {
 		Invocation invocation0 = chain.get(0);
 		Invocation invocation1 = chain.get(1);
 		assertArrayEquals(new Object[]{1, 2}, invocation0.getArgs());
-		assertArrayEquals(new Object[]{"hello"}, invocation1.getArgs());
+		assertArrayEquals(new Object[]{3, 4}, invocation1.getArgs());
 	}
 
 	private TestInterface createProxy() {
 		return InvocationProxy.create(TestInterface.class, invoker);
-	}
-
-	private MethodDescriptor getIndexMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("indexMethod");
 	}
 }

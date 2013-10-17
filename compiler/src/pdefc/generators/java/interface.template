@@ -34,11 +34,7 @@ package {{ package }};
                     .setPost(true)
                 {% endif %}
                 {% if method.result.is_interface %}
-                    .setResult(new io.pdef.Provider<io.pdef.descriptors.Descriptor<{{ method.result }}>>() {
-                        public io.pdef.descriptors.Descriptor<{{ method.result }}> get() {
-                            return {{ method.result.descriptor }};
-                        }
-                    })
+                    .setInterfaceResult({{ method.result }}.class)
                 {% else %}
                     .setResult({{ method.result.descriptor }})
                 {% endif %}

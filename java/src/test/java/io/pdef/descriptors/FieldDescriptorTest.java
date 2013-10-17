@@ -2,7 +2,7 @@ package io.pdef.descriptors;
 
 import io.pdef.test.inheritance.Base;
 import io.pdef.test.inheritance.PolymorphicType;
-import io.pdef.test.messages.SimpleMessage;
+import io.pdef.test.messages.TestMessage;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -11,16 +11,16 @@ import org.junit.Test;
 public class FieldDescriptorTest {
 	@Test
 	public void test() throws Exception {
-		FieldDescriptor<SimpleMessage, String> aString = SimpleMessage.ASTRING_FIELD;
-		FieldDescriptor<SimpleMessage, Boolean> aBool = SimpleMessage.ABOOL_FIELD;
+		FieldDescriptor<TestMessage, Boolean> bool0 = TestMessage.BOOL0_FIELD;
+		FieldDescriptor<TestMessage, String> string0 = TestMessage.STRING0_FIELD;
 
-		assertEquals("aString", aString.getName());
-		assertEquals(Descriptors.string, aString.getType());
-		assertFalse(aString.isDiscriminator());
+		assertEquals("bool0", bool0.getName());
+		assertEquals(Descriptors.bool, bool0.getType());
+		assertFalse(bool0.isDiscriminator());
 
-		assertEquals("aBool", aBool.getName());
-		assertEquals(Descriptors.bool, aBool.getType());
-		assertFalse(aBool.isDiscriminator());
+		assertEquals("string0", string0.getName());
+		assertEquals(Descriptors.string, string0.getType());
+		assertFalse(string0.isDiscriminator());
 	}
 
 	@Test
@@ -34,20 +34,20 @@ public class FieldDescriptorTest {
 
 	@Test
 	public void testGetSet() throws Exception {
-		SimpleMessage msg = new SimpleMessage();
-		SimpleMessage.ASTRING_FIELD.set(msg, "Hello, world");
-		String s = SimpleMessage.ASTRING_FIELD.get(msg);
+		TestMessage msg = new TestMessage();
+		TestMessage.STRING0_FIELD.set(msg, "Hello, world");
+		String s = TestMessage.STRING0_FIELD.get(msg);
 
 		assertEquals("Hello, world", s);
 	}
 
 	@Test
 	public void testCopy() throws Exception {
-		SimpleMessage msg0 = new SimpleMessage().setAnInt16((short) -16);
-		SimpleMessage msg1 = new SimpleMessage();
+		TestMessage msg0 = new TestMessage().setShort0((short) -16);
+		TestMessage msg1 = new TestMessage();
 
-		SimpleMessage.ANINT16_FIELD.copy(msg0, msg1);
-		assertEquals((short) -16, msg0.getAnInt16());
-		assertEquals((short) -16, msg1.getAnInt16());
+		TestMessage.SHORT0_FIELD.copy(msg0, msg1);
+		assertEquals((short) -16, msg0.getShort0());
+		assertEquals((short) -16, msg1.getShort0());
 	}
 }

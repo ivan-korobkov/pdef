@@ -1,7 +1,7 @@
 package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableList;
-import io.pdef.test.messages.SimpleMessage;
+import io.pdef.test.messages.TestMessage;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -18,9 +18,9 @@ public class ListDescriptorTest {
 
 	@Test
 	public void testCopy() throws Exception {
-		ListDescriptor<SimpleMessage> descriptor = Descriptors.list(SimpleMessage.DESCRIPTOR);
-		List<SimpleMessage> list0 = ImmutableList.of(new SimpleMessage().setAString("hello"));
-		List<SimpleMessage> list1 = descriptor.copy(list0);
+		ListDescriptor<TestMessage> descriptor = Descriptors.list(TestMessage.DESCRIPTOR);
+		List<TestMessage> list0 = ImmutableList.of(new TestMessage().setString0("hello"));
+		List<TestMessage> list1 = descriptor.copy(list0);
 
 
 		assertNull(descriptor.copy(null));

@@ -8,7 +8,7 @@ import io.pdef.descriptors.*;
 import io.pdef.test.inheritance.Base;
 import io.pdef.test.inheritance.MultiLevelSubtype;
 import io.pdef.test.inheritance.PolymorphicType;
-import io.pdef.test.messages.SimpleMessage;
+import io.pdef.test.messages.TestMessage;
 import io.pdef.test.messages.TestEnum;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
@@ -74,10 +74,10 @@ public class NativeFormatTest {
 		List<Map<String, Object>> serialized = Lists.newArrayList();
 		serialized.add(fixtureMap());
 
-		List<SimpleMessage> parsed = Lists.newArrayList();
+		List<TestMessage> parsed = Lists.newArrayList();
 		parsed.add(fixtureMessage());
 
-		ListDescriptor<SimpleMessage> descriptor = Descriptors.list(SimpleMessage.DESCRIPTOR);
+		ListDescriptor<TestMessage> descriptor = Descriptors.list(TestMessage.DESCRIPTOR);
 		testData(descriptor, serialized, parsed);
 	}
 
@@ -86,10 +86,10 @@ public class NativeFormatTest {
 		Set<Map<String, Object>> serialized = Sets.newHashSet();
 		serialized.add(fixtureMap());
 
-		Set<SimpleMessage> parsed = Sets.newHashSet();
+		Set<TestMessage> parsed = Sets.newHashSet();
 		parsed.add(fixtureMessage());
 
-		SetDescriptor<SimpleMessage> descriptor = Descriptors.set(SimpleMessage.DESCRIPTOR);
+		SetDescriptor<TestMessage> descriptor = Descriptors.set(TestMessage.DESCRIPTOR);
 		testData(descriptor, serialized, parsed);
 	}
 
@@ -98,11 +98,11 @@ public class NativeFormatTest {
 		Map<Integer, Map<String, Object>> serialized = Maps.newHashMap();
 		serialized.put(123, fixtureMap());
 
-		Map<Integer, SimpleMessage> parsed = Maps.newHashMap();
+		Map<Integer, TestMessage> parsed = Maps.newHashMap();
 		parsed.put(123, fixtureMessage());
 
-		MapDescriptor<Integer, SimpleMessage> descriptor = Descriptors
-				.map(Descriptors.int32, SimpleMessage.DESCRIPTOR);
+		MapDescriptor<Integer, TestMessage> descriptor = Descriptors
+				.map(Descriptors.int32, TestMessage.DESCRIPTOR);
 		testData(descriptor, serialized, parsed);
 	}
 
@@ -117,9 +117,9 @@ public class NativeFormatTest {
 	@Test
 	public void testMessage() throws Exception {
 		Map<String, Object> serialized = fixtureMap();
-		SimpleMessage parsed = fixtureMessage();
+		TestMessage parsed = fixtureMessage();
 
-		testData(SimpleMessage.DESCRIPTOR, serialized, parsed);
+		testData(TestMessage.DESCRIPTOR, serialized, parsed);
 	}
 
 	@Test
@@ -137,17 +137,17 @@ public class NativeFormatTest {
 		testData(Base.DESCRIPTOR, serialized, parsed);
 	}
 
-	private SimpleMessage fixtureMessage() {
-		return new SimpleMessage()
-				.setABool(true)
-				.setAnInt16((short) 123)
-				.setAString("hello");
+	private TestMessage fixtureMessage() {
+		return new TestMessage()
+				.setBool0(true)
+				.setShort0((short) 123)
+				.setString0("hello");
 	}
 
 	private Map<String, Object> fixtureMap() {
 		return ImmutableMap.<String, Object>of(
-				"aBool", true,
-				"anInt16", (short) 123,
-				"aString", "hello");
+				"bool0", true,
+				"short0", (short) 123,
+				"string0", "hello");
 	}
 }

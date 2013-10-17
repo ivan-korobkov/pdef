@@ -24,8 +24,8 @@ public class RestServerTest {
 				});
 
 		RestRequest request = new RestRequest()
-				.setPath("/remoteMethod")
-				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
+				.setPath("/testRemote")
+				.setQuery(ImmutableMap.of("arg0", "1", "arg1", "2"));
 		String content = RestProtocol.resultDescriptor(Descriptors.int32, null).newInstance()
 				.setSuccess(true)
 				.setData(3)
@@ -50,8 +50,8 @@ public class RestServerTest {
 				});
 
 		RestRequest request = new RestRequest()
-				.setPath("/remoteMethod")
-				.setQuery(ImmutableMap.of("a", "1", "b", "2"));
+				.setPath("/testRemote")
+				.setQuery(ImmutableMap.of("arg0", "1", "arg1", "2"));
 		String content = RestProtocol.resultDescriptor(Descriptors.int32, TestException.DESCRIPTOR)
 				.newInstance()
 				.setSuccess(false)

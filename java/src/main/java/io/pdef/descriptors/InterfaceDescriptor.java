@@ -2,7 +2,6 @@ package io.pdef.descriptors;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -98,24 +97,22 @@ public class InterfaceDescriptor<T> extends Descriptor<T> {
 		}
 	}
 
-	/** Returns an interface descriptor or null. */
+	/** Returns an interface descriptor or throws an IllegalArgumentException. */
 	@Nullable
 	public static <T> InterfaceDescriptor<T> findDescriptor(final Class<T> cls) {
 		if (!cls.isInterface()) {
-			return null;
+			throw new IllegalArgumentException("Interface required, got " + cls);
 		}
 
 		Field field;
 		try {
 			field = cls.getField("DESCRIPTOR");
 		} catch (NoSuchFieldException e) {
-			return null;
+			throw new IllegalArgumentException("No DESCRIPTOR field in " + cls);
 		}
 
-		if (!Modifier.isStatic(field.getModifiers())) {
-			return null;
-		} else if (field.getType() != InterfaceDescriptor.class) {
-			return null;
+		if (field.getType() != InterfaceDescriptor.class) {
+			throw new IllegalArgumentException("Not an InterfaceDescriptor field, " + field);
 		}
 
 		try {

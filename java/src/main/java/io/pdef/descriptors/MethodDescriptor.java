@@ -105,6 +105,15 @@ public class MethodDescriptor<T, R> {
 			return setResult(Providers.<Descriptor<R>>ofInstance(result));
 		}
 
+		public Builder<T, R> setInterfaceResult(final Class<R> interfaceClass) {
+			return setResult(new Provider<Descriptor<R>>() {
+				@Override
+				public Descriptor<R> get() {
+					return InterfaceDescriptor.findDescriptor(interfaceClass);
+				}
+			});
+		}
+
 		public Builder<T, R> setResult(final Provider<Descriptor<R>> result) {
 			this.result = result;
 			return this;

@@ -3,9 +3,9 @@ package io.pdef.descriptors;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import io.pdef.test.inheritance.*;
-import io.pdef.test.messages.ComplexMessage;
-import io.pdef.test.messages.SimpleForm;
-import io.pdef.test.messages.SimpleMessage;
+import io.pdef.test.messages.TestDataTypes;
+import io.pdef.test.messages.TestForm;
+import io.pdef.test.messages.TestMessage;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -14,9 +14,9 @@ import java.util.List;
 public class MessageDescriptorTest {
 	@Test
 	public void test() throws Exception {
-		MessageDescriptor<SimpleMessage> descriptor = SimpleMessage.DESCRIPTOR;
+		MessageDescriptor<TestMessage> descriptor = TestMessage.DESCRIPTOR;
 
-		assertEquals(SimpleMessage.class, descriptor.getJavaClass());
+		assertEquals(TestMessage.class, descriptor.getJavaClass());
 		assertNull(descriptor.getBase());
 		assertNull(descriptor.getDiscriminator());
 		assertNull(descriptor.getDiscriminatorValue());
@@ -26,8 +26,8 @@ public class MessageDescriptorTest {
 
 	@Test
 	public void test_form() throws Exception {
-		MessageDescriptor<SimpleMessage> message = SimpleMessage.DESCRIPTOR;
-		MessageDescriptor<SimpleForm> form = SimpleForm.DESCRIPTOR;
+		MessageDescriptor<TestMessage> message = TestMessage.DESCRIPTOR;
+		MessageDescriptor<TestForm> form = TestForm.DESCRIPTOR;
 
 		assertFalse(message.isForm());
 		assertTrue(form.isForm());
@@ -35,13 +35,13 @@ public class MessageDescriptorTest {
 
 	@Test
 	public void test_nonpolymorphicInheritance() throws Exception {
-		MessageDescriptor<SimpleMessage> base = SimpleMessage.DESCRIPTOR;
-		MessageDescriptor<ComplexMessage> message = ComplexMessage.DESCRIPTOR;
+		MessageDescriptor<TestMessage> base = TestMessage.DESCRIPTOR;
+		MessageDescriptor<TestDataTypes> message = TestDataTypes.DESCRIPTOR;
 
-		assertEquals(ComplexMessage.class, message.getJavaClass());
+		assertEquals(TestDataTypes.class, message.getJavaClass());
 		assertEquals(base, message.getBase());
 
-		List<FieldDescriptor<? super ComplexMessage, ?>> fields = Lists.newArrayList();
+		List<FieldDescriptor<? super TestDataTypes, ?>> fields = Lists.newArrayList();
 		fields.addAll(base.getFields());
 		fields.addAll(message.getDeclaredFields());
 		assertEquals(fields, message.getFields());

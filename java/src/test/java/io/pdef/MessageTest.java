@@ -3,8 +3,8 @@ package io.pdef;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.pdef.test.messages.ComplexMessage;
-import io.pdef.test.messages.SimpleMessage;
+import io.pdef.test.messages.TestDataTypes;
+import io.pdef.test.messages.TestMessage;
 import io.pdef.test.messages.TestEnum;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -21,7 +21,7 @@ public class MessageTest {
 
 	@Test
 	public void testHashCode() throws Exception {
-		ComplexMessage msg = createComplexMessage();
+		TestDataTypes msg = createComplexMessage();
 		int h = msg.hashCode();
 		assertTrue(h != 0);
 		assertEquals(h, createComplexMessage().hashCode());
@@ -38,59 +38,59 @@ public class MessageTest {
 	@Test
 	public void testParse() throws Exception {
 		Map<String, Object> map = createComplexMessageMap();
-		Message msg = ComplexMessage.parseFromMap(map);
+		Message msg = TestDataTypes.parseFromMap(map);
 		Message expected = createComplexMessage();
 		assertEquals(expected, msg);
 	}
 
 	@Test
 	public void testInitNullFields() throws Exception {
-		ComplexMessage message = new ComplexMessage();
-		List<Integer> list = message.getAList();
-		Set<Integer> set = message.getASet();
-		Map<Integer, Float> map = message.getAMap();
-		SimpleMessage simpleMessage = message.getAMessage();
+		TestDataTypes message = new TestDataTypes();
+		List<Integer> list = message.getList0();
+		Set<Integer> set = message.getSet0();
+		Map<Integer, Float> map = message.getMap0();
+		TestMessage testMessage = message.getMessage0();
 
 		assertNotNull(list);
 		assertNotNull(set);
 		assertNotNull(map);
-		assertNotNull(simpleMessage);
+		assertNotNull(testMessage);
 
-		assertSame(list, message.getAList());
-		assertSame(set, message.getASet());
-		assertSame(map, message.getAMap());
-		assertSame(simpleMessage, message.getAMessage());
+		assertSame(list, message.getList0());
+		assertSame(set, message.getSet0());
+		assertSame(map, message.getMap0());
+		assertSame(testMessage, message.getMessage0());
 	}
 
-	private ComplexMessage createComplexMessage() {
-		return new ComplexMessage()
-				.setAnEnum(TestEnum.THREE)
-				.setABool(true)
-				.setAnInt16((short) 16)
-				.setAnInt32(32)
-				.setAnInt64(64L)
-				.setAFloat(1f)
-				.setADouble(2d)
-				.setAString("hello")
-				.setAList(ImmutableList.of(1, 2))
-				.setASet(ImmutableSet.of(1, 2))
-				.setAMap(ImmutableMap.<Integer, Float>of(1, 1.5f))
-				.setAMessage(null);
+	private TestDataTypes createComplexMessage() {
+		return new TestDataTypes()
+				.setEnum0(TestEnum.THREE)
+				.setBool0(true)
+				.setShort0((short) -16)
+				.setInt0(-32)
+				.setLong0(-64L)
+				.setFloat0(-1.5f)
+				.setDouble0(-2.5d)
+				.setString0("hello")
+				.setList0(ImmutableList.of(1, 2))
+				.setSet0(ImmutableSet.of(1, 2))
+				.setMap0(ImmutableMap.<Integer, Float>of(1, 1.5f))
+				.setMessage0(null);
 	}
 
 	private Map<String, Object> createComplexMessageMap() {
 		return ImmutableMap.<String, Object>builder()
-				.put("anEnum", TestEnum.THREE)
-				.put("aBool", true)
-				.put("anInt16", (short) 16)
-				.put("anInt32", 32)
-				.put("anInt64", 64L)
-				.put("aFloat", 1f)
-				.put("aDouble", 2d)
-				.put("aString", "hello")
-				.put("aList", ImmutableList.of(1, 2))
-				.put("aSet", ImmutableSet.of(1, 2))
-				.put("aMap", ImmutableMap.of(1, 1.5f))
+				.put("enum0", TestEnum.THREE)
+				.put("bool0", true)
+				.put("short0", (short) -16)
+				.put("int0", -32)
+				.put("long0", -64L)
+				.put("float0", -1.5f)
+				.put("double0", -2.5d)
+				.put("string0", "hello")
+				.put("list0", ImmutableList.of(1, 2))
+				.put("set0", ImmutableSet.of(1, 2))
+				.put("map0", ImmutableMap.of(1, 1.5f))
 				.build();
 	}
 }

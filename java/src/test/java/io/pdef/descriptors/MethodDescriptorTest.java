@@ -10,24 +10,24 @@ import static org.mockito.Mockito.*;
 public class MethodDescriptorTest {
 	@Test
 	public void testGetName() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.INDEXMETHOD_METHOD;
+		MethodDescriptor<TestInterface, ?> method = TestInterface.TESTINDEX_METHOD;
 		assertNotNull(method);
-		assertEquals("indexMethod", method.getName());
+		assertEquals("testIndex", method.getName());
 	}
 
 	@Test
 	public void testGetExc() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.INDEXMETHOD_METHOD;
+		MethodDescriptor<TestInterface, ?> method = TestInterface.TESTINDEX_METHOD;
 		assertNotNull(method);
 		assertTrue(method.getExc() == TestException.DESCRIPTOR);
 	}
 
 	@Test
 	public void testIndexPostRemote() throws Exception {
-		MethodDescriptor<TestInterface, ?> index = TestInterface.INDEXMETHOD_METHOD;
-		MethodDescriptor<TestInterface, ?> remote = TestInterface.REMOTEMETHOD_METHOD;
-		MethodDescriptor<TestInterface, ?> post = TestInterface.POSTMETHOD_METHOD;
-		MethodDescriptor<TestInterface, ?> iface = TestInterface.INTERFACEMETHOD_METHOD;
+		MethodDescriptor<TestInterface, ?> index = TestInterface.TESTINDEX_METHOD;
+		MethodDescriptor<TestInterface, ?> remote = TestInterface.TESTREMOTE_METHOD;
+		MethodDescriptor<TestInterface, ?> post = TestInterface.TESTPOST_METHOD;
+		MethodDescriptor<TestInterface, ?> iface = TestInterface.TESTINTERFACE_METHOD;
 
 		assertTrue(index.isIndex());
 		assertTrue(index.isRemote());
@@ -48,21 +48,21 @@ public class MethodDescriptorTest {
 
 	@Test
 	public void testInvoke() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.INDEXMETHOD_METHOD;
+		MethodDescriptor<TestInterface, ?> method = TestInterface.TESTINDEX_METHOD;
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
 		method.invoke(object, new Object[] {1, 2});
-		verify(object).indexMethod(1, 2);
+		verify(object).testIndex(1, 2);
 	}
 
 	@Test(expected = TestException.class)
 	public void testInvoke_exception() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.EXCMETHOD_METHOD;
+		MethodDescriptor<TestInterface, ?> method = TestInterface.TESTEXC_METHOD;
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
-		doThrow(new TestException()).when(object).excMethod();
+		doThrow(new TestException()).when(object).testExc();
 
 		method.invoke(object, null);
 	}

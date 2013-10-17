@@ -1,7 +1,7 @@
 package io.pdef.descriptors;
 
 import com.google.common.collect.ImmutableSet;
-import io.pdef.test.messages.SimpleMessage;
+import io.pdef.test.messages.TestMessage;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -18,9 +18,9 @@ public class SetDescriptorTest {
 
 	@Test
 	public void testCopy() throws Exception {
-		SetDescriptor<SimpleMessage> descriptor = Descriptors.set(SimpleMessage.DESCRIPTOR);
-		Set<SimpleMessage> set0 = ImmutableSet.of(new SimpleMessage().setAString("hello"));
-		Set<SimpleMessage> set1 = descriptor.copy(set0);
+		SetDescriptor<TestMessage> descriptor = Descriptors.set(TestMessage.DESCRIPTOR);
+		Set<TestMessage> set0 = ImmutableSet.of(new TestMessage().setString0("hello"));
+		Set<TestMessage> set1 = descriptor.copy(set0);
 
 
 		assertNull(descriptor.copy(null));

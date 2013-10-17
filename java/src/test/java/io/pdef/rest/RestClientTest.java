@@ -54,7 +54,7 @@ public class RestClientTest {
 			}
 		});
 
-		int methodResult = proxy(client).indexMethod(1, 2);
+		int methodResult = proxy(client).testIndex(1, 2);
 		assertEquals(3, methodResult);
 	}
 

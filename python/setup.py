@@ -28,5 +28,16 @@ setup(
     package_dir={'': 'src'},
     py_modules=['pdef.rpc'],
 
-    install_requires=['requests>=1.2']
+    install_requires=['requests>=1.2'],
+
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Internet :: WWW/HTTP',
+        'Topic :: Internet :: WWW/HTTP :: WSGI',
+        'Topic :: Software Development :: Libraries'
+    ]
 )

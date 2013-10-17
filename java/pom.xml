@@ -5,21 +5,45 @@
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.ivankorobkov</groupId>
+	<groupId>io.pdef</groupId>
 	<artifactId>pdef</artifactId>
 	<version>1.0-beta4-SNAPSHOT</version>
 
+	<name>Pdef</name>
+	<description>Java bindings for pdef code-generated files</description>
 	<url>http://github.com/ivan-korobkov/pdef</url>
 
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Ivan Korobkov</name>
+			<email>ivan.korobkov@gmail.com</email>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git@github.com:ivan-korobkov/pdef.git</connection>
+		<developerConnection>scm:git:git@github.com:ivan-korobkov/pdef.git</developerConnection>
+		<url>git@github.com:ivan-korobkov/pdef.git</url>
+	</scm>
+
 	<properties>
+		<!-- Test dependencies -->
 		<junit.version>4.9</junit.version>
 		<mockito.version>1.9.5</mockito.version>
 		<jetty.version>8.1.12.v20130726</jetty.version>
-
-		<jackson.version>2.2.2</jackson.version>
-		<jsr305.version>2.0.1</jsr305.version>
 		<guava.version>14.0.1</guava.version>
 
+		<!-- Runtime dependencies -->
+		<jackson.version>2.2.2</jackson.version>
+		<jsr305.version>2.0.1</jsr305.version>
 		<servlet.version>2.5</servlet.version>
 		<httpcomponents.version>4.2.5</httpcomponents.version>
 	</properties>

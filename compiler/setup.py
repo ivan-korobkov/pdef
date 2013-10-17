@@ -42,4 +42,15 @@ setup(
             'python = pdefc.generators.python:generate'
         ]
     },
+
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Software Development :: Code Generators',
+        'Topic :: Software Development :: Compilers'
+    ]
 )

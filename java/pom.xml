@@ -134,7 +134,7 @@
 									<arg value="generate" />
 									<arg value="--ns=java:pdef:io.pdef" />
 									<arg value="--java=target/generated-test-sources/pdef" />
-									<arg value="../pdef/test" />
+									<arg value="../test" />
 								</exec>
 							</tasks>
 						</configuration>

@@ -1,0 +1,52 @@
+/**
+Test pdef module with messages and forms.
+Multi-line comment.
+*/
+module pdef.test.messages;
+from pdef.test import inheritance;
+
+
+/**
+Enum.
+Multi-line comment.
+*/
+enum TestEnum {
+    ONE, TWO, THREE;
+}
+
+
+/**
+Simple message.
+Multi-line comment.
+*/
+message TestMessage {
+    string0     string;
+    bool0       bool;
+    short0      int16;
+}
+
+
+/** Message with fields of all data types. */
+message TestDataTypes : TestMessage {
+    int0        int32;
+    long0       int64;
+    float0      float;
+    double0     double;
+
+    list0       list<int32>;
+    set0        set<int32>;
+    map0        map<int32, float>;
+
+    enum0       TestEnum;
+    message0    TestMessage;
+    polymorphic inheritance.Base;
+    datatypes   TestDataTypes;
+}
+
+
+@form
+message TestForm {
+    formBool    bool;
+    formString  string;
+    formList    list<int32>;
+}

@@ -1,0 +1,61 @@
+/**
+Test pdef module with interfaces and exceptions.
+Multi-line comment.
+*/
+module pdef.test.interfaces;
+from pdef.test import inheritance, messages;
+
+
+/**
+Test exception.
+Multi-line comment.
+*/
+exception TestException {
+    text    string;
+}
+
+
+/**
+Test interface with method of all types.
+Multi-line comment.
+*/
+@throws(TestException)
+interface TestInterface {
+    /**
+    Returns the sum of the numbers.
+    Multi-line comment.
+    */
+    @index
+    testIndex(arg0 int32, arg1 int32) int32;
+
+    /** Returns the sum of the numbers. */
+    @post
+    testPost(arg0 int32, arg1 int32) int32;
+
+    /** Returns the sum of the numbers. */
+    testRemote(arg0 int32, arg1 int32) int32;
+
+    /** Void method which returns null. */
+    testVoid() void;
+
+    /** Throws a TestException. */
+    testExc() void;
+
+    /** Returns the same string. */
+    testString(text string) string;
+
+    /** Returns the same form. */
+    testForm(form messages.TestForm) messages.TestForm;
+
+    /** Returns the same message. */
+    testMessage(msg messages.TestMessage) messages.TestMessage;
+
+    /** Returns the same polymorphic message. */
+    testPolymorphic(msg inheritance.Base) inheritance.Base;
+
+    /** Returns the total number of items. */
+    testCollections(list0 list<int32>, set0 set<int32>, map0 map<int32, int32>) int32;
+
+    /** Returns the same interface (yes, it's endless). */
+    testInterface(arg0 int32, arg1 int32) TestInterface;
+}

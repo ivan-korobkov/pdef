@@ -11,6 +11,12 @@ class List(Type):
         if not isinstance(element, Type):
             raise TypeError('Element must be a definitions.Type instance, %r' % element)
 
+    def __repr__(self):
+        return '<List %s>' % self.type
+
+    def __str__(self):
+        return 'list<%s>' % self.type
+
     def validate(self):
         errors = []
 
@@ -28,6 +34,12 @@ class Set(Type):
 
         if not isinstance(element, Type):
             raise TypeError('Element must be a definitions.Type instance, %r' % element)
+
+    def __repr__(self):
+        return '<Set %s>' % self.type
+
+    def __str__(self):
+        return 'set<%s>' % self.type
 
     def validate(self):
         errors = []
@@ -50,6 +62,12 @@ class Map(Type):
 
         if not isinstance(value, Type):
             raise TypeError('Value must be a definitions.Type instance, %r' % value)
+
+    def __repr__(self):
+        return '<Map %s, %s>' % (self.key, self.value)
+
+    def __str__(self):
+        return 'map<%s, %s>' % (self.key, self.value)
 
     def validate(self):
         errors = []

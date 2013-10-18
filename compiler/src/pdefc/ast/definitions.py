@@ -1,4 +1,5 @@
 # encoding: utf-8
+import logging
 
 
 class Location(object):
@@ -33,7 +34,9 @@ class Located(object):
 
         if not location or not location.lineno:
             return msg % args
-        return 'Line %s, %s' % (location.lineno, (msg % args))
+        s = 'Line %s, %s' % (location.lineno, (msg % args))
+        logging.debug(s)
+        return s
 
 
 class TypeEnum(object):

@@ -35,7 +35,7 @@ class Interface(Definition):
         method.interface = self
         self.declared_methods.append(method)
 
-        logging.debug('%s: added a method, method=%s', self, method)
+        logging.debug('%s: added a method %r', self, method.name)
 
     def create_method(self, name, result=NativeType.VOID, is_index=False, is_post=False,
                       arg_tuples=None):
@@ -50,6 +50,7 @@ class Interface(Definition):
 
     def link(self, scope):
         '''Link the base, the exception and the methods.'''
+        logging.debug('Linking %s', self)
         errors = []
         errors += self._exc.link(scope)
 
@@ -59,6 +60,7 @@ class Interface(Definition):
         return errors
 
     def validate(self):
+        logging.debug('Validating %s', self)
         errors = []
         errors += self._validate_methods()
         errors += self._validate_exc()
@@ -145,6 +147,7 @@ class Method(Located):
 
         arg.method = self
         self.args.append(arg)
+        logging.debug('%s: added an arg %r', self, arg.name)
 
     def create_arg(self, name, definition):
         '''Create a new arg and add it to this method.'''
@@ -153,6 +156,7 @@ class Method(Located):
         return arg
 
     def link(self, scope):
+        logging.debug('Linking %s', self)
         errors = []
         errors += self._result.link(scope)
 
@@ -162,6 +166,7 @@ class Method(Located):
         return errors
 
     def validate(self):
+        logging.debug('Validating %s', self)
         errors = []
 
         # The method must have a result.

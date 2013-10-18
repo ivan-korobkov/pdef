@@ -96,6 +96,8 @@ class Message(Definition):
             self.base._add_subtype(subtype)
 
     def link(self, scope):
+        logging.debug('Linking %s', self)
+
         errors = []
         errors += self._base.link(scope)
         errors += self._discriminator_value.link(scope)
@@ -106,6 +108,8 @@ class Message(Definition):
         return errors
 
     def build(self):
+        logging.debug('Building %s', self)
+
         # Add this message to base subtypes.
         if self._discriminator_value and self.base:
             self.base._add_subtype(self)
@@ -113,6 +117,8 @@ class Message(Definition):
         return []
 
     def validate(self):
+        logging.debug('Validation %s', self)
+
         errors = []
         errors += self._validate_base()
         if errors:
@@ -262,9 +268,11 @@ class Field(Located):
         return self._type.dereference()
 
     def link(self, scope):
+        logging.debug('Linking %s', self)
         return self._type.link(scope)
 
     def validate(self):
+        logging.debug('Validating %s', self)
         errors = []
 
         if not self.type.is_data_type:

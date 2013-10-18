@@ -86,13 +86,10 @@ class Compiler(object):
 
         errors = package.compile()
         if errors:
-            return errors
+            raise CompilerException('Compilation errors', errors)
 
         t = (time.time() - t0) * 1000
         logging.info('Compiled a package in %dms', t)
-
-        if errors:
-            raise CompilerException('Compilation errors', errors)
 
     def _generate(self, package, name, out, namespaces=None):
         t0 = time.time()

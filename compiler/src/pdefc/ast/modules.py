@@ -60,11 +60,14 @@ class Module(object):
 
         self.imports.append(import0)
         import0.module = self
+        logging.debug('%s: added an import \'%s\'', self, import0)
 
     def add_imported_module(self, alias, module):
         '''Add an imported module to this module.'''
         imported = ImportedModule(alias, module)
         self.imported_modules.append(imported)
+
+        logging.debug('%s: added an imported module %r:%r', self, alias, module)
         return imported
 
     def get_imported_module(self, alias):
@@ -81,7 +84,7 @@ class Module(object):
         self.definitions.append(def0)
         def0.module = self
 
-        logging.debug('%s: added a definition %s', self, def0)
+        logging.debug('%s: added a definition %r', self, def0.name)
 
     def get_definition(self, name):
         '''Find a definition in this module by a name.'''
@@ -93,6 +96,8 @@ class Module(object):
 
     def link(self):
         '''Link imports and definitions and return a list of errors.'''
+        logging.debug('Linking %s as %s', self.path, self)
+
         errors = self._link_imports()
         if errors:
             return self._module_errors(errors)
@@ -129,6 +134,8 @@ class Module(object):
 
     def build(self):
         '''Build definitions and return a list of errors.'''
+        logging.debug('Building %s', self)
+
         errors = []
         for def0 in self.definitions:
             errors += def0.build()
@@ -139,6 +146,7 @@ class Module(object):
 
     def validate(self):
         '''Validate imports and definitions and return a list of errors.'''
+        logging.debug('Validating %s', self)
         errors = []
 
         # Prevent imports with duplicate aliases.
@@ -255,6 +263,8 @@ class AbsoluteImport(AbstractImport):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
     def link(self, package):
+        logging.debug('Linking %s', self)
+
         imodule = package.get_module(self.name)
         if imodule:
             return [ImportedModule(self.name, imodule)], []
@@ -278,6 +288,8 @@ class RelativeImport(AbstractImport):
         return '<%s %s at %s>' % (self.__class__.__name__, self, hex(id(self)))
 
     def link(self, package):
+        logging.debug('Linking \'%s\'', self)
+
         imodules = []
         errors = []
 

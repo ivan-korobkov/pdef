@@ -21,7 +21,7 @@ class Package(object):
         self.modules.append(module)
         module.package = self
 
-        logging.debug('%s: added a module %s', self, module)
+        logging.debug('Added a module %r', module.name)
 
     def get_module(self, name):
         '''Find a module by its name.'''
@@ -31,6 +31,8 @@ class Package(object):
 
     def compile(self):
         '''Compile this package and return a list of errors.'''
+        logging.debug('Compiling the package')
+
         errors = self.link()
         if errors:
             return errors
@@ -47,6 +49,8 @@ class Package(object):
 
     def link(self):
         '''Link this package and return a list of errors.'''
+        logging.debug('Linking the package')
+
         errors = []
 
         # Prevent duplicate module names.
@@ -67,6 +71,8 @@ class Package(object):
 
     def build(self):
         '''Build this package and return a list of errors.'''
+        logging.debug('Building the package')
+
         errors = []
         for module in self.modules:
             errors += module.build()
@@ -74,6 +80,8 @@ class Package(object):
 
     def validate(self):
         '''Validate this package and return a list of errors.'''
+        logging.debug('Validating the package')
+
         errors = []
         for module in self.modules:
             errors += module.validate()

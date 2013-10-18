@@ -1,4 +1,5 @@
 # encoding: utf-8
+import logging
 import pdefc.ast.collects
 from pdefc.ast.definitions import Located, Type
 
@@ -59,7 +60,14 @@ class NameReference(Reference):
         super(NameReference, self).__init__(None, location=location)
         self.name = name
 
+    def __repr__(self):
+        return '<NameReference %r>' % self.name
+
+    def __str__(self):
+        return self.name
+
     def link(self, scope):
+        logging.debug('Linking %s', self)
         self._type = scope(self.name)
         if self._type:
             return []
@@ -74,12 +82,19 @@ class ListReference(Reference):
         self.element = reference(element)
         self._init_type()
 
+    def __repr__(self):
+        return '<ListReference %s>' % self.element
+
+    def __str__(self):
+        return 'list<%s>' % self.element
+
     def _init_type(self):
         if not self.element:
             return
         self._type = pdefc.ast.collects.List(self.element.dereference(), location=self.location)
 
     def link(self, scope):
+        logging.debug('Linking %s', self)
         errors = self.element.link(scope)
         if errors:
             return errors
@@ -88,6 +103,7 @@ class ListReference(Reference):
         return []
 
     def validate(self):
+        logging.debug('Validating %s', self)
         if not self._type:
             return []
         return self._type.validate()
@@ -100,12 +116,19 @@ class SetReference(Reference):
         self.element = reference(element)
         self._init_type()
 
+    def __repr__(self):
+        return '<SetReference %s>' % self.element
+
+    def __str__(self):
+        return 'set<%s>' % self.element
+
     def _init_type(self):
         if not self.element:
             return
         self._type = pdefc.ast.collects.Set(self.element.dereference(), location=self.location)
 
     def link(self, scope):
+        logging.debug('Linking %s', self)
         errors = self.element.link(scope)
         if errors:
             return errors
@@ -114,6 +137,7 @@ class SetReference(Reference):
         return []
 
     def validate(self):
+        logging.debug('Validating %s', self)
         if not self._type:
             return []
         return self._type.validate()
@@ -127,6 +151,12 @@ class MapReference(Reference):
         self.value = reference(value)
         self._init_type()
 
+    def __repr__(self):
+        return '<MapReference %s, %s>' % (self.key, self.value)
+
+    def __str__(self):
+        return 'map<%s, %s>' % (self.key, self.value)
+
     def _init_type(self):
         if not self.key or not self.value:
             return
@@ -134,6 +164,7 @@ class MapReference(Reference):
                                             location=self.location)
 
     def link(self, scope):
+        logging.debug('Linking %s', self)
         errors0 = self.key.link(scope)
         errors1 = self.value.link(scope)
         if errors0 or errors1:
@@ -143,6 +174,7 @@ class MapReference(Reference):
         return []
 
     def validate(self):
+        logging.debug('Validation %s', self)
         if not self._type:
             return []
         return self._type.validate()

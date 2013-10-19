@@ -28,20 +28,23 @@ class TestCli(unittest.TestCase):
             shutil.rmtree(d, ignore_errors=True)
 
     def test_check(self):
-        paths = self._fixture_files()
+        paths = self._fixture_paths()
+        include_path = self._fixture_include_path()
 
-        args = ['check']
+        args = ['check', '--include=' + include_path]
         args += paths
 
         cli = Cli()
         cli.run(args)
 
     def test_generate(self):
-        paths = self._fixture_files()
+        paths = self._fixture_paths()
+        include_path = self._fixture_include_path()
         java = self._tempdir()
         python = self._tempdir()
 
         args = ['generate', '--java=' + java, '--python=' + python]
+        args += ['--include=' + include_path]
         args += paths
 
         compiler = Compiler()
@@ -55,6 +58,10 @@ class TestCli(unittest.TestCase):
 
         assert os.path.exists(os.path.join(java, 'hello/world/Message.java'))
         assert os.path.exists(os.path.join(python, 'hello/world.py'))
+
+        # Includes must not be generated.
+        assert not os.path.exists(os.path.join(java, 'include/world'))
+        assert not os.path.exists(os.path.join(python, 'include/world.py'))
 
     def test_generate_parse_outs(self):
         compiler = Mock()
@@ -91,10 +98,14 @@ class TestCli(unittest.TestCase):
         self.tempdirs.append(path)
         return path
 
-    def _fixture_files(self):
+    def _fixture_paths(self):
         s0 = '''
             module hello.world;
-            message Message {}
+            import include.world;
+
+            message Message {
+                field   include.world.IncludeMessage;
+            }
         '''
 
         s1 = '''
@@ -111,3 +122,15 @@ class TestCli(unittest.TestCase):
             f.write(s1)
 
         return path0, path1
+
+    def _fixture_include_path(self):
+        s = '''
+            module include.world;
+            message IncludeMessage {}
+        '''
+
+        path = self._tempfile()
+        with open(path, 'wt') as f:
+            f.write(s)
+
+        return path

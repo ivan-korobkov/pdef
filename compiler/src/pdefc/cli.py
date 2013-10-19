@@ -28,6 +28,7 @@ class Cli(object):
             # It's an expected exception.
             # Get rid of the traceback.
             logging.error('%s', e)
+            sys.exit(1)
 
     def _parse(self, argv, compiler):
         parser = self._create_parser(compiler)
@@ -79,11 +80,14 @@ class Cli(object):
 
     def _check(self, args, compiler):
         paths = args.paths
-        return compiler.compile(paths)
+        include_paths = args.include_paths
+        return compiler.compile(paths, include_paths=include_paths)
 
     def _check_args(self, subparsers):
         # Check command.
         check = subparsers.add_parser('check', help='check pdef files')
+        check.add_argument('--include', dest='include_paths', action='append', default=[],
+                            help='path to pdef dependencies')
         check.add_argument('paths', metavar='path', nargs='+',
                            help='path to pdef files and directories')
         check.set_defaults(command_func=self._check)
@@ -92,20 +96,24 @@ class Cli(object):
 
     def _generate(self, args, compiler):
         paths = args.paths
+        include_paths = args.include_paths
         outs = self._generate_parse_outs(args, compiler)
         namespaces = self._generate_parse_namespaces(args, compiler)
 
-        return compiler.generate(paths, outs=outs, namespaces=namespaces)
+        return compiler.generate(paths, outs=outs, namespaces=namespaces,
+                                 include_paths=include_paths)
 
     def _generate_args(self, subparsers, compiler):
-        parser = subparsers.add_parser('generate', help='generate source code from pdef files')
-        parser.add_argument('--ns', dest='namespaces', action='append', default=[],
+        generate = subparsers.add_parser('generate', help='generate source code from pdef files')
+        generate.add_argument('--ns', dest='namespaces', action='append', default=[],
                               help='add a language namespace, i.e. "java:pdef.module:io.pdef.java"')
-        parser.add_argument('paths', metavar='path', nargs='+',
-                             help='Path to pdef files and directories')
+        generate.add_argument('--include', dest='include_paths', action='append', default=[],
+                              help='path to pdef dependencies')
+        generate.add_argument('paths', metavar='path', nargs='+',
+                              help='path to pdef files and directories')
 
-        self._generate_args_generators(parser, compiler)
-        parser.set_defaults(command_func=self._generate)
+        self._generate_args_generators(generate, compiler)
+        generate.set_defaults(command_func=self._generate)
 
     def _generate_args_generators(self, parser, compiler):
         for gname, gfactory in compiler.generators.items():

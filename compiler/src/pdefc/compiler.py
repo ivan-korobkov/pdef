@@ -39,21 +39,25 @@ class Compiler(object):
             self._generators = dict(pdefc.find_generators())
         return self._generators
 
-    def compile(self, paths):
+    def compile(self, paths, include_paths=None):
         '''Parse paths into a package, then link, validate and return it.'''
         package = self._parse(paths)
-        self._compile(package)
+
+        if include_paths:
+            another = self.compile(include_paths)
+            package.include(another)
+        
+        errors = package.compile()
+        if errors:
+            raise CompilerException('Compilation errors', errors)
+
         return package
 
-    def generate(self, paths, outs, namespaces=None):
+    def generate(self, paths, outs, namespaces=None, include_paths=None):
         '''Parse a package and generate source code.'''
         namespaces = namespaces or {}
-        package = self.compile(paths)
+        package = self.compile(paths, include_paths=include_paths)
 
-        self.generate_package(package, outs, namespaces=namespaces)
-
-    def generate_package(self, package, outs, namespaces=None):
-        '''Generate source code for a package.'''
         for gname, gout in outs.items():
             gnamespaces = namespaces.get(gname)
             self._generate(package, gname, out=gout, namespaces=gnamespaces)
@@ -80,16 +84,6 @@ class Compiler(object):
             raise CompilerException('Parsing errors', errors)
 
         return package
-
-    def _compile(self, package):
-        t0 = time.time()
-
-        errors = package.compile()
-        if errors:
-            raise CompilerException('Compilation errors', errors)
-
-        t = (time.time() - t0) * 1000
-        logging.info('Compiled a package in %dms', t)
 
     def _generate(self, package, name, out, namespaces=None):
         t0 = time.time()

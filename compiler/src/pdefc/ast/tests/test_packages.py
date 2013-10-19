@@ -16,6 +16,17 @@ class TestPackage(unittest.TestCase):
         assert package.modules == [module]
         assert package.get_module('package.module') is module
 
+    def test_include_package_get_module(self):
+        module = Module('included.module')
+        package_to_include = Package()
+        package_to_include.add_module(module)
+
+        package = Package()
+        package.include(package_to_include)
+
+        assert package.get_module('included.module') is module
+        assert package.modules == []
+
     def test_link__duplicate_modules(self):
         module0 = Module('package.module')
         module1 = Module('package.module')
@@ -27,6 +38,18 @@ class TestPackage(unittest.TestCase):
 
         assert len(errors) == 1
         assert 'Duplicate module' in errors[0]
+
+    def test_link__module_clashes_with_included_one(self):
+        module = Module('module')
+        included = Module('module')
+
+        package = Package()
+        package.add_module(module)
+        package.include_module(included)
+        errors = package.link()
+
+        assert len(errors) == 1
+        assert 'Module clashes with an included module' in errors[0]
 
     def test_build(self):
         enum = Enum('Enum')

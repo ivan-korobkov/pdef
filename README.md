@@ -3,7 +3,11 @@ Pdef
 Pdef is an interface definition language with clear separation between data structures and
 interfaces, support for object-oriented APIs and inheritance with JSON and REST(ish) as a default
 format and an RPC implementation. Pdef has been influenced by Google Protobuf and Apache Thrift.
-The language is a statically typed. JSON format and REST RPC are weakly typed.
+The language is statically typed. JSON format and REST RPC are weakly typed.
+
+Pdef is suitable for public APIs, internal service-oriented APIs, config files, a format for cache,
+message queues, logs, etc. Pdef is in general about interfaces and data structures.
+
 
 Copyright: 2013 Ivan Korobkov <ivan.korobkov@gmail.com>
 

@@ -76,11 +76,11 @@ public class Invocation {
 	@Nullable
 	public MessageDescriptor<?> getExc() {
 		MessageDescriptor<?> exc = method.getExc();
-		if (exc == null) {
-			exc = parent.getExc();
+		if (exc != null) {
+			return exc;
 		}
 
-		return exc;
+		return parent == null ? null : parent.getExc();
 	}
 
 	/** Returns true when the method result is not an interface. */

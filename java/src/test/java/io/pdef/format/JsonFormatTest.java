@@ -48,7 +48,7 @@ public class JsonFormatTest {
 
 	@Test
 	public void testInt64() throws Exception {
-		test(Descriptors.int64, -64L, "-64");
+		test(Descriptors.int64, Long.MIN_VALUE, String.valueOf(Long.MIN_VALUE));
 	}
 
 	@Test

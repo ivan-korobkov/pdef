@@ -325,9 +325,8 @@ public class JsonFormat {
 			case VALUE_STRING:
 				return parser.getValueAsString();
 			case VALUE_NUMBER_INT:
-				return parser.getIntValue();
 			case VALUE_NUMBER_FLOAT:
-				return parser.getDoubleValue();
+				return parser.getNumberValue();
 			case START_ARRAY:
 				return readArray(parser);
 			case START_OBJECT:

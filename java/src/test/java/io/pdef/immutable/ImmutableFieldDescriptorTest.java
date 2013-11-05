@@ -13,8 +13,8 @@ import org.junit.Test;
 public class ImmutableFieldDescriptorTest {
 	@Test
 	public void test() throws Exception {
-		FieldDescriptor<?, ?> bool0 = TestMessage.DESCRIPTOR.getFieldMap().get("bool0");
-		FieldDescriptor<?, ?> string0 = TestMessage.DESCRIPTOR.getFieldMap().get("string0");
+		FieldDescriptor<?, ?> bool0 = TestMessage.DESCRIPTOR.getField("bool0");
+		FieldDescriptor<?, ?> string0 = TestMessage.DESCRIPTOR.getField("string0");
 
 		assertEquals("bool0", bool0.getName());
 		assertEquals(Descriptors.bool, bool0.getType());
@@ -27,7 +27,7 @@ public class ImmutableFieldDescriptorTest {
 
 	@Test
 	public void testDiscriminator() throws Exception {
-		FieldDescriptor<?, ?> field = Base.DESCRIPTOR.getFieldMap().get("type");
+		FieldDescriptor<?, ?> field = Base.DESCRIPTOR.getField("type");
 
 		assertEquals("type", field.getName());
 		assertEquals(PolymorphicType.DESCRIPTOR, field.getType());
@@ -57,7 +57,7 @@ public class ImmutableFieldDescriptorTest {
 
 	@SuppressWarnings("unchecked")
 	private FieldDescriptor<? super TestMessage, String> stringField() {
-		return (FieldDescriptor<? super TestMessage, String>) TestMessage.DESCRIPTOR.getFieldMap()
-				.get("string0");
+		return (FieldDescriptor<? super TestMessage, String>)
+				TestMessage.DESCRIPTOR.getField("string0");
 	}
 }

@@ -446,22 +446,22 @@ public class RestProtocolTest {
 	}
 
 	private MethodDescriptor<?, ?> postMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testPost");
+		return TestInterface.DESCRIPTOR.getMethod("testPost");
 	}
 
 	private MethodDescriptor<?, ?> remoteMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testRemote");
+		return TestInterface.DESCRIPTOR.getMethod("testRemote");
 	}
 
 	private MethodDescriptor<?, ?> interfaceMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testInterface");
+		return TestInterface.DESCRIPTOR.getMethod("testInterface");
 	}
 
 	private MethodDescriptor<?, ?> indexMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testIndex");
+		return TestInterface.DESCRIPTOR.getMethod("testIndex");
 	}
 
 	private MethodDescriptor<?, ?> stringMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testString");
+		return TestInterface.DESCRIPTOR.getMethod("testString");
 	}
 }

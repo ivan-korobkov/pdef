@@ -17,8 +17,10 @@ public class ImmutableMessageDescriptor<M extends Message> extends AbstractDataD
 
 	private final Enum<?> discriminatorValue;
 	private final FieldDescriptor<? super M, ?> discriminator;
+
 	private final List<Provider<MessageDescriptor<? extends M>>> subtypeProviders;
 	private Set<MessageDescriptor<? extends M>> subtypes;
+	private Map<Enum<?>, MessageDescriptor<? extends M>> subtypeMap;
 
 	private final boolean form;
 
@@ -49,6 +51,12 @@ public class ImmutableMessageDescriptor<M extends Message> extends AbstractDataD
 		return base;
 	}
 
+	@Nullable
+	@Override
+	public FieldDescriptor<? super M, ?> getField(final String name) {
+		return fieldMap.get(name);
+	}
+
 	@Override
 	public boolean isPolymorphic() {
 		return discriminator != null;
@@ -65,18 +73,34 @@ public class ImmutableMessageDescriptor<M extends Message> extends AbstractDataD
 	}
 
 	@Override
+	public MessageDescriptor<? extends M> getSubtype(@Nullable final Enum<?> discriminatorValue) {
+		if (subtypeMap == null) {
+			getSubtypes();
+		}
+		return subtypeMap.get(discriminatorValue);
+	}
+
+	@Override
 	public Set<MessageDescriptor<? extends M>> getSubtypes() {
 		if (subtypes != null) {
 			return subtypes;
 		}
 
-		Set<MessageDescriptor<? extends M>> set = new HashSet<MessageDescriptor<? extends M>>();
+		Set<MessageDescriptor<? extends M>> list = new HashSet<MessageDescriptor<? extends M>>();
 		for (Provider<MessageDescriptor<? extends M>> provider : subtypeProviders) {
 			MessageDescriptor<? extends M> subtype = provider.get();
-			set.add(subtype);
+			list.add(subtype);
 		}
 
-		return (subtypes = ImmutableCollections.set(set));
+		Map<Enum<?>, MessageDescriptor<? extends M>> map = new HashMap<Enum<?>,
+				MessageDescriptor<? extends M>>();
+		for (MessageDescriptor<? extends M> subtype : list) {
+			map.put(subtype.getDiscriminatorValue(), subtype);
+		}
+
+		subtypes = ImmutableCollections.set(list);
+		subtypeMap = ImmutableCollections.map(map);
+		return subtypes;
 	}
 
 	@Override
@@ -90,30 +114,8 @@ public class ImmutableMessageDescriptor<M extends Message> extends AbstractDataD
 	}
 
 	@Override
-	public Map<String, FieldDescriptor<? super M, ?>> getFieldMap() {
-		return fieldMap;
-	}
-
-	@Override
 	public boolean isForm() {
 		return form;
-	}
-
-	@Override
-	public MessageDescriptor<M> findSubtypeOrThis(@Nullable final Object discriminatorValue) {
-		if (discriminatorValue == null) {
-			return this;
-		}
-
-		for (MessageDescriptor<? extends M> subtype : getSubtypes()) {
-			if (discriminatorValue.equals(subtype.getDiscriminatorValue())) {
-				@SuppressWarnings("unchecked")
-				MessageDescriptor<M> result = (MessageDescriptor<M>) subtype;
-				return result;
-			}
-		}
-
-		return this;
 	}
 
 	// Message methods.

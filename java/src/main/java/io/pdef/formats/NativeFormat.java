@@ -326,7 +326,7 @@ public class NativeFormat {
 		if (input instanceof Enum<?>) {
 			return descriptor.getJavaClass().cast(input);
 		} else if (input instanceof String) {
-			return descriptor.getNamesToValues().get(((String) input).toUpperCase());
+			return descriptor.getValue((String) input);
 		}
 		throw new FormatException("Cannot parse an enum from " + input);
 	}
@@ -344,8 +344,12 @@ public class NativeFormat {
 		if (discriminator != null) {
 			Object fieldValue = map.get(discriminator.getName());
 			if (fieldValue != null) {
-				Object discriminatorValue = doParse(discriminator.getType(), fieldValue);
-				descriptor = descriptor.findSubtypeOrThis(discriminatorValue);
+				Enum<?> discriminatorValue = (Enum<?>) doParse(discriminator.getType(), fieldValue);
+				@SuppressWarnings("unchecked")
+				MessageDescriptor<M> subtype = (MessageDescriptor<M>) descriptor
+						.getSubtype(discriminatorValue);
+
+				descriptor = subtype != null ? subtype : descriptor;
 			}
 		}
 

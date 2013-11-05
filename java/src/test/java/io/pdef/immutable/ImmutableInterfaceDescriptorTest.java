@@ -25,7 +25,7 @@ public class ImmutableInterfaceDescriptorTest {
 	@Test
 	public void testFindMethod() throws Exception {
 		MethodDescriptor<TestInterface, ?> expected = indexMethod();
-		MethodDescriptor<TestInterface, ?> method = descriptor.findMethod("testIndex");
+		MethodDescriptor<TestInterface, ?> method = descriptor.getMethod("testIndex");
 
 		assertEquals(expected, method);
 	}
@@ -43,6 +43,6 @@ public class ImmutableInterfaceDescriptorTest {
 	}
 
 	private MethodDescriptor<TestInterface, ?> indexMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testIndex");
+		return TestInterface.DESCRIPTOR.getMethod("testIndex");
 	}
 }

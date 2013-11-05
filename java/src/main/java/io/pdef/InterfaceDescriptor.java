@@ -5,6 +5,12 @@ import java.util.List;
 
 public interface InterfaceDescriptor<T> extends Descriptor<T> {
 	/**
+	 * Returns a method descriptor by its name and returns it or {@literal null}.
+	 */
+	@Nullable
+	MethodDescriptor<T, ?> getMethod(String name);
+
+	/**
 	 * Returns a list of method descriptors or an empty list.
 	 */
 	List<MethodDescriptor<T, ?>> getMethods();
@@ -20,10 +26,4 @@ public interface InterfaceDescriptor<T> extends Descriptor<T> {
 	 */
 	@Nullable
 	MethodDescriptor<T, ?> getIndexMethod();
-
-	/**
-	 * Finds a method descriptor by its name and returns it or {@literal null}.
-	 */
-	@Nullable
-	MethodDescriptor<T, ?> findMethod(String name);
 }

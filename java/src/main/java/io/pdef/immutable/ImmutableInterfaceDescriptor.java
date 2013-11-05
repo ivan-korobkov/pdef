@@ -4,19 +4,23 @@ import io.pdef.*;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ImmutableInterfaceDescriptor<T> extends AbstractDescriptor<T>
 		implements InterfaceDescriptor<T> {
 	private final List<MethodDescriptor<T, ?>> methods;
+	private final Map<String, MethodDescriptor<T, ?>> methodMap;
 	private final MessageDescriptor<?> exc;
 	private final MethodDescriptor<T, ?> indexMethod;
 
 	private ImmutableInterfaceDescriptor(final Builder<T> builder) {
 		super(TypeEnum.INTERFACE, builder.javaClass);
-		this.exc = builder.exc;
-		this.methods = ImmutableCollections.list(builder.methods);
-		this.indexMethod = findIndexMethod(methods);
+		exc = builder.exc;
+		methods = ImmutableCollections.list(builder.methods);
+		methodMap = ImmutableCollections.map(methodsToMap(methods));
+		indexMethod = findIndexMethod(methods);
 	}
 
 	public static <T> Builder<T> builder() {
@@ -47,14 +51,8 @@ public class ImmutableInterfaceDescriptor<T> extends AbstractDescriptor<T>
 
 	@Override
 	@Nullable
-	public MethodDescriptor<T, ?> findMethod(final String name) {
-		for (MethodDescriptor<T, ?> method : getMethods()) {
-			if (method.getName().equals(name)) {
-				return method;
-			}
-		}
-
-		return null;
+	public MethodDescriptor<T, ?> getMethod(final String name) {
+		return methodMap.get(name);
 	}
 
 	public static class Builder<T> {
@@ -84,6 +82,15 @@ public class ImmutableInterfaceDescriptor<T> extends AbstractDescriptor<T>
 		public InterfaceDescriptor<T> build() {
 			return new ImmutableInterfaceDescriptor<T>(this);
 		}
+	}
+
+	private static <T> Map<String, MethodDescriptor<T, ?>> methodsToMap(
+			final List<MethodDescriptor<T, ?>> methods) {
+		Map<String, MethodDescriptor<T, ?>> map = new HashMap<String, MethodDescriptor<T, ?>>();
+		for (MethodDescriptor<T, ?> method : methods) {
+			map.put(method.getName(), method);
+		}
+		return map;
 	}
 
 	private static <T> MethodDescriptor<T, ?> findIndexMethod(

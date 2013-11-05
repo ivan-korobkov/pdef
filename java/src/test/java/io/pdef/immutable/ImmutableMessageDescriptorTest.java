@@ -56,7 +56,7 @@ public class ImmutableMessageDescriptorTest {
 		MessageDescriptor<Subtype> subtype = Subtype.DESCRIPTOR;
 		MessageDescriptor<Subtype2> subtype2 = Subtype2.DESCRIPTOR;
 		MessageDescriptor<MultiLevelSubtype> msubtype = MultiLevelSubtype.DESCRIPTOR;
-		FieldDescriptor<? super Base, ?> discriminator = base.getFieldMap().get("type");
+		FieldDescriptor<? super Base, ?> discriminator = base.getField("type");
 
 		assertNull(base.getBase());
 		assertEquals(base, subtype.getBase());
@@ -78,10 +78,10 @@ public class ImmutableMessageDescriptorTest {
 		assertTrue(subtype2.getSubtypes().isEmpty());
 		assertTrue(msubtype.getSubtypes().isEmpty());
 
-		assertEquals(base, base.findSubtypeOrThis(null));
-		assertEquals(subtype, base.findSubtypeOrThis(PolymorphicType.SUBTYPE));
-		assertEquals(subtype2, base.findSubtypeOrThis(PolymorphicType.SUBTYPE2));
-		assertEquals(msubtype, base.findSubtypeOrThis(PolymorphicType.MULTILEVEL_SUBTYPE));
-		assertEquals(msubtype, subtype.findSubtypeOrThis(PolymorphicType.MULTILEVEL_SUBTYPE));
+		assertNull(base.getSubtype(null));
+		assertEquals(subtype, base.getSubtype(PolymorphicType.SUBTYPE));
+		assertEquals(subtype2, base.getSubtype(PolymorphicType.SUBTYPE2));
+		assertEquals(msubtype, base.getSubtype(PolymorphicType.MULTILEVEL_SUBTYPE));
+		assertEquals(msubtype, subtype.getSubtype(PolymorphicType.MULTILEVEL_SUBTYPE));
 	}
 }

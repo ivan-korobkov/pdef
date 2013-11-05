@@ -33,8 +33,12 @@ public class ImmutableEnumDescriptor<T extends Enum<T>> extends AbstractDataDesc
 	}
 
 	@Override
-	public Map<String, T> getNamesToValues() {
-		return namesToValues;
+	public T getValue(final String name) {
+		if (name == null) {
+			return null;
+		}
+		String uppercased = name.toUpperCase();
+		return namesToValues.get(uppercased);
 	}
 
 	@Override

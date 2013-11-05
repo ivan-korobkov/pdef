@@ -188,7 +188,7 @@ public class RestProtocol {
 			String part = parts.removeFirst();
 
 			// Find a method by name .
-			MethodDescriptor<?, ?> method = descriptor.findMethod(part);
+			MethodDescriptor<?, ?> method = descriptor.getMethod(part);
 			if (method == null) {
 				// Try to get an index method, if it is not found by a name.
 				method = descriptor.getIndexMethod();
@@ -295,8 +295,12 @@ public class RestProtocol {
 				FieldDescriptor<? super Message, ?> field = mdescriptor.getDiscriminator();
 				assert field != null;
 				String serialized = src.get(field.getName());
-				Object value = parseFromJson(field.getType(), serialized);
-				mdescriptor = mdescriptor.findSubtypeOrThis(value);
+				Enum<?> value = (Enum<?>) parseFromJson(field.getType(), serialized);
+
+				@SuppressWarnings("unchecked")
+				MessageDescriptor<Message> subtype = (MessageDescriptor<Message>) mdescriptor
+						.getSubtype(value);
+				mdescriptor = subtype != null ? subtype : mdescriptor;
 			}
 
 			Message message = mdescriptor.newInstance();

@@ -26,9 +26,10 @@ public class ImmutableMethodDescriptorTest {
 	@Test
 	public void testIndexPostRemote() throws Exception {
 		MethodDescriptor<TestInterface, ?> index = indexMethod();
-		MethodDescriptor<TestInterface, ?> remote = TestInterface.DESCRIPTOR.findMethod("testRemote");
-		MethodDescriptor<TestInterface, ?> post = TestInterface.DESCRIPTOR.findMethod("testPost");
-		MethodDescriptor<TestInterface, ?> iface = TestInterface.DESCRIPTOR.findMethod("testInterface");
+		MethodDescriptor<TestInterface, ?> remote = TestInterface.DESCRIPTOR.getMethod("testRemote");
+		MethodDescriptor<TestInterface, ?> post = TestInterface.DESCRIPTOR.getMethod("testPost");
+		MethodDescriptor<TestInterface, ?> iface = TestInterface.DESCRIPTOR.getMethod(
+				"testInterface");
 
 		assertTrue(index.isIndex());
 		assertTrue(index.isRemote());
@@ -59,7 +60,7 @@ public class ImmutableMethodDescriptorTest {
 
 	@Test(expected = TestException.class)
 	public void testInvoke_exception() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.findMethod("testExc");
+		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.getMethod("testExc");
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
@@ -69,6 +70,6 @@ public class ImmutableMethodDescriptorTest {
 	}
 
 	private MethodDescriptor<TestInterface, ?> indexMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testIndex");
+		return TestInterface.DESCRIPTOR.getMethod("testIndex");
 	}
 }

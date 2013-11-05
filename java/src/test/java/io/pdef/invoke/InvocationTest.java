@@ -121,22 +121,22 @@ public class InvocationTest {
 	}
 
 	private MethodDescriptor<?, ?> indexMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testIndex");
+		return TestInterface.DESCRIPTOR.getMethod("testIndex");
 	}
 
 	private MethodDescriptor<?, ?> messageMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testMessage");
+		return TestInterface.DESCRIPTOR.getMethod("testMessage");
 	}
 
 	private MethodDescriptor<?, ?> interfaceMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testInterface");
+		return TestInterface.DESCRIPTOR.getMethod("testInterface");
 	}
 
 	private MethodDescriptor<?, ?> stringMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testString");
+		return TestInterface.DESCRIPTOR.getMethod("testString");
 	}
 
 	private MethodDescriptor<?, ?> excMethod() {
-		return TestInterface.DESCRIPTOR.findMethod("testExc");
+		return TestInterface.DESCRIPTOR.getMethod("testExc");
 	}
 }

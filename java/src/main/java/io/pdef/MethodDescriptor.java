@@ -11,7 +11,7 @@ public interface MethodDescriptor<T, R> extends MethodInvoker<T, R> {
 	/**
 	 * Returns this method result descriptor.
 	 *
-	 * It can be a {@link DataDescriptor} if the method is terminal or {@link
+	 * It can be a {@link DataDescriptor} if this method is terminal or {@link
 	 * InterfaceDescriptor} otherwise.
 	 */
 	Descriptor<R> getResult();

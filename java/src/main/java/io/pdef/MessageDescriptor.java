@@ -2,7 +2,6 @@ package io.pdef;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public interface MessageDescriptor<M extends Message> extends DataDescriptor<M> {
@@ -13,9 +12,10 @@ public interface MessageDescriptor<M extends Message> extends DataDescriptor<M> 
 	MessageDescriptor getBase();
 
 	/**
-	 * Returns a list of fields declared in this message (not in a base) or an empty list.
+	 * Returns a field descriptor by its name or {@literal null}.
 	 */
-	List<FieldDescriptor<M, ?>> getDeclaredFields();
+	@Nullable
+	FieldDescriptor<? super M, ?> getField(String name);
 
 	/**
 	 * Returns a list of field declared in this message and in its base or an empty list.
@@ -23,9 +23,9 @@ public interface MessageDescriptor<M extends Message> extends DataDescriptor<M> 
 	List<FieldDescriptor<? super M, ?>> getFields();
 
 	/**
-	 * Returns a map of field names to fields or an empty map.
+	 * Returns a list of fields declared in this message (not in a base) or an empty list.
 	 */
-	Map<String, FieldDescriptor<? super M, ?>> getFieldMap();
+	List<FieldDescriptor<M, ?>> getDeclaredFields();
 
 	/**
 	 * Returns whether this message has a discriminator field.
@@ -45,14 +45,14 @@ public interface MessageDescriptor<M extends Message> extends DataDescriptor<M> 
 	FieldDescriptor<? super M, ?> getDiscriminator();
 
 	/**
+	 * Returns a subtype descriptor by its discriminator value or {@literal null}.
+	 */
+	MessageDescriptor<? extends M> getSubtype(@Nullable Enum<?> discriminatorValue);
+
+	/**
 	 * Returns this message subtypes (including their subtypes) or an empty set.
 	 */
 	Set<MessageDescriptor<? extends M>> getSubtypes();
-
-	/**
-	 * Finds a subtype descriptor by an enum value and returns it or this message descriptor.
-	 */
-	MessageDescriptor<M> findSubtypeOrThis(@Nullable Object discriminatorValue);
 
 	/**
 	 * Returns whether this message is a form.

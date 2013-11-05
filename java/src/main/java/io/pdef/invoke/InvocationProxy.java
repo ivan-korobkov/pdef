@@ -46,7 +46,7 @@ public class InvocationProxy<T> implements InvocationHandler {
 	public Object invoke(final Object proxy, final Method method, final Object[] args)
 			throws Throwable {
 		String name = method.getName();
-		MethodDescriptor md = descriptor.findMethod(name);
+		MethodDescriptor md = descriptor.getMethod(name);
 		if (md == null) {
 			// It must be the equals, hashCode, etc. method.
 			return method.invoke(this, args);

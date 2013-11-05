@@ -1,9 +1,8 @@
 package io.pdef;
 
-import io.pdef.descriptors.FieldDescriptor;
-import io.pdef.descriptors.MessageDescriptor;
-import io.pdef.format.JsonFormat;
-import io.pdef.format.NativeFormat;
+import io.pdef.formats.JsonFormat;
+import io.pdef.formats.NativeFormat;
+import io.pdef.immutable.ImmutableMessageDescriptor;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -15,8 +14,8 @@ public abstract class AbstractMessage implements Message, Serializable {
 	protected AbstractMessage() {}
 
 	@SuppressWarnings("unchecked")
-	private MessageDescriptor<Message> thisDescriptor() {
-		return (MessageDescriptor<Message>) descriptor();
+	private ImmutableMessageDescriptor<Message> thisDescriptor() {
+		return (ImmutableMessageDescriptor<Message>) descriptor();
 	}
 
 	@Override

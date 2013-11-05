@@ -1,9 +1,6 @@
 package io.pdef.rest;
 
-import io.pdef.Provider;
-import io.pdef.descriptors.DataDescriptor;
-import io.pdef.descriptors.InterfaceDescriptor;
-import io.pdef.descriptors.MessageDescriptor;
+import io.pdef.*;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
 import io.pdef.invoke.Invoker;
@@ -18,7 +15,7 @@ public class RestServer<T> implements RestHandler {
 		if (cls == null) throw new NullPointerException("cls");
 		if (invoker == null) throw new NullPointerException("invoker");
 
-		this.descriptor = InterfaceDescriptor.findDescriptor(cls);
+		this.descriptor = Descriptors.findInterfaceDescriptor(cls);
 		this.invoker = invoker;
 		protocol = new RestProtocol();
 

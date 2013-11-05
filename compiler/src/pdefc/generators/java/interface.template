@@ -23,8 +23,8 @@ package {{ package }};
 
 {% endfor %}
 {% for method in declared_methods %}
-    static final io.pdef.descriptors.MethodDescriptor<{{ name }}, {{ method.result.boxed }}> {{ method.name|upper }}_METHOD =
-            io.pdef.descriptors.MethodDescriptor.<{{ name }}, {{ method.result.boxed }}>builder()
+    static final io.pdef.MethodDescriptor<{{ name }}, {{ method.result.boxed }}> {{ method.name|upper }}_METHOD =
+            io.pdef.immutable.ImmutableMethodDescriptor.<{{ name }}, {{ method.result.boxed }}>builder()
                     .setName("{{ method.name }}")
                     .setInvokerFrom({{ name }}.class)
                 {% if method.is_index %}
@@ -47,8 +47,8 @@ package {{ package }};
                     .build();
 
     {% endfor %}
-    static io.pdef.descriptors.InterfaceDescriptor<{{ name }}> DESCRIPTOR =
-            io.pdef.descriptors.InterfaceDescriptor.<{{ name }}>builder()
+    static io.pdef.InterfaceDescriptor<{{ name }}> DESCRIPTOR =
+            io.pdef.immutable.ImmutableInterfaceDescriptor.<{{ name }}>builder()
                     .setJavaClass({{ name }}.class)
                 {% if exc %}
                     .setExc({{ exc.descriptor }})

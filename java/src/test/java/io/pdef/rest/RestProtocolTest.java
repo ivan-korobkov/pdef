@@ -4,9 +4,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Atomics;
-import io.pdef.descriptors.ArgumentDescriptor;
-import io.pdef.descriptors.Descriptors;
-import io.pdef.descriptors.MessageDescriptor;
+import io.pdef.ArgumentDescriptor;
+import io.pdef.Descriptors;
+import io.pdef.MessageDescriptor;
+import io.pdef.immutable.ImmutableArgumentDescriptor;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationProxy;
 import io.pdef.invoke.InvocationResult;
@@ -119,7 +120,7 @@ public class RestProtocolTest {
 
 	@Test
 	public void testSerializePathArgument() throws Exception {
-		ArgumentDescriptor<String> argd = ArgumentDescriptor
+		ArgumentDescriptor<String> argd = ImmutableArgumentDescriptor
 				.of("arg", Descriptors.string);
 
 		String value = format.serializePathArgument(argd, "Привет");
@@ -128,7 +129,7 @@ public class RestProtocolTest {
 
 	@Test
 	public void testSerializeParam() throws Exception {
-		ArgumentDescriptor<Integer> argd = ArgumentDescriptor
+		ArgumentDescriptor<Integer> argd = ImmutableArgumentDescriptor
 				.of("arg", Descriptors.int32);
 
 		Map<String, String> dst = Maps.newHashMap();
@@ -138,7 +139,8 @@ public class RestProtocolTest {
 
 	@Test
 	public void testSerializeParam_form() throws Exception {
-		ArgumentDescriptor<TestForm> argd = ArgumentDescriptor.of("arg", TestForm.DESCRIPTOR);
+		ArgumentDescriptor<TestForm> argd = ImmutableArgumentDescriptor
+				.of("arg", TestForm.DESCRIPTOR);
 
 		Map<String, String> dst = Maps.newHashMap();
 		TestForm msg = new TestForm()
@@ -312,7 +314,7 @@ public class RestProtocolTest {
 
 	@Test
 	public void testParsePathArgument() throws Exception {
-		ArgumentDescriptor<String> argd = ArgumentDescriptor
+		ArgumentDescriptor<String> argd = ImmutableArgumentDescriptor
 				.of("arg", Descriptors.string);
 		String part = "%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82";
 
@@ -322,7 +324,7 @@ public class RestProtocolTest {
 
 	@Test
 	public void testParseParam() throws Exception {
-		ArgumentDescriptor<TestMessage> argd = ArgumentDescriptor.of("arg",
+		ArgumentDescriptor<TestMessage> argd = ImmutableArgumentDescriptor.of("arg",
 				TestMessage.DESCRIPTOR);
 
 		TestMessage expected = new TestMessage()
@@ -337,7 +339,7 @@ public class RestProtocolTest {
 
 	@Test
 	public void testParseQueryArg_form() throws Exception {
-		ArgumentDescriptor<TestForm> argd = ArgumentDescriptor
+		ArgumentDescriptor<TestForm> argd = ImmutableArgumentDescriptor
 				.of("arg", TestForm.DESCRIPTOR);
 
 		TestForm expected = new TestForm()

@@ -1,7 +1,8 @@
 package io.pdef.invoke;
 
-import io.pdef.descriptors.InterfaceDescriptor;
-import io.pdef.descriptors.MethodDescriptor;
+import io.pdef.Descriptors;
+import io.pdef.InterfaceDescriptor;
+import io.pdef.MethodDescriptor;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationHandler;
@@ -19,7 +20,7 @@ public class InvocationProxy<T> implements InvocationHandler {
 		if (cls == null) throw new NullPointerException("cls");
 		if (invoker == null) throw new NullPointerException("invocationHandler");
 
-		InterfaceDescriptor<T> descriptor = InterfaceDescriptor.findDescriptor(cls);
+		InterfaceDescriptor<T> descriptor = Descriptors.findInterfaceDescriptor(cls);
 		if (descriptor == null) {
 			throw new IllegalArgumentException("Cannot find an interface descriptor in " + cls);
 		}

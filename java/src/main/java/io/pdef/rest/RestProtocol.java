@@ -1,8 +1,8 @@
 package io.pdef.rest;
 
-import io.pdef.Message;
-import io.pdef.descriptors.*;
-import io.pdef.format.JsonFormat;
+import io.pdef.*;
+import io.pdef.formats.JsonFormat;
+import io.pdef.immutable.*;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationResult;
 
@@ -87,7 +87,7 @@ public class RestProtocol {
 		}
 
 		DataDescriptor<V> descriptor = argd.getType();
-		boolean isForm = (descriptor instanceof MessageDescriptor)
+		boolean isForm = (descriptor instanceof ImmutableMessageDescriptor)
 				&& ((MessageDescriptor<?>) descriptor).isForm();
 
 		if (!isForm) {
@@ -277,7 +277,7 @@ public class RestProtocol {
 	// VisibleForTesting
 	<V> V parseParam(final ArgumentDescriptor<V> argd, final Map<String, String> src) {
 		DataDescriptor<V> descriptor = argd.getType();
-		boolean isForm = descriptor instanceof MessageDescriptor
+		boolean isForm = descriptor instanceof ImmutableMessageDescriptor
 				&& ((MessageDescriptor) descriptor).isForm();
 
 		if (!isForm) {
@@ -293,6 +293,7 @@ public class RestProtocol {
 			if (mdescriptor.isPolymorphic()) {
 				// Parse the discriminator field and get the subtype descriptor.
 				FieldDescriptor<? super Message, ?> field = mdescriptor.getDiscriminator();
+				assert field != null;
 				String serialized = src.get(field.getName());
 				Object value = parseFromJson(field.getType(), serialized);
 				mdescriptor = mdescriptor.findSubtypeOrThis(value);
@@ -345,8 +346,8 @@ public class RestProtocol {
 		MessageDescriptor <RestResult<T, E>> descriptor = resultDescriptor(dataDescriptor,
 				excDescriptor);
 
-		T data = dataDescriptor.cast(result.getData());
-		E exc = excDescriptor == null ? null : excDescriptor.cast(result.getExc());
+		T data = dataDescriptor.getJavaClass().cast(result.getData());
+		E exc = excDescriptor == null ? null : excDescriptor.getJavaClass().cast(result.getExc());
 
 		RestResult<T, E> restResult = descriptor.newInstance()
 				.setSuccess(result.isOk())

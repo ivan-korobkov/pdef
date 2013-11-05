@@ -1,6 +1,6 @@
 package io.pdef.invoke;
 
-import io.pdef.descriptors.MethodDescriptor;
+import io.pdef.MethodDescriptor;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import static org.junit.Assert.assertArrayEquals;

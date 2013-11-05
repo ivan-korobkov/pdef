@@ -19,11 +19,11 @@ public class {{ name }} extends {{ base_or_root }} {
 {% endif %}
 
     public static {{ name }} parseFromMap(final java.util.Map<String, Object> map) {
-        return io.pdef.format.NativeFormat.instance().parse(map, DESCRIPTOR);
+        return io.pdef.formats.NativeFormat.instance().parse(map, DESCRIPTOR);
     }
 
     public static {{ name }} parseFromJson(final String s) {
-        return io.pdef.format.JsonFormat.instance().parse(s, DESCRIPTOR);
+        return io.pdef.formats.JsonFormat.instance().parse(s, DESCRIPTOR);
     }
 
 {% for field in declared_fields %}
@@ -61,13 +61,13 @@ public class {{ name }} extends {{ base_or_root }} {
     }
 
     @Override
-    public io.pdef.descriptors.MessageDescriptor<? extends {{ name }}> descriptor() {
+    public io.pdef.MessageDescriptor<? extends {{ name }}> descriptor() {
         return DESCRIPTOR;
     }
 
 {% for field in declared_fields %}
-    public static final io.pdef.descriptors.FieldDescriptor<{{ name }}, {{ field.type }}> {{ field.name|upper }}_FIELD =
-            io.pdef.descriptors.FieldDescriptor.<{{ name }}, {{ field.type }}>builder()
+    public static final io.pdef.FieldDescriptor<{{ name }}, {{ field.type }}> {{ field.name|upper }}_FIELD =
+            io.pdef.immutable.ImmutableFieldDescriptor.<{{ name }}, {{ field.type }}>builder()
                     .setName("{{ field.name }}")
                 {% if field.is_discriminator %}
                     .setDiscriminator(true)
@@ -75,13 +75,13 @@ public class {{ name }} extends {{ base_or_root }} {
                 {% if field.type.is_primitive %}
                     .setType({{ field.type.descriptor }})
                 {% else %}
-                    .setType(new io.pdef.Provider<io.pdef.descriptors.DataDescriptor<{{ field.type }}>>() {
-                        public io.pdef.descriptors.DataDescriptor<{{ field.type }}> get() {
+                    .setType(new io.pdef.Provider<io.pdef.DataDescriptor<{{ field.type }}>>() {
+                        public io.pdef.DataDescriptor<{{ field.type }}> get() {
                             return {{ field.type.descriptor }};
                         }
                     })
                 {% endif %}
-                    .setAccessor(new io.pdef.descriptors.FieldAccessor<{{ name }}, {{ field.type }}>() {
+                    .setAccessor(new io.pdef.FieldAccessor<{{ name }}, {{ field.type }}>() {
                         public {{ field.type }} get({{ name }} message) {
                             return message.{{ field.name }};
                         }
@@ -94,8 +94,8 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% endfor %}
 
-    public static final io.pdef.descriptors.MessageDescriptor<{{ name }}> DESCRIPTOR =
-            io.pdef.descriptors.MessageDescriptor.<{{ name }}>builder()
+    public static final io.pdef.MessageDescriptor<{{ name }}> DESCRIPTOR =
+            io.pdef.immutable.ImmutableMessageDescriptor.<{{ name }}>builder()
                     .setJavaClass({{ name }}.class)
                     .setProvider(new io.pdef.Provider<{{ name }}>() {
                         public {{ name }} get() {
@@ -112,8 +112,8 @@ public class {{ name }} extends {{ base_or_root }} {
                     .setDiscriminatorValue({{ discriminator_value }})
                     {% endif %}
                     {% for subtype in subtypes %}
-                    .addSubtype(new io.pdef.Provider<io.pdef.descriptors.MessageDescriptor<? extends {{ name }}>>() {
-                        public io.pdef.descriptors.MessageDescriptor<? extends {{ name }}> get() {
+                    .addSubtype(new io.pdef.Provider<io.pdef.MessageDescriptor<? extends {{ name }}>>() {
+                        public io.pdef.MessageDescriptor<? extends {{ name }}> get() {
                             return {{ subtype.descriptor }};
                         }
                     })

@@ -1,7 +1,7 @@
 package io.pdef.rest;
 
 import com.google.common.collect.ImmutableMap;
-import io.pdef.descriptors.Descriptors;
+import io.pdef.Descriptors;
 import io.pdef.invoke.InvocationProxy;
 import io.pdef.invoke.Invoker;
 import io.pdef.test.interfaces.TestInterface;

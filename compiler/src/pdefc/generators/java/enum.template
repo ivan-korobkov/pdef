@@ -10,14 +10,14 @@ public enum {{ name }} {
     {%- endfor %};
 
     public static {{ name }} parseString(final String s) {
-        return io.pdef.format.NativeFormat.instance().parse(s, DESCRIPTOR);
+        return io.pdef.formats.NativeFormat.instance().parse(s, DESCRIPTOR);
     }
 
     public static {{ name }} parseJson(final String s) {
-        return io.pdef.format.JsonFormat.instance().parse(s, DESCRIPTOR);
+        return io.pdef.formats.JsonFormat.instance().parse(s, DESCRIPTOR);
     }
 
-    public static final io.pdef.descriptors.EnumDescriptor<{{ name }}> DESCRIPTOR =
-            io.pdef.descriptors.EnumDescriptor.of({{ name }}.class);
+    public static final io.pdef.EnumDescriptor<{{ name }}> DESCRIPTOR =
+            io.pdef.immutable.ImmutableEnumDescriptor.of({{ name }}.class);
 }
 

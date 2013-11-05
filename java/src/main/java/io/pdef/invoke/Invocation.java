@@ -1,6 +1,6 @@
 package io.pdef.invoke;
 
-import io.pdef.descriptors.*;
+import io.pdef.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

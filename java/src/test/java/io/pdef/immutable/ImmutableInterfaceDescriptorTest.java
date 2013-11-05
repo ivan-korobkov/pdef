@@ -14,7 +14,7 @@ public class ImmutableInterfaceDescriptorTest {
 	@Test
 	public void test() throws Exception {
 		InterfaceDescriptor<TestInterface> descriptor = TestInterface.DESCRIPTOR;
-		MethodDescriptor<TestInterface, Integer> indexMethod = TestInterface.TESTINDEX_METHOD;
+		MethodDescriptor<TestInterface, ?> indexMethod = indexMethod();
 
 		assertEquals(TestInterface.class, descriptor.getJavaClass());
 		assertEquals(TestException.DESCRIPTOR, descriptor.getExc());
@@ -24,7 +24,7 @@ public class ImmutableInterfaceDescriptorTest {
 
 	@Test
 	public void testFindMethod() throws Exception {
-		MethodDescriptor<TestInterface, ?> expected = TestInterface.TESTINDEX_METHOD;
+		MethodDescriptor<TestInterface, ?> expected = indexMethod();
 		MethodDescriptor<TestInterface, ?> method = descriptor.findMethod("testIndex");
 
 		assertEquals(expected, method);
@@ -40,5 +40,9 @@ public class ImmutableInterfaceDescriptorTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testFindDescriptor_notFound() throws Exception {
 		Descriptors.findInterfaceDescriptor(Runnable.class);
+	}
+
+	private MethodDescriptor<TestInterface, ?> indexMethod() {
+		return TestInterface.DESCRIPTOR.findMethod("testIndex");
 	}
 }

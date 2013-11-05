@@ -139,7 +139,7 @@ public class ImmutableMethodDescriptor<T, R> implements MethodDescriptor<T,R> {
 			return this;
 		}
 
-		public Builder<T, R> setInvokerFrom(final Class<T> interfaceClass) {
+		public Builder<T, R> setReflexiveInvoker(final Class<T> interfaceClass) {
 			this.invoker = MethodInvokers.reflexive(interfaceClass, name);
 			return this;
 		}

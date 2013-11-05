@@ -65,9 +65,31 @@ public class {{ name }} extends {{ base_or_root }} {
         return DESCRIPTOR;
     }
 
-{% for field in declared_fields %}
-    public static final io.pdef.FieldDescriptor<{{ name }}, {{ field.type }}> {{ field.name|upper }}_FIELD =
-            io.pdef.immutable.ImmutableFieldDescriptor.<{{ name }}, {{ field.type }}>builder()
+    public static final io.pdef.MessageDescriptor<{{ name }}> DESCRIPTOR = io.pdef.immutable.ImmutableMessageDescriptor.<{{ name }}>builder()
+            .setJavaClass({{ name }}.class)
+            .setProvider(new io.pdef.Provider<{{ name }}>() {
+                public {{ name }} get() {
+                    return new {{ name }}();
+                }
+            })
+            {% if base %}
+            .setBase({{ base.descriptor }})
+            {% endif %}
+            {% if is_form %}
+            .setForm(true)
+            {% endif %}
+            {% if discriminator_value %}
+            .setDiscriminatorValue({{ discriminator_value }})
+            {% endif %}
+            {% for subtype in subtypes %}
+            .addSubtype(new io.pdef.Provider<io.pdef.MessageDescriptor<? extends {{ name }}>>() {
+                public io.pdef.MessageDescriptor<? extends {{ name }}> get() {
+                    return {{ subtype.descriptor }};
+                }
+            })
+            {% endfor %}
+            {% for field in declared_fields %}
+            .addField(io.pdef.immutable.ImmutableFieldDescriptor.<{{ name }}, {{ field.type }}>builder()
                     .setName("{{ field.name }}")
                 {% if field.is_discriminator %}
                     .setDiscriminator(true)
@@ -90,37 +112,8 @@ public class {{ name }} extends {{ base_or_root }} {
                             message.{{ field.name }} = value;
                         }
                     })
-                    .build();
-
-{% endfor %}
-
-    public static final io.pdef.MessageDescriptor<{{ name }}> DESCRIPTOR =
-            io.pdef.immutable.ImmutableMessageDescriptor.<{{ name }}>builder()
-                    .setJavaClass({{ name }}.class)
-                    .setProvider(new io.pdef.Provider<{{ name }}>() {
-                        public {{ name }} get() {
-                            return new {{ name }}();
-                        }
-                    })
-                    {% if base %}
-                    .setBase({{ base.descriptor }})
-                    {% endif %}
-                    {% if is_form %}
-                    .setForm(true)
-                    {% endif %}
-                    {% if discriminator_value %}
-                    .setDiscriminatorValue({{ discriminator_value }})
-                    {% endif %}
-                    {% for subtype in subtypes %}
-                    .addSubtype(new io.pdef.Provider<io.pdef.MessageDescriptor<? extends {{ name }}>>() {
-                        public io.pdef.MessageDescriptor<? extends {{ name }}> get() {
-                            return {{ subtype.descriptor }};
-                        }
-                    })
-                    {% endfor %}
-                    {% for field in declared_fields %}
-                    .addField({{ field.name|upper }}_FIELD)
-                    {% endfor %}
-                    .build();
+                    .build())
+            {% endfor %}
+            .build();
 }
 

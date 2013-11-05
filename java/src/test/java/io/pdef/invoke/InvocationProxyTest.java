@@ -52,7 +52,7 @@ public class InvocationProxyTest {
 		verify(invoker).invoke(captor.capture());
 
 		Invocation invocation = captor.getValue();
-		MethodDescriptor<TestInterface, ?> method = TestInterface.TESTINDEX_METHOD;
+		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.findMethod("testIndex");
 		assertEquals(method, invocation.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}

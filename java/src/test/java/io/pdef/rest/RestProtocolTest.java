@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.Atomics;
 import io.pdef.ArgumentDescriptor;
 import io.pdef.Descriptors;
 import io.pdef.MessageDescriptor;
+import io.pdef.MethodDescriptor;
 import io.pdef.immutable.ImmutableArgumentDescriptor;
 import io.pdef.invoke.Invocation;
 import io.pdef.invoke.InvocationProxy;
@@ -245,7 +246,7 @@ public class RestProtocolTest {
 				.setPost(ImmutableMap.of("arg0", "1", "arg1", "2"));
 
 		Invocation invocation = format.parseInvocation(request, TestInterface.DESCRIPTOR);
-		assertEquals(TestInterface.TESTPOST_METHOD, invocation.getMethod());
+		assertEquals(postMethod(), invocation.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
 
@@ -263,7 +264,7 @@ public class RestProtocolTest {
 				.setQuery(ImmutableMap.of("arg0", "1", "arg1", "2"));
 
 		Invocation invocation = format.parseInvocation(request, TestInterface.DESCRIPTOR);
-		assertEquals(TestInterface.TESTREMOTE_METHOD, invocation.getMethod());
+		assertEquals(remoteMethod(), invocation.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
 
@@ -277,11 +278,11 @@ public class RestProtocolTest {
 		assertEquals(2, chain.size());
 
 		Invocation invocation0 = chain.get(0);
-		assertEquals(TestInterface.TESTINTERFACE_METHOD, invocation0.getMethod());
+		assertEquals(interfaceMethod(), invocation0.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation0.getArgs());
 
 		Invocation invocation1 = chain.get(1);
-		assertEquals(TestInterface.TESTINDEX_METHOD, invocation1.getMethod());
+		assertEquals(indexMethod(), invocation1.getMethod());
 		assertArrayEquals(new Object[]{3, 4}, invocation1.getArgs());
 	}
 
@@ -295,11 +296,11 @@ public class RestProtocolTest {
 		assertEquals(2, chain.size());
 
 		Invocation invocation0 = chain.get(0);
-		assertEquals(TestInterface.TESTINTERFACE_METHOD, invocation0.getMethod());
+		assertEquals(interfaceMethod(), invocation0.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation0.getArgs());
 
 		Invocation invocation1 = chain.get(1);
-		assertEquals(TestInterface.TESTSTRING_METHOD, invocation1.getMethod());
+		assertEquals(stringMethod(), invocation1.getMethod());
 		assertArrayEquals(new Object[]{"Привет"}, invocation1.getArgs());
 	}
 
@@ -442,5 +443,25 @@ public class RestProtocolTest {
 
 	private TestInterface proxy(final Invoker handler) {
 		return InvocationProxy.create(TestInterface.class, handler);
+	}
+
+	private MethodDescriptor<?, ?> postMethod() {
+		return TestInterface.DESCRIPTOR.findMethod("testPost");
+	}
+
+	private MethodDescriptor<?, ?> remoteMethod() {
+		return TestInterface.DESCRIPTOR.findMethod("testRemote");
+	}
+
+	private MethodDescriptor<?, ?> interfaceMethod() {
+		return TestInterface.DESCRIPTOR.findMethod("testInterface");
+	}
+
+	private MethodDescriptor<?, ?> indexMethod() {
+		return TestInterface.DESCRIPTOR.findMethod("testIndex");
+	}
+
+	private MethodDescriptor<?, ?> stringMethod() {
+		return TestInterface.DESCRIPTOR.findMethod("testString");
 	}
 }

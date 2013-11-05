@@ -13,8 +13,8 @@ import org.junit.Test;
 public class ImmutableFieldDescriptorTest {
 	@Test
 	public void test() throws Exception {
-		FieldDescriptor<TestMessage, Boolean> bool0 = TestMessage.BOOL0_FIELD;
-		FieldDescriptor<TestMessage, String> string0 = TestMessage.STRING0_FIELD;
+		FieldDescriptor<?, ?> bool0 = TestMessage.DESCRIPTOR.getFieldMap().get("bool0");
+		FieldDescriptor<?, ?> string0 = TestMessage.DESCRIPTOR.getFieldMap().get("string0");
 
 		assertEquals("bool0", bool0.getName());
 		assertEquals(Descriptors.bool, bool0.getType());
@@ -27,7 +27,7 @@ public class ImmutableFieldDescriptorTest {
 
 	@Test
 	public void testDiscriminator() throws Exception {
-		FieldDescriptor<Base, PolymorphicType> field = Base.TYPE_FIELD;
+		FieldDescriptor<?, ?> field = Base.DESCRIPTOR.getFieldMap().get("type");
 
 		assertEquals("type", field.getName());
 		assertEquals(PolymorphicType.DESCRIPTOR, field.getType());
@@ -37,19 +37,27 @@ public class ImmutableFieldDescriptorTest {
 	@Test
 	public void testGetSet() throws Exception {
 		TestMessage msg = new TestMessage();
-		TestMessage.STRING0_FIELD.set(msg, "Hello, world");
-		String s = TestMessage.STRING0_FIELD.get(msg);
+		FieldDescriptor<? super TestMessage, String> field = stringField();
+
+		field.set(msg, "Hello, world");
+		String s = field.get(msg);
 
 		assertEquals("Hello, world", s);
 	}
 
 	@Test
 	public void testCopy() throws Exception {
-		TestMessage msg0 = new TestMessage().setShort0((short) -16);
+		TestMessage msg0 = new TestMessage().setString0("hello, world");
 		TestMessage msg1 = new TestMessage();
 
-		TestMessage.SHORT0_FIELD.copy(msg0, msg1);
-		assertEquals((short) -16, msg0.getShort0());
-		assertEquals((short) -16, msg1.getShort0());
+		stringField().copy(msg0, msg1);
+		assertEquals("hello, world", msg0.getString0());
+		assertEquals("hello, world", msg1.getString0());
+	}
+
+	@SuppressWarnings("unchecked")
+	private FieldDescriptor<? super TestMessage, String> stringField() {
+		return (FieldDescriptor<? super TestMessage, String>) TestMessage.DESCRIPTOR.getFieldMap()
+				.get("string0");
 	}
 }

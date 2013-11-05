@@ -22,17 +22,15 @@ package {{ package }};
         {%- endfor %});
 
 {% endfor %}
-{% for method in declared_methods %}
-    static final io.pdef.MethodDescriptor<{{ name }}, {{ method.result.boxed }}> {{ method.name|upper }}_METHOD =
-            io.pdef.immutable.ImmutableMethodDescriptor.<{{ name }}, {{ method.result.boxed }}>builder()
+    static io.pdef.InterfaceDescriptor<{{ name }}> DESCRIPTOR = io.pdef.immutable.ImmutableInterfaceDescriptor.<{{ name }}>builder()
+            .setJavaClass({{ name }}.class)
+        {% if exc %}
+            .setExc({{ exc.descriptor }})
+        {% endif %}
+        {% for method in declared_methods %}
+            .addMethod(io.pdef.immutable.ImmutableMethodDescriptor.<{{ name }}, {{ method.result.boxed }}>builder()
                     .setName("{{ method.name }}")
-                    .setInvokerFrom({{ name }}.class)
-                {% if method.is_index %}
-                    .setIndex(true)
-                {% endif %}
-                {% if method.is_post %}
-                    .setPost(true)
-                {% endif %}
+                    .setReflexiveInvoker({{ name }}.class)
                 {% if method.result.is_interface %}
                     .setInterfaceResult({{ method.result }}.class)
                 {% else %}
@@ -44,18 +42,14 @@ package {{ package }};
                 {% for arg in method.args %}
                     .addArg("{{ arg.name }}", {{ arg.type.descriptor }})
                 {% endfor %}
-                    .build();
-
-    {% endfor %}
-    static io.pdef.InterfaceDescriptor<{{ name }}> DESCRIPTOR =
-            io.pdef.immutable.ImmutableInterfaceDescriptor.<{{ name }}>builder()
-                    .setJavaClass({{ name }}.class)
-                {% if exc %}
-                    .setExc({{ exc.descriptor }})
+                {% if method.is_index %}
+                    .setIndex(true)
                 {% endif %}
-                {% for method in declared_methods %}
-                    .addMethod({{ method.name|upper }}_METHOD)
-                {% endfor %}
-                    .build();
+                {% if method.is_post %}
+                    .setPost(true)
+                {% endif %}
+                    .build())
+        {% endfor %}
+            .build();
 }
 

@@ -11,24 +11,24 @@ import static org.mockito.Mockito.*;
 public class ImmutableMethodDescriptorTest {
 	@Test
 	public void testGetName() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.TESTINDEX_METHOD;
+		MethodDescriptor<TestInterface, ?> method = indexMethod();
 		assertNotNull(method);
 		assertEquals("testIndex", method.getName());
 	}
 
 	@Test
 	public void testGetExc() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.TESTINDEX_METHOD;
+		MethodDescriptor<TestInterface, ?> method = indexMethod();
 		assertNotNull(method);
 		assertTrue(method.getExc() == TestException.DESCRIPTOR);
 	}
 
 	@Test
 	public void testIndexPostRemote() throws Exception {
-		MethodDescriptor<TestInterface, ?> index = TestInterface.TESTINDEX_METHOD;
-		MethodDescriptor<TestInterface, ?> remote = TestInterface.TESTREMOTE_METHOD;
-		MethodDescriptor<TestInterface, ?> post = TestInterface.TESTPOST_METHOD;
-		MethodDescriptor<TestInterface, ?> iface = TestInterface.TESTINTERFACE_METHOD;
+		MethodDescriptor<TestInterface, ?> index = indexMethod();
+		MethodDescriptor<TestInterface, ?> remote = TestInterface.DESCRIPTOR.findMethod("testRemote");
+		MethodDescriptor<TestInterface, ?> post = TestInterface.DESCRIPTOR.findMethod("testPost");
+		MethodDescriptor<TestInterface, ?> iface = TestInterface.DESCRIPTOR.findMethod("testInterface");
 
 		assertTrue(index.isIndex());
 		assertTrue(index.isRemote());
@@ -49,7 +49,7 @@ public class ImmutableMethodDescriptorTest {
 
 	@Test
 	public void testInvoke() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.TESTINDEX_METHOD;
+		MethodDescriptor<TestInterface, ?> method = indexMethod();
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
@@ -59,12 +59,16 @@ public class ImmutableMethodDescriptorTest {
 
 	@Test(expected = TestException.class)
 	public void testInvoke_exception() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.TESTEXC_METHOD;
+		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.findMethod("testExc");
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
 		doThrow(new TestException()).when(object).testExc();
 
 		method.invoke(object, null);
+	}
+
+	private MethodDescriptor<TestInterface, ?> indexMethod() {
+		return TestInterface.DESCRIPTOR.findMethod("testIndex");
 	}
 }

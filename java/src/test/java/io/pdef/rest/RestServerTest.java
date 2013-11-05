@@ -29,7 +29,7 @@ public class RestServerTest {
 		String content = RestProtocol.resultDescriptor(Descriptors.int32, null).newInstance()
 				.setSuccess(true)
 				.setData(3)
-				.serializeToJson(true);
+				.toJson(true);
 
 		RestResponse response = server.handle(request);
 		assertNotNull(response);
@@ -56,7 +56,7 @@ public class RestServerTest {
 				.newInstance()
 				.setSuccess(false)
 				.setExc(exc)
-				.serializeToJson();
+				.toJson();
 
 		RestResponse response = server.handle(request);
 		assertNotNull(response);

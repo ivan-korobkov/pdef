@@ -16,15 +16,15 @@ public interface Message {
 	/**
 	 * Serializes this message to a map.
 	 */
-	Map<String, Object> serializeToMap();
+	Map<String, Object> toMap();
 
 	/**
 	 * Serializes this message to a JSON string without indentation.
 	 */
-	String serializeToJson();
+	String toJson();
 
 	/**
 	 * Serializes this method to a JSON string with optional indentation.
 	 */
-	String serializeToJson(boolean indent);
+	String toJson(boolean indent);
 }

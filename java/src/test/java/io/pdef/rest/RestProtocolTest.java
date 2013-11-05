@@ -197,7 +197,7 @@ public class RestProtocolTest {
 				.setBool0(true)
 				.setShort0((short) 1);
 
-		String content = fixtureRestResult(msg).serializeToJson();
+		String content = fixtureRestResult(msg).toJson();
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()
@@ -213,7 +213,7 @@ public class RestProtocolTest {
 	public void testParseInvocationResult_exc() throws Exception {
 		TestException exc = new TestException().setText("Application exception");
 
-		String content = fixtureExcRestResult(exc).serializeToJson();
+		String content = fixtureExcRestResult(exc).toJson();
 		RestResponse response = new RestResponse()
 				.setOkStatus()
 				.setJsonContentType()
@@ -331,7 +331,7 @@ public class RestProtocolTest {
 				.setString0("Привет")
 				.setBool0(true)
 				.setShort0((short) 123);
-		Map<String, String> query = ImmutableMap.of("arg", expected.serializeToJson());
+		Map<String, String> query = ImmutableMap.of("arg", expected.toJson());
 
 		Object result = format.parseParam(argd, query);
 		assertEquals(expected, result);
@@ -379,7 +379,7 @@ public class RestProtocolTest {
 				.setBool0(true)
 				.setShort0((short) 123);
 
-		String json = msg.serializeToJson();
+		String json = msg.toJson();
 		TestMessage result = format.parseFromJson(msg.descriptor(), json);
 		assertEquals(msg, result);
 	}
@@ -394,7 +394,7 @@ public class RestProtocolTest {
 				.setShort0((short) 123);
 
 		InvocationResult result = InvocationResult.ok(msg);
-		String content = fixtureRestResult(msg).serializeToJson();
+		String content = fixtureRestResult(msg).toJson();
 
 		RestResponse response = format.serializeInvocationResult(result,
 				TestMessage.DESCRIPTOR, null);
@@ -407,7 +407,7 @@ public class RestProtocolTest {
 	public void testSerializeInvocationResult_exc() throws Exception {
 		TestException exc = new TestException().setText("hello, world");
 		InvocationResult result = InvocationResult.exc(exc);
-		String content = fixtureExcRestResult(exc).serializeToJson();
+		String content = fixtureExcRestResult(exc).toJson();
 
 		RestResponse response = format.serializeInvocationResult(result,
 				Descriptors.string, TestException.DESCRIPTOR);

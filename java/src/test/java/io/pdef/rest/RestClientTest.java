@@ -50,7 +50,7 @@ public class RestClientTest {
 				return new RestResponse()
 						.setOkStatus()
 						.setJsonContentType()
-						.setContent(result.serializeToJson(true));
+						.setContent(result.toJson(true));
 			}
 		});
 
@@ -112,7 +112,7 @@ public class RestClientTest {
 				.newInstance()
 				.setSuccess(true)
 				.setData("привет")
-				.serializeToJson(true);
+				.toJson(true);
 
 		HttpResponse resp = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 0), 200, "OK");
 		resp.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON));

@@ -9,11 +9,13 @@ public enum {{ name }} {
     {{ value }}{% if not loop.last and loop.length > 1 %}, {% endif %}
     {%- endfor %};
 
-    public static {{ name }} parseString(final String s) {
+    /** Returns an enum value from a string or {@literal null}. */
+    public static {{ name }} fromString(final String s) {
         return io.pdef.formats.NativeFormat.instance().parse(s, DESCRIPTOR);
     }
 
-    public static {{ name }} parseJson(final String s) {
+    /** Returns an enum value from a json string or {@literal null}. */
+    public static {{ name }} fromJson(final String s) {
         return io.pdef.formats.JsonFormat.instance().parse(s, DESCRIPTOR);
     }
 

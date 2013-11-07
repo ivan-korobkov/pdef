@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ImmutableInterfaceDescriptor<T> extends AbstractDescriptor<T>
+public class ImmutableInterfaceDescriptor<T> extends BaseDescriptor<T>
 		implements InterfaceDescriptor<T> {
 	private final List<MethodDescriptor<T, ?>> methods;
 	private final Map<String, MethodDescriptor<T, ?>> methodMap;

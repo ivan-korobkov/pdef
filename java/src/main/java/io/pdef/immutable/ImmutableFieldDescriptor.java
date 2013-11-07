@@ -66,7 +66,7 @@ public class ImmutableFieldDescriptor<M, V> implements FieldDescriptor<M,V> {
 	@Override
 	public void copy(final M src, final M dst) {
 		V value = get(src);
-		V copied = getType().copy(value);
+		V copied = DataTypes.copy(value);
 		set(dst, copied);
 	}
 

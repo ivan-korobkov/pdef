@@ -13,10 +13,4 @@ public class ImmutableEnumDescriptorTest {
 		List<TestEnum> values = TestEnum.DESCRIPTOR.getValues();
 		assertEquals(ImmutableList.<TestEnum>of(TestEnum.ONE, TestEnum.TWO, TestEnum.THREE), values);
 	}
-
-	@Test
-	public void testCopy() throws Exception {
-		TestEnum value = TestEnum.ONE;
-		assert TestEnum.DESCRIPTOR.copy(value) == value;
-	}
 }

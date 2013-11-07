@@ -6,8 +6,8 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 /** MessageDescriptor is a descriptor for Pdef messages. */
-public class ImmutableMessageDescriptor<M extends Message> extends AbstractDataTypeDescriptor<M>
-		implements MessageDescriptor<M> {
+public class ImmutableMessageDescriptor<M extends Message> extends BaseDescriptor<M>
+		implements MessageDescriptor<M>, DataTypeDescriptor<M> {
 	private final Provider<M> provider;
 	private final MessageDescriptor<? super M> base;
 
@@ -123,17 +123,6 @@ public class ImmutableMessageDescriptor<M extends Message> extends AbstractDataT
 	@Override
 	public M newInstance() {
 		return provider.get();
-	}
-
-	@Override
-	public M copy(final M src) {
-		if (src == null) {
-			return null;
-		}
-
-		M dst = newInstance();
-		copy(src, dst);
-		return dst;
 	}
 
 	@Override

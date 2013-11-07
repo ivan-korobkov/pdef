@@ -17,13 +17,7 @@ public class Descriptors {
 	public static DataTypeDescriptor<Float> float0 = primitive(TypeEnum.FLOAT, Float.class);
 	public static DataTypeDescriptor<Double> double0 = primitive(TypeEnum.DOUBLE, Double.class);
 	public static DataTypeDescriptor<String> string = primitive(TypeEnum.STRING, String.class);
-	public static DataTypeDescriptor<Void> void0 = new AbstractDataTypeDescriptor<Void>(
-			TypeEnum.VOID, Void.class) {
-		@Override
-		public Void copy(final Void object) {
-			return null;
-		}
-	};
+	public static DataTypeDescriptor<Void> void0 = primitive(TypeEnum.VOID, Void.class);
 
 	public static <T> ListDescriptorImpl<T> list(final DataTypeDescriptor<T> element) {
 		return new ListDescriptorImpl<T>(element);
@@ -72,19 +66,15 @@ public class Descriptors {
 		}
 	}
 
-	private static class PrimitiveDescriptor<T> extends AbstractDataTypeDescriptor<T> {
+	private static class PrimitiveDescriptor<T> extends BaseDescriptor<T>
+			implements DataTypeDescriptor<T> {
 		private PrimitiveDescriptor(final TypeEnum type, final Class<T> javaClass) {
 			super(type, javaClass);
 		}
-
-		@Override
-		public T copy(final T object) {
-			return object;
-		}
 	}
 
-	private static class ListDescriptorImpl<T> extends AbstractDataTypeDescriptor<List<T>>
-			implements ListDescriptor<T> {
+	private static class ListDescriptorImpl<T> extends BaseDescriptor<List<T>>
+			implements ListDescriptor<T>, DataTypeDescriptor<List<T>> {
 		private final DataTypeDescriptor<T> element;
 
 		@SuppressWarnings("unchecked")
@@ -98,25 +88,10 @@ public class Descriptors {
 		public DataTypeDescriptor<T> getElement() {
 			return element;
 		}
-
-		@Override
-		public List<T> copy(final List<T> list) {
-			if (list == null) {
-				return null;
-			}
-
-			List<T> copy = new ArrayList<T>();
-			for (T e : list) {
-				T copied = element.copy(e);
-				copy.add(copied);
-			}
-
-			return copy;
-		}
 	}
 
-	private static class SetDescriptorImpl<T> extends AbstractDataTypeDescriptor<Set<T>>
-			implements SetDescriptor<T> {
+	private static class SetDescriptorImpl<T> extends BaseDescriptor<Set<T>>
+			implements SetDescriptor<T>, DataTypeDescriptor<Set<T>> {
 		private final DataTypeDescriptor<T> element;
 
 		@SuppressWarnings("unchecked")
@@ -131,25 +106,10 @@ public class Descriptors {
 		public DataTypeDescriptor<T> getElement() {
 			return element;
 		}
-
-		@Override
-		public Set<T> copy(final Set<T> set) {
-			if (set == null) {
-				return null;
-			}
-
-			Set<T> copy = new HashSet<T>();
-			for (T elem : set) {
-				T copied = element.copy(elem);
-				copy.add(copied);
-			}
-
-			return copy;
-		}
 	}
 
-	private static class MapDescriptorImpl<K, V> extends AbstractDataTypeDescriptor<Map<K, V>>
-			implements MapDescriptor<K, V> {
+	private static class MapDescriptorImpl<K, V> extends BaseDescriptor<Map<K, V>>
+			implements MapDescriptor<K, V>, DataTypeDescriptor<Map<K, V>> {
 		private final DataTypeDescriptor<K> key;
 		private final DataTypeDescriptor<V> value;
 
@@ -170,22 +130,6 @@ public class Descriptors {
 		@Override
 		public DataTypeDescriptor<V> getValue() {
 			return value;
-		}
-
-		@Override
-		public Map<K, V> copy(final Map<K, V> map) {
-			if (map == null) {
-				return null;
-			}
-
-			Map<K, V> copy = new LinkedHashMap<K, V>();
-			for (Map.Entry<K, V> entry : map.entrySet()) {
-				K ck = key.copy(entry.getKey());
-				V cv = value.copy(entry.getValue());
-				copy.put(ck, cv);
-			}
-
-			return copy;
 		}
 	}
 }

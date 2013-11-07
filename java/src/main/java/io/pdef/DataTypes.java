@@ -9,6 +9,15 @@ public class DataTypes {
 	private DataTypes() {}
 
 	/**
+	 * Returns a deep copy of a pdef data type.
+	 */
+	public static <T> T copy(final T object) {
+		if (object == null) return null;
+		TypeEnum type = TypeEnum.dataTypeOf(object.getClass());
+		return copy(type, object);
+	}
+
+	/**
 	 * Returns a deep copy of a pdef message.
 	 */
 	@SuppressWarnings("unchecked")

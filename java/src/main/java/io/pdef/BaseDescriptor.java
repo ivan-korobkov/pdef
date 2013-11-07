@@ -5,11 +5,11 @@ package io.pdef;
  * a Java type in runtime. For example, a message descriptor allows to explore declared fields,
  * inherited fields, etc.
  * */
-public class AbstractDescriptor<T> implements Descriptor<T> {
+public class BaseDescriptor<T> implements Descriptor<T> {
 	private final TypeEnum type;
 	private final Class<T> javaClass;
 
-	protected AbstractDescriptor(final TypeEnum type, final Class<T> javaClass) {
+	protected BaseDescriptor(final TypeEnum type, final Class<T> javaClass) {
 		this.type = type;
 		this.javaClass = javaClass;
 

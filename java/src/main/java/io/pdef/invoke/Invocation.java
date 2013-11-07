@@ -28,11 +28,8 @@ public class Invocation {
 	@Nonnull
 	private static Object[] copyArgs(@Nullable final Object[] args,
 			final MethodDescriptor<?, ?> method) {
-		List<ArgumentDescriptor<?>> methodArgs = method.getArgs();
-
 		int length = args == null ? 0 : args.length;
-		int size = methodArgs.size();
-
+		int size = method.getArgs().size();
 		if (length != size) {
 			throw new IllegalArgumentException(
 					"Wrong number of arguments, method " + method + ", " + size + " expected, got "
@@ -41,11 +38,7 @@ public class Invocation {
 
 		Object[] copy = new Object[length];
 		for (int i = 0; i < length; i++) {
-			@SuppressWarnings("unchecked")
-			ArgumentDescriptor<Object> argd = (ArgumentDescriptor<Object>) methodArgs.get(i);
-
-			Object arg = args[i];
-			copy[i] = argd.getType().copy(arg);
+			copy[i] = DataTypes.copy(args[i]);
 		}
 
 		return copy;

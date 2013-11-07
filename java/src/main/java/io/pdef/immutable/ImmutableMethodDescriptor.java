@@ -129,7 +129,7 @@ public class ImmutableMethodDescriptor<T, R> implements MethodDescriptor<T,R> {
 			return this;
 		}
 
-		public <V> Builder<T, R> addArg(final String name, final DataDescriptor<V> type) {
+		public <V> Builder<T, R> addArg(final String name, final DataTypeDescriptor<V> type) {
 			this.args.add(new ImmutableArgumentDescriptor<V>(name, type));
 			return this;
 		}

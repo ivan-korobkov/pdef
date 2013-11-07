@@ -20,7 +20,7 @@ import java.util.Set;
 public class NativeFormatTest {
 	private NativeFormat format = NativeFormat.instance();
 
-	private <T> void testPrimitive(final DataDescriptor<T> descriptor, final String s,
+	private <T> void testPrimitive(final DataTypeDescriptor<T> descriptor, final String s,
 			final T expected) {
 		assert format.parse(null, descriptor) == null;
 		assert format.parse(s, descriptor).equals(expected);
@@ -61,7 +61,7 @@ public class NativeFormatTest {
 		testPrimitive(Descriptors.double0, "2.5", 2.5d);
 	}
 
-	private <T> void testData(final DataDescriptor<T> descriptor, final Object serialized,
+	private <T> void testData(final DataTypeDescriptor<T> descriptor, final Object serialized,
 			final T parsed) {
 		assert format.parse(serialized, descriptor).equals(parsed);
 		assert format.parse(null, descriptor) == null;

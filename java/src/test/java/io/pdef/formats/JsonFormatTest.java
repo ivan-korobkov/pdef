@@ -3,7 +3,7 @@ package io.pdef.formats;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.pdef.DataDescriptor;
+import io.pdef.DataTypeDescriptor;
 import io.pdef.Descriptors;
 import io.pdef.test.inheritance.Base;
 import io.pdef.test.inheritance.MultiLevelSubtype;
@@ -19,7 +19,7 @@ import org.junit.Test;
 public class JsonFormatTest {
 	private JsonFormat format = JsonFormat.instance();
 
-	private <T> void test(final DataDescriptor<T> descriptor, final T parsed,
+	private <T> void test(final DataTypeDescriptor<T> descriptor, final T parsed,
 			final String serialized) {
 		assertEquals(serialized, format.serialize(parsed, descriptor, false));
 		assertEquals(parsed, format.parse(serialized, descriptor));

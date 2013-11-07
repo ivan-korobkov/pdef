@@ -9,7 +9,7 @@ public interface FieldDescriptor<M, V> extends FieldAccessor<M, V> {
 	/**
 	 * Returns a field type descriptor.
 	 */
-	DataDescriptor<V> getType();
+	DataTypeDescriptor<V> getType();
 
 	/**
 	 * Returns whether this field is a discriminator in a message.

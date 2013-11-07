@@ -15,7 +15,7 @@ public class NativeFormat {
 
 	// Serializing.
 
-	public <T> Object serialize(final T object, final DataDescriptor<T> descriptor) throws FormatException {
+	public <T> Object serialize(final T object, final DataTypeDescriptor<T> descriptor) throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
@@ -28,7 +28,7 @@ public class NativeFormat {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> Object doSerialize(final T object, final DataDescriptor<T> descriptor) throws Exception {
+	private <T> Object doSerialize(final T object, final DataTypeDescriptor<T> descriptor) throws Exception {
 		if (object == null) {
 			return null;
 		}
@@ -67,7 +67,7 @@ public class NativeFormat {
 			return null;
 		}
 
-		DataDescriptor<E> element = descriptor.getElement();
+		DataTypeDescriptor<E> element = descriptor.getElement();
 		List<Object> result = new ArrayList<Object>();
 
 		for (E elem : list) {
@@ -84,7 +84,7 @@ public class NativeFormat {
 			return null;
 		}
 
-		DataDescriptor<E> element = descriptor.getElement();
+		DataTypeDescriptor<E> element = descriptor.getElement();
 		Set<Object> result = new HashSet<Object>();
 		for (E elem : set) {
 			Object serialized = doSerialize(elem, element);
@@ -100,8 +100,8 @@ public class NativeFormat {
 			return null;
 		}
 
-		DataDescriptor<K> key = descriptor.getKey();
-		DataDescriptor<V> value = descriptor.getValue();
+		DataTypeDescriptor<K> key = descriptor.getKey();
+		DataTypeDescriptor<V> value = descriptor.getValue();
 		Map<Object, Object> result = new HashMap<Object, Object>();
 
 		for (Map.Entry<K, V> e : map.entrySet()) {
@@ -150,7 +150,7 @@ public class NativeFormat {
 
 	// Parsing.
 
-	public <T> T parse(final Object input, final DataDescriptor<T> descriptor) throws FormatException {
+	public <T> T parse(final Object input, final DataTypeDescriptor<T> descriptor) throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
@@ -163,7 +163,7 @@ public class NativeFormat {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> T doParse(final DataDescriptor<T> descriptor, final Object input) throws Exception {
+	private <T> T doParse(final DataTypeDescriptor<T> descriptor, final Object input) throws Exception {
 		if (input == null) {
 			return null;
 		}
@@ -272,7 +272,7 @@ public class NativeFormat {
 		}
 
 		Collection<?> collection = (Collection<?>) input;
-		DataDescriptor<E> element = descriptor.getElement();
+		DataTypeDescriptor<E> element = descriptor.getElement();
 		List<E> result = new ArrayList<E>();
 
 		for (Object elem : collection) {
@@ -291,7 +291,7 @@ public class NativeFormat {
 
 		Collection<?> collection = (Collection<?>) input;
 		Set<E> result = new HashSet<E>();
-		DataDescriptor<E> element = descriptor.getElement();
+		DataTypeDescriptor<E> element = descriptor.getElement();
 
 		for (Object elem : collection) {
 			E parsed = doParse(element, elem);
@@ -309,8 +309,8 @@ public class NativeFormat {
 
 		Map<?, ?> map = (Map<?, ?>) input;
 		Map<K, V> result = new HashMap<K, V>();
-		DataDescriptor<K> key = descriptor.getKey();
-		DataDescriptor<V> value = descriptor.getValue();
+		DataTypeDescriptor<K> key = descriptor.getKey();
+		DataTypeDescriptor<V> value = descriptor.getValue();
 
 		for (Map.Entry<?, ?> e : map.entrySet()) {
 			K k = doParse(key, e.getKey());

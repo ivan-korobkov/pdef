@@ -47,7 +47,7 @@ public class RestServer<T> implements RestHandler {
 			return errorResponse(e);
 		}
 
-		DataDescriptor<?> dataDescriptor = invocation.getDataResult();
+		DataTypeDescriptor<?> dataDescriptor = invocation.getDataResult();
 		MessageDescriptor<?> excDescriptor = invocation.getExc();
 
 		InvocationResult result = invoker.invoke(invocation);

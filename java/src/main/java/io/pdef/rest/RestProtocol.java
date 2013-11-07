@@ -86,7 +86,7 @@ public class RestProtocol {
 			return;
 		}
 
-		DataDescriptor<V> descriptor = argd.getType();
+		DataTypeDescriptor<V> descriptor = argd.getType();
 		boolean isForm = (descriptor instanceof ImmutableMessageDescriptor)
 				&& ((MessageDescriptor<?>) descriptor).isForm();
 
@@ -128,7 +128,7 @@ public class RestProtocol {
 
 	/** Serializes an argument to JSON, strips the quotes. */
 	// VisibleForTesting
-	<V> String serializeToJson(final DataDescriptor<V> descriptor, final V arg) {
+	<V> String serializeToJson(final DataTypeDescriptor<V> descriptor, final V arg) {
 		String s = jsonFormat.serialize(arg, descriptor, false);
 		if (descriptor.getType() != TypeEnum.STRING) {
 			return s;
@@ -141,8 +141,8 @@ public class RestProtocol {
 	// InvocationResult parsing.
 
 	public <T, E> InvocationResult parseInvocationResult(
-			final RestResponse response, final DataDescriptor<T> datad,
-			@Nullable final DataDescriptor<E> excd) {
+			final RestResponse response, final DataTypeDescriptor<T> datad,
+			@Nullable final DataTypeDescriptor<E> excd) {
 		if (response == null) throw new NullPointerException("response");
 		if (datad == null) throw new NullPointerException("datad");
 
@@ -276,7 +276,7 @@ public class RestProtocol {
 
 	// VisibleForTesting
 	<V> V parseParam(final ArgumentDescriptor<V> argd, final Map<String, String> src) {
-		DataDescriptor<V> descriptor = argd.getType();
+		DataTypeDescriptor<V> descriptor = argd.getType();
 		boolean isForm = descriptor instanceof ImmutableMessageDescriptor
 				&& ((MessageDescriptor) descriptor).isForm();
 
@@ -328,7 +328,7 @@ public class RestProtocol {
 
 	// VisibleForTesting
 	/** Parses an argument from an unquoted JSON string. */
-	<V> V parseFromJson(final DataDescriptor<V> descriptor, String value) {
+	<V> V parseFromJson(final DataTypeDescriptor<V> descriptor, String value) {
 		if (value == null || value.equals("null")) {
 			return null;
 		}
@@ -342,8 +342,8 @@ public class RestProtocol {
 	// InvocationResult serialization.
 
 	public <T, E> RestResponse serializeInvocationResult(final InvocationResult result,
-			final DataDescriptor<T> dataDescriptor,
-			@Nullable final DataDescriptor<E> excDescriptor) {
+			final DataTypeDescriptor<T> dataDescriptor,
+			@Nullable final DataTypeDescriptor<E> excDescriptor) {
 		if (result == null) throw new NullPointerException("result");
 		if (dataDescriptor == null) throw new NullPointerException("dataDescriptor");
 
@@ -366,7 +366,7 @@ public class RestProtocol {
 	}
 
 	static <T, E> MessageDescriptor<RestResult<T, E>> resultDescriptor(
-			final DataDescriptor<T> dataDescriptor, final DataDescriptor<E> excDescriptor) {
+			final DataTypeDescriptor<T> dataDescriptor, final DataTypeDescriptor<E> excDescriptor) {
 		return RestResult.runtimeDescriptor(dataDescriptor, excDescriptor);
 	}
 

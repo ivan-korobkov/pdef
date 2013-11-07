@@ -1,6 +1,6 @@
 package io.pdef;
 
-public interface DataDescriptor<T> extends Descriptor<T> {
+public interface DataTypeDescriptor<T> extends Descriptor<T> {
 	/**
 	 * Returns a deep copy of an object.
 	 */

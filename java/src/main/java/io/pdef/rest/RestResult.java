@@ -43,12 +43,17 @@ public class RestResult<T, E> extends AbstractMessage {
 	}
 
 	@Override
+	public Message copy() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public MessageDescriptor<? extends Message> descriptor() {
 		return descriptor;
 	}
 
 	public static <T, E> MessageDescriptor<RestResult<T, E>> runtimeDescriptor(
-			final DataDescriptor<T> datad, final DataDescriptor<E> excd) {
+			final DataTypeDescriptor<T> datad, final DataTypeDescriptor<E> excd) {
 		if (datad == null) throw new NullPointerException("dataDescriptor");
 
 		@SuppressWarnings("unchecked")

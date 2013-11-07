@@ -68,8 +68,8 @@ public class Invocation {
 		return method.getResult();
 	}
 
-	public DataDescriptor<?> getDataResult() {
-		return (DataDescriptor<?>) method.getResult();
+	public DataTypeDescriptor<?> getDataResult() {
+		return (DataTypeDescriptor<?>) method.getResult();
 	}
 
 	/** Returns the method exception or the parent exception. */

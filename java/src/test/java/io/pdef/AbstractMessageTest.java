@@ -62,6 +62,15 @@ public class AbstractMessageTest {
 		assertSame(testMessage, message.getMessage0());
 	}
 
+	@Test
+	public void testCopy() throws Exception {
+		TestDataTypes message = createComplexMessage();
+		TestDataTypes copy = message.copy();
+
+		assertEquals(message, copy);
+		assertNotSame(message, copy);
+	}
+
 	private TestDataTypes createComplexMessage() {
 		return new TestDataTypes()
 				.setEnum0(TestEnum.THREE)

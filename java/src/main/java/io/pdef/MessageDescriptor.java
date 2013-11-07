@@ -4,7 +4,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Set;
 
-public interface MessageDescriptor<M extends Message> extends DataDescriptor<M> {
+public interface MessageDescriptor<M extends Message> extends DataTypeDescriptor<M> {
 	/**
 	 * Returns this message base descriptor or {@literal null}.
 	 */

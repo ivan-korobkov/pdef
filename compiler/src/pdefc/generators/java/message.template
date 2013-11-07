@@ -18,6 +18,17 @@ public class {{ name }} extends {{ base_or_root }} {
     public {{ name }}() {}
 {% endif %}
 
+    public {{ name }}(final {{ name }} another) {
+        super(another);
+    {% for field in declared_fields %}
+        {% if field.type.is_collection or field.type.is_message %}
+        this.{{ field.name }} = io.pdef.DataTypes.copy(another.{{ field.name }});
+        {% else %}
+        this.{{ field.name }} = another.{{ field.name }};
+        {% endif %}
+    {% endfor %}
+    }
+
     public static {{ name }} fromMap(final java.util.Map<String, Object> map) {
         return io.pdef.formats.NativeFormat.instance().parse(map, DESCRIPTOR);
     }
@@ -57,7 +68,7 @@ public class {{ name }} extends {{ base_or_root }} {
 {% endfor %}
     @Override
     public {{ name }} copy() {
-        return ({{ name }}) super.copy();
+        return new {{ name }}(this);
     }
 
     @Override
@@ -97,8 +108,8 @@ public class {{ name }} extends {{ base_or_root }} {
                 {% if field.type.is_primitive %}
                     .setType({{ field.type.descriptor }})
                 {% else %}
-                    .setType(new io.pdef.Provider<io.pdef.DataDescriptor<{{ field.type }}>>() {
-                        public io.pdef.DataDescriptor<{{ field.type }}> get() {
+                    .setType(new io.pdef.Provider<io.pdef.DataTypeDescriptor<{{ field.type }}>>() {
+                        public io.pdef.DataTypeDescriptor<{{ field.type }}> get() {
                             return {{ field.type.descriptor }};
                         }
                     })

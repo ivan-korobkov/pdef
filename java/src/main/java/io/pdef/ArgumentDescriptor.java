@@ -9,5 +9,5 @@ public interface ArgumentDescriptor<V> {
 	/**
 	 * Returns an argument type descriptor.
 	 */
-	DataDescriptor<V> getType();
+	DataTypeDescriptor<V> getType();
 }

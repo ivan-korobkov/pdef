@@ -1,7 +1,7 @@
 package io.pdef.immutable;
 
 import io.pdef.ArgumentDescriptor;
-import io.pdef.DataDescriptor;
+import io.pdef.DataTypeDescriptor;
 
 /**
  * ArgumentDescriptor provides a method argument name and type.
@@ -9,14 +9,14 @@ import io.pdef.DataDescriptor;
  */
 public class ImmutableArgumentDescriptor<V> implements ArgumentDescriptor<V> {
 	private final String name;
-	private final DataDescriptor<V> type;
+	private final DataTypeDescriptor<V> type;
 
 	public static <V> ArgumentDescriptor<V> of(final String name,
-			final DataDescriptor<V> type) {
+			final DataTypeDescriptor<V> type) {
 		return new ImmutableArgumentDescriptor<V>(name, type);
 	}
 
-	public ImmutableArgumentDescriptor(final String name, final DataDescriptor<V> type) {
+	public ImmutableArgumentDescriptor(final String name, final DataTypeDescriptor<V> type) {
 		if (name == null) throw new NullPointerException("name");
 		if (type == null) throw new NullPointerException("type");
 
@@ -35,7 +35,7 @@ public class ImmutableArgumentDescriptor<V> implements ArgumentDescriptor<V> {
 	}
 
 	@Override
-	public DataDescriptor<V> getType() {
+	public DataTypeDescriptor<V> getType() {
 		return type;
 	}
 }

@@ -1,13 +1,13 @@
 package io.pdef.immutable;
 
-import io.pdef.AbstractDataDescriptor;
+import io.pdef.AbstractDataTypeDescriptor;
 import io.pdef.EnumDescriptor;
 import io.pdef.TypeEnum;
 
 import java.util.*;
 
 /** EnumDescriptor holds enum values and parsing/serialization methods. */
-public class ImmutableEnumDescriptor<T extends Enum<T>> extends AbstractDataDescriptor<T>
+public class ImmutableEnumDescriptor<T extends Enum<T>> extends AbstractDataTypeDescriptor<T>
 		implements EnumDescriptor<T> {
 	private final List<T> values;
 	private final Map<String, T> namesToValues;

@@ -2,7 +2,6 @@ package io.pdef;
 
 import io.pdef.formats.JsonFormat;
 import io.pdef.formats.NativeFormat;
-import io.pdef.immutable.ImmutableMessageDescriptor;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -13,20 +12,12 @@ import java.util.Map;
 public abstract class AbstractException extends RuntimeException implements Message, Serializable {
 	protected AbstractException() {}
 
-	@SuppressWarnings("unchecked")
-	private ImmutableMessageDescriptor<Message> thisDescriptor() {
-		return (ImmutableMessageDescriptor<Message>) descriptor();
-	}
-
-	@Override
-	public Message copy() {
-		return thisDescriptor().copy(this);
-	}
+	protected AbstractException(final AbstractException another) {}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> toMap() {
-		return (Map<String, Object>) NativeFormat.instance().serialize(this, thisDescriptor());
+		return (Map<String, Object>) NativeFormat.instance().serialize(this, uncheckedDescriptor());
 	}
 
 	@Override
@@ -36,7 +27,7 @@ public abstract class AbstractException extends RuntimeException implements Mess
 
 	@Override
 	public String toJson(final boolean indent) {
-		return JsonFormat.instance().serialize(this, thisDescriptor(), indent);
+		return JsonFormat.instance().serialize(this, uncheckedDescriptor(), indent);
 	}
 
 	@Override
@@ -45,7 +36,7 @@ public abstract class AbstractException extends RuntimeException implements Mess
 		sb.append('{');
 
 		String nextSeparator = "";
-		MessageDescriptor<Message> descriptor = thisDescriptor();
+		MessageDescriptor<Message> descriptor = uncheckedDescriptor();
 		for (FieldDescriptor<? super Message, ?> field : descriptor.getFields()) {
 			Object value = field.get(this);
 			if (value == null) {
@@ -67,7 +58,7 @@ public abstract class AbstractException extends RuntimeException implements Mess
 		if (o == null || getClass() != o.getClass()) return false;
 
 		AbstractException cast = (AbstractException) o;
-		MessageDescriptor<Message> descriptor = thisDescriptor();
+		MessageDescriptor<Message> descriptor = uncheckedDescriptor();
 		for (FieldDescriptor<? super Message, ?> field : descriptor.getFields()) {
 			Object value0 = field.get(this);
 			Object value1 = field.get(cast);
@@ -83,12 +74,17 @@ public abstract class AbstractException extends RuntimeException implements Mess
 	public int hashCode() {
 		int result = 0;
 
-		MessageDescriptor<Message> descriptor = thisDescriptor();
+		MessageDescriptor<Message> descriptor = uncheckedDescriptor();
 		for (FieldDescriptor<? super Message, ?> field : descriptor.getFields()) {
 			Object value = field.get(this);
 			result = 31 * result + (value == null ? 0 : value.hashCode());
 		}
 
 		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private MessageDescriptor<Message> uncheckedDescriptor() {
+		return (MessageDescriptor<Message>) descriptor();
 	}
 }

@@ -13,14 +13,12 @@ public class ImmutableInterfaceDescriptor<T> extends BaseDescriptor<T>
 	private final List<MethodDescriptor<T, ?>> methods;
 	private final Map<String, MethodDescriptor<T, ?>> methodMap;
 	private final MessageDescriptor<?> exc;
-	private final MethodDescriptor<T, ?> indexMethod;
 
 	private ImmutableInterfaceDescriptor(final Builder<T> builder) {
 		super(TypeEnum.INTERFACE, builder.javaClass);
 		exc = builder.exc;
 		methods = ImmutableCollections.list(builder.methods);
 		methodMap = ImmutableCollections.map(methodsToMap(methods));
-		indexMethod = findIndexMethod(methods);
 	}
 
 	public static <T> Builder<T> builder() {
@@ -41,12 +39,6 @@ public class ImmutableInterfaceDescriptor<T> extends BaseDescriptor<T>
 	@Nullable
 	public MessageDescriptor<?> getExc() {
 		return exc;
-	}
-
-	@Override
-	@Nullable
-	public MethodDescriptor<T, ?> getIndexMethod() {
-		return indexMethod;
 	}
 
 	@Override
@@ -91,16 +83,5 @@ public class ImmutableInterfaceDescriptor<T> extends BaseDescriptor<T>
 			map.put(method.getName(), method);
 		}
 		return map;
-	}
-
-	private static <T> MethodDescriptor<T, ?> findIndexMethod(
-			final List<MethodDescriptor<T, ?>> methods) {
-		for (MethodDescriptor<T, ?> method : methods) {
-			if (method.isIndex()) {
-				return method;
-			}
-		}
-
-		return null;
 	}
 }

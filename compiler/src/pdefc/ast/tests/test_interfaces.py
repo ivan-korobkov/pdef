@@ -28,7 +28,7 @@ class TestInterface(unittest.TestCase):
 
     def test_link(self):
         iface = Interface('Interface', exc='exc')
-        iface.create_method('method', 'result', arg_tuples=[('arg', 'arg_type')])
+        iface.create_method('method', 'result', [('arg', 'arg_type')])
         errors = iface.link(lambda name: None)
 
         assert len(errors) == 3
@@ -52,14 +52,6 @@ class TestInterface(unittest.TestCase):
 
         errors = iface0.validate()
         assert 'duplicate method' in errors[0]
-
-    def test_validate_methods__one_index(self):
-        iface = Interface('Interface')
-        iface.create_method('method0', is_index=True)
-        iface.create_method('method1', is_index=True)
-
-        errors = iface.validate()
-        assert 'duplicate index method' in errors[0]
 
 
 class TestMethod(unittest.TestCase):
@@ -89,17 +81,6 @@ class TestMethod(unittest.TestCase):
 
         errors = method.validate()
         assert 'duplicate argument' in errors[0]
-
-    def test_validate__form_field_clashes_with_arg(self):
-        form = Message('Form', is_form=True)
-        form.create_field('clash', NativeType.INT32)
-
-        method = Method('method', NativeType.INT32)
-        method.create_arg('clash', NativeType.INT32)
-        method.create_arg('form', form)
-
-        errors = method.validate()
-        assert 'form fields clash with method args' in errors[0]
 
 
 class TestMethodArg(unittest.TestCase):

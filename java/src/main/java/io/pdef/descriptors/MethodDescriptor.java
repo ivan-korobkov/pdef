@@ -29,11 +29,6 @@ public interface MethodDescriptor<T, R> extends MethodInvoker<T, R> {
 	MessageDescriptor<?> getExc();
 
 	/**
-	 * Returns whether this method is an index method in an interface.
-	 */
-	boolean isIndex();
-
-	/**
 	 * Returns whether this method is a post method (annotated with @post annotation).
 	 */
 	boolean isPost();

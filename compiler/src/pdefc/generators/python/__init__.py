@@ -205,7 +205,6 @@ class PythonMessage(PythonDefinition):
         self.discriminator = PythonField(msg.discriminator, ref) if msg.discriminator else None
 
         self.is_exception = msg.is_exception
-        self.is_form = msg.is_form
 
         self.fields = [PythonField(field, ref) for field in msg.fields]
         self.inherited_fields = [PythonField(field, ref) for field in msg.inherited_fields]
@@ -238,8 +237,6 @@ class PythonMethod(object):
 
         self.result = ref(method.result)
         self.args = [PythonArg(arg, ref) for arg in method.args]
-
-        self.is_index = method.is_index
         self.is_post = method.is_post
 
 

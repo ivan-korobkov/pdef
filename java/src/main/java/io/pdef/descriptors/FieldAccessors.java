@@ -5,13 +5,6 @@ import java.lang.reflect.Field;
 public class FieldAccessors {
 	private FieldAccessors() {}
 
-	/**
-	 * Returns a reflection-based field accessor for a declared field.
-	 */
-	public static <M, V> FieldAccessor<M, V> reflexive(final String name, final Class<M> cls) {
-		return new ReflexiveFieldAccessor<M, V>(name, cls);
-	}
-
 	private static class ReflexiveFieldAccessor<M, V> implements FieldAccessor<M, V> {
 		private final Field field;
 

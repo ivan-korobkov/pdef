@@ -171,7 +171,7 @@ class _Tokens(object):
          'LESS', 'GREATER', 'LBRACE', 'RBRACE',
          'LPAREN', 'RPAREN',
          'IDENTIFIER', 'DOC') \
-        + ('DISCRIMINATOR', 'FORM', 'INDEX', 'POST', 'THROWS')
+        + ('DISCRIMINATOR', 'POST', 'THROWS')
 
     # Regexp for simple rules.
     t_DOT = r'.'
@@ -187,8 +187,6 @@ class _Tokens(object):
 
     # Regexp for options.
     t_DISCRIMINATOR = r'@discriminator'
-    t_FORM = r'@form'
-    t_INDEX = r'@index'
     t_POST = r'@post'
     t_THROWS = r'@throws'
 
@@ -376,24 +374,15 @@ class _GrammarRules(object):
     @_with_location(3)
     def p_message(self, t):
         '''
-        message : message_form message_or_exc IDENTIFIER message_base LBRACE fields RBRACE
+        message : message_or_exc IDENTIFIER message_base LBRACE fields RBRACE
         '''
-        is_form = t[1]
-        is_exception = t[2].lower() == 'exception'
-        name = t[3]
-        base, discriminator_value = t[4]
-        fields = t[6]
+        is_exception = t[1].lower() == 'exception'
+        name = t[2]
+        base, discriminator_value = t[3]
+        fields = t[5]
 
         t[0] = pdefc.ast.Message(name, base=base, discriminator_value=discriminator_value,
-                                 declared_fields=fields, is_exception=is_exception,
-                                 is_form=is_form)
-
-    def p_message_form(self, t):
-        '''
-        message_form : FORM
-                     | empty
-        '''
-        t[0] = bool(t[1])
+                                 declared_fields=fields, is_exception=is_exception)
 
     def p_message_or_exception(self, t):
         '''
@@ -488,10 +477,8 @@ class _GrammarRules(object):
         name = t[3]
         args = t[5]
         result = t[7]
-        is_index = '@index' in attrs
         is_post = '@post' in attrs
-        t[0] = pdefc.ast.Method(name, result=result, args=args, is_index=is_index, is_post=is_post,
-                                doc=doc)
+        t[0] = pdefc.ast.Method(name, result=result, args=args, is_post=is_post, doc=doc)
 
     def p_method_args(self, t):
         '''
@@ -518,8 +505,7 @@ class _GrammarRules(object):
 
     def p_method_attr(self, t):
         '''
-        method_attr : INDEX
-                    | POST
+        method_attr : POST
         '''
         t[0] = t[1]
 

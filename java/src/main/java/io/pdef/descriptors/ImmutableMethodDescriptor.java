@@ -15,8 +15,6 @@ public class ImmutableMethodDescriptor<T, R> implements MethodDescriptor<T,R> {
 	private final Provider<Descriptor<R>> resultProvider;
 	private final List<ArgumentDescriptor<?>> args;
 	private final MessageDescriptor<?> exc;
-
-	private final boolean index;
 	private final boolean post;
 
 	private Descriptor<R> result;
@@ -32,8 +30,6 @@ public class ImmutableMethodDescriptor<T, R> implements MethodDescriptor<T,R> {
 		resultProvider = builder.result;
 		args = ImmutableCollections.list(builder.args);
 		exc = builder.exc;
-
-		index = builder.index;
 		post = builder.post;
 	}
 
@@ -67,11 +63,6 @@ public class ImmutableMethodDescriptor<T, R> implements MethodDescriptor<T,R> {
 	}
 
 	@Override
-	public boolean isIndex() {
-		return index;
-	}
-
-	@Override
 	public boolean isPost() {
 		return post;
 	}
@@ -93,7 +84,6 @@ public class ImmutableMethodDescriptor<T, R> implements MethodDescriptor<T,R> {
 		private List<ArgumentDescriptor<?>> args;
 		private MessageDescriptor<?> exc;
 		private MethodInvoker<T, R> invoker;
-		private boolean index;
 		private boolean post;
 
 		public Builder() {
@@ -141,11 +131,6 @@ public class ImmutableMethodDescriptor<T, R> implements MethodDescriptor<T,R> {
 
 		public Builder<T, R> setReflexiveInvoker(final Class<T> interfaceClass) {
 			this.invoker = MethodInvokers.reflexive(interfaceClass, name);
-			return this;
-		}
-
-		public Builder<T, R> setIndex(final boolean index) {
-			this.index = index;
 			return this;
 		}
 

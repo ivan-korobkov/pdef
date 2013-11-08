@@ -3,9 +3,8 @@ package io.pdef.descriptors;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import io.pdef.test.inheritance.*;
-import io.pdef.test.messages.TestValues;
-import io.pdef.test.messages.TestForm;
 import io.pdef.test.messages.TestMessage;
+import io.pdef.test.messages.TestValues;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -22,15 +21,6 @@ public class ImmutableMessageDescriptorTest {
 		assertNull(descriptor.getDiscriminatorValue());
 		assertEquals(3, descriptor.getFields().size());
 		assertEquals(0, descriptor.getSubtypes().size());
-	}
-
-	@Test
-	public void test_form() throws Exception {
-		MessageDescriptor<TestMessage> message = TestMessage.DESCRIPTOR;
-		MessageDescriptor<TestForm> form = TestForm.DESCRIPTOR;
-
-		assertFalse(message.isForm());
-		assertTrue(form.isForm());
 	}
 
 	@Test

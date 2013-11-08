@@ -7,7 +7,7 @@ import java.util.*;
 
 /** MessageDescriptor is a descriptor for Pdef messages. */
 public class ImmutableMessageDescriptor<M extends Message> extends BaseDescriptor<M>
-		implements MessageDescriptor<M>, ValueDescriptor<M> {
+		implements MessageDescriptor<M> {
 	private final Provider<M> provider;
 	private final MessageDescriptor<? super M> base;
 
@@ -21,8 +21,6 @@ public class ImmutableMessageDescriptor<M extends Message> extends BaseDescripto
 	private final List<Provider<MessageDescriptor<? extends M>>> subtypeProviders;
 	private Set<MessageDescriptor<? extends M>> subtypes;
 	private Map<Enum<?>, MessageDescriptor<? extends M>> subtypeMap;
-
-	private final boolean form;
 
 	private ImmutableMessageDescriptor(final Builder<M> builder) {
 		super(TypeEnum.MESSAGE, builder.javaClass);
@@ -38,8 +36,6 @@ public class ImmutableMessageDescriptor<M extends Message> extends BaseDescripto
 		discriminator = findDiscriminator(fields);
 		discriminatorValue = builder.discriminatorValue;
 		subtypeProviders = ImmutableCollections.list(builder.subtypes);
-
-		form = builder.form;
 	}
 
 	public static <M extends Message> Builder<M> builder() {
@@ -113,23 +109,11 @@ public class ImmutableMessageDescriptor<M extends Message> extends BaseDescripto
 		return fields;
 	}
 
-	@Override
-	public boolean isForm() {
-		return form;
-	}
-
 	// Message methods.
 
 	@Override
 	public M newInstance() {
 		return provider.get();
-	}
-
-	@Override
-	public void copy(final M src, final M dst) {
-		for (FieldDescriptor<? super M, ?> field : getFields()) {
-			field.copy(src, dst);
-		}
 	}
 
 	@Override
@@ -144,7 +128,6 @@ public class ImmutableMessageDescriptor<M extends Message> extends BaseDescripto
 		private Enum<?> discriminatorValue;
 		private final List<FieldDescriptor<M, ?>> declaredFields;
 		private final List<Provider<MessageDescriptor<? extends M>>> subtypes;
-		private boolean form;
 
 		private Builder() {
 			declaredFields = new ArrayList<FieldDescriptor<M, ?>>();
@@ -163,11 +146,6 @@ public class ImmutableMessageDescriptor<M extends Message> extends BaseDescripto
 
 		public Builder<M> setBase(final MessageDescriptor<? super M> base) {
 			this.base = base;
-			return this;
-		}
-
-		public Builder<M> setForm(final boolean form) {
-			this.form = form;
 			return this;
 		}
 

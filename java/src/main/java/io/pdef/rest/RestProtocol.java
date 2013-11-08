@@ -75,28 +75,9 @@ public class RestProtocol {
 	<V> void writeParam(final ArgumentDescriptor<V> argd, final V arg,
 			final Map<String, String> dst) {
 		ValueDescriptor<V> descriptor = argd.getType();
-		if (!argd.isForm()) {
-			// Serialize as a single json param.
-			String serialized = toJson(descriptor, arg);
-			dst.put(argd.getName(), serialized);
-			return;
-		}
-
-		// It's a form, serialize each its field into a json param.
-		// Mind polymorphic messages.
-		Message message = (Message) arg;
-		MessageDescriptor<Message> mdescriptor = (MessageDescriptor<Message>) message.descriptor();
-
-		for (FieldDescriptor<? super Message, ?> field : mdescriptor.getFields()) {
-			Object value = field.get(message);
-			ValueDescriptor<Object> type = (ValueDescriptor<Object>) field.getType();
-			if (value == null) {
-				continue;
-			}
-
-			String s = toJson(type, value);
-			dst.put(field.getName(), s);
-		}
+		// Serialize as a single json param.
+		String serialized = toJson(descriptor, arg);
+		dst.put(argd.getName(), serialized);
 	}
 
 	/** Serializes an argument to JSON, strips the quotes. */
@@ -137,19 +118,8 @@ public class RestProtocol {
 			// Find a method by name .
 			MethodDescriptor<?, ?> method = descriptor.getMethod(part);
 			if (method == null) {
-				// Try to get an index method, if it is not found by a name.
-				method = descriptor.getIndexMethod();
-			}
-
-			if (method == null) {
 				// Method is not found.
 				throw RestException.methodNotFound("Method is not found: " + part);
-			}
-
-			if (method.isIndex() && !part.equals("")) {
-				// It's an index method, and the part does not equal
-				// the method name. Prepend the part back, it's an argument.
-				parts.addFirst(part);
 			}
 
 			if (method.isPost() && !request.isPost()) {
@@ -223,43 +193,10 @@ public class RestProtocol {
 
 	// VisibleForTesting
 	<V> V readParam(final ArgumentDescriptor<V> argd, final Map<String, String> src) {
+		// Parse a single json string param.
 		ValueDescriptor<V> descriptor = argd.getType();
-		boolean isForm = descriptor instanceof ImmutableMessageDescriptor
-				&& ((MessageDescriptor) descriptor).isForm();
-
-		if (!isForm) {
-			// Parse a single json string param.
-			String serialized = src.get(argd.getName());
-			return fromJson(descriptor, serialized);
-
-		} else {
-			// It's a form. Parse each its field as a param.
-			// Mind polymorphic messages.
-
-			MessageDescriptor<Message> mdescriptor = (MessageDescriptor<Message>) descriptor;
-			if (mdescriptor.isPolymorphic()) {
-				// Parse the discriminator field and get the subtype descriptor.
-				FieldDescriptor<? super Message, ?> field = mdescriptor.getDiscriminator();
-				assert field != null;
-				String serialized = src.get(field.getName());
-				Enum<?> value = (Enum<?>) fromJson(field.getType(), serialized);
-
-				@SuppressWarnings("unchecked")
-				MessageDescriptor<Message> subtype = (MessageDescriptor<Message>) mdescriptor
-						.getSubtype(value);
-				mdescriptor = subtype != null ? subtype : mdescriptor;
-			}
-
-			Message message = mdescriptor.newInstance();
-			for (FieldDescriptor<? super Message, ?> field : mdescriptor.getFields()) {
-				String serialized = src.get(field.getName());
-				readFormField(message, field, serialized);
-			}
-
-			@SuppressWarnings("unchecked")
-			V result = (V) message;
-			return result;
-		}
+		String serialized = src.get(argd.getName());
+		return fromJson(descriptor, serialized);
 	}
 
 	private <M, V> void readFormField(final M message, final FieldDescriptor<M, V> field,

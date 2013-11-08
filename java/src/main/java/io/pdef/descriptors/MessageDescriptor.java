@@ -57,17 +57,7 @@ public interface MessageDescriptor<M extends Message> extends ValueDescriptor<M>
 	Set<MessageDescriptor<? extends M>> getSubtypes();
 
 	/**
-	 * Returns whether this message is a form.
-	 */
-	boolean isForm();
-
-	/**
 	 * Creates a new message getInstance.
 	 */
 	M newInstance();
-
-	/**
-	 * Deeply copies present fields from one message into another.
-	 */
-	void copy(M src, M dst);
 }

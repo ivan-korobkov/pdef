@@ -37,11 +37,10 @@
         exception_token='exception'
         enum_token='enum'
 
-        // Options
+        // Attributes
         discriminator='@discriminator'
-        form='@form'
-        index='@index'
         post='@post'
+        query='@query'
         throws='@throws'
 
         // Idd, docs and comments.
@@ -67,9 +66,8 @@ Definition      ::= doc? (Enum | Message | Interface)
 Enum            ::= 'enum' id '{' EnumValues? '}'
 EnumValues      ::= id (',' id)* ';'?
 
-Message         ::= MessageForm? ('message' | 'exception') id (':' MessageBase)? '{' Field* '}'
+Message         ::= ('message' | 'exception') id (':' MessageBase)? '{' Field* '}'
 MessageBase     ::= Type ('(' Type ')')?  // Base with an optional polymorphic type.
-MessageForm     ::= '@form'
 
 Field           ::= id Type FieldDiscriminator? ';'
 FieldDiscriminator ::= '@discriminator'
@@ -77,10 +75,11 @@ FieldDiscriminator ::= '@discriminator'
 Interface       ::= InterfaceExc? 'interface' id '{' Method* '}'
 InterfaceExc    ::= '@throws' '(' TypeName ')'
 
-Method          ::= doc? MethodAttribute* id '(' MethodArgs? ')' Type ';'
-MethodArg       ::= doc? id Type
-MethodArgs      ::= MethodArg (',' MethodArg)*
-MethodAttribute ::= '@index' | '@post'
+Method          ::= doc? MethodPost? id '(' Args? ')' Type ';'
+MethodPost      ::= '@post'
+Arg             ::= doc? id Type ArgAttribute*
+Args            ::= Arg (',' Arg)*
+ArgAttribute    ::= '@post' | '@query'
 
 Type            ::= ValueType | ListType | SetType | MapType | TypeName
 ValueType       ::= bool

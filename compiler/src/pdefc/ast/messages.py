@@ -7,7 +7,7 @@ from pdefc.ast.definitions import Definition, TypeEnum, Located
 class Message(Definition):
     '''User-defined message.'''
     def __init__(self, name, base=None, discriminator_value=None, declared_fields=None,
-                 is_exception=False, is_form=False, doc=None, location=None):
+                 is_exception=False, doc=None, location=None):
         super(Message, self).__init__(TypeEnum.EXCEPTION if is_exception else TypeEnum.MESSAGE,
                                       name, doc=doc, location=location)
 
@@ -17,7 +17,6 @@ class Message(Definition):
 
         self.subtypes = []
         self.declared_fields = []
-        self.is_form = is_form
 
         if declared_fields:
             map(self.add_field, declared_fields)

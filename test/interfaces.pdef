@@ -25,37 +25,36 @@ interface TestInterface {
     Returns the sum of the numbers.
     Multi-line comment.
     */
-    @index
-    testIndex(arg0 int32, arg1 int32) int32;
+    path(arg0 int32, arg1 int32) int32;
+
+    /** Returns the sum of the numbers. */
+    query(arg0 int32, arg1 int32) int32;
 
     /** Returns the sum of the numbers. */
     @post
-    testPost(arg0 int32, arg1 int32) int32;
+    post(arg0 int32, arg1 int32) int32;
 
     /** Returns the sum of the numbers. */
-    testRemote(arg0 int32, arg1 int32) int32;
+    terminal(arg0 int32, arg1 int32) int32;
 
     /** Void method which returns null. */
-    testVoid() void;
+    void0() void;
 
     /** Throws a TestException. */
-    testExc() void;
+    exc0() void;
 
     /** Returns the same string. */
-    testString(text string) string;
-
-    /** Returns the same form. */
-    testForm(form messages.TestForm) messages.TestForm;
+    string0(text string) string;
 
     /** Returns the same message. */
-    testMessage(msg messages.TestMessage) messages.TestMessage;
+    message0(msg messages.TestMessage) messages.TestMessage;
 
     /** Returns the same polymorphic message. */
-    testPolymorphic(msg inheritance.Base) inheritance.Base;
+    polymorphic(msg inheritance.Base) inheritance.Base;
 
     /** Returns the total number of items. */
-    testCollections(list0 list<int32>, set0 set<int32>, map0 map<int32, int32>) int32;
+    collections(list0 list<int32>, set0 set<int32>, map0 map<int32, int32>) int32;
 
     /** Returns the same interface (yes, it's endless). */
-    testInterface(arg0 int32, arg1 int32) TestInterface;
+    interface0(arg0 int32, arg1 int32) TestInterface;
 }

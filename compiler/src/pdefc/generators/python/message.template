@@ -53,9 +53,6 @@ class {{ name }}({{ root_or_base }}):
         base={{ base.descriptor }},
         discriminator_value={{ discriminator_value.name if discriminator_value else None }},
     {% endif %}
-    {% if is_form %}
-        is_form=True,
-    {% endif %}
     {% if subtypes %}
         subtypes=(
         {% for subtype in subtypes %}

@@ -135,8 +135,8 @@ class TestPythonInterface(unittest.TestCase):
         exc = Message('Exception', is_exception=True)
 
         iface = Interface('Interface', exc=exc)
-        iface.create_method('method0', NativeType.INT32, ('arg', NativeType.INT32))
-        iface.create_method('method1', NativeType.STRING, ('name', NativeType.STRING))
+        iface.create_method('method0', NativeType.INT32, [('arg', NativeType.INT32)])
+        iface.create_method('method1', NativeType.STRING, [('name', NativeType.STRING)])
 
         return PythonDefinition.create(iface, ref=pyreference)
 

@@ -26,9 +26,6 @@ class {{ name }}({{ root_or_base }}):
         methods=(
         {% for method in declared_methods %}
             pdef.descriptors.method('{{ method.name }}', lambda: {{ method.result.descriptor}},
-            {% if method.is_index %}
-                is_index=True,
-            {% endif %}
             {% if method.is_post %}
                 is_post=True,
             {% endif %}

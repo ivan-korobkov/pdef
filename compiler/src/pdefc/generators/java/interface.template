@@ -42,9 +42,6 @@ package {{ package }};
                 {% for arg in method.args %}
                     .addArg("{{ arg.name }}", {{ arg.type.descriptor }})
                 {% endfor %}
-                {% if method.is_index %}
-                    .setIndex(true)
-                {% endif %}
                 {% if method.is_post %}
                     .setPost(true)
                 {% endif %}

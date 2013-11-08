@@ -63,13 +63,6 @@ public class ImmutableFieldDescriptor<M, V> implements FieldDescriptor<M,V> {
 		accessor.set(message, value);
 	}
 
-	@Override
-	public void copy(final M src, final M dst) {
-		V value = get(src);
-		V copied = Values.copy(value);
-		set(dst, copied);
-	}
-
 	public static class Builder<M, V> {
 		private String name;
 		private boolean discriminator;
@@ -103,14 +96,6 @@ public class ImmutableFieldDescriptor<M, V> implements FieldDescriptor<M,V> {
 			if (accessor == null) throw new NullPointerException("accessor");
 			this.accessor = accessor;
 			return this;
-		}
-
-		public Builder<M, V> setReflexAccessor(final Class<M> cls) {
-			if (name == null) {
-				throw new NullPointerException("Name must be set before the reflex accessor");
-			}
-			FieldAccessor<M, V> accessor = FieldAccessors.reflexive(name, cls);
-			return setAccessor(accessor);
 		}
 
 		public FieldDescriptor<M, V> build() {

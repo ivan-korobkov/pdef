@@ -1,5 +1,5 @@
 /**
-Test pdef module with messages and forms.
+Test pdef messages and enums.
 Multi-line comment.
 */
 module pdef.test.messages;
@@ -41,12 +41,4 @@ message TestValues : TestMessage {
     message0    TestMessage;
     polymorphic inheritance.Base;
     datatypes   TestValues;
-}
-
-
-@form
-message TestForm {
-    formBool    bool;
-    formString  string;
-    formList    list<int32>;
 }

@@ -43,16 +43,6 @@ public class ImmutableFieldDescriptorTest {
 		assertEquals("Hello, world", s);
 	}
 
-	@Test
-	public void testCopy() throws Exception {
-		TestMessage msg0 = new TestMessage().setString0("hello, world");
-		TestMessage msg1 = new TestMessage();
-
-		stringField().copy(msg0, msg1);
-		assertEquals("hello, world", msg0.getString0());
-		assertEquals("hello, world", msg1.getString0());
-	}
-
 	@SuppressWarnings("unchecked")
 	private FieldDescriptor<? super TestMessage, String> stringField() {
 		return (FieldDescriptor<? super TestMessage, String>)

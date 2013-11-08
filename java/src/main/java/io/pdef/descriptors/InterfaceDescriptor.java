@@ -20,10 +20,4 @@ public interface InterfaceDescriptor<T> extends Descriptor<T> {
 	 */
 	@Nullable
 	MessageDescriptor<?> getExc();
-
-	/**
-	 * Returns an index method descriptor or {@literal null}.
-	 */
-	@Nullable
-	MethodDescriptor<T, ?> getIndexMethod();
 }

@@ -30,19 +30,15 @@ public class ImmutableMethodDescriptorTest {
 		MethodDescriptor<TestInterface, ?> iface = TestInterface.DESCRIPTOR.getMethod(
 				"testInterface");
 
-		assertTrue(index.isIndex());
 		assertTrue(index.isRemote());
 		assertFalse(index.isPost());
 
-		assertFalse(remote.isIndex());
 		assertTrue(remote.isRemote());
 		assertFalse(remote.isPost());
 
-		assertFalse(post.isIndex());
 		assertTrue(post.isRemote());
 		assertTrue(post.isPost());
 
-		assertFalse(iface.isIndex());
 		assertFalse(iface.isRemote());
 		assertFalse(iface.isPost());
 	}

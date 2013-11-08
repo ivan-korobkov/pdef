@@ -37,10 +37,9 @@ class Interface(Definition):
 
         logging.debug('%s: added a method %r', self, method.name)
 
-    def create_method(self, name, result=NativeType.VOID, is_index=False, is_post=False,
-                      arg_tuples=None):
+    def create_method(self, name, result=NativeType.VOID, arg_tuples=None, is_post=False):
         '''Add a new method to this interface and return the method.'''
-        method = Method(name, result=result, is_index=is_index, is_post=is_post)
+        method = Method(name, result=result, is_post=is_post)
         if arg_tuples:
             for arg_tuple in arg_tuples:
                 method.create_arg(*arg_tuple)
@@ -85,17 +84,6 @@ class Interface(Definition):
                 errors.append(self._error('%s: duplicate method %r', self, method.name))
             names.add(method.name)
 
-        # Prevent duplicate index methods.
-        index = None
-        for method in self.methods:
-            if not method.is_index:
-                continue
-
-            if index:
-                errors.append(self._error('%s: duplicate index method', self))
-                break
-            index = method
-
         # Validate methods.
         for method in self.methods:
             errors += method.validate()
@@ -105,13 +93,11 @@ class Interface(Definition):
 
 class Method(Located):
     '''Interface method.'''
-    def __init__(self, name, result=NativeType.VOID, args=None, is_index=False, is_post=False,
-                 doc=None, location=None):
+    def __init__(self, name, result=NativeType.VOID, args=None, is_post=False, doc=None,
+                 location=None):
         self.name = name
         self.args = []
         self.result = result
-
-        self.is_index = is_index
         self.is_post = is_post
 
         self.doc = doc
@@ -186,21 +172,6 @@ class Method(Located):
             if arg.name in names:
                 errors.append(self._error('%s: duplicate argument %r', self, arg.name))
             names.add(arg.name)
-
-        # Prevent form arg fields and arguments name clashes.
-        for arg in self.args:
-            type0 = arg.type
-            if not (type0.is_message and type0.is_form):
-                continue
-
-            # It's a form.
-            for field in type0.fields:
-                if field.name not in names:
-                    continue
-
-                errors.append(self._error('%s: form fields clash with method args, form arg=%s',
-                                          self, arg.name))
-                break  # One error is enough
 
         for arg in self.args:
             errors += arg.validate()

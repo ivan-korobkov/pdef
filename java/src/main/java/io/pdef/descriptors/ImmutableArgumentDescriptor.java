@@ -45,9 +45,4 @@ public class ImmutableArgumentDescriptor<V> implements ArgumentDescriptor<V> {
 	public boolean isQuery() {
 		return false;
 	}
-
-	@Override
-	public boolean isForm() {
-		return false;
-	}
 }

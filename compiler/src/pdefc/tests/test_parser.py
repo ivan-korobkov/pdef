@@ -192,7 +192,6 @@ class TestParser(unittest.TestCase):
             module hello.world;
 
             /** Message doc. */
-            @form
             message Message :
                 Base(
                     Type.MESSAGE) {}
@@ -203,14 +202,13 @@ class TestParser(unittest.TestCase):
 
         assert message.name == 'Message'
         assert message.doc == 'Message doc.'
-        assert message.is_form
         assert len(message.declared_fields) == 0
-        assert message.location == Location(6)
+        assert message.location == Location(5)
 
-        assert message._base.location == Location(7)
+        assert message._base.location == Location(6)
         assert message._base.name == 'Base'
         assert message._discriminator_value.name == 'Type.MESSAGE'
-        assert message._discriminator_value.location == Location(8)
+        assert message._discriminator_value.location == Location(7)
 
     def test_message_exception(self):
         s = '''
@@ -281,7 +279,6 @@ class TestParser(unittest.TestCase):
 
             interface Interface {
                 /** Method zero. */
-                @index
                 @post
                 method0() void;
 
@@ -302,28 +299,26 @@ class TestParser(unittest.TestCase):
         assert method0.name == 'method0'
         assert method0.doc == 'Method zero.'
         assert method0.is_post
-        assert method0.is_index
-        assert method0.location == Location(8)
+        assert method0.location == Location(7)
         assert method0._result.name == 'void'
-        assert method0._result.location == Location(8)
+        assert method0._result.location == Location(7)
         assert method0.args == []
 
         method1 = methods[1]
         assert method1.name == 'method1'
         assert method1.doc == 'Method one.'
         assert method1.is_post is False
-        assert method1.is_index is False
-        assert method1.location == Location(11)
+        assert method1.location == Location(10)
         assert method1._result.name == 'result'
-        assert method1._result.location == Location(13)
+        assert method1._result.location == Location(12)
 
         assert len(method1.args) == 2
         assert method1.args[0].name == 'arg0'
         assert method1.args[0]._type.name == 'type0'
-        assert method1.args[0]._type.location == Location(12)
+        assert method1.args[0]._type.location == Location(11)
         assert method1.args[1].name == 'arg1'
         assert method1.args[1]._type.name == 'type1'
-        assert method1.args[1]._type.location == Location(13)
+        assert method1.args[1]._type.location == Location(12)
 
     def test_collections(self):
         s = '''

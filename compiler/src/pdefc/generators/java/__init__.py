@@ -106,7 +106,6 @@ class JavaMessage(JavaDefinition):
         self.inherited_fields = [JavaField(f, ref) for f in msg.inherited_fields]
 
         self.is_exception = msg.is_exception
-        self.is_form = msg.is_form
 
         self.base_or_root = self.base or \
             ('io.pdef.AbstractException' if msg.is_exception else
@@ -140,9 +139,7 @@ class JavaMethod(object):
         self.doc = method.doc
         self.args = [JavaArg(arg, ref) for arg in method.args]
         self.result = ref(method.result)
-
         self.is_post = method.is_post
-        self.is_index = method.is_index
 
 
 class JavaArg(object):

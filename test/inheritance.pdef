@@ -15,7 +15,7 @@ Base polymorphic message.
 @field discriminator    Discriminator field set in all subclasses.
 */
 message Base {
-    type    PolymorphicType     @discriminator;
+    type    PolymorphicType @discriminator;
     field   string;
 }
 

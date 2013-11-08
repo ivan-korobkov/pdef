@@ -1,13 +1,14 @@
 package io.pdef.formats;
 
 import io.pdef.*;
+import io.pdef.descriptors.*;
 
 import java.util.*;
 
 public class NativeFormat {
 	private static final NativeFormat INSTANCE = new NativeFormat();
 
-	public static NativeFormat instance() {
+	public static NativeFormat getInstance() {
 		return INSTANCE;
 	}
 
@@ -208,7 +209,7 @@ public class NativeFormat {
 		} else if (input instanceof String) {
 			return Boolean.parseBoolean((String) input);
 		}
-		throw new FormatException("Cannot parse a boolean from " + input);
+		throw new FormatException("Cannot fromJson a boolean from " + input);
 	}
 
 	private Short parseShort(final Object input) {
@@ -217,7 +218,7 @@ public class NativeFormat {
 		} else if (input instanceof String) {
 			return Short.parseShort((String) input);
 		}
-		throw new FormatException("Cannot parse a short from " + input);
+		throw new FormatException("Cannot fromJson a short from " + input);
 	}
 
 	private Integer parseInt(final Object input) {
@@ -226,7 +227,7 @@ public class NativeFormat {
 		} else if (input instanceof String) {
 			return Integer.parseInt((String) input);
 		}
-		throw new FormatException("Cannot parse an int from " + input);
+		throw new FormatException("Cannot fromJson an int from " + input);
 	}
 
 	private Long parseLong(final Object input) {
@@ -235,7 +236,7 @@ public class NativeFormat {
 		} else if (input instanceof String) {
 			return Long.parseLong((String) input);
 		}
-		throw new FormatException("Cannot parse a long from " + input);
+		throw new FormatException("Cannot fromJson a long from " + input);
 	}
 
 	private Float parseFloat(final Object input) {
@@ -244,7 +245,7 @@ public class NativeFormat {
 		} else if (input instanceof String) {
 			return Float.parseFloat((String) input);
 		}
-		throw new FormatException("Cannot parse a float from " + input);
+		throw new FormatException("Cannot fromJson a float from " + input);
 	}
 
 	private Double parseDouble(final Object input) {
@@ -253,7 +254,7 @@ public class NativeFormat {
 		} else if (input instanceof String) {
 			return Double.parseDouble((String) input);
 		}
-		throw new FormatException("Cannot parse a double from " + input);
+		throw new FormatException("Cannot fromJson a double from " + input);
 	}
 
 	private String parseString(final Object input) {
@@ -262,13 +263,13 @@ public class NativeFormat {
 		} else if (input instanceof String) {
 			return (String) input;
 		}
-		throw new FormatException("Cannot parse a string from " + input);
+		throw new FormatException("Cannot fromJson a string from " + input);
 	}
 
 	private <E> List<E> parseList(final Object input, final ListDescriptor<E> descriptor)
 			throws Exception {
 		if (!(input instanceof Collection)) {
-			throw new FormatException("Cannot parse a list from " + input);
+			throw new FormatException("Cannot fromJson a list from " + input);
 		}
 
 		Collection<?> collection = (Collection<?>) input;
@@ -286,7 +287,7 @@ public class NativeFormat {
 	private <E> Set<E> parseSet(final Object input, final SetDescriptor<E> descriptor)
 			throws Exception {
 		if (!(input instanceof Collection)) {
-			throw new FormatException("Cannot parse a set from " + input);
+			throw new FormatException("Cannot fromJson a set from " + input);
 		}
 
 		Collection<?> collection = (Collection<?>) input;
@@ -304,7 +305,7 @@ public class NativeFormat {
 	private <K, V> Map<K, V> parseMap(final Object input, final MapDescriptor<K, V> descriptor)
 			throws Exception {
 		if (!(input instanceof Map)) {
-			throw new FormatException("Cannot parse a map from " + input);
+			throw new FormatException("Cannot fromJson a map from " + input);
 		}
 
 		Map<?, ?> map = (Map<?, ?>) input;
@@ -328,13 +329,13 @@ public class NativeFormat {
 		} else if (input instanceof String) {
 			return descriptor.getValue((String) input);
 		}
-		throw new FormatException("Cannot parse an enum from " + input);
+		throw new FormatException("Cannot fromJson an enum from " + input);
 	}
 
 	private <M extends Message> M parseMessage(final Object input,
 			MessageDescriptor<M> descriptor) throws Exception {
 		if (!(input instanceof Map)) {
-			throw new FormatException("Cannot parse a map from " + input);
+			throw new FormatException("Cannot fromJson a map from " + input);
 		}
 
 		Map<?, ?> map = (Map<?, ?>) input;

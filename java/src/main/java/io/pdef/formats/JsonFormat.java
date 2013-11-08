@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import io.pdef.*;
+import io.pdef.descriptors.*;
 
 import javax.annotation.Nonnull;
 import java.io.*;
@@ -17,20 +18,20 @@ public class JsonFormat {
 			.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
 	private static final JsonFormat INSTANCE = new JsonFormat();
 
-	public static JsonFormat instance() {
+	public static JsonFormat getInstance() {
 		return INSTANCE;
 	}
 
 	private final NativeFormat nativeFormat;
 
 	private JsonFormat() {
-		nativeFormat = NativeFormat.instance();
+		nativeFormat = NativeFormat.getInstance();
 	}
 
 	// Serialization.
 
 	/** Serializes an object into a string. */
-	public <T> String serialize(final T object, final DataTypeDescriptor<T> descriptor,
+	public <T> String toJson(final T object, final DataTypeDescriptor<T> descriptor,
 			final boolean indent) throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -53,7 +54,7 @@ public class JsonFormat {
 	}
 
 	/** Writes an object to an output stream as a JSON string, does not close the stream. */
-	public <T> void serialize(final OutputStream out, final T object,
+	public <T> void toJson(final OutputStream out, final T object,
 			final DataTypeDescriptor<T> descriptor, final boolean indent) {
 		if (out == null) throw new NullPointerException("out");
 		if (descriptor == null) throw new NullPointerException("descriptor");
@@ -74,7 +75,7 @@ public class JsonFormat {
 	}
 
 	/** Writes an object to a writer as a JSON string, does not close the write. */
-	public <T> void serialize(final PrintWriter writer, final T object,
+	public <T> void toJson(final PrintWriter writer, final T object,
 			final DataTypeDescriptor<T> descriptor, final boolean indent) {
 		if (writer == null) throw new NullPointerException("writer");
 		if (descriptor == null) throw new NullPointerException("descriptor");
@@ -247,7 +248,7 @@ public class JsonFormat {
 	// Parsing.
 
 	/** Parses an object from a string. */
-	public <T> T parse(final String input, final DataTypeDescriptor<T> descriptor)
+	public <T> T fromJson(final String input, final DataTypeDescriptor<T> descriptor)
 			throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 		if (input == null) {
@@ -265,7 +266,7 @@ public class JsonFormat {
 	}
 
 	/** Parses an object from an input stream, does not close the input stream. */
-	public <T> T parse(final InputStream input, final DataTypeDescriptor<T> descriptor) {
+	public <T> T fromJson(final InputStream input, final DataTypeDescriptor<T> descriptor) {
 		if (input == null) throw new NullPointerException("input");
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -280,7 +281,7 @@ public class JsonFormat {
 	}
 
 	/** Parses an object from a reader, does not close the reader. */
-	public <T> T parse(final Reader reader, final DataTypeDescriptor<T> descriptor) {
+	public <T> T fromJson(final Reader reader, final DataTypeDescriptor<T> descriptor) {
 		if (reader == null) throw new NullPointerException("reader");
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -338,7 +339,7 @@ public class JsonFormat {
 	private List<?> readArray(final JsonParser parser) throws IOException {
 		JsonToken current = parser.getCurrentToken();
 		if (current != JsonToken.START_ARRAY) {
-			throw new FormatException("Bad JSON string, failed to parse an array");
+			throw new FormatException("Bad JSON string, failed to fromJson an array");
 		}
 
 		List<Object> list = new ArrayList<Object>();
@@ -360,7 +361,7 @@ public class JsonFormat {
 	private Map<String, Object> readMap(final JsonParser parser) throws IOException {
 		JsonToken current = parser.getCurrentToken();
 		if (current != JsonToken.START_OBJECT) {
-			throw new FormatException("Bad JSON string, failed to parse an object");
+			throw new FormatException("Bad JSON string, failed to fromJson an object");
 		}
 
 		Map<String, Object> map = new LinkedHashMap<String, Object>();
@@ -371,7 +372,7 @@ public class JsonFormat {
 			} else if (next == JsonToken.END_OBJECT) {
 				break;
 			} else if (next != JsonToken.FIELD_NAME) {
-				throw new FormatException("Failed to parse a field name from " + next);
+				throw new FormatException("Failed to fromJson a field name from " + next);
 			}
 
 			String field = parser.getCurrentName();

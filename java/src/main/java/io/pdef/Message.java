@@ -1,5 +1,7 @@
 package io.pdef;
 
+import io.pdef.descriptors.MessageDescriptor;
+
 import java.util.Map;
 
 public interface Message {

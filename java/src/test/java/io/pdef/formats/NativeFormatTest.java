@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import io.pdef.*;
+import io.pdef.descriptors.*;
 import io.pdef.test.inheritance.Base;
 import io.pdef.test.inheritance.MultiLevelSubtype;
 import io.pdef.test.inheritance.PolymorphicType;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class NativeFormatTest {
-	private NativeFormat format = NativeFormat.instance();
+	private NativeFormat format = NativeFormat.getInstance();
 
 	private <T> void testPrimitive(final DataTypeDescriptor<T> descriptor, final String s,
 			final T expected) {

@@ -1,5 +1,5 @@
 package io.pdef.invoke;
 
 public interface Invoker {
-	InvocationResult invoke(Invocation invocation) throws Exception;
+	Object invoke(Invocation invocation) throws Exception;
 }

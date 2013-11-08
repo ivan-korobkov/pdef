@@ -1,6 +1,9 @@
 package io.pdef.invoke;
 
-import io.pdef.*;
+import io.pdef.DataTypes;
+import io.pdef.descriptors.DataTypeDescriptor;
+import io.pdef.descriptors.MessageDescriptor;
+import io.pdef.descriptors.MethodDescriptor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -25,25 +28,6 @@ public class Invocation {
 		this.args = copyArgs(args, method);
 	}
 
-	@Nonnull
-	private static Object[] copyArgs(@Nullable final Object[] args,
-			final MethodDescriptor<?, ?> method) {
-		int length = args == null ? 0 : args.length;
-		int size = method.getArgs().size();
-		if (length != size) {
-			throw new IllegalArgumentException(
-					"Wrong number of arguments, method " + method + ", " + size + " expected, got "
-							+ length);
-		}
-
-		Object[] copy = new Object[length];
-		for (int i = 0; i < length; i++) {
-			copy[i] = DataTypes.copy(args[i]);
-		}
-
-		return copy;
-	}
-
 	@Override
 	public String toString() {
 		return "Invocation{" + method.getName() + ", args=" + Arrays.toString(args) + '}';
@@ -57,11 +41,12 @@ public class Invocation {
 		return method;
 	}
 
-	public Descriptor<?> getResult() {
-		return method.getResult();
-	}
-
-	public DataTypeDescriptor<?> getDataResult() {
+	/** Returns the method result. */
+	public DataTypeDescriptor<?> getResult() {
+		if (!method.isRemote()) {
+			throw new IllegalStateException("Cannot get a result when a method is not remote");
+		}
+		
 		return (DataTypeDescriptor<?>) method.getResult();
 	}
 
@@ -74,11 +59,6 @@ public class Invocation {
 		}
 
 		return parent == null ? null : parent.getExc();
-	}
-
-	/** Returns true when the method result is not an interface. */
-	public boolean isRemote() {
-		return method.isRemote();
 	}
 
 	/** Creates a child invocation. */
@@ -95,31 +75,35 @@ public class Invocation {
 	
 	/** Invokes this invocation chain on an object. */
 	@SuppressWarnings("unchecked")
-	public InvocationResult invoke(Object object) throws Exception {
+	public Object invoke(Object object) throws Exception {
 		if (object == null) throw new NullPointerException("object");
 
-		try {
-			for (Invocation invocation : toChain()) {
-				object = invocation.invokeSingle(object);
-			}
-		} catch (Exception e) {
-			MessageDescriptor<?> excd = getExc();
-			Class<?> excClass = excd == null ? null : excd.getJavaClass();
-
-			if (excd == null || !excClass.isInstance(e)) {
-				throw e;
-			}
-
-			return InvocationResult.exc((RuntimeException) e);
+		for (Invocation invocation : toChain()) {
+			MethodDescriptor<Object, Object> unchecked =
+					(MethodDescriptor<Object, Object>) invocation.method;
+			object = unchecked.invoke(object, args);
 		}
 
-		return InvocationResult.ok(object);
+		return object;
 	}
 
-	// VisibleForTesting
-	Object invokeSingle(final Object object) throws Exception {
-		@SuppressWarnings("unchecked")
-		MethodDescriptor<Object, Object> unchecked = (MethodDescriptor<Object, Object>) method;
-		return unchecked.invoke(object, args);
+	@Nonnull
+	private static Object[] copyArgs(@Nullable final Object[] args,
+			final MethodDescriptor<?, ?> method) {
+		int length = args == null ? 0 : args.length;
+		int size = method.getArgs().size();
+
+		if (length != size) {
+			String msg = String.format("Wrong number of arguments for %s, %d expected, %d got",
+					method, size, length);
+			throw new IllegalArgumentException(msg);
+		}
+
+		Object[] copy = new Object[length];
+		for (int i = 0; i < length; i++) {
+			copy[i] = DataTypes.copy(args[i]);
+		}
+
+		return copy;
 	}
 }

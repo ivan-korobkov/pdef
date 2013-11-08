@@ -31,7 +31,7 @@ public class RestServletTest {
 				"key0", new String[]{"value0"},
 				"key1", new String[]{"value1", "value11"}));
 
-		RestRequest req = server.parseRequest(request);
+		RestRequest req = server.getRestRequest(request);
 		assert req.getMethod().equals(RestRequest.GET);
 		assert req.getPath().equals("/my/app/method1/method2");
 		assert req.getQuery().equals(ImmutableMap.of("key0", "value0", "key1", "value1"));

@@ -1,60 +1,56 @@
 package io.pdef.rest;
 
+import io.pdef.formats.JsonFormat;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class RestServlet extends HttpServlet {
-	private final RestHandler handler;
+public final class RestServlet<T> extends HttpServlet {
+	public static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
+	public static final String TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
+	public static final int APPLICATION_EXC_STATUS = 422;
 
-	public RestServlet(final RestHandler handler) {
+	private final RestHandler<T> handler;
+	private final JsonFormat format = JsonFormat.getInstance();
+
+	public RestServlet(final RestHandler<T> handler) {
 		if (handler == null) throw new NullPointerException("handler");
 		this.handler = handler;
 	}
 
 	@Override
-	protected void doPost(final HttpServletRequest req, final HttpServletResponse resp)
+	protected void service(final HttpServletRequest req, final HttpServletResponse resp)
 			throws ServletException, IOException {
-		doService(req, resp);
-	}
+		if (req == null) throw new NullPointerException("request");
+		if (resp == null) throw new NullPointerException("response");
 
-	@Override
-	protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-			throws ServletException, IOException {
-		doService(req, resp);
-	}
-
-	private void doService(final HttpServletRequest request, final HttpServletResponse response)
-			throws IOException {
-		if (request == null) throw new NullPointerException("request");
-		if (response == null) throw new NullPointerException("response");
-
-		RestRequest req = parseRequest(request);
-		RestResponse resp;
+		RestRequest request = getRestRequest(req);
 		try {
-			resp = handler.handle(req);
-		} catch (RuntimeException e) {
-			throw e;
+			RestResult<?> result = handler.handle(request);
+			writeResult(result, resp);
+		} catch (RestException e) {
+			writeRestException(e, resp);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			writeServerError(e, resp);
 		}
-
-		writeResponse(resp, response);
 	}
 
 	// VisibleForTesting
-	RestRequest parseRequest(final HttpServletRequest request) {
+	RestRequest getRestRequest(final HttpServletRequest request) {
 		String method = request.getMethod();
+		String path = request.getPathInfo();
+		Map<String, String> params = getParams(request);
 
 		// In servlets we cannot distinguish between query and post params,
 		// so we use the same map for both. It is safe because Pdef REST protocol
 		// always uses only one of them.
-		String path = parsePath(request);
-		Map<String, String> params = parseParams(request);
+
 		return new RestRequest()
 				.setMethod(method)
 				.setPath(path)
@@ -62,16 +58,38 @@ public final class RestServlet extends HttpServlet {
 				.setPost(params);
 	}
 
-	private String parsePath(final HttpServletRequest request) {
-		String servletPath = request.getServletPath();
-		String pathInfo = request.getPathInfo();
+	private <T, E> void writeResult(final RestResult<T> result, final HttpServletResponse resp)
+			throws IOException {
+		if (result.isOk()) {
+			resp.setStatus(HttpServletResponse.SC_OK);
+			resp.setContentType(JSON_CONTENT_TYPE);
+		} else {
+			resp.setStatus(APPLICATION_EXC_STATUS);
+			resp.setContentType(JSON_CONTENT_TYPE);
+		}
 
-		servletPath = servletPath != null ? servletPath : "";
-		pathInfo = pathInfo != null ? pathInfo : "";
-		return servletPath + pathInfo;
+		PrintWriter writer = resp.getWriter();
+		format.toJson(writer, result.getData(), result.getDescriptor(), true);
+		writer.flush();
 	}
 
-	private Map<String, String> parseParams(final HttpServletRequest request) {
+	private void writeRestException(final RestException e, final HttpServletResponse resp)
+			throws IOException {
+		String message = e.getMessage() != null ? e.getMessage() : "Client error";
+
+		resp.setStatus(e.getStatus());
+		resp.setContentType(TEXT_CONTENT_TYPE);
+		resp.getWriter().write(message);
+	}
+
+	private void writeServerError(final Exception e, final HttpServletResponse resp)
+			throws IOException {
+		resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+		resp.setContentType(TEXT_CONTENT_TYPE);
+		resp.getWriter().write("Internal server error");
+	}
+
+	private Map<String, String> getParams(final HttpServletRequest request) {
 		Map<String, String> params = new HashMap<String, String>();
 
 		@SuppressWarnings("unchecked")
@@ -88,13 +106,5 @@ public final class RestServlet extends HttpServlet {
 		}
 
 		return params;
-	}
-
-	// VisibleForTesting
-	void writeResponse(final RestResponse resp, final HttpServletResponse response)
-			throws IOException {
-		response.setStatus(resp.getStatus());
-		response.setContentType(resp.getContentType());
-		response.getWriter().print(resp.getContent());
 	}
 }

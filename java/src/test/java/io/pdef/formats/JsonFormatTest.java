@@ -3,8 +3,8 @@ package io.pdef.formats;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.pdef.DataTypeDescriptor;
-import io.pdef.Descriptors;
+import io.pdef.descriptors.DataTypeDescriptor;
+import io.pdef.descriptors.Descriptors;
 import io.pdef.test.inheritance.Base;
 import io.pdef.test.inheritance.MultiLevelSubtype;
 import io.pdef.test.inheritance.Subtype;
@@ -17,17 +17,17 @@ import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
 public class JsonFormatTest {
-	private JsonFormat format = JsonFormat.instance();
+	private JsonFormat format = JsonFormat.getInstance();
 
 	private <T> void test(final DataTypeDescriptor<T> descriptor, final T parsed,
 			final String serialized) {
-		assertEquals(serialized, format.serialize(parsed, descriptor, false));
-		assertEquals(parsed, format.parse(serialized, descriptor));
+		assertEquals(serialized, format.toJson(parsed, descriptor, false));
+		assertEquals(parsed, format.fromJson(serialized, descriptor));
 
 		// Nulls.
-		assertEquals("null", format.serialize(null, descriptor, false));
-		assertNull(format.parse((String) null, descriptor));
-		assertNull(format.parse("null", descriptor));
+		assertEquals("null", format.toJson(null, descriptor, false));
+		assertNull(format.fromJson((String) null, descriptor));
+		assertNull(format.fromJson("null", descriptor));
 	}
 
 	@Test
@@ -69,7 +69,7 @@ public class JsonFormatTest {
 	@Test
 	public void testEnum() throws Exception {
 		test(TestEnum.DESCRIPTOR, TestEnum.THREE, "\"three\"");
-		assertEquals(TestEnum.TWO, format.parse("\"tWo\"", TestEnum.DESCRIPTOR));
+		assertEquals(TestEnum.TWO, format.fromJson("\"tWo\"", TestEnum.DESCRIPTOR));
 	}
 
 	@Test

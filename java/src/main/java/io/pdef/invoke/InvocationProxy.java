@@ -1,8 +1,7 @@
 package io.pdef.invoke;
 
-import io.pdef.Descriptors;
-import io.pdef.InterfaceDescriptor;
-import io.pdef.MethodDescriptor;
+import io.pdef.descriptors.InterfaceDescriptor;
+import io.pdef.descriptors.MethodDescriptor;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationHandler;
@@ -16,14 +15,9 @@ public class InvocationProxy<T> implements InvocationHandler {
 	private final Invocation parent;
 
 	/** Creates a custom client. */
-	public static <T> T create(final Class<T> cls, final Invoker invoker) {
-		if (cls == null) throw new NullPointerException("cls");
+	public static <T> T create(final InterfaceDescriptor<T> descriptor, final Invoker invoker) {
+		if (descriptor == null) throw new NullPointerException("descriptor");
 		if (invoker == null) throw new NullPointerException("invocationHandler");
-
-		InterfaceDescriptor<T> descriptor = Descriptors.findInterfaceDescriptor(cls);
-		if (descriptor == null) {
-			throw new IllegalArgumentException("Cannot find an interface descriptor in " + cls);
-		}
 
 		InvocationProxy<T> invocationProxy = new InvocationProxy<T>(descriptor, invoker, null);
 		return invocationProxy.toProxy();
@@ -53,7 +47,7 @@ public class InvocationProxy<T> implements InvocationHandler {
 		}
 
 		Invocation invocation = capture(md, args);
-		if (invocation.isRemote()) {
+		if (md.isRemote()) {
 			return handle(invocation);
 		} else {
 			return nextProxy(invocation);
@@ -69,27 +63,19 @@ public class InvocationProxy<T> implements InvocationHandler {
 	}
 
 	private Object handle(final Invocation invocation) {
-		InvocationResult result;
 		try {
-			result = handler.invoke(invocation);
+			return handler.invoke(invocation);
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-
-		assert result != null;
-
-		if (result.isOk()) {
-			return result.getData();
-		} else {
-			throw result.getExc();
-		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private Object nextProxy(final Invocation invocation) {
-		@SuppressWarnings("unchecked")
-		InterfaceDescriptor<Object> next = (InterfaceDescriptor<Object>) invocation.getResult();
+		MethodDescriptor<?, ?> method = invocation.getMethod();
+		InterfaceDescriptor<Object> next = (InterfaceDescriptor<Object>) method.getResult();
 		InvocationProxy<Object> nproxy = new InvocationProxy<Object>(next, handler, invocation);
 		return nproxy.toProxy();
 	}

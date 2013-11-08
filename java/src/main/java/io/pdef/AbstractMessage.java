@@ -1,5 +1,7 @@
 package io.pdef;
 
+import io.pdef.descriptors.FieldDescriptor;
+import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.formats.JsonFormat;
 import io.pdef.formats.NativeFormat;
 
@@ -17,7 +19,7 @@ public abstract class AbstractMessage implements Message, Serializable {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> toMap() {
-		return (Map<String, Object>) NativeFormat.instance().serialize(this, uncheckedDescriptor());
+		return (Map<String, Object>) NativeFormat.getInstance().serialize(this, uncheckedDescriptor());
 	}
 
 	@Override
@@ -27,7 +29,7 @@ public abstract class AbstractMessage implements Message, Serializable {
 
 	@Override
 	public String toJson(final boolean indent) {
-		return JsonFormat.instance().serialize(this, uncheckedDescriptor(), indent);
+		return JsonFormat.getInstance().toJson(this, uncheckedDescriptor(), indent);
 	}
 
 	@Override

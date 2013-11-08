@@ -1,6 +1,6 @@
 package io.pdef.invoke;
 
-import io.pdef.MethodDescriptor;
+import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import static org.junit.Assert.assertArrayEquals;
@@ -27,7 +27,7 @@ public class InvocationProxyTest {
 	@Test
 	public void testInvoke_handle() throws Throwable {
 		TestInterface iface = createProxy();
-		when(invoker.invoke(any(Invocation.class))).thenReturn(InvocationResult.ok(3));
+		when(invoker.invoke(any(Invocation.class))).thenReturn(3);
 
 		Object result = iface.testIndex(1, 2);
 		assertEquals(3, result);
@@ -36,8 +36,7 @@ public class InvocationProxyTest {
 	@Test(expected = TestException.class)
 	public void testInvoke_handleExc() throws Exception {
 		TestInterface iface = createProxy();
-		when(invoker.invoke(any(Invocation.class)))
-				.thenReturn(InvocationResult.exc(new TestException()));
+		when(invoker.invoke(any(Invocation.class))).thenThrow(new TestException());
 
 		iface.testExc();
 	}
@@ -46,7 +45,7 @@ public class InvocationProxyTest {
 	public void testInvoke_capture() throws Exception {
 		TestInterface iface = createProxy();
 		ArgumentCaptor<Invocation> captor = ArgumentCaptor.forClass(Invocation.class);
-		when(invoker.invoke(any(Invocation.class))).thenReturn(InvocationResult.ok(null));
+		when(invoker.invoke(any(Invocation.class))).thenReturn(null);
 
 		iface.testIndex(1, 2);
 		verify(invoker).invoke(captor.capture());
@@ -61,7 +60,7 @@ public class InvocationProxyTest {
 	public void testInvoke_captureChain() throws Exception {
 		TestInterface iface = createProxy();
 		ArgumentCaptor<Invocation> captor = ArgumentCaptor.forClass(Invocation.class);
-		when(invoker.invoke(any(Invocation.class))).thenReturn(InvocationResult.ok(null));
+		when(invoker.invoke(any(Invocation.class))).thenReturn(null);
 
 		iface.testInterface(1, 2).testIndex(3, 4);
 		verify(invoker).invoke(captor.capture());
@@ -76,6 +75,6 @@ public class InvocationProxyTest {
 	}
 
 	private TestInterface createProxy() {
-		return InvocationProxy.create(TestInterface.class, invoker);
+		return InvocationProxy.create(TestInterface.DESCRIPTOR, invoker);
 	}
 }

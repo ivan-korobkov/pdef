@@ -1,7 +1,7 @@
 package io.pdef.rest;
 
 import com.google.common.collect.ImmutableMap;
-import io.pdef.Descriptors;
+import io.pdef.descriptors.Descriptors;
 import io.pdef.invoke.InvocationProxy;
 import io.pdef.invoke.Invoker;
 import io.pdef.test.interfaces.TestInterface;
@@ -33,13 +33,14 @@ public class RestClientTest {
 
 	@Before
 	public void setUp() throws Exception {
+		RestClient.create(TestInterface.DESCRIPTOR, "http://localhost:8080/");
 		client = RestClient.create("http://localhost:8080/");
 		handler = new RestClient.DefaultHandler("http://localhost:8080/", null);
 	}
 
 	@Test
 	public void testInvoke() throws Exception {
-		RestClient client = RestClient.create(new RestHandler() {
+		RestClient client = RestClient.create(new RestHandler(descriptor, provider) {
 			@Override
 			public RestResponse handle(final RestRequest request) throws Exception {
 				RestResult<Integer, ?> result = RestProtocol.resultDescriptor(Descriptors.int32, null)

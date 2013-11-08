@@ -1,12 +1,10 @@
 package io.pdef.rest;
 
 import io.pdef.*;
+import io.pdef.descriptors.*;
 import io.pdef.formats.JsonFormat;
-import io.pdef.immutable.*;
 import io.pdef.invoke.Invocation;
-import io.pdef.invoke.InvocationResult;
 
-import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -14,160 +12,109 @@ import java.util.*;
 
 public class RestProtocol {
 	public static final String CHARSET_NAME = "UTF-8";
-	private final JsonFormat jsonFormat = JsonFormat.instance();
-
-	// Invocation serialization.
+	private final JsonFormat jsonFormat = JsonFormat.getInstance();
 
 	public RestProtocol() {}
 
 	/** Converts an invocation into a rest request. */
-	public RestRequest serializeInvocation(final Invocation invocation) {
-		boolean isPost = invocation.getMethod().isPost();
-		RestRequest request = isPost ? RestRequest.post() : RestRequest.get();
+	public RestRequest getRequest(final Invocation invocation) {
+		if (invocation == null) throw new NullPointerException("invocation");
 
-		for (Invocation inv : invocation.toChain()) {
-			serializeSingleInvocation(request, inv);
+		// Set the HTTP method.
+		MethodDescriptor<?, ?> method = invocation.getMethod();
+		RestRequest request = new RestRequest();
+		if (method.isPost()) {
+			request.setMethod(RestRequest.POST);
+		} else {
+			request.setMethod(RestRequest.GET);
+		}
+
+		for (Invocation invocation1 : invocation.toChain()) {
+			writeInvocation(request, invocation1);
 		}
 
 		return request;
 	}
 
-	/** Adds a single invocation to a rest request. */
-	// VisibleForTesting
-	@SuppressWarnings("unchecked")
-	void serializeSingleInvocation(final RestRequest request, final Invocation invocation) {
-		if (request == null) throw new NullPointerException("request");
-		if (invocation == null) throw new NullPointerException("invocation");
-
+	void writeInvocation(final RestRequest request, final Invocation invocation) {
 		MethodDescriptor<?, ?> method = invocation.getMethod();
-		if (method.isIndex()) {
-			request.appendPath("/");
-		} else {
-			request.appendPath("/" + urlencode(method.getName()));
-		}
-
-		boolean isPost = method.isPost();
-		boolean isRemote = method.isRemote();
 
 		Object[] args = invocation.getArgs();
-		List<ArgumentDescriptor<?>> argds = invocation.getMethod().getArgs();
+		List<ArgumentDescriptor<?>> argds = method.getArgs();
 
+		Map<String, String> pathArgs = new HashMap<String, String>();
 		for (int i = 0; i < args.length; i++) {
 			Object arg = args[i];
 			ArgumentDescriptor argd = argds.get(i);
 
-			if (isPost) {
-				// Serialize an argument as a post param.
-				serializeParam(argd, arg, request.getPost());
-
-			} else if (isRemote) {
-				// Serialize an argument as a query param.
-				serializeParam(argd, arg, request.getQuery());
-
+			if (argd.isPost()) {
+				writeParam(argd, arg, request.getPost());
+			} else if (argd.isQuery()) {
+				writeParam(argd, arg, request.getQuery());
 			} else {
-				// Serialize an argument as a path part.
-				request.appendPath("/" + serializePathArgument(argd, arg));
+				writeParam(argd, arg, pathArgs);
 			}
 		}
+
+		String path = expandPath(method.getName(), pathArgs);
+		request.appendPath(path);
 	}
 
-	/** Serializes a positional arg and urlencodes it. */
 	// VisibleForTesting
-	<V> String serializePathArgument(final ArgumentDescriptor<V> argd, final V arg) {
-		String serialized = serializeToJson(argd.getType(), arg);
-		return urlencode(serialized);
+	String expandPath(final String path, final Map<String, String> args) {
+		Map<String, String> encoded = new HashMap<String, String>();
+		for (Map.Entry<String, String> entry : args.entrySet()) {
+			encoded.put(entry.getKey(), urlencode(entry.getValue()));
+		}
+		return path;
 	}
 
 	/** Serializes a query/post argument and puts it into a dst map. */
 	// VisibleForTesting
-	<V> void serializeParam(final ArgumentDescriptor<V> argd, final V arg,
+	@SuppressWarnings("unchecked")
+	<V> void writeParam(final ArgumentDescriptor<V> argd, final V arg,
 			final Map<String, String> dst) {
-		if (arg == null) {
-			return;
-		}
-
 		DataTypeDescriptor<V> descriptor = argd.getType();
-		boolean isForm = (descriptor instanceof ImmutableMessageDescriptor)
-				&& ((MessageDescriptor<?>) descriptor).isForm();
-
-		if (!isForm) {
+		if (!argd.isForm()) {
 			// Serialize as a single json param.
-			String serialized = serializeToJson(descriptor, arg);
+			String serialized = toJson(descriptor, arg);
 			dst.put(argd.getName(), serialized);
 			return;
 		}
 
 		// It's a form, serialize each its field into a json param.
 		// Mind polymorphic messages.
-
 		Message message = (Message) arg;
-		@SuppressWarnings("unchecked")
-		MessageDescriptor<Message> mdescriptor =
-				(MessageDescriptor<Message>) message.descriptor(); // Polymorphic.
+		MessageDescriptor<Message> mdescriptor = (MessageDescriptor<Message>) message.descriptor();
 
 		for (FieldDescriptor<? super Message, ?> field : mdescriptor.getFields()) {
-			String serialized = serializeFormField(field, message);
-			if (serialized == null) {
-				// Skip null fields.
+			Object value = field.get(message);
+			DataTypeDescriptor<Object> type = (DataTypeDescriptor<Object>) field.getType();
+			if (value == null) {
 				continue;
 			}
 
-			dst.put(field.getName(), serialized);
+			String s = toJson(type, value);
+			dst.put(field.getName(), s);
 		}
-	}
-
-	@Nullable
-	private <M, V> String serializeFormField(final FieldDescriptor<M, V> field, final M message) {
-		V value = field.get(message);
-		if (value == null) {
-			return null;
-		}
-
-		return serializeToJson(field.getType(), value);
 	}
 
 	/** Serializes an argument to JSON, strips the quotes. */
 	// VisibleForTesting
-	<V> String serializeToJson(final DataTypeDescriptor<V> descriptor, final V arg) {
-		String s = jsonFormat.serialize(arg, descriptor, false);
+	<V> String toJson(final DataTypeDescriptor<V> descriptor, final V arg) {
+		String s = jsonFormat.toJson(arg, descriptor, false);
 		if (descriptor.getType() != TypeEnum.STRING) {
 			return s;
 		}
 
-		// Remove the JSON quotes.
+		// Remove the quotes.
 		return s.substring(1, s.length() - 1);
-	}
-
-	// InvocationResult parsing.
-
-	public <T, E> InvocationResult parseInvocationResult(
-			final RestResponse response, final DataTypeDescriptor<T> datad,
-			@Nullable final DataTypeDescriptor<E> excd) {
-		if (response == null) throw new NullPointerException("response");
-		if (datad == null) throw new NullPointerException("datad");
-
-		MessageDescriptor <RestResult<T, E>> descriptor = resultDescriptor(datad, excd);
-		RestResult<T, E> result = jsonFormat.parse(response.getContent(), descriptor);
-
-		if (result.isSuccess()) {
-			// It's a successful result.
-			return InvocationResult.ok(result.getData());
-
-		} else {
-			// It's an expected application exception.
-			E exc = result.getExc();
-			if (excd != null) {
-				return InvocationResult.exc((RuntimeException) exc);
-			}
-
-			String s = exc == null ? null : exc.toString();
-			throw RestException.badRequest("Server returned an unknown exception: " + s);
-		}
 	}
 
 	// Invocation parsing.
 
-	public Invocation parseInvocation(final RestRequest request, InterfaceDescriptor<?> descriptor) {
+	/** Parses an invocation from a rest request. */
+	public Invocation getInvocation(final RestRequest request, InterfaceDescriptor<?> descriptor) {
 		if (request == null) throw new NullPointerException("request");
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -221,11 +168,11 @@ public class RestProtocol {
 			for (ArgumentDescriptor<?> argd : method.getArgs()) {
 				if (isPost) {
 					// Parse a post param.
-					args.add(parseParam(argd, post));
+					args.add(readParam(argd, post));
 
 				} else if (isRemote) {
 					// Parse a query param.
-					args.add(parseParam(argd, query));
+					args.add(readParam(argd, query));
 
 				} else {
 					// Parse a path argument.
@@ -233,7 +180,7 @@ public class RestProtocol {
 						throw RestException.methodNotFound("Wrong number of method args");
 					}
 
-					args.add(parsePathArgument(argd, parts.removeFirst()));
+					args.add(readPathArgument(argd, parts.removeFirst()));
 				}
 			}
 
@@ -252,7 +199,7 @@ public class RestProtocol {
 					// Cannot have any more parts here, bad url.
 					throw RestException.methodNotFound(
 							"Reached a remote method which returns a data type or is void. "
-							+ "Cannot have any more path parts. ");
+									+ "Cannot have any more path parts. ");
 				}
 
 				return invocation;
@@ -263,19 +210,19 @@ public class RestProtocol {
 			descriptor = (InterfaceDescriptor<?>) method.getResult();
 		}
 
-		// The parts are empty, and we failed to parse a remote method invocation.
+		// The parts are empty, and we failed to fromJson a remote method invocation.
 		throw RestException.methodNotFound("The last method must be a remote one. It must return "
 				+ "a data type or be void.");
 	}
 
 	// VisibleForTesting
-	<V> V parsePathArgument(final ArgumentDescriptor<V> argd, final String s) {
+	<V> V readPathArgument(final ArgumentDescriptor<V> argd, final String s) {
 		String value = urldecode(s);
-		return parseFromJson(argd.getType(), value);
+		return fromJson(argd.getType(), value);
 	}
 
 	// VisibleForTesting
-	<V> V parseParam(final ArgumentDescriptor<V> argd, final Map<String, String> src) {
+	<V> V readParam(final ArgumentDescriptor<V> argd, final Map<String, String> src) {
 		DataTypeDescriptor<V> descriptor = argd.getType();
 		boolean isForm = descriptor instanceof ImmutableMessageDescriptor
 				&& ((MessageDescriptor) descriptor).isForm();
@@ -283,7 +230,7 @@ public class RestProtocol {
 		if (!isForm) {
 			// Parse a single json string param.
 			String serialized = src.get(argd.getName());
-			return parseFromJson(descriptor, serialized);
+			return fromJson(descriptor, serialized);
 
 		} else {
 			// It's a form. Parse each its field as a param.
@@ -295,7 +242,7 @@ public class RestProtocol {
 				FieldDescriptor<? super Message, ?> field = mdescriptor.getDiscriminator();
 				assert field != null;
 				String serialized = src.get(field.getName());
-				Enum<?> value = (Enum<?>) parseFromJson(field.getType(), serialized);
+				Enum<?> value = (Enum<?>) fromJson(field.getType(), serialized);
 
 				@SuppressWarnings("unchecked")
 				MessageDescriptor<Message> subtype = (MessageDescriptor<Message>) mdescriptor
@@ -306,7 +253,7 @@ public class RestProtocol {
 			Message message = mdescriptor.newInstance();
 			for (FieldDescriptor<? super Message, ?> field : mdescriptor.getFields()) {
 				String serialized = src.get(field.getName());
-				parseFormField(message, field, serialized);
+				readFormField(message, field, serialized);
 			}
 
 			@SuppressWarnings("unchecked")
@@ -315,9 +262,9 @@ public class RestProtocol {
 		}
 	}
 
-	private <M, V> void parseFormField(final M message, final FieldDescriptor<M, V> field,
+	private <M, V> void readFormField(final M message, final FieldDescriptor<M, V> field,
 			final String serialized) {
-		V value = parseFromJson(field.getType(), serialized);
+		V value = fromJson(field.getType(), serialized);
 		if (value == null) {
 			// Skip null fields.
 			return;
@@ -328,46 +275,15 @@ public class RestProtocol {
 
 	// VisibleForTesting
 	/** Parses an argument from an unquoted JSON string. */
-	<V> V parseFromJson(final DataTypeDescriptor<V> descriptor, String value) {
-		if (value == null || value.equals("null")) {
+	<V> V fromJson(final DataTypeDescriptor<V> descriptor, String value) {
+		if (value == null) {
 			return null;
 		}
 
 		if (descriptor.getType() == TypeEnum.STRING) {
 			value = "\"" + value + "\"";
 		}
-		return jsonFormat.parse(value, descriptor);
-	}
-
-	// InvocationResult serialization.
-
-	public <T, E> RestResponse serializeInvocationResult(final InvocationResult result,
-			final DataTypeDescriptor<T> dataDescriptor,
-			@Nullable final DataTypeDescriptor<E> excDescriptor) {
-		if (result == null) throw new NullPointerException("result");
-		if (dataDescriptor == null) throw new NullPointerException("dataDescriptor");
-
-		MessageDescriptor <RestResult<T, E>> descriptor = resultDescriptor(dataDescriptor,
-				excDescriptor);
-
-		T data = dataDescriptor.getJavaClass().cast(result.getData());
-		E exc = excDescriptor == null ? null : excDescriptor.getJavaClass().cast(result.getExc());
-
-		RestResult<T, E> restResult = descriptor.newInstance()
-				.setSuccess(result.isOk())
-				.setData(data)
-				.setExc(exc);
-
-		String content = jsonFormat.serialize(restResult, descriptor, true);
-		return new RestResponse()
-				.setOkStatus()
-				.setContent(content)
-				.setJsonContentType();
-	}
-
-	static <T, E> MessageDescriptor<RestResult<T, E>> resultDescriptor(
-			final DataTypeDescriptor<T> dataDescriptor, final DataTypeDescriptor<E> excDescriptor) {
-		return RestResult.runtimeDescriptor(dataDescriptor, excDescriptor);
+		return jsonFormat.fromJson(value, descriptor);
 	}
 
 	/** Url-encodes a string. */

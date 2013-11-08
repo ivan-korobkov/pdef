@@ -1,6 +1,6 @@
 package io.pdef.invoke;
 
-import io.pdef.MethodDescriptor;
+import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import io.pdef.test.messages.TestMessage;
@@ -56,16 +56,6 @@ public class InvocationTest {
 	}
 
 	@Test
-	public void testIsRemote() throws Exception {
-		Invocation indexInvocation = Invocation
-				.root(indexMethod(), new Object[]{1, 2});
-		Invocation interfaceInvocation = Invocation.root(interfaceMethod(), new Object[]{1, 2});
-
-		assertFalse(interfaceInvocation.isRemote());
-		assertTrue(indexInvocation.isRemote());
-	}
-
-	@Test
 	public void testToChain() throws Exception {
 		List<Invocation> chain = Invocation
 				.root(interfaceMethod(), new Object[]{1, 2})
@@ -80,10 +70,9 @@ public class InvocationTest {
 		TestInterface iface = mock(TestInterface.class);
 		when(iface.testIndex(1, 2)).thenReturn(3);
 
-		Invocation invocation = Invocation.root(indexMethod(),
-				new Object[]{1, 2});
-		InvocationResult result = invocation.invoke(iface);
-		assertEquals(3, result.getData());
+		Invocation invocation = Invocation.root(indexMethod(), new Object[]{1, 2});
+		Object result = invocation.invoke(iface);
+		assertEquals(3, result);
 	}
 
 	@Test
@@ -95,29 +84,17 @@ public class InvocationTest {
 				.root(interfaceMethod(), new Object[]{1, 2})
 				.next(stringMethod(), new Object[]{"world"});
 
-		InvocationResult result = invocation.invoke(iface);
-		assertEquals("goodbye", result.getData());
+		Object result = invocation.invoke(iface);
+		assertEquals("goodbye", result);
 	}
 
-	@Test
+	@Test(expected = TestException.class)
 	public void testInvoke_exc() throws Exception {
 		TestInterface iface = mock(TestInterface.class);
 		doThrow(new TestException()).when(iface).testExc();
 		Invocation invocation = Invocation.root(excMethod(), new Object[]{});
 
-		InvocationResult result = invocation.invoke(iface);
-		assertEquals(new TestException(), result.getExc());
-	}
-
-	@Test
-	public void testInvokeSingle() throws Throwable {
-		TestInterface iface = mock(TestInterface.class);
-		when(iface.testIndex(1, 2)).thenReturn(3);
-		Invocation invocation = Invocation.root(indexMethod(),
-				new Object[]{1, 2});
-
-		Object result = invocation.invokeSingle(iface);
-		assertEquals(3, result);
+		invocation.invoke(iface);
 	}
 
 	private MethodDescriptor<?, ?> indexMethod() {

@@ -12,20 +12,13 @@ import java.util.Map;
 public class RestRequest {
 	public static final String GET = "GET";
 	public static final String POST = "POST";
-	private String method;
+
+	private String method = GET;
 	private String path = "";
 	private Map<String, String> query = new LinkedHashMap<String, String>();
 	private Map<String, String> post = new LinkedHashMap<String, String>();
 
 	public RestRequest() {}
-
-	public static RestRequest get() {
-		return new RestRequest().setMethod(GET);
-	}
-
-	public static RestRequest post() {
-		return new RestRequest().setMethod(POST);
-	}
 
 	@Override
 	public String toString() {

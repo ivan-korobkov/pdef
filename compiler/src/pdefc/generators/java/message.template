@@ -30,11 +30,11 @@ public class {{ name }} extends {{ base_or_root }} {
     }
 
     public static {{ name }} fromMap(final java.util.Map<String, Object> map) {
-        return io.pdef.formats.NativeFormat.instance().parse(map, DESCRIPTOR);
+        return getInstance().parse(map, DESCRIPTOR);
     }
 
     public static {{ name }} fromJson(final String s) {
-        return io.pdef.formats.JsonFormat.instance().parse(s, DESCRIPTOR);
+        return getInstance().parse(s, DESCRIPTOR);
     }
 
 {% for field in declared_fields %}

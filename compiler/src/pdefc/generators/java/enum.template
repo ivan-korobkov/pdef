@@ -11,12 +11,12 @@ public enum {{ name }} {
 
     /** Returns an enum value from a string or {@literal null}. */
     public static {{ name }} fromString(final String s) {
-        return io.pdef.formats.NativeFormat.instance().parse(s, DESCRIPTOR);
+        return getInstance().parse(s, DESCRIPTOR);
     }
 
     /** Returns an enum value from a json string or {@literal null}. */
     public static {{ name }} fromJson(final String s) {
-        return io.pdef.formats.JsonFormat.instance().parse(s, DESCRIPTOR);
+        return getInstance().parse(s, DESCRIPTOR);
     }
 
     public static final io.pdef.EnumDescriptor<{{ name }}> DESCRIPTOR =

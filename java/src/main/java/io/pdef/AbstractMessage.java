@@ -19,7 +19,7 @@ public abstract class AbstractMessage implements Message, Serializable {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> toMap() {
-		return (Map<String, Object>) NativeFormat.getInstance().serialize(this, uncheckedDescriptor());
+		return (Map<String, Object>) NativeFormat.getInstance().write(this, uncheckedDescriptor());
 	}
 
 	@Override

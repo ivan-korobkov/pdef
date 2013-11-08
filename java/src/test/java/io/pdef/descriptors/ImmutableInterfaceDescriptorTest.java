@@ -15,7 +15,7 @@ public class ImmutableInterfaceDescriptorTest {
 
 		assertEquals(TestInterface.class, descriptor.getJavaClass());
 		assertEquals(TestException.DESCRIPTOR, descriptor.getExc());
-		assertEquals(11, descriptor.getMethods().size());
+		assertEquals(9, descriptor.getMethods().size());
 	}
 
 	@Test

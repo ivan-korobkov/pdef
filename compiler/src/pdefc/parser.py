@@ -171,7 +171,7 @@ class _Tokens(object):
          'LESS', 'GREATER', 'LBRACE', 'RBRACE',
          'LPAREN', 'RPAREN',
          'IDENTIFIER', 'DOC') \
-        + ('DISCRIMINATOR', 'POST', 'THROWS')
+        + ('DISCRIMINATOR', 'POST', 'QUERY', 'THROWS')
 
     # Regexp for simple rules.
     t_DOT = r'.'
@@ -188,6 +188,7 @@ class _Tokens(object):
     # Regexp for options.
     t_DISCRIMINATOR = r'@discriminator'
     t_POST = r'@post'
+    t_QUERY = r'@query'
     t_THROWS = r'@throws'
 
     # Ignored characters
@@ -470,15 +471,21 @@ class _GrammarRules(object):
     @_with_location(3)
     def p_method(self, t):
         '''
-        method : doc method_attrs IDENTIFIER LPAREN method_args RPAREN type SEMI
+        method : doc method_post IDENTIFIER LPAREN method_args RPAREN type SEMI
         '''
         doc = t[1]
-        attrs = t[2]
+        is_post = t[2]
         name = t[3]
         args = t[5]
         result = t[7]
-        is_post = '@post' in attrs
         t[0] = pdefc.ast.Method(name, result=result, args=args, is_post=is_post, doc=doc)
+
+    def p_method_post(self, t):
+        '''
+        method_post : POST
+                    | empty
+        '''
+        t[0] = t[1] == '@post'
 
     def p_method_args(self, t):
         '''
@@ -491,21 +498,18 @@ class _GrammarRules(object):
     @_with_location(2)
     def p_method_arg(self, t):
         '''
-        method_arg : doc IDENTIFIER type
+        method_arg : doc IDENTIFIER type method_arg_attr
         '''
-        t[0] = pdefc.ast.MethodArg(t[2], t[3])
+        attr = t[4]
+        is_query = attr == '@query'
+        is_post = attr == '@post'
+        t[0] = pdefc.ast.MethodArg(t[2], t[3], is_query=is_query, is_post=is_post)
 
-    def p_method_attrs(self, t):
+    def p_method_arg_attr(self, t):
         '''
-        method_attrs : method_attrs method_attr
-                     | method_attr
-                     | empty
-        '''
-        self._list(t)
-
-    def p_method_attr(self, t):
-        '''
-        method_attr : POST
+        method_arg_attr : POST
+                        | QUERY
+                        | empty
         '''
         t[0] = t[1]
 

@@ -1,6 +1,5 @@
 package io.pdef.rest;
 
-import com.google.common.collect.ImmutableMap;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
@@ -28,7 +27,7 @@ public class RestHandlerTest {
 
 	@Test
 	public void testHandle_ok() throws Exception {
-		when(service.testIndex(1, 2)).thenReturn(3);
+		when(service.method(1, 2)).thenReturn(3);
 		RestRequest request = getRequest();
 
 		RestResult<?> result = handler.handle(request);
@@ -40,7 +39,7 @@ public class RestHandlerTest {
 	@Test
 	public void testHandle_applicationException() throws Exception {
 		TestException e = new TestException().setText("Hello, world");
-		when(service.testIndex(1, 2)).thenThrow(e);
+		when(service.method(1, 2)).thenThrow(e);
 		RestRequest request = getRequest();
 
 		RestResult<?> result = handler.handle(request);
@@ -51,15 +50,13 @@ public class RestHandlerTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testHandle_unexpectedException() throws Exception {
-		when(service.testIndex(1, 2)).thenThrow(new IllegalArgumentException());
+		when(service.method(1, 2)).thenThrow(new IllegalArgumentException());
 		RestRequest request = getRequest();
 
 		handler.handle(request);
 	}
 
 	private RestRequest getRequest() {
-		return new RestRequest()
-				.setPath("/")
-				.setQuery(ImmutableMap.of("arg0", "1", "arg1", "2"));
+		return new RestRequest().setPath("/method/1/2");
 	}
 }

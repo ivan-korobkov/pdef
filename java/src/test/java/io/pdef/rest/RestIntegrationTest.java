@@ -1,10 +1,7 @@
 package io.pdef.rest;
 
-import com.google.common.collect.ImmutableList;
-import io.pdef.test.inheritance.Base;
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
-import io.pdef.test.messages.TestForm;
 import io.pdef.test.messages.TestMessage;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -67,24 +64,18 @@ public class RestIntegrationTest {
 				.setString0("Привет, как дела?")
 				.setBool0(false)
 				.setShort0((short) 123);
-		TestForm form = new TestForm()
-				.setFormString("Привет, как дела?")
-				.setFormList(ImmutableList.of(1, 2, 3))
-				.setFormBool(true);
 
 		TestInterface client = client();
-
-		assertEquals(3, (int) client.testIndex(1, 2));
-		assertEquals(7, (int) client.testRemote(3, 4));
-		assertEquals(11, (int) client.testPost(5, 6));
-		assertEquals(message, client.testMessage(message));
-		assertEquals(form, client.testForm(form));
-		client.testVoid(); // No Exception.
-		assertEquals("Привет", client.testString("Привет"));
-		assertEquals(7, (int) client.testInterface(1, 2).testIndex(3, 4));
+		assertEquals(3, (int) client.method(1, 2));
+		assertEquals(7, (int) client.query(3, 4));
+		assertEquals(11, (int) client.post(5, 6));
+		assertEquals(message, client.message0(message));
+		client.void0(); // No Exception.
+		assertEquals("Привет", client.string0("Привет"));
+		assertEquals(7, (int) client.interface0(1, 2).method(3, 4));
 
 		try {
-			client.testExc();
+			client.exc0();
 			fail();
 		} catch (TestException e) {
 			TestException exc = new TestException().setText("Application exception");
@@ -108,58 +99,47 @@ public class RestIntegrationTest {
 	}
 
 	public static class TestService implements TestInterface {
-
 		@Override
-		public Integer testIndex(final Integer arg0, final Integer arg1) {
+		public Integer method(final Integer arg0, final Integer arg1) {
 			return arg0 + arg1;
 		}
 
 		@Override
-		public Integer testPost(final Integer arg0, final Integer arg1) {
+		public Integer query(final Integer arg0, final Integer arg1) {
 			return arg0 + arg1;
 		}
 
 		@Override
-		public Integer testRemote(final Integer arg0, final Integer arg1) {
+		public Integer post(final Integer arg0, final Integer arg1) {
 			return arg0 + arg1;
 		}
 
 		@Override
-		public void testVoid() {}
+		public void void0() {}
 
 		@Override
-		public void testExc() {
+		public void exc0() {
 			throw new TestException().setText("Application exception");
 		}
 
 		@Override
-		public String testString(final String text) {
+		public String string0(final String text) {
 			return text;
 		}
 
 		@Override
-		public TestForm testForm(final TestForm form) {
-			return form.copy();
-		}
-
-		@Override
-		public TestMessage testMessage(final TestMessage msg) {
+		public TestMessage message0(final TestMessage msg) {
 			return msg.copy();
 		}
 
 		@Override
-		public Base testPolymorphic(final Base msg) {
-			return msg.copy();
-		}
-
-		@Override
-		public Integer testCollections(final List<Integer> list0, final Set<Integer> set0,
+		public Integer collections(final List<Integer> list0, final Set<Integer> set0,
 				final Map<Integer, Integer> map0) {
 			return list0.size() + set0.size() + map0.size();
 		}
 
 		@Override
-		public TestInterface testInterface(final Integer arg0, final Integer arg1) {
+		public TestInterface interface0(final Integer arg0, final Integer arg1) {
 			return this;
 		}
 	}

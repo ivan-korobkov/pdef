@@ -13,13 +13,13 @@ import java.util.List;
 public class InvocationTest {
 	@Test
 	public void testConstructor() throws Exception {
-		Invocation invocation = Invocation.root(indexMethod(), new Object[]{1, 2});
+		Invocation invocation = Invocation.root(method(), new Object[]{1, 2});
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testConstructor_wrongMethodArgs() throws Exception {
-		Invocation.root(indexMethod(), new Object[]{1, 2, 3, 4});
+		Invocation.root(method(), new Object[]{1, 2, 3, 4});
 	}
 
 	@Test
@@ -36,23 +36,23 @@ public class InvocationTest {
 
 	@Test
 	public void testGetMethod() throws Exception {
-		Invocation invocation = Invocation.root(indexMethod(),
+		Invocation invocation = Invocation.root(method(),
 				new Object[]{1, 2});
-		assertEquals(indexMethod(), invocation.getMethod());
+		assertEquals(method(), invocation.getMethod());
 	}
 
 	@Test
 	public void testGetResult() throws Exception {
-		Invocation invocation = Invocation.root(indexMethod(),
+		Invocation invocation = Invocation.root(method(),
 				new Object[]{1, 2});
-		assertEquals(indexMethod().getResult(), invocation.getResult());
+		assertEquals(method().getResult(), invocation.getResult());
 	}
 
 	@Test
 	public void testGetExc() throws Exception {
-		Invocation invocation = Invocation.root(indexMethod(),
+		Invocation invocation = Invocation.root(method(),
 				new Object[]{1, 2});
-		assertEquals(indexMethod().getExc(), invocation.getExc());
+		assertEquals(method().getExc(), invocation.getExc());
 	}
 
 	@Test
@@ -68,9 +68,9 @@ public class InvocationTest {
 	@Test
 	public void testInvoke() throws Exception {
 		TestInterface iface = mock(TestInterface.class);
-		when(iface.testIndex(1, 2)).thenReturn(3);
+		when(iface.method(1, 2)).thenReturn(3);
 
-		Invocation invocation = Invocation.root(indexMethod(), new Object[]{1, 2});
+		Invocation invocation = Invocation.root(method(), new Object[]{1, 2});
 		Object result = invocation.invoke(iface);
 		assertEquals(3, result);
 	}
@@ -78,7 +78,7 @@ public class InvocationTest {
 	@Test
 	public void testInvoke_chained() throws Exception {
 		TestInterface iface = mock(TestInterface.class, RETURNS_DEEP_STUBS);
-		when(iface.testInterface(1, 2).testString("world")).thenReturn("goodbye");
+		when(iface.interface0(1, 2).string0("world")).thenReturn("goodbye");
 
 		Invocation invocation = Invocation
 				.root(interfaceMethod(), new Object[]{1, 2})
@@ -91,29 +91,29 @@ public class InvocationTest {
 	@Test(expected = TestException.class)
 	public void testInvoke_exc() throws Exception {
 		TestInterface iface = mock(TestInterface.class);
-		doThrow(new TestException()).when(iface).testExc();
+		doThrow(new TestException()).when(iface).exc0();
 		Invocation invocation = Invocation.root(excMethod(), new Object[]{});
 
 		invocation.invoke(iface);
 	}
 
-	private MethodDescriptor<?, ?> indexMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testIndex");
+	private MethodDescriptor<?, ?> method() {
+		return TestInterface.DESCRIPTOR.getMethod("method");
 	}
 
 	private MethodDescriptor<?, ?> messageMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testMessage");
+		return TestInterface.DESCRIPTOR.getMethod("message0");
 	}
 
 	private MethodDescriptor<?, ?> interfaceMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testInterface");
+		return TestInterface.DESCRIPTOR.getMethod("interface0");
 	}
 
 	private MethodDescriptor<?, ?> stringMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testString");
+		return TestInterface.DESCRIPTOR.getMethod("string0");
 	}
 
 	private MethodDescriptor<?, ?> excMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testExc");
+		return TestInterface.DESCRIPTOR.getMethod("exc0");
 	}
 }

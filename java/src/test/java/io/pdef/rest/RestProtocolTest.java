@@ -1,40 +1,44 @@
 package io.pdef.rest;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Atomics;
-import io.pdef.descriptors.ArgumentDescriptor;
-import io.pdef.descriptors.Descriptors;
-import io.pdef.descriptors.MethodDescriptor;
-import io.pdef.descriptors.ImmutableArgumentDescriptor;
 import io.pdef.Invocation;
 import io.pdef.InvocationProxy;
 import io.pdef.Invoker;
+import io.pdef.descriptors.Descriptors;
+import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.test.interfaces.TestInterface;
-import io.pdef.test.messages.TestForm;
 import io.pdef.test.messages.TestMessage;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RestProtocolTest {
-	private RestProtocol format = new RestProtocol();
+	private RestProtocol protocol = new RestProtocol();
 
 	// GetRequest.
 
 	@Test
 	public void testGetRequest() throws Exception {
 		AtomicReference<Invocation> ref = Atomics.newReference();
-		proxy(ref).testIndex(1, 2);
+		proxy(ref).method(1, 2);
 
-		RestRequest request = format.getRequest(ref.get());
+		RestRequest request = protocol.getRequest(ref.get());
 		assertEquals(RestRequest.GET, request.getMethod());
-		assertEquals("/", request.getPath());
+		assertEquals("/method/1/2", request.getPath());
+		assertTrue(request.getQuery().isEmpty());
+		assertTrue(request.getPost().isEmpty());
+	}
+
+	@Test
+	public void testGetRequest_query() throws Exception {
+		AtomicReference<Invocation> ref = Atomics.newReference();
+		proxy(ref).query(1, 2);
+
+		RestRequest request = protocol.getRequest(ref.get());
+		assertEquals("/query", request.getPath());
 		assertEquals(ImmutableMap.of("arg0", "1", "arg1", "2"), request.getQuery());
 		assertTrue(request.getPost().isEmpty());
 	}
@@ -42,129 +46,63 @@ public class RestProtocolTest {
 	@Test
 	public void testGetRequest_post() throws Exception {
 		AtomicReference<Invocation> ref = Atomics.newReference();
-		proxy(ref).testPost(1, 2);
+		proxy(ref).post(1, 2);
 
-		RestRequest request = format.getRequest(ref.get());
+		RestRequest request = protocol.getRequest(ref.get());
 		assertEquals(RestRequest.POST, request.getMethod());
-		assertEquals("/testPost", request.getPath());
+		assertEquals("/post", request.getPath());
 		assertTrue(request.getQuery().isEmpty());
 		assertEquals(ImmutableMap.of("arg0", "1", "arg1", "2"), request.getPost());
 	}
 
 	@Test
-	public void testGetRequest_chainedMethod() throws Exception {
+	public void testGetRequest_chainedMethods() throws Exception {
 		AtomicReference<Invocation> ref = Atomics.newReference();
-		proxy(ref).testInterface(1, 2).testRemote(3, 4);
+		proxy(ref).interface0(1, 2).method(3, 4);
 
-		RestRequest request = format.getRequest(ref.get());
+		RestRequest request = protocol.getRequest(ref.get());
 		assertEquals(RestRequest.GET, request.getMethod());
-		assertEquals("/testInterface/1/2/testRemote", request.getPath());
-		assertEquals(ImmutableMap.of("arg0", "3", "arg1", "4"), request.getQuery());
-		assertTrue(request.getPost().isEmpty());
-	}
-
-	// WriteInvocation.
-
-	@Test
-	public void testWriteInvocation_indexMethod() throws Exception {
-		RestRequest request = new RestRequest();
-		AtomicReference<Invocation> ref = Atomics.newReference();
-		proxy(ref).testIndex(1, 2);
-
-		format.writeInvocation(request, ref.get());
-		assertEquals("/", request.getPath());
-		assertEquals(ImmutableMap.of("arg0", "1", "arg1", "2"), request.getQuery());
-		assertTrue(request.getPost().isEmpty());
-	}
-
-	@Test
-	public void testWriteInvocation_postMethod() throws Exception {
-		RestRequest request = new RestRequest();
-		AtomicReference<Invocation> ref = Atomics.newReference();
-		proxy(ref).testPost(1, 2);
-
-		format.writeInvocation(request, ref.get());
-		assertEquals("/testPost", request.getPath());
-		assertTrue(request.getQuery().isEmpty());
-		assertEquals(ImmutableMap.of("arg0", "1", "arg1", "2"), request.getPost());
-	}
-
-	@Test
-	public void testWriteInvocation_remoteMethod() throws Exception {
-		RestRequest request = new RestRequest();
-		AtomicReference<Invocation> ref = Atomics.newReference();
-		proxy(ref).testRemote(10, 100);
-
-		format.writeInvocation(request, ref.get());
-		assertEquals("/testRemote", request.getPath());
-		assertEquals(ImmutableMap.of("arg0", "10", "arg1", "100"), request.getQuery());
-		assertTrue(request.getPost().isEmpty());
-	}
-
-	@Test
-	public void testWriteInvocation_interfaceMethod() throws Exception {
-		RestRequest request = new RestRequest();
-		AtomicReference<Invocation> ref = Atomics.newReference();
-		proxy(ref).testInterface(1, 2).testIndex(3, 4);
-
-		// Get the first invocation in the chain.
-		Invocation interfaceInvocation = ref.get().toChain().get(0);
-		format.writeInvocation(request, interfaceInvocation);
-		assertEquals("/testInterface/1/2", request.getPath());
+		assertEquals("/interface0/1/2/method/3/4", request.getPath());
 		assertTrue(request.getQuery().isEmpty());
 		assertTrue(request.getPost().isEmpty());
 	}
 
-	// WriteParam.
-
-	@Ignore
 	@Test
-	public void testWritePathArgument() throws Exception {
-//		ArgumentDescriptor<String> argd = ImmutableArgumentDescriptor
-//				.of("arg", Descriptors.string);
-//
-//		String value = format.writePathArgument(argd, "Привет");
-//		assertEquals("%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82", value);
+	public void testGetRequest_urlencodePathArgs() throws Exception {
+		AtomicReference<Invocation> ref = Atomics.newReference();
+		proxy(ref).string0("привет");
+
+		RestRequest request = protocol.getRequest(ref.get());
+		assertEquals("/string0/%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82", request.getPath());
+	}
+
+	// toJson.
+
+	@Test
+	public void testToJson_noQuotes() throws Exception {
+		String result = protocol.toJson(Descriptors.string, "Привет,\" мир!");
+		assertEquals("Привет,\\\" мир!", result);
+	}
+
+	// GetInvocation.
+
+	@Test
+	public void testGetInvocation() throws Exception {
+		RestRequest request = new RestRequest().setPath("/method/1/2/");
+
+		Invocation invocation = protocol.getInvocation(request, TestInterface.DESCRIPTOR);
+		assertEquals("method", invocation.getMethod().getName());
+		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
 
 	@Test
-	public void testWriteParam() throws Exception {
-		ArgumentDescriptor<Integer> argd = ImmutableArgumentDescriptor
-				.of("arg", Descriptors.int32);
-
-		Map<String, String> dst = Maps.newHashMap();
-		format.writeParam(argd, 123, dst);
-		assertEquals(ImmutableMap.of("arg", "123"), dst);
-	}
-
-	@Test
-	public void testWriteParam_form() throws Exception {
-		ArgumentDescriptor<TestForm> argd = ImmutableArgumentDescriptor
-				.of("arg", TestForm.DESCRIPTOR);
-
-		Map<String, String> dst = Maps.newHashMap();
-		TestForm msg = new TestForm()
-				.setFormString("Привет, как дела?")
-				.setFormList(ImmutableList.of(1, 2, 3))
-				.setFormBool(false);
-		format.writeParam(argd, msg, dst);
-
-		assertEquals(ImmutableMap.of(
-				"formString", "Привет, как дела?",
-				"formList", "[1,2,3]",
-				"formBool", "false"), dst);
-	}
-
-	// Invocation parsing.
-
-	@Test
-	public void testGetInvocation_indexMethod() throws Exception {
+	public void testGetInvocation_queryMethod() throws Exception {
 		RestRequest request = new RestRequest()
-				.setPath("/")
+				.setPath("/query")
 				.setQuery(ImmutableMap.of("arg0", "1", "arg1", "2"));
 
-		Invocation invocation = format.getInvocation(request, TestInterface.DESCRIPTOR);
-		assertEquals("testIndex", invocation.getMethod().getName());
+		Invocation invocation = protocol.getInvocation(request, TestInterface.DESCRIPTOR);
+		assertEquals(queryMethod(), invocation.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
 
@@ -172,39 +110,27 @@ public class RestProtocolTest {
 	public void testGetInvocation_postMethod() throws Exception {
 		RestRequest request = new RestRequest()
 				.setMethod(RestRequest.POST)
-				.setPath("/testPost")
+				.setPath("/post")
 				.setPost(ImmutableMap.of("arg0", "1", "arg1", "2"));
 
-		Invocation invocation = format.getInvocation(request, TestInterface.DESCRIPTOR);
+		Invocation invocation = protocol.getInvocation(request, TestInterface.DESCRIPTOR);
 		assertEquals(postMethod(), invocation.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
 
 	@Test(expected = RestException.class)
-	public void testGetInvocation_postMethodNotAllowed() throws Exception {
-		RestRequest request = new RestRequest().setPath("/testPost");
+	public void testGetInvocation_postMethod_getNotAllowed() throws Exception {
+		RestRequest request = new RestRequest().setPath("/post");
 
-		format.getInvocation(request, TestInterface.DESCRIPTOR);
+		protocol.getInvocation(request, TestInterface.DESCRIPTOR);
 	}
 
 	@Test
-	public void testGetInvocation_remoteMethod() throws Exception {
-		RestRequest request = new RestRequest()
-				.setPath("/testRemote")
-				.setQuery(ImmutableMap.of("arg0", "1", "arg1", "2"));
-
-		Invocation invocation = format.getInvocation(request, TestInterface.DESCRIPTOR);
-		assertEquals(remoteMethod(), invocation.getMethod());
-		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
-	}
-
-	@Test
-	public void testGetInvocation_chainedMethodIndex() throws Exception {
-		RestRequest request = new RestRequest().setPath("/testInterface/1/2/")
+	public void testGetInvocation_chainedMethods() throws Exception {
+		RestRequest request = new RestRequest().setPath("/interface0/1/2/query/")
 				.setQuery(ImmutableMap.of("arg0", "3", "arg1", "4"));
 
-		List<Invocation> chain = format.getInvocation(request, TestInterface.DESCRIPTOR)
-				.toChain();
+		List<Invocation> chain = protocol.getInvocation(request, TestInterface.DESCRIPTOR).toChain();
 		assertEquals(2, chain.size());
 
 		Invocation invocation0 = chain.get(0);
@@ -212,89 +138,44 @@ public class RestProtocolTest {
 		assertArrayEquals(new Object[]{1, 2}, invocation0.getArgs());
 
 		Invocation invocation1 = chain.get(1);
-		assertEquals(indexMethod(), invocation1.getMethod());
+		assertEquals(queryMethod(), invocation1.getMethod());
 		assertArrayEquals(new Object[]{3, 4}, invocation1.getArgs());
 	}
 
-	@Test
-	public void testGetInvocation_chainedMethodRemote() throws Exception {
-		RestRequest request = new RestRequest()
-				.setPath("/testInterface/1/2/testString")
-				.setQuery(ImmutableMap.of("text", "Привет"));
-
-		List<Invocation> chain = format.getInvocation(request, TestInterface.DESCRIPTOR).toChain();
-		assertEquals(2, chain.size());
-
-		Invocation invocation0 = chain.get(0);
-		assertEquals(interfaceMethod(), invocation0.getMethod());
-		assertArrayEquals(new Object[]{1, 2}, invocation0.getArgs());
-
-		Invocation invocation1 = chain.get(1);
-		assertEquals(stringMethod(), invocation1.getMethod());
-		assertArrayEquals(new Object[]{"Привет"}, invocation1.getArgs());
-	}
-
 	@Test(expected = RestException.class)
-	public void testGetInvocation_interfaceMethodNotRemote() throws Exception {
-		RestRequest request = new RestRequest().setPath("/testInterface/1/2");
+	public void testGetInvocation_lastMethodNotRemote() throws Exception {
+		RestRequest request = new RestRequest().setPath("/interface0/1/2");
 
-		format.getInvocation(request, TestInterface.DESCRIPTOR);
-	}
-
-	// Argument parsing.
-
-	@Test
-	public void testReadPathArgument() throws Exception {
-		ArgumentDescriptor<String> argd = ImmutableArgumentDescriptor
-				.of("arg", Descriptors.string);
-		String part = "%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82";
-
-		String value = format.readPathArgument(argd, part);
-		assertEquals("Привет", value);
+		protocol.getInvocation(request, TestInterface.DESCRIPTOR);
 	}
 
 	@Test
-	public void testReadParam() throws Exception {
-		ArgumentDescriptor<TestMessage> argd = ImmutableArgumentDescriptor.of("arg",
-				TestMessage.DESCRIPTOR);
+	public void testGetInvocation_urldecodePathArgs() throws Exception {
+		RestRequest request = new RestRequest()
+				.setPath("/string0/%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82");
 
+		Invocation invocation = protocol.getInvocation(request, TestInterface.DESCRIPTOR);
+		assertEquals(stringMethod(), invocation.getMethod());
+		assertArrayEquals(new Object[]{"Привет"}, invocation.getArgs());
+	}
+
+	// fromJson
+
+	@Test
+	public void testFromJson() throws Exception {
 		TestMessage expected = new TestMessage()
 				.setString0("Привет")
 				.setBool0(true)
 				.setShort0((short) 123);
-		Map<String, String> query = ImmutableMap.of("arg", expected.toJson());
-
-		Object result = format.readParam(argd, query);
+		String json = expected.toJson();
+		TestMessage result = protocol.fromJson(TestMessage.DESCRIPTOR, json);
 		assertEquals(expected, result);
 	}
 
 	@Test
-	public void testReadParam_form() throws Exception {
-		ArgumentDescriptor<TestForm> argd = ImmutableArgumentDescriptor
-				.of("arg", TestForm.DESCRIPTOR);
-
-		TestForm expected = new TestForm()
-				.setFormString("Привет, как дела?")
-				.setFormList(ImmutableList.of(1, 2, 3))
-				.setFormBool(false);
-		Map<String, String> src = ImmutableMap.of(
-				"formString", "Привет, как дела?",
-				"formList", "[1,2,3]",
-				"formBool", "false");
-		TestForm result = format.readParam(argd, src);
-		assertEquals(expected, result);
-	}
-
-	@Test
-	public void testReadParam_message() throws Exception {
-		TestMessage msg = new TestMessage()
-				.setString0("Привет")
-				.setBool0(true)
-				.setShort0((short) 123);
-
-		String json = msg.toJson();
-		TestMessage result = format.fromJson(msg.descriptor(), json);
-		assertEquals(msg, result);
+	public void testFromJson_unquotedString() throws Exception {
+		String result = protocol.fromJson(Descriptors.string, "Привет");
+		assertEquals("Привет", result);
 	}
 
 	private TestInterface proxy(final AtomicReference<Invocation> ref) {
@@ -311,23 +192,23 @@ public class RestProtocolTest {
 		return InvocationProxy.create(TestInterface.DESCRIPTOR, handler);
 	}
 
+	private MethodDescriptor<?, ?> method() {
+		return TestInterface.DESCRIPTOR.getMethod("method");
+	}
+
+	private MethodDescriptor<?, ?> queryMethod() {
+		return TestInterface.DESCRIPTOR.getMethod("query");
+	}
+
 	private MethodDescriptor<?, ?> postMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testPost");
-	}
-
-	private MethodDescriptor<?, ?> remoteMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testRemote");
-	}
-
-	private MethodDescriptor<?, ?> interfaceMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testInterface");
-	}
-
-	private MethodDescriptor<?, ?> indexMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testIndex");
+		return TestInterface.DESCRIPTOR.getMethod("post");
 	}
 
 	private MethodDescriptor<?, ?> stringMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testString");
+		return TestInterface.DESCRIPTOR.getMethod("string0");
+	}
+
+	private MethodDescriptor<?, ?> interfaceMethod() {
+		return TestInterface.DESCRIPTOR.getMethod("interface0");
 	}
 }

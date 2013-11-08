@@ -279,13 +279,13 @@ class TestParser(unittest.TestCase):
 
             interface Interface {
                 /** Method zero. */
-                @post
                 method0() void;
 
                 /** Method one. */
+                @post
                 method1(
-                    arg0 type0,
-                    arg1 type1) result;
+                    arg0 type0 @query,
+                    arg1 type1 @post) result;
             }
         '''
 
@@ -298,16 +298,16 @@ class TestParser(unittest.TestCase):
         method0 = methods[0]
         assert method0.name == 'method0'
         assert method0.doc == 'Method zero.'
-        assert method0.is_post
-        assert method0.location == Location(7)
+        assert method0.is_post is False
+        assert method0.location == Location(6)
         assert method0._result.name == 'void'
-        assert method0._result.location == Location(7)
+        assert method0._result.location == Location(6)
         assert method0.args == []
 
         method1 = methods[1]
         assert method1.name == 'method1'
         assert method1.doc == 'Method one.'
-        assert method1.is_post is False
+        assert method1.is_post
         assert method1.location == Location(10)
         assert method1._result.name == 'result'
         assert method1._result.location == Location(12)
@@ -316,9 +316,11 @@ class TestParser(unittest.TestCase):
         assert method1.args[0].name == 'arg0'
         assert method1.args[0]._type.name == 'type0'
         assert method1.args[0]._type.location == Location(11)
+        assert method1.args[0].is_query
         assert method1.args[1].name == 'arg1'
         assert method1.args[1]._type.name == 'type1'
         assert method1.args[1]._type.location == Location(12)
+        assert method1.args[1].is_post
 
     def test_collections(self):
         s = '''

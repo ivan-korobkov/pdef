@@ -10,31 +10,30 @@ import static org.mockito.Mockito.*;
 public class ImmutableMethodDescriptorTest {
 	@Test
 	public void testGetName() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = indexMethod();
+		MethodDescriptor<TestInterface, ?> method = method();
 		assertNotNull(method);
-		assertEquals("testIndex", method.getName());
+		assertEquals("method", method.getName());
 	}
 
 	@Test
 	public void testGetExc() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = indexMethod();
+		MethodDescriptor<TestInterface, ?> method = method();
 		assertNotNull(method);
 		assertTrue(method.getExc() == TestException.DESCRIPTOR);
 	}
 
 	@Test
 	public void testIndexPostRemote() throws Exception {
-		MethodDescriptor<TestInterface, ?> index = indexMethod();
-		MethodDescriptor<TestInterface, ?> remote = TestInterface.DESCRIPTOR.getMethod("testRemote");
-		MethodDescriptor<TestInterface, ?> post = TestInterface.DESCRIPTOR.getMethod("testPost");
-		MethodDescriptor<TestInterface, ?> iface = TestInterface.DESCRIPTOR.getMethod(
-				"testInterface");
+		MethodDescriptor<TestInterface, ?> index = method();
+		MethodDescriptor<TestInterface, ?> query = TestInterface.DESCRIPTOR.getMethod("query");
+		MethodDescriptor<TestInterface, ?> post = TestInterface.DESCRIPTOR.getMethod("post");
+		MethodDescriptor<TestInterface, ?> iface = TestInterface.DESCRIPTOR.getMethod("interface0");
 
 		assertTrue(index.isRemote());
 		assertFalse(index.isPost());
 
-		assertTrue(remote.isRemote());
-		assertFalse(remote.isPost());
+		assertTrue(query.isRemote());
+		assertFalse(query.isPost());
 
 		assertTrue(post.isRemote());
 		assertTrue(post.isPost());
@@ -45,26 +44,26 @@ public class ImmutableMethodDescriptorTest {
 
 	@Test
 	public void testInvoke() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = indexMethod();
+		MethodDescriptor<TestInterface, ?> method = method();
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
 		method.invoke(object, new Object[] {1, 2});
-		verify(object).testIndex(1, 2);
+		verify(object).method(1, 2);
 	}
 
 	@Test(expected = TestException.class)
 	public void testInvoke_exception() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.getMethod("testExc");
+		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.getMethod("exc0");
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);
-		doThrow(new TestException()).when(object).testExc();
+		doThrow(new TestException()).when(object).exc0();
 
 		method.invoke(object, null);
 	}
 
-	private MethodDescriptor<TestInterface, ?> indexMethod() {
-		return TestInterface.DESCRIPTOR.getMethod("testIndex");
+	private MethodDescriptor<TestInterface, ?> method() {
+		return TestInterface.DESCRIPTOR.getMethod("method");
 	}
 }

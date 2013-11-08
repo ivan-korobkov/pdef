@@ -22,12 +22,12 @@ public class NativeFormatTest {
 
 	private <T> void testPrimitive(final ValueDescriptor<T> descriptor, final String s,
 			final T expected) {
-		assert format.parse(null, descriptor) == null;
-		assert format.parse(s, descriptor).equals(expected);
-		assert format.parse(expected, descriptor).equals(expected);
+		assert format.read(null, descriptor) == null;
+		assert format.read(s, descriptor).equals(expected);
+		assert format.read(expected, descriptor).equals(expected);
 
-		assert format.serialize(null, descriptor) == null;
-		assert format.serialize(expected, descriptor).equals(expected);
+		assert format.write(null, descriptor) == null;
+		assert format.write(expected, descriptor).equals(expected);
 	}
 
 	@Test
@@ -63,10 +63,10 @@ public class NativeFormatTest {
 
 	private <T> void testValue(final ValueDescriptor<T> descriptor, final Object serialized,
 			final T parsed) {
-		assert format.parse(serialized, descriptor).equals(parsed);
-		assert format.parse(null, descriptor) == null;
-		assert format.serialize(null, descriptor) == null;
-		assert format.serialize(parsed, descriptor).equals(serialized);
+		assert format.read(serialized, descriptor).equals(parsed);
+		assert format.read(null, descriptor) == null;
+		assert format.write(null, descriptor) == null;
+		assert format.write(parsed, descriptor).equals(serialized);
 	}
 
 	@Test
@@ -111,7 +111,7 @@ public class NativeFormatTest {
 		EnumDescriptor<TestEnum> descriptor = TestEnum.DESCRIPTOR;
 
 		testValue(descriptor, TestEnum.TWO, TestEnum.TWO);
-		assertEquals(TestEnum.TWO, format.parse("two", descriptor));
+		assertEquals(TestEnum.TWO, format.read("two", descriptor));
 	}
 
 	@Test

@@ -13,19 +13,22 @@ import java.util.*;
 
 /** JsonFormat parses and serializes Pdef value types from/to JSON. */
 public class JsonFormat {
-	private static final JsonFactory FACTORY = new JsonFactory()
-			.enable(JsonParser.Feature.ALLOW_COMMENTS)
-			.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
 	private static final JsonFormat INSTANCE = new JsonFormat();
+
+	private final JsonFactory factory;
+	private final NativeFormat nativeFormat;
+
+	protected JsonFormat() {
+		this(new JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS));
+	}
+
+	protected JsonFormat(final JsonFactory factory) {
+		this.factory = factory;
+		nativeFormat = NativeFormat.getInstance();
+	}
 
 	public static JsonFormat getInstance() {
 		return INSTANCE;
-	}
-
-	private final NativeFormat nativeFormat;
-
-	private JsonFormat() {
-		nativeFormat = NativeFormat.getInstance();
 	}
 
 	// Serialization.
@@ -37,7 +40,7 @@ public class JsonFormat {
 
 		try {
 			StringWriter out = new StringWriter();
-			JsonGenerator generator = FACTORY.createGenerator(out);
+			JsonGenerator generator = factory.createGenerator(out);
 			if (indent) {
 				generator.useDefaultPrettyPrinter();
 			}
@@ -60,7 +63,7 @@ public class JsonFormat {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
-			JsonGenerator generator = FACTORY.createGenerator(out);
+			JsonGenerator generator = factory.createGenerator(out);
 			if (indent) {
 				generator.useDefaultPrettyPrinter();
 			}
@@ -81,7 +84,7 @@ public class JsonFormat {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
-			JsonGenerator generator = FACTORY.createGenerator(writer);
+			JsonGenerator generator = factory.createGenerator(writer);
 			if (indent) {
 				generator.useDefaultPrettyPrinter();
 			}
@@ -256,7 +259,7 @@ public class JsonFormat {
 		}
 
 		try {
-			JsonParser parser = FACTORY.createParser(input);
+			JsonParser parser = factory.createParser(input);
 			return read(parser, descriptor);
 		} catch (FormatException e) {
 			throw e;
@@ -271,7 +274,7 @@ public class JsonFormat {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
-			JsonParser parser = FACTORY.createParser(input);
+			JsonParser parser = factory.createParser(input);
 			return read(parser, descriptor);
 		} catch (FormatException e) {
 			throw e;
@@ -286,7 +289,7 @@ public class JsonFormat {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
-			JsonParser parser = FACTORY.createParser(reader);
+			JsonParser parser = factory.createParser(reader);
 			return read(parser, descriptor);
 		} catch (FormatException e) {
 			throw e;
@@ -306,7 +309,7 @@ public class JsonFormat {
 			parser.close();
 		}
 
-		return nativeFormat.parse(nativeObject, descriptor);
+		return nativeFormat.read(nativeObject, descriptor);
 	}
 
 	private Object read(final JsonParser parser) throws IOException {

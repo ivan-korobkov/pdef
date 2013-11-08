@@ -29,8 +29,9 @@ public class RestServletTest {
 	public void getRestRequest() throws Exception {
 		HttpServletRequest request = mock(HttpServletRequest.class);
 		when(request.getMethod()).thenReturn(RestRequest.GET);
-		when(request.getServletPath()).thenReturn("/my/app");
-		when(request.getPathInfo()).thenReturn("/method1/method2");
+		when(request.getContextPath()).thenReturn("/my/app");
+		when(request.getServletPath()).thenReturn("/method1");
+		when(request.getPathInfo()).thenReturn("/method2");
 		when(request.getParameterMap()).thenReturn(ImmutableMap.of(
 				"key0", new String[]{"value0"},
 				"key1", new String[]{"value1", "value11"}));

@@ -29,7 +29,7 @@ public class InvocationProxyTest {
 		TestInterface iface = createProxy();
 		when(invoker.invoke(any(Invocation.class))).thenReturn(3);
 
-		Object result = iface.testIndex(1, 2);
+		Object result = iface.method(1, 2);
 		assertEquals(3, result);
 	}
 
@@ -38,7 +38,7 @@ public class InvocationProxyTest {
 		TestInterface iface = createProxy();
 		when(invoker.invoke(any(Invocation.class))).thenThrow(new TestException());
 
-		iface.testExc();
+		iface.exc0();
 	}
 
 	@Test
@@ -47,11 +47,11 @@ public class InvocationProxyTest {
 		ArgumentCaptor<Invocation> captor = ArgumentCaptor.forClass(Invocation.class);
 		when(invoker.invoke(any(Invocation.class))).thenReturn(null);
 
-		iface.testIndex(1, 2);
+		iface.method(1, 2);
 		verify(invoker).invoke(captor.capture());
 
 		Invocation invocation = captor.getValue();
-		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.getMethod("testIndex");
+		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.getMethod("method");
 		assertEquals(method, invocation.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
@@ -62,7 +62,7 @@ public class InvocationProxyTest {
 		ArgumentCaptor<Invocation> captor = ArgumentCaptor.forClass(Invocation.class);
 		when(invoker.invoke(any(Invocation.class))).thenReturn(null);
 
-		iface.testInterface(1, 2).testIndex(3, 4);
+		iface.interface0(1, 2).method(3, 4);
 		verify(invoker).invoke(captor.capture());
 
 		List<Invocation> chain = captor.getValue().toChain();

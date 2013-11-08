@@ -20,6 +20,10 @@ public class RestRequest {
 
 	public RestRequest() {}
 
+	public RestRequest(final String method) {
+		setMethod(method);
+	}
+
 	@Override
 	public String toString() {
 		return "RestRequest{" + method + ", path='" + path + '\'' + '}';

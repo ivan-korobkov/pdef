@@ -11,7 +11,7 @@ public enum {{ name }} {
 
     /** Returns an enum value from a string or {@literal null}. */
     public static {{ name }} fromString(final String s) {
-        return io.pdef.formats.NativeFormat.getInstance().parse(s, DESCRIPTOR);
+        return io.pdef.formats.NativeFormat.getInstance().read(s, DESCRIPTOR);
     }
 
     /** Returns an enum value from a json string or {@literal null}. */

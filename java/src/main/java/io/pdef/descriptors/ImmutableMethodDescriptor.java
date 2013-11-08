@@ -119,8 +119,9 @@ public class ImmutableMethodDescriptor<T, R> implements MethodDescriptor<T,R> {
 			return this;
 		}
 
-		public <V> Builder<T, R> addArg(final String name, final ValueDescriptor<V> type) {
-			this.args.add(new ImmutableArgumentDescriptor<V>(name, type));
+		public <V> Builder<T, R> addArg(final String name, final ValueDescriptor<V> type,
+				final boolean isQuery, final boolean isPost) {
+			this.args.add(new ImmutableArgumentDescriptor<V>(name, type, isQuery, isPost));
 			return this;
 		}
 

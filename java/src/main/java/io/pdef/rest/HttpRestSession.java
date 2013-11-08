@@ -32,7 +32,6 @@ public class HttpRestSession implements RestSession {
 			final ValueDescriptor<T> resultDescriptor,
 			final ValueDescriptor<E> excDescriptor) throws Exception {
 		Request request = buildRequest(restRequest);
-		request.execute().returnContent();
 		return request.execute().handleResponse(new ResponseHandler<T>() {
 			@Override
 			public T handleResponse(final HttpResponse response) throws IOException {

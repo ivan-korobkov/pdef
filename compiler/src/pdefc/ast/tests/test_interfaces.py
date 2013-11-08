@@ -82,6 +82,12 @@ class TestMethod(unittest.TestCase):
         errors = method.validate()
         assert 'duplicate argument' in errors[0]
 
+    def test_validate__prevent_post_args_when_method_not_post(self):
+        method = Method('method')
+        method.create_arg('arg', NativeType.INT32, is_post=True)
+
+        errors = method.validate()
+        assert 'argument can be @post only when the method is @post' in errors[0]
 
 class TestMethodArg(unittest.TestCase):
     def test_link(self):
@@ -109,3 +115,9 @@ class TestMethodArg(unittest.TestCase):
 
         errors = arg.validate()
         assert 'argument must be a data type' in errors[0]
+
+    def test_validate__cannot_be_post_and_query(self):
+        arg = MethodArg('arg', NativeType.STRING, is_query=True, is_post=True)
+        errors = arg.validate()
+
+        assert 'argument cannot be both @query and @post' in errors[0]

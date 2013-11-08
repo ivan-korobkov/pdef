@@ -12,23 +12,27 @@ import java.util.*;
 
 public class RestProtocol {
 	public static final String CHARSET_NAME = "UTF-8";
-	private final JsonFormat jsonFormat = JsonFormat.getInstance();
+	private final JsonFormat format;
 
-	public RestProtocol() {}
+	public RestProtocol() {
+		this(JsonFormat.getInstance());
+	}
+
+	public RestProtocol(final JsonFormat format) {
+		if (format == null) throw new NullPointerException("format");
+		this.format = format;
+	}
 
 	/** Converts an invocation into a rest request. */
 	public RestRequest getRequest(final Invocation invocation) {
 		if (invocation == null) throw new NullPointerException("invocation");
 
-		// Set the HTTP method.
 		MethodDescriptor<?, ?> method = invocation.getMethod();
-		RestRequest request = new RestRequest();
-		if (method.isPost()) {
-			request.setMethod(RestRequest.POST);
-		} else {
-			request.setMethod(RestRequest.GET);
+		if (!method.isRemote()) {
+			throw new IllegalArgumentException("Last invocation method must be remote");
 		}
 
+		RestRequest request = new RestRequest(method.isPost() ? RestRequest.POST : RestRequest.GET);
 		for (Invocation invocation1 : invocation.toChain()) {
 			writeInvocation(request, invocation1);
 		}
@@ -36,54 +40,39 @@ public class RestProtocol {
 		return request;
 	}
 
-	void writeInvocation(final RestRequest request, final Invocation invocation) {
+	private void writeInvocation(final RestRequest request, final Invocation invocation) {
 		MethodDescriptor<?, ?> method = invocation.getMethod();
 
 		Object[] args = invocation.getArgs();
 		List<ArgumentDescriptor<?>> argds = method.getArgs();
 
-		Map<String, String> pathArgs = new HashMap<String, String>();
+		String path = request.getPath() + "/" + urlencode(method.getName());
+		Map<String, String> post = request.getPost();
+		Map<String, String> query = request.getQuery();
+
 		for (int i = 0; i < args.length; i++) {
-			Object arg = args[i];
 			ArgumentDescriptor argd = argds.get(i);
 
+			Object arg = args[i];
+			String name = argd.getName();
+			String value = toJson(argd.getType(), arg);
+
 			if (argd.isPost()) {
-				writeParam(argd, arg, request.getPost());
+				post.put(name, value);
 			} else if (argd.isQuery()) {
-				writeParam(argd, arg, request.getQuery());
+				query.put(name, value);
 			} else {
-				writeParam(argd, arg, pathArgs);
+				path = path + "/" + urlencode(value);
 			}
 		}
 
-		String path = expandPath(method.getName(), pathArgs);
-		request.appendPath(path);
+		request.setPath(path);
 	}
 
 	// VisibleForTesting
-	String expandPath(final String path, final Map<String, String> args) {
-		Map<String, String> encoded = new HashMap<String, String>();
-		for (Map.Entry<String, String> entry : args.entrySet()) {
-			encoded.put(entry.getKey(), urlencode(entry.getValue()));
-		}
-		return path;
-	}
-
-	/** Serializes a query/post argument and puts it into a dst map. */
-	// VisibleForTesting
-	@SuppressWarnings("unchecked")
-	<V> void writeParam(final ArgumentDescriptor<V> argd, final V arg,
-			final Map<String, String> dst) {
-		ValueDescriptor<V> descriptor = argd.getType();
-		// Serialize as a single json param.
-		String serialized = toJson(descriptor, arg);
-		dst.put(argd.getName(), serialized);
-	}
-
 	/** Serializes an argument to JSON, strips the quotes. */
-	// VisibleForTesting
 	<V> String toJson(final ValueDescriptor<V> descriptor, final V arg) {
-		String s = jsonFormat.toJson(arg, descriptor, false);
+		String s = format.toJson(arg, descriptor, false);
 		if (descriptor.getType() != TypeEnum.STRING) {
 			return s;
 		}
@@ -92,87 +81,32 @@ public class RestProtocol {
 		return s.substring(1, s.length() - 1);
 	}
 
-	// Invocation parsing.
-
 	/** Parses an invocation from a rest request. */
 	public Invocation getInvocation(final RestRequest request, InterfaceDescriptor<?> descriptor) {
 		if (request == null) throw new NullPointerException("request");
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
-		String path = request.getPath();
-		if (path.startsWith("/")) {
-			path = path.substring(1);
-		}
-
-		// Split the path into a list of parts (method names and positions arguments).
-		String[] partsArray = path.split("/", -1); // -1 disables discarding trailing empty
-		// strings.
-		LinkedList<String> parts = new LinkedList<String>();
-		Collections.addAll(parts, partsArray);
-
-		// Parse the parts as method invocations.
 		Invocation invocation = null;
+		LinkedList<String> parts = splitPath(request.getPath());
+
 		while (!parts.isEmpty()) {
 			String part = parts.removeFirst();
 
-			// Find a method by name .
+			// Find a method by name.
 			MethodDescriptor<?, ?> method = descriptor.getMethod(part);
 			if (method == null) {
-				// Method is not found.
 				throw RestException.methodNotFound("Method is not found: " + part);
 			}
-
 			if (method.isPost() && !request.isPost()) {
-				// The method requires a POST HTTP request.
 				throw RestException.methodNotAllowed("Method not allowed, POST required");
 			}
 
-			// Parse method arguments.
-			boolean isPost = method.isPost();
-			boolean isRemote = method.isRemote();
-
-			List<Object> args = new ArrayList<Object>();
-			Map<String, String> post = request.getPost();
-			Map<String, String> query = request.getQuery();
-
-			for (ArgumentDescriptor<?> argd : method.getArgs()) {
-				if (isPost) {
-					// Parse a post param.
-					args.add(readParam(argd, post));
-
-				} else if (isRemote) {
-					// Parse a query param.
-					args.add(readParam(argd, query));
-
-				} else {
-					// Parse a path argument.
-					if (parts.isEmpty()) {
-						throw RestException.methodNotFound("Wrong number of method args");
-					}
-
-					args.add(readPathArgument(argd, parts.removeFirst()));
-				}
-			}
-
-			// Create a next invocation in a chain with the parsed arguments.
-			if (invocation == null) {
-				invocation = Invocation.root(method, args.toArray());
-			} else {
-				invocation = invocation.next(method, args.toArray());
-			}
-
+			// Parse arguments and create an invocation.
+			List<Object> args = readArgs(method, parts, request.getQuery(), request.getPost());
+			invocation = invocation != null ? invocation.next(method, args.toArray())
+			                                : Invocation.root(method, args.toArray());
 			if (method.isRemote()) {
-				// It's the last method which returns a data type.
-				// Stop parsing.
-
-				if (!parts.isEmpty()) {
-					// Cannot have any more parts here, bad url.
-					throw RestException.methodNotFound(
-							"Reached a remote method which returns a data type or is void. "
-									+ "Cannot have any more path parts. ");
-				}
-
-				return invocation;
+				break;
 			}
 
 			// It's an interface method.
@@ -180,34 +114,56 @@ public class RestProtocol {
 			descriptor = (InterfaceDescriptor<?>) method.getResult();
 		}
 
-		// The parts are empty, and we failed to fromJson a remote method invocation.
-		throw RestException.methodNotFound("The last method must be a remote one. It must return "
-				+ "a value type or be void.");
-	}
-
-	// VisibleForTesting
-	<V> V readPathArgument(final ArgumentDescriptor<V> argd, final String s) {
-		String value = urldecode(s);
-		return fromJson(argd.getType(), value);
-	}
-
-	// VisibleForTesting
-	<V> V readParam(final ArgumentDescriptor<V> argd, final Map<String, String> src) {
-		// Parse a single json string param.
-		ValueDescriptor<V> descriptor = argd.getType();
-		String serialized = src.get(argd.getName());
-		return fromJson(descriptor, serialized);
-	}
-
-	private <M, V> void readFormField(final M message, final FieldDescriptor<M, V> field,
-			final String serialized) {
-		V value = fromJson(field.getType(), serialized);
-		if (value == null) {
-			// Skip null fields.
-			return;
+		if (!parts.isEmpty()) {
+			throw RestException.methodNotFound("Failed to parse an invocation chain");
+		}
+		if (invocation == null) {
+			throw RestException.methodNotFound("No methods");
+		}
+		if (!invocation.getMethod().isRemote()) {
+			throw RestException.methodNotFound("The last method must be a remote one. "
+					+ "It must return a value type or be void.");
 		}
 
-		field.set(message, value);
+		return invocation;
+	}
+
+	private List<Object> readArgs(final MethodDescriptor<?, ?> method,
+			final LinkedList<String> parts, final Map<String, String> query,
+			final Map<String, String> post) {
+		List<Object> args = new ArrayList<Object>();
+
+		for (ArgumentDescriptor<?> argd : method.getArgs()) {
+			String value;
+			String name = argd.getName();
+
+			if (argd.isPost()) {
+				value = post.get(name);
+			} else if (argd.isQuery()) {
+				value = query.get(name);
+			} else if (parts.isEmpty()) {
+				throw RestException.methodNotFound("Wrong number of method args");
+			} else {
+				value = urldecode(parts.removeFirst());
+			}
+
+			Object arg = fromJson(argd.getType(), value);
+			args.add(arg);
+		}
+
+		return args;
+	}
+
+	private LinkedList<String> splitPath(String path) {
+		if (path.startsWith("/")) {
+			path = path.substring(1);
+		}
+
+		// The split() method discards trailing empty strings (i.e. the last slash).
+		String[] partsArray = path.split("/");
+		LinkedList<String> parts = new LinkedList<String>();
+		Collections.addAll(parts, partsArray);
+		return parts;
 	}
 
 	// VisibleForTesting
@@ -220,7 +176,7 @@ public class RestProtocol {
 		if (descriptor.getType() == TypeEnum.STRING) {
 			value = "\"" + value + "\"";
 		}
-		return jsonFormat.fromJson(value, descriptor);
+		return format.fromJson(value, descriptor);
 	}
 
 	/** Url-encodes a string. */

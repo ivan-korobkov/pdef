@@ -135,9 +135,9 @@ class Method(Located):
         self.args.append(arg)
         logging.debug('%s: added an arg %r', self, arg.name)
 
-    def create_arg(self, name, definition):
+    def create_arg(self, name, definition, is_query=False, is_post=False):
         '''Create a new arg and add it to this method.'''
-        arg = MethodArg(name, definition)
+        arg = MethodArg(name, definition, is_query=is_query, is_post=is_post)
         self.add_arg(arg)
         return arg
 
@@ -176,15 +176,24 @@ class Method(Located):
         for arg in self.args:
             errors += arg.validate()
 
+        # Prevent @post arguments when the method is not @post.
+        if not self.is_post:
+            for arg in self.args:
+                if arg.is_post:
+                    errors.append(
+                        self._error('%s: argument can be @post only when the method is @post', arg))
+
         return errors
 
 
 class MethodArg(Located):
     '''Single method argument.'''
-    def __init__(self, name, type0):
+    def __init__(self, name, type0, is_query=False, is_post=False):
         self.name = name
         self.type = type0
         self.method = None
+        self.is_query = is_query
+        self.is_post = is_post
 
     def __str__(self):
         return self.name
@@ -214,4 +223,9 @@ class MethodArg(Located):
         if not self.type.is_data_type:
             return [self._error('%s: argument must be a data type', self)]
 
-        return self._type.validate()
+        errors = []
+        if self.is_post and self.is_query:
+            errors = [self._error('%s: argument cannot be both @query and @post', self)]
+
+        errors += self._type.validate()
+        return errors

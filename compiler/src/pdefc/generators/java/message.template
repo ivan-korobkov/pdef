@@ -30,7 +30,7 @@ public class {{ name }} extends {{ base_or_root }} {
     }
 
     public static {{ name }} fromMap(final java.util.Map<String, Object> map) {
-        return io.pdef.formats.NativeFormat.getInstance().parse(map, DESCRIPTOR);
+        return io.pdef.formats.NativeFormat.getInstance().read(map, DESCRIPTOR);
     }
 
     public static {{ name }} fromJson(final String s) {

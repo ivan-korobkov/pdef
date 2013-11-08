@@ -40,7 +40,7 @@ package {{ package }};
                     .setExc({{ exc.descriptor }})
                 {% endif %}
                 {% for arg in method.args %}
-                    .addArg("{{ arg.name }}", {{ arg.type.descriptor }})
+                    .addArg("{{ arg.name }}", {{ arg.type.descriptor }}, {{ arg.is_query }}, {{ arg.is_post }})
                 {% endfor %}
                 {% if method.is_post %}
                     .setPost(true)

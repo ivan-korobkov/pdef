@@ -146,6 +146,8 @@ class JavaArg(object):
     def __init__(self, arg, ref):
         self.name = arg.name
         self.type = ref(arg.type)
+        self.is_query = 'true' if arg.is_query else 'false'
+        self.is_post = 'true' if arg.is_post else 'false'
 
 
 class JavaReference(object):

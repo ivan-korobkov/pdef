@@ -77,9 +77,8 @@ InterfaceExc    ::= '@throws' '(' TypeName ')'
 
 Method          ::= doc? MethodPost? id '(' Args? ')' Type ';'
 MethodPost      ::= '@post'
-Arg             ::= doc? id Type ArgAttribute*
+Arg             ::= doc? id Type ('@post' | '@query')?
 Args            ::= Arg (',' Arg)*
-ArgAttribute    ::= '@post' | '@query'
 
 Type            ::= ValueType | ListType | SetType | MapType | TypeName
 ValueType       ::= bool

@@ -13,7 +13,6 @@ import java.util.Map;
 
 public final class RestServlet<T> extends HttpServlet {
 	public static final String CLIENT_ERROR_MESSAGE = "Client error";
-	public static final String INTERNAL_SERVER_ERROR = "Internal server error";
 	public static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 	public static final String TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
 	public static final int APPLICATION_EXC_STATUS = 422;
@@ -49,7 +48,7 @@ public final class RestServlet<T> extends HttpServlet {
 	// VisibleForTesting
 	RestRequest getRestRequest(final HttpServletRequest request) {
 		String method = request.getMethod();
-		String path = request.getPathInfo();
+		String path = nullToEmpty(request.getServletPath()) + nullToEmpty(request.getPathInfo());
 		Map<String, String> params = getParams(request);
 
 		// In servlets we cannot distinguish between query and post params,
@@ -106,5 +105,9 @@ public final class RestServlet<T> extends HttpServlet {
 		}
 
 		return params;
+	}
+
+	private static String nullToEmpty(final String s) {
+		return s != null ? s : "";
 	}
 }

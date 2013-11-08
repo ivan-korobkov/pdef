@@ -12,16 +12,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class RestServlet<T> extends HttpServlet {
+	public static final String CLIENT_ERROR_MESSAGE = "Client error";
+	public static final String INTERNAL_SERVER_ERROR = "Internal server error";
 	public static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 	public static final String TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
 	public static final int APPLICATION_EXC_STATUS = 422;
 
 	private final RestHandler<T> handler;
-	private final JsonFormat format = JsonFormat.getInstance();
+	private final JsonFormat format;
 
 	public RestServlet(final RestHandler<T> handler) {
 		if (handler == null) throw new NullPointerException("handler");
 		this.handler = handler;
+		format = JsonFormat.getInstance();
 	}
 
 	@Override
@@ -36,8 +39,10 @@ public final class RestServlet<T> extends HttpServlet {
 			writeResult(result, resp);
 		} catch (RestException e) {
 			writeRestException(e, resp);
+		} catch (RuntimeException e) {
+			throw e;
 		} catch (Exception e) {
-			writeServerError(e, resp);
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -58,7 +63,8 @@ public final class RestServlet<T> extends HttpServlet {
 				.setPost(params);
 	}
 
-	private <T, E> void writeResult(final RestResult<T> result, final HttpServletResponse resp)
+	// VisibleForTesting
+	<T> void writeResult(final RestResult<T> result, final HttpServletResponse resp)
 			throws IOException {
 		if (result.isOk()) {
 			resp.setStatus(HttpServletResponse.SC_OK);
@@ -73,20 +79,14 @@ public final class RestServlet<T> extends HttpServlet {
 		writer.flush();
 	}
 
-	private void writeRestException(final RestException e, final HttpServletResponse resp)
+	// VisibleForTesting
+	void writeRestException(final RestException e, final HttpServletResponse resp)
 			throws IOException {
-		String message = e.getMessage() != null ? e.getMessage() : "Client error";
+		String message = e.getMessage() != null ? e.getMessage() : CLIENT_ERROR_MESSAGE;
 
 		resp.setStatus(e.getStatus());
 		resp.setContentType(TEXT_CONTENT_TYPE);
 		resp.getWriter().write(message);
-	}
-
-	private void writeServerError(final Exception e, final HttpServletResponse resp)
-			throws IOException {
-		resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-		resp.setContentType(TEXT_CONTENT_TYPE);
-		resp.getWriter().write("Internal server error");
 	}
 
 	private Map<String, String> getParams(final HttpServletRequest request) {

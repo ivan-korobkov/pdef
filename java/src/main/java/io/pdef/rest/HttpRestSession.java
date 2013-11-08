@@ -14,9 +14,11 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 public class HttpRestSession implements RestSession {
+	public static final Charset UTF_8 = Charset.forName("UTF-8");
 	public static final int APPLICATION_EXC_STATUS = 422;
 	private final String url;
 	private final JsonFormat format = JsonFormat.getInstance();
@@ -29,9 +31,7 @@ public class HttpRestSession implements RestSession {
 	public <T, E> T send(final RestRequest restRequest,
 			final DataTypeDescriptor<T> resultDescriptor,
 			final DataTypeDescriptor<E> excDescriptor) throws Exception {
-		URI uri = buildUri(restRequest);
-		Request request = buildRequest(restRequest, uri);
-
+		Request request = buildRequest(restRequest);
 		request.execute().returnContent();
 		return request.execute().handleResponse(new ResponseHandler<T>() {
 			@Override
@@ -41,7 +41,8 @@ public class HttpRestSession implements RestSession {
 		});
 	}
 
-	private <T, E> T handle(final HttpResponse response,
+	// VisibleForTesting
+	<T, E> T handle(final HttpResponse response,
 			final DataTypeDescriptor<T> resultDescriptor,
 			final DataTypeDescriptor<E> excDescriptor) throws IOException {
 		int status = response.getStatusLine().getStatusCode();
@@ -65,26 +66,29 @@ public class HttpRestSession implements RestSession {
 		throw new RestException(response.getStatusLine().getStatusCode(), error);
 	}
 
-	private URI buildUri(final RestRequest restRequest) throws URISyntaxException {
-		URIBuilder uriBuilder = new URIBuilder(url + restRequest.getPath());
-
-		for (Map.Entry<String, String> entry : restRequest.getQuery().entrySet()) {
-			uriBuilder.addParameter(entry.getKey(), entry.getValue());
-		}
-		return uriBuilder.build();
-	}
-
-	private Request buildRequest(final RestRequest restRequest, final URI uri) {
+	// VisibleForTesting
+	Request buildRequest(final RestRequest restRequest) throws URISyntaxException {
+		URI uri = buildUri(restRequest);
 		Request request = restRequest.isPost() ? Request.Post(uri) : Request.Get(uri);
 		if (!restRequest.isPost()) {
 			return request;
 		}
 
 		Form form = Form.form();
-		for (Map.Entry<String, String> entry : restRequest.getQuery().entrySet()) {
+		for (Map.Entry<String, String> entry : restRequest.getPost().entrySet()) {
 			form.add(entry.getKey(), entry.getValue());
 		}
-		request.bodyForm(form.build());
+		request.bodyForm(form.build(), UTF_8);
 		return request;
+	}
+
+	// VisibleForTesting
+	URI buildUri(final RestRequest restRequest) throws URISyntaxException {
+		URIBuilder uriBuilder = new URIBuilder(url + restRequest.getPath());
+
+		for (Map.Entry<String, String> entry : restRequest.getQuery().entrySet()) {
+			uriBuilder.addParameter(entry.getKey(), entry.getValue());
+		}
+		return uriBuilder.build();
 	}
 }

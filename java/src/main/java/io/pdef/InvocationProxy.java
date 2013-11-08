@@ -1,4 +1,4 @@
-package io.pdef.invoke;
+package io.pdef;
 
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.descriptors.MethodDescriptor;

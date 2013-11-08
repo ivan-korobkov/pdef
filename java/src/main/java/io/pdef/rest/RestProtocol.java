@@ -3,7 +3,7 @@ package io.pdef.rest;
 import io.pdef.*;
 import io.pdef.descriptors.*;
 import io.pdef.formats.JsonFormat;
-import io.pdef.invoke.Invocation;
+import io.pdef.Invocation;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;

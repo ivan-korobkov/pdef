@@ -1,6 +1,5 @@
-package io.pdef.invoke;
+package io.pdef;
 
-import io.pdef.DataTypes;
 import io.pdef.descriptors.DataTypeDescriptor;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
@@ -46,7 +45,7 @@ public class Invocation {
 		if (!method.isRemote()) {
 			throw new IllegalStateException("Cannot get a result when a method is not remote");
 		}
-		
+
 		return (DataTypeDescriptor<?>) method.getResult();
 	}
 
@@ -81,7 +80,7 @@ public class Invocation {
 		for (Invocation invocation : toChain()) {
 			MethodDescriptor<Object, Object> unchecked =
 					(MethodDescriptor<Object, Object>) invocation.method;
-			object = unchecked.invoke(object, args);
+			object = unchecked.invoke(object, invocation.args);
 		}
 
 		return object;

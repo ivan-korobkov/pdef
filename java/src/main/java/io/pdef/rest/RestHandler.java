@@ -1,11 +1,10 @@
 package io.pdef.rest;
 
+import io.pdef.Invocation;
 import io.pdef.Provider;
 import io.pdef.Providers;
 import io.pdef.descriptors.DataTypeDescriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
-import io.pdef.descriptors.MessageDescriptor;
-import io.pdef.invoke.Invocation;
 
 public class RestHandler<T> {
 	private final InterfaceDescriptor<T> descriptor;
@@ -25,6 +24,7 @@ public class RestHandler<T> {
 		protocol = new RestProtocol();
 	}
 
+	@SuppressWarnings("unchecked")
 	public RestResult<?> handle(final RestRequest request) throws Exception {
 		if (request == null) throw new NullPointerException("request");
 
@@ -33,11 +33,13 @@ public class RestHandler<T> {
 
 		try {
 			Object result = invocation.invoke(service);
-			DataTypeDescriptor<?> resultDescriptor = invocation.getResult();
+			DataTypeDescriptor<Object> resultDescriptor =
+					(DataTypeDescriptor<Object>) invocation.getResult();
 			return RestResult.ok(result, resultDescriptor);
-		} catch (Exception e) {
 
-			MessageDescriptor<?> excDescriptor = invocation.getExc();
+		} catch (Exception e) {
+			DataTypeDescriptor<Exception> excDescriptor =
+					(DataTypeDescriptor<Exception>) invocation.getExc();
 			if (excDescriptor != null
 					&& excDescriptor.getJavaClass().isAssignableFrom(e.getClass())) {
 				// It's an application exception.

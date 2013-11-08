@@ -35,4 +35,19 @@ public class ImmutableArgumentDescriptor<V> implements ArgumentDescriptor<V> {
 	public DataTypeDescriptor<V> getType() {
 		return type;
 	}
+
+	@Override
+	public boolean isPost() {
+		return false;
+	}
+
+	@Override
+	public boolean isQuery() {
+		return false;
+	}
+
+	@Override
+	public boolean isForm() {
+		return false;
+	}
 }

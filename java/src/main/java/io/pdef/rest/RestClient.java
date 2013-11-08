@@ -4,9 +4,9 @@ import io.pdef.descriptors.DataTypeDescriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
-import io.pdef.invoke.Invocation;
-import io.pdef.invoke.InvocationProxy;
-import io.pdef.invoke.Invoker;
+import io.pdef.Invocation;
+import io.pdef.InvocationProxy;
+import io.pdef.Invoker;
 
 import java.nio.charset.Charset;
 

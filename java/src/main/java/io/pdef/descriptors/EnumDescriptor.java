@@ -3,7 +3,7 @@ package io.pdef.descriptors;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public interface EnumDescriptor<T extends Enum<T>> extends DataTypeDescriptor<T> {
+public interface EnumDescriptor<T extends Enum<T>> extends ValueDescriptor<T> {
 	/**
 	 * Returns an enum value by its name or {@literal null}.
 	 */

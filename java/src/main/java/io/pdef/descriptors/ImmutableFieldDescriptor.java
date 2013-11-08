@@ -9,10 +9,10 @@ import io.pdef.*;
  */
 public class ImmutableFieldDescriptor<M, V> implements FieldDescriptor<M,V> {
 	private final String name;
-	private final Provider<DataTypeDescriptor<V>> typeProvider;
+	private final Provider<ValueDescriptor<V>> typeProvider;
 	private final FieldAccessor<M, V> accessor;
 	private final boolean discriminator;
-	private DataTypeDescriptor<V> type;
+	private ValueDescriptor<V> type;
 
 	protected ImmutableFieldDescriptor(final Builder<M, V> builder) {
 		name = builder.name;
@@ -45,7 +45,7 @@ public class ImmutableFieldDescriptor<M, V> implements FieldDescriptor<M,V> {
 	}
 
 	@Override
-	public DataTypeDescriptor<V> getType() {
+	public ValueDescriptor<V> getType() {
 		if (type != null) {
 			return type;
 		}
@@ -66,14 +66,14 @@ public class ImmutableFieldDescriptor<M, V> implements FieldDescriptor<M,V> {
 	@Override
 	public void copy(final M src, final M dst) {
 		V value = get(src);
-		V copied = DataTypes.copy(value);
+		V copied = Values.copy(value);
 		set(dst, copied);
 	}
 
 	public static class Builder<M, V> {
 		private String name;
 		private boolean discriminator;
-		private Provider<DataTypeDescriptor<V>> type;
+		private Provider<ValueDescriptor<V>> type;
 		private FieldAccessor<M, V> accessor;
 
 		protected Builder() {}
@@ -88,12 +88,12 @@ public class ImmutableFieldDescriptor<M, V> implements FieldDescriptor<M,V> {
 			return this;
 		}
 
-		public Builder<M, V> setType(final Provider<DataTypeDescriptor<V>> type) {
+		public Builder<M, V> setType(final Provider<ValueDescriptor<V>> type) {
 			this.type = type;
 			return this;
 		}
 
-		public Builder<M, V> setType(final DataTypeDescriptor<V> type) {
+		public Builder<M, V> setType(final ValueDescriptor<V> type) {
 			if (type == null) throw new NullPointerException("type");
 			this.type = Providers.ofInstance(type);
 			return this;

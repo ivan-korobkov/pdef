@@ -7,7 +7,7 @@ import java.util.*;
 
 /** MessageDescriptor is a descriptor for Pdef messages. */
 public class ImmutableMessageDescriptor<M extends Message> extends BaseDescriptor<M>
-		implements MessageDescriptor<M>, DataTypeDescriptor<M> {
+		implements MessageDescriptor<M>, ValueDescriptor<M> {
 	private final Provider<M> provider;
 	private final MessageDescriptor<? super M> base;
 

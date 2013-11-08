@@ -9,7 +9,7 @@ public interface ArgumentDescriptor<V> {
 	/**
 	 * Returns an argument type descriptor.
 	 */
-	DataTypeDescriptor<V> getType();
+	ValueDescriptor<V> getType();
 
 	/**
 	 * Returns whether this argument is an HTTP post argument.

@@ -11,7 +11,7 @@ public interface MethodDescriptor<T, R> extends MethodInvoker<T, R> {
 	/**
 	 * Returns this method result descriptor.
 	 *
-	 * It can be a {@link DataTypeDescriptor} if this method is terminal or {@link
+	 * It can be a {@link ValueDescriptor} if this method is terminal or {@link
 	 * InterfaceDescriptor} otherwise.
 	 */
 	Descriptor<R> getResult();
@@ -39,7 +39,7 @@ public interface MethodDescriptor<T, R> extends MethodInvoker<T, R> {
 	boolean isPost();
 
 	/**
-	 * Returns whether this method returns a data type or void (not an interface).
+	 * Returns whether this method returns a value type or void (not an interface).
 	 */
 	boolean isRemote();
 }

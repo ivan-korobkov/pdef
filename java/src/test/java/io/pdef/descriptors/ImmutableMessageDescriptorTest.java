@@ -3,7 +3,7 @@ package io.pdef.descriptors;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import io.pdef.test.inheritance.*;
-import io.pdef.test.messages.TestDataTypes;
+import io.pdef.test.messages.TestValues;
 import io.pdef.test.messages.TestForm;
 import io.pdef.test.messages.TestMessage;
 import static org.junit.Assert.*;
@@ -36,12 +36,12 @@ public class ImmutableMessageDescriptorTest {
 	@Test
 	public void test_nonpolymorphicInheritance() throws Exception {
 		MessageDescriptor<TestMessage> base = TestMessage.DESCRIPTOR;
-		MessageDescriptor<TestDataTypes> message = TestDataTypes.DESCRIPTOR;
+		MessageDescriptor<TestValues> message = TestValues.DESCRIPTOR;
 
-		assertEquals(TestDataTypes.class, message.getJavaClass());
+		assertEquals(TestValues.class, message.getJavaClass());
 		assertEquals(base, message.getBase());
 
-		List<FieldDescriptor<? super TestDataTypes, ?>> fields = Lists.newArrayList();
+		List<FieldDescriptor<? super TestValues, ?>> fields = Lists.newArrayList();
 		fields.addAll(base.getFields());
 		fields.addAll(message.getDeclaredFields());
 		assertEquals(fields, message.getFields());

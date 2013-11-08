@@ -1,7 +1,7 @@
 package io.pdef.rest;
 
 import com.google.common.collect.ImmutableMap;
-import io.pdef.descriptors.DataTypeDescriptor;
+import io.pdef.descriptors.ValueDescriptor;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.test.interfaces.TestException;
 import org.apache.http.HttpEntity;
@@ -67,7 +67,7 @@ public class HttpRestSessionTest {
 		HttpResponse resp = new BasicHttpResponse(HttpVersion.HTTP_1_0, 200, "OK");
 		resp.setEntity(new StringEntity("\"Привет\"", ContentType.APPLICATION_JSON));
 
-		DataTypeDescriptor<String> resultDescriptor = Descriptors.string;
+		ValueDescriptor<String> resultDescriptor = Descriptors.string;
 		String result = session.handle(resp, resultDescriptor, null);
 
 		assertEquals("Привет", result);

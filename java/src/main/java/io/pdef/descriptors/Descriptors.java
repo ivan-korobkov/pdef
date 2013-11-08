@@ -12,25 +12,25 @@ import java.util.*;
 public class Descriptors {
 	private Descriptors() {}
 
-	public static DataTypeDescriptor<Boolean> bool = primitive(TypeEnum.BOOL, Boolean.class);
-	public static DataTypeDescriptor<Short> int16 = primitive(TypeEnum.INT16, Short.class);
-	public static DataTypeDescriptor<Integer> int32 = primitive(TypeEnum.INT32, Integer.class);
-	public static DataTypeDescriptor<Long> int64 = primitive(TypeEnum.INT64, Long.class);
-	public static DataTypeDescriptor<Float> float0 = primitive(TypeEnum.FLOAT, Float.class);
-	public static DataTypeDescriptor<Double> double0 = primitive(TypeEnum.DOUBLE, Double.class);
-	public static DataTypeDescriptor<String> string = primitive(TypeEnum.STRING, String.class);
-	public static DataTypeDescriptor<Void> void0 = primitive(TypeEnum.VOID, Void.class);
+	public static ValueDescriptor<Boolean> bool = primitive(TypeEnum.BOOL, Boolean.class);
+	public static ValueDescriptor<Short> int16 = primitive(TypeEnum.INT16, Short.class);
+	public static ValueDescriptor<Integer> int32 = primitive(TypeEnum.INT32, Integer.class);
+	public static ValueDescriptor<Long> int64 = primitive(TypeEnum.INT64, Long.class);
+	public static ValueDescriptor<Float> float0 = primitive(TypeEnum.FLOAT, Float.class);
+	public static ValueDescriptor<Double> double0 = primitive(TypeEnum.DOUBLE, Double.class);
+	public static ValueDescriptor<String> string = primitive(TypeEnum.STRING, String.class);
+	public static ValueDescriptor<Void> void0 = primitive(TypeEnum.VOID, Void.class);
 
-	public static <T> ListDescriptorImpl<T> list(final DataTypeDescriptor<T> element) {
+	public static <T> ListDescriptorImpl<T> list(final ValueDescriptor<T> element) {
 		return new ListDescriptorImpl<T>(element);
 	}
 
-	public static <T> SetDescriptorImpl<T> set(final DataTypeDescriptor<T> element) {
+	public static <T> SetDescriptorImpl<T> set(final ValueDescriptor<T> element) {
 		return new SetDescriptorImpl<T>(element);
 	}
 
-	public static <K, V> MapDescriptorImpl<K, V> map(final DataTypeDescriptor<K> key,
-			final DataTypeDescriptor<V> value) {
+	public static <K, V> MapDescriptorImpl<K, V> map(final ValueDescriptor<K> key,
+			final ValueDescriptor<V> value) {
 		return new MapDescriptorImpl<K, V>(key, value);
 	}
 
@@ -69,35 +69,35 @@ public class Descriptors {
 	}
 
 	private static class PrimitiveDescriptor<T> extends BaseDescriptor<T>
-			implements DataTypeDescriptor<T> {
+			implements ValueDescriptor<T> {
 		private PrimitiveDescriptor(final TypeEnum type, final Class<T> javaClass) {
 			super(type, javaClass);
 		}
 	}
 
 	private static class ListDescriptorImpl<T> extends BaseDescriptor<List<T>>
-			implements ListDescriptor<T>, DataTypeDescriptor<List<T>> {
-		private final DataTypeDescriptor<T> element;
+			implements ListDescriptor<T>, ValueDescriptor<List<T>> {
+		private final ValueDescriptor<T> element;
 
 		@SuppressWarnings("unchecked")
-		private ListDescriptorImpl(final DataTypeDescriptor<T> element) {
+		private ListDescriptorImpl(final ValueDescriptor<T> element) {
 			super(TypeEnum.LIST, (Class<List<T>>) (Class<?>) List.class);
 			this.element = element;
 			if (element == null) throw new NullPointerException("element");
 		}
 
 		@Override
-		public DataTypeDescriptor<T> getElement() {
+		public ValueDescriptor<T> getElement() {
 			return element;
 		}
 	}
 
 	private static class SetDescriptorImpl<T> extends BaseDescriptor<Set<T>>
-			implements SetDescriptor<T>, DataTypeDescriptor<Set<T>> {
-		private final DataTypeDescriptor<T> element;
+			implements SetDescriptor<T>, ValueDescriptor<Set<T>> {
+		private final ValueDescriptor<T> element;
 
 		@SuppressWarnings("unchecked")
-		private SetDescriptorImpl(final DataTypeDescriptor<T> element) {
+		private SetDescriptorImpl(final ValueDescriptor<T> element) {
 			super(TypeEnum.SET, (Class<Set<T>>) (Class<?>) Set.class);
 			this.element = element;
 
@@ -105,18 +105,18 @@ public class Descriptors {
 		}
 
 		@Override
-		public DataTypeDescriptor<T> getElement() {
+		public ValueDescriptor<T> getElement() {
 			return element;
 		}
 	}
 
 	private static class MapDescriptorImpl<K, V> extends BaseDescriptor<Map<K, V>>
-			implements MapDescriptor<K, V>, DataTypeDescriptor<Map<K, V>> {
-		private final DataTypeDescriptor<K> key;
-		private final DataTypeDescriptor<V> value;
+			implements MapDescriptor<K, V>, ValueDescriptor<Map<K, V>> {
+		private final ValueDescriptor<K> key;
+		private final ValueDescriptor<V> value;
 
 		@SuppressWarnings("unchecked")
-		MapDescriptorImpl(final DataTypeDescriptor<K> key, final DataTypeDescriptor<V> value) {
+		MapDescriptorImpl(final ValueDescriptor<K> key, final ValueDescriptor<V> value) {
 			super(TypeEnum.MAP, (Class<Map<K, V>>) (Class<?>) Map.class);
 			this.key = key;
 			this.value = value;
@@ -125,12 +125,12 @@ public class Descriptors {
 		}
 
 		@Override
-		public DataTypeDescriptor<K> getKey() {
+		public ValueDescriptor<K> getKey() {
 			return key;
 		}
 
 		@Override
-		public DataTypeDescriptor<V> getValue() {
+		public ValueDescriptor<V> getValue() {
 			return value;
 		}
 	}

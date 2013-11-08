@@ -2,14 +2,14 @@ package io.pdef.descriptors;
 
 import java.util.Map;
 
-public interface MapDescriptor<K, V> extends DataTypeDescriptor<Map<K, V>> {
+public interface MapDescriptor<K, V> extends ValueDescriptor<Map<K, V>> {
 	/**
 	 * Returns a map key descriptor.
 	 */
-	DataTypeDescriptor<K> getKey();
+	ValueDescriptor<K> getKey();
 
 	/**
 	 * Returns a map value descriptor.
 	 */
-	DataTypeDescriptor<V> getValue();
+	ValueDescriptor<V> getValue();
 }

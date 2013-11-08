@@ -1,6 +1,6 @@
 package io.pdef.rest;
 
-import io.pdef.descriptors.DataTypeDescriptor;
+import io.pdef.descriptors.ValueDescriptor;
 import io.pdef.formats.JsonFormat;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -29,8 +29,8 @@ public class HttpRestSession implements RestSession {
 
 	@Override
 	public <T, E> T send(final RestRequest restRequest,
-			final DataTypeDescriptor<T> resultDescriptor,
-			final DataTypeDescriptor<E> excDescriptor) throws Exception {
+			final ValueDescriptor<T> resultDescriptor,
+			final ValueDescriptor<E> excDescriptor) throws Exception {
 		Request request = buildRequest(restRequest);
 		request.execute().returnContent();
 		return request.execute().handleResponse(new ResponseHandler<T>() {
@@ -43,8 +43,8 @@ public class HttpRestSession implements RestSession {
 
 	// VisibleForTesting
 	<T, E> T handle(final HttpResponse response,
-			final DataTypeDescriptor<T> resultDescriptor,
-			final DataTypeDescriptor<E> excDescriptor) throws IOException {
+			final ValueDescriptor<T> resultDescriptor,
+			final ValueDescriptor<E> excDescriptor) throws IOException {
 		int status = response.getStatusLine().getStatusCode();
 		HttpEntity entity = response.getEntity();
 

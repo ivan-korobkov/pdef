@@ -6,14 +6,14 @@ package io.pdef.descriptors;
  */
 public class ImmutableArgumentDescriptor<V> implements ArgumentDescriptor<V> {
 	private final String name;
-	private final DataTypeDescriptor<V> type;
+	private final ValueDescriptor<V> type;
 
 	public static <V> ArgumentDescriptor<V> of(final String name,
-			final DataTypeDescriptor<V> type) {
+			final ValueDescriptor<V> type) {
 		return new ImmutableArgumentDescriptor<V>(name, type);
 	}
 
-	public ImmutableArgumentDescriptor(final String name, final DataTypeDescriptor<V> type) {
+	public ImmutableArgumentDescriptor(final String name, final ValueDescriptor<V> type) {
 		if (name == null) throw new NullPointerException("name");
 		if (type == null) throw new NullPointerException("type");
 
@@ -32,7 +32,7 @@ public class ImmutableArgumentDescriptor<V> implements ArgumentDescriptor<V> {
 	}
 
 	@Override
-	public DataTypeDescriptor<V> getType() {
+	public ValueDescriptor<V> getType() {
 		return type;
 	}
 

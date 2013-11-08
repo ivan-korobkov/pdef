@@ -11,15 +11,15 @@ public enum {{ name }} {
 
     /** Returns an enum value from a string or {@literal null}. */
     public static {{ name }} fromString(final String s) {
-        return getInstance().parse(s, DESCRIPTOR);
+        return io.pdef.formats.NativeFormat.getInstance().parse(s, DESCRIPTOR);
     }
 
     /** Returns an enum value from a json string or {@literal null}. */
     public static {{ name }} fromJson(final String s) {
-        return getInstance().parse(s, DESCRIPTOR);
+        return io.pdef.formats.JsonFormat.getInstance().fromJson(s, DESCRIPTOR);
     }
 
-    public static final io.pdef.EnumDescriptor<{{ name }}> DESCRIPTOR =
-            io.pdef.immutable.ImmutableEnumDescriptor.of({{ name }}.class);
+    public static final io.pdef.descriptors.EnumDescriptor<{{ name }}> DESCRIPTOR =
+            io.pdef.descriptors.ImmutableEnumDescriptor.of({{ name }}.class);
 }
 

@@ -3,7 +3,7 @@ package io.pdef;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.pdef.test.messages.TestDataTypes;
+import io.pdef.test.messages.TestValues;
 import io.pdef.test.messages.TestMessage;
 import io.pdef.test.messages.TestEnum;
 import static org.junit.Assert.*;
@@ -21,7 +21,7 @@ public class AbstractMessageTest {
 
 	@Test
 	public void testHashCode() throws Exception {
-		TestDataTypes msg = createComplexMessage();
+		TestValues msg = createComplexMessage();
 		int h = msg.hashCode();
 		assertTrue(h != 0);
 		assertEquals(h, createComplexMessage().hashCode());
@@ -38,14 +38,14 @@ public class AbstractMessageTest {
 	@Test
 	public void testParse() throws Exception {
 		Map<String, Object> map = createComplexMessageMap();
-		Message msg = TestDataTypes.fromMap(map);
+		Message msg = TestValues.fromMap(map);
 		Message expected = createComplexMessage();
 		assertEquals(expected, msg);
 	}
 
 	@Test
 	public void testInitNullFields() throws Exception {
-		TestDataTypes message = new TestDataTypes();
+		TestValues message = new TestValues();
 		List<Integer> list = message.getList0();
 		Set<Integer> set = message.getSet0();
 		Map<Integer, Float> map = message.getMap0();
@@ -64,15 +64,15 @@ public class AbstractMessageTest {
 
 	@Test
 	public void testCopy() throws Exception {
-		TestDataTypes message = createComplexMessage();
-		TestDataTypes copy = message.copy();
+		TestValues message = createComplexMessage();
+		TestValues copy = message.copy();
 
 		assertEquals(message, copy);
 		assertNotSame(message, copy);
 	}
 
-	private TestDataTypes createComplexMessage() {
-		return new TestDataTypes()
+	private TestValues createComplexMessage() {
+		return new TestValues()
 				.setEnum0(TestEnum.THREE)
 				.setBool0(true)
 				.setShort0((short) -16)

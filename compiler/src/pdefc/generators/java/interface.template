@@ -22,13 +22,13 @@ package {{ package }};
         {%- endfor %});
 
 {% endfor %}
-    static io.pdef.InterfaceDescriptor<{{ name }}> DESCRIPTOR = io.pdef.immutable.ImmutableInterfaceDescriptor.<{{ name }}>builder()
+    static io.pdef.descriptors.InterfaceDescriptor<{{ name }}> DESCRIPTOR = io.pdef.descriptors.ImmutableInterfaceDescriptor.<{{ name }}>builder()
             .setJavaClass({{ name }}.class)
         {% if exc %}
             .setExc({{ exc.descriptor }})
         {% endif %}
         {% for method in declared_methods %}
-            .addMethod(io.pdef.immutable.ImmutableMethodDescriptor.<{{ name }}, {{ method.result.boxed }}>builder()
+            .addMethod(io.pdef.descriptors.ImmutableMethodDescriptor.<{{ name }}, {{ method.result.boxed }}>builder()
                     .setName("{{ method.name }}")
                     .setReflexiveInvoker({{ name }}.class)
                 {% if method.result.is_interface %}

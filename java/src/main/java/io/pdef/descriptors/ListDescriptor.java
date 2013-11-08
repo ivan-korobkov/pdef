@@ -2,9 +2,9 @@ package io.pdef.descriptors;
 
 import java.util.List;
 
-public interface ListDescriptor<T> extends DataTypeDescriptor<List<T>> {
+public interface ListDescriptor<T> extends ValueDescriptor<List<T>> {
 	/**
 	 * Returns a list element descriptor.
 	 */
-	DataTypeDescriptor<T> getElement();
+	ValueDescriptor<T> getElement();
 }

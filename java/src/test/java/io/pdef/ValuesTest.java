@@ -12,21 +12,21 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-public class DataTypesTest {
+public class ValuesTest {
 	private final Random random = new Random();
 
 	@Test
 	public void testCopy_message() throws Exception {
 		TestMessage message = createMessage();
 
-		TestMessage copy = DataTypes.copy(message);
+		TestMessage copy = Values.copy(message);
 		assertEquals(message, copy);
 		assertNotSame(message, copy);
 	}
 
 	@Test
 	public void testCopy_messageNull() throws Exception {
-		Message message = DataTypes.copy((Message) null);
+		Message message = Values.copy((Message) null);
 		assertNull(message);
 	}
 
@@ -36,7 +36,7 @@ public class DataTypesTest {
 		TestMessage message1 = new TestMessage();
 		List<TestMessage> list = ImmutableList.of(message0, message1);
 
-		List<TestMessage> copy = DataTypes.copy(list);
+		List<TestMessage> copy = Values.copy(list);
 		assertEquals(list, copy);
 		assertNotSame(list, copy);
 		assertNotSame(message0, copy.get(0));
@@ -49,7 +49,7 @@ public class DataTypesTest {
 		TestMessage message1 = new TestMessage();
 		Set<TestMessage> list = ImmutableSet.of(message0, message1);
 
-		Set<TestMessage> copy = DataTypes.copy(list);
+		Set<TestMessage> copy = Values.copy(list);
 		assertEquals(list, copy);
 		assertNotSame(list, copy);
 	}
@@ -60,7 +60,7 @@ public class DataTypesTest {
 		TestMessage message1 = new TestMessage();
 		Map<Integer, TestMessage> map = ImmutableMap.of(0, message0, 1, message1);
 
-		Map<Integer, TestMessage> copy = DataTypes.copy(map);
+		Map<Integer, TestMessage> copy = Values.copy(map);
 		assertEquals(map, copy);
 		assertNotSame(map, copy);
 		assertNotSame(message0, copy.get(0));

@@ -6,7 +6,7 @@ import java.util.*;
 
 /** EnumDescriptor holds enum values and parsing/serialization methods. */
 public class ImmutableEnumDescriptor<T extends Enum<T>> extends BaseDescriptor<T>
-		implements EnumDescriptor<T>,DataTypeDescriptor<T> {
+		implements EnumDescriptor<T>,ValueDescriptor<T> {
 	private final List<T> values;
 	private final Map<String, T> namesToValues;
 

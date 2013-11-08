@@ -74,7 +74,7 @@ public class RestProtocol {
 	@SuppressWarnings("unchecked")
 	<V> void writeParam(final ArgumentDescriptor<V> argd, final V arg,
 			final Map<String, String> dst) {
-		DataTypeDescriptor<V> descriptor = argd.getType();
+		ValueDescriptor<V> descriptor = argd.getType();
 		if (!argd.isForm()) {
 			// Serialize as a single json param.
 			String serialized = toJson(descriptor, arg);
@@ -89,7 +89,7 @@ public class RestProtocol {
 
 		for (FieldDescriptor<? super Message, ?> field : mdescriptor.getFields()) {
 			Object value = field.get(message);
-			DataTypeDescriptor<Object> type = (DataTypeDescriptor<Object>) field.getType();
+			ValueDescriptor<Object> type = (ValueDescriptor<Object>) field.getType();
 			if (value == null) {
 				continue;
 			}
@@ -101,7 +101,7 @@ public class RestProtocol {
 
 	/** Serializes an argument to JSON, strips the quotes. */
 	// VisibleForTesting
-	<V> String toJson(final DataTypeDescriptor<V> descriptor, final V arg) {
+	<V> String toJson(final ValueDescriptor<V> descriptor, final V arg) {
 		String s = jsonFormat.toJson(arg, descriptor, false);
 		if (descriptor.getType() != TypeEnum.STRING) {
 			return s;
@@ -212,7 +212,7 @@ public class RestProtocol {
 
 		// The parts are empty, and we failed to fromJson a remote method invocation.
 		throw RestException.methodNotFound("The last method must be a remote one. It must return "
-				+ "a data type or be void.");
+				+ "a value type or be void.");
 	}
 
 	// VisibleForTesting
@@ -223,7 +223,7 @@ public class RestProtocol {
 
 	// VisibleForTesting
 	<V> V readParam(final ArgumentDescriptor<V> argd, final Map<String, String> src) {
-		DataTypeDescriptor<V> descriptor = argd.getType();
+		ValueDescriptor<V> descriptor = argd.getType();
 		boolean isForm = descriptor instanceof ImmutableMessageDescriptor
 				&& ((MessageDescriptor) descriptor).isForm();
 
@@ -275,7 +275,7 @@ public class RestProtocol {
 
 	// VisibleForTesting
 	/** Parses an argument from an unquoted JSON string. */
-	<V> V fromJson(final DataTypeDescriptor<V> descriptor, String value) {
+	<V> V fromJson(final ValueDescriptor<V> descriptor, String value) {
 		if (value == null) {
 			return null;
 		}

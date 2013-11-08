@@ -24,9 +24,9 @@ public enum TypeEnum {
 	INTERFACE;
 
 	/**
-	 * Returns a pdef data type of a java class or throws IllegalArgumentException.
+	 * Returns a pdef value type of a java class or throws IllegalArgumentException.
 	 */
-	public static TypeEnum dataTypeOf(final Class<?> cls) {
+	public static TypeEnum valueTypeOf(final Class<?> cls) {
 		if (cls == null) throw new NullPointerException("cls");
 		else if (cls == Boolean.class) return TypeEnum.BOOL;
 		else if (cls == Short.class) return TypeEnum.INT16;
@@ -44,6 +44,6 @@ public enum TypeEnum {
 			return TypeEnum.EXCEPTION;
 		}
 		else if (Message.class.isAssignableFrom(cls)) return TypeEnum.MESSAGE;
-		throw new IllegalArgumentException("Unsupported data type " + cls);
+		throw new IllegalArgumentException("Unsupported value type " + cls);
 	}
 }

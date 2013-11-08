@@ -1,6 +1,6 @@
 package io.pdef.rest;
 
-import io.pdef.descriptors.DataTypeDescriptor;
+import io.pdef.descriptors.ValueDescriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
@@ -44,7 +44,7 @@ public class RestClient<T> implements Invoker {
 		MethodDescriptor<?, ?> method = invocation.getMethod();
 		if (!method.isRemote()) throw new IllegalArgumentException("Method must be remote");
 
-		DataTypeDescriptor<?> resultDescriptor = (DataTypeDescriptor<?>) method.getResult();
+		ValueDescriptor<?> resultDescriptor = (ValueDescriptor<?>) method.getResult();
 		MessageDescriptor<?> excDescriptor = method.getExc();
 
 		RestRequest request = protocol.getRequest(invocation);

@@ -20,7 +20,7 @@ import java.util.Set;
 public class NativeFormatTest {
 	private NativeFormat format = NativeFormat.getInstance();
 
-	private <T> void testPrimitive(final DataTypeDescriptor<T> descriptor, final String s,
+	private <T> void testPrimitive(final ValueDescriptor<T> descriptor, final String s,
 			final T expected) {
 		assert format.parse(null, descriptor) == null;
 		assert format.parse(s, descriptor).equals(expected);
@@ -61,7 +61,7 @@ public class NativeFormatTest {
 		testPrimitive(Descriptors.double0, "2.5", 2.5d);
 	}
 
-	private <T> void testData(final DataTypeDescriptor<T> descriptor, final Object serialized,
+	private <T> void testValue(final ValueDescriptor<T> descriptor, final Object serialized,
 			final T parsed) {
 		assert format.parse(serialized, descriptor).equals(parsed);
 		assert format.parse(null, descriptor) == null;
@@ -78,7 +78,7 @@ public class NativeFormatTest {
 		parsed.add(fixtureMessage());
 
 		ListDescriptor<TestMessage> descriptor = Descriptors.list(TestMessage.DESCRIPTOR);
-		testData(descriptor, serialized, parsed);
+		testValue(descriptor, serialized, parsed);
 	}
 
 	@Test
@@ -90,7 +90,7 @@ public class NativeFormatTest {
 		parsed.add(fixtureMessage());
 
 		SetDescriptor<TestMessage> descriptor = Descriptors.set(TestMessage.DESCRIPTOR);
-		testData(descriptor, serialized, parsed);
+		testValue(descriptor, serialized, parsed);
 	}
 
 	@Test
@@ -103,14 +103,14 @@ public class NativeFormatTest {
 
 		MapDescriptor<Integer, TestMessage> descriptor = Descriptors
 				.map(Descriptors.int32, TestMessage.DESCRIPTOR);
-		testData(descriptor, serialized, parsed);
+		testValue(descriptor, serialized, parsed);
 	}
 
 	@Test
 	public void testEnum() throws Exception {
 		EnumDescriptor<TestEnum> descriptor = TestEnum.DESCRIPTOR;
 
-		testData(descriptor, TestEnum.TWO, TestEnum.TWO);
+		testValue(descriptor, TestEnum.TWO, TestEnum.TWO);
 		assertEquals(TestEnum.TWO, format.parse("two", descriptor));
 	}
 
@@ -119,7 +119,7 @@ public class NativeFormatTest {
 		Map<String, Object> serialized = fixtureMap();
 		TestMessage parsed = fixtureMessage();
 
-		testData(TestMessage.DESCRIPTOR, serialized, parsed);
+		testValue(TestMessage.DESCRIPTOR, serialized, parsed);
 	}
 
 	@Test
@@ -134,7 +134,7 @@ public class NativeFormatTest {
 				"subfield", "subfield",
 				"mfield", "multi-level-field");
 
-		testData(Base.DESCRIPTOR, serialized, parsed);
+		testValue(Base.DESCRIPTOR, serialized, parsed);
 	}
 
 	private TestMessage fixtureMessage() {

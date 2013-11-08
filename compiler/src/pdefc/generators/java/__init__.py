@@ -158,7 +158,7 @@ class JavaReference(object):
 
         name = 'java.util.List<%s>' % element
         default = 'new java.util.ArrayList<%s>()' % element
-        meta = 'io.pdef.Descriptors.list(%s)' % element.descriptor
+        meta = 'io.pdef.descriptors.Descriptors.list(%s)' % element.descriptor
 
         return JavaReference(type0.type, name, default=default, meta=meta)
 
@@ -168,7 +168,7 @@ class JavaReference(object):
 
         name = 'java.util.Set<%s>' % element
         default = 'new java.util.HashSet<%s>()' % element
-        meta = 'io.pdef.Descriptors.set(%s)' % element.descriptor
+        meta = 'io.pdef.descriptors.Descriptors.set(%s)' % element.descriptor
 
         return JavaReference(type0.type, name, default=default, meta=meta)
 
@@ -179,7 +179,7 @@ class JavaReference(object):
 
         name = 'java.util.Map<%s, %s>' % (key, value)
         default = 'new java.util.HashMap<%s, %s>()' % (key, value)
-        meta = 'io.pdef.Descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
+        meta = 'io.pdef.descriptors.Descriptors.map(%s, %s)' % (key.descriptor, value.descriptor)
 
         return JavaReference(type0.type, name, default=default, meta=meta)
 
@@ -224,28 +224,28 @@ class JavaReference(object):
 
 NATIVE_TYPES = {
     TypeEnum.BOOL: JavaReference(TypeEnum.BOOL, 'Boolean', 'boolean', default='false',
-            meta='io.pdef.Descriptors.bool'),
+            meta='io.pdef.descriptors.Descriptors.bool'),
 
     TypeEnum.INT16: JavaReference(TypeEnum.INT16, 'Short', 'short', default='(short) 0',
-            meta='io.pdef.Descriptors.int16'),
+            meta='io.pdef.descriptors.Descriptors.int16'),
 
     TypeEnum.INT32: JavaReference(TypeEnum.INT32, 'Integer', 'int', default='0',
-            meta='io.pdef.Descriptors.int32'),
+            meta='io.pdef.descriptors.Descriptors.int32'),
 
     TypeEnum.INT64: JavaReference(TypeEnum.INT64, 'Long', 'long', default='0L',
-            meta='io.pdef.Descriptors.int64'),
+            meta='io.pdef.descriptors.Descriptors.int64'),
 
     TypeEnum.FLOAT: JavaReference(TypeEnum.FLOAT, 'Float', 'float', default='0f',
-            meta='io.pdef.Descriptors.float0'),
+            meta='io.pdef.descriptors.Descriptors.float0'),
 
     TypeEnum.DOUBLE: JavaReference(TypeEnum.DOUBLE, 'Double', 'double', default='0.0',
-            meta='io.pdef.Descriptors.double0'),
+            meta='io.pdef.descriptors.Descriptors.double0'),
 
     TypeEnum.STRING: JavaReference(TypeEnum.STRING, 'String', default='""',
-            meta='io.pdef.Descriptors.string'),
+            meta='io.pdef.descriptors.Descriptors.string'),
 
     TypeEnum.VOID: JavaReference(TypeEnum.VOID, 'void', 'void',
-            meta='io.pdef.Descriptors.void0', boxed='Void')
+            meta='io.pdef.descriptors.Descriptors.void0', boxed='Void')
 }
 
 

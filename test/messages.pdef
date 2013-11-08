@@ -27,7 +27,7 @@ message TestMessage {
 
 
 /** Message with fields of all data types. */
-message TestDataTypes : TestMessage {
+message TestValues : TestMessage {
     int0        int32;
     long0       int64;
     float0      float;
@@ -40,7 +40,7 @@ message TestDataTypes : TestMessage {
     enum0       TestEnum;
     message0    TestMessage;
     polymorphic inheritance.Base;
-    datatypes   TestDataTypes;
+    datatypes   TestValues;
 }
 
 

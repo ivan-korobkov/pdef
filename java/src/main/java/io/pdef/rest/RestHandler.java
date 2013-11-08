@@ -3,7 +3,7 @@ package io.pdef.rest;
 import io.pdef.Invocation;
 import io.pdef.Provider;
 import io.pdef.Providers;
-import io.pdef.descriptors.DataTypeDescriptor;
+import io.pdef.descriptors.ValueDescriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
 
 public class RestHandler<T> {
@@ -33,13 +33,13 @@ public class RestHandler<T> {
 
 		try {
 			Object result = invocation.invoke(service);
-			DataTypeDescriptor<Object> resultDescriptor =
-					(DataTypeDescriptor<Object>) invocation.getResult();
+			ValueDescriptor<Object> resultDescriptor =
+					(ValueDescriptor<Object>) invocation.getResult();
 			return RestResult.ok(result, resultDescriptor);
 
 		} catch (Exception e) {
-			DataTypeDescriptor<Exception> excDescriptor =
-					(DataTypeDescriptor<Exception>) invocation.getExc();
+			ValueDescriptor<Exception> excDescriptor =
+					(ValueDescriptor<Exception>) invocation.getExc();
 			if (excDescriptor != null
 					&& excDescriptor.getJavaClass().isAssignableFrom(e.getClass())) {
 				// It's an application exception.

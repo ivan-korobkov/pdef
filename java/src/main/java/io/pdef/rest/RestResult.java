@@ -1,23 +1,23 @@
 package io.pdef.rest;
 
-import io.pdef.descriptors.DataTypeDescriptor;
+import io.pdef.descriptors.ValueDescriptor;
 
 public class RestResult<T> {
 	private final boolean ok;
 	private final T data;
-	private final DataTypeDescriptor<T> descriptor;
+	private final ValueDescriptor<T> descriptor;
 
-	private RestResult(final boolean ok, final T data, final DataTypeDescriptor<T> descriptor) {
+	private RestResult(final boolean ok, final T data, final ValueDescriptor<T> descriptor) {
 		this.ok = ok;
 		this.data = data;
 		this.descriptor = descriptor;
 	}
 
-	public static <T> RestResult<T> ok(final T data, final DataTypeDescriptor<T> descriptor) {
+	public static <T> RestResult<T> ok(final T data, final ValueDescriptor<T> descriptor) {
 		return new RestResult<T>(true, data, descriptor);
 	}
 
-	public static <E> RestResult<E> exc(final E exception, final DataTypeDescriptor<E> descriptor) {
+	public static <E> RestResult<E> exc(final E exception, final ValueDescriptor<E> descriptor) {
 		return new RestResult<E>(false, exception, descriptor);
 	}
 
@@ -29,7 +29,7 @@ public class RestResult<T> {
 		return data;
 	}
 
-	public DataTypeDescriptor<T> getDescriptor() {
+	public ValueDescriptor<T> getDescriptor() {
 		return descriptor;
 	}
 

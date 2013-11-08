@@ -1,6 +1,6 @@
 package io.pdef;
 
-import io.pdef.descriptors.DataTypeDescriptor;
+import io.pdef.descriptors.ValueDescriptor;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
 
@@ -41,12 +41,12 @@ public class Invocation {
 	}
 
 	/** Returns the method result. */
-	public DataTypeDescriptor<?> getResult() {
+	public ValueDescriptor<?> getResult() {
 		if (!method.isRemote()) {
 			throw new IllegalStateException("Cannot get a result when a method is not remote");
 		}
 
-		return (DataTypeDescriptor<?>) method.getResult();
+		return (ValueDescriptor<?>) method.getResult();
 	}
 
 	/** Returns the method exception or the parent exception. */
@@ -100,7 +100,7 @@ public class Invocation {
 
 		Object[] copy = new Object[length];
 		for (int i = 0; i < length; i++) {
-			copy[i] = DataTypes.copy(args[i]);
+			copy[i] = Values.copy(args[i]);
 		}
 
 		return copy;

@@ -3,17 +3,17 @@ package io.pdef;
 import java.util.*;
 
 /**
- * Pdef utility methods.
+ * Pdef values utility methods.
  */
-public class DataTypes {
-	private DataTypes() {}
+public class Values {
+	private Values() {}
 
 	/**
-	 * Returns a deep copy of a pdef data type.
+	 * Returns a deep copy of a pdef value (a primitive, a collection, or a message).
 	 */
 	public static <T> T copy(final T object) {
 		if (object == null) return null;
-		TypeEnum type = TypeEnum.dataTypeOf(object.getClass());
+		TypeEnum type = TypeEnum.valueTypeOf(object.getClass());
 		return copy(type, object);
 	}
 
@@ -39,7 +39,7 @@ public class DataTypes {
 			T elementCopy = null;
 			if (element != null) {
 				if (elementType == null) {
-					elementType = TypeEnum.dataTypeOf(element.getClass());
+					elementType = TypeEnum.valueTypeOf(element.getClass());
 				}
 				elementCopy = copy(elementType, element);
 			}
@@ -64,7 +64,7 @@ public class DataTypes {
 			T elementCopy = null;
 			if (element != null) {
 				if (elementType == null) {
-					elementType = TypeEnum.dataTypeOf(element.getClass());
+					elementType = TypeEnum.valueTypeOf(element.getClass());
 				}
 				elementCopy = copy(elementType, element);
 			}
@@ -94,7 +94,7 @@ public class DataTypes {
 			K keyCopy = null;
 			if (key != null) {
 				if (keyType == null) {
-					keyType = TypeEnum.dataTypeOf(key.getClass());
+					keyType = TypeEnum.valueTypeOf(key.getClass());
 				}
 				keyCopy = copy(keyType, key);
 			}
@@ -102,7 +102,7 @@ public class DataTypes {
 			V valueCopy = null;
 			if (value != null) {
 				if (valueType == null) {
-					valueType = TypeEnum.dataTypeOf(value.getClass());
+					valueType = TypeEnum.valueTypeOf(value.getClass());
 				}
 				valueCopy = copy(valueType, value);
 			}

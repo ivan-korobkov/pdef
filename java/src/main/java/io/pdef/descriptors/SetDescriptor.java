@@ -2,9 +2,9 @@ package io.pdef.descriptors;
 
 import java.util.Set;
 
-public interface SetDescriptor<T> extends DataTypeDescriptor<Set<T>> {
+public interface SetDescriptor<T> extends ValueDescriptor<Set<T>> {
 	/**
 	 * Returns a set element descriptor.
 	 */
-	DataTypeDescriptor<T> getElement();
+	ValueDescriptor<T> getElement();
 }

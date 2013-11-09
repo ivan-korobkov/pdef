@@ -1,26 +1,23 @@
 package io.pdef.rpc;
 
-import io.pdef.descriptors.ValueDescriptor;
-import io.pdef.descriptors.InterfaceDescriptor;
-import io.pdef.descriptors.MessageDescriptor;
-import io.pdef.descriptors.MethodDescriptor;
 import io.pdef.Invocation;
 import io.pdef.InvocationProxy;
 import io.pdef.Invoker;
-
-import java.nio.charset.Charset;
+import io.pdef.descriptors.InterfaceDescriptor;
+import io.pdef.descriptors.MessageDescriptor;
+import io.pdef.descriptors.MethodDescriptor;
+import io.pdef.descriptors.ValueDescriptor;
 
 public class RpcClient<T> implements Invoker {
-	protected static final Charset CHARSET = Charset.forName("UTF-8");
 	private final InterfaceDescriptor<T> descriptor;
-	private final RpcClientSession session;
+	private final RpcSession session;
 	private final RpcProtocol protocol;
 
 	public RpcClient(final InterfaceDescriptor<T> descriptor, final String url) {
-		this(descriptor, new DefaultRpcClientSession(url));
+		this(descriptor, new HttpUrlConnectionRpcSession(url));
 	}
 
-	public RpcClient(final InterfaceDescriptor<T> descriptor, final RpcClientSession session) {
+	public RpcClient(final InterfaceDescriptor<T> descriptor, final RpcSession session) {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 		if (session == null) throw new NullPointerException("session");
 

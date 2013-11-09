@@ -56,21 +56,31 @@ public class RpcRequest {
 		return this;
 	}
 
+	/** Returns a query params map or an empty map, it is not a defensive copy. */
 	public Map<String, String> getQuery() {
 		return query;
 	}
 
 	public RpcRequest setQuery(final Map<String, String> query) {
-		this.query = query;
+		if (query == null) {
+			this.query = new LinkedHashMap<String, String>();
+		} else {
+			this.query = query;
+		}
 		return this;
 	}
 
+	/** Returns a post params map or an empty map, it is not a defensive copy. */
 	public Map<String, String> getPost() {
 		return post;
 	}
 
 	public RpcRequest setPost(final Map<String, String> post) {
-		this.post = post;
+		if (post == null) {
+			this.post = new LinkedHashMap<String, String>();
+		} else {
+			this.post = post;
+		}
 		return this;
 	}
 

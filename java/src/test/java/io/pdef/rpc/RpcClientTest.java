@@ -13,7 +13,7 @@ import static org.mockito.Mockito.verify;
 public class RpcClientTest {
 	@Test
 	public void testInvoke() throws Exception {
-		RpcClientSession session = mock(RpcClientSession.class);
+		RpcSession session = mock(RpcSession.class);
 		RpcClient<TestInterface> client = new RpcClient<TestInterface>(TestInterface.DESCRIPTOR, session);
 
 		Invocation invocation = getInvocation(1, 2);

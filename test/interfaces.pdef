@@ -34,12 +34,6 @@ interface TestInterface {
     @post
     post(arg0 int32 @post, arg1 int32 @post) int32;
 
-    /** Void method which returns null. */
-    void0() void;
-
-    /** Throws a TestException. */
-    exc0() void;
-
     /** Returns the same string. */
     string0(text string) string;
 
@@ -54,4 +48,13 @@ interface TestInterface {
 
     /** Returns the same interface (yes, it's endless). */
     interface0(arg0 int32, arg1 int32) TestInterface;
+
+    /** Void method which returns null. */
+    void0() void;
+
+    /** Throws a TestException. */
+    exc0() void;
+
+    /** Throws any server error. */
+    serverError() void;
 }

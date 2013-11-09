@@ -45,7 +45,6 @@
 		<jackson.version>2.2.2</jackson.version>
 		<jsr305.version>2.0.1</jsr305.version>
 		<servlet.version>2.5</servlet.version>
-		<httpcomponents.version>4.2.5</httpcomponents.version>
 	</properties>
 
 	<dependencies>
@@ -72,7 +71,6 @@
 		</dependency>
 
 		<dependency>
-			<!-- Guava is a very big dependency to include it in the release version. -->
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>${guava.version}</version>
@@ -99,18 +97,6 @@
 			<artifactId>servlet-api</artifactId>
 			<version>${servlet.version}</version>
 			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>${httpcomponents.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>fluent-hc</artifactId>
-			<version>${httpcomponents.version}</version>
 		</dependency>
 	</dependencies>
 

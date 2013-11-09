@@ -11,11 +11,9 @@ public class ImmutableInterfaceDescriptorTest {
 	@Test
 	public void test() throws Exception {
 		InterfaceDescriptor<TestInterface> descriptor = TestInterface.DESCRIPTOR;
-		MethodDescriptor<TestInterface, ?> method = method();
-
 		assertEquals(TestInterface.class, descriptor.getJavaClass());
 		assertEquals(TestException.DESCRIPTOR, descriptor.getExc());
-		assertEquals(9, descriptor.getMethods().size());
+		assertEquals(10, descriptor.getMethods().size());
 	}
 
 	@Test

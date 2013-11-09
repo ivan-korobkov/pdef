@@ -28,7 +28,7 @@ public class AbstractMessageTest {
 	}
 
 	@Test
-	public void  testSerialize() throws Exception {
+	public void testToMap() throws Exception {
 		Message msg = createComplexMessage();
 		Map<String, Object> map = msg.toMap();
 		Map<String, Object> expected = createComplexMessageMap();
@@ -36,7 +36,7 @@ public class AbstractMessageTest {
 	}
 
 	@Test
-	public void testParse() throws Exception {
+	public void testFromMap() throws Exception {
 		Map<String, Object> map = createComplexMessageMap();
 		Message msg = TestValues.fromMap(map);
 		Message expected = createComplexMessage();
@@ -69,6 +69,14 @@ public class AbstractMessageTest {
 
 		assertEquals(message, copy);
 		assertNotSame(message, copy);
+	}
+
+	@Test
+	public void testMerge() throws Exception {
+		TestValues message = createComplexMessage();
+		TestValues another = new TestValues().merge(message);
+
+		assertEquals(message, another);
 	}
 
 	private TestValues createComplexMessage() {

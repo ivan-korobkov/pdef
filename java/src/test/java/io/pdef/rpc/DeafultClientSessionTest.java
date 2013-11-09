@@ -23,7 +23,7 @@ import java.lang.reflect.Field;
 import java.net.URI;
 
 public class DeafultClientSessionTest {
-	DefaultClientSession session = new DefaultClientSession("http://localhost:8080");
+	DefaultRpcClientSession session = new DefaultRpcClientSession("http://localhost:8080");
 
 	@Test
 	public void testBuildUri() throws Exception {
@@ -76,7 +76,7 @@ public class DeafultClientSessionTest {
 	public void testHandle_applicationException() throws Exception {
 		TestException e = new TestException().setText("привет");
 		HttpResponse resp = new BasicHttpResponse(HttpVersion.HTTP_1_0,
-				DefaultClientSession.APPLICATION_EXC_STATUS, "OK");
+				DefaultRpcClientSession.APPLICATION_EXC_STATUS, "OK");
 		resp.setEntity(new StringEntity(e.toJson(), ContentType.APPLICATION_JSON));
 
 		session.handle(resp, null, TestException.DESCRIPTOR);

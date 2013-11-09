@@ -16,7 +16,14 @@ public class NativeFormat {
 
 	// Serializing.
 
-	public <T> Object write(final T object, final ValueDescriptor<T> descriptor) throws FormatException {
+	@SuppressWarnings("unchecked")
+	public <T extends Message> Map<String, Object> write(final T message,
+			final MessageDescriptor<T> descriptor) throws FormatException {
+		return (Map<String, Object>) write(message, (ValueDescriptor<T>) descriptor);
+	}
+
+	public <T> Object write(final T object, final ValueDescriptor<T> descriptor)
+			throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {

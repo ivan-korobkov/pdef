@@ -17,13 +17,15 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class DefaultClientSession implements ClientSession {
+public class DefaultRpcClientSession implements RpcClientSession {
 	public static final Charset UTF_8 = Charset.forName("UTF-8");
 	public static final int APPLICATION_EXC_STATUS = 422;
+
 	private final String url;
 	private final JsonFormat format = JsonFormat.getInstance();
 
-	DefaultClientSession(final String url) {
+	public DefaultRpcClientSession(final String url) {
+		if (url == null) throw new NullPointerException("url");
 		this.url = url;
 	}
 

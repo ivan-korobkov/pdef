@@ -16,10 +16,9 @@ public abstract class AbstractException extends RuntimeException implements Mess
 
 	protected AbstractException(final AbstractException another) {}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> toMap() {
-		return (Map<String, Object>) NativeFormat.getInstance().write(this, uncheckedDescriptor());
+		return NativeFormat.getInstance().write(this, uncheckedDescriptor());
 	}
 
 	@Override
@@ -30,6 +29,11 @@ public abstract class AbstractException extends RuntimeException implements Mess
 	@Override
 	public String toJson(final boolean indent) {
 		return JsonFormat.getInstance().toJson(this, uncheckedDescriptor(), indent);
+	}
+
+	@Override
+	public AbstractException merge(final Message message) {
+		return this;
 	}
 
 	@Override

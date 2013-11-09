@@ -6,11 +6,6 @@ import java.util.Map;
 
 public interface Message {
 	/**
-	 * Returns a deep copy of this message.
-	 */
-	Message copy();
-
-	/**
 	 * Returns this message descriptor.
 	 */
 	MessageDescriptor<? extends Message> descriptor();
@@ -29,4 +24,14 @@ public interface Message {
 	 * Serializes this method to a JSON string with optional indentation.
 	 */
 	String toJson(boolean indent);
+
+	/**
+	 * Returns a deep copy of this message.
+	 */
+	Message copy();
+
+	/**
+	 * Deeply copies all present fields from another message into this message.
+	 */
+	Message merge(Message message);
 }

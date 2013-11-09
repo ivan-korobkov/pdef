@@ -14,11 +14,6 @@ public class RpcException extends RuntimeException {
 		this.status = status;
 	}
 
-	public RpcException(final int status, final String s, final Throwable throwable) {
-		super(s, throwable);
-		this.status = status;
-	}
-
 	public RpcException(final int status, final Throwable throwable) {
 		super(throwable);
 		this.status = status;
@@ -34,17 +29,5 @@ public class RpcException extends RuntimeException {
 
 	public static RpcException methodNotFound(final String s) {
 		return new RpcException(HttpURLConnection.HTTP_NOT_FOUND, s);
-	}
-
-	public static RpcException serverError(final String s) {
-		return new RpcException(HttpURLConnection.HTTP_INTERNAL_ERROR, s);
-	}
-
-	public static RpcException serviceUnavailable(final String s) {
-		return new RpcException(HttpURLConnection.HTTP_UNAVAILABLE, s);
-	}
-
-	public static RpcException badRequest(final String s) {
-		return new RpcException(HttpURLConnection.HTTP_BAD_REQUEST, s);
 	}
 }

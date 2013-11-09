@@ -72,6 +72,23 @@ public class {{ name }} extends {{ base_or_root }} {
     }
 
     @Override
+	public {{ name }} merge(final io.pdef.Message message) {
+		super.merge(message);
+		if (!(message instanceof {{ name }})) return this;
+
+		{{ name }} another = ({{ name }}) message;
+    {% for field in declared_fields %}
+        {% if field.type.is_collection or field.type.is_message %}
+        if (another.{{ field.name }} != null) this.{{ field.name }} = io.pdef.Values.copy(another.{{ field.name }});
+        {% else %}
+        if (another.{{ field.name }} != null) this.{{ field.name }} = another.{{ field.name }};
+        {% endif %}
+    {% endfor %}
+
+        return this;
+	}
+
+    @Override
     public io.pdef.descriptors.MessageDescriptor<? extends {{ name }}> descriptor() {
         return DESCRIPTOR;
     }

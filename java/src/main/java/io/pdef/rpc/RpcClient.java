@@ -13,14 +13,14 @@ import java.nio.charset.Charset;
 public class RpcClient<T> implements Invoker {
 	protected static final Charset CHARSET = Charset.forName("UTF-8");
 	private final InterfaceDescriptor<T> descriptor;
-	private final ClientSession session;
+	private final RpcClientSession session;
 	private final RpcProtocol protocol;
 
 	public RpcClient(final InterfaceDescriptor<T> descriptor, final String url) {
-		this(descriptor, new DefaultClientSession(url));
+		this(descriptor, new DefaultRpcClientSession(url));
 	}
 
-	public RpcClient(final InterfaceDescriptor<T> descriptor, final ClientSession session) {
+	public RpcClient(final InterfaceDescriptor<T> descriptor, final RpcClientSession session) {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 		if (session == null) throw new NullPointerException("session");
 

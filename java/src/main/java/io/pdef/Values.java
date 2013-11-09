@@ -123,17 +123,13 @@ public class Values {
 		}
 
 		switch (type) {
-			case LIST:
-				return (T) copy((List<?>) object);
-			case SET:
-				return (T) copy((Set<?>) object);
-			case MAP:
-				return (T) copy((Map<?, ?>) object);
+			case LIST: return (T) copy((List<?>) object);
+			case SET: return (T) copy((Set<?>) object);
+			case MAP: return (T) copy((Map<?, ?>) object);
 			case MESSAGE:
 			case EXCEPTION:
 				return (T) ((Message) object).copy();
-			default:
-				return object;
+			default: return object;
 		}
 	}
 }

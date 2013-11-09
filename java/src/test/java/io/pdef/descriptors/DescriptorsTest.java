@@ -1,4 +1,4 @@
-package io.pdef;
+package io.pdef.descriptors;
 
 import io.pdef.descriptors.Descriptors;
 import io.pdef.descriptors.ListDescriptor;

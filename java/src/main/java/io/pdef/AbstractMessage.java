@@ -16,10 +16,9 @@ public abstract class AbstractMessage implements Message, Serializable {
 
 	protected AbstractMessage(final AbstractMessage another) {}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> toMap() {
-		return (Map<String, Object>) NativeFormat.getInstance().write(this, uncheckedDescriptor());
+		return NativeFormat.getInstance().write(this, uncheckedDescriptor());
 	}
 
 	@Override
@@ -30,6 +29,11 @@ public abstract class AbstractMessage implements Message, Serializable {
 	@Override
 	public String toJson(final boolean indent) {
 		return JsonFormat.getInstance().toJson(this, uncheckedDescriptor(), indent);
+	}
+
+	@Override
+	public AbstractMessage merge(final Message message) {
+		return this;
 	}
 
 	@Override

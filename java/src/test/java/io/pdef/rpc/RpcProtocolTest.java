@@ -1,4 +1,4 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Atomics;
@@ -15,8 +15,8 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RestProtocolTest {
-	private RestProtocol protocol = new RestProtocol();
+public class RpcProtocolTest {
+	private RpcProtocol protocol = new RpcProtocol();
 
 	// GetRequest.
 
@@ -25,8 +25,8 @@ public class RestProtocolTest {
 		AtomicReference<Invocation> ref = Atomics.newReference();
 		proxy(ref).method(1, 2);
 
-		RestRequest request = protocol.getRequest(ref.get());
-		assertEquals(RestRequest.GET, request.getMethod());
+		RpcRequest request = protocol.getRequest(ref.get());
+		assertEquals(RpcRequest.GET, request.getMethod());
 		assertEquals("/method/1/2", request.getPath());
 		assertTrue(request.getQuery().isEmpty());
 		assertTrue(request.getPost().isEmpty());
@@ -37,7 +37,7 @@ public class RestProtocolTest {
 		AtomicReference<Invocation> ref = Atomics.newReference();
 		proxy(ref).query(1, 2);
 
-		RestRequest request = protocol.getRequest(ref.get());
+		RpcRequest request = protocol.getRequest(ref.get());
 		assertEquals("/query", request.getPath());
 		assertEquals(ImmutableMap.of("arg0", "1", "arg1", "2"), request.getQuery());
 		assertTrue(request.getPost().isEmpty());
@@ -48,8 +48,8 @@ public class RestProtocolTest {
 		AtomicReference<Invocation> ref = Atomics.newReference();
 		proxy(ref).post(1, 2);
 
-		RestRequest request = protocol.getRequest(ref.get());
-		assertEquals(RestRequest.POST, request.getMethod());
+		RpcRequest request = protocol.getRequest(ref.get());
+		assertEquals(RpcRequest.POST, request.getMethod());
 		assertEquals("/post", request.getPath());
 		assertTrue(request.getQuery().isEmpty());
 		assertEquals(ImmutableMap.of("arg0", "1", "arg1", "2"), request.getPost());
@@ -60,8 +60,8 @@ public class RestProtocolTest {
 		AtomicReference<Invocation> ref = Atomics.newReference();
 		proxy(ref).interface0(1, 2).method(3, 4);
 
-		RestRequest request = protocol.getRequest(ref.get());
-		assertEquals(RestRequest.GET, request.getMethod());
+		RpcRequest request = protocol.getRequest(ref.get());
+		assertEquals(RpcRequest.GET, request.getMethod());
 		assertEquals("/interface0/1/2/method/3/4", request.getPath());
 		assertTrue(request.getQuery().isEmpty());
 		assertTrue(request.getPost().isEmpty());
@@ -72,7 +72,7 @@ public class RestProtocolTest {
 		AtomicReference<Invocation> ref = Atomics.newReference();
 		proxy(ref).string0("привет");
 
-		RestRequest request = protocol.getRequest(ref.get());
+		RpcRequest request = protocol.getRequest(ref.get());
 		assertEquals("/string0/%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82", request.getPath());
 	}
 
@@ -88,7 +88,7 @@ public class RestProtocolTest {
 
 	@Test
 	public void testGetInvocation() throws Exception {
-		RestRequest request = new RestRequest().setPath("/method/1/2/");
+		RpcRequest request = new RpcRequest().setPath("/method/1/2/");
 
 		Invocation invocation = protocol.getInvocation(request, TestInterface.DESCRIPTOR);
 		assertEquals("method", invocation.getMethod().getName());
@@ -97,7 +97,7 @@ public class RestProtocolTest {
 
 	@Test
 	public void testGetInvocation_queryMethod() throws Exception {
-		RestRequest request = new RestRequest()
+		RpcRequest request = new RpcRequest()
 				.setPath("/query")
 				.setQuery(ImmutableMap.of("arg0", "1", "arg1", "2"));
 
@@ -108,8 +108,8 @@ public class RestProtocolTest {
 
 	@Test
 	public void testGetInvocation_postMethod() throws Exception {
-		RestRequest request = new RestRequest()
-				.setMethod(RestRequest.POST)
+		RpcRequest request = new RpcRequest()
+				.setMethod(RpcRequest.POST)
 				.setPath("/post")
 				.setPost(ImmutableMap.of("arg0", "1", "arg1", "2"));
 
@@ -118,16 +118,16 @@ public class RestProtocolTest {
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}
 
-	@Test(expected = RestException.class)
+	@Test(expected = RpcException.class)
 	public void testGetInvocation_postMethod_getNotAllowed() throws Exception {
-		RestRequest request = new RestRequest().setPath("/post");
+		RpcRequest request = new RpcRequest().setPath("/post");
 
 		protocol.getInvocation(request, TestInterface.DESCRIPTOR);
 	}
 
 	@Test
 	public void testGetInvocation_chainedMethods() throws Exception {
-		RestRequest request = new RestRequest().setPath("/interface0/1/2/query/")
+		RpcRequest request = new RpcRequest().setPath("/interface0/1/2/query/")
 				.setQuery(ImmutableMap.of("arg0", "3", "arg1", "4"));
 
 		List<Invocation> chain = protocol.getInvocation(request, TestInterface.DESCRIPTOR).toChain();
@@ -142,16 +142,16 @@ public class RestProtocolTest {
 		assertArrayEquals(new Object[]{3, 4}, invocation1.getArgs());
 	}
 
-	@Test(expected = RestException.class)
+	@Test(expected = RpcException.class)
 	public void testGetInvocation_lastMethodNotRemote() throws Exception {
-		RestRequest request = new RestRequest().setPath("/interface0/1/2");
+		RpcRequest request = new RpcRequest().setPath("/interface0/1/2");
 
 		protocol.getInvocation(request, TestInterface.DESCRIPTOR);
 	}
 
 	@Test
 	public void testGetInvocation_urldecodePathArgs() throws Exception {
-		RestRequest request = new RestRequest()
+		RpcRequest request = new RpcRequest()
 				.setPath("/string0/%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82");
 
 		Invocation invocation = protocol.getInvocation(request, TestInterface.DESCRIPTOR);

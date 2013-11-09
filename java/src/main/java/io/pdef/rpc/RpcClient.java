@@ -1,4 +1,4 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import io.pdef.descriptors.ValueDescriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
@@ -10,23 +10,23 @@ import io.pdef.Invoker;
 
 import java.nio.charset.Charset;
 
-public class RestClient<T> implements Invoker {
+public class RpcClient<T> implements Invoker {
 	protected static final Charset CHARSET = Charset.forName("UTF-8");
 	private final InterfaceDescriptor<T> descriptor;
-	private final RestSession session;
-	private final RestProtocol protocol;
+	private final ClientSession session;
+	private final RpcProtocol protocol;
 
-	public RestClient(final InterfaceDescriptor<T> descriptor, final String url) {
-		this(descriptor, new HttpRestSession(url));
+	public RpcClient(final InterfaceDescriptor<T> descriptor, final String url) {
+		this(descriptor, new DefaultClientSession(url));
 	}
 
-	public RestClient(final InterfaceDescriptor<T> descriptor, final RestSession session) {
+	public RpcClient(final InterfaceDescriptor<T> descriptor, final ClientSession session) {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 		if (session == null) throw new NullPointerException("session");
 
 		this.descriptor = descriptor;
 		this.session = session;
-		protocol = new RestProtocol();
+		protocol = new RpcProtocol();
 	}
 
 	public T proxy() {
@@ -34,8 +34,7 @@ public class RestClient<T> implements Invoker {
 	}
 
 	/**
-	 * Serializes an invocation, sends a rest request, parses a rest response,
-	 * and returns the result or raises an exception.
+	 * Serializes an invocation, sends an rpc request and returns the result.
 	 */
 	@Override
 	public Object invoke(final Invocation invocation) throws Exception {
@@ -47,7 +46,7 @@ public class RestClient<T> implements Invoker {
 		ValueDescriptor<?> resultDescriptor = (ValueDescriptor<?>) method.getResult();
 		MessageDescriptor<?> excDescriptor = method.getExc();
 
-		RestRequest request = protocol.getRequest(invocation);
+		RpcRequest request = protocol.getRequest(invocation);
 		return session.send(request, resultDescriptor, excDescriptor);
 	}
 }

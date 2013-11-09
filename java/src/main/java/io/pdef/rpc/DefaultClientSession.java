@@ -1,4 +1,4 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import io.pdef.descriptors.ValueDescriptor;
 import io.pdef.formats.JsonFormat;
@@ -17,21 +17,21 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class HttpRestSession implements RestSession {
+public class DefaultClientSession implements ClientSession {
 	public static final Charset UTF_8 = Charset.forName("UTF-8");
 	public static final int APPLICATION_EXC_STATUS = 422;
 	private final String url;
 	private final JsonFormat format = JsonFormat.getInstance();
 
-	HttpRestSession(final String url) {
+	DefaultClientSession(final String url) {
 		this.url = url;
 	}
 
 	@Override
-	public <T, E> T send(final RestRequest restRequest,
+	public <T, E> T send(final RpcRequest rpcRequest,
 			final ValueDescriptor<T> resultDescriptor,
 			final ValueDescriptor<E> excDescriptor) throws Exception {
-		Request request = buildRequest(restRequest);
+		Request request = buildRequest(rpcRequest);
 		return request.execute().handleResponse(new ResponseHandler<T>() {
 			@Override
 			public T handleResponse(final HttpResponse response) throws IOException {
@@ -54,7 +54,7 @@ public class HttpRestSession implements RestSession {
 		} else if (status == APPLICATION_EXC_STATUS) {
 			// It's an expected application exception.
 			if (excDescriptor == null) {
-				throw new RestException(APPLICATION_EXC_STATUS, "Unsupported application exception");
+				throw new RpcException(APPLICATION_EXC_STATUS, "Unsupported application exception");
 			}
 			E exc = format.fromJson(entity.getContent(), excDescriptor);
 			throw (RuntimeException) exc;
@@ -62,19 +62,19 @@ public class HttpRestSession implements RestSession {
 		}
 
 		String error = entity == null ? "Error"  : EntityUtils.toString(entity);
-		throw new RestException(response.getStatusLine().getStatusCode(), error);
+		throw new RpcException(response.getStatusLine().getStatusCode(), error);
 	}
 
 	// VisibleForTesting
-	Request buildRequest(final RestRequest restRequest) throws URISyntaxException {
-		URI uri = buildUri(restRequest);
-		Request request = restRequest.isPost() ? Request.Post(uri) : Request.Get(uri);
-		if (!restRequest.isPost()) {
+	Request buildRequest(final RpcRequest rpcRequest) throws URISyntaxException {
+		URI uri = buildUri(rpcRequest);
+		Request request = rpcRequest.isPost() ? Request.Post(uri) : Request.Get(uri);
+		if (!rpcRequest.isPost()) {
 			return request;
 		}
 
 		Form form = Form.form();
-		for (Map.Entry<String, String> entry : restRequest.getPost().entrySet()) {
+		for (Map.Entry<String, String> entry : rpcRequest.getPost().entrySet()) {
 			form.add(entry.getKey(), entry.getValue());
 		}
 		request.bodyForm(form.build(), UTF_8);
@@ -82,10 +82,10 @@ public class HttpRestSession implements RestSession {
 	}
 
 	// VisibleForTesting
-	URI buildUri(final RestRequest restRequest) throws URISyntaxException {
-		URIBuilder uriBuilder = new URIBuilder(url + restRequest.getPath());
+	URI buildUri(final RpcRequest rpcRequest) throws URISyntaxException {
+		URIBuilder uriBuilder = new URIBuilder(url + rpcRequest.getPath());
 
-		for (Map.Entry<String, String> entry : restRequest.getQuery().entrySet()) {
+		for (Map.Entry<String, String> entry : rpcRequest.getQuery().entrySet()) {
 			uriBuilder.addParameter(entry.getKey(), entry.getValue());
 		}
 		return uriBuilder.build();

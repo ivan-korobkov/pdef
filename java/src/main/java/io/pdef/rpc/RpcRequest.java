@@ -1,15 +1,15 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Simple REST request, which decouples the REST client/server from the transport.
+/** Simple HTTP RPC request, which decouples the client/server from the transport.
  * The latter can be servlets, Netty, etc.
  *
  * The request contains an HTTP method, a url-encoded path, and two maps with query and post
  * params. The params must be unicode not url-encoded strings.
  * */
-public class RestRequest {
+public class RpcRequest {
 	public static final String GET = "GET";
 	public static final String POST = "POST";
 
@@ -18,15 +18,15 @@ public class RestRequest {
 	private Map<String, String> query = new LinkedHashMap<String, String>();
 	private Map<String, String> post = new LinkedHashMap<String, String>();
 
-	public RestRequest() {}
+	public RpcRequest() {}
 
-	public RestRequest(final String method) {
+	public RpcRequest(final String method) {
 		setMethod(method);
 	}
 
 	@Override
 	public String toString() {
-		return "RestRequest{" + method + ", path='" + path + '\'' + '}';
+		return "RpcRequest{" + method + ", path='" + path + '\'' + '}';
 	}
 
 	public boolean isPost() {
@@ -37,7 +37,7 @@ public class RestRequest {
 		return method;
 	}
 
-	public RestRequest setMethod(final String method) {
+	public RpcRequest setMethod(final String method) {
 		this.method = method;
 		return this;
 	}
@@ -46,12 +46,12 @@ public class RestRequest {
 		return path;
 	}
 
-	public RestRequest setPath(final String path) {
+	public RpcRequest setPath(final String path) {
 		this.path = path;
 		return this;
 	}
 
-	public RestRequest appendPath(final String s) {
+	public RpcRequest appendPath(final String s) {
 		path += s;
 		return this;
 	}
@@ -60,7 +60,7 @@ public class RestRequest {
 		return query;
 	}
 
-	public RestRequest setQuery(final Map<String, String> query) {
+	public RpcRequest setQuery(final Map<String, String> query) {
 		this.query = query;
 		return this;
 	}
@@ -69,7 +69,7 @@ public class RestRequest {
 		return post;
 	}
 
-	public RestRequest setPost(final Map<String, String> post) {
+	public RpcRequest setPost(final Map<String, String> post) {
 		this.post = post;
 		return this;
 	}
@@ -79,7 +79,7 @@ public class RestRequest {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		final RestRequest request = (RestRequest) o;
+		final RpcRequest request = (RpcRequest) o;
 
 		if (method != null ? !method.equals(request.method) : request.method != null) return false;
 		if (path != null ? !path.equals(request.path) : request.path != null) return false;

@@ -1,4 +1,4 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import com.google.common.collect.ImmutableMap;
 import io.pdef.descriptors.Descriptors;
@@ -10,16 +10,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 
-public class RestClientTest {
+public class RpcClientTest {
 	@Test
 	public void testInvoke() throws Exception {
-		RestSession session = mock(RestSession.class);
-		RestClient<TestInterface> client = new RestClient<TestInterface>(TestInterface.DESCRIPTOR, session);
+		ClientSession session = mock(ClientSession.class);
+		RpcClient<TestInterface> client = new RpcClient<TestInterface>(TestInterface.DESCRIPTOR, session);
 
 		Invocation invocation = getInvocation(1, 2);
 		client.invoke(invocation);
 
-		RestRequest request = new RestRequest()
+		RpcRequest request = new RpcRequest()
 				.setPath("/query")
 				.setQuery(ImmutableMap.of("arg0", "1", "arg1", "2"));
 		verify(session).send(request, Descriptors.int32, TestException.DESCRIPTOR);

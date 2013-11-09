@@ -1,11 +1,10 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import com.google.common.collect.ImmutableMap;
 import io.pdef.descriptors.ValueDescriptor;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.test.interfaces.TestException;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.fluent.Request;
@@ -23,12 +22,12 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URI;
 
-public class HttpRestSessionTest {
-	HttpRestSession session = new HttpRestSession("http://localhost:8080");
+public class DeafultClientSessionTest {
+	DefaultClientSession session = new DefaultClientSession("http://localhost:8080");
 
 	@Test
 	public void testBuildUri() throws Exception {
-		RestRequest request = new RestRequest()
+		RpcRequest request = new RpcRequest()
 				.setPath("/hello/world")
 				.setQuery(ImmutableMap.of("a", "1"));
 
@@ -38,26 +37,26 @@ public class HttpRestSessionTest {
 
 	@Test
 	public void testBuildRequest_get() throws Exception {
-		RestRequest request = new RestRequest()
+		RpcRequest request = new RpcRequest()
 				.setPath("/hello/world")
 				.setQuery(ImmutableMap.of("a", "1"));
 
-		HttpRequest req = httpRequest(session.buildRequest(request));
-		assertEquals(RestRequest.GET, req.getRequestLine().getMethod());
+		org.apache.http.HttpRequest req = httpRequest(session.buildRequest(request));
+		assertEquals(RpcRequest.GET, req.getRequestLine().getMethod());
 		assertEquals("http://localhost:8080/hello/world?a=1", req.getRequestLine().getUri());
 	}
 
 	@Test
 	public void testBuildRequest_post() throws Exception {
-		RestRequest request = new RestRequest()
-				.setMethod(RestRequest.POST)
+		RpcRequest request = new RpcRequest()
+				.setMethod(RpcRequest.POST)
 				.setPath("/hello/world")
 				.setPost(ImmutableMap.of("a", "1", "text", "привет"));
 
 		HttpPost req = (HttpPost) httpRequest(session.buildRequest(request));
 
 		byte[] content = entityToBytes(req.getEntity());
-		assertEquals(RestRequest.POST, req.getRequestLine().getMethod());
+		assertEquals(RpcRequest.POST, req.getRequestLine().getMethod());
 		assertEquals("http://localhost:8080/hello/world", req.getRequestLine().getUri());
 		assertArrayEquals("a=1&text=%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82".getBytes(), content);
 	}
@@ -77,26 +76,26 @@ public class HttpRestSessionTest {
 	public void testHandle_applicationException() throws Exception {
 		TestException e = new TestException().setText("привет");
 		HttpResponse resp = new BasicHttpResponse(HttpVersion.HTTP_1_0,
-				HttpRestSession.APPLICATION_EXC_STATUS, "OK");
+				DefaultClientSession.APPLICATION_EXC_STATUS, "OK");
 		resp.setEntity(new StringEntity(e.toJson(), ContentType.APPLICATION_JSON));
 
 		session.handle(resp, null, TestException.DESCRIPTOR);
 	}
 
-	@Test(expected = RestException.class)
-	public void testHandle_restException() throws Exception {
+	@Test(expected = RpcException.class)
+	public void testHandle_rpcException() throws Exception {
 		HttpResponse resp = new BasicHttpResponse(HttpVersion.HTTP_1_0, 404, "OK");
 		session.handle(resp, null, null);
 	}
 
-	private HttpRequest httpRequest(final Request request) {
+	private org.apache.http.HttpRequest httpRequest(final Request request) {
 		// A bit of reflection to simplify the tests.
 		// I think, it is bad to use reflection to access private fields,
 		// but the fluent HttpClient is not easy to use in tests.
 		try {
 			Field field = Request.class.getDeclaredField("request");
 			field.setAccessible(true);
-			return (HttpRequest) field.get(request);
+			return (org.apache.http.HttpRequest) field.get(request);
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
 		} catch (NoSuchFieldException e) {

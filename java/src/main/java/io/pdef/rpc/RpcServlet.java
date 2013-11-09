@@ -1,4 +1,4 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import io.pdef.formats.JsonFormat;
 
@@ -11,16 +11,16 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class RestServlet<T> extends HttpServlet {
+public final class RpcServlet<T> extends HttpServlet {
 	public static final String CLIENT_ERROR_MESSAGE = "Client error";
 	public static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 	public static final String TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
 	public static final int APPLICATION_EXC_STATUS = 422;
 
-	private final RestHandler<T> handler;
+	private final RpcHandler<T> handler;
 	private final JsonFormat format;
 
-	public RestServlet(final RestHandler<T> handler) {
+	public RpcServlet(final RpcHandler<T> handler) {
 		if (handler == null) throw new NullPointerException("handler");
 		this.handler = handler;
 		format = JsonFormat.getInstance();
@@ -32,12 +32,12 @@ public final class RestServlet<T> extends HttpServlet {
 		if (req == null) throw new NullPointerException("request");
 		if (resp == null) throw new NullPointerException("response");
 
-		RestRequest request = getRestRequest(req);
+		RpcRequest request = getRpcRequest(req);
 		try {
-			RestResult<?> result = handler.handle(request);
+			RpcResult<?> result = handler.handle(request);
 			writeResult(result, resp);
-		} catch (RestException e) {
-			writeRestException(e, resp);
+		} catch (RpcException e) {
+			writeRpcException(e, resp);
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
@@ -46,16 +46,16 @@ public final class RestServlet<T> extends HttpServlet {
 	}
 
 	// VisibleForTesting
-	RestRequest getRestRequest(final HttpServletRequest request) {
+	RpcRequest getRpcRequest(final HttpServletRequest request) {
 		String method = request.getMethod();
 		String path = nullToEmpty(request.getServletPath()) + nullToEmpty(request.getPathInfo());
 		Map<String, String> params = getParams(request);
 
 		// In servlets we cannot distinguish between query and post params,
-		// so we use the same map for both. It is safe because Pdef REST protocol
+		// so we use the same map for both. It is safe because Pdef HTTP RPC
 		// always uses only one of them.
 
-		return new RestRequest()
+		return new RpcRequest()
 				.setMethod(method)
 				.setPath(path)
 				.setQuery(params)
@@ -63,7 +63,7 @@ public final class RestServlet<T> extends HttpServlet {
 	}
 
 	// VisibleForTesting
-	<T> void writeResult(final RestResult<T> result, final HttpServletResponse resp)
+	<T> void writeResult(final RpcResult<T> result, final HttpServletResponse resp)
 			throws IOException {
 		if (result.isOk()) {
 			resp.setStatus(HttpServletResponse.SC_OK);
@@ -79,7 +79,7 @@ public final class RestServlet<T> extends HttpServlet {
 	}
 
 	// VisibleForTesting
-	void writeRestException(final RestException e, final HttpServletResponse resp)
+	void writeRpcException(final RpcException e, final HttpServletResponse resp)
 			throws IOException {
 		String message = e.getMessage() != null ? e.getMessage() : CLIENT_ERROR_MESSAGE;
 

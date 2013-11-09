@@ -1,39 +1,37 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import io.pdef.test.interfaces.TestException;
 import io.pdef.test.interfaces.TestInterface;
 import io.pdef.test.messages.TestMessage;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class RestIntegrationTest {
+public class RpcTest {
 	Server server;
 	Thread serverThread;
 	String address;
 
 	@Before
 	public void setUp() throws Exception {
-		server = new Server(0);
+		RpcServlet<TestInterface> servlet = new RpcHandler<TestInterface>(
+				TestInterface.DESCRIPTOR, new TestService()).servlet();
 
 		ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath("/testapp");
-		context.addServlet(TestServlet.class, "/");
-		server.setHandler(context);
+		context.addServlet(new ServletHolder(servlet), "/");
 
+		server = new Server(0);
+		server.setHandler(context);
 		server.start();
 		address = "http://localhost:" + server.getConnectors()[0].getLocalPort() + "/testapp";
 
@@ -65,7 +63,8 @@ public class RestIntegrationTest {
 				.setBool0(false)
 				.setShort0((short) 123);
 
-		TestInterface client = client();
+		TestInterface client = new RpcClient<TestInterface>(TestInterface.DESCRIPTOR, address)
+				.proxy();
 		assertEquals(3, (int) client.method(1, 2));
 		assertEquals(7, (int) client.query(3, 4));
 		assertEquals(11, (int) client.post(5, 6));
@@ -80,21 +79,6 @@ public class RestIntegrationTest {
 		} catch (TestException e) {
 			TestException exc = new TestException().setText("Application exception");
 			assertEquals(exc, e);
-		}
-	}
-
-	private TestInterface client() {
-		return new RestClient<TestInterface>(TestInterface.DESCRIPTOR, address).proxy();
-	}
-
-	public static class TestServlet extends HttpServlet {
-		private final RestServlet<TestInterface> delegate = new RestHandler<TestInterface>(
-				TestInterface.DESCRIPTOR, new TestService()).servlet();
-
-		@Override
-		protected void service(final HttpServletRequest req, final HttpServletResponse resp)
-				throws ServletException, IOException {
-			delegate.service(req, resp);
 		}
 	}
 

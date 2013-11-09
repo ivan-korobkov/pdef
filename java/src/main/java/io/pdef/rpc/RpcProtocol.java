@@ -1,4 +1,4 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import io.pdef.*;
 import io.pdef.descriptors.*;
@@ -10,21 +10,21 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 
-public class RestProtocol {
+public class RpcProtocol {
 	public static final String CHARSET_NAME = "UTF-8";
 	private final JsonFormat format;
 
-	public RestProtocol() {
+	public RpcProtocol() {
 		this(JsonFormat.getInstance());
 	}
 
-	public RestProtocol(final JsonFormat format) {
+	public RpcProtocol(final JsonFormat format) {
 		if (format == null) throw new NullPointerException("format");
 		this.format = format;
 	}
 
-	/** Converts an invocation into a rest request. */
-	public RestRequest getRequest(final Invocation invocation) {
+	/** Converts an invocation into an rpc request. */
+	public RpcRequest getRequest(final Invocation invocation) {
 		if (invocation == null) throw new NullPointerException("invocation");
 
 		MethodDescriptor<?, ?> method = invocation.getMethod();
@@ -32,7 +32,7 @@ public class RestProtocol {
 			throw new IllegalArgumentException("Last invocation method must be remote");
 		}
 
-		RestRequest request = new RestRequest(method.isPost() ? RestRequest.POST : RestRequest.GET);
+		RpcRequest request = new RpcRequest(method.isPost() ? RpcRequest.POST : RpcRequest.GET);
 		for (Invocation invocation1 : invocation.toChain()) {
 			writeInvocation(request, invocation1);
 		}
@@ -40,7 +40,7 @@ public class RestProtocol {
 		return request;
 	}
 
-	private void writeInvocation(final RestRequest request, final Invocation invocation) {
+	private void writeInvocation(final RpcRequest request, final Invocation invocation) {
 		MethodDescriptor<?, ?> method = invocation.getMethod();
 
 		Object[] args = invocation.getArgs();
@@ -81,8 +81,8 @@ public class RestProtocol {
 		return s.substring(1, s.length() - 1);
 	}
 
-	/** Parses an invocation from a rest request. */
-	public Invocation getInvocation(final RestRequest request, InterfaceDescriptor<?> descriptor) {
+	/** Parses an invocation from an rpc request. */
+	public Invocation getInvocation(final RpcRequest request, InterfaceDescriptor<?> descriptor) {
 		if (request == null) throw new NullPointerException("request");
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -95,10 +95,10 @@ public class RestProtocol {
 			// Find a method by name.
 			MethodDescriptor<?, ?> method = descriptor.getMethod(part);
 			if (method == null) {
-				throw RestException.methodNotFound("Method is not found: " + part);
+				throw RpcException.methodNotFound("Method is not found: " + part);
 			}
 			if (method.isPost() && !request.isPost()) {
-				throw RestException.methodNotAllowed("Method not allowed, POST required");
+				throw RpcException.methodNotAllowed("Method not allowed, POST required");
 			}
 
 			// Parse arguments and create an invocation.
@@ -115,13 +115,13 @@ public class RestProtocol {
 		}
 
 		if (!parts.isEmpty()) {
-			throw RestException.methodNotFound("Failed to parse an invocation chain");
+			throw RpcException.methodNotFound("Failed to parse an invocation chain");
 		}
 		if (invocation == null) {
-			throw RestException.methodNotFound("No methods");
+			throw RpcException.methodNotFound("No methods");
 		}
 		if (!invocation.getMethod().isRemote()) {
-			throw RestException.methodNotFound("The last method must be a remote one. "
+			throw RpcException.methodNotFound("The last method must be a remote one. "
 					+ "It must return a value type or be void.");
 		}
 
@@ -142,7 +142,7 @@ public class RestProtocol {
 			} else if (argd.isQuery()) {
 				value = query.get(name);
 			} else if (parts.isEmpty()) {
-				throw RestException.methodNotFound("Wrong number of method args");
+				throw RpcException.methodNotFound("Wrong number of method args");
 			} else {
 				value = urldecode(parts.removeFirst());
 			}

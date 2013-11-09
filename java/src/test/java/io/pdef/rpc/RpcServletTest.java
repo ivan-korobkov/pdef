@@ -1,4 +1,4 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import com.google.common.collect.ImmutableMap;
 import io.pdef.descriptors.Descriptors;
@@ -15,20 +15,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.net.HttpURLConnection;
 
-public class RestServletTest {
-	@Mock RestHandler<TestInterface> handler;
-	RestServlet<TestInterface> servlet;
+public class RpcServletTest {
+	@Mock RpcHandler<TestInterface> handler;
+	RpcServlet<TestInterface> servlet;
 
 	@Before
 	public void setUp() throws Exception {
 		initMocks(this);
-		servlet = new RestServlet<TestInterface>(handler);
+		servlet = new RpcServlet<TestInterface>(handler);
 	}
 
 	@Test
-	public void getRestRequest() throws Exception {
+	public void testGetRpcRequest() throws Exception {
 		HttpServletRequest request = mock(HttpServletRequest.class);
-		when(request.getMethod()).thenReturn(RestRequest.GET);
+		when(request.getMethod()).thenReturn(RpcRequest.GET);
 		when(request.getContextPath()).thenReturn("/my/app");
 		when(request.getServletPath()).thenReturn("/method1");
 		when(request.getPathInfo()).thenReturn("/method2");
@@ -36,8 +36,8 @@ public class RestServletTest {
 				"key0", new String[]{"value0"},
 				"key1", new String[]{"value1", "value11"}));
 
-		RestRequest req = servlet.getRestRequest(request);
-		assertEquals(RestRequest.GET, req.getMethod());
+		RpcRequest req = servlet.getRpcRequest(request);
+		assertEquals(RpcRequest.GET, req.getMethod());
 		assertEquals("/method1/method2", req.getPath());
 		assertEquals(ImmutableMap.of("key0", "value0", "key1", "value1"), req.getQuery());
 		assertEquals(ImmutableMap.of("key0", "value0", "key1", "value1"), req.getPost());
@@ -45,33 +45,33 @@ public class RestServletTest {
 
 	@Test
 	public void testWriteResult_ok() throws Exception {
-		RestResult<String> result = RestResult.ok("Привет", Descriptors.string);
+		RpcResult<String> result = RpcResult.ok("Привет", Descriptors.string);
 		HttpServletResponse response = mockResponse();
 		servlet.writeResult(result, response);
 
 		verify(response).setStatus(HttpURLConnection.HTTP_OK);
-		verify(response).setContentType(RestServlet.JSON_CONTENT_TYPE);
+		verify(response).setContentType(RpcServlet.JSON_CONTENT_TYPE);
 	}
 
 	@Test
 	public void testWriteResult_applicationException() throws Exception {
 		TestException e = new TestException().setText("Привет");
-		RestResult<TestException> result = RestResult.exc(e, TestException.DESCRIPTOR);
+		RpcResult<TestException> result = RpcResult.exc(e, TestException.DESCRIPTOR);
 		HttpServletResponse response = mockResponse();
 		servlet.writeResult(result, response);
 
-		verify(response).setStatus(RestServlet.APPLICATION_EXC_STATUS);
-		verify(response).setContentType(RestServlet.JSON_CONTENT_TYPE);
+		verify(response).setStatus(RpcServlet.APPLICATION_EXC_STATUS);
+		verify(response).setContentType(RpcServlet.JSON_CONTENT_TYPE);
 	}
 
 	@Test
-	public void testWriteRestException() throws Exception {
-		RestException exception = RestException.methodNotFound("Method not found");
+	public void testWriteRpcException() throws Exception {
+		RpcException exception = RpcException.methodNotFound("Method not found");
 		HttpServletResponse response = mockResponse();
-		servlet.writeRestException(exception, response);
+		servlet.writeRpcException(exception, response);
 
 		verify(response).setStatus(HttpURLConnection.HTTP_NOT_FOUND);
-		verify(response).setContentType(RestServlet.TEXT_CONTENT_TYPE);
+		verify(response).setContentType(RpcServlet.TEXT_CONTENT_TYPE);
 	}
 
 	private HttpServletResponse mockResponse() {

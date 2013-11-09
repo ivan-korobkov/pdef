@@ -1,24 +1,24 @@
-package io.pdef.rest;
+package io.pdef.rpc;
 
 import io.pdef.descriptors.ValueDescriptor;
 
-public class RestResult<T> {
+public class RpcResult<T> {
 	private final boolean ok;
 	private final T data;
 	private final ValueDescriptor<T> descriptor;
 
-	private RestResult(final boolean ok, final T data, final ValueDescriptor<T> descriptor) {
+	private RpcResult(final boolean ok, final T data, final ValueDescriptor<T> descriptor) {
 		this.ok = ok;
 		this.data = data;
 		this.descriptor = descriptor;
 	}
 
-	public static <T> RestResult<T> ok(final T data, final ValueDescriptor<T> descriptor) {
-		return new RestResult<T>(true, data, descriptor);
+	public static <T> RpcResult<T> ok(final T data, final ValueDescriptor<T> descriptor) {
+		return new RpcResult<T>(true, data, descriptor);
 	}
 
-	public static <E> RestResult<E> exc(final E exception, final ValueDescriptor<E> descriptor) {
-		return new RestResult<E>(false, exception, descriptor);
+	public static <E> RpcResult<E> exc(final E exception, final ValueDescriptor<E> descriptor) {
+		return new RpcResult<E>(false, exception, descriptor);
 	}
 
 	public boolean isOk() {
@@ -38,7 +38,7 @@ public class RestResult<T> {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		final RestResult result = (RestResult) o;
+		final RpcResult result = (RpcResult) o;
 
 		if (ok != result.ok) return false;
 		if (data != null ? !data.equals(result.data) : result.data != null) return false;

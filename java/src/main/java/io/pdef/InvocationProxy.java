@@ -4,11 +4,14 @@ import io.pdef.descriptors.InterfaceDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.lang.reflect.*;
+import java.util.WeakHashMap;
 
 public class InvocationProxy<T> implements InvocationHandler {
+	private static final WeakHashMap<Class<?>, Class<?>> proxyClasses =
+			new WeakHashMap<Class<?>, Class<?>>();
+	private static final Class[] constructorParams = new Class[]{InvocationHandler.class};
+
 	private final InterfaceDescriptor<T> descriptor;
 	private final Invoker handler;
 	@Nullable
@@ -32,8 +35,7 @@ public class InvocationProxy<T> implements InvocationHandler {
 
 	private T toProxy() {
 		Class<T> cls = descriptor.getJavaClass();
-		Object proxy = Proxy.newProxyInstance(cls.getClassLoader(), new Class<?>[]{cls}, this);
-		return cls.cast(proxy);
+		return getProxyInstance(cls, this);
 	}
 
 	@Override
@@ -78,5 +80,40 @@ public class InvocationProxy<T> implements InvocationHandler {
 		InterfaceDescriptor<Object> next = (InterfaceDescriptor<Object>) method.getResult();
 		InvocationProxy<Object> nproxy = new InvocationProxy<Object>(next, handler, invocation);
 		return nproxy.toProxy();
+	}
+
+	private static <T> T getProxyInstance(final Class<T> cls, final InvocationHandler handler) {
+		Class<T> proxyClass = getProxyClass(cls);
+		Constructor<T> constructor;
+		try {
+			constructor = proxyClass.getConstructor(constructorParams);
+		} catch (NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		}
+
+		try {
+			return constructor.newInstance(handler);
+		} catch (InstantiationException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> Class<T> getProxyClass(final Class<T> cls) {
+		Class<?> proxyClass;
+		synchronized (proxyClasses) {
+			proxyClass = proxyClasses.get(cls);
+
+			if (proxyClass == null) {
+				proxyClass = Proxy.getProxyClass(cls.getClassLoader(), cls);
+				proxyClasses.put(cls, proxyClass);
+			}
+		}
+
+		return (Class<T>) proxyClass;
 	}
 }

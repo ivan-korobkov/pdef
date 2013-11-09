@@ -46,7 +46,9 @@ public class RpcProtocol {
 		Object[] args = invocation.getArgs();
 		List<ArgumentDescriptor<?>> argds = method.getArgs();
 
-		String path = request.getPath() + "/" + urlencode(method.getName());
+		StringBuilder path = new StringBuilder(request.getPath());
+		path.append("/").append(urlencode(method.getName()));
+
 		Map<String, String> post = request.getPost();
 		Map<String, String> query = request.getQuery();
 
@@ -62,11 +64,11 @@ public class RpcProtocol {
 			} else if (argd.isQuery()) {
 				query.put(name, value);
 			} else {
-				path = path + "/" + urlencode(value);
+				path.append("/").append(urlencode(value));
 			}
 		}
 
-		request.setPath(path);
+		request.setPath(path.toString());
 	}
 
 	// VisibleForTesting

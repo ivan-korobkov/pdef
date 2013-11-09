@@ -17,8 +17,8 @@ public final class RpcServlet<T> extends HttpServlet {
 	public static final String TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
 	public static final int APPLICATION_EXC_STATUS = 422;
 
-	private final RpcHandler<T> handler;
-	private final JsonFormat format;
+	private final transient RpcHandler<T> handler;
+	private final transient JsonFormat format;
 
 	public RpcServlet(final RpcHandler<T> handler) {
 		if (handler == null) throw new NullPointerException("handler");

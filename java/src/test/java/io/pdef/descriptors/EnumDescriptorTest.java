@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class ImmutableEnumDescriptorTest {
+public class EnumDescriptorTest {
 	@Test
 	public void testGetValues() throws Exception {
 		List<TestEnum> values = TestEnum.DESCRIPTOR.getValues();

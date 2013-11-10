@@ -7,7 +7,7 @@ import io.pdef.test.interfaces.TestInterface;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-public class ImmutableMethodDescriptorTest {
+public class MethodDescriptorTest {
 	@Test
 	public void testGetName() throws Exception {
 		MethodDescriptor<TestInterface, ?> method = method();
@@ -25,9 +25,12 @@ public class ImmutableMethodDescriptorTest {
 	@Test
 	public void testIndexPostRemote() throws Exception {
 		MethodDescriptor<TestInterface, ?> index = method();
-		MethodDescriptor<TestInterface, ?> query = TestInterface.DESCRIPTOR.getMethod("query");
-		MethodDescriptor<TestInterface, ?> post = TestInterface.DESCRIPTOR.getMethod("post");
-		MethodDescriptor<TestInterface, ?> iface = TestInterface.DESCRIPTOR.getMethod("interface0");
+		MethodDescriptor<TestInterface, ?> query = TestInterface.DESCRIPTOR.getMethod(
+				"query");
+		MethodDescriptor<TestInterface, ?> post = TestInterface.DESCRIPTOR.getMethod(
+				"post");
+		MethodDescriptor<TestInterface, ?> iface = TestInterface.DESCRIPTOR.getMethod(
+				"interface0");
 
 		assertTrue(index.isRemote());
 		assertFalse(index.isPost());
@@ -54,7 +57,8 @@ public class ImmutableMethodDescriptorTest {
 
 	@Test(expected = TestException.class)
 	public void testInvoke_exception() throws Exception {
-		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.getMethod("exc0");
+		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.getMethod(
+				"exc0");
 		assert method != null;
 
 		TestInterface object = mock(TestInterface.class);

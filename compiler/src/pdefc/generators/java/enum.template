@@ -20,6 +20,6 @@ public enum {{ name }} {
     }
 
     public static final io.pdef.descriptors.EnumDescriptor<{{ name }}> DESCRIPTOR =
-            io.pdef.descriptors.ImmutableEnumDescriptor.of({{ name }}.class);
+            io.pdef.descriptors.EnumDescriptor.of({{ name }}.class);
 }
 

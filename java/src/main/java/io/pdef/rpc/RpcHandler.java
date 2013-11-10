@@ -1,10 +1,12 @@
 package io.pdef.rpc;
 
 import io.pdef.Invocation;
+import io.pdef.Message;
 import io.pdef.Provider;
 import io.pdef.Providers;
-import io.pdef.descriptors.ValueDescriptor;
 import io.pdef.descriptors.InterfaceDescriptor;
+import io.pdef.descriptors.MessageDescriptor;
+import io.pdef.descriptors.ValueDescriptor;
 
 public class RpcHandler<T> {
 	private final InterfaceDescriptor<T> descriptor;
@@ -38,12 +40,12 @@ public class RpcHandler<T> {
 			return RpcResult.ok(result, resultDescriptor);
 
 		} catch (Exception e) {
-			ValueDescriptor<Exception> excDescriptor =
-					(ValueDescriptor<Exception>) invocation.getExc();
+			MessageDescriptor<Message> excDescriptor =
+					(MessageDescriptor<Message>) invocation.getExc();
 			if (excDescriptor != null
 					&& excDescriptor.getJavaClass().isAssignableFrom(e.getClass())) {
 				// It's an application exception.
-				return RpcResult.exc(e, excDescriptor);
+				return RpcResult.exc((Message) e, excDescriptor);
 			}
 
 			throw e;

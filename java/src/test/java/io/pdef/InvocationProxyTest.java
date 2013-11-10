@@ -51,7 +51,8 @@ public class InvocationProxyTest {
 		verify(invoker).invoke(captor.capture());
 
 		Invocation invocation = captor.getValue();
-		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.getMethod("method");
+		MethodDescriptor<TestInterface, ?> method = TestInterface.DESCRIPTOR.getMethod(
+				"method");
 		assertEquals(method, invocation.getMethod());
 		assertArrayEquals(new Object[]{1, 2}, invocation.getArgs());
 	}

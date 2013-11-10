@@ -5,9 +5,7 @@ import io.pdef.test.interfaces.TestInterface;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-public class ImmutableInterfaceDescriptorTest {
-	private InterfaceDescriptor<TestInterface> descriptor = TestInterface.DESCRIPTOR;
-
+public class InterfaceDescriptorTest {
 	@Test
 	public void test() throws Exception {
 		InterfaceDescriptor<TestInterface> descriptor = TestInterface.DESCRIPTOR;
@@ -18,16 +16,13 @@ public class ImmutableInterfaceDescriptorTest {
 
 	@Test
 	public void testFindDescriptor() throws Exception {
-		InterfaceDescriptor descriptor = Descriptors.findInterfaceDescriptor(TestInterface.class);
+		InterfaceDescriptor descriptor = Descriptors.findInterfaceDescriptor(
+				TestInterface.class);
 		assertTrue(descriptor == TestInterface.DESCRIPTOR);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testFindDescriptor_notFound() throws Exception {
 		Descriptors.findInterfaceDescriptor(Runnable.class);
-	}
-
-	private MethodDescriptor<TestInterface, ?> method() {
-		return TestInterface.DESCRIPTOR.getMethod("method");
 	}
 }

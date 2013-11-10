@@ -6,9 +6,7 @@ import java.lang.reflect.Method;
 public class MethodInvokers {
 	private MethodInvokers() {}
 
-	/**
-	 * Returns a reflection-based method invoker or throws {@link IllegalArgumentException}.
-	 */
+	/** Returns a reflection-based method invoker or throws {@link IllegalArgumentException}. */
 	public static <T, R> MethodInvoker<T, R> reflexive(final Class<T> interfaceClass,
 			final String methodName) {
 		return new ReflexMethodInvoker<T, R>(interfaceClass, methodName);

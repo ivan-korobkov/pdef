@@ -1,8 +1,8 @@
 package io.pdef;
 
-import io.pdef.descriptors.ValueDescriptor;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
+import io.pdef.descriptors.ValueDescriptor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -51,8 +51,8 @@ public class Invocation {
 
 	/** Returns the method exception or the parent exception. */
 	@Nullable
-	public MessageDescriptor<?> getExc() {
-		MessageDescriptor<?> exc = method.getExc();
+	public MessageDescriptor<? extends Message> getExc() {
+		MessageDescriptor<? extends Message> exc = method.getExc();
 		if (exc != null) {
 			return exc;
 		}

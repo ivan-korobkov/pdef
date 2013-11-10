@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class ImmutableMessageDescriptorTest {
+public class MessageDescriptorTest {
 	@Test
 	public void test() throws Exception {
 		MessageDescriptor<TestMessage> descriptor = TestMessage.DESCRIPTOR;

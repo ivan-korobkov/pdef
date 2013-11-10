@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * TypeEnum enumerates Pdef types.
- * */
+/** TypeEnum enumerates Pdef types. */
 public enum TypeEnum {
 	// Primitives.
 	BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING,
@@ -23,9 +21,7 @@ public enum TypeEnum {
 	EXCEPTION,
 	INTERFACE;
 
-	/**
-	 * Returns a pdef value type of a java class or throws IllegalArgumentException.
-	 */
+	/** Returns a pdef value type of a java class or throws IllegalArgumentException. */
 	public static TypeEnum valueTypeOf(final Class<?> cls) {
 		if (cls == null) throw new NullPointerException("cls");
 		else if (cls == Boolean.class) return TypeEnum.BOOL;
@@ -42,8 +38,11 @@ public enum TypeEnum {
 		else if (cls.isEnum()) return TypeEnum.ENUM;
 		else if (Exception.class.isAssignableFrom(cls) && Message.class.isAssignableFrom(cls)) {
 			return TypeEnum.EXCEPTION;
-		}
-		else if (Message.class.isAssignableFrom(cls)) return TypeEnum.MESSAGE;
+		} else if (Message.class.isAssignableFrom(cls)) return TypeEnum.MESSAGE;
 		throw new IllegalArgumentException("Unsupported value type " + cls);
+	}
+
+	public boolean isValueType() {
+		return this != INTERFACE;
 	}
 }

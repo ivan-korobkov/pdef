@@ -1,5 +1,7 @@
 package io.pdef.rpc;
 
+import io.pdef.Message;
+import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.descriptors.ValueDescriptor;
 
 public class RpcResult<T> {
@@ -17,7 +19,8 @@ public class RpcResult<T> {
 		return new RpcResult<T>(true, data, descriptor);
 	}
 
-	public static <E> RpcResult<E> exc(final E exception, final ValueDescriptor<E> descriptor) {
+	public static <E extends Message> RpcResult<E> exc(final E exception,
+			final MessageDescriptor<E> descriptor) {
 		return new RpcResult<E>(false, exception, descriptor);
 	}
 

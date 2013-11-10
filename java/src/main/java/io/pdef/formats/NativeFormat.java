@@ -181,9 +181,9 @@ public class NativeFormat {
 			case LIST: return (T) readList(input, (ListDescriptor<?>) descriptor);
 			case SET: return (T) readSet(input, (SetDescriptor<?>) descriptor);
 			case MAP: return (T) readMap(input, (MapDescriptor<?, ?>) descriptor);
-			case ENUM: return (T) readEnum(input, (EnumDescriptor<?>) descriptor);
+			case ENUM: return (T) readEnum(input, (EnumDescriptor<? extends Enum<?>>) descriptor);
 			case MESSAGE: case EXCEPTION:
-				return (T) readMessage(input, (MessageDescriptor<?>) descriptor);
+				return (T) readMessage(input, (MessageDescriptor<? extends Message>) descriptor);
 			case VOID: return null;
 			default: throw new IllegalArgumentException("Unsupported descriptor " + descriptor);
 		}

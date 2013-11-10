@@ -8,7 +8,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
-public class ImmutableFieldDescriptorTest {
+public class FieldDescriptorTest {
 	@Test
 	public void test() throws Exception {
 		FieldDescriptor<?, ?> bool0 = TestMessage.DESCRIPTOR.getField("bool0");

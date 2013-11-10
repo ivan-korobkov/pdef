@@ -93,7 +93,7 @@ public class {{ name }} extends {{ base_or_root }} {
         return DESCRIPTOR;
     }
 
-    public static final io.pdef.descriptors.MessageDescriptor<{{ name }}> DESCRIPTOR = io.pdef.descriptors.ImmutableMessageDescriptor.<{{ name }}>builder()
+    public static final io.pdef.descriptors.MessageDescriptor<{{ name }}> DESCRIPTOR = io.pdef.descriptors.MessageDescriptor.<{{ name }}>builder()
             .setJavaClass({{ name }}.class)
             .setProvider(new io.pdef.Provider<{{ name }}>() {
                 public {{ name }} get() {
@@ -114,7 +114,7 @@ public class {{ name }} extends {{ base_or_root }} {
             })
             {% endfor %}
             {% for field in declared_fields %}
-            .addField(io.pdef.descriptors.ImmutableFieldDescriptor.<{{ name }}, {{ field.type }}>builder()
+            .addField(io.pdef.descriptors.FieldDescriptor.<{{ name }}, {{ field.type }}>builder()
                     .setName("{{ field.name }}")
                 {% if field.is_discriminator %}
                     .setDiscriminator(true)

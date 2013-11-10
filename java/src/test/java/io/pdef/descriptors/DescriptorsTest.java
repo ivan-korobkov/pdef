@@ -1,9 +1,5 @@
 package io.pdef.descriptors;
 
-import io.pdef.descriptors.Descriptors;
-import io.pdef.descriptors.ListDescriptor;
-import io.pdef.descriptors.MapDescriptor;
-import io.pdef.descriptors.SetDescriptor;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 

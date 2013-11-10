@@ -3,10 +3,8 @@ package io.pdef.rpc;
 import io.pdef.Invocation;
 import io.pdef.InvocationProxy;
 import io.pdef.Invoker;
-import io.pdef.descriptors.InterfaceDescriptor;
-import io.pdef.descriptors.MessageDescriptor;
-import io.pdef.descriptors.MethodDescriptor;
-import io.pdef.descriptors.ValueDescriptor;
+import io.pdef.Message;
+import io.pdef.descriptors.*;
 
 public class RpcClient<T> implements Invoker {
 	private final InterfaceDescriptor<T> descriptor;
@@ -41,7 +39,7 @@ public class RpcClient<T> implements Invoker {
 		if (!method.isRemote()) throw new IllegalArgumentException("Method must be remote");
 
 		ValueDescriptor<?> resultDescriptor = (ValueDescriptor<?>) method.getResult();
-		MessageDescriptor<?> excDescriptor = method.getExc();
+		MessageDescriptor<? extends Message> excDescriptor = method.getExc();
 
 		RpcRequest request = protocol.getRequest(invocation);
 		return session.send(request, resultDescriptor, excDescriptor);

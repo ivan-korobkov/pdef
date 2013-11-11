@@ -3,7 +3,8 @@ class {{ name }}({{ root_or_base }}):
     """{{ doc|indent(4) }}"""
 
 {% endif %}
-{% for method in declared_methods %}
+
+{%- for method in declared_methods %}
     {% if method.args %}
     def {{ method.name }}(self, {% for arg in method.args -%}
             {{ arg.name }}=None
@@ -26,15 +27,17 @@ class {{ name }}({{ root_or_base }}):
         methods=(
         {% for method in declared_methods %}
             pdef.descriptors.method('{{ method.name }}', lambda: {{ method.result.descriptor}},
+                exc=lambda: {{ exc.descriptor }},
             {% if method.is_post %}
                 is_post=True,
             {% endif %}
-            {% if not method.args %}
+
+            {%- if not method.args %}
                 ),
             {% else %}
                 args=(
                 {% for arg in method.args %}
-                    pdef.descriptors.arg('{{ arg.name }}', lambda: {{ arg.type.descriptor }}),
+                    pdef.descriptors.arg('{{ arg.name }}', lambda: {{ arg.type.descriptor }}, {{ arg.is_query }}, {{ arg.is_post }}),
                 {% endfor %}
                 )),
             {% endif %}

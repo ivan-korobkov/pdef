@@ -2,16 +2,10 @@ class {{ name }}({{ root_or_base }}):
 {% if doc %}
     """{{ doc|indent(4) }}"""
 
-{% endif %}
+{% endif -%}
+
 {% if not fields %}
     def __init__(self):
-{% elif fields|length < 5 %}
-    def __init__(self, {% for field in fields if not field.is_discriminator -%}
-        {{ field.name }}=None
-        {%- if loop.last %}): {% else %}, {% endif %}
-    {% else %}):
-    {% endfor %}
-
 {% else %}
     def __init__(self,
     {% for field in fields if not field.is_discriminator %}
@@ -22,31 +16,31 @@ class {{ name }}({{ root_or_base }}):
     {% endfor %}
 {% endif %}
 
-    {%- if inherited_fields %}
+        {%- if inherited_fields %}
         super({{ name }}, self).__init__(
-        {%- for field in inherited_fields if not field.is_discriminator %}
-
+            {% for field in inherited_fields if not field.is_discriminator %}
             {{ field.name }}={{ field.name }}
             {%- if loop.last %}) {% else %}, {% endif %}
-        {% else %})
-        {% endfor %}
 
-    {% endif %}
+            {% endfor %}
+        {% endif %}
 
-    {%- if not declared_fields and not discriminator_value %}
+        {%- if not declared_fields and not discriminator_value %}
         pass
-    {% endif %}
-    {% for field in declared_fields %}
+        {% endif -%}
+
+        {% for field in declared_fields %}
         self.{{ field.name }} = {% if field.is_discriminator -%}
             None
-        {%- else -%}
+            {%- else -%}
             {{ field.name }}
-        {%- endif %}
+            {%- endif %}
 
-    {% endfor %}
-    {% if discriminator_value %}
+        {% endfor %}
+
+        {%- if discriminator_value %}
         self.{{ discriminator.name }} = {{ discriminator_value }}
-    {% endif %}
+        {% endif %}
 
     DESCRIPTOR = pdef.descriptors.message(lambda: {{ name }},
     {% if base %}

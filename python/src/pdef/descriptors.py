@@ -30,22 +30,21 @@ class DataDescriptor(Descriptor):
 
 class MessageDescriptor(DataDescriptor):
     '''Message descriptor.'''
-    def __init__(self, pyclass, base=None, discriminator_value=None, fields=None, subtypes=None,
-                 is_form=False):
+    def __init__(self, pyclass, base=None, discriminator_value=None, fields=None, subtypes=None):
         super(MessageDescriptor, self).__init__(Type.MESSAGE, pyclass)
         self.base = base
-        self.discriminator_value = discriminator_value
 
         self.declared_fields = tuple(fields) if fields else ()
         self.inherited_fields = base.fields if base else ()
         self.fields = self.inherited_fields + self.declared_fields
+
+        self.discriminator_value = discriminator_value
         self.discriminator = self._find_discriminator(self.fields)
 
         self._subtype_suppliers = tuple(_supplier(s) for s in subtypes) if subtypes else ()
         self._subtypes = None
         self._subtype_map = None
 
-        self.is_form = is_form
         self.is_polymorphic = bool(self.discriminator)
 
     def __str__(self):
@@ -114,21 +113,10 @@ class InterfaceDescriptor(Descriptor):
         super(InterfaceDescriptor, self).__init__(Type.INTERFACE, pyclass)
         self._exc_supplier = _supplier(exc)
         self._exc = None
-
         self.methods = tuple(methods) if methods else ()
-        self.index_method = self._find_index_method(self.methods)
-
-        for method in self.methods:
-            method._exc_supplier = self._exc_supplier
 
     def __str__(self):
         return str(self.pyclass)
-
-    @classmethod
-    def _find_index_method(cls, methods):
-        for method in methods:
-            if method.is_index:
-                return method
 
     @property
     def exc(self):
@@ -145,7 +133,7 @@ class InterfaceDescriptor(Descriptor):
 
 class MethodDescriptor(object):
     '''Interface method descriptor.'''
-    def __init__(self, name, result, args=None, exc=None, is_index=False, is_post=False):
+    def __init__(self, name, result, args=None, exc=None, is_post=False):
         self.name = name
         self._result_supplier = _supplier(result)
         self._result = None
@@ -155,7 +143,6 @@ class MethodDescriptor(object):
 
         self.args = tuple(args) if args else ()
 
-        self.is_index = is_index
         self.is_post = is_post
 
     @property
@@ -201,10 +188,13 @@ class MethodDescriptor(object):
 
 class ArgDescriptor(object):
     '''Method argument descriptor.'''
-    def __init__(self, name, type0):
+    def __init__(self, name, type0, is_query=False, is_post=False):
         self.name = name
         self._type_supplier = _supplier(type0)
         self._type = None
+
+        self.is_query = is_query
+        self.is_post = is_post
 
     @property
     def type(self):
@@ -276,11 +266,10 @@ def map0(key, value):
     return MapDescriptor(key, value)
 
 
-def message(pyclass, base=None, discriminator_value=None, fields=None, subtypes=None,
-            is_form=False):
+def message(pyclass, base=None, discriminator_value=None, fields=None, subtypes=None):
     '''Create a message descriptor.'''
     return MessageDescriptor(pyclass, base=base, discriminator_value=discriminator_value,
-                             fields=fields, subtypes=subtypes, is_form=is_form)
+                             fields=fields, subtypes=subtypes)
 
 
 def field(name, type0, is_discriminator=False):
@@ -300,13 +289,12 @@ def interface(pyclass, exc=None, methods=None):
 
 def method(name, result, args=None, exc=None, is_index=False, is_post=False):
     '''Create an interface method descriptor.'''
-    return MethodDescriptor(name, result=result, args=args, exc=exc,
-                            is_index=is_index, is_post=is_post)
+    return MethodDescriptor(name, result=result, args=args, exc=exc, is_post=is_post)
 
 
-def arg(name, type0):
+def arg(name, type0, is_query=False, is_post=False):
     '''Create a method argument descriptor.'''
-    return ArgDescriptor(name, type0)
+    return ArgDescriptor(name, type0, is_query=is_query, is_post=is_post)
 
 
 def _supplier(type_or_lambda):

@@ -244,6 +244,8 @@ class PythonArg(object):
     def __init__(self, arg, ref):
         self.name = arg.name
         self.type = ref(arg.type)
+        self.is_query = 'True' if arg.is_query else 'False'
+        self.is_post = 'True' if arg.is_post else 'False'
 
 
 class PythonReference(object):

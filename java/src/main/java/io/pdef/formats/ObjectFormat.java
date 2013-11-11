@@ -5,29 +5,29 @@ import io.pdef.descriptors.*;
 
 import java.util.*;
 
-public class NativeFormat {
-	private static final NativeFormat INSTANCE = new NativeFormat();
+public class ObjectFormat {
+	private static final ObjectFormat INSTANCE = new ObjectFormat();
 
-	public static NativeFormat getInstance() {
+	public static ObjectFormat getInstance() {
 		return INSTANCE;
 	}
 
-	private NativeFormat() {}
+	private ObjectFormat() {}
 
 	// Serializing.
 
 	@SuppressWarnings("unchecked")
-	public <T extends Message> Map<String, Object> write(final T message,
+	public <T extends Message> Map<String, Object> toObject(final T message,
 			final MessageDescriptor<T> descriptor) throws FormatException {
-		return (Map<String, Object>) write(message, (ValueDescriptor<T>) descriptor);
+		return (Map<String, Object>) this.toObject(message, (ValueDescriptor<T>) descriptor);
 	}
 
-	public <T> Object write(final T object, final ValueDescriptor<T> descriptor)
+	public <T> Object toObject(final T object, final ValueDescriptor<T> descriptor)
 			throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
-			return doWrite(object, descriptor);
+			return write(object, descriptor);
 		} catch (FormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -36,7 +36,8 @@ public class NativeFormat {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> Object doWrite(final T object, final ValueDescriptor<T> descriptor) throws Exception {
+	private <T> Object write(final T object, final ValueDescriptor<T> descriptor)
+			throws Exception {
 		if (object == null) {
 			return null;
 		}
@@ -49,16 +50,23 @@ public class NativeFormat {
 			case INT64:
 			case FLOAT:
 			case DOUBLE:
-			case STRING: return object;
-			case LIST: return writeList((List) object, (ListDescriptor) descriptor);
-			case SET: return writeSet((Set) object, (SetDescriptor) descriptor);
-			case MAP: return writeMap((Map) object, (MapDescriptor) descriptor);
-			case ENUM: return writeEnum((Enum) object);
+			case STRING:
+				return object;
+			case LIST:
+				return writeList((List) object, (ListDescriptor) descriptor);
+			case SET:
+				return writeSet((Set) object, (SetDescriptor) descriptor);
+			case MAP:
+				return writeMap((Map) object, (MapDescriptor) descriptor);
+			case ENUM:
+				return writeEnum((Enum) object);
 			case MESSAGE:
 			case EXCEPTION:
 				return writeMessage((Message) object);
-			case VOID: return null;
-			default: throw new IllegalArgumentException("Unsupported descriptor " + descriptor);
+			case VOID:
+				return null;
+			default:
+				throw new IllegalArgumentException("Unsupported descriptor " + descriptor);
 		}
 	}
 
@@ -72,7 +80,7 @@ public class NativeFormat {
 		List<Object> result = new ArrayList<Object>();
 
 		for (E elem : list) {
-			Object serialized = doWrite(elem, element);
+			Object serialized = write(elem, element);
 			result.add(serialized);
 		}
 
@@ -88,7 +96,7 @@ public class NativeFormat {
 		ValueDescriptor<E> element = descriptor.getElement();
 		Set<Object> result = new HashSet<Object>();
 		for (E elem : set) {
-			Object serialized = doWrite(elem, element);
+			Object serialized = write(elem, element);
 			result.add(serialized);
 		}
 
@@ -106,8 +114,8 @@ public class NativeFormat {
 		Map<Object, Object> result = new HashMap<Object, Object>();
 
 		for (Map.Entry<K, V> e : map.entrySet()) {
-			Object k = doWrite(e.getKey(), key);
-			Object v = doWrite(e.getValue(), value);
+			Object k = write(e.getKey(), key);
+			Object v = write(e.getValue(), value);
 			result.put(k, v);
 		}
 
@@ -145,17 +153,18 @@ public class NativeFormat {
 			return;
 		}
 
-		Object serialized = doWrite(value, field.getType());
+		Object serialized = write(value, field.getType());
 		map.put(field.getName(), serialized);
 	}
 
 	// Parsing.
 
-	public <T> T read(final Object input, final ValueDescriptor<T> descriptor) throws FormatException {
+	public <T> T fromObject(final Object input, final ValueDescriptor<T> descriptor)
+			throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
 		try {
-			return doRead(descriptor, input);
+			return read(descriptor, input);
 		} catch (FormatException e) {
 			throw e;
 		} catch (Exception e) {
@@ -164,7 +173,7 @@ public class NativeFormat {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> T doRead(final ValueDescriptor<T> descriptor, final Object input) throws Exception {
+	private <T> T read(final ValueDescriptor<T> descriptor, final Object input) throws Exception {
 		if (input == null) {
 			return null;
 		}
@@ -263,7 +272,7 @@ public class NativeFormat {
 		List<E> result = new ArrayList<E>();
 
 		for (Object elem : collection) {
-			E parsed = doRead(element, elem);
+			E parsed = read(element, elem);
 			result.add(parsed);
 		}
 
@@ -281,7 +290,7 @@ public class NativeFormat {
 		ValueDescriptor<E> element = descriptor.getElement();
 
 		for (Object elem : collection) {
-			E parsed = doRead(element, elem);
+			E parsed = read(element, elem);
 			result.add(parsed);
 		}
 
@@ -300,8 +309,8 @@ public class NativeFormat {
 		ValueDescriptor<V> value = descriptor.getValue();
 
 		for (Map.Entry<?, ?> e : map.entrySet()) {
-			K k = doRead(key, e.getKey());
-			V v = doRead(value, e.getValue());
+			K k = read(key, e.getKey());
+			V v = read(value, e.getValue());
 			result.put(k, v);
 		}
 
@@ -331,7 +340,7 @@ public class NativeFormat {
 		if (discriminator != null) {
 			Object fieldValue = map.get(discriminator.getName());
 			if (fieldValue != null) {
-				Enum<?> discriminatorValue = (Enum<?>) doRead(discriminator.getType(), fieldValue);
+				Enum<?> discriminatorValue = (Enum<?>) read(discriminator.getType(), fieldValue);
 				@SuppressWarnings("unchecked")
 				MessageDescriptor<M> subtype = (MessageDescriptor<M>) descriptor
 						.getSubtype(discriminatorValue);
@@ -350,10 +359,10 @@ public class NativeFormat {
 		return message;
 	}
 
-	private <M extends Message, V> void parseField(final FieldDescriptor<M, V> field, final M message,
-			final Map<?, ?> map) throws Exception {
+	private <M extends Message, V> void parseField(final FieldDescriptor<M, V> field,
+			final M message, final Map<?, ?> map) throws Exception {
 		Object fieldInput = map.get(field.getName());
-		V value = doRead(field.getType(), fieldInput);
+		V value = read(field.getType(), fieldInput);
 		field.set(message, value);
 	}
 }

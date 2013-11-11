@@ -9,9 +9,12 @@ public enum {{ name }} {
     {{ value }}{% if not loop.last and loop.length > 1 %}, {% endif %}
     {%- endfor %};
 
+    public static final io.pdef.descriptors.EnumDescriptor<{{ name }}> DESCRIPTOR =
+            io.pdef.descriptors.EnumDescriptor.of({{ name }}.class);
+
     /** Returns an enum value from a string or {@literal null}. */
     public static {{ name }} fromString(final String s) {
-        return io.pdef.formats.NativeFormat.getInstance().read(s, DESCRIPTOR);
+        return io.pdef.formats.ObjectFormat.getInstance().fromObject(s, DESCRIPTOR);
     }
 
     /** Returns an enum value from a json string or {@literal null}. */
@@ -19,7 +22,8 @@ public enum {{ name }} {
         return io.pdef.formats.JsonFormat.getInstance().fromJson(s, DESCRIPTOR);
     }
 
-    public static final io.pdef.descriptors.EnumDescriptor<{{ name }}> DESCRIPTOR =
-            io.pdef.descriptors.EnumDescriptor.of({{ name }}.class);
+    public String toJson() {
+        return io.pdef.formats.JsonFormat.getInstance().toJson(this, DESCRIPTOR, false);
+    }
 }
 

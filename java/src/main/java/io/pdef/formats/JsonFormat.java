@@ -16,7 +16,7 @@ public class JsonFormat {
 	private static final JsonFormat INSTANCE = new JsonFormat();
 
 	private final JsonFactory factory;
-	private final NativeFormat nativeFormat;
+	private final ObjectFormat objectFormat;
 
 	protected JsonFormat() {
 		this(new JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS));
@@ -24,7 +24,7 @@ public class JsonFormat {
 
 	protected JsonFormat(final JsonFactory factory) {
 		this.factory = factory;
-		nativeFormat = NativeFormat.getInstance();
+		objectFormat = ObjectFormat.getInstance();
 	}
 
 	public static JsonFormat getInstance() {
@@ -77,7 +77,7 @@ public class JsonFormat {
 		}
 	}
 
-	/** Writes an object to a writer as a JSON string, does not close the write. */
+	/** Writes an object to a writer as a JSON string, does not close the writer. */
 	public <T> void toJson(final PrintWriter writer, final T object,
 			final ValueDescriptor<T> descriptor, final boolean indent) {
 		if (writer == null) throw new NullPointerException("writer");
@@ -309,7 +309,7 @@ public class JsonFormat {
 			parser.close();
 		}
 
-		return nativeFormat.read(nativeObject, descriptor);
+		return objectFormat.fromObject(nativeObject, descriptor);
 	}
 
 	private Object read(final JsonParser parser) throws IOException {

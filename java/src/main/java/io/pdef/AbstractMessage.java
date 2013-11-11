@@ -3,7 +3,7 @@ package io.pdef;
 import io.pdef.descriptors.FieldDescriptor;
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.formats.JsonFormat;
-import io.pdef.formats.NativeFormat;
+import io.pdef.formats.ObjectFormat;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -18,7 +18,7 @@ public abstract class AbstractMessage implements Message, Serializable {
 
 	@Override
 	public Map<String, Object> toMap() {
-		return NativeFormat.getInstance().write(this, uncheckedDescriptor());
+		return ObjectFormat.getInstance().toObject(this, uncheckedDescriptor());
 	}
 
 	@Override

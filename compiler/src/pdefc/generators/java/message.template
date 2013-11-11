@@ -47,7 +47,7 @@ public class {{ name }} extends {{ base_or_root }} {
     {% endif %}
     }
 
-    public {{ name }} {{ field.set }}(final {{ field.type }} value) {
+    public {{ name }} {{ field.set }}(final {{ field.type.unboxed }} value) {
         this.{{ field.name }} = value;
         return this;
     }
@@ -56,12 +56,23 @@ public class {{ name }} extends {{ base_or_root }} {
         return {{ field.name }} != null;
     }
 
+    public {{ name }} {{ field.clear }}() {
+        this.{{ field.name }} = null;
+        return this;
+    }
+
 {% endfor %}
 {% for field in inherited_fields %}
     // {{ field.name }}
     @Override
-    public {{ name }} {{ field.set }}(final {{ field.type }} value) {
+    public {{ name }} {{ field.set }}(final {{ field.type.unboxed }} value) {
         super.{{ field.set }}(value);
+        return this;
+    }
+
+    @Override
+    public {{ name }} {{ field.clear }}() {
+        super.{{ field.clear }}();
         return this;
     }
 

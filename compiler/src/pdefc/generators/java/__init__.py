@@ -121,6 +121,7 @@ class JavaField(object):
         self.get = 'get%s' % generators.upper_first(self.name)
         self.set = 'set%s' % generators.upper_first(self.name)
         self.present = 'has%s' % generators.upper_first(self.name)
+        self.clear = 'clear%s' % generators.upper_first(self.name)
 
 
 class JavaInterface(JavaDefinition):

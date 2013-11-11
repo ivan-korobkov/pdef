@@ -106,7 +106,7 @@ class RestProtocol(object):
             dst[field.name] = self._serialize_to_json(field.type, value)
 
     def _serialize_to_json(self, descriptor, value):
-        s = pdef.json.serialize(value, descriptor, indent=None)
+        s = pdef.json_format.to_json(value, descriptor, indent=None)
         if descriptor.type == pdef.Type.STRING:
             s = s.strip('"')
         return s
@@ -116,7 +116,7 @@ class RestProtocol(object):
     def parse_invocation_result(self, response, datad, excd=None):
         '''Parse an invocation result from a RestResponse.'''
         result_class = self._result_class(datad, excd)
-        result = result_class.parse_json(response.content)
+        result = result_class.from_json(response.content)
 
         if result.ok:
             # It's a successful result.
@@ -253,7 +253,7 @@ class RestProtocol(object):
             return None
         if descriptor.type == pdef.Type.STRING:
             s = '"' + s + '"'
-        return pdef.json.parse(s, descriptor)
+        return pdef.json_format.from_json(s, descriptor)
 
     # InvocationResult serialization.
 

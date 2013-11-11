@@ -39,31 +39,31 @@ class Message(object):
     DESCRIPTOR = None
 
     @classmethod
-    def parse_json(cls, s, **kwargs):
+    def from_json(cls, s, **kwargs):
         '''Parse a message from a json string.'''
-        return pdef.json.parse(s, cls.DESCRIPTOR, **kwargs)
+        return pdef.json_format.from_json(s, cls.DESCRIPTOR, **kwargs)
 
     @classmethod
-    def parse_json_stream(cls, fp, **kwargs):
+    def from_json_stream(cls, fp, **kwargs):
         '''Parse a message from a json file-like object.'''
-        return pdef.json.parse_stream(fp, cls.DESCRIPTOR, **kwargs)
+        return pdef.json_format.from_json_stream(fp, cls.DESCRIPTOR, **kwargs)
 
     @classmethod
-    def parse_dict(cls, d):
+    def from_dict(cls, d):
         '''Parse a message from a dictionary.'''
-        return pdef.native.parse(d, cls.DESCRIPTOR)
+        return pdef.object_format.parse(d, cls.DESCRIPTOR)
 
     def to_json(self, indent=None, **kwargs):
         '''Convert this message to a json string.'''
-        return pdef.json.serialize(self, self.DESCRIPTOR, indent=indent)
+        return pdef.json_format.to_json(self, self.DESCRIPTOR, indent=indent)
 
     def to_json_stream(self, fp, indent=None, **kwargs):
         '''Serialize this message as a json string to a file-like stream.'''
-        return pdef.json.serialize_to_stream(self, self.DESCRIPTOR, fp, indent=indent, **kwargs)
+        return pdef.json_format.to_json_stream(self, self.DESCRIPTOR, fp, indent=indent, **kwargs)
 
     def to_dict(self):
         '''Convert this message to a dictionary (serialize each field).'''
-        return pdef.native.serialize(self, self.DESCRIPTOR)
+        return pdef.object_format.serialize(self, self.DESCRIPTOR)
 
     def __eq__(self, other):
         if other is None or self.__class__ is not other.__class__:
@@ -117,7 +117,7 @@ class Enum(object):
 
     @classmethod
     def parse_json(cls, s):
-        return pdef.json.parse(s, cls.DESCRIPTOR)
+        return pdef.json_format.from_json(s, cls.DESCRIPTOR)
 
 
 class Interface(object):

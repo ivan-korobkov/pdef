@@ -15,21 +15,21 @@ class TestPdefMessage(unittest.TestCase):
         return {'string0': 'hello', 'bool0': True}
 
     def test_parse_json(self):
-        msg = TestMessage.parse_json(self.JSON)
+        msg = TestMessage.from_json(self.JSON)
         assert msg == self._fixture()
 
     def test_parse_dict(self):
         msg = self._fixture()
         d = msg.to_dict()
 
-        msg1 = TestMessage.parse_dict(d)
+        msg1 = TestMessage.from_dict(d)
         assert msg == msg1
 
     def test_to_json(self):
         msg = self._fixture()
         s = msg.to_json()
 
-        msg1 = TestMessage.parse_json(s)
+        msg1 = TestMessage.from_json(s)
         assert msg == msg1
 
     def test_to_dict(self):

@@ -4,8 +4,8 @@ import json as _json
 import pdef.types
 
 
-class NativeFormat(object):
-    '''NativeFormat parses/serializes pdef data types from/to native types and collections.'''
+class ObjectFormat(object):
+    '''ObjectFormat parses/serializes pdef data types from/to native types and collections.'''
     def serialize(self, obj, descriptor):
         if obj is None:
             return None
@@ -122,33 +122,33 @@ class NativeFormat(object):
 class JsonFormat(object):
     '''JsonFormat parses/serializes pdef types from/to JSON strings.'''
     def __init__(self):
-        self.native = NativeFormat()
+        self.object_format = ObjectFormat()
 
-    def parse(self, s, descriptor):
+    def from_json(self, s, descriptor):
         '''Parse a pdef data type from a json string.'''
         if s is None:
             return None
 
         value = _json.loads(s)
-        parsed = self.native.parse(value, descriptor)
+        parsed = self.object_format.parse(value, descriptor)
         return parsed
 
-    def parse_stream(self, fp, descriptor):
+    def from_json_stream(self, fp, descriptor):
         '''Parse an pdef data type as a json string from a file-like object.'''
         value = _json.load(fp)
-        parsed = self.native.parse(value, descriptor)
+        parsed = self.object_format.parse(value, descriptor)
         return parsed
 
-    def serialize(self, obj, descriptor, indent=None, **kwargs):
+    def to_json(self, obj, descriptor, indent=None, **kwargs):
         '''Serialize a pdef object into a json string.'''
-        serialized = self.native.serialize(obj, descriptor)
+        serialized = self.object_format.serialize(obj, descriptor)
         s = _json.dumps(serialized, ensure_ascii=False, indent=indent, default=self._default,
                         **kwargs)
         return s
 
-    def serialize_to_stream(self, obj, descriptor, fp, indent=None, **kwargs):
+    def to_json_stream(self, obj, descriptor, fp, indent=None, **kwargs):
         '''Serialize a pdef object as a json string to a file-like object.'''
-        serialized = self.native.serialize(obj, descriptor)
+        serialized = self.object_format.serialize(obj, descriptor)
         return _json.dump(serialized, fp, ensure_ascii=False, indent=indent, default=self._default,
                           **kwargs)
 
@@ -158,5 +158,5 @@ class JsonFormat(object):
         raise TypeError('%s is not JSON serializable' % type(obj))
 
 
-native = NativeFormat()
-json = JsonFormat()
+object_format = ObjectFormat()
+json_format = JsonFormat()

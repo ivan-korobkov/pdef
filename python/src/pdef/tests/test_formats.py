@@ -1,18 +1,18 @@
 # encoding: utf-8
 import unittest
 from pdef import descriptors
-from pdef.formats import json
+from pdef.formats import json_format
 from pdef_test import inheritance, messages
 
 
 class TestJsonFormat(unittest.TestCase):
     def _test(self, descriptor, parsed, serialized):
-        assert json.serialize(parsed, descriptor) == serialized
-        assert json.parse(serialized, descriptor) == parsed
+        assert json_format.to_json(parsed, descriptor) == serialized
+        assert json_format.from_json(serialized, descriptor) == parsed
 
         # Nulls.
-        assert json.serialize(None, descriptor) == 'null'
-        assert json.parse('null', descriptor) is None
+        assert json_format.to_json(None, descriptor) == 'null'
+        assert json_format.from_json('null', descriptor) is None
 
     def test_boolean(self):
         self._test(descriptors.bool0, True, 'true')
@@ -39,7 +39,7 @@ class TestJsonFormat(unittest.TestCase):
 
     def test_enum(self):
         self._test(messages.TestEnum.DESCRIPTOR, messages.TestEnum.THREE, '"three"')
-        assert json.parse('"tWo"', messages.TestEnum.DESCRIPTOR) == messages.TestEnum.TWO
+        assert json_format.from_json('"tWo"', messages.TestEnum.DESCRIPTOR) == messages.TestEnum.TWO
 
     def test_message(self):
         message = self._complex_message()
@@ -51,7 +51,7 @@ class TestJsonFormat(unittest.TestCase):
 
     def test_message__skip_null_fields(self):
         message = messages.TestMessage(string0='hello')
-        assert json.serialize(message, messages.TestMessage.DESCRIPTOR) == '{"string0": "hello"}'
+        assert json_format.to_json(message, messages.TestMessage.DESCRIPTOR) == '{"string0": "hello"}'
 
     def test_void(self):
         self._test(descriptors.void, None, 'null')

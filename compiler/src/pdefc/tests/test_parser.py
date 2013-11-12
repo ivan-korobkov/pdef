@@ -82,13 +82,32 @@ class TestParser(unittest.TestCase):
     def test_syntax_error(self):
         s = '''module hello.world;
 
+        /**
+         * Multi-line doc.
+         */
         message Message {
+            // Comment
             wrong field definition;
         }
         '''
         module, errors = self.parser.parse_string(s)
         assert not module
-        assert "Syntax error at 'definition', line 4" in errors[0].errors
+        assert "Syntax error at 'definition', line 8" in errors[0].errors
+
+    def test_syntax_error__reuse_parser(self):
+        s = '''module hello.world;
+
+        /** Doc. */
+        message Message {
+            // Comment
+            wrong field definition;
+        }
+        '''
+        _, errors0 = self.parser.parse_string(s)
+        _, errors1 = self.parser.parse_string(s)
+
+        assert "Syntax error at 'definition', line 6" in errors0[0].errors
+        assert "Syntax error at 'definition', line 6" in errors1[0].errors
 
     def test_syntax_error__end_of_file(self):
         s = '''module hello.world;

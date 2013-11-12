@@ -119,7 +119,8 @@ class Parser(object):
         self._path = path
 
         try:
-            module = self.parser.parse(s, tracking=True, lexer=self.lexer)
+            lexer = self.lexer.clone()
+            module = self.parser.parse(s, tracking=True, lexer=lexer)
 
             errors = list(self._errors)
             module = None if errors else module
@@ -207,9 +208,10 @@ class _Tokens(object):
 
     def t_comment(self, t):
         r'//.*\n'
+        t.lexer.lineno += 1
         t.lineno += 1
 
-    # Skip the new line and increment the lineno counter.
+    # Skip a new line and increment the lexer lineno counter.
     def t_newline(self, t):
         r'\n+'
         t.lexer.lineno += t.value.count("\n")
@@ -220,7 +222,8 @@ class _Tokens(object):
     # Pdef docstring.
     def t_DOC(self, t):
         r'\/\*\*((.|\n)*?)\*\/'
-        t.lineno += t.value.count('\n')
+        t.lexer.lineno += t.value.count('\n')
+
         value = t.value.strip('/')
         value = self.doc_start.sub('', value)
         value = self.doc_end.sub('', value)

@@ -159,8 +159,8 @@ class MethodDescriptor(object):
         return self._exc
 
     @property
-    def is_remote(self):
-        '''Method is remote when its result is not an interface.'''
+    def is_terminal(self):
+        '''Method is terminal when its result is not an interface.'''
         return self.result.type != Type.INTERFACE
 
     def invoke(self, obj, *args, **kwargs):

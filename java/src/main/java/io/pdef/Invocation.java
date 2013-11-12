@@ -42,8 +42,8 @@ public class Invocation {
 
 	/** Returns the method result. */
 	public ValueDescriptor<?> getResult() {
-		if (!method.isRemote()) {
-			throw new IllegalStateException("Cannot get a result when a method is not remote");
+		if (!method.isTerminal()) {
+			throw new IllegalStateException("Cannot get a result when a method is not terminal");
 		}
 
 		return (ValueDescriptor<?>) method.getResult();

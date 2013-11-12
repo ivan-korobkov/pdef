@@ -28,8 +28,8 @@ public class RpcProtocol {
 		if (invocation == null) throw new NullPointerException("invocation");
 
 		MethodDescriptor<?, ?> method = invocation.getMethod();
-		if (!method.isRemote()) {
-			throw new IllegalArgumentException("Last invocation method must be remote");
+		if (!method.isTerminal()) {
+			throw new IllegalArgumentException("Last invocation method must be terminal");
 		}
 
 		RpcRequest request = new RpcRequest(method.isPost() ? RpcRequest.POST : RpcRequest.GET);
@@ -113,7 +113,7 @@ public class RpcProtocol {
 			// or a next invocation in a chain.
 			invocation = invocation != null ? invocation.next(method, args.toArray())
 			                                : Invocation.root(method, args.toArray());
-			if (method.isRemote()) {
+			if (method.isTerminal()) {
 				break;
 			}
 
@@ -130,8 +130,8 @@ public class RpcProtocol {
 			throw RpcException.methodNotFound("No methods");
 		}
 
-		if (!invocation.getMethod().isRemote()) {
-			throw RpcException.methodNotFound("The last method must be a remote one. "
+		if (!invocation.getMethod().isTerminal()) {
+			throw RpcException.methodNotFound("The last method must be a terminal one. "
 					+ "It must return a value type or be void.");
 		}
 

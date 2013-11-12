@@ -123,7 +123,7 @@ class Method(Located):
         self._result = references.reference(value)
 
     @property
-    def is_remote(self):
+    def is_terminal(self):
         return self.result and (not self.result.is_interface)
 
     def add_arg(self, arg):
@@ -161,9 +161,9 @@ class Method(Located):
         else:
             errors += self._result.validate()
 
-        # @post methods must be remote.
-        if self.is_post and not self.is_remote:
-            errors.append(self._error('%s: @post method must be remote (return a data type '
+        # @post methods must be terminal.
+        if self.is_post and not self.is_terminal:
+            errors.append(self._error('%s: @post method must be terminal (return a data type '
                                       'or void)', self))
 
         # Prevent duplicate arguments.

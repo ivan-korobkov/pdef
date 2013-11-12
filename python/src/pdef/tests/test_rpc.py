@@ -116,7 +116,7 @@ class TestRpcProtocol(unittest.TestCase):
         assert invocation1.method.name == 'query'
         assert invocation1.kwargs == {'arg0': 3, 'arg1': None}
 
-    def test_get_invocation__last_method_not_remote(self):
+    def test_get_invocation__last_method_not_terminal(self):
         request = RpcRequest(path='/interface0/1/2')
 
         try:

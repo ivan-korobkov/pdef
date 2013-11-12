@@ -143,7 +143,7 @@ public class RpcProtocolTest {
 	}
 
 	@Test(expected = RpcException.class)
-	public void testGetInvocation_lastMethodNotRemote() throws Exception {
+	public void testGetInvocation_lastMethodNotTerminal() throws Exception {
 		RpcRequest request = new RpcRequest().setPath("/interface0/1/2");
 
 		protocol.getInvocation(request, TestInterface.DESCRIPTOR);

@@ -122,19 +122,19 @@ class TestMethodDescriptor(unittest.TestCase):
         assert method.args[0].type is descriptors.int32
         assert method.args[1].type is descriptors.int32
 
-    def test_post_remote(self):
+    def test_post_terminal(self):
         descriptor = TestInterface.DESCRIPTOR
         method = descriptor.find_method('method')
         post = descriptor.find_method('post')
         interface = descriptor.find_method('interface0')
 
-        assert method.is_remote
+        assert method.is_terminal
         assert not method.is_post
 
-        assert post.is_remote
+        assert post.is_terminal
         assert post.is_post
 
-        assert not interface.is_remote
+        assert not interface.is_terminal
         assert not interface.is_post
 
     def test_invoke(self):

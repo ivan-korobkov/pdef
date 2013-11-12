@@ -67,12 +67,12 @@ class TestMethod(unittest.TestCase):
 
         assert 'List element must be a data type' in errors[0]
 
-    def test_validate__post_must_be_remote(self):
+    def test_validate__post_must_be_terminal(self):
         result = Interface('Interface')
         method = Method('method', result, is_post=True)
 
         errors = method.validate()
-        assert '@post method must be remote' in errors[0]
+        assert '@post method must be terminal' in errors[0]
 
     def test_validate__duplicate_args(self):
         method = Method('method')

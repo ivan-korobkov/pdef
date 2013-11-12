@@ -49,7 +49,7 @@ public class InvocationProxy<T> implements InvocationHandler {
 		}
 
 		Invocation invocation = capture(md, args);
-		if (md.isRemote()) {
+		if (md.isTerminal()) {
 			return handle(invocation);
 		} else {
 			return nextProxy(invocation);

@@ -78,7 +78,7 @@ public class MethodDescriptor<T, R> implements MethodInvoker<T, R> {
 	}
 
 	/** Returns whether this method returns a value type or void (not an interface). */
-	public boolean isRemote() {
+	public boolean isTerminal() {
 		TypeEnum type = getResult().getType();
 		return type != TypeEnum.INTERFACE;
 	}

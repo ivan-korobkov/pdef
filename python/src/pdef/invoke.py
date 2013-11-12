@@ -7,7 +7,7 @@ def proxy(interface, invocation_handler):
     '''Create a interface proxy.
 
     The proxy captures method calls into chained invocations, and passes them
-    to the handler on remote methods.
+    to the handler on terminal methods.
 
     @param interface:               Interface with a class DESCRIPTOR field.
     @param invocation_handler:      callable(Invocation): InvocationResult.
@@ -135,7 +135,7 @@ class _ProxyMethod(object):
         else:
             invocation = Invocation(method, args=args, kwargs=kwargs)
 
-        if not method.is_remote:
+        if not method.is_terminal:
             # This is a method, which returns an interface.
             # Create a next invocation proxy.
             return InvocationProxy(method.result, self.handler, invocation)

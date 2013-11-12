@@ -23,7 +23,7 @@ public class MethodDescriptorTest {
 	}
 
 	@Test
-	public void testIndexPostRemote() throws Exception {
+	public void testIndexPostTerminal() throws Exception {
 		MethodDescriptor<TestInterface, ?> index = method();
 		MethodDescriptor<TestInterface, ?> query = TestInterface.DESCRIPTOR.getMethod(
 				"query");
@@ -32,16 +32,16 @@ public class MethodDescriptorTest {
 		MethodDescriptor<TestInterface, ?> iface = TestInterface.DESCRIPTOR.getMethod(
 				"interface0");
 
-		assertTrue(index.isRemote());
+		assertTrue(index.isTerminal());
 		assertFalse(index.isPost());
 
-		assertTrue(query.isRemote());
+		assertTrue(query.isTerminal());
 		assertFalse(query.isPost());
 
-		assertTrue(post.isRemote());
+		assertTrue(post.isTerminal());
 		assertTrue(post.isPost());
 
-		assertFalse(iface.isRemote());
+		assertFalse(iface.isTerminal());
 		assertFalse(iface.isPost());
 	}
 

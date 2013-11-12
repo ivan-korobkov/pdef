@@ -330,7 +330,7 @@ class TestIntegration(unittest.TestCase):
         service.interface0 = Mock(return_value=service)
         service.void0 = Mock(return_value=None)
         service.exc0 = Mock(side_effect=copy.deepcopy(exc))
-        service.serverError = Mock(side_effect=ValueError)
+        service.serverError = Mock(side_effect=ValueError('Test exception'))
 
         assert client.method(1, 2) == 3
         service.method.assert_called_with(arg0=1, arg1=2)

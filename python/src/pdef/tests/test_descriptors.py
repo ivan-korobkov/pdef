@@ -19,18 +19,11 @@ class TestMessageDescriptor(unittest.TestCase):
         assert len(descriptor.subtypes) == 0
         assert len(descriptor.fields) == 3
 
-    def test__form(self):
-        message = TestMessage.DESCRIPTOR
-        form = TestForm.DESCRIPTOR
-
-        assert not message.is_form
-        assert form.is_form
-
     def test__nonpolymorphic_inheritance(self):
         base = TestMessage.DESCRIPTOR
-        descriptor = TestDataTypes.DESCRIPTOR
+        descriptor = TestValues.DESCRIPTOR
 
-        assert descriptor.pyclass is TestDataTypes
+        assert descriptor.pyclass is TestValues
         assert descriptor.base is TestMessage.DESCRIPTOR
         assert descriptor.inherited_fields == base.fields
         assert descriptor.fields == base.fields + descriptor.declared_fields
@@ -102,27 +95,26 @@ class TestFieldDescriptor(unittest.TestCase):
 class TestInterfaceDescriptor(unittest.TestCase):
     def test(self):
         descriptor = TestInterface.DESCRIPTOR
-        index_method = descriptor.find_method('testIndex')
+        method = descriptor.find_method('method')
 
         assert descriptor.pyclass is TestInterface
         assert descriptor.exc is TestException.DESCRIPTOR
-        assert len(descriptor.methods) == 11
-        assert index_method
-        assert descriptor.index_method is index_method
+        assert len(descriptor.methods) == 10
+        assert method
 
 
 class TestMethodDescriptor(unittest.TestCase):
     def test(self):
-        method = TestInterface.DESCRIPTOR.find_method('testMessage')
+        method = TestInterface.DESCRIPTOR.find_method('message0')
 
-        assert method.name == 'testMessage'
+        assert method.name == 'message0'
         assert method.result is TestMessage.DESCRIPTOR
         assert len(method.args) == 1
         assert method.args[0].name == 'msg'
         assert method.args[0].type is TestMessage.DESCRIPTOR
 
     def test_args(self):
-        method = TestInterface.DESCRIPTOR.find_method('testIndex')
+        method = TestInterface.DESCRIPTOR.find_method('method')
 
         assert len(method.args) == 2
         assert method.args[0].name == 'arg0'
@@ -130,34 +122,26 @@ class TestMethodDescriptor(unittest.TestCase):
         assert method.args[0].type is descriptors.int32
         assert method.args[1].type is descriptors.int32
 
-    def test_index_post_remote(self):
+    def test_post_remote(self):
         descriptor = TestInterface.DESCRIPTOR
-        index = descriptor.find_method('testIndex')
-        remote = descriptor.find_method('testRemote')
-        post = descriptor.find_method('testPost')
-        interface = descriptor.find_method('testInterface')
+        method = descriptor.find_method('method')
+        post = descriptor.find_method('post')
+        interface = descriptor.find_method('interface0')
 
-        assert index.is_index
-        assert index.is_remote
-        assert not index.is_post
+        assert method.is_remote
+        assert not method.is_post
 
-        assert not remote.is_index
-        assert remote.is_remote
-        assert not remote.is_post
-
-        assert not post.is_index
         assert post.is_remote
         assert post.is_post
 
-        assert not interface.is_index
         assert not interface.is_remote
         assert not interface.is_post
 
     def test_invoke(self):
         service = Mock()
-        method = TestInterface.DESCRIPTOR.find_method('testIndex')
-        method.invoke(service, 1, b=2)
-        service.testIndex.assert_called_with(1, b=2)
+        method = TestInterface.DESCRIPTOR.find_method('method')
+        method.invoke(service, 1, arg1=2)
+        service.method.assert_called_with(1, arg1=2)
 
 
 class TestEnumDescriptor(unittest.TestCase):

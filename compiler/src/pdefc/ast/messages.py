@@ -120,18 +120,37 @@ class Message(Definition):
     def _validate(self):
         logging.debug('Validation %s', self)
 
-        errors = []
-        errors += self._validate_base()
+        # Prevent circular inheritance.
+        errors = self._validate_circular_inheritance()
         if errors:
-            # Cannot continue validation when the base is wrong.
+            # Cannot proceed when circular inheritance.
             return errors
 
+        # Validate the base, cannot validate this message when an invalid base.
+        # Ignore the errors, they are collected when the base is validated by a module.
+        if not self._is_base_valid:
+            return errors
+
+        errors = self._validate_inheritance()
+        if errors:
+            # Cannot proceed when inheritance errors.
+            return errors
+
+        errors = []
         errors += self._validate_discriminator()
         errors += self._validate_subtypes()
         errors += self._validate_fields()
         return errors
 
-    def _validate_base(self):
+    @property
+    def _is_base_valid(self):
+        if not self.base:
+            return True
+
+        self.base.validate()
+        return self.base.is_valid
+
+    def _validate_inheritance(self):
         base = self.base
         if not base:
             return []
@@ -153,14 +172,16 @@ class Message(Definition):
         # The message must be defined after the base.
         errors += self._validate_is_defined_after(base)
 
-        # Prevent circular inheritance.
+        return errors
+
+    def _validate_circular_inheritance(self):
+        base = self.base
         while base:
             if base is self:
-                errors.append(self._error('%s: circular inheritance', self))
-                break
+                return [self._error('%s: circular inheritance', self)]
             base = base.base
 
-        return errors
+        return []
 
     def _validate_discriminator(self):
         base = self.base

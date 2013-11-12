@@ -41,14 +41,21 @@ class Located(object):
 
 class Validatable(object):
     is_valid = None
+    validated = False
+    validation_errors = ()
 
     def validate(self):
         '''Validate this object and return a list of errors.'''
+        if self.validated:
+            return self.validation_errors
+
         errors = self._validate()
         self.is_valid = not errors
-        return errors
+        self.validated = True
+        self.validation_errors = tuple(errors)
+
+        return self.validation_errors
 
     def _validate(self):
         '''Override this method in a subclass.'''
         return []
-

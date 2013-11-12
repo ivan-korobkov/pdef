@@ -1,6 +1,6 @@
 Pdef-python
 ===========
-Python bindings and REST RPC implementation.
+Python bindings and HTTP RPC implementation.
 
 Copyright: 2013 Ivan Korobkov <ivan.korobkov@gmail.com>
 

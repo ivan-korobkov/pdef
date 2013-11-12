@@ -36,8 +36,6 @@ public class RpcClient<T> implements Invoker {
 		if (invocation == null) throw new NullPointerException("invocation");
 
 		MethodDescriptor<?, ?> method = invocation.getMethod();
-		if (!method.isRemote()) throw new IllegalArgumentException("Method must be remote");
-
 		ValueDescriptor<?> resultDescriptor = (ValueDescriptor<?>) method.getResult();
 		MessageDescriptor<? extends Message> excDescriptor = method.getExc();
 

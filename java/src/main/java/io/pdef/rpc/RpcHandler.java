@@ -31,23 +31,20 @@ public class RpcHandler<T> {
 		if (request == null) throw new NullPointerException("request");
 
 		Invocation invocation = protocol.getInvocation(request, descriptor);
-		T service = provider.get();
+		ValueDescriptor<Object> resultd = (ValueDescriptor<Object>) invocation.getResult();
+		MessageDescriptor<Message> excd = (MessageDescriptor<Message>) invocation.getExc();
 
+		T service = provider.get();
 		try {
 			Object result = invocation.invoke(service);
-			ValueDescriptor<Object> resultDescriptor =
-					(ValueDescriptor<Object>) invocation.getResult();
-			return RpcResult.ok(result, resultDescriptor);
+			return RpcResult.ok(result, resultd);
 
 		} catch (Exception e) {
-			MessageDescriptor<Message> excDescriptor =
-					(MessageDescriptor<Message>) invocation.getExc();
-			if (excDescriptor != null
-					&& excDescriptor.getJavaClass().isAssignableFrom(e.getClass())) {
+			if (excd != null && excd.getJavaClass().isAssignableFrom(e.getClass())) {
 				// It's an application exception.
-				return RpcResult.exc((Message) e, excDescriptor);
+				return RpcResult.exc((Message) e, excd);
 			}
-
+			
 			throw e;
 		}
 	}

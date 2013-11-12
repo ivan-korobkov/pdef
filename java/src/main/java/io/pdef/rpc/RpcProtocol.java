@@ -46,16 +46,17 @@ public class RpcProtocol {
 		Object[] args = invocation.getArgs();
 		List<ArgumentDescriptor<?>> argds = method.getArgs();
 
-		StringBuilder path = new StringBuilder(request.getPath());
-		path.append("/").append(urlencode(method.getName()));
+		StringBuilder path = new StringBuilder(request.getPath())
+				.append("/")
+				.append(method.getName());
 
 		Map<String, String> post = request.getPost();
 		Map<String, String> query = request.getQuery();
 
 		for (int i = 0; i < args.length; i++) {
 			ArgumentDescriptor argd = argds.get(i);
-
 			Object arg = args[i];
+
 			String name = argd.getName();
 			String value = toJson(argd.getType(), arg);
 
@@ -99,12 +100,17 @@ public class RpcProtocol {
 			if (method == null) {
 				throw RpcException.methodNotFound("Method is not found: " + part);
 			}
+
+			// Check the required HTTP method.
 			if (method.isPost() && !request.isPost()) {
 				throw RpcException.methodNotAllowed("Method not allowed, POST required");
 			}
 
-			// Parse arguments and create an invocation.
+			// Parse arguments.
 			List<Object> args = readArgs(method, parts, request.getQuery(), request.getPost());
+
+			// Create a root invocation,
+			// or a next invocation in a chain.
 			invocation = invocation != null ? invocation.next(method, args.toArray())
 			                                : Invocation.root(method, args.toArray());
 			if (method.isRemote()) {
@@ -119,9 +125,11 @@ public class RpcProtocol {
 		if (!parts.isEmpty()) {
 			throw RpcException.methodNotFound("Failed to parse an invocation chain");
 		}
+
 		if (invocation == null) {
 			throw RpcException.methodNotFound("No methods");
 		}
+
 		if (!invocation.getMethod().isRemote()) {
 			throw RpcException.methodNotFound("The last method must be a remote one. "
 					+ "It must return a value type or be void.");
@@ -178,6 +186,7 @@ public class RpcProtocol {
 		if (descriptor.getType() == TypeEnum.STRING) {
 			value = "\"" + value + "\"";
 		}
+
 		return format.fromJson(value, descriptor);
 	}
 

@@ -67,7 +67,7 @@ public class RpcTest {
 		TestMessage message = new TestMessage()
 				.setString0("Привет, как дела?")
 				.setBool0(false)
-				.setShort0((short) 123);
+				.setShort0((short) -123);
 
 		when(service.method(1, 2)).thenReturn(3);
 		when(service.query(3, 4)).thenReturn(7);

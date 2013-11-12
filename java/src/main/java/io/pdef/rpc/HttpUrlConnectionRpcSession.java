@@ -174,9 +174,9 @@ public class HttpUrlConnectionRpcSession implements RpcSession {
 		InputStream input = connection.getErrorStream();
 
 		try {
-			String message = input == null ? "No content" : readString(connection, input);
+			String message = input == null ? "No error description" : readString(connection, input);
 			if (message.length() > MAX_RPC_EXCEPTION_MESSAGE_LEN) {
-				message = message.substring(0, 256) + "...";
+				message = message.substring(0, MAX_RPC_EXCEPTION_MESSAGE_LEN) + "...";
 			}
 			message = message.replace("\n", " ");
 			message = message.replace("\r", " ");

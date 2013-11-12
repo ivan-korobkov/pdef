@@ -15,7 +15,7 @@ class TestInvocation(unittest.TestCase):
         invocation = Invocation(method, args=[1, 2])
 
         assert invocation.method is method
-        assert invocation.args == {'a': 1, 'b': 2}
+        assert invocation.kwargs == {'a': 1, 'b': 2}
         assert invocation.exc is TestException.DESCRIPTOR
         assert invocation.result is method.result
 
@@ -30,7 +30,7 @@ class TestInvocation(unittest.TestCase):
 
         assert invocation1.parent is invocation0
         assert invocation1.method is method1
-        assert invocation1.args == {'a': 1, 'b': 2}
+        assert invocation1.kwargs == {'a': 1, 'b': 2}
 
     def test_to_chain(self):
         method0 = descriptors.method('method0', descriptors.interface(object))
@@ -54,31 +54,27 @@ class TestInvocation(unittest.TestCase):
                                           descriptors.arg('b', descriptors.int32)))
         invocation = Invocation(method, args=(1, 2))
         service = Service()
-        result = invocation.invoke(service)
-
-        assert result.ok
-        assert result.data == 3
-        assert result.exc is None
+        assert invocation.invoke(service) == 3
 
     def test_invoke_exc(self):
         class Service(object):
             def method(self):
-                raise TestException('hello')
+                raise TestException('Hello')
 
         method = descriptors.method('method', descriptors.void, exc=TestException.DESCRIPTOR)
         invocation = Invocation(method)
         service = Service()
-        result = invocation.invoke(service)
 
-        assert result.ok is False
-        assert result.data is None
-        assert result.exc == TestException('hello')
+        try:
+            invocation.invoke(service)
+        except TestException as e:
+            assert e == TestException('Hello')
 
     def test_build_args(self):
         method = descriptors.method('method', descriptors.void,
                                     args=(descriptors.arg('a', descriptors.int32),
                                           descriptors.arg('b', descriptors.int32)))
-        build = lambda args, kwargs: Invocation._build_args(method, args, kwargs)
+        build = lambda args, kwargs: Invocation._build_kwargs(method, args, kwargs)
         expected = {'a': 1, 'b': 2}
 
         assert build([1, 2], None) == expected
@@ -101,8 +97,8 @@ class TestInvocation(unittest.TestCase):
         set0 = {1, 2, 3}
 
         invocation = Invocation(method, args=(list0, set0))
-        arg0 = invocation.args['arg0']
-        arg1 = invocation.args['arg1']
+        arg0 = invocation.kwargs['arg0']
+        arg1 = invocation.kwargs['arg1']
 
         assert arg0 == list0
         assert arg1 == set0
@@ -116,31 +112,30 @@ class TestInvocation(unittest.TestCase):
 
 class TestInvocationProxy(unittest.TestCase):
     def proxy(self):
-        return proxy(TestInterface, lambda invocation: InvocationResult.from_data(invocation))
+        return proxy(TestInterface, lambda invocation: invocation)
 
     def test_ok(self):
-        proxy = InvocationProxy(TestInterface.DESCRIPTOR, lambda inv: InvocationResult.from_data(3))
-        result = proxy.testIndex(1, 2)
-
-        assert result == 3
+        proxy = InvocationProxy(TestInterface.DESCRIPTOR, lambda inv: 3)
+        assert proxy.method(1, 2) == 3
 
     def test_exc(self):
-        exc = TestException('hello')
-        client = proxy(TestInterface, lambda inv: InvocationResult.from_exc(exc))
+        def raise_exc(invocation):
+            raise TestException('Hello')
+        client = proxy(TestInterface, raise_exc)
 
         try:
-            client.testIndex(1, 2)
+            client.method(1, 2)
             self.fail()
         except TestException, e:
-            assert e == exc
+            assert e == TestException('Hello')
 
     def test_proxy_method(self):
         interface = TestInterface.DESCRIPTOR
-        method = interface.find_method('testIndex')
-        handler = lambda inv: InvocationResult.from_data(None)
+        method = interface.find_method('method')
+        handler = lambda inv: None
 
         proxy = InvocationProxy(interface, handler)
-        proxy_method = proxy.testIndex
+        proxy_method = proxy.method
 
         assert method
         assert proxy_method.method is method
@@ -148,12 +143,12 @@ class TestInvocationProxy(unittest.TestCase):
 
     def test_proxy_method_chain(self):
         interface0 = TestInterface.DESCRIPTOR
-        method0 = interface0.find_method('testInterface')
-        method1 = interface0.find_method('testIndex')
-        handler = lambda inv: InvocationResult.from_data(None)
+        method0 = interface0.find_method('interface0')
+        method1 = interface0.find_method('method')
+        handler = lambda inv: None
 
         proxy = InvocationProxy(interface0, handler)
-        proxy_method = proxy.testInterface(1, 2).testIndex
+        proxy_method = proxy.interface0(1, 2).method
 
         assert proxy_method.method is method1
         assert proxy_method.handler is handler
@@ -161,16 +156,16 @@ class TestInvocationProxy(unittest.TestCase):
         assert proxy_method.invocation.method is method0
 
     def test_invocation_chain(self):
-        handler = lambda inv: InvocationResult.from_data(inv)
+        handler = lambda inv: inv
         proxy = InvocationProxy(TestInterface.DESCRIPTOR, handler)
 
-        invocation = proxy.testInterface(1, 2).testRemote()
+        invocation = proxy.interface0(1, 2).query()
         chain = invocation.to_chain()
         invocation0 = chain[0]
         invocation1 = chain[1]
 
-        assert invocation0.method.name == 'testInterface'
-        assert invocation0.args == {'arg0': 1, 'arg1': 2}
+        assert invocation0.method.name == 'interface0'
+        assert invocation0.kwargs == {'arg0': 1, 'arg1': 2}
 
-        assert invocation1.method.name == 'testRemote'
-        assert invocation1.args == {'arg0': None, 'arg1': None}
+        assert invocation1.method.name == 'query'
+        assert invocation1.kwargs == {'arg0': None, 'arg1': None}

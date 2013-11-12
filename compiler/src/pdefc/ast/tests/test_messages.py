@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast import Enum, Interface
-from pdefc.ast.definitions import *
+from pdefc.ast import Enum
+from pdefc.ast.types import *
 from pdefc.ast.messages import *
 from pdefc.ast.modules import Module
 

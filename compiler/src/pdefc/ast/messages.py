@@ -1,7 +1,9 @@
 # encoding: utf-8
 import logging
+
 from pdefc.ast import references
-from pdefc.ast.definitions import Definition, TypeEnum, Located
+from pdefc.ast.common import Located, Validatable
+from pdefc.ast.types import TypeEnum, Definition
 
 
 class Message(Definition):
@@ -115,7 +117,7 @@ class Message(Definition):
 
         return []
 
-    def validate(self):
+    def _validate(self):
         logging.debug('Validation %s', self)
 
         errors = []
@@ -139,12 +141,13 @@ class Message(Definition):
             return [self._error('%s: base must be a message, got %s', self, base)]
 
         errors = []
-
         if self.is_exception != base.is_exception:
             # The base exception/message flag must match this message flag.
             errors.append(self._error('%s: wrong base type (message/exc) %s', self, base))
 
         # Validate the reference.
+        # A linked message reference is valid,
+        # the method is called to support the contract.
         errors += self._base.validate()
 
         # The message must be defined after the base.
@@ -155,7 +158,6 @@ class Message(Definition):
             if base is self:
                 errors.append(self._error('%s: circular inheritance', self))
                 break
-
             base = base.base
 
         return errors
@@ -175,8 +177,10 @@ class Message(Definition):
         # The discriminator value is present.
 
         errors = []
+        dvalue_valid = True
         if not dvalue.is_enum_value:
             errors.append(self._error('%s: discriminator value must be an enum value', self))
+            dvalue_valid = False
 
         if not base:
             # No base but the discriminator value is present.
@@ -189,11 +193,14 @@ class Message(Definition):
                                       'is not polymorphic (does not have a discriminator)', self))
             return errors
 
-        if dvalue not in base.discriminator.type:
-            # The discriminator value is not a base discriminator enum value.
-            errors.append(self._error('%s: discriminator value does not match the base '
-                                      'discriminator type', self))
-            return errors
+        if base.discriminator and base.discriminator.type.is_enum:
+            # Check only when the base has a correct discriminator.
+
+            if dvalue not in base.discriminator.type:
+                # The discriminator value is not a base discriminator enum value.
+                errors.append(self._error('%s: discriminator value does not match the base '
+                                          'discriminator type', self))
+                return errors
 
         # Validate the reference.
         errors += self._discriminator_value.validate()
@@ -201,6 +208,9 @@ class Message(Definition):
         # The message must be defined after the discriminator enum.
         errors += self._validate_is_defined_after(dvalue.enum)
         return errors
+
+    def _validate_discriminator_value(self):
+        pass
 
     def _validate_subtypes(self):
         if not self.subtypes:
@@ -246,7 +256,7 @@ class Message(Definition):
         return errors
 
 
-class Field(Located):
+class Field(Located, Validatable):
     '''Message field.'''
     def __init__(self, name, type0, is_discriminator=False, location=None):
         self.name = name
@@ -270,7 +280,7 @@ class Field(Located):
         logging.debug('Linking %s', self)
         return self._type.link(scope)
 
-    def validate(self):
+    def _validate(self):
         logging.debug('Validating %s', self)
         errors = []
 

@@ -83,7 +83,7 @@ class Parser(object):
         errors = []
 
         for root, dirs, files in os.walk(path):
-            logging.info('Walking %s' % root)
+            logging.debug('Walking %s' % root)
             for file0 in files:
                 ext = os.path.splitext(file0)[1]
                 if ext.lower() != self.extension:
@@ -569,6 +569,8 @@ class _GrammarRules(object):
             msg = u'Unexpected end of file'
         else:
             msg = u"Syntax error at '%s', line %s" % (t.value, t.lexer.lineno)
+
+        logging.debug(msg)
         self._error(msg)
 
     def _list(self, t, separated=False):

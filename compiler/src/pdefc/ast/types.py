@@ -1,42 +1,5 @@
 # encoding: utf-8
-import logging
-
-
-class Location(object):
-    def __init__(self, lineno):
-        self.lineno = lineno
-
-    def __str__(self):
-        return 'line %s' % self.lineno
-
-    def __repr__(self):
-        return '<%s %s at %s>' % (self.__class__.__name__, self.lineno, hex(id(self)))
-
-    def __eq__(self, other):
-        if other is None:
-            return False
-
-        if self.__class__ != other.__class__:
-            return False
-
-        return self.lineno == other.lineno
-
-    def __hash__(self):
-        return self.lineno
-
-
-class Located(object):
-    location = None
-
-    def _error(self, msg, *args):
-        '''Shortcut for errors.'''
-        location = self.location
-
-        if not location or not location.lineno:
-            return msg % args
-        s = 'Line %s, %s' % (location.lineno, (msg % args))
-        logging.debug(s)
-        return s
+from pdefc.ast.common import Located, Validatable
 
 
 class TypeEnum(object):
@@ -92,7 +55,7 @@ class TypeEnum(object):
         return type_enum in cls.COLLECTION_TYPES
 
 
-class Type(Located):
+class Type(Located, Validatable):
     '''Type is a common class for all pdef types. These include native types, definitions,
     collections, and enum values.'''
     def __init__(self, type0, location=None):
@@ -175,10 +138,6 @@ class Definition(Type):
 
     def build(self):
         '''Build this definition after linking and return a list of errors.'''
-        return []
-
-    def validate(self):
-        '''Validate this definition and return a list of errors.'''
         return []
 
     def _validate_is_defined_after(self, another):

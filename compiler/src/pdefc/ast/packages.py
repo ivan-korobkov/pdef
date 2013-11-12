@@ -1,8 +1,9 @@
 # encoding: utf-8
 import logging
+from pdefc.ast.common import Validatable
 
 
-class Package(object):
+class Package(Validatable):
     '''Protocol definition.'''
     def __init__(self, modules=None, includes=None):
         self.modules = []
@@ -105,7 +106,7 @@ class Package(object):
             errors += module.build()
         return errors
 
-    def validate(self):
+    def _validate(self):
         '''Validate this package and return a list of errors.'''
         logging.debug('Validating the package')
 

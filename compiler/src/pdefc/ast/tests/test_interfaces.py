@@ -1,9 +1,7 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast import NativeType
 from pdefc.ast.interfaces import *
-from pdefc.ast.messages import Message
-from pdefc.ast.modules import Module
+from pdefc.ast.types import NativeType
 
 
 class TestInterface(unittest.TestCase):

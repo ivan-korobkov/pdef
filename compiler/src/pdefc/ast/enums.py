@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdefc.ast.definitions import Definition, TypeEnum, Type
+from pdefc.ast.types import Type, TypeEnum, Definition
 
 
 class Enum(Definition):
@@ -46,7 +46,7 @@ class Enum(Definition):
     def __contains__(self, enum_value):
         return enum_value in self.values
 
-    def validate(self):
+    def _validate(self):
         errors = []
 
         names = set()

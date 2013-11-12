@@ -1,7 +1,9 @@
 # encoding: utf-8
 import logging
+
 import pdefc.ast.collects
-from pdefc.ast.definitions import Located, Type
+from pdefc.ast.common import Located, Validatable
+from pdefc.ast.types import Type
 
 
 def reference(name_ref_def):
@@ -21,7 +23,7 @@ def reference(name_ref_def):
     raise ValueError('Unsupported type: %r' % name_ref_def)
 
 
-class Reference(Located):
+class Reference(Located, Validatable):
     '''Reference directly references a type.'''
     def __init__(self, type0=None, location=None):
         self._type = type0
@@ -38,10 +40,6 @@ class Reference(Located):
 
     def link(self, scope):
         '''Link this reference in a provided callable scope.'''
-        return []
-
-    def validate(self):
-        '''Validate this reference and return a list of errors.'''
         return []
 
 
@@ -102,7 +100,7 @@ class ListReference(Reference):
         self._init_type()
         return []
 
-    def validate(self):
+    def _validate(self):
         logging.debug('Validating %s', self)
         if not self._type:
             return []
@@ -136,7 +134,7 @@ class SetReference(Reference):
         self._init_type()
         return []
 
-    def validate(self):
+    def _validate(self):
         logging.debug('Validating %s', self)
         if not self._type:
             return []
@@ -173,7 +171,7 @@ class MapReference(Reference):
         self._init_type()
         return []
 
-    def validate(self):
+    def _validate(self):
         logging.debug('Validation %s', self)
         if not self._type:
             return []

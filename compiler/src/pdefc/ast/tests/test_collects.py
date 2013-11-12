@@ -31,7 +31,7 @@ class TestMap(unittest.TestCase):
 
     def test_validate__value_is_data_type(self):
         iface = interfaces.Interface('Interface')
-        map0 = Map(definitions.NativeType.STRING, iface)
+        map0 = Map(NativeType.STRING, iface)
         errors = map0.validate()
 
         assert 'Map value must be a data type' in errors[0]

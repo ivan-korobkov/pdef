@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast import collects, definitions, references, NativeType, Interface
+from pdefc.ast import collects, types, references, NativeType
 
 
 class TestReference(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestReference(unittest.TestCase):
         assert isinstance(ref, references.NameReference)
 
     def test_definition(self):
-        def0 = definitions.Definition(definitions.TypeEnum.MESSAGE, 'Message')
+        def0 = types.Definition(types.TypeEnum.MESSAGE, 'Message')
         ref = references.reference(def0)
 
         assert isinstance(ref, references.Reference)
@@ -26,7 +26,7 @@ class TestReference(unittest.TestCase):
         assert ref0 is ref1
 
     def test_dereference(self):
-        def0 = definitions.Definition(definitions.TypeEnum.MESSAGE, 'Message')
+        def0 = types.Definition(types.TypeEnum.MESSAGE, 'Message')
         ref = references.Reference(def0)
 
         assert ref.dereference() is def0

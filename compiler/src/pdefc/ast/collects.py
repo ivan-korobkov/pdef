@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdefc.ast.definitions import Type, TypeEnum
+from pdefc.ast.types import Type, TypeEnum
 
 
 class List(Type):
@@ -17,7 +17,7 @@ class List(Type):
     def __str__(self):
         return 'list<%s>' % self.type
 
-    def validate(self):
+    def _validate(self):
         errors = []
 
         if not self.element.is_data_type:
@@ -41,7 +41,7 @@ class Set(Type):
     def __str__(self):
         return 'set<%s>' % self.type
 
-    def validate(self):
+    def _validate(self):
         errors = []
 
         if not self.element.is_data_type:
@@ -69,7 +69,7 @@ class Map(Type):
     def __str__(self):
         return 'map<%s, %s>' % (self.key, self.value)
 
-    def validate(self):
+    def _validate(self):
         errors = []
 
         if not self.key.is_primitive:

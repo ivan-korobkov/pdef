@@ -1,7 +1,9 @@
 # encoding: utf-8
 import logging
-from pdefc.ast.definitions import Definition, TypeEnum, NativeType, Located
+
 from pdefc.ast import references
+from pdefc.ast.common import Located, Validatable
+from pdefc.ast.types import TypeEnum, NativeType, Definition
 
 
 class Interface(Definition):
@@ -58,7 +60,7 @@ class Interface(Definition):
 
         return errors
 
-    def validate(self):
+    def _validate(self):
         logging.debug('Validating %s', self)
         errors = []
         errors += self._validate_methods()
@@ -91,7 +93,7 @@ class Interface(Definition):
         return errors
 
 
-class Method(Located):
+class Method(Located, Validatable):
     '''Interface method.'''
     def __init__(self, name, result=NativeType.VOID, args=None, is_post=False, doc=None,
                  location=None):
@@ -151,7 +153,7 @@ class Method(Located):
 
         return errors
 
-    def validate(self):
+    def _validate(self):
         logging.debug('Validating %s', self)
         errors = []
 
@@ -186,7 +188,7 @@ class Method(Located):
         return errors
 
 
-class MethodArg(Located):
+class MethodArg(Located, Validatable):
     '''Single method argument.'''
     def __init__(self, name, type0, is_query=False, is_post=False):
         self.name = name
@@ -216,7 +218,7 @@ class MethodArg(Located):
     def link(self, scope):
         return self._type.link(scope)
 
-    def validate(self):
+    def _validate(self):
         if not self.type:
             return [self._error('%s: argument type required', self)]
 

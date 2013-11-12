@@ -1,8 +1,9 @@
 # encoding: utf-8
 import logging
 from collections import deque
-from pdefc.ast import definitions
-from pdefc.ast.definitions import Located
+
+from pdefc.ast.common import Located, Validatable
+from pdefc.ast.types import NativeType
 
 
 class ModuleErrors(object):
@@ -23,7 +24,7 @@ class ModuleErrors(object):
         return unicode(self).encode('utf8')
 
 
-class Module(object):
+class Module(Validatable):
     '''Module is a named scope for definitions. It is usually a *.pdef file.'''
     def __init__(self, name, imports=None, definitions=None, doc=None, path=None):
         self.name = name
@@ -144,7 +145,7 @@ class Module(object):
 
     # Validate.
 
-    def validate(self):
+    def _validate(self):
         '''Validate imports and definitions and return a list of errors.'''
         logging.debug('Validating %s', self)
         errors = []
@@ -189,7 +190,7 @@ class Module(object):
         '''Find a type by a name.'''
 
         # Try to get a native type.
-        def0 = definitions.NativeType.get(name)
+        def0 = NativeType.get(name)
         if def0:
             return def0
 

@@ -221,10 +221,10 @@ class TestRpcHandler(unittest.TestCase):
         self.service.method = Mock(side_effect=e)
         request = RpcRequest(path='/method/1/2')
 
-        success, data, datad = self.handler(request)
+        success, value, valued = self.handler(request)
         assert success is False
-        assert data == e
-        assert datad is TestException.DESCRIPTOR
+        assert value == e
+        assert valued is TestException.DESCRIPTOR
 
     def test_handle__unexpected_exception(self):
         self.service.method = Mock(side_effect=ValueError)

@@ -10,7 +10,7 @@ class Descriptor(object):
         self._pyclass = None
 
         self.is_primitive = self.type in Type.PRIMITIVES
-        self.is_data_type = self.type in Type.DATA_TYPES
+        self.is_value = self.type in Type.VALUES
         self.is_message = self.type == Type.MESSAGE or self.type == Type.EXCEPTION
 
     def __str__(self):
@@ -23,12 +23,11 @@ class Descriptor(object):
         return self._pyclass
 
 
-class DataDescriptor(Descriptor):
-    def copy(self, x):
-        raise NotImplementedError
+class ValueDescriptor(Descriptor):
+    pass
 
 
-class MessageDescriptor(DataDescriptor):
+class MessageDescriptor(ValueDescriptor):
     '''Message descriptor.'''
     def __init__(self, pyclass, base=None, discriminator_value=None, fields=None, subtypes=None):
         super(MessageDescriptor, self).__init__(Type.MESSAGE, pyclass)
@@ -204,7 +203,7 @@ class ArgDescriptor(object):
         return self._type
 
 
-class EnumDescriptor(DataDescriptor):
+class EnumDescriptor(ValueDescriptor):
     '''Enum descriptor.'''
     def __init__(self, pyclass, values):
         super(EnumDescriptor, self).__init__(Type.ENUM, pyclass)
@@ -220,7 +219,7 @@ class EnumDescriptor(DataDescriptor):
         return name
 
 
-class ListDescriptor(DataDescriptor):
+class ListDescriptor(ValueDescriptor):
     '''Internal list descriptor.'''
     def __init__(self, element):
         super(ListDescriptor, self).__init__(Type.LIST, list)
@@ -230,7 +229,7 @@ class ListDescriptor(DataDescriptor):
         return 'list<%s>' % self.element
 
 
-class SetDescriptor(DataDescriptor):
+class SetDescriptor(ValueDescriptor):
     '''Internal set descriptor.'''
     def __init__(self, element):
         super(SetDescriptor, self).__init__(Type.SET, set)
@@ -240,7 +239,7 @@ class SetDescriptor(DataDescriptor):
         return 'set<%s>' % self.element
 
 
-class MapDescriptor(DataDescriptor):
+class MapDescriptor(ValueDescriptor):
     '''Internal map/dict descriptor.'''
     def __init__(self, key, value):
         super(MapDescriptor, self).__init__(Type.MAP, dict)
@@ -311,11 +310,11 @@ def _supplier(type_or_lambda):
     return lambda: type_or_lambda
 
 
-bool0 = DataDescriptor(Type.BOOL, bool)
-int16 = DataDescriptor(Type.INT16, int)
-int32 = DataDescriptor(Type.INT32, int)
-int64 = DataDescriptor(Type.INT64, int)
-float0 = DataDescriptor(Type.FLOAT, float)
-double0 = DataDescriptor(Type.DOUBLE, float)
-string0 = DataDescriptor(Type.STRING, unicode)
-void = DataDescriptor(Type.VOID, type(None))
+bool0 = ValueDescriptor(Type.BOOL, bool)
+int16 = ValueDescriptor(Type.INT16, int)
+int32 = ValueDescriptor(Type.INT32, int)
+int64 = ValueDescriptor(Type.INT64, int)
+float0 = ValueDescriptor(Type.FLOAT, float)
+double0 = ValueDescriptor(Type.DOUBLE, float)
+string0 = ValueDescriptor(Type.STRING, unicode)
+void = ValueDescriptor(Type.VOID, type(None))

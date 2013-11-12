@@ -5,7 +5,7 @@ import pdef.types
 
 
 class ObjectFormat(object):
-    '''ObjectFormat parses/serializes pdef data types from/to native types and collections.'''
+    '''ObjectFormat parses/serializes pdef values from/to native types and collections.'''
     def serialize(self, obj, descriptor):
         if obj is None:
             return None
@@ -125,7 +125,7 @@ class JsonFormat(object):
         self.object_format = ObjectFormat()
 
     def from_json(self, s, descriptor):
-        '''Parse a pdef data type from a json string.'''
+        '''Parse a pdef value from a json string.'''
         if s is None:
             return None
 
@@ -134,7 +134,7 @@ class JsonFormat(object):
         return parsed
 
     def from_json_stream(self, fp, descriptor):
-        '''Parse an pdef data type as a json string from a file-like object.'''
+        '''Parse an pdef value type as a json string from a file-like object.'''
         value = _json.load(fp)
         parsed = self.object_format.parse(value, descriptor)
         return parsed

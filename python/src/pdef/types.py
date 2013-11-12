@@ -6,7 +6,7 @@ import pdef.formats
 class Type(object):
     '''Pdef type enum.'''
 
-    # Base value types.
+    # Primitive types
     BOOL = 'bool'
     INT16 = 'int16'
     INT32 = 'int32'
@@ -15,24 +15,25 @@ class Type(object):
     DOUBLE = 'double'
     STRING = 'string'
 
+    # Void
+    VOID = 'void'
+
     # Collection types.
     LIST = 'list'
     MAP = 'map'
     SET = 'set'
 
-    # User defined data types.
-    DEFINITION = 'definition' # Abstract definition type, used in references.
+    # User defined types.
     ENUM = 'enum'
-    ENUM_VALUE = 'enum_value'
     MESSAGE = 'message'
     EXCEPTION = 'exception'
 
-    # Interface and void.
+    # Interface
     INTERFACE = 'interface'
-    VOID = 'void'
 
     PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
-    DATA_TYPES = PRIMITIVES + (LIST, MAP, SET, DEFINITION, ENUM, MESSAGE, EXCEPTION)
+    VALUES = PRIMITIVES + (VOID, LIST, MAP, SET, ENUM, MESSAGE, EXCEPTION)
+    ALL = VALUES + (INTERFACE, )
 
 
 class Message(object):
@@ -108,7 +109,6 @@ class Message(object):
 
 
 class Exc(Exception, Message):
-    '''Base generated pdef exception.'''
     pass
 
 

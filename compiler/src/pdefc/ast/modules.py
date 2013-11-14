@@ -6,24 +6,6 @@ from pdefc.ast.common import Validatable
 from pdefc.ast.types import NativeType
 
 
-class ModuleErrors(object):
-    '''ModuleErrors class combines a module path/name and its errors into a single error.
-    This error supports pretty printing.'''
-    def __init__(self, path_or_name, errors):
-        self.name = path_or_name
-        self.errors = errors
-
-    def __unicode__(self):
-        s = [self.name]
-        for e in self.errors:
-            s.append('  ' + unicode(e))
-
-        return '\n'.join(s)
-
-    def __str__(self):
-        return unicode(self).encode('utf8')
-
-
 class Module(Validatable):
     '''Module is a named scope for definitions. It is usually a *.pdef file.'''
     def __init__(self, name, imports=None, definitions=None, doc=None, path=None):
@@ -51,11 +33,15 @@ class Module(Validatable):
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
-    def _module_errors(self, errors):
+    def _log_return_errors(self, errors):
         if not errors:
             return []
 
-        return [ModuleErrors(self.path or self.name, errors)]
+        logging.error(self.path or self.name)
+        for error in errors:
+            logging.error('  %s' % error)
+
+        return errors
 
     def add_import(self, import0):
         '''Add a module import to this module.'''
@@ -149,10 +135,10 @@ class Module(Validatable):
 
         errors = self._link_imports(package)
         if errors:
-            return self._module_errors(errors)
+            return self._log_return_errors(errors)
 
         errors = self._link_definitions()
-        return self._module_errors(errors)
+        return self._log_return_errors(errors)
 
     def _link_imports(self, package):
         '''Link imports, must be called before link_module_defs().'''
@@ -184,7 +170,7 @@ class Module(Validatable):
         for def0 in self.definitions:
             errors += def0.build()
 
-        return self._module_errors(errors)
+        return self._log_return_errors(errors)
 
     # Validate.
 
@@ -196,7 +182,7 @@ class Module(Validatable):
         for def0 in self.definitions:
             errors += def0.validate()
 
-        return self._module_errors(errors)
+        return self._log_return_errors(errors)
 
     def _validate_no_duplicate_symbols(self):
         errors = []

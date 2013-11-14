@@ -92,7 +92,7 @@ class TestParser(unittest.TestCase):
         '''
         module, errors = self.parser.parse_string(s)
         assert not module
-        assert "Syntax error at 'definition', line 8" in errors[0].errors
+        assert "Syntax error at 'definition', line 8" in errors[0]
 
     def test_syntax_error__reuse_parser(self):
         s = '''module hello.world;
@@ -106,8 +106,8 @@ class TestParser(unittest.TestCase):
         _, errors0 = self.parser.parse_string(s)
         _, errors1 = self.parser.parse_string(s)
 
-        assert "Syntax error at 'definition', line 6" in errors0[0].errors
-        assert "Syntax error at 'definition', line 6" in errors1[0].errors
+        assert "Syntax error at 'definition', line 6" in errors0[0]
+        assert "Syntax error at 'definition', line 6" in errors1[0]
 
     def test_syntax_error__end_of_file(self):
         s = '''module hello.world;
@@ -116,7 +116,7 @@ class TestParser(unittest.TestCase):
         '''
         module, errors = self.parser.parse_string(s)
         assert not module
-        assert 'Unexpected end of file' in errors[0].errors
+        assert 'Unexpected end of file' in errors[0]
 
     def test_doc(self):
         s = '''

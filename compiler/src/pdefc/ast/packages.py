@@ -74,14 +74,14 @@ class Package(object):
         names = set()
         for module in self.modules:
             if module.name in names:
-                errors.append('Duplicate module %r' % module.name)
+                errors.append(self._error('Duplicate module %r', module.name))
             names.add(module.name)
 
         # Prevent name clashes with included modules.
         names = set(m.name for m in self.includes)
         for module in self.modules:
             if module.name in names:
-                errors.append('Module clashes with an included module %r' % module.name)
+                errors.append(self._error('Module clashes with an included module %r', module.name))
 
         if errors:
             return errors
@@ -110,3 +110,8 @@ class Package(object):
             errors += module.validate()
 
         return errors
+
+    def _error(self, msg, *args):
+        record = msg % args if args else msg
+        logging.error(record)
+        return record

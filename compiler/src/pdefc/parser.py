@@ -18,24 +18,6 @@ def create_parser():
     return Parser()
 
 
-class FileErrors(object):
-    '''FileErrors class combines a path and its error messages into a single error.
-    This error supports pretty printing.'''
-    def __init__(self, path, errors):
-        self.path = path
-        self.errors = list(errors)
-
-    def __unicode__(self):
-        s = [self.path]
-        for e in self.errors:
-            s.append('  ' + unicode(e))
-
-        return '\n'.join(s)
-
-    def __str__(self):
-        return unicode(self).encode('utf8')
-
-
 class Parser(object):
     '''Pdef parser. It is reusable but not thread-safe.'''
 
@@ -127,9 +109,8 @@ class Parser(object):
             if module:
                 module.path = path
 
-            if self._errors:
-                return None, [FileErrors(path, self._errors)]
-            return module, []
+            self._log_errors(path, errors)
+            return module, self._errors
 
         finally:
             self._errors = None
@@ -137,6 +118,14 @@ class Parser(object):
 
     def _error(self, msg):
         self._errors.append(msg)
+
+    def _log_errors(self, path, errors):
+        if not errors:
+            return
+
+        logging.error(path)
+        for error in errors:
+            logging.error('  %s' % error)
 
 
 def _location(t, token_position):

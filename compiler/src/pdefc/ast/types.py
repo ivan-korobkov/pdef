@@ -132,8 +132,15 @@ class Definition(Type):
     def __str__(self):
         return self.name
 
-    def link(self, scope):
+    def lookup(self, name):
+        return self.module.lookup(name) if self.module else None
+
+    def link(self, module):
         '''Link this definition references and return a list of errors.'''
+        if self.module:
+            raise ValueError('Definition is already linked')
+
+        self.module = module
         return []
 
     def build(self):

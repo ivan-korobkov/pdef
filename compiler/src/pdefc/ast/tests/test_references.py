@@ -34,26 +34,26 @@ class TestReference(unittest.TestCase):
 
 class TestNameReference(unittest.TestCase):
     def test_link(self):
-        scope = lambda name: name
+        lookup = lambda name: name
         ref = references.reference('module.Message')
-        errors = ref.link(scope)
+        errors = ref.link(lookup)
 
         assert not errors
         assert ref.dereference() == 'module.Message'
 
     def test_link__error(self):
-        scope = lambda name: None
+        lookup = lambda name: None
         ref = references.reference('module.Message')
-        errors = ref.link(scope)
+        errors = ref.link(lookup)
 
         assert "Type not found 'module.Message'" in errors[0]
 
 
 class TestListReference(unittest.TestCase):
     def test_link(self):
-        scope = lambda name: NativeType.INT32
+        lookup = lambda name: NativeType.INT32
         ref = references.ListReference('int32')
-        errors = ref.link(scope)
+        errors = ref.link(lookup)
         list0 = ref.dereference()
 
         assert not errors
@@ -61,9 +61,9 @@ class TestListReference(unittest.TestCase):
         assert list0.element is NativeType.INT32
 
     def test_link_errors(self):
-        scope = lambda name: None
+        lookup = lambda name: None
         ref = references.ListReference('element')
-        errors = ref.link(scope)
+        errors = ref.link(lookup)
 
         assert not ref
         assert len(errors) == 1
@@ -77,9 +77,9 @@ class TestListReference(unittest.TestCase):
 
 class TestSetReference(unittest.TestCase):
     def test_link(self):
-        scope = lambda name: NativeType.INT32
+        lookup = lambda name: NativeType.INT32
         ref = references.SetReference('int32')
-        errors = ref.link(scope)
+        errors = ref.link(lookup)
         set0 = ref.dereference()
 
         assert not errors
@@ -87,9 +87,9 @@ class TestSetReference(unittest.TestCase):
         assert set0.element is NativeType.INT32
 
     def test_link_errors(self):
-        scope = lambda name: None
+        lookup = lambda name: None
         ref = references.SetReference('element')
-        errors = ref.link(scope)
+        errors = ref.link(lookup)
 
         assert not ref
         assert len(errors) == 1
@@ -103,9 +103,9 @@ class TestSetReference(unittest.TestCase):
 
 class TestMapReference(unittest.TestCase):
     def test_link(self):
-        scope = lambda name: NativeType.STRING
+        lookup = lambda name: NativeType.STRING
         ref = references.MapReference('string', 'string')
-        errors = ref.link(scope)
+        errors = ref.link(lookup)
         map0 = ref.dereference()
 
         assert not errors
@@ -114,9 +114,9 @@ class TestMapReference(unittest.TestCase):
         assert map0.value is NativeType.STRING
 
     def test_link_errors(self):
-        scope = lambda name: None
+        lookup = lambda name: None
         ref = references.MapReference('key', 'value')
-        errors = ref.link(scope)
+        errors = ref.link(lookup)
 
         assert not ref
         assert "Type not found 'key'" in errors[0]

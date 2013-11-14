@@ -38,8 +38,8 @@ class Reference(Located, Validatable):
             raise ValueError('Reference is not linked: %s' % self)
         return self._type
 
-    def link(self, scope):
-        '''Link this reference in a provided callable scope.'''
+    def link(self, lookup):
+        '''Link this reference in a provided callable lookup.'''
         return []
 
 
@@ -64,9 +64,9 @@ class NameReference(Reference):
     def __str__(self):
         return self.name
 
-    def link(self, scope):
+    def link(self, lookup):
         logging.debug('Linking %s', self)
-        self._type = scope(self.name)
+        self._type = lookup(self.name)
         if self._type:
             return []
 
@@ -91,9 +91,9 @@ class ListReference(Reference):
             return
         self._type = pdefc.ast.collects.List(self.element.dereference(), location=self.location)
 
-    def link(self, scope):
+    def link(self, lookup):
         logging.debug('Linking %s', self)
-        errors = self.element.link(scope)
+        errors = self.element.link(lookup)
         if errors:
             return errors
 
@@ -125,9 +125,9 @@ class SetReference(Reference):
             return
         self._type = pdefc.ast.collects.Set(self.element.dereference(), location=self.location)
 
-    def link(self, scope):
+    def link(self, lookup):
         logging.debug('Linking %s', self)
-        errors = self.element.link(scope)
+        errors = self.element.link(lookup)
         if errors:
             return errors
 
@@ -161,10 +161,10 @@ class MapReference(Reference):
         self._type = pdefc.ast.collects.Map(self.key.dereference(), self.value.dereference(),
                                             location=self.location)
 
-    def link(self, scope):
+    def link(self, lookup):
         logging.debug('Linking %s', self)
-        errors0 = self.key.link(scope)
-        errors1 = self.value.link(scope)
+        errors0 = self.key.link(lookup)
+        errors1 = self.value.link(lookup)
         if errors0 or errors1:
             return errors0 + errors1
 

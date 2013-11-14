@@ -64,9 +64,12 @@ class TestMessage(unittest.TestCase):
     def test_link(self):
         message = Message('Message', base='base', discriminator_value='subtype')
         message.create_field('field', 'field_type')
-        errors = message.link(lambda name: None)
+
+        module = Module('module')
+        errors = message.link(module)
 
         assert len(errors) == 3
+        assert message.module is module
         assert "Type not found 'base'" in errors[0]
         assert "Type not found 'subtype'" in errors[1]
         assert "Type not found 'field_type'" in errors[2]
@@ -140,6 +143,7 @@ class TestMessage(unittest.TestCase):
         module = Module('module')
         module.add_definition(msg)
         module.add_definition(base)
+        module.link()
 
         errors = msg.validate()
         assert 'Message must be defined after Base' in errors[0]
@@ -196,8 +200,9 @@ class TestMessage(unittest.TestCase):
         module.add_definition(base)
         module.add_definition(msg)
         module.add_definition(enum)
-        errors = msg.validate()
+        module.link()
 
+        errors = msg.validate()
         assert 'Message must be defined after Enum' in errors[0]
 
     # validate_fields.

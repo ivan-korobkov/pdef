@@ -23,11 +23,9 @@ class TestPythonModule(unittest.TestCase):
         enum = Enum('Enum')
         imported = Module('imported.module')
 
-        module = Module('test')
-        module.add_definition(msg)
-        module.add_definition(iface)
-        module.add_definition(enum)
+        module = Module('test', definitions=[msg, iface, enum])
         module.add_imported_module('module', imported)
+        module.link()
 
         return PythonModule(module)
 
@@ -197,8 +195,9 @@ class TestPythonRefeference(unittest.TestCase):
 
     def test_enum(self):
         enum = Enum('Number')
-        module = Module('test')
-        module.add_definition(enum)
+
+        module = Module('test', definitions=[enum])
+        module.link()
 
         ref = pyreference(enum)
         assert ref.name == 'test.Number'
@@ -208,8 +207,9 @@ class TestPythonRefeference(unittest.TestCase):
         enum = Enum('Number')
         enum.create_value('ONE')
         two = enum.create_value('TWO')
-        module = Module('test')
-        module.add_definition(enum)
+
+        module = Module('test', definitions=[enum])
+        module.link()
 
         ref = pyreference(two)
         assert ref.name == 'test.Number.TWO'
@@ -217,8 +217,9 @@ class TestPythonRefeference(unittest.TestCase):
 
     def test_message(self):
         def0 = Message('Message')
-        module = Module('test')
-        module.add_definition(def0)
+
+        module = Module('test', definitions=[def0])
+        module.link()
 
         ref = pyreference(def0)
         assert ref.name == 'test.Message'
@@ -226,8 +227,9 @@ class TestPythonRefeference(unittest.TestCase):
 
     def test_interface(self):
         def0 = Interface('Interface')
-        module = Module('test')
-        module.add_definition(def0)
+
+        module = Module('test', definitions=[def0])
+        module.link()
 
         ref = pyreference(def0)
         assert ref.name == 'test.Interface'
@@ -235,8 +237,9 @@ class TestPythonRefeference(unittest.TestCase):
 
     def test_in_module_scope(self):
         def0 = Message('Message')
-        module = Module('test')
-        module.add_definition(def0)
+
+        module = Module('test', definitions=[def0])
+        module.link()
 
         ref = pyreference(def0, module)
         assert ref.name == 'Message'
@@ -244,8 +247,9 @@ class TestPythonRefeference(unittest.TestCase):
 
     def test_map_module_name(self):
         def0 = Message('Message')
-        module = Module('my.test.submodule')
-        module.add_definition(def0)
+
+        module = Module('my.test.submodule', definitions=[def0])
+        module.link()
 
         namespaces = pynamespace({'my.test': 'my_test'})
         ref = pyreference(def0, namespace=namespaces)

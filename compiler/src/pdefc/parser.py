@@ -451,7 +451,7 @@ class _GrammarRules(object):
         name = t[3]
         methods = t[5]
 
-        t[0] = pdefc.ast.Interface(name, exc=exc, declared_methods=methods)
+        t[0] = pdefc.ast.Interface(name, exc=exc, methods=methods)
 
     def p_interface_exc(self, t):
         '''

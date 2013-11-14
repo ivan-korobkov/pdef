@@ -10,13 +10,19 @@ class TestEnum(unittest.TestCase):
         one = enum.create_value('ONE')
 
         assert one.name == 'ONE'
-        assert one.enum is enum
 
     def test_get_value(self):
         enum = Enum('Number')
         one = enum.create_value('ONE')
 
         assert enum.get_value('ONE') is one
+
+    def test_link(self):
+        enum = Enum('Number')
+        one = enum.create_value('ONE')
+
+        enum.link(None)
+        assert one.enum is enum
 
     def test_validate__duplicate_values(self):
         enum = Enum('Number')

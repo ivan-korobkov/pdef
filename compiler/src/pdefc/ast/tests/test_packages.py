@@ -35,7 +35,7 @@ class TestPackage(unittest.TestCase):
         package = Package()
         package.add_module(module0)
         package.add_module(module1)
-        errors = package.link()
+        errors = package._link()
 
         assert len(errors) == 1
         assert 'Duplicate module' in errors[0]
@@ -47,7 +47,7 @@ class TestPackage(unittest.TestCase):
         package = Package()
         package.add_module(module)
         package.include_module(included)
-        errors = package.link()
+        errors = package._link()
 
         assert len(errors) == 1
         assert 'Module clashes with an included module' in errors[0]
@@ -66,8 +66,8 @@ class TestPackage(unittest.TestCase):
         package = Package()
         package.add_module(module)
 
-        package.link()
-        package.build()
+        package._link()
+        package._build()
 
         assert one in zero.subtypes
 
@@ -80,6 +80,6 @@ class TestPackage(unittest.TestCase):
 
         package = Package()
         package.add_module(module)
-        errors = package.validate()
+        errors = package._validate()
 
         assert len(errors) == 1

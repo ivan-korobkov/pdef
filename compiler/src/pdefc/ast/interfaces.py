@@ -8,14 +8,14 @@ from pdefc.ast.types import TypeEnum, NativeType, Definition
 
 class Interface(Definition):
     '''User-defined interface.'''
-    def __init__(self, name, exc=None, declared_methods=None, doc=None, location=None):
+    def __init__(self, name, exc=None, methods=None, doc=None, location=None):
         super(Interface, self).__init__(TypeEnum.INTERFACE, name, doc=doc, location=location)
 
         self.exc = exc
-        self.declared_methods = []
+        self.methods = []
 
-        if declared_methods:
-            map(self.add_method, declared_methods)
+        if methods:
+            map(self.add_method, methods)
 
     @property
     def exc(self):
@@ -26,17 +26,12 @@ class Interface(Definition):
         self._exc = references.reference(value)
 
     @property
-    def methods(self):
-        return self.declared_methods
+    def declared_methods(self):
+        return self.methods
 
     def add_method(self, method):
         '''Add a method to this interface.'''
-        if method.interface:
-            raise ValueError('Method is already in an interface, %s' % method)
-
-        method.interface = self
-        self.declared_methods.append(method)
-
+        self.methods.append(method)
         logging.debug('%s: added a method %r', self, method.name)
 
     def create_method(self, name, result=NativeType.VOID, arg_tuples=None, is_post=False):
@@ -49,14 +44,13 @@ class Interface(Definition):
         self.add_method(method)
         return method
 
-    def link(self, scope):
+    def link(self, module):
         '''Link the base, the exception and the methods.'''
-        logging.debug('Linking %s', self)
-        errors = []
-        errors += self._exc.link(scope)
+        errors = super(Interface, self).link(module)
+        errors += self._exc.link(module.lookup)
 
-        for method in self.declared_methods:
-            errors += method.link(scope)
+        for method in self.methods:
+            errors += method.link(module)
 
         return errors
 
@@ -100,12 +94,11 @@ class Method(Located, Validatable):
         self.name = name
         self.args = []
         self.result = result
+        self.interface = None
         self.is_post = is_post
 
         self.doc = doc
         self.location = location
-
-        self.interface = None
 
         if args:
             map(self.add_arg, args)
@@ -128,12 +121,14 @@ class Method(Located, Validatable):
     def is_terminal(self):
         return self.result and (not self.result.is_interface)
 
+    def lookup(self, name):
+        return self.interface.lookup(name) if self.interface else None
+
     def add_arg(self, arg):
         '''Append an argument to this method.'''
         if arg.method:
             raise ValueError('Argument is already in a method, %s' % arg)
 
-        arg.method = self
         self.args.append(arg)
         logging.debug('%s: added an arg %r', self, arg.name)
 
@@ -143,13 +138,17 @@ class Method(Located, Validatable):
         self.add_arg(arg)
         return arg
 
-    def link(self, scope):
+    def link(self, interface):
         logging.debug('Linking %s', self)
-        errors = []
-        errors += self._result.link(scope)
 
+        if self.interface:
+            raise ValueError('Method is already linked, method=%s', self)
+        self.interface = interface
+
+        errors = []
+        errors += self._result.link(self.lookup)
         for arg in self.args:
-            errors += arg.link(scope)
+            errors += arg.link(self)
 
         return errors
 
@@ -194,6 +193,7 @@ class MethodArg(Located, Validatable):
         self.name = name
         self.type = type0
         self.method = None
+
         self.is_query = is_query
         self.is_post = is_post
 
@@ -215,8 +215,12 @@ class MethodArg(Located, Validatable):
     def fullname(self):
         return '%s.%s' % (self.method, self.name)
 
-    def link(self, scope):
-        return self._type.link(scope)
+    def link(self, method):
+        if self.method:
+            raise ValueError('Method argument is already linked, %s' % self)
+        self.method = method
+
+        return self._type.link(method.lookup)
 
     def _validate(self):
         if not self.type:

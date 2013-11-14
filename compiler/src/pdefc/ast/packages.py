@@ -3,7 +3,7 @@ import logging
 from pdefc.ast.common import Validatable
 
 
-class Package(Validatable):
+class Package(object):
     '''Protocol definition.'''
     def __init__(self, modules=None, includes=None):
         self.modules = []
@@ -20,12 +20,7 @@ class Package(Validatable):
 
     def add_module(self, module):
         '''Add a module to this package.'''
-        if module.package:
-            raise ValueError('Module is already in a package, %s' % module)
-
         self.modules.append(module)
-        module.package = self
-
         logging.debug('Added a module %r', module.name)
 
     def include(self, package):
@@ -55,21 +50,21 @@ class Package(Validatable):
         '''Compile this package and return a list of errors.'''
         logging.debug('Compiling the package')
 
-        errors = self.link()
+        errors = self._link()
         if errors:
             return errors
 
-        errors = self.build()
+        errors = self._build()
         if errors:
             return errors
 
-        errors = self.validate()
+        errors = self._validate()
         if errors:
             return errors
 
         return []
 
-    def link(self):
+    def _link(self):
         '''Link this package and return a list of errors.'''
         logging.debug('Linking the package')
 
@@ -93,11 +88,11 @@ class Package(Validatable):
 
         # Link modules.
         for module in self.modules:
-            errors += module.link()
+            errors += module.link(self)
 
         return errors
 
-    def build(self):
+    def _build(self):
         '''Build this package and return a list of errors.'''
         logging.debug('Building the package')
 

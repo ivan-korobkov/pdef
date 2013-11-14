@@ -67,10 +67,6 @@ class Message(Definition):
 
     def add_field(self, field):
         '''Add a new field to this message and return the field.'''
-        if field.message:
-            raise ValueError('Field is already in a message, %s' % field)
-
-        field.message = self
         self.declared_fields.append(field)
 
         if field.is_discriminator:
@@ -96,15 +92,13 @@ class Message(Definition):
         if self.base:
             self.base._add_subtype(subtype)
 
-    def link(self, scope):
-        logging.debug('Linking %s', self)
-
-        errors = []
-        errors += self._base.link(scope)
-        errors += self._discriminator_value.link(scope)
+    def link(self, module):
+        errors = super(Message, self).link(module)
+        errors += self._base.link(self.lookup)
+        errors += self._discriminator_value.link(self.lookup)
 
         for field in self.declared_fields:
-            errors += field.link(scope)
+            errors += field.link(self)
 
         return errors
 
@@ -297,9 +291,14 @@ class Field(Located, Validatable):
     def type(self):
         return self._type.dereference()
 
-    def link(self, scope):
+    def link(self, message):
         logging.debug('Linking %s', self)
-        return self._type.link(scope)
+
+        if self.message:
+            raise ValueError('Field is already linked, %s' % self)
+        self.message = message
+
+        return self._type.link(message.lookup)
 
     def _validate(self):
         logging.debug('Validating %s', self)

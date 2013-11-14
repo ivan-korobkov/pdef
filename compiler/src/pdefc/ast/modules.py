@@ -79,12 +79,7 @@ class Module(Validatable):
 
     def add_definition(self, def0):
         '''Add a new definition to this module.'''
-        if def0.module:
-            raise ValueError('Definition is already in a module, def=%s,' % def0)
-
         self.definitions.append(def0)
-        def0.module = self
-
         logging.debug('%s: added a definition %r', self, def0.name)
 
     def get_definition(self, name):
@@ -95,24 +90,23 @@ class Module(Validatable):
 
     # Link.
 
-    def link(self):
+    def link(self, package=None):
         '''Link imports and definitions and return a list of errors.'''
         logging.debug('Linking %s as %s', self.path, self)
+        if self.package:
+            raise ValueError('Module is already linked, module=%s' % self)
+        self.package = package
 
-        errors = self._link_imports()
+        errors = self._link_imports(package)
         if errors:
             return self._module_errors(errors)
 
         errors = self._link_definitions()
         return self._module_errors(errors)
 
-    def _link_imports(self):
+    def _link_imports(self, package):
         '''Link imports, must be called before link_module_defs().'''
-        if not self.package:
-            raise ValueError('Module must be in a package, %s' % self)
-
         errors = []
-        package = self.package
 
         for import0 in self.imports:
             imodules, errors0 = import0.link(package)
@@ -123,11 +117,9 @@ class Module(Validatable):
 
     def _link_definitions(self):
         '''Link imports and definitions.'''
-        scope = lambda name: self._find(name)
-
         errors = []
         for def0 in self.definitions:
-            errors += def0.link(scope)
+            errors += def0.link(self)
 
         return errors
 
@@ -185,6 +177,9 @@ class Module(Validatable):
                 q.append(imp.module)
 
         return False
+
+    def lookup(self, name):
+        return self._find(name)
 
     def _find(self, name):
         '''Find a type by a name.'''

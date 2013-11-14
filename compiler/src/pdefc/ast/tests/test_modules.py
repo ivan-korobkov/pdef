@@ -39,7 +39,7 @@ class TestModule(unittest.TestCase):
         package.add_module(module)
         package.add_module(module0)
         package.add_module(module1)
-        errors = module.link()
+        errors = module.link(package)
 
         assert not errors
         assert len(module.imported_modules) == 2

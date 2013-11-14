@@ -1,4 +1,5 @@
 # encoding: utf-8
+import logging
 from pdefc.ast.types import Type, TypeEnum, Definition
 
 
@@ -25,15 +26,12 @@ class Enum(Definition):
 
     def add_value(self, value):
         '''Add a value to this enum.'''
-        if value.enum:
-            raise ValueError('Enum value is already in enum %r' % value)
-
-        value.enum = self
         self.values.append(value)
+        logging.debug('Added an enum value, enum=%s, value=%s' % (self, value))
 
     def create_value(self, name):
         '''Create a new enum value by its name, add it to this enum, and return it.'''
-        value = EnumValue(name)
+        value = EnumValue(name, enum=self)
         self.add_value(value)
         return value
 
@@ -45,6 +43,14 @@ class Enum(Definition):
 
     def __contains__(self, enum_value):
         return enum_value in self.values
+
+    def link(self, module):
+        errors = super(Enum, self).link(module)
+
+        for value in self.values:
+            errors += value.link(self)
+
+        return errors
 
     def _validate(self):
         errors = []
@@ -61,10 +67,10 @@ class Enum(Definition):
 
 class EnumValue(Type):
     '''Single enum value which has a name and a pointer to the declaring enum.'''
-    def __init__(self, name, location=None):
+    def __init__(self, name, enum=None, location=None):
         super(EnumValue, self).__init__(TypeEnum.ENUM_VALUE, location=location)
         self.name = name
-        self.enum = None
+        self.enum = enum
 
     def __str__(self):
         if not self.enum:
@@ -73,3 +79,9 @@ class EnumValue(Type):
 
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
+
+    def link(self, enum):
+        if self.enum and not self.enum is enum:
+            raise ValueError('Enum value is already linked, value=%s' % self)
+        self.enum = enum
+        return []

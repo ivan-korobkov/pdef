@@ -9,6 +9,7 @@ class TestJavaEnum(unittest.TestCase):
         enum = Enum('Number', value_names=['ONE', 'TWO'])
         module = Module('test.module')
         module.add_definition(enum)
+        module.link()
 
         return JavaEnum(enum, jreference)
 
@@ -38,6 +39,7 @@ class TestMessage(unittest.TestCase):
         module.add_definition(enum)
         module.add_definition(base)
         module.add_definition(msg)
+        module.link()
 
         return JavaDefinition.create(msg, jreference)
 
@@ -67,9 +69,10 @@ class TestInterface(unittest.TestCase):
         iface.create_method('method0', NativeType.INT32, [('arg', NativeType.INT32)])
         iface.create_method('method1', NativeType.STRING, [('name', NativeType.STRING)])
 
-        module0 = Module('test.module')
-        module0.add_definition(exc)
-        module0.add_definition(iface)
+        module = Module('test.module')
+        module.add_definition(exc)
+        module.add_definition(iface)
+        module.link()
 
         return JavaDefinition.create(iface, jreference)
 
@@ -117,10 +120,11 @@ class TestRef(unittest.TestCase):
 
     def test_enum(self):
         enum = Enum('Number')
-        module = Module('test.module')
-        module.add_definition(enum)
-        ref = jreference(enum)
 
+        module = Module('test.module', definitions=[enum])
+        module.link()
+
+        ref = jreference(enum)
         assert ref.name == 'test.module.Number'
         assert ref.descriptor == 'test.module.Number.DESCRIPTOR'
 
@@ -128,8 +132,8 @@ class TestRef(unittest.TestCase):
         enum = Enum('Number')
         one = enum.create_value('ONE')
 
-        module = Module('test.module')
-        module.add_definition(enum)
+        module = Module('test.module', definitions=[enum])
+        module.link()
 
         ref = jreference(one)
         assert ref.name == 'test.module.Number.ONE'
@@ -137,20 +141,22 @@ class TestRef(unittest.TestCase):
 
     def test_message(self):
         msg = Message('Message')
-        module = Module('test.module')
-        module.add_definition(msg)
-        ref = jreference(msg)
 
+        module = Module('test.module', definitions=[msg])
+        module.link()
+
+        ref = jreference(msg)
         assert ref.name == 'test.module.Message'
         assert ref.default == 'new test.module.Message()'
         assert ref.descriptor == 'test.module.Message.DESCRIPTOR'
 
     def test_interface(self):
         iface = Interface('Interface')
-        module = Module('test.module')
-        module.add_definition(iface)
-        ref = jreference(iface)
 
+        module = Module('test.module', definitions=[iface])
+        module.link()
+
+        ref = jreference(iface)
         assert ref.name == 'test.module.Interface'
         assert ref.descriptor == 'test.module.Interface.DESCRIPTOR'
         assert ref.default is None
@@ -163,12 +169,12 @@ class TestRef(unittest.TestCase):
 
     def test_namespace__definition(self):
         msg = Message('Message')
-        module = Module('test.module')
-        module.add_definition(msg)
 
+        module = Module('test.module', definitions=[msg])
+        module.link()
         namespace = jnamespace({'test': 'com.company.test'})
-        ref = jreference(msg, namespace)
 
+        ref = jreference(msg, namespace)
         assert ref.name == 'com.company.test.module.Message'
         assert ref.descriptor == 'com.company.test.module.Message.DESCRIPTOR'
         assert ref.default == 'new com.company.test.module.Message()'

@@ -1,5 +1,6 @@
 # encoding: utf-8
 import unittest
+from pdefc.ast import Module
 from pdefc.ast.interfaces import *
 from pdefc.ast.types import NativeType
 
@@ -18,17 +19,19 @@ class TestInterface(unittest.TestCase):
         method = iface.create_method('sum', NativeType.INT32,
             arg_tuples=[('i0', NativeType.INT32), ('i1', NativeType.INT32)])
 
-        assert [method] == iface.declared_methods
+        assert [method] == iface.methods
         assert method.name == 'sum'
         assert method.result is NativeType.INT32
         assert method.args[0].name == 'i0'
         assert method.args[1].name == 'i1'
 
     def test_link(self):
+        module = Module('test')
         iface = Interface('Interface', exc='exc')
         iface.create_method('method', 'result', [('arg', 'arg_type')])
-        errors = iface.link(lambda name: None)
 
+        errors = iface.link(module)
+        assert iface.module is module
         assert len(errors) == 3
 
     # validate_exc
@@ -89,10 +92,11 @@ class TestMethod(unittest.TestCase):
 
 class TestMethodArg(unittest.TestCase):
     def test_link(self):
-        scope = lambda name: None
         arg = MethodArg('arg', 'module.Message')
+        method = Method('method')
 
-        errors = arg.link(scope)
+        errors = arg.link(method)
+        assert arg.method is method
         assert 'Type not found' in errors[0]
 
     def test_validate__type_reference(self):

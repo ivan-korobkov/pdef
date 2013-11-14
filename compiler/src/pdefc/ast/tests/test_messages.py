@@ -127,83 +127,131 @@ class TestMessage(unittest.TestCase):
         errors = msg0.validate()
         assert 'circular inheritance' in errors[0]
 
+    def test_validate_base__invalid_base(self):
+        base = Message('Base')
+        base.create_field('field', NativeType.VOID)     # Field cannot be void.
+
+        msg = Message('Msg')
+        msg.base = base
+
+        errors = msg.validate()
+        assert 'invalid base' in errors[0]
+
     def test_validate_base__message_exception_clash(self):
         msg = Message('Msg')
         exc = Message('Exc', is_exception=True)
         exc.base = msg
 
         errors = exc.validate()
-        assert 'wrong base type (message/exc)' in errors[0]
+        assert 'wrong base type (message/exception)' in errors[0]
 
-    def test_validate_base__message_must_be_defined_after_base(self):
+    def test_validate_base__must_be_declared_after_base(self):
         base = Message('Base')
-        msg = Message('Message')
-        msg.base = base
+        msg = Message('Message', base=base)
 
-        module = Module('module')
-        module.add_definition(msg)
-        module.add_definition(base)
+        module = Module('module', definitions=[msg, base])
         module.link()
 
         errors = msg.validate()
-        assert 'Message must be defined after Base' in errors[0]
+        assert 'must be declared after its base' in errors[0]
+
+    def test_validate_base__prevent_base_from_dependent_module(self):
+        base = Message('Base')
+        msg = Message('Message', base=base)
+
+        module0 = Module('module0', definitions=[msg])
+        module0.link()
+
+        module1 = Module('module1', definitions=[base])
+        module1.add_imported_module('module0', module0)
+        module1.link()
+
+        errors = msg.validate()
+        assert 'cannot inherit Base, it is in a dependent module "module1"' in errors[0]
 
     # validate_discriminator.
 
-    def test_validate_discriminator__not_enum(self):
-        msg = Message('Message', discriminator_value=NativeType.STRING)
+    def test_validate_discriminator_value__present_no_base(self):
+        enum = Enum('Number')
+        one = enum.create_value('ONE')
+        msg = Message('Message', discriminator_value=one)
+
+        errors = msg.validate()
+        assert 'discriminator value is present, but no base' in errors[0]
+
+    def test_validate_discriminator_value__not_present_no_base(self):
+        msg = Message('Message')
         errors = msg.validate()
 
-        assert 'discriminator value must be an enum value' in errors[0]
+        assert not errors
 
-    def test_validate_discriminator__no_discriminator_value_but_polymorphic_base(self):
-        enum = Enum('Type')
-        base = Message('Base')
-        base.create_field('type', enum, is_discriminator=True)
-
-        msg = Message('Msg', base=base)
-        errors = msg.validate()
-
-        assert 'discriminator value required' in errors[0]
-
-    def test_validate_discriminator__discriminator_value_but_nonpolymorphic_base(self):
-        base = Message('Base')
-        enum = Enum('Type')
-        subtype = enum.create_value('SUBTYPE')
-
-        msg = Message('Msg', base=base, discriminator_value=subtype)
-        errors = msg.validate()
-
-        assert 'cannot set a discriminator value, the base is not polymorphic' in errors[0]
-
-    def test_validate_discrminator__value_type_does_not_match_base_discriminator_type(self):
-        enum0 = Enum('Enum0')
-        base = Message('Base')
-        base.create_field('field', enum0, is_discriminator=True)
-
-        enum1 = Enum('Enum1')
-        subtype = enum1.create_value('SUBTYPE')
-        msg = Message('Message', base=base, discriminator_value=subtype)
-        errors = msg.validate()
-
-        assert 'discriminator value does not match the base discriminator type' in errors[0]
-
-    def test_validate_discriminator__message_must_be_defined_after_discriminator_type(self):
-        enum = Enum('Enum')
-        subtype = enum.create_value('SUBTYPE')
-
+    def test_validate_discriminator_value__not_present_base_polymorphic(self):
+        enum = Enum('Number')
         base = Message('Base')
         base.create_field('field', enum, is_discriminator=True)
-        msg = Message('Message', base=base, discriminator_value=subtype)
+        msg = Message('Message', base=base)
 
-        module = Module('module')
-        module.add_definition(base)
-        module.add_definition(msg)
-        module.add_definition(enum)
+        errors = msg.validate()
+        assert 'discriminator value required, base is polymorphic' in errors[0]
+
+    def test_validate_discriminator_value__not_present_base_nonpolymorphic(self):
+        base = Message('Base')
+        msg = Message('Message', base=base)
+
+        errors = msg.validate()
+        assert not errors
+
+    def test_validate_discriminator_value__present_base_nonpolymorphic(self):
+        number = Enum('Number')
+        one = number.create_value('ONE')
+        base = Message('Base')
+        msg = Message('Message', base=base, discriminator_value=one)
+
+        errors = msg.validate()
+        assert 'cannot set a discriminator value, the base is not polymorphic' in errors[0]
+
+    def test_validate_discriminator_value__does_not_match_base_discriminator_type(self):
+        number = Enum('Number')
+        letter = Enum('Letter')
+        a = letter.create_value('A')
+
+        base = Message('Base')
+        base.create_field('field', number, is_discriminator=True)
+        msg = Message('Message', base=base, discriminator_value=a)
+
+        errors = msg.validate()
+        assert 'discriminator value does not match the base discriminator type' in errors[0]
+
+    def test_validate_discriminator_value__message_must_be_declared_after_discriminator_type(self):
+        number = Enum('Number')
+        one = number.create_value('ONE')
+
+        base = Message('Base')
+        base.create_field('field', number, is_discriminator=True)
+
+        msg = Message('Message', base=base, discriminator_value=one)
+        module = Module('module', definitions=[msg, number])
         module.link()
 
         errors = msg.validate()
-        assert 'Message must be defined after Enum' in errors[0]
+        assert 'must be declared after discriminator type' in errors[0]
+
+    def test_validate_discriminator_value__from_dependent_module(self):
+        number = Enum('Number')
+        one = number.create_value('ONE')
+
+        base = Message('Base')
+        base.create_field('field', number, is_discriminator=True)
+        msg = Message('Message', base=base, discriminator_value=one)
+
+        module0 = Module('module0', definitions=[msg])
+        module1 = Module('module1', definitions=[number])
+        module1.add_imported_module('module0', module0)
+        module0.link()
+        module1.link()
+
+        errors = msg.validate()
+        assert 'cannot use Number as a discriminator, it is in a dependent module' in errors[0]
 
     # validate_fields.
 

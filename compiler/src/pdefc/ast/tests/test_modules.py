@@ -75,6 +75,21 @@ class TestModule(unittest.TestCase):
         result = module1.lookup('module0.Number.One')
         assert result is one
 
+    # get_import_path.
+
+    def test_get_import_path(self):
+        # 0 -> 1 -> 2
+        module0 = Module('module0')
+        module1 = Module('module1')
+        module2 = Module('module2')
+
+        module0.add_imported_module('module1', module1)
+        module1.add_imported_module('module2', module2)
+
+        assert module0._get_import_path(module2) == [module0, module1, module2]
+        assert module0._get_import_path(module1) == [module0, module1]
+        assert module2._get_import_path(module0) == []
+
     # Linking.
 
     def test_link_imports(self):
@@ -147,26 +162,3 @@ class TestModule(unittest.TestCase):
 
         assert len(errors) == 1
         assert 'Duplicate definition or import' in str(errors[0])
-
-    def test_has_import_circle__true(self):
-        # 0 -> 1 -> 2 -> 0
-        module0 = Module('module0')
-        module1 = Module('module1')
-        module2 = Module('module2')
-
-        module0.add_imported_module('module1', module1)
-        module1.add_imported_module('module2', module2)
-        module2.add_imported_module('module0', module0)
-
-        assert module0._has_import_circle(module2)
-
-    def test_has_import_circle__false(self):
-        # 0 -> 1 -> 2
-        module0 = Module('module0')
-        module1 = Module('module1')
-        module2 = Module('module2')
-
-        module0.add_imported_module('module0', module1)
-        module1.add_imported_module('module0', module2)
-
-        assert module0._has_import_circle(module2) is False

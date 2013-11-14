@@ -114,118 +114,112 @@ class Message(Definition):
     def _validate(self):
         logging.debug('Validation %s', self)
 
-        # Prevent circular inheritance.
-        errors = self._validate_circular_inheritance()
+        errors = self._validate_base()
         if errors:
-            # Cannot proceed when circular inheritance.
-            return errors
-
-        # Validate the base, cannot validate this message when an invalid base.
-        # Ignore the errors, they are collected when the base is validated by a module.
-        if not self._is_base_valid:
-            return errors
-
-        errors = self._validate_inheritance()
-        if errors:
-            # Cannot proceed when inheritance errors.
+            # Cannot validate this message with an invalid base.
             return errors
 
         errors = []
-        errors += self._validate_discriminator()
+        errors += self._validate_discriminator_value()
         errors += self._validate_subtypes()
         errors += self._validate_fields()
         return errors
 
     @property
-    def _is_base_valid(self):
-        if not self.base:
-            return True
-
-        self.base.validate()
-        return self.base.is_valid
-
-    def _validate_inheritance(self):
-        base = self.base
-        if not base:
-            return []
-
-        # The base must be a message.
-        if not base.is_message:
-            return [self._error('%s: base must be a message, got %s', self, base)]
-
-        errors = []
-        if self.is_exception != base.is_exception:
-            # The base exception/message flag must match this message flag.
-            errors.append(self._error('%s: wrong base type (message/exc) %s', self, base))
-
-        # Validate the reference.
-        # A linked message reference is valid,
-        # the method is called to support the contract.
-        errors += self._base.validate()
-
-        # The message must be defined after the base.
-        errors += self._validate_is_defined_after(base)
-
-        return errors
-
-    def _validate_circular_inheritance(self):
+    def _has_circular_inheritance(self):
         base = self.base
         while base:
             if base is self:
-                return [self._error('%s: circular inheritance', self)]
-            base = base.base
+                return True
 
-        return []
+            if base.is_message:
+                base = base.base
+            else:
+                # Cannot proceed, the base is not a message.
+                break
 
-    def _validate_discriminator(self):
+        return False
+
+    def _validate_base(self):
+        if not self.base:
+            return []
+
+        # Prevent circular inheritance before any validation.
+        if self._has_circular_inheritance:
+            # Cannot proceed when circular inheritance.
+            return [self._error('%s: circular inheritance', self)]
+
+        # Validate the base, ignore the errors, they are collected
+        # when the base is validated in a module.
         base = self.base
-        dvalue = self.discriminator_value
+        base.validate()
 
-        if not dvalue:
-            if not base or not base.is_polymorphic:
-                return []
+        if not base.is_valid:
+            return [self._error('%s: invalid base %s', self, base)]
 
-            # The base is present and it is polymorphic,
-            # so it requires a discriminator value.
-            return [self._error('%s: discriminator value required', self)]
-
-        # The discriminator value is present.
+        if not base.is_message:
+            return [self._error('%s: base must be a message but %s', self, base)]
 
         errors = []
-        dvalue_valid = True
-        if not dvalue.is_enum_value:
-            errors.append(self._error('%s: discriminator value must be an enum value', self))
-            dvalue_valid = False
+        if self.is_exception != base.is_exception:
+            errors.append(self._error('%s: wrong base type (message/exception), %s', self, base))
 
-        if not base:
-            # No base but the discriminator value is present.
-            errors.append(self._error('%s: cannot set a discriminator value, no base', self))
-            return errors
+        if not self._is_defined_after(base):
+            errors.append(self._error('%s: must be declared after its base %s', self, base))
 
-        if not base.is_polymorphic:
-            # The base is not polymorphic, i.e. does not have a discriminator field.
-            errors.append(self._error('%s: cannot set a discriminator value, the base '
-                                      'is not polymorphic (does not have a discriminator)', self))
-            return errors
+        # Base.module can be None in tests.
+        if base.module and base.module._depends_on(self.module):
+            path = base.module._get_import_path(base.module)
+            errors.append(self._error('%s: cannot inherit %s, '
+                                      'it is in a dependent module "%s", import path: %s',
+                                      self, base, base.module, path))
 
-        if base.discriminator and base.discriminator.type.is_enum:
-            # Check only when the base has a correct discriminator.
-
-            if dvalue not in base.discriminator.type:
-                # The discriminator value is not a base discriminator enum value.
-                errors.append(self._error('%s: discriminator value does not match the base '
-                                          'discriminator type', self))
-                return errors
-
-        # Validate the reference.
-        errors += self._discriminator_value.validate()
-
-        # The message must be defined after the discriminator enum.
-        errors += self._validate_is_defined_after(dvalue.enum)
         return errors
 
     def _validate_discriminator_value(self):
-        pass
+        base = self.base
+        value = self.discriminator_value
+
+        if not base:
+            if value:
+                return [self._error('%s: discriminator value is present, but no base', self)]
+
+            # No discriminator value, nothing to validate.
+            return []
+
+        # The base is present.
+        if not value:
+            if base.is_polymorphic:
+                return [self._error('%s: discriminator value required, base is polymorphic', self)]
+
+            # Non-polymorphic inheritance is correct.
+            return []
+
+        # The value is present.
+        if not base.is_polymorphic:
+            # A present discriminator value requires a polymorphic base.
+            return [self._error('%s: cannot set a discriminator value, the base '
+                                'is not polymorphic (does not have a discriminator)', self)]
+
+        # Both the value and the base are present, and the base is polymorphic.
+        # The base has been validated before, its discriminator field must valid.
+        if value not in base.discriminator.type:
+            # The discriminator value is not a base discriminator enum value.
+            return [self._error('%s: discriminator value does not match '
+                                'the base discriminator type', self)]
+
+        enum = value.enum
+        if not self._is_defined_after(enum):
+            return [self._error('%s: must be declared after discriminator type %s', self, enum)]
+
+        # enum.module can be None in tests.
+        if enum.module and enum.module._depends_on(self.module):
+            path = enum.module._get_import_path(self.module)
+            return [self._error('%s: cannot use %s as a discriminator, '
+                                'it is in a dependent module "%s", import path: %s',
+                                self, enum, enum.module, path)]
+
+        return []
 
     def _validate_subtypes(self):
         if not self.subtypes:

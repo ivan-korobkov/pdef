@@ -123,6 +123,53 @@ class Module(Validatable):
 
         return None
 
+    def _depends_on(self, another):
+        return bool(self._get_import_path(another))
+
+    def _get_import_path(self, another):
+        '''Returns a list of modules when this module depends on another module.
+
+        For example: a imports b, b imports c;
+        a._get_import_path_with(c) => [a, b, c]
+        '''
+        if another is None:
+            return []
+
+        # BFS
+        q = deque(self.imported_modules)
+        seen = set()
+        came_from = {module: self for module in self.imported_modules}
+
+        depends = False
+        while q:
+            current = q.pop()
+            if current in seen:
+                continue
+
+            if current is another:
+                # Self depends on another!
+                depends = True
+                break
+
+            seen.add(current)
+            q += current.imported_modules
+            came_from.update({imported: current for imported in current.imported_modules})
+
+        if not depends:
+            return []
+
+        # Reconstruct the path.
+        path = [another]
+        module = another
+        while True:
+            module = came_from[module]
+            path.append(module)
+            if module is self:
+                break
+
+        path.reverse()
+        return path
+
     # Link.
 
     def link(self, package=None):
@@ -202,18 +249,3 @@ class Module(Validatable):
             names.add(name)
 
         return errors
-
-    def _has_import_circle(self, another):
-        '''Return true if this module has an import circle with another module.'''
-        if another is self:
-            return False
-
-        q = deque(self.imported_modules)
-        while q:
-            module = q.pop()
-            if module is self:
-                return True
-
-            q += module.imported_modules
-
-        return False

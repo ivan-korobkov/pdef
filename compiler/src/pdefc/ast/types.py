@@ -147,26 +147,19 @@ class Definition(Type):
         '''Build this definition after linking and return a list of errors.'''
         return []
 
-    def _validate_is_defined_after(self, another):
-        '''Validate this definition is defined after another one.'''
+    def _is_defined_after(self, another):
+        '''Return true if this definition is after another one in one module.'''
         if not self.module or not another.module:
-            return []
+            return True
 
-        if self.module is another.module:
-            # They are in the same module.
+        if self.module is not another.module:
+            return True
 
-            for def0 in self.module.definitions:
-                if def0 is another:
-                    return []
+        for def0 in self.module.definitions:
+            if def0 is another:
+                return True
 
-                if def0 is self:
-                    return [self._error('%s must be defined after %s.', self, another)]
+            if def0 is self:
+                return False
 
-            raise AssertionError('Wrong module state')
-
-        if self.module._has_import_circle(another.module):
-            return [self._error('%s must be defined after %s, but their modules circularly '
-                                'import each other. Move %s into another module.',
-                                self, another, self)]
-
-        return []
+        raise AssertionError('Unnreachable code')

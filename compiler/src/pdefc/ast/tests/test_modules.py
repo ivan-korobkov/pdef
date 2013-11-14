@@ -24,6 +24,56 @@ class TestModule(unittest.TestCase):
 
         assert module.get_definition('Test') is def0
 
+    # Lookup
+
+    def test_lookup(self):
+        '''Should find up a user-defined definition by its reference.'''
+        def0 = Definition(TypeEnum.MESSAGE, 'Test')
+
+        module = Module('test')
+        module.add_definition(def0)
+
+        result = module.lookup('Test')
+        assert result is def0
+
+    def test_lookup__enum_value(self):
+        '''Should find an enum value by its name.'''
+        enum = Enum('Number')
+        one = enum.create_value('One')
+
+        module = Module('test')
+        module.add_definition(enum)
+
+        result = module.lookup('Number.One')
+        assert result is one
+
+    def test_lookup__imported_definition(self):
+        '''Should find an imported definition.'''
+        def0 = Definition(TypeEnum.MESSAGE, 'Test')
+
+        module0 = Module('test.module0')
+        module0.add_definition(def0)
+
+        module1 = Module('module1')
+        module1.add_imported_module('test.module0', module0)
+
+        result = module1.lookup('test.module0.Test')
+        assert result is def0
+
+    def test_lookup__imported_enum_value(self):
+        '''Should find an imported enum value.'''
+        enum = Enum('Number')
+        one = enum.create_value('One')
+
+        module0 = Module('test.module0')
+        module0.add_definition(enum)
+
+        module1 = Module('module1')
+        module1.add_imported_module('module0', module0)
+
+        result = module1.lookup('module0.Number.One')
+        assert result is one
+
     # Linking.
 
     def test_link_imports(self):
@@ -119,56 +169,6 @@ class TestModule(unittest.TestCase):
         module1.add_imported_module('module0', module2)
 
         assert module0._has_import_circle(module2) is False
-
-    # Search.
-
-    def test_find__definition(self):
-        '''Should find up a user-defined definition by its reference.'''
-        def0 = Definition(TypeEnum.MESSAGE, 'Test')
-
-        module = Module('test')
-        module.add_definition(def0)
-
-        result = module._find('Test')
-        assert result is def0
-
-    def test_find__enum_value(self):
-        '''Should find an enum value by its name.'''
-        enum = Enum('Number')
-        one = enum.create_value('One')
-
-        module = Module('test')
-        module.add_definition(enum)
-
-        result = module._find('Number.One')
-        assert result is one
-
-    def test_find__imported_definition(self):
-        '''Should find an imported definition.'''
-        def0 = Definition(TypeEnum.MESSAGE, 'Test')
-
-        module0 = Module('test.module0')
-        module0.add_definition(def0)
-
-        module1 = Module('module1')
-        module1.add_imported_module('test.module0', module0)
-
-        result = module1._find('test.module0.Test')
-        assert result is def0
-
-    def test_find__imported_enum_value(self):
-        '''Should find an imported enum value.'''
-        enum = Enum('Number')
-        one = enum.create_value('One')
-
-        module0 = Module('test.module0')
-        module0.add_definition(enum)
-
-        module1 = Module('module1')
-        module1.add_imported_module('module0', module0)
-
-        result = module1._find('module0.Number.One')
-        assert result is one
 
 
 class TestAbsoluteImport(unittest.TestCase):

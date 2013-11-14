@@ -34,7 +34,9 @@ class Module(Validatable):
 
         self.imports = []
         self.imported_modules = []
+
         self.definitions = []
+        self._definition_map = {}       # Performance optimization
 
         if imports:
             map(self.add_import, imports)
@@ -80,19 +82,69 @@ class Module(Validatable):
     def add_definition(self, def0):
         '''Add a new definition to this module.'''
         self.definitions.append(def0)
+        self._definition_map[def0.name] = def0
         logging.debug('%s: added a definition %r', self, def0.name)
 
     def get_definition(self, name):
-        '''Find a definition in this module by a name.'''
-        for d in self.definitions:
-            if d.name == name:
-                return d
+        '''Return a definition or an enum value in this module by a name.'''
+
+        # Try to get a definition by name.
+        if name in self._definition_map:
+            return self._definition_map[name]
+
+        # Return if not a relative name.
+        if '.' not in name:
+            return
+
+        # Try to get an enum value.
+        enum_name, value_name = name.split('.', 1)
+        if enum_name not in self._definition_map:
+            return
+
+        enum = self._definition_map[enum_name]
+        if not enum.is_enum:
+            return
+
+        return enum.get_value(value_name)
+
+    def lookup(self, name):
+        '''Find a definition or enum value in this module or imported modules.'''
+
+        # Try to get a native type.
+        def0 = NativeType.get(name)
+        if def0:
+            return def0
+
+        # Try to find a type or an enum value in the current module.
+        def0 = self.get_definition(name)
+        if def0:
+            return def0
+
+        # Try to find an imported type.
+        left = []
+        right = name.split('.')
+        while right:
+            left.append(right.pop(0))
+            lname = '.'.join(left)
+            rname = '.'.join(right)
+
+            module = self.get_imported_module(lname)
+            if not module:
+                continue
+
+            # Try to get a definition or an enum value from the imported module.
+            def0 = module.get_definition(rname)
+            if def0:
+                return def0
+
+        return None
 
     # Link.
 
     def link(self, package=None):
         '''Link imports and definitions and return a list of errors.'''
         logging.debug('Linking %s as %s', self.path, self)
+
         if self.package:
             raise ValueError('Module is already linked, module=%s' % self)
         self.package = package
@@ -177,60 +229,6 @@ class Module(Validatable):
                 q.append(imp.module)
 
         return False
-
-    def lookup(self, name):
-        return self._find(name)
-
-    def _find(self, name):
-        '''Find a type by a name.'''
-
-        # Try to get a native type.
-        def0 = NativeType.get(name)
-        if def0:
-            return def0
-
-        # Try to find a type or an enum value in the current module.
-        def0 = self._find_definition(name)
-        if def0:
-            return def0
-
-        # Try to find an imported type.
-        left = []
-        right = name.split('.')
-        while right:
-            left.append(right.pop(0))
-            lname = '.'.join(left)
-            rname = '.'.join(right)
-
-            imodule = self.get_imported_module(lname)
-            if not imodule:
-                continue
-
-            # Try to get a definition or an enum value from the imported module.
-            def0 = imodule._find_definition(rname)
-            if def0:
-                return def0
-
-                # Still can have more imports to check, i.e.:
-                # import com.project
-                # import com.project.submodule
-
-        return None
-
-    def _find_definition(self, name):
-        '''Find a definition or an enum value by a name inside this module.'''
-        if '.' not in name:
-            # It must be a user-defined type.
-            return self.get_definition(name)
-
-        # It can be an enum value.
-        left, right = name.split('.', 1)
-
-        enum = self.get_definition(left)
-        if enum and enum.is_enum:
-            return enum.get_value(right)
-
-        return None
 
 
 class AbstractImport(Located):

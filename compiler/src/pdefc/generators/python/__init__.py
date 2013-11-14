@@ -344,11 +344,11 @@ def pyreference(type0, module=None, namespace=None):
     return PythonReference.definition(type0, module, namespace)
 
 
-def pyimport(imported_module, namespace=None):
+def pyimport(module, namespace=None):
     '''Create a python import string.'''
     if not namespace:
-        return imported_module.module.name
-    return namespace(imported_module.module.name)
+        return module.name
+    return namespace(module.name)
 
 
 def pynamespace(namespaces=None):

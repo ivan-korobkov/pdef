@@ -1,5 +1,6 @@
 # encoding: utf-8
 import unittest
+from pdefc.ast import AbsoluteImport, RelativeImport
 from pdefc.ast.types import Definition, TypeEnum
 from pdefc.ast.enums import Enum
 from pdefc.ast.modules import *
@@ -169,50 +170,3 @@ class TestModule(unittest.TestCase):
         module1.add_imported_module('module0', module2)
 
         assert module0._has_import_circle(module2) is False
-
-
-class TestAbsoluteImport(unittest.TestCase):
-    def test_link(self):
-        module = Module('package.module')
-        package = Package()
-        package.add_module(module)
-
-        import0 = AbsoluteImport('package.module')
-        imodules, errors = import0.link(package)
-
-        assert imodules[0].module is module
-        assert not errors
-
-    def test_link__error(self):
-        package = Package()
-        import0 = AbsoluteImport('package.module')
-        imodules, errors = import0.link(package)
-
-        assert not imodules
-        assert 'Module not found' in errors[0]
-
-
-class TestRelativeImport(unittest.TestCase):
-    def test_link(self):
-        module0 = Module('package.system.module0')
-        module1 = Module('package.system.module1')
-        package = Package()
-        package.add_module(module0)
-        package.add_module(module1)
-
-        import0 = RelativeImport('package.system', ['module0', 'module1'])
-        imodules, errors = import0.link(package)
-
-        assert imodules[0].module is module0
-        assert imodules[1].module is module1
-        assert not errors
-
-    def test_link__error(self):
-        package = Package()
-
-        import0 = RelativeImport('package.system', ['module0', 'module1'])
-        imodules, errors = import0.link(package)
-
-        assert not imodules
-        assert "Module not found 'package.system.module0'" in errors[0]
-        assert "Module not found 'package.system.module1'" in errors[1]

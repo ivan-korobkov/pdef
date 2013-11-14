@@ -154,16 +154,13 @@ class TestPythonInterface(unittest.TestCase):
 class TestPythonImport(unittest.TestCase):
     def test(self):
         module = Module('my.test')
-        imodule = ImportedModule('alias', module)
-
-        assert pyimport(imodule) == 'my.test'
+        assert pyimport(module) == 'my.test'
 
     def test_namespaces(self):
         module = Module('my.test.module')
-        imodule = ImportedModule('alias', module)
         namespaces = pynamespace({'my.test': 'my_test'})
 
-        assert pyimport(imodule, namespaces) == 'my_test.module'
+        assert pyimport(module, namespaces) == 'my_test.module'
 
 
 class TestPythonRefeference(unittest.TestCase):

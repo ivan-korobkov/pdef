@@ -6,16 +6,16 @@ from pdefc import generators
 from pdefc.ast import TypeEnum
 
 
-def generate(package, out, namespaces=None, **kwargs):
+def generate(package, out, namespace=None, **kwargs):
     '''Python source code generator.'''
-    return PythonGenerator(out, namespaces).generate(package)
+    return PythonGenerator(out, namespace).generate(package)
 
 
 class PythonGenerator(generators.Generator):
     '''Python source code generators.'''
-    def __init__(self, out, namespaces=None):
+    def __init__(self, out, namespace=None):
         self.out = out
-        self.namespace = pynamespace(namespaces)
+        self.namespace = pynamespace(namespace)
         self.templates = pytemplates()
 
     def generate(self, package):

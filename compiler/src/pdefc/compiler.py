@@ -43,14 +43,20 @@ class Compiler(object):
 
         return package
 
-    def generate(self, paths, outs, namespaces=None, include_paths=None):
+    def generate(self, generator_name, paths, out, namespace=None, include_paths=None):
         '''Parse a package and generate source code.'''
-        namespaces = namespaces or {}
-        package = self.compile(paths, include_paths=include_paths)
+        generator = self.generators.get(generator_name)
+        if not generator:
+            raise CompilerException('Source code generator is not found: %r' % generator_name)
 
-        for gname, gout in outs.items():
-            gnamespaces = namespaces.get(gname)
-            self._generate(package, gname, out=gout, namespaces=gnamespaces)
+        t0 = time.time()
+
+        package = self.compile(paths, include_paths=include_paths)
+        namespace = namespace or {}
+        generator(package, out, namespace=namespace)
+
+        t = (time.time() - t0) * 1000
+        logging.info('Generated %s code in %dms' % (generator_name, t))
 
     def _parse(self, paths):
         '''Parse a package and return it.'''
@@ -74,17 +80,3 @@ class Compiler(object):
             raise CompilerException('Parsing errors', errors)
 
         return package
-
-    def _generate(self, package, name, out, namespaces=None):
-        t0 = time.time()
-
-        logging.info('Running a %s generator...' % name)
-        generator = self.generators.get(name)
-        if not generator:
-            logging.error('Source code generator is not found %r' % name)
-            return
-
-        generator(package, out, namespaces=namespaces)
-
-        t = (time.time() - t0) * 1000
-        logging.info('Generated %s code in %dms' % (name, t))

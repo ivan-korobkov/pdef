@@ -7,15 +7,15 @@ from pdefc import generators
 from pdefc.ast import TypeEnum
 
 
-def generate(package, out, namespaces=None, **kwargs):
+def generate(package, out, namespace=None, **kwargs):
     '''Java source code generator'''
-    return JavaGenerator(out, namespaces=namespaces).generate(package)
+    return JavaGenerator(out, namespace=namespace).generate(package)
 
 
 class JavaGenerator(generators.Generator):
-    def __init__(self, out, namespaces=None):
+    def __init__(self, out, namespace=None):
         self.out = out
-        self.namespace = jnamespace(namespaces)
+        self.namespace = jnamespace(namespace)
         self.templates = jtemplates()
 
     def generate(self, package):
@@ -282,7 +282,7 @@ def jtemplates():
     return generators.Templates(__file__)
 
 
-def jnamespace(namespaces=None):
+def jnamespace(namespace=None):
     '''Create java namespaces.'''
-    return generators.Namespace(namespaces)
+    return generators.Namespace(namespace)
 

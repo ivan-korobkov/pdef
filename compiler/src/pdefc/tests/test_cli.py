@@ -37,56 +37,54 @@ class TestCli(unittest.TestCase):
         cli = Cli()
         cli.run(args)
 
-    def test_generate(self):
+    def test_generate__python(self):
         paths = self._fixture_paths()
         include_path = self._fixture_include_path()
-        java = self._tempdir()
-        python = self._tempdir()
+        out = self._tempdir()
 
-        args = ['generate', '--java=' + java, '--python=' + python]
+        args = ['generate', 'python']
         args += ['--include=' + include_path]
+        args += ['--out=' + out]
         args += paths
 
         compiler = Compiler()
         compiler._generators = {
-            'java': pdefc.generators.java.generate,
-            'python': pdefc.generators.python.generate
+            'python': pdefc.generators.python.generate,
         }
 
         cli = Cli()
         cli.run(args, compiler)
 
-        assert os.path.exists(os.path.join(java, 'hello/world/Message.java'))
-        assert os.path.exists(os.path.join(python, 'hello/world.py'))
+        assert os.path.exists(os.path.join(out, 'hello/world.py'))
+        assert not os.path.exists(os.path.join(out, 'include/world.py'))  # No includes.
 
-        # Includes must not be generated.
-        assert not os.path.exists(os.path.join(java, 'include/world'))
-        assert not os.path.exists(os.path.join(python, 'include/world.py'))
+    def test_generate__java(self):
+        paths = self._fixture_paths()
+        include_path = self._fixture_include_path()
+        out = self._tempdir()
 
-    def test_generate_parse_outs(self):
-        compiler = Mock()
-        compiler.generators = {'java': 'generator0', 'python': 'generator1'}
+        args = ['generate', 'java']
+        args += ['--include=' + include_path]
+        args += ['--out=' + out]
+        args += paths
 
-        args = Mock()
-        args.outs = {'java': 'generated-sources', 'python': 'src/generated',
-                     'unsupported': '/dev/null'}
-
-        cli = Cli()
-        outs = cli._generate_parse_outs(args, compiler)
-
-        assert outs == {'java': 'generated-sources', 'python': 'src/generated'}
-
-    def test_generate_parse_namespaces(self):
-        compiler = Mock()
-        compiler.generators = {'java': 'generator0', 'python': 'generator1'}
-
-        args = Mock()
-        args.namespaces = ['java:pdef:io.pdef', 'java:test:tests', 'python:pdef.rpc:pdef_rpc']
+        compiler = Compiler()
+        compiler._generators = {
+            'java': pdefc.generators.java.generate,
+        }
 
         cli = Cli()
-        namespaces = cli._generate_parse_namespaces(args, compiler)
-        assert namespaces == {'java': {'pdef': 'io.pdef', 'test': 'tests'},
-                              'python': {'pdef.rpc': 'pdef_rpc'}}
+        cli.run(args, compiler)
+
+        assert os.path.exists(os.path.join(out, 'hello/world/Message.java'))
+        assert not os.path.exists(os.path.join(out, 'include/world'))  # No includes.
+
+    def test_parse_namespace(self):
+        seq = ['pdef:io.pdef', 'test:io.tests']
+
+        cli = Cli()
+        namespace = cli._parse_namespace(seq)
+        assert namespace == {'pdef': 'io.pdef', 'test': 'io.tests'}
 
     def _tempfile(self):
         fd, path = tempfile.mkstemp('.pdef', text=True)

@@ -87,7 +87,7 @@ class Cli(object):
         # Check command.
         check = subparsers.add_parser('check', help='check pdef files')
         check.add_argument('--include', dest='include_paths', action='append', default=[],
-                            help='path to pdef dependencies')
+                            help='path to pdef imports')
         check.add_argument('paths', metavar='path', nargs='+',
                            help='path to pdef files and directories')
         check.set_defaults(command_func=self._check)
@@ -95,89 +95,52 @@ class Cli(object):
     # Generate.
 
     def _generate(self, args, compiler):
+        generator_name = args.generator
         paths = args.paths
         include_paths = args.include_paths
-        outs = self._generate_parse_outs(args, compiler)
-        namespaces = self._generate_parse_namespaces(args, compiler)
+        out = args.out
+        namespace = self._parse_namespace(args.namespace)
 
-        return compiler.generate(paths, outs=outs, namespaces=namespaces,
+        return compiler.generate(generator_name, paths, out=out, namespace=namespace,
                                  include_paths=include_paths)
 
     def _generate_args(self, subparsers, compiler):
+        generator_names = list(compiler.generators.keys())
+
         generate = subparsers.add_parser('generate', help='generate source code from pdef files')
-        generate.add_argument('--ns', dest='namespaces', action='append', default=[],
-                              help='add a language namespace, i.e. "java:pdef.module:io.pdef.java"')
+        generate.add_argument('generator', metavar='generator', choices=generator_names,
+                              help='available: %s' % ', '.join(generator_names))
+        generate.add_argument('--out', dest='out', required=True,
+                              help='directory for generated files')
+        generate.add_argument('--ns', dest='namespace', action='append', default=[],
+                              help='add a namespace which maps pdef names '
+                                   'to generated names, i.e. "pdef.module:io.pdef.java"')
         generate.add_argument('--include', dest='include_paths', action='append', default=[],
-                              help='path to pdef dependencies')
+                              help='path to pdef imports')
         generate.add_argument('paths', metavar='path', nargs='+',
                               help='path to pdef files and directories')
 
-        self._generate_args_generators(generate, compiler)
         generate.set_defaults(command_func=self._generate)
 
-    def _generate_args_generators(self, parser, compiler):
-        for gname, gfactory in compiler.generators.items():
-            gdoc = gfactory.__doc__
-            parser.add_argument('--' + gname, help='outdir for ' + gdoc, metavar='out',
-                                dest='outs', action=_dict_action(gname))
-
-    def _generate_parse_outs(self, args, compiler):
-        if not args.outs:
+    def _parse_namespace(self, seq):
+        if not seq:
             return {}
 
         result = {}
-        for name, out in args.outs.items():
-            if name not in compiler.generators:
-                logging.warn('Generator not found %r', name)
-                continue
-
-            result[name] = out
-
-        logging.debug('Outdirs %s', result)
-        return result
-
-    def _generate_parse_namespaces(self, args, compiler):
-        if not args.namespaces:
-            return {}
-
         error = False
-        result = {}
-        for gname_namespace in args.namespaces:
-            parts = gname_namespace.split(':')
-            if len(parts) != 3:
+        for item in seq:
+            parts = item.split(':')
+            if len(parts) != 2:
                 logging.error('Wrong namespace %r, the namespace must be specified as '
-                              '"generator:pdef.module:lang.module"', gname_namespace)
+                              '"pdef.module:lang.module"', item)
                 error = True
                 continue
 
-            gname, pmodule, lmodule = parts
-            if gname not in compiler.generators:
-                logging.error('Unknown generator in a namespace %r', gname_namespace)
-                error = True
-                continue
-
-            if gname not in result:
-                result[gname] = {}
-
-            result[gname][pmodule] = lmodule
+            pmodule, lmodule = parts
+            result[pmodule] = lmodule
 
         if error:
             sys.exit(1)
 
-        logging.debug('Namespaces %s', result)
+        logging.debug('Namespace %s', result)
         return result
-
-
-def _dict_action(key):
-    '''Aggregates values in a dest dict, can be used with multiple arguments.'''
-    class DictAction(argparse.Action):
-        def __call__(self, parser, namespace, values, option_string=None):
-            if hasattr(namespace, self.dest) and getattr(namespace, self.dest) is not None:
-                outs = getattr(namespace, self.dest)
-            else:
-                outs = {}
-                setattr(namespace, self.dest, outs)
-
-            outs[key] = values
-
-    return DictAction

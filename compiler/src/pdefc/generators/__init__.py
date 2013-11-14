@@ -67,23 +67,23 @@ class Namespace(object):
         >>> namespace.map('pdef.tests.messages')
         >>> 'pdef_tests.messages'
     '''
-    def __init__(self, namespaces=None):
-        self._namespaces = dict(namespaces) if namespaces else {}
+    def __init__(self, namespace=None):
+        self._namespace = dict(namespace) if namespace else {}
 
     def __call__(self, module_name):
         return self.map(module_name)
 
-    def map(self, module_name):
-        '''Returns a new module name.'''
-        for name, mapped in self._namespaces.items():
-            if module_name == name:
+    def map(self, name):
+        '''Returns a new name.'''
+        for prefix, mapped in self._namespace.items():
+            if name == prefix:
                 # Full match, service.module => service_module.
                 return mapped
 
-            if module_name.startswith(name + '.'):
-                return mapped + module_name[len(name):]
+            if name.startswith(prefix + '.'):
+                return mapped + name[len(prefix):]
 
-        return module_name
+        return name
 
 
 def upper_first(s):

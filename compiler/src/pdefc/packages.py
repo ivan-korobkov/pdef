@@ -137,9 +137,9 @@ class PackageInfo(object):
     @classmethod
     def from_dict(cls, d):
         name = d.get('name') or 'noname'
-        description = d.get('description') or 'No description'
-        modules = d.get('modules') or []
-        dependencies = d.get('dependencies') or []
+        description = d.get('description', '')
+        modules = d.get('modules', [])
+        dependencies = d.get('dependencies', [])
 
         return PackageInfo(name, description, modules=modules, dependencies=dependencies)
 

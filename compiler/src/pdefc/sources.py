@@ -2,6 +2,8 @@
 import io
 import logging
 import os
+import urllib2
+import urlparse
 from pdefc import CompilerException
 from pdefc.packages import PackageInfo
 
@@ -18,11 +20,18 @@ def create_sources(paths=None):
 
 class Sources(object):
     '''Package sources.'''
-    def __init__(self, paths):
-        self._sources = {}  # Package sources by names.
+    def __init__(self, paths=None):
+        self._sources = {}  # Package names to sources.
+        self._files = {}    # Absolute file names to sources.
 
         if paths:
             map(self.add_path, paths)
+
+    def _create_file_source(self, filename):
+        return FileSource(filename)
+
+    def _create_url_source(self, url):
+        return UrlSource(url)
 
     def add_source(self, source):
         '''Add a package source, raise CompilerException if a duplicate package.'''
@@ -36,20 +45,34 @@ class Sources(object):
 
     def add_path(self, path):
         '''Add a source path.'''
-        if os.path.isfile(path):
-            self.read_file(path)
-        elif os.path.isdir(path):
-            self._walk_directory(path)
-        else:
-            raise CompilerException('Unsupported path: %s' % path)
+        if os.path.isdir(path):
+            return self._walk_directory(path)
+        return self.read_path(path)
 
     def read_path(self, path):
         '''Read a package source path, add and return the source.'''
-        return self.read_file(path)
+        if os.path.isfile(path):
+            return self.read_file(path)
+        elif _is_url(path):
+            return self.read_url(path)
+
+        raise CompilerException('Unsupported path: %s' % path)
+
+    def read_url(self, url):
+        '''Read a package source url, add and return the source.'''
+        source = self._create_url_source(url)
+        self.add_source(source)
+        return source
 
     def read_file(self, filename):
         '''Read a package source file, add and return the source.'''
-        source = FileSource(filename)
+        absolute = os.path.abspath(filename)
+        if absolute in self._files:
+            logging.debug('Package file is already present: %s', absolute)
+            return self._files[absolute]
+
+        source = self._create_file_source(filename)
+        self._files[absolute] = source
         return self.add_source(source)
 
     def get(self, package_name):
@@ -98,7 +121,7 @@ class Source(object):
 
 
 class InMemorySource(Source):
-    def __init__(self, info, modules_to_sources):
+    def __init__(self, info, modules_to_sources=None):
         self.name = info.name
         self.info = info
         self.modules = dict(modules_to_sources) if modules_to_sources else {}
@@ -140,8 +163,68 @@ class FileSource(Source):
         if not os.path.exists(filepath):
             raise CompilerException('File does not exist: %s' % filepath)
 
-        with io.open(filepath, 'r', encoding=UTF8) as f:
-            try:
+        try:
+            with io.open(filepath, 'r', encoding=UTF8) as f:
                 return f.read()
-            except Exception as e:
-                raise CompilerException('Failed to read a file: %s, e=%s' % (filepath, e))
+        except Exception as e:
+            raise CompilerException('Failed to read a file: %s, e=%s' % (filepath, e))
+
+
+class UrlSource(Source):
+    def __init__(self, url):
+        self.url = url
+        self._delegate = None
+
+    def __str__(self):
+        if not self._delegate:
+            return self.url
+        return self.name + ':' + self.url
+
+    def __repr__(self):
+        return '<UrlSource url=%r at %s>' % (self.url, hex(id(self)))
+
+    @property
+    def name(self):
+        return self.delegate().name
+
+    @property
+    def info(self):
+        return self.delegate().info
+
+    def module(self, module_name):
+        return self.delegate().module(module_name)
+
+    def module_path(self, module_name):
+        filename = self._module_filename(module_name)
+        return urlparse.urljoin(self.url, filename)
+
+    def delegate(self):
+        if self._delegate:
+            return self._delegate
+
+        package_json = self._fetch(self.url)
+        info = PackageInfo.from_json(package_json)
+
+        modules = {}
+        for name in info.modules:
+            url = self.module_path(name)
+            modules[name] = self._fetch(url)
+
+        self._delegate = InMemorySource(info, modules)
+        return self._delegate
+
+    def _fetch(self, url):
+        logging.warn('Downloading %s', url)
+        try:
+            req = urllib2.urlopen(url)
+            return req.read()
+        except Exception as e:
+            raise CompilerException('%s: %s' % (e, url))
+
+
+def _is_url(s):
+    if not s:
+        return False
+
+    scheme = urlparse.urlparse(s).scheme
+    return scheme and scheme.lower() in ('http', 'https', 'ftp')

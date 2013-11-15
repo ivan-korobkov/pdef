@@ -148,3 +148,15 @@ class PackageInfo(object):
         self.description = description
         self.modules = list(modules) if modules else []
         self.dependencies = list(dependencies) if dependencies else []
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'description': self.description,
+            'modules': list(self.modules),
+            'dependencies': list(self.dependencies)
+        }
+
+    def to_json(self):
+        import json
+        return json.dumps(self.to_dict())

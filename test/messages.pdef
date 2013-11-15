@@ -2,7 +2,7 @@
 Test pdef messages and enums.
 Multi-line comment.
 */
-from pdef.test import inheritance;
+from pdef_test import inheritance;
 
 
 /**

@@ -32,7 +32,7 @@ class Interface(Definition):
     def add_method(self, method):
         '''Add a method to this interface.'''
         self.methods.append(method)
-        logging.debug('%s: added a method %r', self, method.name)
+        logging.debug('%s: added a method "%s"', self, method.name)
 
     def create_method(self, name, result=NativeType.VOID, arg_tuples=None, is_post=False):
         '''Add a new method to this interface and return the method.'''
@@ -77,7 +77,7 @@ class Interface(Definition):
         names = set()
         for method in self.methods:
             if method.name in names:
-                errors.append(self._error('%s: duplicate method %r', self, method.name))
+                errors.append(self._error('%s: duplicate method "%s"', self, method.name))
             names.add(method.name)
 
         # Validate methods.
@@ -130,7 +130,7 @@ class Method(Located, Validatable):
             raise ValueError('Argument is already in a method, %s' % arg)
 
         self.args.append(arg)
-        logging.debug('%s: added an arg %r', self, arg.name)
+        logging.debug('%s: added an arg "%s"', self, arg.name)
 
     def create_arg(self, name, definition, is_query=False, is_post=False):
         '''Create a new arg and add it to this method.'''
@@ -171,7 +171,7 @@ class Method(Located, Validatable):
         names = set()
         for arg in self.args:
             if arg.name in names:
-                errors.append(self._error('%s: duplicate argument %r', self, arg.name))
+                errors.append(self._error('%s: duplicate argument "%s"', self, arg.name))
             names.add(arg.name)
 
         for arg in self.args:

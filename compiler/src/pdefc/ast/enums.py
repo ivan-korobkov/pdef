@@ -58,7 +58,7 @@ class Enum(Definition):
         names = set()
         for value in self.values:
             if value.name in names:
-                errors.append(self._error('%s: duplicate enum value %r', self, value.name))
+                errors.append(self._error('%s: duplicate enum value "%s"', self, value.name))
 
             names.add(value.name)
 

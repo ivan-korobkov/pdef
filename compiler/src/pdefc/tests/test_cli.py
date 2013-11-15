@@ -5,6 +5,7 @@ import shutil
 import tempfile
 import unittest
 from mock import Mock
+from pdefc import CompilerException
 
 from pdefc.cli import Cli
 from pdefc.compiler import Compiler
@@ -28,37 +29,48 @@ class TestCli(unittest.TestCase):
             shutil.rmtree(d, ignore_errors=True)
 
     def test_check(self):
-        paths = self._fixture_paths()
-        include_path = self._fixture_include_path()
+        args = ['check', 'test.package']
+        args += ['--include=second.package']
 
-        args = ['check', '--include=' + include_path]
-        args += paths
+        compiler = Mock()
+        factory = Mock(return_value=compiler)
 
         cli = Cli()
+        cli._create_compiler = factory
         cli.run(args)
 
-    def test_generate__python(self):
-        paths = self._fixture_paths()
-        include_path = self._fixture_include_path()
-        out = self._tempdir()
+        factory.assert_called_with(paths=['second.package'])
+        compiler.check.assert_called_with('test.package')
 
-        args = ['generate', 'python']
-        args += ['--include=' + include_path]
-        args += ['--out=' + out]
-        args += paths
+    def test_generate(self):
+        args = ['generate', 'test.package']
+        args += ['--generator', 'python']
+        args += ['--out', 'destination']
+        args += ['--ns', 'test:io.test']
+        args += ['--ns', 'second:io.second']
+        args += ['--include', 'second.package']
+        args += ['--include', 'third.package']
 
-        compiler = Compiler()
-        compiler._generators = {
-            'python': pdefc.generators.python.generate,
-        }
-
+        compiler = Mock()
+        factory = Mock(return_value=compiler)
         cli = Cli()
-        cli.run(args, compiler)
+        cli._create_compiler = factory
+        cli.run(args)
 
-        assert os.path.exists(os.path.join(out, 'hello/world.py'))
-        assert not os.path.exists(os.path.join(out, 'include/world.py'))  # No includes.
+        factory.assert_called_with(paths=['second.package', 'third.package'])
+        compiler.generate.assert_called_with('test.package', 'python', out='destination',
+                                             namespace={'test': 'io.test', 'second': 'io.second'})
 
-    def test_generate__java(self):
+    def test_parse_namespace(self):
+        cli = Cli()
+        namespace = cli._parse_namespace(['pdef:io.pdef', 'test:io.tests'])
+        assert namespace == {'pdef': 'io.pdef', 'test': 'io.tests'}
+
+    def test_parse_namespace__wrong_namespace(self):
+        cli = Cli()
+        self.assertRaises(CompilerException, cli._parse_namespace, ['wrong:name:space'])
+
+    def _test_generate__java(self):
         paths = self._fixture_paths()
         include_path = self._fixture_include_path()
         out = self._tempdir()
@@ -71,20 +83,13 @@ class TestCli(unittest.TestCase):
         compiler = Compiler()
         compiler._generators = {
             'java': pdefc.generators.java.generate,
-        }
+            }
 
         cli = Cli()
         cli.run(args, compiler)
 
         assert os.path.exists(os.path.join(out, 'hello/world/Message.java'))
         assert not os.path.exists(os.path.join(out, 'include/world'))  # No includes.
-
-    def test_parse_namespace(self):
-        seq = ['pdef:io.pdef', 'test:io.tests']
-
-        cli = Cli()
-        namespace = cli._parse_namespace(seq)
-        assert namespace == {'pdef': 'io.pdef', 'test': 'io.tests'}
 
     def _tempfile(self):
         fd, path = tempfile.mkstemp('.pdef', text=True)

@@ -2,7 +2,6 @@
 Test pdef messages and enums.
 Multi-line comment.
 */
-module pdef.test.messages;
 from pdef.test import inheritance;
 
 

@@ -72,7 +72,7 @@ class Message(Definition):
         if field.is_discriminator:
             self._discriminator = field
 
-        logging.debug('%s: added a field %r', self, field.name)
+        logging.debug('%s: added a field "%s"', self, field.name)
         return field
 
     def create_field(self, name, type0, is_discriminator=False):
@@ -231,7 +231,7 @@ class Message(Definition):
         for subtype in self.subtypes:
             value = subtype.discriminator_value
             if value in values:
-                errors.append(self._error('%s: duplicate subtype with a discriminator value %r',
+                errors.append(self._error('%s: duplicate subtype with a discriminator value "%s"',
                                           self, value.name))
             values.add(value)
 
@@ -244,7 +244,7 @@ class Message(Definition):
         names = set()
         for field in self.fields:
             if field.name in names:
-                errors.append(self._error('%s: duplicate field %r', self, field.name))
+                errors.append(self._error('%s: duplicate field "%s"', self, field.name))
             names.add(field.name)
 
         # Prevent multiple discriminator fields.

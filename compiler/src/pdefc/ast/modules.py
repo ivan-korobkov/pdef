@@ -8,8 +8,8 @@ from pdefc.ast.types import NativeType
 
 class Module(Validatable):
     '''Module is a named scope for definitions. It is usually a *.pdef file.'''
-    def __init__(self, name, imports=None, definitions=None, doc=None, path=None):
-        self.name = name
+    def __init__(self, relative_name, imports=None, definitions=None, doc=None, path=None):
+        self.relative_name = relative_name
         self.doc = doc
         self.path = path
         self.package = None
@@ -33,6 +33,16 @@ class Module(Validatable):
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
+    @property
+    def name(self):
+        if not self.package:
+            return self.relative_name
+
+        if self.package.name == self.relative_name:
+            return self.relative_name
+
+        return '%s.%s' % (self.package.name, self.relative_name)
+
     def _log_return_errors(self, errors):
         if not errors:
             return []
@@ -46,14 +56,14 @@ class Module(Validatable):
     def add_import(self, import0):
         '''Add a module import to this module.'''
         self.imports.append(import0)
-        logging.debug('%s: added an import \'%s\'', self, import0)
+        logging.debug('%s: added an import "%s"', self, import0)
 
     def add_imported_module(self, alias, module):
         '''Add an imported module to this module.'''
         self.imported_aliases.append((alias, module))
         self.imported_modules.append(module)
 
-        logging.debug('%s: added an imported module, alias=%r, module=%r', self, alias, module)
+        logging.debug('%s: added an imported module, alias="%s", module="%s"', self, alias, module)
 
     def get_imported_module(self, alias):
         '''Find a module by its import alias.'''
@@ -67,7 +77,7 @@ class Module(Validatable):
         '''Add a new definition to this module.'''
         self.definitions.append(def0)
         self._definition_map[def0.name] = def0
-        logging.debug('%s: added a definition %r', self, def0.name)
+        logging.debug('%s: added a definition "%s"', self, def0.name)
 
     def get_definition(self, name):
         '''Return a definition or an enum value in this module by a name.'''
@@ -238,14 +248,14 @@ class Module(Validatable):
         names = set()
         for alias, _ in self.imported_aliases:
             if alias in names:
-                errors.append('Duplicate import %r' % alias)
+                errors.append('Duplicate import "%s"' % alias)
             names.add(alias)
 
         # Prevent definitions and imports with duplicate names.
         for def0 in self.definitions:
             name = def0.name
             if name in names:
-                errors.append('Duplicate definition or import %r' % name)
+                errors.append('Duplicate definition or import "%s"' % name)
             names.add(name)
 
         return errors

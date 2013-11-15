@@ -2,7 +2,6 @@
 Test pdef module with polymorphic messages.
 Multi-line comment.
 */
-module pdef.test.inheritance;
 
 
 /** Enum with discriminator values. */

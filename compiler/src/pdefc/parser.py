@@ -1,5 +1,4 @@
 # encoding: utf-8
-import io
 import functools
 import logging
 import re
@@ -8,9 +7,6 @@ import ply.lex as lex
 import ply.yacc as yacc
 
 import pdefc.ast
-
-EXTENSION = '.pdef'
-ENCODING = 'utf8'
 
 
 def create_parser():
@@ -21,16 +17,14 @@ def create_parser():
 class Parser(object):
     '''Pdef parser. It is reusable but not thread-safe.'''
 
-    def __init__(self, extension=EXTENSION, encoding=ENCODING):
-        self.extension = (extension if extension.startswith('.') else '.' + extension).lower()
-        self.encoding = encoding
-        self.grammar = _Grammar(self._error)
+    def __init__(self):
+        self.grammar = _Grammar(self._name, self._error)
 
         # Some docs on options:
-        # * optimize=False and write_tables=False force to generate tabmodule each time
+        # - optimize=False and write_tables=False force to generate tabmodule each time
         #   parser is created. It is required for production.
-        # * module=self.grammar sets the grammar for a lexer and a parser.
-        # * start='file' sets the start grammar rule.
+        # - module=self.grammar sets the grammar for a lexer and a parser.
+        # - start='file' sets the start grammar rule.
 
         self.lexer = lex.lex(module=self.grammar, optimize=False, debug=False, reflags=re.UNICODE)
         self.parser = yacc.yacc(module=self.grammar, optimize=False, write_tables=False,
@@ -38,91 +32,45 @@ class Parser(object):
 
         # These are cleaned on each parse invocation.
         self._errors = []
+        self._module_name = None
         self._path = None
 
-    def parse_path(self, path):
-        '''Parse a directory or a file and return a list of modules and a list of errors.'''
-        if not os.path.exists(path):
-            return [], ['Path does not exist %r' % path]
-
-        if os.path.isdir(path):
-            return self.parse_directory(path)
-
-        module, errors = self.parse_file(path)
-        if module:
-            return [module], errors
-        return [], errors
-
-    def parse_directory(self, path):
-        '''Recursively parse a directory, return a list of modules and a list of errors.'''
-        if not os.path.exists(path):
-            return [], ['Directory does not exist %r' % path]
-
-        if not os.path.isdir(path):
-            return [], ['Not a directory %r' % path]
-
-        modules = []
-        errors = []
-
-        for root, dirs, files in os.walk(path):
-            logging.debug('Walking %s' % root)
-            for file0 in files:
-                ext = os.path.splitext(file0)[1]
-                if ext.lower() != self.extension:
-                    continue
-
-                filepath = os.path.join(root, file0)
-                module, errors0 = self.parse_file(filepath)
-                if module:
-                    modules.append(module)
-                errors += errors0
-
-        return modules, errors
-
-    def parse_file(self, path):
-        '''Parse a file into a module, return a module and a list of errors.'''
-        if not os.path.exists(path):
-            return None, ['File does not exist %r' % path]
-
-        if not os.path.isfile(path):
-            return None, ['Not a file %r' % path]
-
-        with io.open(path, 'r', encoding=self.encoding) as f:
-            s = f.read()
-
-        return self.parse_string(s, path)
-
-    def parse_string(self, s, path=None):
-        '''Parses a string into a module, return a module and a list of errors.'''
-        logging.info('Parsing %s', path)
+    def parse(self, source, relative_name, path=None):
+        '''Parse a module from a source string, return the module and a list of errors.'''
+        name = relative_name
+        logging.info('Parsing %s', path or name)
 
         # Clear the variables.
         self._errors = []
+        self._module_name = name
         self._path = path
 
         try:
             lexer = self.lexer.clone()
-            module = self.parser.parse(s, tracking=True, lexer=lexer)
-
+            module = self.parser.parse(source, tracking=True, lexer=lexer)
             errors = list(self._errors)
-            module = None if errors else module
+
             if module:
+                module.relative_name = name
                 module.path = path
 
-            self._log_errors(path, errors)
-            return module, self._errors
+            if errors:
+                self._log_errors(errors, path or name)
+                return None, errors
+
+            return module, errors
 
         finally:
             self._errors = None
             self._path = None
 
+    def _name(self):
+        return self._module_name
+
     def _error(self, msg):
         self._errors.append(msg)
 
-    def _log_errors(self, path, errors):
-        if not errors:
-            return
-
+    def _log_errors(self, errors, path):
         logging.error(path)
         for error in errors:
             logging.error('  %s' % error)
@@ -154,7 +102,7 @@ class _Tokens(object):
         'STRING', 'VOID', 'LIST', 'SET', 'MAP', 'ENUM',
         'MESSAGE', 'EXCEPTION', 'INTERFACE')
 
-    reserved = types + ('MODULE', 'FROM', 'IMPORT')
+    reserved = types + ('FROM', 'IMPORT')
 
     tokens = reserved + \
         ('DOT', 'COLON', 'COMMA', 'SEMI',
@@ -229,19 +177,22 @@ class _Tokens(object):
 
 class _GrammarRules(object):
     '''Parser grammar rules.'''
+    def _name(self):
+        raise NotImplementedError
+
     def _error(self, msg):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # Starting point.
     @_with_location(0)
     def p_module(self, t):
         '''
-        module : doc MODULE module_name SEMI imports definitions
+        module : doc imports definitions
         '''
+        name = self._name()
         doc = t[1]
-        name = t[3]
-        imports = t[5]
-        definitions = t[6]
+        imports = t[2]
+        definitions = t[3]
         t[0] = pdefc.ast.Module(name, imports=imports, definitions=definitions, doc=doc)
 
     # Any absolute name, returns a list.
@@ -589,5 +540,6 @@ class _Grammar(_GrammarRules, _Tokens):
     '''Grammar combines grammar rules and lexer tokens. It can be passed to the ply.yacc
     and pla.lex functions as the module argument.'''
 
-    def __init__(self, error_func):
+    def __init__(self, name_func, error_func):
+        self._name = name_func
         self._error = error_func

@@ -5,7 +5,7 @@ from pdefc.ast.types import Definition, TypeEnum
 from pdefc.ast.enums import Enum
 from pdefc.ast.modules import *
 from pdefc.ast.messages import Message
-from pdefc.ast.packages import Package
+from pdefc.packages import Package
 
 
 class TestModule(unittest.TestCase):
@@ -94,14 +94,14 @@ class TestModule(unittest.TestCase):
 
     def test_link_imports(self):
         '''Should link module imports.'''
-        module0 = Module('package.module0')
-        module1 = Module('package.module1')
+        module0 = Module('module0')
+        module1 = Module('module1')
 
         module = Module('module')
         module.add_import(AbsoluteImport('package.module0'))
         module.add_import(RelativeImport('package', ['module1']))
 
-        package = Package()
+        package = Package('package')
         package.add_module(module)
         package.add_module(module0)
         package.add_module(module1)

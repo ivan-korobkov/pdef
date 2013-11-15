@@ -2,7 +2,6 @@
 Test pdef module with interfaces and exceptions.
 Multi-line comment.
 */
-module pdef.test.interfaces;
 from pdef.test import inheritance, messages;
 
 

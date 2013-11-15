@@ -13,8 +13,7 @@
         lparent='('
         rparent=')'
 
-        // Module and imports
-        module='module'
+        // Imports
         from='from'
         import='import'
 
@@ -53,7 +52,7 @@
 // Single quotes (') are used to enclose tokens in GrammarKit when they clash with the rules,
 // i.e. a message rule and a message_token 'message'.
 
-File            ::= doc? 'module' TypeName ';' ImportBlock* Definition*
+File            ::= doc? ImportBlock* Definition*
 TypeName        ::= id ('.' id)*
 ModuleName      ::= id ('.' id)*
 

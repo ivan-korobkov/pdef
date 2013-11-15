@@ -3,24 +3,21 @@ import logging
 import time
 
 import pdefc
-from pdefc import ast
+from pdefc.exc import CompilerException
+from pdefc.packages import Package
 
 
-def create_compiler():
+def create_compiler(paths=None):
     '''Creates a compiler, the compiler is reusable but not thread-safe.'''
-    return Compiler()
-
-
-class CompilerException(Exception):
-    def __init__(self, message, errors=None):
-        super(CompilerException, self).__init__(message)
-        self.errors = errors or ()
+    sources = pdefc.create_sources(paths)
+    return Compiler(sources)
 
 
 class Compiler(object):
-    '''Compiler parses and compiles paths into a valid package.
-    It is reusable but not thread-safe.'''
-    def __init__(self):
+    '''Compiler parses and compiles packages. It is reusable but not thread-safe.'''
+    def __init__(self, sources=None, parser=None):
+        self.sources = sources or pdefc.create_sources()
+        self.parser = parser or pdefc.create_parser()
         self._generators = None
 
     @property
@@ -29,54 +26,83 @@ class Compiler(object):
             self._generators = dict(pdefc.find_generators())
         return self._generators
 
-    def compile(self, paths, include_paths=None):
-        '''Parse paths into a package, then link, validate and return it.'''
-        package = self._parse(paths)
+    def check(self, package_path):
+        '''Compile a package from a path, and print a message if its correct.'''
+        package = self.compile(package_path)
+        logging.info('%s is valid', package.name)
 
-        if include_paths:
-            another = self.compile(include_paths)
-            package.include(another)
-        
+    def compile(self, package_path):
+        '''Compile a package from a path.'''
+
+        source = self.sources.read_path(package_path)
+        return self._compile(source.name, compiled_map=set())
+
+    def generate(self, package_path, generator_name, out, namespace=None):
+        '''Generate a package from a path.'''
+
+        generator = self.generators.get(generator_name)
+        if not generator:
+            raise CompilerException('Source code generator not found: %s' % generator_name)
+
+        package = self.compile(package_path)
+        namespace = namespace or {}
+
+        generator(package, out, namespace=namespace)
+        logging.info('Generated %s code' % generator_name)
+
+    def _compile(self, package_name, compiled_map):
+        '''Compile and return a package with its dependencies, prevent circular dependencies.'''
+
+        # Prevent circular package dependencies
+        if package_name in compiled_map:
+            raise CompilerException('Circular dependency: package=%s' % package_name)
+        compiled_map.add(package_name)
+
+        # Parse the package before compiling its dependencies
+        # to improve responsiveness.
+        package = self._parse(package_name)
+
+        # Compile the package dependencies.
+        deps = []
+        for depname in package.info.dependencies:
+            dependency = self._compile(depname, compiled_map)
+            deps.append(dependency)
+
+        # Compile and return the package.
+        logging.info('Compiling %s', package_name)
+        map(package.add_dependency, deps)
         errors = package.compile()
         if errors:
             raise CompilerException('Compilation errors', errors)
 
         return package
 
-    def generate(self, generator_name, paths, out, namespace=None, include_paths=None):
-        '''Parse a package and generate source code.'''
-        generator = self.generators.get(generator_name)
-        if not generator:
-            raise CompilerException('Source code generator is not found: %r' % generator_name)
+    def _parse(self, pname):
+        '''Parse and return a package, but not its dependencies.'''
+        logging.info('Parsing %s', pname)
 
-        t0 = time.time()
+        # Find the package source.
+        source = self.sources.get(pname)
+        info = source.info
 
-        package = self.compile(paths, include_paths=include_paths)
-        namespace = namespace or {}
-        generator(package, out, namespace=namespace)
+        # Init the package.
+        package = Package(pname, info=info)
+        assert info.name == pname, 'Package name does not match one in info'
 
-        t = (time.time() - t0) * 1000
-        logging.info('Generated %s code in %dms' % (generator_name, t))
-
-    def _parse(self, paths):
-        '''Parse a package and return it.'''
-        t0 = time.time()
-
-        parser = pdefc.create_parser()
-        package = ast.Package()
+        # Parse package modules.
         errors = []
+        modules = []
+        for mname in info.modules:
+            s = source.module(mname)
+            path = source.module_path(mname)
 
-        for path in paths:
-            modules, errors0 = parser.parse_path(path)
+            module, errors0 = self.parser.parse(s, relative_name=mname, path=path)
             errors += errors0
-
-            for module in modules:
-                package.add_module(module)
-
-        t = (time.time() - t0) * 1000
-        logging.info('Parsed files in %dms', t)
+            if module:
+                modules.append(module)
 
         if errors:
             raise CompilerException('Parsing errors', errors)
 
+        map(package.add_module, modules)
         return package

@@ -21,7 +21,7 @@ class AbsoluteImport(AbstractImport):
         self.name = name
 
     def __str__(self):
-        return self.name
+        return 'import ' + self.name
 
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
@@ -29,9 +29,9 @@ class AbsoluteImport(AbstractImport):
     def link(self, package):
         logging.debug('Linking %s', self)
 
-        module = package.get_module(self.name)
+        module = package.lookup_module(self.name)
         if not module:
-            return [self._error('Module not found %r', self.name)]
+            return [self._error('Module not found "%s"', self.name)]
 
         self.alias_module_pairs = [(self.name, module)]
         return []
@@ -59,10 +59,10 @@ class RelativeImport(AbstractImport):
         for rname in self.relative_names:
             fullname = self.prefix + '.' + rname
 
-            module = package.get_module(fullname)
+            module = package.lookup_module(fullname)
             if module:
                 self.alias_module_pairs.append((rname, module))
             else:
-                errors.append(self._error('Module not found %r', fullname))
+                errors.append(self._error('Module not found "%s"', fullname))
 
         return errors

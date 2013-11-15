@@ -313,7 +313,7 @@ class TestMessage(unittest.TestCase):
         msg1.build()
 
         errors = base.validate()
-        assert "duplicate subtype with a discriminator value 'SUBTYPE'" in errors[0]
+        assert 'duplicate subtype with a discriminator value "SUBTYPE"' in errors[0]
 
 
 class TestField(unittest.TestCase):

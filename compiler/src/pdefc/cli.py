@@ -91,7 +91,7 @@ class Cli(object):
     def _check_args(self, subparsers):
         # Check command.
         check = subparsers.add_parser('check', help='check a package')
-        check.add_argument('package', help='path to a *.package file')
+        check.add_argument('package', help='path to a package yaml file')
         check.add_argument('--include', dest='paths', action='append', default=[],
                             help='paths to package dependencies')
         check.set_defaults(command_func=self._check)
@@ -112,7 +112,7 @@ class Cli(object):
         generator_names = list(pdefc.find_generators().keys())
 
         generate = subparsers.add_parser('generate', help='generate source code from a package')
-        generate.add_argument('package', help='path to a *.package file')
+        generate.add_argument('package', help='path to a package yaml file')
         generate.add_argument('--generator', choices=generator_names, required=True,
                               help='available: %s' % ', '.join(generator_names))
         generate.add_argument('--out', dest='out', required=True,

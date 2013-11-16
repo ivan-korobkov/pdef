@@ -79,7 +79,7 @@ class TestCompiler(unittest.TestCase):
 
         package = os.path.join(directory, 'test.package')
         with open(package, 'wt') as f:
-            f.write(info.to_json())
+            f.write(info.to_yaml())
 
         for name, source in modules_to_sources.items():
             filename = os.path.join(directory, name + '.pdef')

@@ -34,7 +34,12 @@ setup(
         '': ['*.template']
     },
 
-    install_requires=['argparse', 'jinja2>=2.7', 'ply>=3.4'],
+    install_requires=[
+        'argparse',
+        'jinja2>=2.7',
+        'ply>=3.4',
+        'PyYAML'
+    ],
     entry_points={
         'console_scripts': ['pdefc = pdefc:main'],
         'pdefc.generators': [

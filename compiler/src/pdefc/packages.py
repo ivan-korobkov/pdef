@@ -1,6 +1,7 @@
 # encoding: utf-8
 import logging
 import re
+import yaml
 
 
 class Package(object):
@@ -140,34 +141,37 @@ class Package(object):
 
 class PackageInfo(object):
     @classmethod
-    def from_json(cls, s):
-        import json
-        d = json.loads(s)
+    def from_yaml(cls, s):
+        d = yaml.load(s)
         return PackageInfo.from_dict(d)
 
     @classmethod
     def from_dict(cls, d):
-        name = d.get('name') or 'noname'
-        description = d.get('description', '')
-        modules = d.get('modules', [])
-        dependencies = d.get('dependencies', [])
+        p = d.get('package', {})
+        name = p.get('name')
+        url = p.get('url')
+        description = p.get('description', '')
+        modules = p.get('modules', [])
+        dependencies = p.get('dependencies', [])
 
-        return PackageInfo(name, description, modules=modules, dependencies=dependencies)
+        return PackageInfo(name, url=url, description=description, modules=modules,
+                           dependencies=dependencies)
 
-    def __init__(self, name, description=None, modules=None, dependencies=None):
+    def __init__(self, name, url=None, description=None, modules=None, dependencies=None):
         self.name = name
+        self.url = url
         self.description = description
         self.modules = list(modules) if modules else []
         self.dependencies = list(dependencies) if dependencies else []
 
     def to_dict(self):
-        return {
+        return {'package': {
             'name': self.name,
+            'url': self.url,
             'description': self.description,
             'modules': list(self.modules),
             'dependencies': list(self.dependencies)
-        }
+        }}
 
-    def to_json(self):
-        import json
-        return json.dumps(self.to_dict())
+    def to_yaml(self):
+        return yaml.dump(self.to_dict())

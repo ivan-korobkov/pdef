@@ -35,7 +35,7 @@ class TestSources(unittest.TestCase):
 
     def test_add_path__file(self):
         info = PackageInfo('test')
-        file0 = self._tempfile('.package', info.to_json())
+        file0 = self._tempfile('.yaml', info.to_yaml())
 
         sources = Sources()
         sources.add_path(file0)
@@ -50,7 +50,7 @@ class TestSources(unittest.TestCase):
 
         sources = Sources()
         sources._create_url_source = lambda url: source
-        sources.add_path('http://localhost:8080/test/api.package')
+        sources.add_path('http://localhost:8080/test/api.yaml')
 
         assert sources.get('test') is source
 
@@ -78,12 +78,12 @@ class TestFileSource(unittest.TestCase):
 
         info = PackageInfo('project_api', modules=['users', 'users.events'])
         files = {
-            '../../test.package': info.to_json(),
+            '../../test.yaml': info.to_yaml(),
             '../../users.pdef': 'users module',
             '../../users/events.pdef': 'events module'
         }
 
-        source = TestSource('../../test.package', files)
+        source = TestSource('../../test.yaml', files)
         assert source.name == 'project_api'
         assert source.info.to_dict() == info.to_dict()
         assert source.module('users') == 'users module'
@@ -94,12 +94,12 @@ class TestUrlSource(unittest.TestCase):
     def test(self):
         info = PackageInfo('project_api', modules=['users', 'users.events'])
         urls = {
-            'http://localhost:8080/project/api/api.package': info.to_json(),
+            'http://localhost:8080/project/api/api.yaml': info.to_yaml(),
             'http://localhost:8080/project/api/users.pdef': 'users module',
             'http://localhost:8080/project/api/users/events.pdef': 'events module'
         }
 
-        source = UrlSource('http://localhost:8080/project/api/api.package')
+        source = UrlSource('http://localhost:8080/project/api/api.yaml')
         source._fetch = lambda url: urls[url]
 
         assert source.name == 'project_api'
@@ -108,6 +108,6 @@ class TestUrlSource(unittest.TestCase):
         assert source.module('users.events') == 'events module'
 
     def test_module_path(self):
-        source = UrlSource('http://localhost:8080/project/api/api.package')
+        source = UrlSource('http://localhost:8080/project/api/api.yaml')
         path = source.module_path('users.internal.events')
         assert path == 'http://localhost:8080/project/api/users/internal/events.pdef'

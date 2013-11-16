@@ -9,7 +9,7 @@ from pdefc.packages import PackageInfo
 
 
 MODULE_EXT = '.pdef'
-PACKAGE_EXT = '.package'
+PACKAGE_EXT = '.yaml'
 MODULE_SEP = '/'
 UTF8 = 'utf-8'
 
@@ -140,7 +140,7 @@ class FileSource(Source):
         s = self._read(filename)
 
         try:
-            self.info = PackageInfo.from_json(s)
+            self.info = PackageInfo.from_yaml(s)
             self.name = self.info.name
         except Exception as e:
             raise CompilerException('Failed to read package info: %s, e=%s' % (filename, e))
@@ -203,7 +203,7 @@ class UrlSource(Source):
             return self._delegate
 
         package_json = self._fetch(self.url)
-        info = PackageInfo.from_json(package_json)
+        info = PackageInfo.from_yaml(package_json)
 
         modules = {}
         for name in info.modules:

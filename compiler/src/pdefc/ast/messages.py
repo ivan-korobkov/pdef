@@ -10,8 +10,7 @@ class Message(Definition):
     '''User-defined message.'''
     def __init__(self, name, base=None, discriminator_value=None, declared_fields=None,
                  is_exception=False, doc=None, location=None):
-        super(Message, self).__init__(TypeEnum.EXCEPTION if is_exception else TypeEnum.MESSAGE,
-                                      name, doc=doc, location=location)
+        super(Message, self).__init__(TypeEnum.MESSAGE, name, doc=doc, location=location)
 
         self.base = base
         self.discriminator_value = discriminator_value
@@ -19,6 +18,7 @@ class Message(Definition):
 
         self.subtypes = []
         self.declared_fields = []
+        self.is_exception = is_exception
 
         if declared_fields:
             map(self.add_field, declared_fields)

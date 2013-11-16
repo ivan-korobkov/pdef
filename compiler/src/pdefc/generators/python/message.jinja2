@@ -1,6 +1,6 @@
-class {{ name }}({{ root_or_base }}):
+class {{ name }}({{ definition|pymessage_base }}):
 {% if doc %}
-    """{{ doc|indent(4) }}"""
+    """{{ doc|pydoc|indent(4) }}"""
 
 {% endif -%}
 
@@ -39,25 +39,25 @@ class {{ name }}({{ root_or_base }}):
         {% endfor %}
 
         {%- if discriminator_value %}
-        self.{{ discriminator.name }} = {{ discriminator_value }}
+        self.{{ discriminator.name }} = {{ discriminator_value|pyref }}
         {% endif %}
 
     DESCRIPTOR = pdef.descriptors.message(lambda: {{ name }},
     {% if base %}
-        base={{ base.descriptor }},
+        base={{ base|pydescriptor }},
         discriminator_value={{ discriminator_value.name if discriminator_value else None }},
     {% endif %}
     {% if subtypes %}
         subtypes=(
         {% for subtype in subtypes %}
-            lambda: {{ subtype.descriptor }},
+            lambda: {{ subtype|pydescriptor }},
         {% endfor %}
         ),
     {% endif %}
     {% if declared_fields %}
         fields=(
         {% for field in declared_fields %}
-            pdef.descriptors.field('{{ field.name }}', lambda: {{ field.type.descriptor }}
+            pdef.descriptors.field('{{ field.name }}', lambda: {{ field.type|pydescriptor }}
             {%- if field.is_discriminator -%}
                 , is_discriminator=True
             {%- endif %}),

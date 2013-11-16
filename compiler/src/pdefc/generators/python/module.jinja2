@@ -1,14 +1,15 @@
 # encoding: utf-8
 {{ generated_by }}
 {% if doc %}
-"""{{ doc }}"""
+"""{{ doc|pydoc }}"""
 
 {% endif %}
 import pdef
 import pdef.descriptors
-{% if imports %}
-{% for import0 in imports %}
-import {{ import0 }}
+{% if imported_modules %}
+
+{% for imported_module in imported_modules %}
+import {{ imported_module|pymodule }}
 {% endfor %}
 
 {% endif %}

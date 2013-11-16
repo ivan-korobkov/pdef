@@ -44,7 +44,7 @@ setup(
         'console_scripts': ['pdefc = pdefc:main'],
         'pdefc.generators': [
             'java = pdefc.generators.java:JavaGenerator',
-            'python = pdefc.generators.python:generate'
+            'python = pdefc.generators.python:PythonGenerator'
         ]
     },
 

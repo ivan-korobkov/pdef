@@ -35,6 +35,18 @@ class Type(object):
     ALL = VALUES + (INTERFACE, )
 
 
+class Enum(object):
+    DESCRIPTOR = None
+
+    @classmethod
+    def parse_json(cls, s):
+        return pdef.json_format.from_json(s, cls.DESCRIPTOR)
+
+
+class Interface(object):
+    DESCRIPTOR = None
+
+
 class Message(object):
     DESCRIPTOR = None
 
@@ -109,15 +121,3 @@ class Message(object):
 
 class Exc(Exception, Message):
     pass
-
-
-class Enum(object):
-    DESCRIPTOR = None
-
-    @classmethod
-    def parse_json(cls, s):
-        return pdef.json_format.from_json(s, cls.DESCRIPTOR)
-
-
-class Interface(object):
-    DESCRIPTOR = None

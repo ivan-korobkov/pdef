@@ -28,22 +28,14 @@ class TypeEnum(object):
     INTERFACE = 'interface'
     VOID = 'void'
 
-    PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
-    DATA_TYPES = PRIMITIVES + (LIST, SET, MAP, ENUM, MESSAGE)
-    NATIVE = PRIMITIVES + (VOID, )
+    PRIMITIVE_TYPES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
+    DATA_TYPES = PRIMITIVE_TYPES + (LIST, SET, MAP, ENUM, MESSAGE)
+    NATIVE_TYPES = PRIMITIVE_TYPES + (VOID, )
     COLLECTION_TYPES = (LIST, SET, MAP)
 
     @classmethod
-    def is_message(cls, type_enum):
-        return type_enum == cls.MESSAGE
-
-    @classmethod
-    def is_interface(cls, type_enum):
-        return type_enum == cls.INTERFACE
-
-    @classmethod
     def is_primitive(cls, type_enum):
-        return type_enum in cls.PRIMITIVES
+        return type_enum in cls.PRIMITIVE_TYPES
 
     @classmethod
     def is_data_type(cls, type_enum):
@@ -61,19 +53,15 @@ class Type(Located, Validatable):
         self.type = type0
         self.location = location
 
-        self.is_primitive = self.type in TypeEnum.PRIMITIVES
+        self.is_primitive = self.type in TypeEnum.PRIMITIVE_TYPES
         self.is_data_type = self.type in TypeEnum.DATA_TYPES
-        self.is_native = self.type in TypeEnum.NATIVE
+        self.is_native = self.type in TypeEnum.NATIVE_TYPES
+        self.is_collection = TypeEnum.is_collection(self.type)
 
         self.is_message = self.type == TypeEnum.MESSAGE
-        self.is_exception = False
         self.is_interface = self.type == TypeEnum.INTERFACE
         self.is_enum = self.type == TypeEnum.ENUM
-        self.is_enum_value = self.type == TypeEnum.ENUM_VALUE
-
-        self.is_list = self.type == TypeEnum.LIST
-        self.is_set = self.type == TypeEnum.SET
-        self.is_map = self.type == TypeEnum.MAP
+        self.is_exception = False
 
     def __str__(self):
         return self.type

@@ -11,10 +11,10 @@ class TestMessage(unittest.TestCase):
         msg = Message('Message')
         exc = Message('Exception', is_exception=True)
 
-        assert msg.is_message
+        assert msg.type == TypeEnum.MESSAGE
         assert msg.is_exception is False
 
-        assert exc.is_message
+        assert exc.type == TypeEnum.MESSAGE
         assert exc.is_exception
 
     def test_create_field(self):

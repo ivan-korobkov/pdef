@@ -40,14 +40,15 @@ class Compiler(object):
     def generate(self, package_path, generator_name, out, namespace=None):
         '''Generate a package from a path.'''
 
-        generator = self.generators.get(generator_name)
-        if not generator:
+        factory = self.generators.get(generator_name)
+        if not factory:
             raise CompilerException('Source code generator not found: %s' % generator_name)
 
         package = self.compile(package_path)
         namespace = namespace or {}
 
-        generator(package, out, namespace=namespace)
+        generator = factory(out, namespace=namespace)
+        generator.generate(package)
         logging.info('Generated %s code' % generator_name)
 
     def _compile(self, package_name, compiled_map):

@@ -1,4 +1,5 @@
 # encoding: utf-8
+import inspect
 import logging
 import os
 import pkg_resources
@@ -32,7 +33,7 @@ class Templates(object):
         >>> templates = Templates(__file__)
         >>> templates.get('my_jinja.template')
     '''
-    def __init__(self, dir_or_file):
+    def __init__(self, dir_or_file, filters=None):
         '''Create a templates loader relative to a directory or a file.'''
         if os.path.isdir(dir_or_file):
             self._dir = dir_or_file
@@ -41,6 +42,29 @@ class Templates(object):
 
         self._env = Environment(trim_blocks=True, lstrip_blocks=True)
         self._cache = {}
+
+        self.add_filter('upper_first', upper_first)
+        if isinstance(filters, dict):
+            self.add_filters(**filters)
+        elif filters:
+            self.add_filters_from_methods(filters)
+
+    def add_filter(self, name, filter0):
+        self._env.filters[name] = filter0
+        logging.debug('Added a template filter "%s"' % name)
+
+    def add_filters(self, **name_to_filter):
+        for name, filter0 in name_to_filter.items():
+            self.add_filter(name, filter0)
+
+    def add_filters_from_methods(self, obj):
+        for name in dir(obj):
+            if name.startswith('_'):
+                continue
+
+            attr = getattr(obj, name)
+            if inspect.ismethod(attr):
+                self.add_filter(name, attr)
 
     def get(self, name):
         '''Read and return a Jinja template, the templates are cached.'''

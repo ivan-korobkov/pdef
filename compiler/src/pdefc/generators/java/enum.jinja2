@@ -1,12 +1,12 @@
 // {{ generated_by }}
-package {{package}};
+package {{module|jpackage}};
 
 {% if doc %}
 /** {{ doc }} */
 {% endif %}
 public enum {{ name }} {
 {{ "    " }}{% for value in values -%}
-    {{ value }}{% if not loop.last and loop.length > 1 %}, {% endif %}
+    {{ value.name }}{% if not loop.last and loop.length > 1 %}, {% endif %}
     {%- endfor %};
 
     public static final io.pdef.descriptors.EnumDescriptor<{{ name }}> DESCRIPTOR =

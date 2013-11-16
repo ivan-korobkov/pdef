@@ -1,31 +1,22 @@
 # encoding: utf-8
 import unittest
 from pdefc.ast import *
+from pdefc.generators import Namespace
 from pdefc.generators.java import *
 
 
-class TestJavaEnum(unittest.TestCase):
-    def _fixture(self):
+class TestJavaGenerator(unittest.TestCase):
+    def test_render_enum(self):
         enum = Enum('Number', value_names=['ONE', 'TWO'])
         module = Module('test.module')
         module.add_definition(enum)
         module.link()
 
-        return JavaEnum(enum, jreference)
+        generator = JavaGenerator('/dev/null')
+        code = generator._render(enum)
+        assert code
 
-    def test_constructor(self):
-        jenum = self._fixture()
-        assert jenum.name == 'Number'
-        assert jenum.values == ['ONE', 'TWO']
-
-    def test_render(self):
-        jenum = self._fixture()
-        templates = jtemplates()
-        assert jenum.render(templates)
-
-
-class TestMessage(unittest.TestCase):
-    def _fixture(self):
+    def test_render_message(self):
         enum = Enum('Type')
         subtype = enum.create_value('SUBTYPE')
 
@@ -41,28 +32,11 @@ class TestMessage(unittest.TestCase):
         module.add_definition(msg)
         module.link()
 
-        return JavaDefinition.create(msg, jreference)
+        generator = JavaGenerator('/dev/null')
+        code = generator._render(msg)
+        assert code
 
-    def test_constructor(self):
-        jmsg = self._fixture()
-        assert jmsg.name == 'Message'
-        assert jmsg.is_exception is False
-        assert jmsg.base.name == 'test.module.Base'
-        assert jmsg.discriminator_value.name == 'test.module.Type.SUBTYPE'
-        assert jmsg.subtypes == ()
-
-        assert len(jmsg.declared_fields) == 1
-        assert len(jmsg.inherited_fields) == 1
-        assert len(jmsg.fields) == 2
-
-    def test_render(self):
-        jmsg = self._fixture()
-        templates = jtemplates()
-        assert jmsg.render(templates)
-
-
-class TestInterface(unittest.TestCase):
-    def _fixture(self):
+    def test_render_interface(self):
         exc = Message('Exception', is_exception=True)
 
         iface = Interface('Interface', exc=exc)
@@ -74,107 +48,106 @@ class TestInterface(unittest.TestCase):
         module.add_definition(iface)
         module.link()
 
-        return JavaDefinition.create(iface, jreference)
-
-    def test_constructor(self):
-        jiface = self._fixture()
-        assert jiface.name == 'Interface'
-        assert jiface.exc.name == 'test.module.Exception'
-        assert len(jiface.declared_methods) == 2
-
-    def test_render(self):
-        jiface = self._fixture()
-        templates = jtemplates()
-        assert jiface.render(templates)
+        generator = JavaGenerator('/dev/null')
+        code = generator._render(iface)
+        assert code
 
 
-class TestRef(unittest.TestCase):
-    def test_native(self):
+class TestJavaFilters(unittest.TestCase):
+    def setUp(self):
+        self.filters = JavaFilters(Namespace())
+
+    def test_jpackage(self):
+        self.filters.namespace = Namespace({'service': 'com.company.service'})
+        module = Module('service.client.tests')
+        ref = self.filters.jpackage(module)
+
+        assert ref == 'com.company.service.client.tests'
+
+    def test_jref__native(self):
         for ntype in NativeType.all():
-            ref = jreference(ntype)
-            assert ref is NATIVE_TYPES[ntype.type]
+            ref = self.filters.jref(ntype)
+            assert ref is JAVA_NATIVE_REFS[ntype.type]
 
-    def test_list(self):
+    def test_jref__with_package(self):
+        msg = Message('Message')
+
+        module = Module('test.module', definitions=[msg])
+        module.link()
+        self.filters.namespace = Namespace({'test': 'com.company.test'})
+
+        ref = self.filters.jref(msg)
+        assert ref.name == 'com.company.test.module.Message'
+        assert ref.descriptor == 'com.company.test.module.Message.DESCRIPTOR'
+        assert ref.default == 'new com.company.test.module.Message()'
+
+    def test_jlist(self):
         list0 = List(NativeType.INT32)
-        ref = jreference(list0)
+        ref = self.filters.jref(list0)
 
         assert ref.name == 'java.util.List<Integer>'
         assert ref.default == 'new java.util.ArrayList<Integer>()'
-        assert ref.descriptor == 'io.pdef.descriptors.Descriptors.list(io.pdef.descriptors.Descriptors.int32)'
+        assert ref.descriptor == 'io.pdef.descriptors.Descriptors.list(' \
+                                 'io.pdef.descriptors.Descriptors.int32)'
 
-    def test_set(self):
+    def test_jset(self):
         set0 = Set(NativeType.BOOL)
-        ref = jreference(set0)
+        ref = self.filters.jref(set0)
 
         assert ref.name == 'java.util.Set<Boolean>'
         assert ref.default == 'new java.util.HashSet<Boolean>()'
-        assert ref.descriptor == 'io.pdef.descriptors.Descriptors.set(io.pdef.descriptors.Descriptors.bool)'
+        assert ref.descriptor == 'io.pdef.descriptors.Descriptors.set(' \
+                                 'io.pdef.descriptors.Descriptors.bool)'
 
-    def test_map(self):
+    def test_jmap(self):
         map0 = Map(NativeType.STRING, NativeType.FLOAT)
-        ref = jreference(map0)
+        ref = self.filters.jref(map0)
 
         assert ref.name == 'java.util.Map<String, Float>'
         assert ref.default == 'new java.util.HashMap<String, Float>()'
-        assert ref.descriptor == 'io.pdef.descriptors.Descriptors.map(io.pdef.descriptors.Descriptors.string, io.pdef.descriptors.Descriptors.float0)'
+        assert ref.descriptor == 'io.pdef.descriptors.Descriptors.map(' \
+                                 'io.pdef.descriptors.Descriptors.string, ' \
+                                 'io.pdef.descriptors.Descriptors.float0)'
 
-    def test_enum(self):
+    def test_jenum(self):
         enum = Enum('Number')
 
         module = Module('test.module', definitions=[enum])
         module.link()
 
-        ref = jreference(enum)
+        ref = self.filters.jref(enum)
         assert ref.name == 'test.module.Number'
         assert ref.descriptor == 'test.module.Number.DESCRIPTOR'
 
-    def test_enum_value(self):
+    def test_jenum_value(self):
         enum = Enum('Number')
         one = enum.create_value('ONE')
 
         module = Module('test.module', definitions=[enum])
         module.link()
 
-        ref = jreference(one)
+        ref = self.filters.jref(one)
         assert ref.name == 'test.module.Number.ONE'
         assert ref.descriptor is None
 
-    def test_message(self):
+    def test_jmessage(self):
         msg = Message('Message')
 
         module = Module('test.module', definitions=[msg])
         module.link()
 
-        ref = jreference(msg)
+        ref = self.filters.jref(msg)
         assert ref.name == 'test.module.Message'
         assert ref.default == 'new test.module.Message()'
         assert ref.descriptor == 'test.module.Message.DESCRIPTOR'
 
-    def test_interface(self):
+    def test_jinterface(self):
         iface = Interface('Interface')
 
         module = Module('test.module', definitions=[iface])
         module.link()
 
-        ref = jreference(iface)
+        ref = self.filters.jref(iface)
         assert ref.name == 'test.module.Interface'
         assert ref.descriptor == 'test.module.Interface.DESCRIPTOR'
-        assert ref.default is None
-
-    def test_namespace__string(self):
-        namespace = jnamespace({'service': 'com.company.service'})
-        ref = jreference('service.client.tests', namespace)
-
-        assert ref == 'com.company.service.client.tests'
-
-    def test_namespace__definition(self):
-        msg = Message('Message')
-
-        module = Module('test.module', definitions=[msg])
-        module.link()
-        namespace = jnamespace({'test': 'com.company.test'})
-
-        ref = jreference(msg, namespace)
-        assert ref.name == 'com.company.test.module.Message'
-        assert ref.descriptor == 'com.company.test.module.Message.DESCRIPTOR'
-        assert ref.default == 'new com.company.test.module.Message()'
+        assert ref.default is 'null'

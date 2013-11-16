@@ -4,7 +4,7 @@ from collections import deque
 import re
 
 from pdefc.ast.common import Validatable
-from pdefc.ast.types import NativeType
+from pdefc.ast.types import NativeType, TypeEnum
 
 
 class Module(Validatable):

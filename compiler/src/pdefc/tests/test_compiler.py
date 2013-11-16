@@ -69,7 +69,7 @@ class TestCompiler(unittest.TestCase):
         out = self._tempdir()
 
         compiler = Compiler()
-        compiler._generators = {'java': java_generator.generate}
+        compiler._generators = {'java': java_generator.JavaGenerator}
         compiler.generate(package, 'java', out=out)
 
         assert os.path.exists(os.path.join(out, 'test/TestMessage.java'))

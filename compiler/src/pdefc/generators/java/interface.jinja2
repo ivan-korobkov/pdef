@@ -1,5 +1,5 @@
 // {{ generated_by }}
-package {{ package }};
+package {{ module|jpackage }};
 
 
 {% if doc %}
@@ -8,16 +8,16 @@ package {{ package }};
 {% if not base -%}
     public interface {{ name }} {
 {% else -%}
-    public interface {{ name }} extends {{ base }} {
+    public interface {{ name }} extends {{ base|jref }} {
 {% endif %}
 
 {% for method in declared_methods %}
     {% if method.doc %}
     /** {{ method.doc|indent(4) }} */
     {% endif %}
-    {{ method.result }} {{ method.name }}(
+    {{ method.result|jref }} {{ method.name }}(
         {%- for arg in method.args -%}
-                {{ arg.type }} {{ arg.name }}
+                {{ arg.type|jref }} {{ arg.name }}
                 {%- if loop.length > 1 and not loop.last %}, {% endif %}
         {%- endfor %});
 
@@ -25,22 +25,22 @@ package {{ package }};
     static io.pdef.descriptors.InterfaceDescriptor<{{ name }}> DESCRIPTOR = io.pdef.descriptors.InterfaceDescriptor.<{{ name }}>builder()
             .setJavaClass({{ name }}.class)
         {% if exc %}
-            .setExc({{ exc.descriptor }})
+            .setExc({{ exc.descriptor|jref }})
         {% endif %}
         {% for method in declared_methods %}
-            .addMethod(io.pdef.descriptors.MethodDescriptor.<{{ name }}, {{ method.result.boxed }}>builder()
+            .addMethod(io.pdef.descriptors.MethodDescriptor.<{{ name }}, {{ method.result|jref }}>builder()
                     .setName("{{ method.name }}")
                     .setReflexiveInvoker({{ name }}.class)
                 {% if method.result.is_interface %}
-                    .setInterfaceResult({{ method.result }}.class)
+                    .setInterfaceResult({{ method.result|jref }}.class)
                 {% else %}
-                    .setResult({{ method.result.descriptor }})
+                    .setResult({{ method.result|jdescriptor }})
                 {% endif %}
                 {% if exc %}
-                    .setExc({{ exc.descriptor }})
+                    .setExc({{ exc|jdescriptor }})
                 {% endif %}
                 {% for arg in method.args %}
-                    .addArg("{{ arg.name }}", {{ arg.type.descriptor }}, {{ arg.is_query }}, {{ arg.is_post }})
+                    .addArg("{{ arg.name }}", {{ arg.type|jdescriptor }}, {{ arg.is_query|jbool }}, {{ arg.is_post|jbool }})
                 {% endfor %}
                 {% if method.is_post %}
                     .setPost(true)

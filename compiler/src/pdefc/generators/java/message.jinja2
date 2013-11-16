@@ -1,18 +1,18 @@
 // {{ generated_by }}
-package {{ package }};
+package {{ module|jpackage }};
 
 
 {% if doc %}
 /** {{ doc }} */
 {% endif %}
-public class {{ name }} extends {{ base_or_root }} {
+public class {{ name }} extends {{ definition|jbase_class }} {
     {% for field in declared_fields %}
-    private {{ field.type }} {{ field.name }};
+    private {{ field.type|jref }} {{ field.name }};
     {% endfor %}
 
 {% if discriminator_value %}
     public {{ name }}() {
-        this.{{ discriminator.set }}({{ discriminator_value }});
+        this.{{ discriminator|jfield_set }}({{ discriminator_value|jref }}
     }
 {% else %}
     public {{ name }}() {}
@@ -39,24 +39,24 @@ public class {{ name }} extends {{ base_or_root }} {
 
 {% for field in declared_fields %}
     // {{ field.name }}
-    public {{ field.type.unboxed }} {{ field.get }}() {
+    public {{ field.type|jref_unboxed }} {{ field|jfield_get }}() {
     {% if field.type.is_collection or field.type.is_message %}
-        return {{ field.name }} != null ? {{ field.name }} : ({{ field.name }} = {{ field.type.default }});
+        return {{ field.name }} != null ? {{ field.name }} : ({{ field.name }} = {{ field.type|jdefault }});
     {% else %}
-        return {{ field.name }} != null ? {{ field.name }} : {{ field.type.default }};
+        return {{ field.name }} != null ? {{ field.name }} : {{ field.type|jdefault }};
     {% endif %}
     }
 
-    public {{ name }} {{ field.set }}(final {{ field.type.unboxed }} value) {
+    public {{ name }} {{ field|jfield_set }}(final {{ field.type|jref_unboxed }} value) {
         this.{{ field.name }} = value;
         return this;
     }
 
-    public boolean {{ field.present }}() {
+    public boolean {{ field|jfield_has }}() {
         return {{ field.name }} != null;
     }
 
-    public {{ name }} {{ field.clear }}() {
+    public {{ name }} {{ field|jfield_clear }}() {
         this.{{ field.name }} = null;
         return this;
     }
@@ -65,14 +65,14 @@ public class {{ name }} extends {{ base_or_root }} {
 {% for field in inherited_fields %}
     // {{ field.name }}
     @Override
-    public {{ name }} {{ field.set }}(final {{ field.type.unboxed }} value) {
-        super.{{ field.set }}(value);
+    public {{ name }} {{ field|jfield_set }}(final {{ field.type|jref_unboxed }} value) {
+        super.{{ field|jfield_set }}(value);
         return this;
     }
 
     @Override
-    public {{ name }} {{ field.clear }}() {
-        super.{{ field.clear }}();
+    public {{ name }} {{ field|jfield_clear }}() {
+        super.{{ field|jfield_clear }}();
         return this;
     }
 
@@ -112,39 +112,39 @@ public class {{ name }} extends {{ base_or_root }} {
                 }
             })
             {% if base %}
-            .setBase({{ base.descriptor }})
+            .setBase({{ base|jdescriptor }})
             {% endif %}
             {% if discriminator_value %}
-            .setDiscriminatorValue({{ discriminator_value }})
+            .setDiscriminatorValue({{ discriminator_value|jref }})
             {% endif %}
             {% for subtype in subtypes %}
             .addSubtype(new io.pdef.Provider<io.pdef.descriptors.MessageDescriptor<? extends {{ name }}>>() {
                 public io.pdef.descriptors.MessageDescriptor<? extends {{ name }}> get() {
-                    return {{ subtype.descriptor }};
+                    return {{ subtype|jdescriptor }};
                 }
             })
             {% endfor %}
             {% for field in declared_fields %}
-            .addField(io.pdef.descriptors.FieldDescriptor.<{{ name }}, {{ field.type }}>builder()
+            .addField(io.pdef.descriptors.FieldDescriptor.<{{ name }}, {{ field.type|jref }}>builder()
                     .setName("{{ field.name }}")
                 {% if field.is_discriminator %}
                     .setDiscriminator(true)
                 {% endif %}
                 {% if field.type.is_primitive %}
-                    .setType({{ field.type.descriptor }})
+                    .setType({{ field.type|jdescriptor }})
                 {% else %}
-                    .setType(new io.pdef.Provider<io.pdef.descriptors.ValueDescriptor<{{ field.type }}>>() {
-                        public io.pdef.descriptors.ValueDescriptor<{{ field.type }}> get() {
-                            return {{ field.type.descriptor }};
+                    .setType(new io.pdef.Provider<io.pdef.descriptors.ValueDescriptor<{{ field.type|jref }}>>() {
+                        public io.pdef.descriptors.ValueDescriptor<{{ field.type|jref }}> get() {
+                            return {{ field.type|jdescriptor }};
                         }
                     })
                 {% endif %}
-                    .setAccessor(new io.pdef.descriptors.FieldAccessor<{{ name }}, {{ field.type }}>() {
-                        public {{ field.type }} get({{ name }} message) {
+                    .setAccessor(new io.pdef.descriptors.FieldAccessor<{{ name }}, {{ field.type|jref }}>() {
+                        public {{ field.type|jref }} get({{ name }} message) {
                             return message.{{ field.name }};
                         }
 
-                        public void set({{ name }} message, {{ field.type }} value) {
+                        public void set({{ name }} message, {{ field.type|jref }} value) {
                             message.{{ field.name }} = value;
                         }
                     })

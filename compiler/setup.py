@@ -31,7 +31,7 @@ setup(
               'pdefc.generators.python'],
     package_dir={'': 'src'},
     package_data={
-        '': ['*.template']
+        '': ['*.jinja2']
     },
 
     install_requires=[
@@ -43,7 +43,7 @@ setup(
     entry_points={
         'console_scripts': ['pdefc = pdefc:main'],
         'pdefc.generators': [
-            'java = pdefc.generators.java:generate',
+            'java = pdefc.generators.java:JavaGenerator',
             'python = pdefc.generators.python:generate'
         ]
     },

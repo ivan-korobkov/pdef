@@ -119,7 +119,7 @@ class Method(Located, Validatable):
 
     @property
     def is_terminal(self):
-        return self.result and (not self.result.is_interface)
+        return self.result and self.result.type != TypeEnum.INTERFACE
 
     def lookup(self, name):
         return self.interface.lookup(name) if self.interface else None

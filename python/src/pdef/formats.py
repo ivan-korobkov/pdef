@@ -33,7 +33,7 @@ class ObjectFormat(object):
             valued = descriptor.value
             return {serialize(k, keyd): serialize(v, valued) for k, v in obj.items()}
 
-        elif type0 == Type.MESSAGE or type0 == Type.EXCEPTION:
+        elif type0 == Type.MESSAGE:
             return self._serialize_message(obj)
 
         elif type0 == Type.VOID:
@@ -85,7 +85,7 @@ class ObjectFormat(object):
             valued = descriptor.value
             return {parse(k, keyd): parse(v, valued) for k, v in obj.items()}
 
-        elif type0 == Type.MESSAGE or type0 == Type.EXCEPTION:
+        elif type0 == Type.MESSAGE:
             return self._parse_message(obj, descriptor)
 
         elif type0 == Type.VOID:

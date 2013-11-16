@@ -143,7 +143,6 @@ public class JsonFormat {
 				writeEnum((Enum) object, generator);
 				return;
 			case MESSAGE:
-			case EXCEPTION:
 				writeMessage((Message) object, generator);
 				return;
 			default:

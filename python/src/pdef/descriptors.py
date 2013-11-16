@@ -11,7 +11,7 @@ class Descriptor(object):
 
         self.is_primitive = self.type in Type.PRIMITIVES
         self.is_value = self.type in Type.VALUES
-        self.is_message = self.type == Type.MESSAGE or self.type == Type.EXCEPTION
+        self.is_message = self.type == Type.MESSAGE
 
     def __str__(self):
         return str(self.type)

@@ -18,7 +18,6 @@ public enum TypeEnum {
 	// User-defined types.
 	ENUM,
 	MESSAGE,
-	EXCEPTION,
 	INTERFACE;
 
 	/** Returns a pdef value type of a java class or throws IllegalArgumentException. */
@@ -36,9 +35,7 @@ public enum TypeEnum {
 		else if (Map.class.isAssignableFrom(cls)) return TypeEnum.MAP;
 		else if (cls == Void.class) return TypeEnum.VOID;
 		else if (cls.isEnum()) return TypeEnum.ENUM;
-		else if (Exception.class.isAssignableFrom(cls) && Message.class.isAssignableFrom(cls)) {
-			return TypeEnum.EXCEPTION;
-		} else if (Message.class.isAssignableFrom(cls)) return TypeEnum.MESSAGE;
+		else if (Message.class.isAssignableFrom(cls)) return TypeEnum.MESSAGE;
 		throw new IllegalArgumentException("Unsupported value type " + cls);
 	}
 

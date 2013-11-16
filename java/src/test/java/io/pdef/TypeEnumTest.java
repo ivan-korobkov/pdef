@@ -27,7 +27,7 @@ public class TypeEnumTest {
 		assertEquals(TypeEnum.VOID, TypeEnum.valueTypeOf(Void.class));
 		assertEquals(TypeEnum.ENUM, TypeEnum.valueTypeOf(TestEnum.class));
 		assertEquals(TypeEnum.MESSAGE, TypeEnum.valueTypeOf(TestMessage.class));
-		assertEquals(TypeEnum.EXCEPTION, TypeEnum.valueTypeOf(TestException.class));
+		assertEquals(TypeEnum.MESSAGE, TypeEnum.valueTypeOf(TestException.class));
 	}
 
 	@Test(expected = IllegalArgumentException.class)

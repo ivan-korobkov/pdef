@@ -26,13 +26,12 @@ class Type(object):
     # User defined types.
     ENUM = 'enum'
     MESSAGE = 'message'
-    EXCEPTION = 'exception'
 
     # Interface
     INTERFACE = 'interface'
 
     PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
-    VALUES = PRIMITIVES + (VOID, LIST, MAP, SET, ENUM, MESSAGE, EXCEPTION)
+    VALUES = PRIMITIVES + (VOID, LIST, MAP, SET, ENUM, MESSAGE)
     ALL = VALUES + (INTERFACE, )
 
 

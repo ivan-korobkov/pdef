@@ -50,21 +50,13 @@ public class ObjectFormat {
 			case INT64:
 			case FLOAT:
 			case DOUBLE:
-			case STRING:
-				return object;
-			case LIST:
-				return writeList((List) object, (ListDescriptor) descriptor);
-			case SET:
-				return writeSet((Set) object, (SetDescriptor) descriptor);
-			case MAP:
-				return writeMap((Map) object, (MapDescriptor) descriptor);
-			case ENUM:
-				return writeEnum((Enum) object);
-			case MESSAGE:
-			case EXCEPTION:
-				return writeMessage((Message) object);
-			case VOID:
-				return null;
+			case STRING: return object;
+			case LIST: return writeList((List) object, (ListDescriptor) descriptor);
+			case SET: return writeSet((Set) object, (SetDescriptor) descriptor);
+			case MAP: return writeMap((Map) object, (MapDescriptor) descriptor);
+			case ENUM: return writeEnum((Enum) object);
+			case MESSAGE: return writeMessage((Message) object);
+			case VOID: return null;
 			default:
 				throw new IllegalArgumentException("Unsupported descriptor " + descriptor);
 		}
@@ -191,8 +183,7 @@ public class ObjectFormat {
 			case SET: return (T) readSet(input, (SetDescriptor<?>) descriptor);
 			case MAP: return (T) readMap(input, (MapDescriptor<?, ?>) descriptor);
 			case ENUM: return (T) readEnum(input, (EnumDescriptor<? extends Enum<?>>) descriptor);
-			case MESSAGE: case EXCEPTION:
-				return (T) readMessage(input, (MessageDescriptor<? extends Message>) descriptor);
+			case MESSAGE: return (T) readMessage(input, (MessageDescriptor<? extends Message>) descriptor);
 			case VOID: return null;
 			default: throw new IllegalArgumentException("Unsupported descriptor " + descriptor);
 		}

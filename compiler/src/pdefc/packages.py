@@ -1,9 +1,12 @@
 # encoding: utf-8
 import logging
+import re
 
 
 class Package(object):
     '''Protocol definition.'''
+    name_pattern = re.compile(r'^[a-zA-Z]{1}[a-zA-Z0-9_]*$')
+
     def __init__(self, name, info=None, modules=None, dependencies=None):
         self.name = name
         self.info = info
@@ -116,10 +119,18 @@ class Package(object):
         logging.debug('Validating the package')
 
         errors = []
+        errors += self._validate_name()
         for module in self.modules:
             errors += module.validate()
 
         return errors
+
+    def _validate_name(self):
+        if self.name_pattern.match(self.name):
+            return []
+        return [self._error('Wrong package name "%s". A name must contain only latin letters, '
+                            'digits and underscores, and must start with a letter, for example, '
+                            '"mycompany_project_api"', self.name)]
 
     def _error(self, msg, *args):
         record = msg % args if args else msg

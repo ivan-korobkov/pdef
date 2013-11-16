@@ -129,7 +129,20 @@ class TestModule(unittest.TestCase):
 
     # Validation.
 
-    def test_validate_module__duplicate_imports(self):
+    def test_validate_name(self):
+        module0 = Module('wrong-module')
+        module1 = Module('_wrong')
+        module2 = Module('1234_wrong')
+
+        errors0 = module0._validate()
+        errors1 = module1._validate()
+        errors2 = module2._validate()
+
+        assert 'Wrong module name' in errors0[0]
+        assert 'Wrong module name' in errors1[0]
+        assert 'Wrong module name' in errors2[0]
+
+    def test_validate__duplicate_imports(self):
         module = Module('test', path='/home/ivan/test.pdef')
         module.add_imported_module('submodule', Module('module0.submodule'))
         module.add_imported_module('submodule', Module('module1.submodule'))
@@ -138,7 +151,7 @@ class TestModule(unittest.TestCase):
         assert len(errors) == 1
         assert 'Duplicate import' in str(errors[0])
 
-    def test_validate_module__duplicate_definition(self):
+    def test_validate__duplicate_definition(self):
         '''Should prevent adding a duplicate definition to a module.'''
         def0 = Definition(TypeEnum.MESSAGE, 'Test')
         def1 = Definition(TypeEnum.MESSAGE, 'Test')
@@ -151,7 +164,7 @@ class TestModule(unittest.TestCase):
         assert len(errors) == 1
         assert 'Duplicate definition or import' in str(errors[0])
 
-    def test_validate_module__definition_import_clash(self):
+    def test_validate__definition_import_clash(self):
         '''Should prevent adding a definition to a module when its name clashes with an import.'''
         module = Module('test')
         module.add_imported_module('clash', Module('imported'))

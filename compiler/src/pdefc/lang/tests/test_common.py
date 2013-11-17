@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast.common import Validatable
+from pdefc.lang.common import Validatable
 
 
 class TestValidatable(unittest.TestCase):

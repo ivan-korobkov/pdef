@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast import *
+from pdefc.lang import *
 from pdefc.generators.python import *
 
 

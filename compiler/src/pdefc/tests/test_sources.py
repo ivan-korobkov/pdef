@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from mock import Mock
 from pdefc import CompilerException
-from pdefc.packages import PackageInfo
+from pdefc.lang.packages import PackageInfo
 from pdefc.sources import UrlSource, FileSource, InMemorySource, Sources
 
 

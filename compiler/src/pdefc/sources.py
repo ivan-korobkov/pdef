@@ -5,7 +5,7 @@ import os
 import urllib2
 import urlparse
 from pdefc import CompilerException
-from pdefc.packages import PackageInfo
+from pdefc.lang.packages import PackageInfo
 
 
 MODULE_EXT = '.pdef'

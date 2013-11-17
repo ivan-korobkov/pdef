@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast.types import *
-from pdefc.ast.modules import *
+from pdefc.lang.types import *
+from pdefc.lang.modules import *
 
 
 class TestDefinition(unittest.TestCase):

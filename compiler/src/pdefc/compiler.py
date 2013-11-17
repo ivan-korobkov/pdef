@@ -1,10 +1,9 @@
 # encoding: utf-8
 import logging
-import time
 
 import pdefc
 from pdefc.exc import CompilerException
-from pdefc.packages import Package
+from pdefc.lang.packages import Package
 
 
 def create_compiler(paths=None, allow_duplicate_definitions=False):

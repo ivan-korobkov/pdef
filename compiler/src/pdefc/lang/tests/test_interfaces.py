@@ -1,8 +1,8 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast import Module
-from pdefc.ast.interfaces import *
-from pdefc.ast.types import NativeType
+from pdefc.lang import Module
+from pdefc.lang.interfaces import *
+from pdefc.lang.types import NativeType
 
 
 class TestInterface(unittest.TestCase):

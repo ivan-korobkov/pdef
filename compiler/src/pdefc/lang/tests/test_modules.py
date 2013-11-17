@@ -1,11 +1,11 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast import AbsoluteImport, RelativeImport
-from pdefc.ast.types import Definition, TypeEnum
-from pdefc.ast.enums import Enum
-from pdefc.ast.modules import *
-from pdefc.ast.messages import Message
-from pdefc.packages import Package
+from pdefc.lang import AbsoluteImport, RelativeImport
+from pdefc.lang.types import Definition, TypeEnum
+from pdefc.lang.enums import Enum
+from pdefc.lang.modules import *
+from pdefc.lang.messages import Message
+from pdefc.lang.packages import Package
 
 
 class TestModule(unittest.TestCase):

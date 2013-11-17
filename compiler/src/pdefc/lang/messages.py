@@ -1,9 +1,9 @@
 # encoding: utf-8
 import logging
 
-from pdefc.ast import references
-from pdefc.ast.common import Located, Validatable
-from pdefc.ast.types import TypeEnum, Definition
+from pdefc.lang import references
+from pdefc.lang.common import Located, Validatable
+from pdefc.lang.types import TypeEnum, Definition
 
 
 class Message(Definition):

@@ -8,7 +8,7 @@ from mock import Mock
 from pdefc.compiler import Compiler
 from pdefc.exc import CompilerException
 from pdefc.generators import java as java_generator
-from pdefc.packages import PackageInfo
+from pdefc.lang.packages import PackageInfo
 from pdefc.sources import InMemorySource
 
 

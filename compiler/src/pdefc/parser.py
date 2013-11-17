@@ -6,7 +6,7 @@ import os.path
 import ply.lex as lex
 import ply.yacc as yacc
 
-import pdefc.ast
+import pdefc.lang
 
 
 def create_parser():
@@ -78,7 +78,7 @@ class Parser(object):
 
 def _location(t, token_position):
     lineno = t.lineno(token_position)
-    return pdefc.ast.Location(lineno)
+    return pdefc.lang.Location(lineno)
 
 
 def _with_location(token_position):
@@ -220,7 +220,7 @@ class _GrammarRules(object):
         doc = t[1]
         imports = t[2]
         definitions = t[3]
-        t[0] = pdefc.ast.Module(name, imports=imports, definitions=definitions, doc=doc)
+        t[0] = pdefc.lang.Module(name, imports=imports, definitions=definitions, doc=doc)
 
     # Any absolute name, returns a list.
     def p_absolute_name(self, t):
@@ -279,13 +279,13 @@ class _GrammarRules(object):
         '''
         absolute_import : IMPORT module_name SEMI
         '''
-        t[0] = pdefc.ast.AbsoluteImport(t[2])
+        t[0] = pdefc.lang.AbsoluteImport(t[2])
 
     def p_relative_import(self, t):
         '''
         relative_import : FROM module_name IMPORT relative_import_names SEMI
         '''
-        t[0] = pdefc.ast.RelativeImport(t[2], t[4])
+        t[0] = pdefc.lang.RelativeImport(t[2], t[4])
 
     def p_relative_import_names(self, t):
         '''
@@ -317,7 +317,7 @@ class _GrammarRules(object):
         '''
         enum : ENUM IDENTIFIER LBRACE enum_values RBRACE
         '''
-        t[0] = pdefc.ast.Enum(t[2], values=t[4])
+        t[0] = pdefc.lang.Enum(t[2], values=t[4])
 
     def p_enum_values(self, t):
         '''
@@ -339,7 +339,7 @@ class _GrammarRules(object):
         '''
         enum_value : IDENTIFIER
         '''
-        t[0] = pdefc.ast.EnumValue(t[1])
+        t[0] = pdefc.lang.EnumValue(t[1])
 
     # Message definition
     @_with_location(3)
@@ -352,7 +352,7 @@ class _GrammarRules(object):
         base, discriminator_value = t[3]
         fields = t[5]
 
-        t[0] = pdefc.ast.Message(name, base=base, discriminator_value=discriminator_value,
+        t[0] = pdefc.lang.Message(name, base=base, discriminator_value=discriminator_value,
                                  declared_fields=fields, is_exception=is_exception)
 
     def p_message_or_exception(self, t):
@@ -399,7 +399,7 @@ class _GrammarRules(object):
         name = t[1]
         type0 = t[2]
         is_discriminator = t[3]
-        t[0] = pdefc.ast.Field(name, type0, is_discriminator=is_discriminator)
+        t[0] = pdefc.lang.Field(name, type0, is_discriminator=is_discriminator)
 
     def p_field_discriminator(self, t):
         '''
@@ -418,7 +418,7 @@ class _GrammarRules(object):
         name = t[3]
         methods = t[5]
 
-        t[0] = pdefc.ast.Interface(name, exc=exc, methods=methods)
+        t[0] = pdefc.lang.Interface(name, exc=exc, methods=methods)
 
     def p_interface_exc(self, t):
         '''
@@ -448,7 +448,7 @@ class _GrammarRules(object):
         name = t[3]
         args = t[5]
         result = t[7]
-        t[0] = pdefc.ast.Method(name, result=result, args=args, is_post=is_post, doc=doc)
+        t[0] = pdefc.lang.Method(name, result=result, args=args, is_post=is_post, doc=doc)
 
     def p_method_post(self, t):
         '''
@@ -473,7 +473,7 @@ class _GrammarRules(object):
         attr = t[4]
         is_query = attr == '@query'
         is_post = attr == '@post'
-        t[0] = pdefc.ast.MethodArg(t[2], t[3], is_query=is_query, is_post=is_post)
+        t[0] = pdefc.lang.MethodArg(t[2], t[3], is_query=is_query, is_post=is_post)
 
     def p_method_arg_attr(self, t):
         '''
@@ -506,31 +506,31 @@ class _GrammarRules(object):
                   | DATETIME
                   | VOID
         '''
-        t[0] = pdefc.ast.reference(t[1].lower())
+        t[0] = pdefc.lang.reference(t[1].lower())
 
     def p_list_ref(self, t):
         '''
         list_ref : LIST LESS type GREATER
         '''
-        t[0] = pdefc.ast.ListReference(t[3])
+        t[0] = pdefc.lang.ListReference(t[3])
 
     def p_set_ref(self, t):
         '''
         set_ref : SET LESS type GREATER
         '''
-        t[0] = pdefc.ast.SetReference(t[3])
+        t[0] = pdefc.lang.SetReference(t[3])
 
     def p_map_ref(self, t):
         '''
         map_ref : MAP LESS type COMMA type GREATER
         '''
-        t[0] = pdefc.ast.MapReference(t[3], t[5])
+        t[0] = pdefc.lang.MapReference(t[3], t[5])
 
     def p_def_ref(self, t):
         '''
         def_ref : type_name
         '''
-        t[0] = pdefc.ast.reference(t[1])
+        t[0] = pdefc.lang.reference(t[1])
 
     def p_error(self, t):
         if t is None:

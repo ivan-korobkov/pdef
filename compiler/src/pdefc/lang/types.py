@@ -1,5 +1,5 @@
 # encoding: utf-8
-from pdefc.ast.common import Located, Validatable
+from pdefc.lang.common import Located, Validatable
 
 
 class TypeEnum(object):

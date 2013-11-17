@@ -3,8 +3,8 @@ import logging
 from collections import deque
 import re
 
-from pdefc.ast.common import Validatable
-from pdefc.ast.types import NativeType, TypeEnum
+from pdefc.lang.common import Validatable
+from pdefc.lang.types import NativeType, TypeEnum
 
 
 class Module(Validatable):

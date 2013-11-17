@@ -1,6 +1,6 @@
 # encoding: utf-8
 import logging
-from pdefc.ast.common import Located
+from pdefc.lang.common import Located
 
 
 class AbstractImport(Located):

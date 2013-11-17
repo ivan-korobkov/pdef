@@ -1,9 +1,9 @@
 # encoding: utf-8
 import logging
 
-import pdefc.ast.collects
-from pdefc.ast.common import Located, Validatable
-from pdefc.ast.types import Type
+import pdefc.lang.collects
+from pdefc.lang.common import Located, Validatable
+from pdefc.lang.types import Type
 
 
 def reference(name_ref_def):
@@ -89,7 +89,7 @@ class ListReference(Reference):
     def _init_type(self):
         if not self.element:
             return
-        self._type = pdefc.ast.collects.List(self.element.dereference(), location=self.location)
+        self._type = pdefc.lang.collects.List(self.element.dereference(), location=self.location)
 
     def link(self, lookup):
         logging.debug('Linking %s', self)
@@ -123,7 +123,7 @@ class SetReference(Reference):
     def _init_type(self):
         if not self.element:
             return
-        self._type = pdefc.ast.collects.Set(self.element.dereference(), location=self.location)
+        self._type = pdefc.lang.collects.Set(self.element.dereference(), location=self.location)
 
     def link(self, lookup):
         logging.debug('Linking %s', self)
@@ -158,7 +158,7 @@ class MapReference(Reference):
     def _init_type(self):
         if not self.key or not self.value:
             return
-        self._type = pdefc.ast.collects.Map(self.key.dereference(), self.value.dereference(),
+        self._type = pdefc.lang.collects.Map(self.key.dereference(), self.value.dereference(),
                                             location=self.location)
 
     def link(self, lookup):

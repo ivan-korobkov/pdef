@@ -1,10 +1,10 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast.types import NativeType
-from pdefc.ast.enums import Enum
-from pdefc.ast.messages import Message
-from pdefc.ast.modules import *
-from pdefc.packages import *
+from pdefc.lang.types import NativeType
+from pdefc.lang.enums import Enum
+from pdefc.lang.messages import Message
+from pdefc.lang.modules import *
+from pdefc.lang.packages import *
 
 
 class TestPackage(unittest.TestCase):

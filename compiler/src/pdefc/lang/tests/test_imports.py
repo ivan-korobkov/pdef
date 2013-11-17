@@ -1,8 +1,8 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast import Module
-from pdefc.ast.imports import AbsoluteImport, RelativeImport
-from pdefc.packages import Package
+from pdefc.lang import Module
+from pdefc.lang.imports import AbsoluteImport, RelativeImport
+from pdefc.lang.packages import Package
 
 
 class TestAbsoluteImport(unittest.TestCase):

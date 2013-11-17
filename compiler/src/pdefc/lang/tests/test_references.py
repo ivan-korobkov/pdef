@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdefc.ast import collects, types, references, NativeType
+from pdefc.lang import collects, types, references, NativeType
 
 
 class TestReference(unittest.TestCase):

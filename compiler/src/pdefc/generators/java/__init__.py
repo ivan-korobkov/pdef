@@ -4,7 +4,7 @@ import logging
 import os.path
 
 import pdefc
-from pdefc.ast import TypeEnum
+from pdefc.lang import TypeEnum
 from pdefc.generators import Namespace, Generator, Templates, upper_first, mkdir_p
 
 

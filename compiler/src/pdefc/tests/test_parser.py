@@ -4,8 +4,8 @@ import os.path
 import unittest
 
 from pdefc.parser import create_parser
-from pdefc.ast import AbsoluteImport, RelativeImport, Location
-from pdefc.ast.references import ListReference, SetReference, MapReference
+from pdefc.lang import AbsoluteImport, RelativeImport, Location
+from pdefc.lang.references import ListReference, SetReference, MapReference
 
 
 class TestParser(unittest.TestCase):

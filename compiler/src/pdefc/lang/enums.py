@@ -1,6 +1,6 @@
 # encoding: utf-8
 import logging
-from pdefc.ast.types import Type, TypeEnum, Definition
+from pdefc.lang.types import Type, TypeEnum, Definition
 
 
 class Enum(Definition):

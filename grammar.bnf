@@ -13,29 +13,6 @@
         lparent='('
         rparent=')'
 
-        // Imports
-        from='from'
-        import='import'
-
-        // Native types
-        bool='bool'
-        int16='int16'
-        int32='int32'
-        int64='int64'
-        float='float'
-        double='double'
-        string='string'
-        void='void'
-        list='list'
-        set='set'
-        map='map'
-
-        // Definition types
-        message_token='message'
-        interface_token='interface'
-        exception_token='exception'
-        enum_token='enum'
-
         // Attributes
         discriminator='@discriminator'
         post='@post'
@@ -49,8 +26,6 @@
         comment='regexp://.*'
     ]
 }
-// Single quotes (') are used to enclose tokens in GrammarKit when they clash with the rules,
-// i.e. a message rule and a message_token 'message'.
 
 File            ::= doc? ImportBlock* Definition*
 TypeName        ::= id ('.' id)*
@@ -87,6 +62,7 @@ ValueType       ::= bool
                     | float
                     | double
                     | string
+                    | datetime
                     | void
 ListType        ::= list '<' Type '>'
 SetType         ::= set '<' Type '>'

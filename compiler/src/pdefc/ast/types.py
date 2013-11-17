@@ -13,6 +13,7 @@ class TypeEnum(object):
     FLOAT = 'float'
     DOUBLE = 'double'
     STRING = 'string'
+    DATETIME = 'datetime'
 
     # Collection types.
     LIST = 'list'
@@ -28,7 +29,7 @@ class TypeEnum(object):
     INTERFACE = 'interface'
     VOID = 'void'
 
-    PRIMITIVE_TYPES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
+    PRIMITIVE_TYPES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING, DATETIME)
     DATA_TYPES = PRIMITIVE_TYPES + (LIST, SET, MAP, ENUM, MESSAGE)
     NATIVE_TYPES = PRIMITIVE_TYPES + (VOID, )
     COLLECTION_TYPES = (LIST, SET, MAP)
@@ -79,6 +80,7 @@ class NativeType(object):
     FLOAT = Type(TypeEnum.FLOAT)
     DOUBLE = Type(TypeEnum.DOUBLE)
     STRING = Type(TypeEnum.STRING)
+    DATETIME = Type(TypeEnum.DATETIME)
     VOID = Type(TypeEnum.VOID)
 
     _BY_TYPE = {
@@ -89,6 +91,7 @@ class NativeType(object):
         TypeEnum.FLOAT: FLOAT,
         TypeEnum.DOUBLE: DOUBLE,
         TypeEnum.STRING: STRING,
+        TypeEnum.DATETIME: DATETIME,
         TypeEnum.VOID: VOID
     }
 
@@ -149,4 +152,4 @@ class Definition(Type):
             if def0 is self:
                 return False
 
-        raise AssertionError('Unnreachable code')
+        raise AssertionError('Unreachable code')

@@ -4,11 +4,13 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import io.pdef.*;
+import io.pdef.Message;
 import io.pdef.descriptors.*;
 
 import javax.annotation.Nonnull;
 import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /** JsonFormat parses and serializes Pdef value types from/to JSON. */
@@ -17,6 +19,15 @@ public class JsonFormat {
 
 	private final JsonFactory factory;
 	private final ObjectFormat objectFormat;
+	private final ThreadLocal<DateFormat> dateFormat = new ThreadLocal<DateFormat>() {
+		@Override
+		protected DateFormat initialValue() {
+			TimeZone tz = TimeZone.getTimeZone("UTC");
+			DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+			format.setTimeZone(tz);
+			return format;
+		}
+	};
 
 	protected JsonFormat() {
 		this(new JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS));
@@ -127,6 +138,9 @@ public class JsonFormat {
 			case STRING:
 				generator.writeString((String) object);
 				return;
+			case DATETIME:
+				writeDatetime((Date) object, generator);
+				return;
 			case LIST:
 				writeList((List) object, (ListDescriptor) descriptor, generator);
 				return;
@@ -148,6 +162,11 @@ public class JsonFormat {
 			default:
 				throw new FormatException("Unsupported descriptor " + descriptor);
 		}
+	}
+
+	private void writeDatetime(final Date date, final JsonGenerator generator) throws IOException {
+		String s = dateFormat.get().format(date);
+		generator.writeString(s);
 	}
 
 	private <T> void writeList(@Nonnull final List<T> object, final ListDescriptor<T> descriptor,
@@ -318,21 +337,15 @@ public class JsonFormat {
 		}
 
 		switch (current) {
-			case VALUE_NULL:
-				return null;
-			case VALUE_TRUE:
-				return true;
-			case VALUE_FALSE:
-				return false;
-			case VALUE_STRING:
-				return parser.getValueAsString();
+			case VALUE_NULL: return null;
+			case VALUE_TRUE: return true;
+			case VALUE_FALSE: return false;
+			case VALUE_STRING: return parser.getValueAsString();
 			case VALUE_NUMBER_INT:
 			case VALUE_NUMBER_FLOAT:
 				return parser.getNumberValue();
-			case START_ARRAY:
-				return readArray(parser);
-			case START_OBJECT:
-				return readMap(parser);
+			case START_ARRAY: return readArray(parser);
+			case START_OBJECT: return readMap(parser);
 			default:
 				throw new FormatException("Bad JSON string");
 		}

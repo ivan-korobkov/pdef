@@ -99,7 +99,7 @@ class TestInterfaceDescriptor(unittest.TestCase):
 
         assert descriptor.pyclass is TestInterface
         assert descriptor.exc is TestException.DESCRIPTOR
-        assert len(descriptor.methods) == 10
+        assert len(descriptor.methods) == 11
         assert method
 
 

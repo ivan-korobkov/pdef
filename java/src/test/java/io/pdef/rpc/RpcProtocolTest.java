@@ -166,7 +166,7 @@ public class RpcProtocolTest {
 		TestMessage expected = new TestMessage()
 				.setString0("Привет")
 				.setBool0(true)
-				.setShort0((short) 123);
+				.setInt0(123);
 		String json = expected.toJson();
 		TestMessage result = protocol.fromJson(TestMessage.DESCRIPTOR, json);
 		assertEquals(expected, result);

@@ -4,6 +4,8 @@ import io.pdef.TypeEnum;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /** Primitive and collection descriptors. */
 public class Descriptors {
@@ -14,6 +16,7 @@ public class Descriptors {
 	public static DataTypeDescriptor<Float> float0 = primitive(TypeEnum.FLOAT, Float.class);
 	public static DataTypeDescriptor<Double> double0 = primitive(TypeEnum.DOUBLE, Double.class);
 	public static DataTypeDescriptor<String> string = primitive(TypeEnum.STRING, String.class);
+	public static DataTypeDescriptor<Date> datetime = primitive(TypeEnum.DATETIME, Date.class);
 	public static DataTypeDescriptor<Void> void0 = primitive(TypeEnum.VOID, Void.class);
 
 	private Descriptors() {}

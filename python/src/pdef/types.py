@@ -14,6 +14,7 @@ class Type(object):
     FLOAT = 'float'
     DOUBLE = 'double'
     STRING = 'string'
+    DATETIME = 'datetime'
 
     # Void
     VOID = 'void'
@@ -26,12 +27,10 @@ class Type(object):
     # User defined types.
     ENUM = 'enum'
     MESSAGE = 'message'
-
-    # Interface
     INTERFACE = 'interface'
 
     PRIMITIVE_TYPES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
-    DATA_TYPES = PRIMITIVE_TYPES + (LIST, MAP, SET, ENUM, MESSAGE, VOID)
+    DATA_TYPES = PRIMITIVE_TYPES + (DATETIME, LIST, MAP, SET, ENUM, MESSAGE, VOID)
     ALL_TYPES = DATA_TYPES + (INTERFACE, )
 
 

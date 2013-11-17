@@ -36,6 +36,9 @@ interface TestInterface {
     /** Returns the same string. */
     string0(text string) string;
 
+    /** Return the same datetime. */
+    datetime0(dt datetime) datetime;
+
     /** Returns the same message. */
     message0(msg messages.TestMessage) messages.TestMessage;
 

@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Date;
 
 public class RpcTest {
 	TestInterface service;
@@ -67,12 +68,14 @@ public class RpcTest {
 		TestMessage message = new TestMessage()
 				.setString0("Привет, как дела?")
 				.setBool0(false)
-				.setShort0((short) -123);
+				.setInt0(-123);
+		Date date = new Date(0);
 
 		when(service.method(1, 2)).thenReturn(3);
 		when(service.query(3, 4)).thenReturn(7);
 		when(service.post(5, 6)).thenReturn(11);
 		when(service.string0("Привет")).thenReturn("Привет");
+		when(service.datetime0(date)).thenReturn(new Date(date.getTime()));
 		when(service.message0(message.copy())).thenReturn(message.copy());
 		when(service.interface0(1, 2)).thenReturn(service);
 		doThrow(new TestException().setText("Application exception")).when(service).exc0();
@@ -84,6 +87,7 @@ public class RpcTest {
 		assertEquals(7, (int) client.query(3, 4));
 		assertEquals(11, (int) client.post(5, 6));
 		assertEquals("Привет", client.string0("Привет"));
+		assertEquals(date, client.datetime0(date));
 		assertEquals(message, client.message0(message));
 		assertEquals(7, (int) client.interface0(1, 2).query(3, 4));
 

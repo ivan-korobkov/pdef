@@ -70,7 +70,7 @@ public class DataTypesTest {
 	private TestMessage createMessage() {
 		return new TestMessage()
 				.setBool0(random.nextBoolean())
-				.setShort0((short) random.nextInt())
+				.setInt0(random.nextInt())
 				.setString0(String.valueOf(random.nextInt()));
 	}
 }

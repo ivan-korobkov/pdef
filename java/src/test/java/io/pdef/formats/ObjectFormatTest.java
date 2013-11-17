@@ -8,11 +8,12 @@ import io.pdef.descriptors.*;
 import io.pdef.test.inheritance.Base;
 import io.pdef.test.inheritance.MultiLevelSubtype;
 import io.pdef.test.inheritance.PolymorphicType;
-import io.pdef.test.messages.TestMessage;
 import io.pdef.test.messages.TestEnum;
+import io.pdef.test.messages.TestMessage;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +60,16 @@ public class ObjectFormatTest {
 	@Test
 	public void testDouble() throws Exception {
 		testPrimitive(Descriptors.double0, "2.5", 2.5d);
+	}
+
+	@Test
+	public void testDatetime() throws Exception {
+		testPrimitive(Descriptors.datetime, "1970-01-01T00:00Z", new Date(0));
+	}
+
+	@Test
+	public void testString() throws Exception {
+		testPrimitive(Descriptors.string, "Hello, world", "Hello, world");
 	}
 
 	private <T> void testValue(final DataTypeDescriptor<T> descriptor, final Object serialized,
@@ -140,14 +151,14 @@ public class ObjectFormatTest {
 	private TestMessage fixtureMessage() {
 		return new TestMessage()
 				.setBool0(true)
-				.setShort0((short) 123)
+				.setInt0(123)
 				.setString0("hello");
 	}
 
 	private Map<String, Object> fixtureMap() {
 		return ImmutableMap.<String, Object>of(
 				"bool0", true,
-				"short0", (short) 123,
+				"int0", 123,
 				"string0", "hello");
 	}
 }

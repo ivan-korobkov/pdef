@@ -1,18 +1,31 @@
 package io.pdef.formats;
 
-import io.pdef.*;
+import io.pdef.Message;
+import io.pdef.TypeEnum;
 import io.pdef.descriptors.*;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ObjectFormat {
 	private static final ObjectFormat INSTANCE = new ObjectFormat();
+	private final ThreadLocal<DateFormat> dateFormat = new ThreadLocal<DateFormat>() {
+		@Override
+		protected DateFormat initialValue() {
+			TimeZone tz = TimeZone.getTimeZone("UTC");
+			DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+			format.setTimeZone(tz);
+			return format;
+		}
+	};
+
+	private ObjectFormat() {}
 
 	public static ObjectFormat getInstance() {
 		return INSTANCE;
 	}
-
-	private ObjectFormat() {}
 
 	// Serializing.
 
@@ -51,6 +64,7 @@ public class ObjectFormat {
 			case FLOAT:
 			case DOUBLE:
 			case STRING: return object;
+			case DATETIME: return writeDate((Date) object);
 			case LIST: return writeList((List) object, (ListDescriptor) descriptor);
 			case SET: return writeSet((Set) object, (SetDescriptor) descriptor);
 			case MAP: return writeMap((Map) object, (MapDescriptor) descriptor);
@@ -60,6 +74,14 @@ public class ObjectFormat {
 			default:
 				throw new IllegalArgumentException("Unsupported descriptor " + descriptor);
 		}
+	}
+
+	private Date writeDate(final Date date) {
+		if (date == null) {
+			return null;
+		}
+
+		return new Date(date.getTime());
 	}
 
 	private <E> List<Object> writeList(final List<E> list, final ListDescriptor<E> descriptor)
@@ -179,6 +201,7 @@ public class ObjectFormat {
 			case FLOAT: return (T) readFloat(input);
 			case DOUBLE: return (T) readDouble(input);
 			case STRING: return (T) readString(input);
+			case DATETIME: return (T) readDatetime(input);
 			case LIST: return (T) readList(input, (ListDescriptor<?>) descriptor);
 			case SET: return (T) readSet(input, (SetDescriptor<?>) descriptor);
 			case MAP: return (T) readMap(input, (MapDescriptor<?, ?>) descriptor);
@@ -195,7 +218,7 @@ public class ObjectFormat {
 		} else if (input instanceof String) {
 			return Boolean.parseBoolean((String) input);
 		}
-		throw new FormatException("Cannot fromJson a boolean from " + input);
+		throw new FormatException("Cannot read a boolean from " + input);
 	}
 
 	private Short readShort(final Object input) {
@@ -204,7 +227,7 @@ public class ObjectFormat {
 		} else if (input instanceof String) {
 			return Short.parseShort((String) input);
 		}
-		throw new FormatException("Cannot fromJson a short from " + input);
+		throw new FormatException("Cannot read a short from " + input);
 	}
 
 	private Integer readInt(final Object input) {
@@ -213,7 +236,7 @@ public class ObjectFormat {
 		} else if (input instanceof String) {
 			return Integer.parseInt((String) input);
 		}
-		throw new FormatException("Cannot fromJson an int from " + input);
+		throw new FormatException("Cannot read an int from " + input);
 	}
 
 	private Long readLong(final Object input) {
@@ -222,7 +245,7 @@ public class ObjectFormat {
 		} else if (input instanceof String) {
 			return Long.parseLong((String) input);
 		}
-		throw new FormatException("Cannot fromJson a long from " + input);
+		throw new FormatException("Cannot read a long from " + input);
 	}
 
 	private Float readFloat(final Object input) {
@@ -231,7 +254,7 @@ public class ObjectFormat {
 		} else if (input instanceof String) {
 			return Float.parseFloat((String) input);
 		}
-		throw new FormatException("Cannot fromJson a float from " + input);
+		throw new FormatException("Cannot read a float from " + input);
 	}
 
 	private Double readDouble(final Object input) {
@@ -240,7 +263,7 @@ public class ObjectFormat {
 		} else if (input instanceof String) {
 			return Double.parseDouble((String) input);
 		}
-		throw new FormatException("Cannot fromJson a double from " + input);
+		throw new FormatException("Cannot read a double from " + input);
 	}
 
 	private String readString(final Object input) {
@@ -249,13 +272,28 @@ public class ObjectFormat {
 		} else if (input instanceof String) {
 			return (String) input;
 		}
-		throw new FormatException("Cannot fromJson a string from " + input);
+		throw new FormatException("Cannot read a string from " + input);
+	}
+
+	private Date readDatetime(final Object input) {
+		if (input == null) {
+			return null;
+		} else if (input instanceof Date) {
+			return (Date) input;
+		} else if (input instanceof String) {
+			try {
+				return dateFormat.get().parse((String) input);
+			} catch (ParseException e) {
+				throw new FormatException("Failed to read a datetime from " + input, e);
+			}
+		}
+		throw new FormatException("Cannot read a datetime from " + input);
 	}
 
 	private <E> List<E> readList(final Object input, final ListDescriptor<E> descriptor)
 			throws Exception {
 		if (!(input instanceof Collection)) {
-			throw new FormatException("Cannot fromJson a list from " + input);
+			throw new FormatException("Cannot read a list from " + input);
 		}
 
 		Collection<?> collection = (Collection<?>) input;
@@ -273,7 +311,7 @@ public class ObjectFormat {
 	private <E> Set<E> readSet(final Object input, final SetDescriptor<E> descriptor)
 			throws Exception {
 		if (!(input instanceof Collection)) {
-			throw new FormatException("Cannot fromJson a set from " + input);
+			throw new FormatException("Cannot read a set from " + input);
 		}
 
 		Collection<?> collection = (Collection<?>) input;
@@ -291,7 +329,7 @@ public class ObjectFormat {
 	private <K, V> Map<K, V> readMap(final Object input, final MapDescriptor<K, V> descriptor)
 			throws Exception {
 		if (!(input instanceof Map)) {
-			throw new FormatException("Cannot fromJson a map from " + input);
+			throw new FormatException("Cannot read a map from " + input);
 		}
 
 		Map<?, ?> map = (Map<?, ?>) input;
@@ -315,13 +353,13 @@ public class ObjectFormat {
 		} else if (input instanceof String) {
 			return descriptor.getValue((String) input);
 		}
-		throw new FormatException("Cannot fromJson an enum from " + input);
+		throw new FormatException("Cannot read an enum from " + input);
 	}
 
 	private <M extends Message> M readMessage(final Object input,
 			MessageDescriptor<M> descriptor) throws Exception {
 		if (!(input instanceof Map)) {
-			throw new FormatException("Cannot fromJson a map from " + input);
+			throw new FormatException("Cannot read a map from " + input);
 		}
 
 		Map<?, ?> map = (Map<?, ?>) input;

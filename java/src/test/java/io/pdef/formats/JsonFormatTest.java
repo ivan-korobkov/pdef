@@ -16,6 +16,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
+import java.util.Date;
+
 public class JsonFormatTest {
 	private JsonFormat format = JsonFormat.getInstance();
 
@@ -64,6 +66,11 @@ public class JsonFormatTest {
 	@Test
 	public void testString() throws Exception {
 		test(Descriptors.string, "привет", "\"привет\"");
+	}
+
+	@Test
+	public void testDatetime() throws Exception {
+		test(Descriptors.datetime, new Date(0), "\"1970-01-01T00:00Z\"");
 	}
 
 	@Test
@@ -117,7 +124,7 @@ public class JsonFormatTest {
 				.setMap0(ImmutableMap.<Integer, Float>of(1, 1.5f))
 				.setMessage0(new TestMessage()
 						.setBool0(true)
-						.setShort0((short) 16)
+						.setInt0(16)
 						.setString0("hello"))
 				.setPolymorphic(new MultiLevelSubtype()
 						.setField("field")
@@ -128,8 +135,8 @@ public class JsonFormatTest {
 	private final String MESSAGE_JSON = "{"
 			+ "\"string0\":\"hello\","
 			+ "\"bool0\":true,"
-			+ "\"short0\":16,"
 			+ "\"int0\":32,"
+			+ "\"short0\":16,"
 			+ "\"long0\":64,"
 			+ "\"float0\":1.5,"
 			+ "\"double0\":2.5,"
@@ -137,7 +144,7 @@ public class JsonFormatTest {
 			+ "\"set0\":[1,2],"
 			+ "\"map0\":{\"1\":1.5},"
 			+ "\"enum0\":\"three\","
-			+ "\"message0\":{\"string0\":\"hello\",\"bool0\":true,\"short0\":16},"
+			+ "\"message0\":{\"string0\":\"hello\",\"bool0\":true,\"int0\":16},"
 			+ "\"polymorphic\":{\"type\":\"multilevel_subtype\",\"field\":\"field\","
 			+ "\"subfield\":\"subfield\",\"mfield\":\"mfield\"}}";
 }

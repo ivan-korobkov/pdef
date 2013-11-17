@@ -98,18 +98,45 @@ class _Tokens(object):
 
     # Simple reserved words.
     types = (
-        'BOOL', 'INT16', 'INT32', 'INT64', 'FLOAT', 'DOUBLE',
-        'STRING', 'VOID', 'LIST', 'SET', 'MAP', 'ENUM',
-        'MESSAGE', 'EXCEPTION', 'INTERFACE')
+        'BOOL',
+        'INT16',
+        'INT32',
+        'INT64',
+        'FLOAT',
+        'DOUBLE',
+        'STRING',
+        'DATETIME',
+        'VOID',
 
-    reserved = types + ('FROM', 'IMPORT')
+        'LIST',
+        'SET',
+        'MAP',
 
-    tokens = reserved + \
-        ('DOT', 'COLON', 'COMMA', 'SEMI',
-         'LESS', 'GREATER', 'LBRACE', 'RBRACE',
-         'LPAREN', 'RPAREN',
-         'IDENTIFIER', 'DOC') \
-        + ('DISCRIMINATOR', 'POST', 'QUERY', 'THROWS')
+        'ENUM',
+        'MESSAGE',
+        'EXCEPTION',
+        'INTERFACE')
+    reserved = types + (
+        'FROM',
+        'IMPORT')
+
+    tokens = reserved + (
+        'DOT',
+        'COLON',
+        'COMMA',
+        'SEMI',
+        'LESS',
+        'GREATER',
+        'LBRACE',
+        'RBRACE',
+        'LPAREN',
+        'RPAREN',
+        'IDENTIFIER',
+        'DOC',
+        'DISCRIMINATOR',
+        'POST',
+        'QUERY',
+        'THROWS')
 
     # Regexp for simple rules.
     t_DOT = r'.'
@@ -476,6 +503,7 @@ class _GrammarRules(object):
                   | FLOAT
                   | DOUBLE
                   | STRING
+                  | DATETIME
                   | VOID
         '''
         t[0] = pdefc.ast.reference(t[1].lower())

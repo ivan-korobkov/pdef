@@ -1,7 +1,10 @@
 # encoding: utf-8
 from collections import OrderedDict
+from datetime import datetime
 import json as _json
 import pdef.types
+
+SIMPLE_ISO_8601_PATTERN = "%Y-%m-%dT%H:%M:%SZ"
 
 
 class ObjectFormat(object):
@@ -15,7 +18,13 @@ class ObjectFormat(object):
         to_object = self.to_object
 
         if type0 in Type.PRIMITIVE_TYPES:
+            # This is for type checks.
             return descriptor.pyclass(obj)
+
+        elif type0 == Type.DATETIME:
+            if not isinstance(obj, datetime):
+                raise ValueError('Not a datetime object %r' % datetime)
+            return obj
 
         elif type0 == Type.ENUM:
             return obj.lower()
@@ -68,6 +77,11 @@ class ObjectFormat(object):
 
         if type0 in Type.PRIMITIVE_TYPES:
             return descriptor.pyclass(obj)
+
+        elif type0 == Type.DATETIME:
+            if isinstance(obj, datetime):
+                return obj
+            return datetime.strptime(obj, SIMPLE_ISO_8601_PATTERN)
 
         elif type0 == Type.ENUM:
             return descriptor.find_value(obj)
@@ -153,6 +167,8 @@ class JsonFormat(object):
                           **kwargs)
 
     def _default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.strftime(SIMPLE_ISO_8601_PATTERN)
         if isinstance(obj, set):
             return list(obj)
         raise TypeError('%s is not JSON serializable' % type(obj))

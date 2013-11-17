@@ -1,4 +1,5 @@
 # encoding: utf-8
+from datetime import datetime
 import unittest
 from pdef import descriptors
 from pdef.formats import json_format
@@ -37,6 +38,9 @@ class TestJsonFormat(unittest.TestCase):
         self._test(descriptors.string0, '123', '"123"')
         self._test(descriptors.string0, u'привет', u'"привет"')
 
+    def test_datetime(self):
+        self._test(descriptors.datetime0, datetime(2013, 11, 17, 19, 12), '"2013-11-17T19:12:00Z"')
+
     def test_enum(self):
         self._test(messages.TestEnum.DESCRIPTOR, messages.TestEnum.THREE, '"three"')
         assert json_format.from_json('"tWo"', messages.TestEnum.DESCRIPTOR) == messages.TestEnum.TWO
@@ -60,19 +64,20 @@ class TestJsonFormat(unittest.TestCase):
         return messages.TestComplexMessage(
             string0="hello",
             bool0=True,
-            short0=16,
-            enum0=messages.TestEnum.THREE,
             int0=32,
+            short0=16,
             long0=64L,
             float0=1.5,
             double0=2.5,
+            datetime0=datetime(1970, 1, 1, 0, 0, 0),
+            enum0=messages.TestEnum.THREE,
             list0=[1, 2],
             set0={1, 2},
             map0={1: 1.5},
             message0=messages.TestMessage(
                 string0='hello',
                 bool0=True,
-                short0=16),
+                int0=16),
             polymorphic=inheritance.MultiLevelSubtype(
                 field='field',
                 subfield='subfield',
@@ -84,23 +89,24 @@ class TestJsonFormat(unittest.TestCase):
             subfield='subfield',
             mfield='mfield')
 
-    MESSAGE_JSON = u'{"string0": "hello", ' \
-                   u'"bool0": true, ' \
-                   u'"short0": 16, ' \
-                   u'"int0": 32, ' \
-                   u'"long0": 64, ' \
-                   u'"float0": 1.5, ' \
-                   u'"double0": 2.5, ' \
-                   u'"list0": [1, 2], ' \
-                   u'"set0": [1, 2], ' \
-                   u'"map0": {"1": 1.5}, ' \
-                   u'"enum0": "three", ' \
-                   u'"message0": {"string0": "hello", "bool0": true, "short0": 16}, ' \
-                   u'"polymorphic": ' \
-                   u'{"type": "multilevel_subtype", ' \
-                   u'"field": "field", "subfield": "subfield", "mfield": "mfield"}}'
+    MESSAGE_JSON = '{"string0": "hello", ' \
+                   '"bool0": true, ' \
+                   '"int0": 32, ' \
+                   '"short0": 16, ' \
+                   '"long0": 64, ' \
+                   '"float0": 1.5, ' \
+                   '"double0": 2.5, ' \
+                   '"datetime0": "1970-01-01T00:00:00Z", ' \
+                   '"list0": [1, 2], ' \
+                   '"set0": [1, 2], ' \
+                   '"map0": {"1": 1.5}, ' \
+                   '"enum0": "three", ' \
+                   '"message0": {"string0": "hello", "bool0": true, "int0": 16}, ' \
+                   '"polymorphic": ' \
+                   '{"type": "multilevel_subtype", ' \
+                   '"field": "field", "subfield": "subfield", "mfield": "mfield"}}'
 
-    POLYMORPHIC_JSON = u'{"type": "multilevel_subtype", ' \
-                       u'"field": "field", ' \
-                       u'"subfield": "subfield", ' \
-                       u'"mfield": "mfield"}'
+    POLYMORPHIC_JSON = '{"type": "multilevel_subtype", ' \
+                       '"field": "field", ' \
+                       '"subfield": "subfield", ' \
+                       '"mfield": "mfield"}'

@@ -4,11 +4,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.pdef.test.messages.TestComplexMessage;
-import io.pdef.test.messages.TestMessage;
 import io.pdef.test.messages.TestEnum;
+import io.pdef.test.messages.TestMessage;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,12 +84,13 @@ public class AbstractMessageTest {
 		return new TestComplexMessage()
 				.setEnum0(TestEnum.THREE)
 				.setBool0(true)
-				.setShort0((short) -16)
 				.setInt0(-32)
+				.setShort0((short) -16)
 				.setLong0(-64L)
 				.setFloat0(-1.5f)
 				.setDouble0(-2.5d)
 				.setString0("hello")
+				.setDatetime0(new Date(0))
 				.setList0(ImmutableList.of(1, 2))
 				.setSet0(ImmutableSet.of(1, 2))
 				.setMap0(ImmutableMap.<Integer, Float>of(1, 1.5f))
@@ -99,12 +101,13 @@ public class AbstractMessageTest {
 		return ImmutableMap.<String, Object>builder()
 				.put("enum0", TestEnum.THREE)
 				.put("bool0", true)
-				.put("short0", (short) -16)
 				.put("int0", -32)
+				.put("short0", (short) -16)
 				.put("long0", -64L)
 				.put("float0", -1.5f)
 				.put("double0", -2.5d)
 				.put("string0", "hello")
+				.put("datetime0", new Date(0))
 				.put("list0", ImmutableList.of(1, 2))
 				.put("set0", ImmutableSet.of(1, 2))
 				.put("map0", ImmutableMap.of(1, 1.5f))

@@ -222,5 +222,6 @@ PYTHON_NATIVE_REFS = {
     TypeEnum.FLOAT: PythonRef('float', 'pdef.descriptors.float0'),
     TypeEnum.DOUBLE: PythonRef('float', 'pdef.descriptors.double0'),
     TypeEnum.STRING: PythonRef('unicode', 'pdef.descriptors.string0'),
+    TypeEnum.DATETIME: PythonRef('datetime', 'pdef.descriptors.datetime0'),
     TypeEnum.VOID: PythonRef('object', 'pdef.descriptors.void'),
 }

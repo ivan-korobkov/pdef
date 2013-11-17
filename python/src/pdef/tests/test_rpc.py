@@ -1,7 +1,7 @@
 # encoding: utf-8
 import copy
+from datetime import datetime
 import httplib
-import json
 import unittest
 import urllib
 from mock import Mock
@@ -135,7 +135,7 @@ class TestRpcProtocol(unittest.TestCase):
     # fromJson.
 
     def test_from_json(self):
-        message = TestMessage(string0=u'Привет', bool0=True, short0=123)
+        message = TestMessage(string0=u'Привет', bool0=True, int0=123)
         json = message.to_json()
         result = self.protocol._from_json(TestMessage.DESCRIPTOR, json)
 
@@ -321,13 +321,16 @@ class TestIntegration(unittest.TestCase):
         service = self.service
         message = TestMessage(u'Привет', True, -123)
         exc = TestException('Test exception')
+        dt = datetime(2013, 11, 17, 19, 41)
 
         service.method = Mock(return_value=3)
         service.query = Mock(return_value=7)
         service.post = Mock(return_value=11)
         service.string0 = Mock(return_value=u'Пока')
+        service.datetime0 = Mock(return_value=dt)
         service.message0 = Mock(return_value=copy.deepcopy(message))
         service.interface0 = Mock(return_value=service)
+
         service.void0 = Mock(return_value=None)
         service.exc0 = Mock(side_effect=copy.deepcopy(exc))
         service.serverError = Mock(side_effect=ValueError('Test exception'))
@@ -343,6 +346,9 @@ class TestIntegration(unittest.TestCase):
 
         assert client.string0(u'Привет') == u'Пока'
         service.string0.assert_called_with(text=u'Привет')
+
+        assert client.datetime0(dt) == dt
+        service.datetime0.assert_called_with(dt=dt)
 
         assert client.message0(message) == message
         service.message0.assert_called_with(msg=message)

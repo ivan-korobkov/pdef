@@ -21,16 +21,17 @@ Multi-line comment.
 message TestMessage {
     string0     string;
     bool0       bool;
-    short0      int16;
+    int0        int32;
 }
 
 
 /** Message with fields of all data types. */
 message TestComplexMessage : TestMessage {
-    int0        int32;
+    short0      int16;
     long0       int64;
     float0      float;
     double0     double;
+    datetime0   datetime;
 
     list0       list<int32>;
     set0        set<int32>;

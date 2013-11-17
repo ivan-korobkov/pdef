@@ -1,4 +1,5 @@
 # encoding: utf-8
+from datetime import datetime
 from pdef import Type
 
 
@@ -317,4 +318,5 @@ int64 = DataTypeDescriptor(Type.INT64, int)
 float0 = DataTypeDescriptor(Type.FLOAT, float)
 double0 = DataTypeDescriptor(Type.DOUBLE, float)
 string0 = DataTypeDescriptor(Type.STRING, unicode)
+datetime0 = DataTypeDescriptor(Type.DATETIME, datetime)
 void = DataTypeDescriptor(Type.VOID, type(None))

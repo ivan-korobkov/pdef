@@ -27,7 +27,7 @@ public class InvocationTest {
 		TestMessage message = new TestMessage()
 				.setBool0(true)
 				.setString0("hello")
-				.setShort0((short) -16);
+				.setInt0(-16);
 		Invocation invocation = Invocation.root(messageMethod(), new Object[]{message});
 
 		assertEquals(message, invocation.getArgs()[0]);

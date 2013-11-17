@@ -25,7 +25,13 @@ class Cli(object):
 
         try:
             args = self._parse(argv)
-            return self._execute(args)
+
+            # The command_func is set in each subparser.
+            func = args.command_func
+            if not func:
+                raise ValueError('No command_func in %s' % args)
+
+            return func(args)
 
         except pdefc.CompilerException, e:
             # It's an expected exception.
@@ -40,24 +46,12 @@ class Cli(object):
         logging.debug('Arguments: %s', args)
         return args
 
-    def _execute(self, args):
-        # The command_func is set as the default in each subparser.
-        func = args.command_func
-        if not func:
-            raise ValueError('No command_func in %s' % args)
-
-        return func(args)
-
-    # Parser.
-
     def _create_parser(self):
         parser = argparse.ArgumentParser(description='Pdef compiler, see http://github.com/pdef')
-        self._logging_args(parser)
-
-        # Create command parsers.
         subparsers = parser.add_subparsers(dest='command', title='commands',
             description='To show a command help execute "pdefc {command} -h"')
 
+        self._logging_args(parser)
         self._check_args(subparsers)
         self._generate_args(subparsers)
         return parser
@@ -90,15 +84,14 @@ class Cli(object):
         return compiler.check(package)
 
     def _check_args(self, subparsers):
-        # Check command.
-        check = subparsers.add_parser('check', help='check a package')
-        check.add_argument('package', help='path to a package yaml file')
-        check.add_argument('--include', dest='paths', action='append', default=[],
-                           help='paths to package dependencies')
-        check.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
-                           action='store_true', default=False,
-                           help='allow duplicate definition names in a package')
-        check.set_defaults(command_func=self._check)
+        parser = subparsers.add_parser('check', help='check a package')
+        parser.add_argument('package', help='path to a package yaml file')
+        parser.add_argument('--include', dest='paths', action='append', default=[],
+                            help='paths to package dependencies')
+        parser.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
+                            action='store_true', default=False,
+                            help='allow duplicate definition names in a package')
+        parser.set_defaults(command_func=self._check)
 
     # Generate.
 
@@ -116,22 +109,22 @@ class Cli(object):
     def _generate_args(self, subparsers):
         generator_names = list(pdefc.find_generators().keys())
 
-        generate = subparsers.add_parser('generate', help='generate source code from a package')
-        generate.add_argument('package', help='path to a package yaml file')
-        generate.add_argument('--generator', choices=generator_names, required=True,
-                              help='available: %s' % ', '.join(generator_names))
-        generate.add_argument('--out', dest='out', required=True,
-                              help='directory for generated files')
-        generate.add_argument('--ns', dest='namespace', action='append', default=[],
-                              help='adds a namespace which maps pdef names '
-                                   'to generated names, i.e. "pdef.module:io.pdef.java"')
-        generate.add_argument('--include', dest='paths', action='append', default=[],
-                              help='paths to package dependencies')
-        generate.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
-                              action='store_true', default=False,
-                              help='allow duplicate definition names in a package')
+        parser = subparsers.add_parser('generate', help='generate source code from a package')
+        parser.add_argument('package', help='path to a package yaml file')
+        parser.add_argument('--generator', choices=generator_names, required=True,
+                            help='available: %s' % ', '.join(generator_names))
+        parser.add_argument('--out', dest='out', required=True,
+                            help='directory for generated files')
+        parser.add_argument('--ns', dest='namespace', action='append', default=[],
+                            help='adds a namespace which maps pdef names '
+                                 'to generated names, i.e. "pdef.module:io.pdef.java"')
+        parser.add_argument('--include', dest='paths', action='append', default=[],
+                            help='paths to package dependencies')
+        parser.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
+                            action='store_true', default=False,
+                            help='allow duplicate definition names in a package')
 
-        generate.set_defaults(command_func=self._generate)
+        parser.set_defaults(command_func=self._generate)
 
     def _parse_namespace(self, seq):
         if not seq:

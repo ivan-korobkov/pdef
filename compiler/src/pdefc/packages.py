@@ -1,4 +1,5 @@
 # encoding: utf-8
+from collections import defaultdict
 import logging
 import re
 import yaml
@@ -66,7 +67,7 @@ class Package(object):
 
         return None
 
-    def compile(self):
+    def compile(self, allow_duplicate_definitions=False):
         '''Compile this package and return a list of errors.'''
         logging.debug('Compiling the package')
 
@@ -78,7 +79,7 @@ class Package(object):
         if errors:
             return errors
 
-        errors = self._validate()
+        errors = self._validate(allow_duplicate_definitions)
         if errors:
             return errors
 
@@ -115,7 +116,7 @@ class Package(object):
             errors += module.build()
         return errors
 
-    def _validate(self):
+    def _validate(self, allow_duplicate_definitions=False):
         '''Validate this package and return a list of errors.'''
         logging.debug('Validating the package')
 
@@ -123,6 +124,9 @@ class Package(object):
         errors += self._validate_name()
         for module in self.modules:
             errors += module.validate()
+
+        if not allow_duplicate_definitions:
+            errors += self._validate_no_duplicate_definitions()
 
         return errors
 
@@ -134,6 +138,34 @@ class Package(object):
         return [self._error('Wrong package name "%s". A name must contain only latin letters, '
                             'digits and underscores, and must start with a letter, for example, '
                             '"mycompany_project_api"', self.name)]
+
+    def _validate_no_duplicate_definitions(self):
+        errors = []
+        names_to_defs = defaultdict(list)
+
+        for module in self.modules:
+            for def0 in module.definitions:
+                names_to_defs[def0.name].append(def0)
+
+        is_first = True
+        for name, defs in names_to_defs.items():
+            if len(defs) == 1:
+                continue
+
+            if is_first:
+                msg = self._error('Duplicate definitions in a package. They are forbidden '
+                                  'in languages without namespaces (such as C and Objective C) '
+                                  'and will require manual name mapping during code generation. '
+                                  'Please, consider renaming them, or explicitly allow them with '
+                                  'the --allow-duplicate-definitions flag.')
+                errors.append(msg)
+
+            is_first = False
+            for def0 in defs:
+                path = def0.module.path if def0.module else None
+                errors.append(self._error('  %s: %s', def0.name, path))
+
+        return errors
 
     def _error(self, msg, *args):
         record = msg % args if args else msg

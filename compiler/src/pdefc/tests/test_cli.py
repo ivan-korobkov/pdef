@@ -18,7 +18,7 @@ class TestCli(unittest.TestCase):
         cli._create_compiler = factory
         cli.run(args)
 
-        factory.assert_called_with(paths=['second.package'])
+        factory.assert_called_with(['second.package'], False)
         compiler.check.assert_called_with('test.package')
 
     def test_generate(self):
@@ -36,7 +36,7 @@ class TestCli(unittest.TestCase):
         cli._create_compiler = factory
         cli.run(args)
 
-        factory.assert_called_with(paths=['second.package', 'third.package'])
+        factory.assert_called_with(['second.package', 'third.package'], False)
         compiler.generate.assert_called_with('test.package', 'python', out='destination',
                                              namespace={'test': 'io.test', 'second': 'io.second'})
 

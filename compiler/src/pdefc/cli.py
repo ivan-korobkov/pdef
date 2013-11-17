@@ -15,8 +15,8 @@ def main(argv=None):
 
 class Cli(object):
     '''Pdef command-line interface.'''
-    def _create_compiler(self, paths=None):
-        return pdefc.create_compiler(paths)
+    def _create_compiler(self, paths=None, allow_duplicate_definitions=False):
+        return pdefc.create_compiler(paths, allow_duplicate_definitions=allow_duplicate_definitions)
 
     def run(self, argv=None):
         # Configure logging before the commands, because the latter
@@ -84,8 +84,9 @@ class Cli(object):
     def _check(self, args):
         package = args.package
         paths = args.paths
+        allow_duplicate_definitions = args.allow_duplicate_definitions
 
-        compiler = self._create_compiler(paths=paths)
+        compiler = self._create_compiler(paths, allow_duplicate_definitions)
         return compiler.check(package)
 
     def _check_args(self, subparsers):
@@ -93,7 +94,10 @@ class Cli(object):
         check = subparsers.add_parser('check', help='check a package')
         check.add_argument('package', help='path to a package yaml file')
         check.add_argument('--include', dest='paths', action='append', default=[],
-                            help='paths to package dependencies')
+                           help='paths to package dependencies')
+        check.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
+                           action='store_true', default=False,
+                           help='allow duplicate definition names in a package')
         check.set_defaults(command_func=self._check)
 
     # Generate.
@@ -104,8 +108,9 @@ class Cli(object):
         paths = args.paths
         out = args.out
         namespace = self._parse_namespace(args.namespace)
+        allow_duplicate_definitions = args.allow_duplicate_definitions
 
-        compiler = self._create_compiler(paths=paths)
+        compiler = self._create_compiler(paths, allow_duplicate_definitions)
         return compiler.generate(package, generator, out=out, namespace=namespace)
 
     def _generate_args(self, subparsers):
@@ -122,6 +127,9 @@ class Cli(object):
                                    'to generated names, i.e. "pdef.module:io.pdef.java"')
         generate.add_argument('--include', dest='paths', action='append', default=[],
                               help='paths to package dependencies')
+        generate.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
+                              action='store_true', default=False,
+                              help='allow duplicate definition names in a package')
 
         generate.set_defaults(command_func=self._generate)
 

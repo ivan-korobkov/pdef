@@ -90,3 +90,27 @@ class TestPackage(unittest.TestCase):
         assert 'Wrong package name' in errors0[0]
         assert 'Wrong package name' in errors1[0]
         assert 'Wrong package name' in errors2[0]
+
+    def test_validate__duplicate_definitions(self):
+        message0 = Message('message')
+        message1 = Message('message')
+
+        module0 = Module('module0', definitions=[message0])
+        module1 = Module('module1', definitions=[message1])
+
+        package = Package('package', modules=[module0, module1])
+        errors = package._validate()
+
+        assert 'Duplicate definitions in a package' in errors[0]
+
+    def test_validate__allow_duplicate_definitions(self):
+        message0 = Message('message')
+        message1 = Message('message')
+
+        module0 = Module('module0', definitions=[message0])
+        module1 = Module('module1', definitions=[message1])
+
+        package = Package('package', modules=[module0, module1])
+        errors = package._validate(allow_duplicate_definitions=True)
+
+        assert not errors

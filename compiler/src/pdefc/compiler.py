@@ -7,17 +7,18 @@ from pdefc.exc import CompilerException
 from pdefc.packages import Package
 
 
-def create_compiler(paths=None):
+def create_compiler(paths=None, allow_duplicate_definitions=False):
     '''Creates a compiler, the compiler is reusable but not thread-safe.'''
     sources = pdefc.create_sources(paths)
-    return Compiler(sources)
+    return Compiler(sources, allow_duplicate_definitions=allow_duplicate_definitions)
 
 
 class Compiler(object):
     '''Compiler parses and compiles packages. It is reusable but not thread-safe.'''
-    def __init__(self, sources=None, parser=None):
+    def __init__(self, sources=None, parser=None, allow_duplicate_definitions=False):
         self.sources = sources or pdefc.create_sources()
         self.parser = parser or pdefc.create_parser()
+        self.allow_duplicate_definitions = allow_duplicate_definitions
         self._generators = None
 
     @property
@@ -72,7 +73,8 @@ class Compiler(object):
         # Compile and return the package.
         logging.info('Compiling %s', package_name)
         map(package.add_dependency, deps)
-        errors = package.compile()
+
+        errors = package.compile(allow_duplicate_definitions=self.allow_duplicate_definitions)
         if errors:
             raise CompilerException('Compilation errors', errors)
 

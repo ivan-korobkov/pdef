@@ -7,16 +7,16 @@ package io.pdef.descriptors;
  */
 public class ArgumentDescriptor<V> {
 	private final String name;
-	private final ValueDescriptor<V> type;
+	private final DataTypeDescriptor<V> type;
 	private final boolean query;
 	private final boolean post;
 
 	public static <V> ArgumentDescriptor<V> of(final String name,
-			final ValueDescriptor<V> type) {
+			final DataTypeDescriptor<V> type) {
 		return new ArgumentDescriptor<V>(name, type, false, false);
 	}
 
-	public ArgumentDescriptor(final String name, final ValueDescriptor<V> type,
+	public ArgumentDescriptor(final String name, final DataTypeDescriptor<V> type,
 			final boolean query, final boolean post) {
 		if (name == null) throw new NullPointerException("name");
 		if (type == null) throw new NullPointerException("type");
@@ -38,7 +38,7 @@ public class ArgumentDescriptor<V> {
 	}
 
 	/** Returns an argument type descriptor. */
-	public ValueDescriptor<V> getType() {
+	public DataTypeDescriptor<V> getType() {
 		return type;
 	}
 

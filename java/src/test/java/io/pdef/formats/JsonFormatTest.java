@@ -3,13 +3,13 @@ package io.pdef.formats;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.pdef.descriptors.ValueDescriptor;
+import io.pdef.descriptors.DataTypeDescriptor;
 import io.pdef.descriptors.Descriptors;
 import io.pdef.test.inheritance.Base;
 import io.pdef.test.inheritance.MultiLevelSubtype;
 import io.pdef.test.inheritance.Subtype;
 import io.pdef.test.inheritance.Subtype2;
-import io.pdef.test.messages.TestValues;
+import io.pdef.test.messages.TestComplexMessage;
 import io.pdef.test.messages.TestMessage;
 import io.pdef.test.messages.TestEnum;
 import static org.junit.Assert.assertEquals;
@@ -19,7 +19,7 @@ import org.junit.Test;
 public class JsonFormatTest {
 	private JsonFormat format = JsonFormat.getInstance();
 
-	private <T> void test(final ValueDescriptor<T> descriptor, final T parsed,
+	private <T> void test(final DataTypeDescriptor<T> descriptor, final T parsed,
 			final String serialized) {
 		assertEquals(serialized, format.toJson(parsed, descriptor, false));
 		assertEquals(parsed, format.fromJson(serialized, descriptor));
@@ -74,7 +74,7 @@ public class JsonFormatTest {
 
 	@Test
 	public void testMessage() throws Exception {
-		test(TestValues.DESCRIPTOR, createComplexMessage(), MESSAGE_JSON);
+		test(TestComplexMessage.DESCRIPTOR, createComplexMessage(), MESSAGE_JSON);
 	}
 
 	@Test
@@ -102,8 +102,8 @@ public class JsonFormatTest {
 						+ "\"mfield\":\"mfield\"}");
 	}
 
-	private TestValues createComplexMessage() {
-		return new TestValues()
+	private TestComplexMessage createComplexMessage() {
+		return new TestComplexMessage()
 				.setEnum0(TestEnum.THREE)
 				.setBool0(true)
 				.setShort0((short) 16)

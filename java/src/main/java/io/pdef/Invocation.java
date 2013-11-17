@@ -2,7 +2,7 @@ package io.pdef;
 
 import io.pdef.descriptors.MessageDescriptor;
 import io.pdef.descriptors.MethodDescriptor;
-import io.pdef.descriptors.ValueDescriptor;
+import io.pdef.descriptors.DataTypeDescriptor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -41,12 +41,12 @@ public class Invocation {
 	}
 
 	/** Returns the method result. */
-	public ValueDescriptor<?> getResult() {
+	public DataTypeDescriptor<?> getResult() {
 		if (!method.isTerminal()) {
 			throw new IllegalStateException("Cannot get a result when a method is not terminal");
 		}
 
-		return (ValueDescriptor<?>) method.getResult();
+		return (DataTypeDescriptor<?>) method.getResult();
 	}
 
 	/** Returns the method exception or the parent exception. */
@@ -100,7 +100,7 @@ public class Invocation {
 
 		Object[] copy = new Object[length];
 		for (int i = 0; i < length; i++) {
-			copy[i] = Values.copy(args[i]);
+			copy[i] = DataTypes.copy(args[i]);
 		}
 
 		return copy;

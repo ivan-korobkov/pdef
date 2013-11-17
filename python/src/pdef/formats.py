@@ -5,16 +5,16 @@ import pdef.types
 
 
 class ObjectFormat(object):
-    '''ObjectFormat parses/serializes pdef values from/to native types and collections.'''
-    def serialize(self, obj, descriptor):
+    '''ObjectFormat parses/serializes pdef data types from/to native types and collections.'''
+    def to_object(self, obj, descriptor):
         if obj is None:
             return None
 
         type0 = descriptor.type
-        serialize = self.serialize
         Type = pdef.types.Type
+        to_object = self.to_object
 
-        if type0 in Type.PRIMITIVES:
+        if type0 in Type.PRIMITIVE_TYPES:
             return descriptor.pyclass(obj)
 
         elif type0 == Type.ENUM:
@@ -22,31 +22,31 @@ class ObjectFormat(object):
 
         elif type0 == Type.LIST:
             elemd = descriptor.element
-            return [serialize(elem, elemd) for elem in obj]
+            return [to_object(elem, elemd) for elem in obj]
 
         elif type0 == Type.SET:
             elemd = descriptor.element
-            return {serialize(elem, elemd) for elem in obj}
+            return {to_object(elem, elemd) for elem in obj}
 
         elif type0 == Type.MAP:
             keyd = descriptor.key
             valued = descriptor.value
-            return {serialize(k, keyd): serialize(v, valued) for k, v in obj.items()}
+            return {to_object(k, keyd): to_object(v, valued) for k, v in obj.items()}
 
         elif type0 == Type.MESSAGE:
-            return self._serialize_message(obj)
+            return self._message_to_dict(obj)
 
         elif type0 == Type.VOID:
             return None
 
         raise ValueError('Unsupported type ' + descriptor)
 
-    def _serialize_message(self, message):
+    def _message_to_dict(self, message):
         if message is None:
             return None
 
         result = OrderedDict()
-        serialize = self.serialize
+        serialize = self.to_object
         descriptor = message.DESCRIPTOR  # Support polymorphic messages.
 
         for field in descriptor.fields:
@@ -58,15 +58,15 @@ class ObjectFormat(object):
 
         return result
 
-    def parse(self, obj, descriptor):
+    def from_object(self, obj, descriptor):
         if obj is None:
             return None
 
         type0 = descriptor.type
-        parse = self.parse
         Type = pdef.types.Type
+        from_object = self.from_object
 
-        if type0 in Type.PRIMITIVES:
+        if type0 in Type.PRIMITIVE_TYPES:
             return descriptor.pyclass(obj)
 
         elif type0 == Type.ENUM:
@@ -74,37 +74,37 @@ class ObjectFormat(object):
 
         elif type0 == Type.LIST:
             elemd = descriptor.element
-            return [parse(elem, elemd) for elem in obj]
+            return [from_object(elem, elemd) for elem in obj]
 
         elif type0 == Type.SET:
             elemd = descriptor.element
-            return {parse(elem, elemd) for elem in obj}
+            return {from_object(elem, elemd) for elem in obj}
 
         elif type0 == Type.MAP:
             keyd = descriptor.key
             valued = descriptor.value
-            return {parse(k, keyd): parse(v, valued) for k, v in obj.items()}
+            return {from_object(k, keyd): from_object(v, valued) for k, v in obj.items()}
 
         elif type0 == Type.MESSAGE:
-            return self._parse_message(obj, descriptor)
+            return self._message_from_dict(obj, descriptor)
 
         elif type0 == Type.VOID:
             return None
 
         raise ValueError('Unsupported type ' + descriptor)
 
-    def _parse_message(self, dict0, descriptor):
+    def _message_from_dict(self, dict0, descriptor):
         '''Parse a message from a dictionary.'''
         if dict0 is None:
             return None
 
-        parse = self.parse
+        from_object = self.from_object
 
         if descriptor.is_polymorphic:
             # Parse a discriminator value and find a subtype descriptor.
             discriminator = descriptor.discriminator
             serialized = dict0.get(discriminator.name)
-            parsed = parse(serialized, discriminator.type)
+            parsed = from_object(serialized, discriminator.type)
             descriptor = descriptor.find_subtype(parsed)
 
         message = descriptor.pyclass()
@@ -113,7 +113,7 @@ class ObjectFormat(object):
             if serialized is None:
                 continue
 
-            parsed = parse(serialized, field.type)
+            parsed = from_object(serialized, field.type)
             field.set(message, parsed)
 
         return message
@@ -130,25 +130,25 @@ class JsonFormat(object):
             return None
 
         value = _json.loads(s)
-        parsed = self.object_format.parse(value, descriptor)
+        parsed = self.object_format.from_object(value, descriptor)
         return parsed
 
     def from_json_stream(self, fp, descriptor):
         '''Parse an pdef value type as a json string from a file-like object.'''
         value = _json.load(fp)
-        parsed = self.object_format.parse(value, descriptor)
+        parsed = self.object_format.from_object(value, descriptor)
         return parsed
 
     def to_json(self, obj, descriptor, indent=None, **kwargs):
         '''Serialize a pdef object into a json string.'''
-        serialized = self.object_format.serialize(obj, descriptor)
+        serialized = self.object_format.to_object(obj, descriptor)
         s = _json.dumps(serialized, ensure_ascii=False, indent=indent, default=self._default,
                         **kwargs)
         return s
 
     def to_json_stream(self, obj, descriptor, fp, indent=None, **kwargs):
         '''Serialize a pdef object as a json string to a file-like object.'''
-        serialized = self.object_format.serialize(obj, descriptor)
+        serialized = self.object_format.to_object(obj, descriptor)
         return _json.dump(serialized, fp, ensure_ascii=False, indent=indent, default=self._default,
                           **kwargs)
 

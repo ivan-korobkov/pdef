@@ -4,12 +4,12 @@ import io.pdef.TypeEnum;
 
 import java.util.Map;
 
-public class MapDescriptor<K, V> extends ValueDescriptor<Map<K, V>> {
-	private final ValueDescriptor<K> key;
-	private final ValueDescriptor<V> value;
+public class MapDescriptor<K, V> extends DataTypeDescriptor<Map<K, V>> {
+	private final DataTypeDescriptor<K> key;
+	private final DataTypeDescriptor<V> value;
 
 	@SuppressWarnings("unchecked")
-	MapDescriptor(final ValueDescriptor<K> key, final ValueDescriptor<V> value) {
+	MapDescriptor(final DataTypeDescriptor<K> key, final DataTypeDescriptor<V> value) {
 		super(TypeEnum.MAP, (Class<Map<K, V>>) (Class<?>) Map.class);
 		if (key == null) throw new NullPointerException("key");
 		if (value == null) throw new NullPointerException("value");
@@ -19,12 +19,12 @@ public class MapDescriptor<K, V> extends ValueDescriptor<Map<K, V>> {
 	}
 
 	/** Returns a map key descriptor. */
-	public ValueDescriptor<K> getKey() {
+	public DataTypeDescriptor<K> getKey() {
 		return key;
 	}
 
 	/** Returns a map value descriptor. */
-	public ValueDescriptor<V> getValue() {
+	public DataTypeDescriptor<V> getValue() {
 		return value;
 	}
 }

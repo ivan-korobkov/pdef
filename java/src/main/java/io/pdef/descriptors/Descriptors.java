@@ -7,27 +7,27 @@ import java.lang.reflect.Field;
 
 /** Primitive and collection descriptors. */
 public class Descriptors {
-	public static ValueDescriptor<Boolean> bool = primitive(TypeEnum.BOOL, Boolean.class);
-	public static ValueDescriptor<Short> int16 = primitive(TypeEnum.INT16, Short.class);
-	public static ValueDescriptor<Integer> int32 = primitive(TypeEnum.INT32, Integer.class);
-	public static ValueDescriptor<Long> int64 = primitive(TypeEnum.INT64, Long.class);
-	public static ValueDescriptor<Float> float0 = primitive(TypeEnum.FLOAT, Float.class);
-	public static ValueDescriptor<Double> double0 = primitive(TypeEnum.DOUBLE, Double.class);
-	public static ValueDescriptor<String> string = primitive(TypeEnum.STRING, String.class);
-	public static ValueDescriptor<Void> void0 = primitive(TypeEnum.VOID, Void.class);
+	public static DataTypeDescriptor<Boolean> bool = primitive(TypeEnum.BOOL, Boolean.class);
+	public static DataTypeDescriptor<Short> int16 = primitive(TypeEnum.INT16, Short.class);
+	public static DataTypeDescriptor<Integer> int32 = primitive(TypeEnum.INT32, Integer.class);
+	public static DataTypeDescriptor<Long> int64 = primitive(TypeEnum.INT64, Long.class);
+	public static DataTypeDescriptor<Float> float0 = primitive(TypeEnum.FLOAT, Float.class);
+	public static DataTypeDescriptor<Double> double0 = primitive(TypeEnum.DOUBLE, Double.class);
+	public static DataTypeDescriptor<String> string = primitive(TypeEnum.STRING, String.class);
+	public static DataTypeDescriptor<Void> void0 = primitive(TypeEnum.VOID, Void.class);
 
 	private Descriptors() {}
 
-	public static <T> ListDescriptor<T> list(final ValueDescriptor<T> element) {
+	public static <T> ListDescriptor<T> list(final DataTypeDescriptor<T> element) {
 		return new ListDescriptor<T>(element);
 	}
 
-	public static <T> SetDescriptor<T> set(final ValueDescriptor<T> element) {
+	public static <T> SetDescriptor<T> set(final DataTypeDescriptor<T> element) {
 		return new SetDescriptor<T>(element);
 	}
 
-	public static <K, V> MapDescriptor<K, V> map(final ValueDescriptor<K> key,
-			final ValueDescriptor<V> value) {
+	public static <K, V> MapDescriptor<K, V> map(final DataTypeDescriptor<K> key,
+			final DataTypeDescriptor<V> value) {
 		return new MapDescriptor<K, V>(key, value);
 	}
 
@@ -63,7 +63,7 @@ public class Descriptors {
 		}
 	}
 
-	private static class PrimitiveDescriptor<T> extends ValueDescriptor<T> {
+	private static class PrimitiveDescriptor<T> extends DataTypeDescriptor<T> {
 		private PrimitiveDescriptor(final TypeEnum type, final Class<T> javaClass) {
 			super(type, javaClass);
 		}

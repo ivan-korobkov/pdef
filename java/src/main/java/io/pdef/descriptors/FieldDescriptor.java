@@ -11,10 +11,10 @@ import io.pdef.Providers;
  */
 public class FieldDescriptor<M, V> implements FieldAccessor<M, V> {
 	private final String name;
-	private final Provider<ValueDescriptor<V>> typeProvider;
+	private final Provider<DataTypeDescriptor<V>> typeProvider;
 	private final FieldAccessor<M, V> accessor;
 	private final boolean discriminator;
-	private ValueDescriptor<V> type;
+	private DataTypeDescriptor<V> type;
 
 	protected FieldDescriptor(final Builder<M, V> builder) {
 		name = builder.name;
@@ -47,7 +47,7 @@ public class FieldDescriptor<M, V> implements FieldAccessor<M, V> {
 	}
 
 	/** Returns a field type descriptor. */
-	public ValueDescriptor<V> getType() {
+	public DataTypeDescriptor<V> getType() {
 		if (type != null) {
 			return type;
 		}
@@ -68,7 +68,7 @@ public class FieldDescriptor<M, V> implements FieldAccessor<M, V> {
 	public static class Builder<M, V> {
 		private String name;
 		private boolean discriminator;
-		private Provider<ValueDescriptor<V>> type;
+		private Provider<DataTypeDescriptor<V>> type;
 		private FieldAccessor<M, V> accessor;
 
 		protected Builder() {
@@ -84,12 +84,12 @@ public class FieldDescriptor<M, V> implements FieldAccessor<M, V> {
 			return this;
 		}
 
-		public Builder<M, V> setType(final Provider<ValueDescriptor<V>> type) {
+		public Builder<M, V> setType(final Provider<DataTypeDescriptor<V>> type) {
 			this.type = type;
 			return this;
 		}
 
-		public Builder<M, V> setType(final ValueDescriptor<V> type) {
+		public Builder<M, V> setType(final DataTypeDescriptor<V> type) {
 			if (type == null) throw new NullPointerException("type");
 			this.type = Providers.ofInstance(type);
 			return this;

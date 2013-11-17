@@ -4,11 +4,11 @@ import io.pdef.TypeEnum;
 
 import java.util.Set;
 
-public class SetDescriptor<T> extends ValueDescriptor<Set<T>> {
-	private final ValueDescriptor<T> element;
+public class SetDescriptor<T> extends DataTypeDescriptor<Set<T>> {
+	private final DataTypeDescriptor<T> element;
 
 	@SuppressWarnings("unchecked")
-	SetDescriptor(final ValueDescriptor<T> element) {
+	SetDescriptor(final DataTypeDescriptor<T> element) {
 		super(TypeEnum.SET, (Class<Set<T>>) (Class<?>) Set.class);
 		if (element == null) throw new NullPointerException("element");
 
@@ -16,7 +16,7 @@ public class SetDescriptor<T> extends ValueDescriptor<Set<T>> {
 	}
 
 	/** Returns a set element descriptor. */
-	public ValueDescriptor<T> getElement() {
+	public DataTypeDescriptor<T> getElement() {
 		return element;
 	}
 }

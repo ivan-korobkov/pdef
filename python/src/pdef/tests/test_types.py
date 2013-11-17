@@ -2,7 +2,7 @@
 import copy
 import unittest
 
-from pdef_test.messages import TestValues, TestMessage
+from pdef_test.messages import TestComplexMessage, TestMessage
 
 
 class TestPdefMessage(unittest.TestCase):
@@ -46,7 +46,7 @@ class TestPdefMessage(unittest.TestCase):
         assert msg0 != msg1
 
     def test_copy(self):
-        msg0 = TestValues(string0='hello', list0=[1,2,3], message0=TestMessage('world'))
+        msg0 = TestComplexMessage(string0='hello', list0=[1,2,3], message0=TestMessage('world'))
         msg1 = copy.copy(msg0)
 
         assert msg1 is not msg0
@@ -55,7 +55,7 @@ class TestPdefMessage(unittest.TestCase):
         assert msg1.message0 is msg0.message0
 
     def test_deepcopy(self):
-        msg0 = TestValues(string0='hello', list0=[1,2,3], message0=TestMessage('world'))
+        msg0 = TestComplexMessage(string0='hello', list0=[1,2,3], message0=TestMessage('world'))
         msg1 = copy.deepcopy(msg0)
 
         assert msg1 is not msg0

@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 /** MessageDescriptor is a descriptor for Pdef messages. */
-public class MessageDescriptor<M extends Message> extends ValueDescriptor<M> {
+public class MessageDescriptor<M extends Message> extends DataTypeDescriptor<M> {
 	private final Provider<M> provider;
 	private final MessageDescriptor<? super M> base;
 

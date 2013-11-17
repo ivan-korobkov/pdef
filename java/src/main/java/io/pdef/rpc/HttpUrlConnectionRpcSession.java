@@ -1,6 +1,6 @@
 package io.pdef.rpc;
 
-import io.pdef.descriptors.ValueDescriptor;
+import io.pdef.descriptors.DataTypeDescriptor;
 import io.pdef.formats.JsonFormat;
 
 import javax.annotation.Nullable;
@@ -41,8 +41,8 @@ public class HttpUrlConnectionRpcSession implements RpcSession {
 	}
 
 	@Override
-	public <T, E> T send(final RpcRequest request, final ValueDescriptor<T> resultDescriptor,
-			final ValueDescriptor<E> excDescriptor) throws Exception {
+	public <T, E> T send(final RpcRequest request, final DataTypeDescriptor<T> resultDescriptor,
+			final DataTypeDescriptor<E> excDescriptor) throws Exception {
 		if (request == null) throw new NullPointerException("request");
 		if (resultDescriptor == null) throw new NullPointerException("resultDescriptor");
 
@@ -125,7 +125,7 @@ public class HttpUrlConnectionRpcSession implements RpcSession {
 
 	/** Reads a response. */
 	protected <T, E> T handleResponse(final HttpURLConnection connection,
-			final ValueDescriptor<T> resultDescriptor, final ValueDescriptor<E> excDescriptor)
+			final DataTypeDescriptor<T> resultDescriptor, final DataTypeDescriptor<E> excDescriptor)
 			throws IOException {
 		connection.connect();
 
@@ -145,13 +145,13 @@ public class HttpUrlConnectionRpcSession implements RpcSession {
 	}
 
 	protected <T> T readResult(final HttpURLConnection connection,
-			final ValueDescriptor<T> resultDescriptor) throws IOException {
+			final DataTypeDescriptor<T> resultDescriptor) throws IOException {
 		InputStream input = new BufferedInputStream(connection.getInputStream());
 		return format.fromJson(input, resultDescriptor);
 	}
 
 	protected <E> E readApplicationException(final HttpURLConnection connection,
-			final ValueDescriptor<E> excDescriptor) throws IOException {
+			final DataTypeDescriptor<E> excDescriptor) throws IOException {
 		int status = connection.getResponseCode();
 		InputStream input = connection.getErrorStream();
 

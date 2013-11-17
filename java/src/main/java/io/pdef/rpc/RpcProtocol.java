@@ -74,7 +74,7 @@ public class RpcProtocol {
 
 	// VisibleForTesting
 	/** Serializes an argument to JSON, strips the quotes. */
-	<V> String toJson(final ValueDescriptor<V> descriptor, final V arg) {
+	<V> String toJson(final DataTypeDescriptor<V> descriptor, final V arg) {
 		String s = format.toJson(arg, descriptor, false);
 		if (descriptor.getType() != TypeEnum.STRING) {
 			return s;
@@ -178,7 +178,7 @@ public class RpcProtocol {
 
 	// VisibleForTesting
 	/** Parses an argument from an unquoted JSON string. */
-	<V> V fromJson(final ValueDescriptor<V> descriptor, String value) {
+	<V> V fromJson(final DataTypeDescriptor<V> descriptor, String value) {
 		if (value == null) {
 			return null;
 		}

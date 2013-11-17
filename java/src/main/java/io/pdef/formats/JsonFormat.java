@@ -34,7 +34,7 @@ public class JsonFormat {
 	// Serialization.
 
 	/** Serializes an object into a string. */
-	public <T> String toJson(final T object, final ValueDescriptor<T> descriptor,
+	public <T> String toJson(final T object, final DataTypeDescriptor<T> descriptor,
 			final boolean indent) throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -58,7 +58,7 @@ public class JsonFormat {
 
 	/** Writes an object to an output stream as a JSON string, does not close the stream. */
 	public <T> void toJson(final OutputStream out, final T object,
-			final ValueDescriptor<T> descriptor, final boolean indent) {
+			final DataTypeDescriptor<T> descriptor, final boolean indent) {
 		if (out == null) throw new NullPointerException("out");
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -79,7 +79,7 @@ public class JsonFormat {
 
 	/** Writes an object to a writer as a JSON string, does not close the writer. */
 	public <T> void toJson(final PrintWriter writer, final T object,
-			final ValueDescriptor<T> descriptor, final boolean indent) {
+			final DataTypeDescriptor<T> descriptor, final boolean indent) {
 		if (writer == null) throw new NullPointerException("writer");
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -98,7 +98,7 @@ public class JsonFormat {
 		}
 	}
 
-	private <T> void write(final T object, final ValueDescriptor<T> descriptor,
+	private <T> void write(final T object, final DataTypeDescriptor<T> descriptor,
 			final JsonGenerator generator) throws IOException {
 		if (object == null) {
 			generator.writeNull();
@@ -152,7 +152,7 @@ public class JsonFormat {
 
 	private <T> void writeList(@Nonnull final List<T> object, final ListDescriptor<T> descriptor,
 			final JsonGenerator generator) throws IOException {
-		ValueDescriptor<T> element = descriptor.getElement();
+		DataTypeDescriptor<T> element = descriptor.getElement();
 
 		generator.writeStartArray();
 		for (T elem : object) {
@@ -163,7 +163,7 @@ public class JsonFormat {
 
 	private <T> void writeSet(@Nonnull final Set<T> object, final SetDescriptor<T> descriptor,
 			final JsonGenerator generator) throws IOException {
-		ValueDescriptor<T> element = descriptor.getElement();
+		DataTypeDescriptor<T> element = descriptor.getElement();
 
 		generator.writeStartArray();
 		for (T elem : object) {
@@ -175,8 +175,8 @@ public class JsonFormat {
 	private <K, V> void writeMap(@Nonnull final Map<K, V> object,
 			final MapDescriptor<K, V> descriptor, final JsonGenerator generator)
 			throws IOException {
-		ValueDescriptor<K> key = descriptor.getKey();
-		ValueDescriptor<V> value = descriptor.getValue();
+		DataTypeDescriptor<K> key = descriptor.getKey();
+		DataTypeDescriptor<V> value = descriptor.getValue();
 
 		generator.writeStartObject();
 		for (Map.Entry<K, V> entry : object.entrySet()) {
@@ -189,7 +189,7 @@ public class JsonFormat {
 		generator.writeEndObject();
 	}
 
-	private <K> void writeFieldName(final K object, final ValueDescriptor<K> descriptor,
+	private <K> void writeFieldName(final K object, final DataTypeDescriptor<K> descriptor,
 			final JsonGenerator generator) throws IOException {
 		if (object == null) {
 			throw new FormatException(
@@ -242,7 +242,7 @@ public class JsonFormat {
 			return;
 		}
 
-		ValueDescriptor<V> type = field.getType();
+		DataTypeDescriptor<V> type = field.getType();
 		generator.writeFieldName(field.getName());
 		write(value, type, generator);
 	}
@@ -250,7 +250,7 @@ public class JsonFormat {
 	// Parsing.
 
 	/** Parses an object from a string. */
-	public <T> T fromJson(final String input, final ValueDescriptor<T> descriptor)
+	public <T> T fromJson(final String input, final DataTypeDescriptor<T> descriptor)
 			throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 		if (input == null) {
@@ -268,7 +268,7 @@ public class JsonFormat {
 	}
 
 	/** Parses an object from an input stream, does not close the input stream. */
-	public <T> T fromJson(final InputStream input, final ValueDescriptor<T> descriptor) {
+	public <T> T fromJson(final InputStream input, final DataTypeDescriptor<T> descriptor) {
 		if (input == null) throw new NullPointerException("input");
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -283,7 +283,7 @@ public class JsonFormat {
 	}
 
 	/** Parses an object from a reader, does not close the reader. */
-	public <T> T fromJson(final Reader reader, final ValueDescriptor<T> descriptor) {
+	public <T> T fromJson(final Reader reader, final DataTypeDescriptor<T> descriptor) {
 		if (reader == null) throw new NullPointerException("reader");
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -297,7 +297,7 @@ public class JsonFormat {
 		}
 	}
 
-	private <T> T read(final JsonParser parser, final ValueDescriptor<T> descriptor)
+	private <T> T read(final JsonParser parser, final DataTypeDescriptor<T> descriptor)
 			throws IOException {
 		Object nativeObject;
 

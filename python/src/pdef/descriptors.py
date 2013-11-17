@@ -9,8 +9,8 @@ class Descriptor(object):
         self._pyclass_supplier = _supplier(pyclass)
         self._pyclass = None
 
-        self.is_primitive = self.type in Type.PRIMITIVES
-        self.is_value = self.type in Type.VALUES
+        self.is_primitive = self.type in Type.PRIMITIVE_TYPES
+        self.is_data_type = self.type in Type.DATA_TYPES
         self.is_message = self.type == Type.MESSAGE
 
     def __str__(self):
@@ -23,11 +23,11 @@ class Descriptor(object):
         return self._pyclass
 
 
-class ValueDescriptor(Descriptor):
+class DataTypeDescriptor(Descriptor):
     pass
 
 
-class MessageDescriptor(ValueDescriptor):
+class MessageDescriptor(DataTypeDescriptor):
     '''Message descriptor.'''
     def __init__(self, pyclass, base=None, discriminator_value=None, fields=None, subtypes=None):
         super(MessageDescriptor, self).__init__(Type.MESSAGE, pyclass)
@@ -203,7 +203,7 @@ class ArgDescriptor(object):
         return self._type
 
 
-class EnumDescriptor(ValueDescriptor):
+class EnumDescriptor(DataTypeDescriptor):
     '''Enum descriptor.'''
     def __init__(self, pyclass, values):
         super(EnumDescriptor, self).__init__(Type.ENUM, pyclass)
@@ -219,7 +219,7 @@ class EnumDescriptor(ValueDescriptor):
         return name
 
 
-class ListDescriptor(ValueDescriptor):
+class ListDescriptor(DataTypeDescriptor):
     '''Internal list descriptor.'''
     def __init__(self, element):
         super(ListDescriptor, self).__init__(Type.LIST, list)
@@ -229,7 +229,7 @@ class ListDescriptor(ValueDescriptor):
         return 'list<%s>' % self.element
 
 
-class SetDescriptor(ValueDescriptor):
+class SetDescriptor(DataTypeDescriptor):
     '''Internal set descriptor.'''
     def __init__(self, element):
         super(SetDescriptor, self).__init__(Type.SET, set)
@@ -239,7 +239,7 @@ class SetDescriptor(ValueDescriptor):
         return 'set<%s>' % self.element
 
 
-class MapDescriptor(ValueDescriptor):
+class MapDescriptor(DataTypeDescriptor):
     '''Internal map/dict descriptor.'''
     def __init__(self, key, value):
         super(MapDescriptor, self).__init__(Type.MAP, dict)
@@ -286,7 +286,7 @@ def interface(pyclass, exc=None, methods=None):
     return InterfaceDescriptor(pyclass, exc=exc, methods=methods)
 
 
-def method(name, result, args=None, exc=None, is_index=False, is_post=False):
+def method(name, result, args=None, exc=None, is_post=False):
     '''Create an interface method descriptor.'''
     return MethodDescriptor(name, result=result, args=args, exc=exc, is_post=is_post)
 
@@ -310,11 +310,11 @@ def _supplier(type_or_lambda):
     return lambda: type_or_lambda
 
 
-bool0 = ValueDescriptor(Type.BOOL, bool)
-int16 = ValueDescriptor(Type.INT16, int)
-int32 = ValueDescriptor(Type.INT32, int)
-int64 = ValueDescriptor(Type.INT64, int)
-float0 = ValueDescriptor(Type.FLOAT, float)
-double0 = ValueDescriptor(Type.DOUBLE, float)
-string0 = ValueDescriptor(Type.STRING, unicode)
-void = ValueDescriptor(Type.VOID, type(None))
+bool0 = DataTypeDescriptor(Type.BOOL, bool)
+int16 = DataTypeDescriptor(Type.INT16, int)
+int32 = DataTypeDescriptor(Type.INT32, int)
+int64 = DataTypeDescriptor(Type.INT64, int)
+float0 = DataTypeDescriptor(Type.FLOAT, float)
+double0 = DataTypeDescriptor(Type.DOUBLE, float)
+string0 = DataTypeDescriptor(Type.STRING, unicode)
+void = DataTypeDescriptor(Type.VOID, type(None))

@@ -43,7 +43,7 @@ class TestJsonFormat(unittest.TestCase):
 
     def test_message(self):
         message = self._complex_message()
-        self._test(messages.TestValues.DESCRIPTOR, message, self.MESSAGE_JSON)
+        self._test(messages.TestComplexMessage.DESCRIPTOR, message, self.MESSAGE_JSON)
 
     def test_message__polymorphic(self):
         message = self._polymorphic_message()
@@ -57,7 +57,7 @@ class TestJsonFormat(unittest.TestCase):
         self._test(descriptors.void, None, 'null')
 
     def _complex_message(self):
-        return messages.TestValues(
+        return messages.TestComplexMessage(
             string0="hello",
             bool0=True,
             short0=16,

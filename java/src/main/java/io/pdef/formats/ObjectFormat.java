@@ -19,10 +19,10 @@ public class ObjectFormat {
 	@SuppressWarnings("unchecked")
 	public <T extends Message> Map<String, Object> toObject(final T message,
 			final MessageDescriptor<T> descriptor) throws FormatException {
-		return (Map<String, Object>) this.toObject(message, (ValueDescriptor<T>) descriptor);
+		return (Map<String, Object>) this.toObject(message, (DataTypeDescriptor<T>) descriptor);
 	}
 
-	public <T> Object toObject(final T object, final ValueDescriptor<T> descriptor)
+	public <T> Object toObject(final T object, final DataTypeDescriptor<T> descriptor)
 			throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -36,7 +36,7 @@ public class ObjectFormat {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> Object write(final T object, final ValueDescriptor<T> descriptor)
+	private <T> Object write(final T object, final DataTypeDescriptor<T> descriptor)
 			throws Exception {
 		if (object == null) {
 			return null;
@@ -68,7 +68,7 @@ public class ObjectFormat {
 			return null;
 		}
 
-		ValueDescriptor<E> element = descriptor.getElement();
+		DataTypeDescriptor<E> element = descriptor.getElement();
 		List<Object> result = new ArrayList<Object>();
 
 		for (E elem : list) {
@@ -85,7 +85,7 @@ public class ObjectFormat {
 			return null;
 		}
 
-		ValueDescriptor<E> element = descriptor.getElement();
+		DataTypeDescriptor<E> element = descriptor.getElement();
 		Set<Object> result = new HashSet<Object>();
 		for (E elem : set) {
 			Object serialized = write(elem, element);
@@ -101,8 +101,8 @@ public class ObjectFormat {
 			return null;
 		}
 
-		ValueDescriptor<K> key = descriptor.getKey();
-		ValueDescriptor<V> value = descriptor.getValue();
+		DataTypeDescriptor<K> key = descriptor.getKey();
+		DataTypeDescriptor<V> value = descriptor.getValue();
 		Map<Object, Object> result = new HashMap<Object, Object>();
 
 		for (Map.Entry<K, V> e : map.entrySet()) {
@@ -151,7 +151,7 @@ public class ObjectFormat {
 
 	// Parsing.
 
-	public <T> T fromObject(final Object input, final ValueDescriptor<T> descriptor)
+	public <T> T fromObject(final Object input, final DataTypeDescriptor<T> descriptor)
 			throws FormatException {
 		if (descriptor == null) throw new NullPointerException("descriptor");
 
@@ -165,7 +165,7 @@ public class ObjectFormat {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> T read(final ValueDescriptor<T> descriptor, final Object input) throws Exception {
+	private <T> T read(final DataTypeDescriptor<T> descriptor, final Object input) throws Exception {
 		if (input == null) {
 			return null;
 		}
@@ -259,7 +259,7 @@ public class ObjectFormat {
 		}
 
 		Collection<?> collection = (Collection<?>) input;
-		ValueDescriptor<E> element = descriptor.getElement();
+		DataTypeDescriptor<E> element = descriptor.getElement();
 		List<E> result = new ArrayList<E>();
 
 		for (Object elem : collection) {
@@ -278,7 +278,7 @@ public class ObjectFormat {
 
 		Collection<?> collection = (Collection<?>) input;
 		Set<E> result = new HashSet<E>();
-		ValueDescriptor<E> element = descriptor.getElement();
+		DataTypeDescriptor<E> element = descriptor.getElement();
 
 		for (Object elem : collection) {
 			E parsed = read(element, elem);
@@ -296,8 +296,8 @@ public class ObjectFormat {
 
 		Map<?, ?> map = (Map<?, ?>) input;
 		Map<K, V> result = new HashMap<K, V>();
-		ValueDescriptor<K> key = descriptor.getKey();
-		ValueDescriptor<V> value = descriptor.getValue();
+		DataTypeDescriptor<K> key = descriptor.getKey();
+		DataTypeDescriptor<V> value = descriptor.getValue();
 
 		for (Map.Entry<?, ?> e : map.entrySet()) {
 			K k = read(key, e.getKey());

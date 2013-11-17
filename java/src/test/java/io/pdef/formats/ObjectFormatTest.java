@@ -20,7 +20,7 @@ import java.util.Set;
 public class ObjectFormatTest {
 	private ObjectFormat format = ObjectFormat.getInstance();
 
-	private <T> void testPrimitive(final ValueDescriptor<T> descriptor, final String s,
+	private <T> void testPrimitive(final DataTypeDescriptor<T> descriptor, final String s,
 			final T expected) {
 		assert format.fromObject(null, descriptor) == null;
 		assert format.fromObject(s, descriptor).equals(expected);
@@ -61,7 +61,7 @@ public class ObjectFormatTest {
 		testPrimitive(Descriptors.double0, "2.5", 2.5d);
 	}
 
-	private <T> void testValue(final ValueDescriptor<T> descriptor, final Object serialized,
+	private <T> void testValue(final DataTypeDescriptor<T> descriptor, final Object serialized,
 			final T parsed) {
 		assert format.fromObject(serialized, descriptor).equals(parsed);
 		assert format.fromObject(null, descriptor) == null;

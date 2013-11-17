@@ -30,9 +30,9 @@ class Type(object):
     # Interface
     INTERFACE = 'interface'
 
-    PRIMITIVES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
-    VALUES = PRIMITIVES + (VOID, LIST, MAP, SET, ENUM, MESSAGE)
-    ALL = VALUES + (INTERFACE, )
+    PRIMITIVE_TYPES = (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING)
+    DATA_TYPES = PRIMITIVE_TYPES + (LIST, MAP, SET, ENUM, MESSAGE, VOID)
+    ALL_TYPES = DATA_TYPES + (INTERFACE, )
 
 
 class Enum(object):
@@ -63,7 +63,7 @@ class Message(object):
     @classmethod
     def from_dict(cls, d):
         '''Parse a message from a dictionary.'''
-        return pdef.object_format.parse(d, cls.DESCRIPTOR)
+        return pdef.object_format.from_object(d, cls.DESCRIPTOR)
 
     def to_json(self, indent=None, **kwargs):
         '''Convert this message to a json string.'''
@@ -75,7 +75,7 @@ class Message(object):
 
     def to_dict(self):
         '''Convert this message to a dictionary (serialize each field).'''
-        return pdef.object_format.serialize(self, self.DESCRIPTOR)
+        return pdef.object_format.to_object(self, self.DESCRIPTOR)
 
     def __eq__(self, other):
         if other is None or self.__class__ is not other.__class__:

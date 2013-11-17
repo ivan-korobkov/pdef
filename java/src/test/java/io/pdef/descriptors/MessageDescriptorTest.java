@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import io.pdef.test.inheritance.*;
 import io.pdef.test.messages.TestMessage;
-import io.pdef.test.messages.TestValues;
+import io.pdef.test.messages.TestComplexMessage;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -26,12 +26,12 @@ public class MessageDescriptorTest {
 	@Test
 	public void test_nonpolymorphicInheritance() throws Exception {
 		MessageDescriptor<TestMessage> base = TestMessage.DESCRIPTOR;
-		MessageDescriptor<TestValues> message = TestValues.DESCRIPTOR;
+		MessageDescriptor<TestComplexMessage> message = TestComplexMessage.DESCRIPTOR;
 
-		assertEquals(TestValues.class, message.getJavaClass());
+		assertEquals(TestComplexMessage.class, message.getJavaClass());
 		assertEquals(base, message.getBase());
 
-		List<FieldDescriptor<? super TestValues, ?>> fields = Lists.newArrayList();
+		List<FieldDescriptor<? super TestComplexMessage, ?>> fields = Lists.newArrayList();
 		fields.addAll(base.getFields());
 		fields.addAll(message.getDeclaredFields());
 		assertEquals(fields, message.getFields());

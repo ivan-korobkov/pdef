@@ -22,7 +22,7 @@ public class {{ message.name }} extends {{ message|jmessage_base }} {
         super(another);
     {% for field in message.declared_fields %}
         {% if field.type.is_collection or field.type.is_message %}
-        this.{{ field.name }} = io.pdef.Values.copy(another.{{ field.name }});
+        this.{{ field.name }} = io.pdef.DataTypes.copy(another.{{ field.name }});
         {% else %}
         this.{{ field.name }} = another.{{ field.name }};
         {% endif %}
@@ -90,7 +90,7 @@ public class {{ message.name }} extends {{ message|jmessage_base }} {
 		{{ message.name }} another = ({{ message.name }}) message;
     {% for field in message.declared_fields %}
         {% if field.type.is_collection or field.type.is_message %}
-        if (another.{{ field.name }} != null) this.{{ field.name }} = io.pdef.Values.copy(another.{{ field.name }});
+        if (another.{{ field.name }} != null) this.{{ field.name }} = io.pdef.DataTypes.copy(another.{{ field.name }});
         {% else %}
         if (another.{{ field.name }} != null) this.{{ field.name }} = another.{{ field.name }};
         {% endif %}
@@ -133,8 +133,8 @@ public class {{ message.name }} extends {{ message|jmessage_base }} {
                 {% if field.type.is_primitive %}
                     .setType({{ field.type|jdescriptor }})
                 {% else %}
-                    .setType(new io.pdef.Provider<io.pdef.descriptors.ValueDescriptor<{{ field.type|jref }}>>() {
-                        public io.pdef.descriptors.ValueDescriptor<{{ field.type|jref }}> get() {
+                    .setType(new io.pdef.Provider<io.pdef.descriptors.DataTypeDescriptor<{{ field.type|jref }}>>() {
+                        public io.pdef.descriptors.DataTypeDescriptor<{{ field.type|jref }}> get() {
                             return {{ field.type|jdescriptor }};
                         }
                     })

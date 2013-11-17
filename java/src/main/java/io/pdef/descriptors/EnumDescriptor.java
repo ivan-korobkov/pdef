@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 /** EnumDescriptor holds enum values and parsing/serialization methods. */
-public class EnumDescriptor<T extends Enum<T>> extends ValueDescriptor<T> {
+public class EnumDescriptor<T extends Enum<T>> extends DataTypeDescriptor<T> {
 	private final List<T> values;
 	private final Map<String, T> namesToValues;
 

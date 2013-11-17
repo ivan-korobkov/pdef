@@ -21,9 +21,9 @@ class TestMessageDescriptor(unittest.TestCase):
 
     def test__nonpolymorphic_inheritance(self):
         base = TestMessage.DESCRIPTOR
-        descriptor = TestValues.DESCRIPTOR
+        descriptor = TestComplexMessage.DESCRIPTOR
 
-        assert descriptor.pyclass is TestValues
+        assert descriptor.pyclass is TestComplexMessage
         assert descriptor.base is TestMessage.DESCRIPTOR
         assert descriptor.inherited_fields == base.fields
         assert descriptor.fields == base.fields + descriptor.declared_fields

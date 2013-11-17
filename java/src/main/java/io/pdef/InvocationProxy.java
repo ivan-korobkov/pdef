@@ -8,9 +8,9 @@ import java.lang.reflect.*;
 import java.util.WeakHashMap;
 
 public class InvocationProxy<T> implements InvocationHandler {
+	private static final Class[] constructorParams = new Class[]{InvocationHandler.class};
 	private static final WeakHashMap<Class<?>, Class<?>> proxyClasses =
 			new WeakHashMap<Class<?>, Class<?>>();
-	private static final Class[] constructorParams = new Class[]{InvocationHandler.class};
 
 	private final InterfaceDescriptor<T> descriptor;
 	private final Invoker handler;

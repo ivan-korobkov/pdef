@@ -2,20 +2,20 @@ package io.pdef.rpc;
 
 import io.pdef.Message;
 import io.pdef.descriptors.MessageDescriptor;
-import io.pdef.descriptors.ValueDescriptor;
+import io.pdef.descriptors.DataTypeDescriptor;
 
 public class RpcResult<T> {
 	private final boolean ok;
 	private final T data;
-	private final ValueDescriptor<T> descriptor;
+	private final DataTypeDescriptor<T> descriptor;
 
-	private RpcResult(final boolean ok, final T data, final ValueDescriptor<T> descriptor) {
+	private RpcResult(final boolean ok, final T data, final DataTypeDescriptor<T> descriptor) {
 		this.ok = ok;
 		this.data = data;
 		this.descriptor = descriptor;
 	}
 
-	public static <T> RpcResult<T> ok(final T data, final ValueDescriptor<T> descriptor) {
+	public static <T> RpcResult<T> ok(final T data, final DataTypeDescriptor<T> descriptor) {
 		return new RpcResult<T>(true, data, descriptor);
 	}
 
@@ -32,7 +32,7 @@ public class RpcResult<T> {
 		return data;
 	}
 
-	public ValueDescriptor<T> getDescriptor() {
+	public DataTypeDescriptor<T> getDescriptor() {
 		return descriptor;
 	}
 

@@ -51,7 +51,7 @@ public class MethodDescriptor<T, R> implements MethodInvoker<T, R> {
 	/**
 	 * Returns this method result descriptor.
 	 * <p/>
-	 * It can be a {@link io.pdef.descriptors.ValueDescriptor} if this method is terminal or {@link
+	 * It can be a {@link DataTypeDescriptor} if this method is terminal or {@link
 	 * io.pdef.descriptors.InterfaceDescriptor} otherwise.
 	 */
 	public Descriptor<R> getResult() {
@@ -129,7 +129,7 @@ public class MethodDescriptor<T, R> implements MethodInvoker<T, R> {
 			return this;
 		}
 
-		public <V> Builder<T, R> addArg(final String name, final ValueDescriptor<V> type,
+		public <V> Builder<T, R> addArg(final String name, final DataTypeDescriptor<V> type,
 				final boolean isQuery, final boolean isPost) {
 			this.args.add(new ArgumentDescriptor<V>(name, type, isQuery, isPost));
 			return this;

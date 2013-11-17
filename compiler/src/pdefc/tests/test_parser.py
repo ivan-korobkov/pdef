@@ -84,7 +84,7 @@ class TestParser(unittest.TestCase):
         '''
         module, errors = self.parser.parse(s, 'module')
         assert not module
-        assert "Syntax error at 'definition', line 8" in errors[0]
+        assert 'Line 8, syntax error at "definition"' in errors[0]
 
     def test_syntax_error__reuse_parser(self):
         s = '''/** Description. */
@@ -98,8 +98,8 @@ class TestParser(unittest.TestCase):
         _, errors0 = self.parser.parse(s, 'module')
         _, errors1 = self.parser.parse(s, 'module')
 
-        assert "Syntax error at 'definition', line 6" in errors0[0]
-        assert "Syntax error at 'definition', line 6" in errors1[0]
+        assert 'Line 6, syntax error at "definition"' in errors0[0]
+        assert 'Line 6, syntax error at "definition"' in errors1[0]
 
     def test_syntax_error__end_of_file(self):
         s = '''/** Description. */
@@ -109,6 +109,16 @@ class TestParser(unittest.TestCase):
         module, errors = self.parser.parse(s, 'module')
         assert not module
         assert 'Unexpected end of file' in errors[0]
+
+    def test_syntax_error__reserved_word(self):
+        s = '''
+        message Message {
+            final string;
+        }
+        '''
+
+        _, errors = self.parser.parse(s, 'module')
+        assert 'Line 3, "final" is a reserved word' in errors[0]
 
     def test_doc(self):
         s = '''

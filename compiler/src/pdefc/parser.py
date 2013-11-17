@@ -2,11 +2,11 @@
 import functools
 import logging
 import re
-import os.path
 import ply.lex as lex
 import ply.yacc as yacc
 
 import pdefc.lang
+from pdefc.reserved import RESERVED
 
 
 def create_parser():
@@ -116,11 +116,13 @@ class _Tokens(object):
         'MESSAGE',
         'EXCEPTION',
         'INTERFACE')
-    reserved = types + (
-        'FROM',
-        'IMPORT')
 
-    tokens = reserved + (
+    # Identifier types, see t_IDENTIFIER
+    ids = types + ('FROM', 'IMPORT')
+    ids_map = {s.lower(): s for s in ids}
+    reserved = set(s.lower() for s in RESERVED)
+
+    tokens = ids + (
         'DOT',
         'COLON',
         'COMMA',
@@ -159,15 +161,16 @@ class _Tokens(object):
     # Ignored characters
     t_ignore = " \t"
 
-    # Reserved words map {lowercase: UPPERCASE}.
-    # Used as a type in IDENTIFIER.
-    reserved_map = {}
-    for r in reserved:
-        reserved_map[r.lower()] = r
+    doc_start_pattern = re.compile('^\s*\**\s*', re.MULTILINE)
+    doc_end_pattern = re.compile('\s\*$', re.MULTILINE)
 
     def t_IDENTIFIER(self, t):
         r'[a-zA-Z_]{1}[a-zA-Z0-9_]*'
-        t.type = self.reserved_map.get(t.value, 'IDENTIFIER')
+        t.type = self.ids_map.get(t.value, 'IDENTIFIER')
+
+        if t.value.lower() in self.reserved:
+            self._error('Line %s, "%s" is a reserved word' % (t.lineno, t.value))
+
         return t
 
     def t_comment(self, t):
@@ -180,17 +183,14 @@ class _Tokens(object):
         r'\n+'
         t.lexer.lineno += t.value.count("\n")
 
-    doc_start = re.compile('^\s*\**\s*', re.MULTILINE)
-    doc_end = re.compile('\s\*$', re.MULTILINE)
-
     # Pdef docstring.
     def t_DOC(self, t):
         r'\/\*\*((.|\n)*?)\*\/'
         t.lexer.lineno += t.value.count('\n')
 
         value = t.value.strip('/')
-        value = self.doc_start.sub('', value)
-        value = self.doc_end.sub('', value)
+        value = self.doc_start_pattern.sub('', value)
+        value = self.doc_end_pattern.sub('', value)
         t.value = value
         return t
 
@@ -212,157 +212,157 @@ class _GrammarRules(object):
 
     # Starting point.
     @_with_location(0)
-    def p_module(self, t):
+    def p_module(self, p):
         '''
         module : doc imports definitions
         '''
         name = self._name()
-        doc = t[1]
-        imports = t[2]
-        definitions = t[3]
-        t[0] = pdefc.lang.Module(name, imports=imports, definitions=definitions, doc=doc)
+        doc = p[1]
+        imports = p[2]
+        definitions = p[3]
+        p[0] = pdefc.lang.Module(name, imports=imports, definitions=definitions, doc=doc)
 
     # Any absolute name, returns a list.
-    def p_absolute_name(self, t):
+    def p_absolute_name(self, p):
         '''
         absolute_name : absolute_name DOT IDENTIFIER
                       | IDENTIFIER
         '''
-        self._list(t, separated=True)
+        self._list(p, separated=True)
 
-    def p_type_name(self, t):
+    def p_type_name(self, p):
         '''
         type_name : absolute_name
         '''
-        t[0] = '.'.join(t[1])
+        p[0] = '.'.join(p[1])
 
-    def p_module_name(self, t):
+    def p_module_name(self, p):
         '''
         module_name : absolute_name
         '''
-        t[0] = '.'.join(t[1])
+        p[0] = '.'.join(p[1])
 
     # Empty token to support optional values.
-    def p_empty(self, t):
+    def p_empty(self, p):
         '''
         empty :
         '''
         pass
 
-    def p_doc(self, t):
+    def p_doc(self, p):
         '''
         doc : DOC
             | empty
         '''
-        if len(t) == 2:
-            t[0] = t[1]
+        if len(p) == 2:
+            p[0] = p[1]
         else:
-            t[0] = ''
+            p[0] = ''
 
-    def p_imports(self, t):
+    def p_imports(self, p):
         '''
         imports : imports import
                 | import
                 | empty
         '''
-        self._list(t)
+        self._list(p)
 
     @_with_location(1)
-    def p_import(self, t):
+    def p_import(self, p):
         '''
         import : absolute_import
                | relative_import
         '''
-        t[0] = t[1]
+        p[0] = p[1]
 
-    def p_absolute_import(self, t):
+    def p_absolute_import(self, p):
         '''
         absolute_import : IMPORT module_name SEMI
         '''
-        t[0] = pdefc.lang.AbsoluteImport(t[2])
+        p[0] = pdefc.lang.AbsoluteImport(p[2])
 
-    def p_relative_import(self, t):
+    def p_relative_import(self, p):
         '''
         relative_import : FROM module_name IMPORT relative_import_names SEMI
         '''
-        t[0] = pdefc.lang.RelativeImport(t[2], t[4])
+        p[0] = pdefc.lang.RelativeImport(p[2], p[4])
 
-    def p_relative_import_names(self, t):
+    def p_relative_import_names(self, p):
         '''
         relative_import_names : relative_import_names COMMA module_name
                               | module_name
         '''
-        self._list(t, separated=True)
+        self._list(p, separated=True)
 
-    def p_definitions(self, t):
+    def p_definitions(self, p):
         '''
         definitions : definitions definition
                     | definition
                     | empty
         '''
-        self._list(t)
+        self._list(p)
 
-    def p_definition(self, t):
+    def p_definition(self, p):
         '''
         definition : doc enum
                    | doc message
                    | doc interface
         '''
-        d = t[2]
-        d.doc = t[1]
-        t[0] = d
+        d = p[2]
+        d.doc = p[1]
+        p[0] = d
 
     @_with_location(2)
-    def p_enum(self, t):
+    def p_enum(self, p):
         '''
         enum : ENUM IDENTIFIER LBRACE enum_values RBRACE
         '''
-        t[0] = pdefc.lang.Enum(t[2], values=t[4])
+        p[0] = pdefc.lang.Enum(p[2], values=p[4])
 
-    def p_enum_values(self, t):
+    def p_enum_values(self, p):
         '''
         enum_values : enum_value_list SEMI
                     | enum_value_list
         '''
-        t[0] = t[1]
+        p[0] = p[1]
 
-    def p_enum_value_list(self, t):
+    def p_enum_value_list(self, p):
         '''
         enum_value_list : enum_value_list COMMA enum_value
                         | enum_value
                         | empty
         '''
-        self._list(t, separated=1)
+        self._list(p, separated=1)
 
     @_with_location(1)
-    def p_enum_value(self, t):
+    def p_enum_value(self, p):
         '''
         enum_value : IDENTIFIER
         '''
-        t[0] = pdefc.lang.EnumValue(t[1])
+        p[0] = pdefc.lang.EnumValue(p[1])
 
     # Message definition
     @_with_location(3)
-    def p_message(self, t):
+    def p_message(self, p):
         '''
         message : message_or_exc IDENTIFIER message_base LBRACE fields RBRACE
         '''
-        is_exception = t[1].lower() == 'exception'
-        name = t[2]
-        base, discriminator_value = t[3]
-        fields = t[5]
+        is_exception = p[1].lower() == 'exception'
+        name = p[2]
+        base, discriminator_value = p[3]
+        fields = p[5]
 
-        t[0] = pdefc.lang.Message(name, base=base, discriminator_value=discriminator_value,
+        p[0] = pdefc.lang.Message(name, base=base, discriminator_value=discriminator_value,
                                  declared_fields=fields, is_exception=is_exception)
 
-    def p_message_or_exception(self, t):
+    def p_message_or_exception(self, p):
         '''
         message_or_exc : MESSAGE
                        | EXCEPTION
         '''
-        t[0] = t[1]
+        p[0] = p[1]
 
-    def p_message_base(self, t):
+    def p_message_base(self, p):
         '''
         message_base : COLON type LPAREN type RPAREN
                      | COLON type
@@ -370,121 +370,121 @@ class _GrammarRules(object):
         '''
         base, discriminator = None, None
 
-        if len(t) == 3:
-            base = t[2]
-        elif len(t) == 6:
-            base = t[2]
-            discriminator = t[4]
+        if len(p) == 3:
+            base = p[2]
+        elif len(p) == 6:
+            base = p[2]
+            discriminator = p[4]
 
         if base:
-            base.location = _location(t, 2)
+            base.location = _location(p, 2)
 
-        t[0] = base, discriminator
+        p[0] = base, discriminator
 
     # List of message fields
-    def p_fields(self, t):
+    def p_fields(self, p):
         '''
         fields : fields field
                | field
                | empty
         '''
-        self._list(t)
+        self._list(p)
 
     # Single message field
     @_with_location(1)
-    def p_field(self, t):
+    def p_field(self, p):
         '''
         field : IDENTIFIER type field_discriminator SEMI
         '''
-        name = t[1]
-        type0 = t[2]
-        is_discriminator = t[3]
-        t[0] = pdefc.lang.Field(name, type0, is_discriminator=is_discriminator)
+        name = p[1]
+        type0 = p[2]
+        is_discriminator = p[3]
+        p[0] = pdefc.lang.Field(name, type0, is_discriminator=is_discriminator)
 
-    def p_field_discriminator(self, t):
+    def p_field_discriminator(self, p):
         '''
         field_discriminator : DISCRIMINATOR
                             | empty
         '''
-        t[0] = bool(t[1])
+        p[0] = bool(p[1])
 
     # Interface definition
     @_with_location(3)
-    def p_interface(self, t):
+    def p_interface(self, p):
         '''
         interface : interface_exc INTERFACE IDENTIFIER LBRACE methods RBRACE
         '''
-        exc = t[1]
-        name = t[3]
-        methods = t[5]
+        exc = p[1]
+        name = p[3]
+        methods = p[5]
 
-        t[0] = pdefc.lang.Interface(name, exc=exc, methods=methods)
+        p[0] = pdefc.lang.Interface(name, exc=exc, methods=methods)
 
-    def p_interface_exc(self, t):
+    def p_interface_exc(self, p):
         '''
         interface_exc : THROWS LPAREN type RPAREN
                       | empty
         '''
-        if len(t) == 5:
-            t[0] = t[3]
+        if len(p) == 5:
+            p[0] = p[3]
         else:
-            t[0] = None
+            p[0] = None
 
-    def p_methods(self, t):
+    def p_methods(self, p):
         '''
         methods : methods method
                 | method
                 | empty
         '''
-        self._list(t)
+        self._list(p)
 
     @_with_location(3)
-    def p_method(self, t):
+    def p_method(self, p):
         '''
         method : doc method_post IDENTIFIER LPAREN method_args RPAREN type SEMI
         '''
-        doc = t[1]
-        is_post = t[2]
-        name = t[3]
-        args = t[5]
-        result = t[7]
-        t[0] = pdefc.lang.Method(name, result=result, args=args, is_post=is_post, doc=doc)
+        doc = p[1]
+        is_post = p[2]
+        name = p[3]
+        args = p[5]
+        result = p[7]
+        p[0] = pdefc.lang.Method(name, result=result, args=args, is_post=is_post, doc=doc)
 
-    def p_method_post(self, t):
+    def p_method_post(self, p):
         '''
         method_post : POST
                     | empty
         '''
-        t[0] = t[1] == '@post'
+        p[0] = p[1] == '@post'
 
-    def p_method_args(self, t):
+    def p_method_args(self, p):
         '''
         method_args : method_args COMMA method_arg
                     | method_arg
                     | empty
         '''
-        self._list(t, separated=True)
+        self._list(p, separated=True)
 
     @_with_location(2)
-    def p_method_arg(self, t):
+    def p_method_arg(self, p):
         '''
         method_arg : doc IDENTIFIER type method_arg_attr
         '''
-        attr = t[4]
+        attr = p[4]
         is_query = attr == '@query'
         is_post = attr == '@post'
-        t[0] = pdefc.lang.MethodArg(t[2], t[3], is_query=is_query, is_post=is_post)
+        p[0] = pdefc.lang.MethodArg(p[2], p[3], is_query=is_query, is_post=is_post)
 
-    def p_method_arg_attr(self, t):
+    def p_method_arg_attr(self, p):
         '''
         method_arg_attr : POST
                         | QUERY
                         | empty
         '''
-        t[0] = t[1]
+        p[0] = p[1]
 
     @_with_location(1)
-    def p_type(self, t):
+    def p_type(self, p):
         '''
         type : value_ref
              | list_ref
@@ -492,9 +492,9 @@ class _GrammarRules(object):
              | map_ref
              | def_ref
         '''
-        t[0] = t[1]
+        p[0] = p[1]
 
-    def p_value_ref(self, t):
+    def p_value_ref(self, p):
         '''
         value_ref : BOOL
                   | INT16
@@ -506,42 +506,41 @@ class _GrammarRules(object):
                   | DATETIME
                   | VOID
         '''
-        t[0] = pdefc.lang.reference(t[1].lower())
+        p[0] = pdefc.lang.reference(p[1].lower())
 
-    def p_list_ref(self, t):
+    def p_list_ref(self, p):
         '''
         list_ref : LIST LESS type GREATER
         '''
-        t[0] = pdefc.lang.ListReference(t[3])
+        p[0] = pdefc.lang.ListReference(p[3])
 
-    def p_set_ref(self, t):
+    def p_set_ref(self, p):
         '''
         set_ref : SET LESS type GREATER
         '''
-        t[0] = pdefc.lang.SetReference(t[3])
+        p[0] = pdefc.lang.SetReference(p[3])
 
-    def p_map_ref(self, t):
+    def p_map_ref(self, p):
         '''
         map_ref : MAP LESS type COMMA type GREATER
         '''
-        t[0] = pdefc.lang.MapReference(t[3], t[5])
+        p[0] = pdefc.lang.MapReference(p[3], p[5])
 
-    def p_def_ref(self, t):
+    def p_def_ref(self, p):
         '''
         def_ref : type_name
         '''
-        t[0] = pdefc.lang.reference(t[1])
+        p[0] = pdefc.lang.reference(p[1])
 
-    def p_error(self, t):
-        if t is None:
+    def p_error(self, p):
+        if p is None:
             msg = u'Unexpected end of file'
         else:
-            msg = u"Syntax error at '%s', line %s" % (t.value, t.lexer.lineno)
+            msg = u'Line %s, syntax error at "%s"' % (p.lexer.lineno, p.value)
 
-        logging.debug(msg)
         self._error(msg)
 
-    def _list(self, t, separated=False):
+    def _list(self, p, separated=False):
         '''List builder, supports separated and empty lists.
 
         Supported grammar:
@@ -549,19 +548,19 @@ class _GrammarRules(object):
              | item
              | empty
         '''
-        if len(t) == 1:
-            t[0] = []
-        elif len(t) == 2:
-            if t[1] is None:
-                t[0] = []
+        if len(p) == 1:
+            p[0] = []
+        elif len(p) == 2:
+            if p[1] is None:
+                p[0] = []
             else:
-                t[0] = [t[1]]
+                p[0] = [p[1]]
         else:
-            t[0] = t[1]
+            p[0] = p[1]
             if not separated:
-                t[0].append(t[2])
+                p[0].append(p[2])
             else:
-                t[0].append(t[3])
+                p[0].append(p[3])
 
 
 class _Grammar(_GrammarRules, _Tokens):

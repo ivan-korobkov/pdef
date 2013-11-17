@@ -25,10 +25,10 @@ setup(
     author_email='ivan.korobkov@gmail.com',
 
     packages=['pdefc',
-              'pdefc.ast',
               'pdefc.generators',
               'pdefc.generators.java',
-              'pdefc.generators.python'],
+              'pdefc.generators.python',
+              'pdefc.lang'],
     package_dir={'': 'src'},
     package_data={
         '': ['*.jinja2']

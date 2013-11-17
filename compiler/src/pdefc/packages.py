@@ -127,6 +127,8 @@ class Package(object):
         return errors
 
     def _validate_name(self):
+        if not self.name:
+            return [self._error('Package name required, add it to the YAML file')]
         if self.name_pattern.match(self.name):
             return []
         return [self._error('Wrong package name "%s". A name must contain only latin letters, '
@@ -150,17 +152,17 @@ class PackageInfo(object):
         p = d.get('package', {})
         name = p.get('name')
         url = p.get('url')
-        description = p.get('description', '')
-        modules = p.get('modules', [])
-        dependencies = p.get('dependencies', [])
+        description = p.get('description')
+        modules = p.get('modules')
+        dependencies = p.get('dependencies')
 
         return PackageInfo(name, url=url, description=description, modules=modules,
                            dependencies=dependencies)
 
     def __init__(self, name, url=None, description=None, modules=None, dependencies=None):
-        self.name = name
+        self.name = name or ''
         self.url = url
-        self.description = description
+        self.description = description or ''
         self.modules = list(modules) if modules else []
         self.dependencies = list(dependencies) if dependencies else []
 

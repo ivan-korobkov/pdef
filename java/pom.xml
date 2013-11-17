@@ -142,9 +142,10 @@
 							<tasks>
 								<exec executable="pdefc" failonerror="true">
 									<arg value="generate" />
-									<arg value="--ns=java:pdef:io.pdef" />
-									<arg value="--java=target/generated-test-sources/pdef" />
-									<arg value="../test" />
+                                    <arg value="../test/test.yaml" />
+									<arg value="--generator=java" />
+									<arg value="--ns=pdef_test:io.pdef.test" />
+									<arg value="--out=target/generated-test-sources/pdef" />
 								</exec>
 							</tasks>
 						</configuration>

@@ -146,7 +146,7 @@ class FileSource(Source):
             raise CompilerException('Failed to read package info: %s, e=%s' % (filename, e))
 
     def __str__(self):
-        return self.name + ':' + self.filename
+        return self.filename
 
     def __repr__(self):
         return '<FileSource %r, file=%r at %s>' % (self.name, self.filename, hex(id(self)))
@@ -178,7 +178,7 @@ class UrlSource(Source):
     def __str__(self):
         if not self._delegate:
             return self.url
-        return self.name + ':' + self.url
+        return self.url
 
     def __repr__(self):
         return '<UrlSource url=%r at %s>' % (self.url, hex(id(self)))

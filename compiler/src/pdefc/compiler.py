@@ -80,13 +80,12 @@ class Compiler(object):
 
     def _parse(self, pname):
         '''Parse and return a package, but not its dependencies.'''
-        logging.info('Parsing %s', pname)
-
         # Find the package source.
         source = self.sources.get(pname)
         info = source.info
 
         # Init the package.
+        logging.info('Parsing %s', source)
         package = Package(pname, info=info)
         assert info.name == pname, 'Package name does not match one in info'
 

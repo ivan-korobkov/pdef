@@ -1,0 +1,7 @@
+package:
+  name: pdef_test
+  description: Pdef test data types and interfaces
+  modules:
+    - inheritance
+    - interfaces
+    - messages

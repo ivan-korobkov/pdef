@@ -72,7 +72,13 @@ class TestPackage(unittest.TestCase):
 
         assert len(errors) == 1
 
-    def test_validate_name(self):
+    def test_validate_name__required(self):
+        package = Package('')
+        errors = package._validate()
+
+        assert 'Package name required' in errors[0]
+
+    def test_validate_name__wrong_name(self):
         package0 = Package('wrong-package')
         package1 = Package('_wrong')
         package2 = Package('1234_wrong')

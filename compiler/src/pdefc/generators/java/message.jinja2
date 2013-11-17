@@ -1,26 +1,26 @@
 // {{ generated_by }}
-package {{ module|jpackage }};
+package {{ message.module|jpackage }};
 
 
-{% if doc %}
-/** {{ doc }} */
+{% if message.doc %}
+/** {{ message.doc }} */
 {% endif %}
-public class {{ name }} extends {{ definition|jbase_class }} {
-    {% for field in declared_fields %}
+public class {{ message.name }} extends {{ message|jmessage_base }} {
+    {% for field in message.declared_fields %}
     private {{ field.type|jref }} {{ field.name }};
     {% endfor %}
 
-{% if discriminator_value %}
-    public {{ name }}() {
-        this.{{ discriminator|jfield_set }}({{ discriminator_value|jref }}
+{% if message.discriminator_value %}
+    public {{ message.name }}() {
+        this.{{ message.discriminator|jfield_set }}({{ message.discriminator_value|jref }});
     }
 {% else %}
-    public {{ name }}() {}
+    public {{ message.name }}() {}
 {% endif %}
 
-    public {{ name }}(final {{ name }} another) {
+    public {{ message.name }}(final {{ message.name }} another) {
         super(another);
-    {% for field in declared_fields %}
+    {% for field in message.declared_fields %}
         {% if field.type.is_collection or field.type.is_message %}
         this.{{ field.name }} = io.pdef.Values.copy(another.{{ field.name }});
         {% else %}
@@ -29,15 +29,15 @@ public class {{ name }} extends {{ definition|jbase_class }} {
     {% endfor %}
     }
 
-    public static {{ name }} fromMap(final java.util.Map<String, Object> map) {
+    public static {{ message.name }} fromMap(final java.util.Map<String, Object> map) {
         return io.pdef.formats.ObjectFormat.getInstance().fromObject(map, DESCRIPTOR);
     }
 
-    public static {{ name }} fromJson(final String s) {
+    public static {{ message.name }} fromJson(final String s) {
         return io.pdef.formats.JsonFormat.getInstance().fromJson(s, DESCRIPTOR);
     }
 
-{% for field in declared_fields %}
+{% for field in message.declared_fields %}
     // {{ field.name }}
     public {{ field.type|jref_unboxed }} {{ field|jfield_get }}() {
     {% if field.type.is_collection or field.type.is_message %}
@@ -47,7 +47,7 @@ public class {{ name }} extends {{ definition|jbase_class }} {
     {% endif %}
     }
 
-    public {{ name }} {{ field|jfield_set }}(final {{ field.type|jref_unboxed }} value) {
+    public {{ message.name }} {{ field|jfield_set }}(final {{ field.type|jref_unboxed }} value) {
         this.{{ field.name }} = value;
         return this;
     }
@@ -56,39 +56,39 @@ public class {{ name }} extends {{ definition|jbase_class }} {
         return {{ field.name }} != null;
     }
 
-    public {{ name }} {{ field|jfield_clear }}() {
+    public {{ message.name }} {{ field|jfield_clear }}() {
         this.{{ field.name }} = null;
         return this;
     }
 
 {% endfor %}
-{% for field in inherited_fields %}
+{% for field in message.inherited_fields %}
     // {{ field.name }}
     @Override
-    public {{ name }} {{ field|jfield_set }}(final {{ field.type|jref_unboxed }} value) {
+    public {{ message.name }} {{ field|jfield_set }}(final {{ field.type|jref_unboxed }} value) {
         super.{{ field|jfield_set }}(value);
         return this;
     }
 
     @Override
-    public {{ name }} {{ field|jfield_clear }}() {
+    public {{ message.name }} {{ field|jfield_clear }}() {
         super.{{ field|jfield_clear }}();
         return this;
     }
 
 {% endfor %}
     @Override
-    public {{ name }} copy() {
-        return new {{ name }}(this);
+    public {{ message.name }} copy() {
+        return new {{ message.name }}(this);
     }
 
     @Override
-	public {{ name }} merge(final io.pdef.Message message) {
+	public {{ message.name }} merge(final io.pdef.Message message) {
 		super.merge(message);
-		if (!(message instanceof {{ name }})) return this;
+		if (!(message instanceof {{ message.name }})) return this;
 
-		{{ name }} another = ({{ name }}) message;
-    {% for field in declared_fields %}
+		{{ message.name }} another = ({{ message.name }}) message;
+    {% for field in message.declared_fields %}
         {% if field.type.is_collection or field.type.is_message %}
         if (another.{{ field.name }} != null) this.{{ field.name }} = io.pdef.Values.copy(another.{{ field.name }});
         {% else %}
@@ -100,32 +100,32 @@ public class {{ name }} extends {{ definition|jbase_class }} {
 	}
 
     @Override
-    public io.pdef.descriptors.MessageDescriptor<? extends {{ name }}> descriptor() {
+    public io.pdef.descriptors.MessageDescriptor<? extends {{ message.name }}> descriptor() {
         return DESCRIPTOR;
     }
 
-    public static final io.pdef.descriptors.MessageDescriptor<{{ name }}> DESCRIPTOR = io.pdef.descriptors.MessageDescriptor.<{{ name }}>builder()
-            .setJavaClass({{ name }}.class)
-            .setProvider(new io.pdef.Provider<{{ name }}>() {
-                public {{ name }} get() {
-                    return new {{ name }}();
+    public static final io.pdef.descriptors.MessageDescriptor<{{ message.name }}> DESCRIPTOR = io.pdef.descriptors.MessageDescriptor.<{{ message.name }}>builder()
+            .setJavaClass({{ message.name }}.class)
+            .setProvider(new io.pdef.Provider<{{ message.name }}>() {
+                public {{ message.name }} get() {
+                    return new {{ message.name }}();
                 }
             })
-            {% if base %}
-            .setBase({{ base|jdescriptor }})
+            {% if message.base %}
+            .setBase({{ message.base|jdescriptor }})
             {% endif %}
-            {% if discriminator_value %}
-            .setDiscriminatorValue({{ discriminator_value|jref }})
+            {% if message.discriminator_value %}
+            .setDiscriminatorValue({{ message.discriminator_value|jref }})
             {% endif %}
-            {% for subtype in subtypes %}
-            .addSubtype(new io.pdef.Provider<io.pdef.descriptors.MessageDescriptor<? extends {{ name }}>>() {
-                public io.pdef.descriptors.MessageDescriptor<? extends {{ name }}> get() {
+            {% for subtype in message.subtypes %}
+            .addSubtype(new io.pdef.Provider<io.pdef.descriptors.MessageDescriptor<? extends {{ message.name }}>>() {
+                public io.pdef.descriptors.MessageDescriptor<? extends {{ message.name }}> get() {
                     return {{ subtype|jdescriptor }};
                 }
             })
             {% endfor %}
-            {% for field in declared_fields %}
-            .addField(io.pdef.descriptors.FieldDescriptor.<{{ name }}, {{ field.type|jref }}>builder()
+            {% for field in message.declared_fields %}
+            .addField(io.pdef.descriptors.FieldDescriptor.<{{ message.name }}, {{ field.type|jref }}>builder()
                     .setName("{{ field.name }}")
                 {% if field.is_discriminator %}
                     .setDiscriminator(true)
@@ -139,12 +139,12 @@ public class {{ name }} extends {{ definition|jbase_class }} {
                         }
                     })
                 {% endif %}
-                    .setAccessor(new io.pdef.descriptors.FieldAccessor<{{ name }}, {{ field.type|jref }}>() {
-                        public {{ field.type|jref }} get({{ name }} message) {
+                    .setAccessor(new io.pdef.descriptors.FieldAccessor<{{ message.name }}, {{ field.type|jref }}>() {
+                        public {{ field.type|jref }} get({{ message.name }} message) {
                             return message.{{ field.name }};
                         }
 
-                        public void set({{ name }} message, {{ field.type|jref }} value) {
+                        public void set({{ message.name }} message, {{ field.type|jref }} value) {
                             message.{{ field.name }} = value;
                         }
                     })

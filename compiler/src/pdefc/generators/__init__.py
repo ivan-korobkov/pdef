@@ -81,6 +81,11 @@ class Templates(object):
 
         return template
 
+    def render(self, template_name, **kwargs):
+        '''Get a template and render it using the keyword arguments.'''
+        template = self.get(template_name)
+        return template.render(**kwargs)
+
 
 class Namespace(object):
     '''Namespace class is a default namespace mapper, which maps pdef modules names to

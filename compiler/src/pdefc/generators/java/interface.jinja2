@@ -1,17 +1,17 @@
 // {{ generated_by }}
-package {{ module|jpackage }};
+package {{ interface.module|jpackage }};
 
 
-{% if doc %}
-/** {{ doc }} */
+{% if interface.doc %}
+/** {{ interface.doc }} */
 {% endif %}
-{% if not base -%}
-    public interface {{ name }} {
+{% if not interface.base -%}
+    public interface {{ interface.name }} {
 {% else -%}
-    public interface {{ name }} extends {{ base|jref }} {
+    public interface {{ interface.name }} extends {{ interface.base|jref }} {
 {% endif %}
 
-{% for method in declared_methods %}
+{% for method in interface.declared_methods %}
     {% if method.doc %}
     /** {{ method.doc|indent(4) }} */
     {% endif %}
@@ -22,22 +22,22 @@ package {{ module|jpackage }};
         {%- endfor %});
 
 {% endfor %}
-    static io.pdef.descriptors.InterfaceDescriptor<{{ name }}> DESCRIPTOR = io.pdef.descriptors.InterfaceDescriptor.<{{ name }}>builder()
-            .setJavaClass({{ name }}.class)
-        {% if exc %}
-            .setExc({{ exc.descriptor|jref }})
+    static io.pdef.descriptors.InterfaceDescriptor<{{ interface.name }}> DESCRIPTOR = io.pdef.descriptors.InterfaceDescriptor.<{{ interface.name }}>builder()
+            .setJavaClass({{ interface.name }}.class)
+        {% if interface.exc %}
+            .setExc({{ interface.exc|jdescriptor }})
         {% endif %}
-        {% for method in declared_methods %}
-            .addMethod(io.pdef.descriptors.MethodDescriptor.<{{ name }}, {{ method.result|jref }}>builder()
+        {% for method in interface.declared_methods %}
+            .addMethod(io.pdef.descriptors.MethodDescriptor.<{{ interface.name }}, {{ method.result|jref }}>builder()
                     .setName("{{ method.name }}")
-                    .setReflexiveInvoker({{ name }}.class)
+                    .setReflexiveInvoker({{ interface.name }}.class)
                 {% if method.result.is_interface %}
                     .setInterfaceResult({{ method.result|jref }}.class)
                 {% else %}
                     .setResult({{ method.result|jdescriptor }})
                 {% endif %}
-                {% if exc %}
-                    .setExc({{ exc|jdescriptor }})
+                {% if interface.exc %}
+                    .setExc({{ interface.exc|jdescriptor }})
                 {% endif %}
                 {% for arg in method.args %}
                     .addArg("{{ arg.name }}", {{ arg.type|jdescriptor }}, {{ arg.is_query|jbool }}, {{ arg.is_post|jbool }})

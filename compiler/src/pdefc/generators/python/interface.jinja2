@@ -1,10 +1,10 @@
-class {{ name }}(pdef.Interface):
-{% if doc %}
-    """{{ doc|pydoc|indent(4) }}"""
+class {{ interface.name }}(pdef.Interface):
+{% if interface.doc %}
+    """{{ interface.doc|pydoc|indent(4) }}"""
 
 {% endif %}
 
-{%- for method in declared_methods %}
+{%- for method in interface.declared_methods %}
     {% if method.args %}
     def {{ method.name }}(self, {% for arg in method.args -%}
             {{ arg.name }}=None
@@ -19,15 +19,17 @@ class {{ name }}(pdef.Interface):
         pass
 
 {% endfor %}
-    DESCRIPTOR = pdef.descriptors.interface(lambda: {{ name }},
-    {% if exc %}
-        exc=lambda: {{ exc|pydescriptor }},
+    DESCRIPTOR = pdef.descriptors.interface(lambda: {{ interface.name }},
+    {% if interface.exc %}
+        exc=lambda: {{ interface.exc|pydescriptor }},
     {% endif %}
-    {% if declared_methods %}
+    {% if interface.declared_methods %}
         methods=(
-        {% for method in declared_methods %}
+        {% for method in interface.declared_methods %}
             pdef.descriptors.method('{{ method.name }}', lambda: {{ method.result|pydescriptor}},
-                exc=lambda: {{ exc|pydescriptor }},
+            {% if interface.exc %}
+                exc=lambda: {{ interface.exc|pydescriptor }},
+            {% endif %}
             {% if method.is_post %}
                 is_post=True,
             {% endif %}

@@ -9,10 +9,10 @@ def proxy(interface, invocation_handler):
     The proxy captures method calls into chained invocations, and passes them
     to the handler on terminal methods.
 
-    @param interface:               Interface with a class DESCRIPTOR field.
+    @param interface:               Interface with a class descriptor field.
     @param invocation_handler:      callable(Invocation): InvocationResult.
     '''
-    descriptor = interface.DESCRIPTOR
+    descriptor = interface.descriptor
     return InvocationProxy(descriptor, invocation_handler)
 
 

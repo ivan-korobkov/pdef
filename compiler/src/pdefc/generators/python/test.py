@@ -143,7 +143,7 @@ class TestPythonFilters(unittest.TestCase):
 
         ref = self.filters.pyref(enum)
         assert ref.name == 'test.Number'
-        assert ref.descriptor == 'test.Number.DESCRIPTOR'
+        assert ref.descriptor == 'test.Number.descriptor'
 
     def test_pydefinition__message(self):
         def0 = Message('Message')
@@ -153,7 +153,7 @@ class TestPythonFilters(unittest.TestCase):
 
         ref = self.filters.pyref(def0)
         assert ref.name == 'test.Message'
-        assert ref.descriptor == 'test.Message.DESCRIPTOR'
+        assert ref.descriptor == 'test.Message.descriptor'
 
     def test_pydefinition__interface(self):
         def0 = Interface('Interface')
@@ -163,7 +163,7 @@ class TestPythonFilters(unittest.TestCase):
 
         ref = self.filters.pyref(def0)
         assert ref.name == 'test.Interface'
-        assert ref.descriptor == 'test.Interface.DESCRIPTOR'
+        assert ref.descriptor == 'test.Interface.descriptor'
 
     def test_pydefinition__in_current_module(self):
         def0 = Message('Message')
@@ -174,4 +174,4 @@ class TestPythonFilters(unittest.TestCase):
         self.filters.current_module = module
         ref = self.filters.pyref(def0)
         assert ref.name == 'Message'
-        assert ref.descriptor == 'Message.DESCRIPTOR'
+        assert ref.descriptor == 'Message.descriptor'

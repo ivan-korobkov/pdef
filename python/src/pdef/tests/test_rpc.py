@@ -77,28 +77,28 @@ class TestRpcProtocol(unittest.TestCase):
     def test_get_invocation(self):
         request = RpcRequest(path='/method/1/2/')
 
-        invocation = self.protocol.get_invocation(request, TestInterface.DESCRIPTOR)
+        invocation = self.protocol.get_invocation(request, TestInterface.descriptor)
         assert invocation.method.name == 'method'
         assert invocation.kwargs == {'arg0': 1, 'arg1': 2}
 
     def test_get_invocation__query_method(self):
         request = RpcRequest(path='/query', query={'arg0': '1', 'arg1': '2'})
 
-        invocation = self.protocol.get_invocation(request, TestInterface.DESCRIPTOR)
+        invocation = self.protocol.get_invocation(request, TestInterface.descriptor)
         assert invocation.method.name == 'query'
         assert invocation.kwargs == {'arg0': 1, 'arg1': 2}
 
     def test_get_invocation__post_method(self):
         request = RpcRequest(POST, path='/post', post={'arg0': '1', 'arg1': '2'},)
 
-        invocation = self.protocol.get_invocation(request, TestInterface.DESCRIPTOR)
+        invocation = self.protocol.get_invocation(request, TestInterface.descriptor)
         assert invocation.method.name == 'post'
         assert invocation.kwargs == {'arg0': 1, 'arg1': 2}
 
     def test_get_invocation__post_method_not_allowed(self):
         request = RpcRequest(GET, path='/post', post={})
         try:
-            self.protocol.get_invocation(request, TestInterface.DESCRIPTOR)
+            self.protocol.get_invocation(request, TestInterface.descriptor)
             self.fail()
         except RpcException as e:
             assert e.status == httplib.METHOD_NOT_ALLOWED
@@ -106,7 +106,7 @@ class TestRpcProtocol(unittest.TestCase):
     def test_get_invocation__chained_method_index(self):
         request = RpcRequest(path='/interface0/1/2/query', query={'arg0': '3'})
 
-        chain = self.protocol.get_invocation(request, TestInterface.DESCRIPTOR).to_chain()
+        chain = self.protocol.get_invocation(request, TestInterface.descriptor).to_chain()
         invocation0 = chain[0]
         invocation1 = chain[1]
 
@@ -120,7 +120,7 @@ class TestRpcProtocol(unittest.TestCase):
         request = RpcRequest(path='/interface0/1/2')
 
         try:
-            self.protocol.get_invocation(request, TestInterface.DESCRIPTOR)
+            self.protocol.get_invocation(request, TestInterface.descriptor)
             self.fail()
         except RpcException as e:
             assert e.status == httplib.NOT_FOUND
@@ -128,7 +128,7 @@ class TestRpcProtocol(unittest.TestCase):
     def test_get_invocation__urldecode_path_args(self):
         request = RpcRequest(path='/string0/%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82')
 
-        invocation = self.protocol.get_invocation(request, TestInterface.DESCRIPTOR)
+        invocation = self.protocol.get_invocation(request, TestInterface.descriptor)
         assert invocation.method.name == 'string0'
         assert invocation.kwargs == {'text': u'Привет'}
 
@@ -137,7 +137,7 @@ class TestRpcProtocol(unittest.TestCase):
     def test_from_json(self):
         message = TestMessage(string0=u'Привет', bool0=True, int0=123)
         json = message.to_json()
-        result = self.protocol._from_json(TestMessage.DESCRIPTOR, json)
+        result = self.protocol._from_json(TestMessage.descriptor, json)
 
         assert result == message
 
@@ -176,7 +176,7 @@ class TestRpcClient(unittest.TestCase):
         response._content = exc.to_json().encode('utf-8')
 
         try:
-            self.client._parse_response(response, descriptors.int32, TestException.DESCRIPTOR)
+            self.client._parse_response(response, descriptors.int32, TestException.descriptor)
             self.fail()
         except TestException as e:
             assert e == exc
@@ -224,7 +224,7 @@ class TestRpcHandler(unittest.TestCase):
         success, value, valued = self.handler(request)
         assert success is False
         assert value == e
-        assert valued is TestException.DESCRIPTOR
+        assert valued is TestException.descriptor
 
     def test_handle__unexpected_exception(self):
         self.service.method = Mock(side_effect=ValueError)

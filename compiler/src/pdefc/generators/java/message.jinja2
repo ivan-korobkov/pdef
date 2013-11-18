@@ -20,7 +20,7 @@ public class {{ message.name }} extends {{ message|jmessage_base }} {
 
     public {{ message.name }}(final {{ message.name }} another) {
         super(another);
-    {% for field in message.declared_fields %}
+    {% for field in message.declared_fields if not field.is_discriminator %}
         {% if field.type.is_collection or field.type.is_message %}
         this.{{ field.name }} = io.pdef.DataTypes.copy(another.{{ field.name }});
         {% else %}

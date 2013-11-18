@@ -201,7 +201,7 @@ class PythonFilters(object):
             module_name = self.pymodule(type0.module)
             name = '%s.%s' % (module_name, type0.name)
 
-        descriptor = '%s.DESCRIPTOR' % name
+        descriptor = '%s.descriptor' % name
         return PythonRef(name, descriptor)
 
 

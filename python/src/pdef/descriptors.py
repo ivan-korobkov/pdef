@@ -72,7 +72,7 @@ class MessageDescriptor(DataTypeDescriptor):
 
     def find_subtype(self, type0):
         '''Return a subtype descriptor by a type enum value or self if not found.'''
-        _ = self.subtypes # Force loading subtypes.
+        _ = self.subtypes  # Force loading subtypes.
 
         subtype = self._subtype_map.get(type0)
         return subtype if subtype else self

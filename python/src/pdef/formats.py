@@ -14,14 +14,13 @@ class ObjectFormat(object):
             return None
 
         type0 = descriptor.type
-        Type = pdef.types.Type
-        to_object = self.to_object
-
-        if type0 in Type.PRIMITIVE_TYPES:
+        if type0 in pdef.types.Type.PRIMITIVE_TYPES:
             # This is for type checks.
             return descriptor.pyclass(obj)
 
-        elif type0 == Type.DATETIME:
+        to_object = self.to_object
+        Type = pdef.types.Type
+        if type0 == Type.DATETIME:
             if not isinstance(obj, datetime):
                 raise ValueError('Not a datetime object %r' % datetime)
             return obj
@@ -54,15 +53,16 @@ class ObjectFormat(object):
         if message is None:
             return None
 
-        result = OrderedDict()
+        result = {}
         serialize = self.to_object
-        descriptor = message.DESCRIPTOR  # Support polymorphic messages.
+        descriptor = message.descriptor  # Support polymorphic messages.
 
         for field in descriptor.fields:
-            value = field.get(message)
+            value = getattr(message, field.name)
             if value is None:
                 # Skip null fields.
                 continue
+
             result[field.name] = serialize(value, field.type)
 
         return result
@@ -128,7 +128,7 @@ class ObjectFormat(object):
                 continue
 
             parsed = from_object(serialized, field.type)
-            field.set(message, parsed)
+            setattr(message, field.name, parsed)
 
         return message
 

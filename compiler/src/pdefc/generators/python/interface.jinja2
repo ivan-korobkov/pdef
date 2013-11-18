@@ -19,7 +19,7 @@ class {{ interface.name }}(pdef.Interface):
         pass
 
 {% endfor %}
-    DESCRIPTOR = pdef.descriptors.interface(lambda: {{ interface.name }},
+    descriptor = pdef.descriptors.interface(lambda: {{ interface.name }},
     {% if interface.exc %}
         exc=lambda: {{ interface.exc|pydescriptor }},
     {% endif %}

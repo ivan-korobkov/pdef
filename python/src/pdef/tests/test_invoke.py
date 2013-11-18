@@ -9,14 +9,14 @@ from pdef_test.interfaces import TestInterface, TestException
 
 class TestInvocation(unittest.TestCase):
     def test_init(self):
-        method = descriptors.method('method', descriptors.void, exc=TestException.DESCRIPTOR,
+        method = descriptors.method('method', descriptors.void, exc=TestException.descriptor,
                                     args=(descriptors.arg('a', descriptors.int32),
                                           descriptors.arg('b', descriptors.int32)))
         invocation = Invocation(method, args=[1, 2])
 
         assert invocation.method is method
         assert invocation.kwargs == {'a': 1, 'b': 2}
-        assert invocation.exc is TestException.DESCRIPTOR
+        assert invocation.exc is TestException.descriptor
         assert invocation.result is method.result
 
     def test_next(self):
@@ -61,7 +61,7 @@ class TestInvocation(unittest.TestCase):
             def method(self):
                 raise TestException('Hello')
 
-        method = descriptors.method('method', descriptors.void, exc=TestException.DESCRIPTOR)
+        method = descriptors.method('method', descriptors.void, exc=TestException.descriptor)
         invocation = Invocation(method)
         service = Service()
 
@@ -89,7 +89,7 @@ class TestInvocation(unittest.TestCase):
 
     def test_deep_copy_args(self):
         method = descriptors.method('method', descriptors.void,
-            args=(descriptors.arg('arg0', descriptors.list0(TestMessage.DESCRIPTOR)),
+            args=(descriptors.arg('arg0', descriptors.list0(TestMessage.descriptor)),
                   descriptors.arg('arg1', descriptors.set0(descriptors.int32))
             ))
 
@@ -115,7 +115,7 @@ class TestInvocationProxy(unittest.TestCase):
         return proxy(TestInterface, lambda invocation: invocation)
 
     def test_ok(self):
-        proxy = InvocationProxy(TestInterface.DESCRIPTOR, lambda inv: 3)
+        proxy = InvocationProxy(TestInterface.descriptor, lambda inv: 3)
         assert proxy.method(1, 2) == 3
 
     def test_exc(self):
@@ -130,7 +130,7 @@ class TestInvocationProxy(unittest.TestCase):
             assert e == TestException('Hello')
 
     def test_proxy_method(self):
-        interface = TestInterface.DESCRIPTOR
+        interface = TestInterface.descriptor
         method = interface.find_method('method')
         handler = lambda inv: None
 
@@ -142,7 +142,7 @@ class TestInvocationProxy(unittest.TestCase):
         assert proxy_method.handler is handler
 
     def test_proxy_method_chain(self):
-        interface0 = TestInterface.DESCRIPTOR
+        interface0 = TestInterface.descriptor
         method0 = interface0.find_method('interface0')
         method1 = interface0.find_method('method')
         handler = lambda inv: None
@@ -157,7 +157,7 @@ class TestInvocationProxy(unittest.TestCase):
 
     def test_invocation_chain(self):
         handler = lambda inv: inv
-        proxy = InvocationProxy(TestInterface.DESCRIPTOR, handler)
+        proxy = InvocationProxy(TestInterface.descriptor, handler)
 
         invocation = proxy.interface0(1, 2).query()
         chain = invocation.to_chain()

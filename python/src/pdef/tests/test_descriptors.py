@@ -10,7 +10,7 @@ from pdef_test.interfaces import *
 
 class TestMessageDescriptor(unittest.TestCase):
     def test(self):
-        descriptor = TestMessage.DESCRIPTOR
+        descriptor = TestMessage.descriptor
 
         assert descriptor.pyclass is TestMessage
         assert descriptor.base is None
@@ -20,20 +20,20 @@ class TestMessageDescriptor(unittest.TestCase):
         assert len(descriptor.fields) == 3
 
     def test__nonpolymorphic_inheritance(self):
-        base = TestMessage.DESCRIPTOR
-        descriptor = TestComplexMessage.DESCRIPTOR
+        base = TestMessage.descriptor
+        descriptor = TestComplexMessage.descriptor
 
         assert descriptor.pyclass is TestComplexMessage
-        assert descriptor.base is TestMessage.DESCRIPTOR
+        assert descriptor.base is TestMessage.descriptor
         assert descriptor.inherited_fields == base.fields
         assert descriptor.fields == base.fields + descriptor.declared_fields
         assert len(descriptor.subtypes) == 0
 
     def test__polymorphic_inheritance(self):
-        base = Base.DESCRIPTOR
-        subtype = Subtype.DESCRIPTOR
-        subtype2 = Subtype2.DESCRIPTOR
-        msubtype = MultiLevelSubtype.DESCRIPTOR
+        base = Base.descriptor
+        subtype = Subtype.descriptor
+        subtype2 = Subtype2.descriptor
+        msubtype = MultiLevelSubtype.descriptor
         discriminator = base.find_field('type')
 
         assert base.base is None
@@ -63,11 +63,11 @@ class TestMessageDescriptor(unittest.TestCase):
 
 
 class TestFieldDescriptor(unittest.TestCase):
-    field = TestMessage.DESCRIPTOR.find_field('string0')
+    field = TestMessage.descriptor.find_field('string0')
 
     def test(self):
-        string0 = TestMessage.DESCRIPTOR.find_field('string0')
-        bool0 = TestMessage.DESCRIPTOR.find_field('bool0')
+        string0 = TestMessage.descriptor.find_field('string0')
+        bool0 = TestMessage.descriptor.find_field('bool0')
 
         assert string0.name == 'string0'
         assert string0.type is descriptors.string0
@@ -76,10 +76,10 @@ class TestFieldDescriptor(unittest.TestCase):
         assert bool0.type is descriptors.bool0
 
     def test_discriminator(self):
-        discriminator = Base.DESCRIPTOR.find_field('type')
+        discriminator = Base.descriptor.find_field('type')
 
         assert discriminator.name == 'type'
-        assert discriminator.type is PolymorphicType.DESCRIPTOR
+        assert discriminator.type is PolymorphicType.descriptor
         assert discriminator.is_discriminator
 
     def test_set(self):
@@ -94,27 +94,27 @@ class TestFieldDescriptor(unittest.TestCase):
 
 class TestInterfaceDescriptor(unittest.TestCase):
     def test(self):
-        descriptor = TestInterface.DESCRIPTOR
+        descriptor = TestInterface.descriptor
         method = descriptor.find_method('method')
 
         assert descriptor.pyclass is TestInterface
-        assert descriptor.exc is TestException.DESCRIPTOR
+        assert descriptor.exc is TestException.descriptor
         assert len(descriptor.methods) == 11
         assert method
 
 
 class TestMethodDescriptor(unittest.TestCase):
     def test(self):
-        method = TestInterface.DESCRIPTOR.find_method('message0')
+        method = TestInterface.descriptor.find_method('message0')
 
         assert method.name == 'message0'
-        assert method.result is TestMessage.DESCRIPTOR
+        assert method.result is TestMessage.descriptor
         assert len(method.args) == 1
         assert method.args[0].name == 'msg'
-        assert method.args[0].type is TestMessage.DESCRIPTOR
+        assert method.args[0].type is TestMessage.descriptor
 
     def test_args(self):
-        method = TestInterface.DESCRIPTOR.find_method('method')
+        method = TestInterface.descriptor.find_method('method')
 
         assert len(method.args) == 2
         assert method.args[0].name == 'arg0'
@@ -123,7 +123,7 @@ class TestMethodDescriptor(unittest.TestCase):
         assert method.args[1].type is descriptors.int32
 
     def test_post_terminal(self):
-        descriptor = TestInterface.DESCRIPTOR
+        descriptor = TestInterface.descriptor
         method = descriptor.find_method('method')
         post = descriptor.find_method('post')
         interface = descriptor.find_method('interface0')
@@ -139,18 +139,18 @@ class TestMethodDescriptor(unittest.TestCase):
 
     def test_invoke(self):
         service = Mock()
-        method = TestInterface.DESCRIPTOR.find_method('method')
+        method = TestInterface.descriptor.find_method('method')
         method.invoke(service, 1, arg1=2)
         service.method.assert_called_with(1, arg1=2)
 
 
 class TestEnumDescriptor(unittest.TestCase):
     def test(self):
-        descriptor = TestEnum.DESCRIPTOR
+        descriptor = TestEnum.descriptor
         assert descriptor.values == ('ONE', 'TWO', 'THREE')
 
     def test_find_value(self):
-        descriptor = TestEnum.DESCRIPTOR
+        descriptor = TestEnum.descriptor
         assert descriptor.find_value('one') == TestEnum.ONE
         assert descriptor.find_value('TWO') == TestEnum.TWO
 

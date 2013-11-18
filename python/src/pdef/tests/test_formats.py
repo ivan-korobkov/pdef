@@ -4,6 +4,8 @@ import unittest
 from pdef import descriptors
 from pdef.formats import json_format
 from pdef_test import inheritance, messages
+from pdef_test.inheritance import MultiLevelSubtype
+from pdef_test.messages import TestComplexMessage
 
 
 class TestJsonFormat(unittest.TestCase):
@@ -42,26 +44,32 @@ class TestJsonFormat(unittest.TestCase):
         self._test(descriptors.datetime0, datetime(2013, 11, 17, 19, 12), '"2013-11-17T19:12:00Z"')
 
     def test_enum(self):
-        self._test(messages.TestEnum.DESCRIPTOR, messages.TestEnum.THREE, '"three"')
-        assert json_format.from_json('"tWo"', messages.TestEnum.DESCRIPTOR) == messages.TestEnum.TWO
+        self._test(messages.TestEnum.descriptor, messages.TestEnum.THREE, '"three"')
+        assert json_format.from_json('"tWo"', messages.TestEnum.descriptor) == messages.TestEnum.TWO
 
     def test_message(self):
-        message = self._complex_message()
-        self._test(messages.TestComplexMessage.DESCRIPTOR, message, self.MESSAGE_JSON)
+        msg0 = self._complex_message()
+        s = msg0.to_json()
+
+        result = TestComplexMessage.from_json(s)
+        assert msg0 == result
 
     def test_message__polymorphic(self):
-        message = self._polymorphic_message()
-        self._test(inheritance.Base.DESCRIPTOR, message, self.POLYMORPHIC_JSON)
+        msg0 = self._polymorphic_message()
+        s = msg0.to_json()
+
+        result = MultiLevelSubtype.from_json(s)
+        assert msg0 == result
 
     def test_message__skip_null_fields(self):
         message = messages.TestMessage(string0='hello')
-        assert json_format.to_json(message, messages.TestMessage.DESCRIPTOR) == '{"string0": "hello"}'
+        assert message.to_json() == '{"string0": "hello"}'
 
     def test_void(self):
         self._test(descriptors.void, None, 'null')
 
     def _complex_message(self):
-        return messages.TestComplexMessage(
+        return TestComplexMessage(
             string0="hello",
             bool0=True,
             int0=32,
@@ -84,29 +92,7 @@ class TestJsonFormat(unittest.TestCase):
                 mfield='mfield'))
 
     def _polymorphic_message(self):
-        return inheritance.MultiLevelSubtype(
+        return MultiLevelSubtype(
             field='field',
             subfield='subfield',
             mfield='mfield')
-
-    MESSAGE_JSON = '{"string0": "hello", ' \
-                   '"bool0": true, ' \
-                   '"int0": 32, ' \
-                   '"short0": 16, ' \
-                   '"long0": 64, ' \
-                   '"float0": 1.5, ' \
-                   '"double0": 2.5, ' \
-                   '"datetime0": "1970-01-01T00:00:00Z", ' \
-                   '"list0": [1, 2], ' \
-                   '"set0": [1, 2], ' \
-                   '"map0": {"1": 1.5}, ' \
-                   '"enum0": "three", ' \
-                   '"message0": {"string0": "hello", "bool0": true, "int0": 16}, ' \
-                   '"polymorphic": ' \
-                   '{"type": "multilevel_subtype", ' \
-                   '"field": "field", "subfield": "subfield", "mfield": "mfield"}}'
-
-    POLYMORPHIC_JSON = '{"type": "multilevel_subtype", ' \
-                       '"field": "field", ' \
-                       '"subfield": "subfield", ' \
-                       '"mfield": "mfield"}'

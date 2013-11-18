@@ -7,7 +7,7 @@
 
 	<groupId>io.pdef</groupId>
 	<artifactId>pdef</artifactId>
-	<version>1.0-beta4</version>
+	<version>1.0-beta5-SNAPSHOT</version>
 
 	<name>Pdef</name>
 	<description>Java bindings for pdef code-generated files</description>

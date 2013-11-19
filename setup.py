@@ -40,6 +40,11 @@ setup(
         'ply>=3.4',
         'PyYAML'
     ],
+
+    tests_require=[
+        'mock'
+    ],
+
     entry_points={
         'console_scripts': ['pdefc = pdefc:main'],
         'pdefc.generators': [

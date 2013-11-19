@@ -1,16 +1,8 @@
-.*
 *.pyc
 *.iml
+.idea
+.DS_Store
 
-compiler/build/
-compiler/dist/
-compiler/src/*.egg-info
-
-python/dist/
-python/build/
-python/src/*.egg-info
-python/src/pdef/rpc.py
-
-java/target/
-
-env/
+dist/
+build/
+*.egg-info

@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdefc.lang import Module
+from pdefc.lang import Module, Message
 from pdefc.lang.interfaces import *
 from pdefc.lang.types import NativeType
 
@@ -33,6 +33,7 @@ class TestInterface(unittest.TestCase):
         errors = iface.link(module)
         assert iface.module is module
         assert len(errors) == 3
+        assert iface.methods[0].interface is iface
 
     # validate_exc
 
@@ -56,6 +57,14 @@ class TestInterface(unittest.TestCase):
 
 
 class TestMethod(unittest.TestCase):
+    def test_exc(self):
+        exc = Message('Exception', is_exception=True)
+        method = Method('method')
+        interface = Interface('Interface', exc=exc, methods=[method])
+        method.link(interface)
+
+        assert method.exc is exc
+
     def test_validate__required_result(self):
         method = Method('method', result=None)
         errors = method.validate()

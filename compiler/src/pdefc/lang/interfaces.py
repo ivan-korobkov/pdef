@@ -50,7 +50,7 @@ class Interface(Definition):
         errors += self._exc.link(module.lookup)
 
         for method in self.methods:
-            errors += method.link(module)
+            errors += method.link(self)
 
         return errors
 
@@ -108,6 +108,10 @@ class Method(Located, Validatable):
 
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
+
+    @property
+    def exc(self):
+        return self.interface.exc if self.interface else None
 
     @property
     def result(self):

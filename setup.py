@@ -25,9 +25,6 @@ setup(
     author_email='ivan.korobkov@gmail.com',
 
     packages=['pdefc',
-              'pdefc.generators',
-              'pdefc.generators.java',
-              'pdefc.generators.python',
               'pdefc.lang'],
     package_dir={'': 'src'},
     package_data={
@@ -47,10 +44,7 @@ setup(
 
     entry_points={
         'console_scripts': ['pdefc = pdefc:main'],
-        'pdefc.generators': [
-            'java = pdefc.generators.java:JavaGenerator',
-            'python = pdefc.generators.python:PythonGenerator'
-        ]
+        'pdefc.generators': []
     },
 
     classifiers=[

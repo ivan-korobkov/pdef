@@ -7,7 +7,6 @@ from mock import Mock
 
 from pdefc.compiler import Compiler
 from pdefc.exc import CompilerException
-from pdefc.generators import java as java_generator
 from pdefc.lang.packages import PackageInfo
 from pdefc.sources import InMemorySource
 
@@ -65,19 +64,26 @@ class TestCompiler(unittest.TestCase):
         '''
 
         info = PackageInfo('test', modules=['test'])
-        package = self._fixture_package(info, {'test': module})
+        package_yaml = self._fixture_package_yaml(info, {'test': module})
         out = self._tempdir()
 
+        generator = Mock()
+        generator_factory = Mock(return_value=generator)
         compiler = Compiler()
-        compiler._generators = {'java': java_generator.JavaGenerator}
-        compiler.generate(package, 'java', out=out)
+        compiler._generators = {'test': generator_factory}
+        compiler.generate(package_yaml, 'test', out=out, namespace={'key': 'value'})
 
-        assert os.path.exists(os.path.join(out, 'test/TestMessage.java'))
+        generator_factory.assert_called_with(out, namespace={'key': 'value'})
+        args = generator.generate.call_args[0]
+        package = args[0]
+        assert package.name == 'test'
+        assert len(package.modules) == 1
+        assert package.modules[0].relative_name == 'test'
 
-    def _fixture_package(self, info, modules_to_sources):
+    def _fixture_package_yaml(self, info, modules_to_sources):
         directory = self._tempdir()
 
-        package = os.path.join(directory, 'test.package')
+        package = os.path.join(directory, 'test.yaml')
         with open(package, 'wt') as f:
             f.write(info.to_yaml())
 

@@ -5,11 +5,19 @@ import os
 import pkg_resources
 from jinja2 import Environment
 
-
 GENERATORS_ENTRY_POINT = 'pdefc.generators'
 
 
 class Generator(object):
+    '''Abstract code generator, subclass it and implement the generate method.
+
+    @param out          generated files destination (directory).
+    @param namespace    an optional {'pdef.package.module': 'language_module'} mapping.
+    '''
+    def __init__(self, out, namespace=None, **kwargs):
+        self.out = out
+        self.namespace = Namespace(namespace)
+
     def generate(self, package):
         raise NotImplementedError
 
@@ -29,9 +37,14 @@ def find_generators(entry_point=GENERATORS_ENTRY_POINT):
 class Templates(object):
     '''Templates class is a default Jinja templates loader relative to a directory or a file.
 
-    Example::
+    Get a template::
         >>> templates = Templates(__file__)
-        >>> templates.get('my_jinja.template')
+        >>> templates.get('my_jinja.jinja2')
+
+    Render a template::
+        >>> templates = Templates(__file__)
+        >>> templates.render('mytemplate.jinja2', key='value')
+
     '''
     def __init__(self, dir_or_file, filters=None):
         '''Create a templates loader relative to a directory or a file.'''
@@ -89,12 +102,13 @@ class Templates(object):
 
 class Namespace(object):
     '''Namespace class is a default namespace mapper, which maps pdef modules names to
-    prefix names.
+    language module names.
 
     Example::
         >>> namespace = Namespace({'pdef.tests': 'pdef_tests'})
         >>> namespace.map('pdef.tests.messages')
         >>> 'pdef_tests.messages'
+
     '''
     def __init__(self, namespace=None):
         self._namespace = dict(namespace) if namespace else {}

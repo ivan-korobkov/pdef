@@ -23,7 +23,7 @@ class TestCli(unittest.TestCase):
 
     def test_generate(self):
         args = ['generate', 'test.package']
-        args += ['--generator', 'python']
+        args += ['--generator', 'test']
         args += ['--out', 'destination']
         args += ['--ns', 'test:io.test']
         args += ['--ns', 'second:io.second']
@@ -31,13 +31,15 @@ class TestCli(unittest.TestCase):
         args += ['--include', 'third.package']
 
         compiler = Mock()
+        generator = Mock()
         factory = Mock(return_value=compiler)
         cli = Cli()
         cli._create_compiler = factory
+        cli._find_generators = lambda: {'test': generator}
         cli.run(args)
 
         factory.assert_called_with(['second.package', 'third.package'], False)
-        compiler.generate.assert_called_with('test.package', 'python', out='destination',
+        compiler.generate.assert_called_with('test.package', 'test', out='destination',
                                              namespace={'test': 'io.test', 'second': 'io.second'})
 
     def test_parse_namespace(self):

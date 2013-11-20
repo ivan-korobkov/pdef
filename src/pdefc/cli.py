@@ -18,6 +18,9 @@ class Cli(object):
     def _create_compiler(self, paths=None, allow_duplicate_definitions=False):
         return pdefc.create_compiler(paths, allow_duplicate_definitions=allow_duplicate_definitions)
 
+    def _find_generators(self):
+        return pdefc.find_generators()
+
     def run(self, argv=None):
         # Configure logging before the commands, because the latter
         # requires a functional logger.
@@ -107,12 +110,12 @@ class Cli(object):
         return compiler.generate(package, generator, out=out, namespace=namespace)
 
     def _generate_args(self, subparsers):
-        generator_names = list(pdefc.find_generators().keys())
+        generator_names = self._find_generators()
 
         parser = subparsers.add_parser('generate', help='generate source code from a package')
         parser.add_argument('package', help='path to a package yaml file')
         parser.add_argument('--generator', choices=generator_names, required=True,
-                            help='available: %s' % ', '.join(generator_names))
+                            help=', '.join(generator_names))
         parser.add_argument('--out', dest='out', required=True,
                             help='directory for generated files')
         parser.add_argument('--ns', dest='namespace', action='append', default=[],

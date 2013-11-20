@@ -110,17 +110,20 @@ class Cli(object):
         return compiler.generate(package, generator, out=out, namespace=namespace)
 
     def _generate_args(self, subparsers):
-        generator_names = self._find_generators()
+        generators = self._find_generators()
+        generator_names = list(generators.keys())
+        description = self._generators_description()
 
-        parser = subparsers.add_parser('generate', help='generate source code from a package')
+        parser = subparsers.add_parser('generate', description=description,
+                                       formatter_class=argparse.RawDescriptionHelpFormatter,
+                                       help='generate source code from a package')
         parser.add_argument('package', help='path to a package yaml file')
-        parser.add_argument('--generator', choices=generator_names, required=True,
-                            help=', '.join(generator_names))
+        parser.add_argument('--generator', choices=generator_names, required=True)
         parser.add_argument('--out', dest='out', required=True,
                             help='directory for generated files')
         parser.add_argument('--ns', dest='namespace', action='append', default=[],
-                            help='adds a namespace which maps pdef names '
-                                 'to generated names, i.e. "pdef.module:io.pdef.java"')
+                            help='adds a namespace which maps pdef modules '
+                                 'to generated modules, i.e. "pdef.module:io.pdef.java"')
         parser.add_argument('--include', dest='paths', action='append', default=[],
                             help='paths to package dependencies')
         parser.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
@@ -128,6 +131,30 @@ class Cli(object):
                             help='allow duplicate definition names in a package')
 
         parser.set_defaults(command_func=self._generate)
+
+    def _generators_description(self):
+        '''Return a generators description string.'''
+        generators = dict(self._find_generators())
+
+        description  = ['available generators:']
+
+        for name, generator in generators.items():
+            doc = generator.__doc__ or ''
+
+            first = True
+            for line in doc.splitlines():
+                if first:
+                    line = line.strip() or 'no description'
+                    description.append('  - %s: %s' % (name, line))
+                    first = False
+                elif line.strip():
+                    description.append(line)
+
+            if first:
+                description.append('  - %s: no description' % name)
+
+        description.append('\nmore generators: \n  see https://github.com/pdef/pdef')
+        return '\n'.join(description)
 
     def _parse_namespace(self, seq):
         if not seq:

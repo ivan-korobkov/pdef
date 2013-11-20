@@ -25,6 +25,19 @@ class TestInterface(unittest.TestCase):
         assert method.args[0].name == 'i0'
         assert method.args[1].name == 'i1'
 
+    def test_referenced_types(self):
+        exc = Message('Exception', is_exception=True)
+        iface = Interface('Interface', exc=exc)
+        iface.create_method('method', arg_tuples=[
+            ('arg0', NativeType.INT32), ('arg1', NativeType.INT64)
+        ])
+
+        assert len(iface.referenced_types) == 4
+        assert iface.referenced_types[0] == exc
+        assert iface.referenced_types[1] == NativeType.VOID
+        assert iface.referenced_types[2] == NativeType.INT32
+        assert iface.referenced_types[3] == NativeType.INT64
+    
     def test_link(self):
         module = Module('test')
         iface = Interface('Interface', exc='exc')

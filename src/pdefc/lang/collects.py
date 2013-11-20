@@ -12,10 +12,10 @@ class List(Type):
             raise TypeError('Element must be a definitions.Type instance, %r' % element)
 
     def __repr__(self):
-        return '<List %s>' % self.type
+        return '<List %s>' % self.element
 
     def __str__(self):
-        return 'list<%s>' % self.type
+        return 'list<%s>' % self.element
 
     def _validate(self):
         errors = []
@@ -36,10 +36,10 @@ class Set(Type):
             raise TypeError('Element must be a definitions.Type instance, %r' % element)
 
     def __repr__(self):
-        return '<Set %s>' % self.type
+        return '<Set %s>' % self.element
 
     def __str__(self):
-        return 'set<%s>' % self.type
+        return 'set<%s>' % self.element
 
     def _validate(self):
         errors = []

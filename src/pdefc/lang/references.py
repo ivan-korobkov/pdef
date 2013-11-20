@@ -42,6 +42,13 @@ class Reference(Located, Validatable):
         '''Link this reference in a provided callable lookup.'''
         return []
 
+    @property
+    def referenced_types(self):
+        '''Return a list of all referenced types in this reference.'''
+        if not self._type:
+            return []
+        return [self._type]
+
 
 class EmptyReference(Reference):
     '''EmptyReference is a sentinel for an absent type. It returns None when dereferenced'''
@@ -106,6 +113,12 @@ class ListReference(Reference):
             return []
         return self._type.validate()
 
+    @property
+    def referenced_types(self):
+        result = super(ListReference, self).referenced_types
+        result += self.element.referenced_types
+        return result
+
 
 class SetReference(Reference):
     '''SetReference has a child for an element, creates a set on linking.'''
@@ -139,6 +152,12 @@ class SetReference(Reference):
         if not self._type:
             return []
         return self._type.validate()
+
+    @property
+    def referenced_types(self):
+        result = super(SetReference, self).referenced_types
+        result += self.element.referenced_types
+        return result
 
 
 class MapReference(Reference):
@@ -176,3 +195,10 @@ class MapReference(Reference):
         if not self._type:
             return []
         return self._type.validate()
+
+    @property
+    def referenced_types(self):
+        result = super(MapReference, self).referenced_types
+        result += self.key.referenced_types
+        result += self.value.referenced_types
+        return result

@@ -59,6 +59,17 @@ class TestMessage(unittest.TestCase):
         assert msg0.fields == [type_field, field0]
         assert msg0.inherited_fields == [type_field]
 
+    def test_referenced_types(self):
+        number = Enum('Number')
+        one = number.create_value('ONE')
+
+        base = Message('Base')
+        message0 = Message('Message0')
+        message1 = Message('Message1', base=base, discriminator_value=one)
+        message1.create_field('field', message0)
+        
+        assert message1.referenced_types == [base, one, message0]
+
     # link.
 
     def test_link(self):

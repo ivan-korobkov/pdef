@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdefc.lang import collects, types, references, NativeType
+from pdefc.lang import collects, types, references, NativeType, TypeEnum
 
 
 class TestReference(unittest.TestCase):
@@ -48,6 +48,13 @@ class TestNameReference(unittest.TestCase):
 
         assert "Type not found 'module.Message'" in errors[0]
 
+    def test_referenced_types(self):
+        lookup = lambda name: name
+        ref = references.reference('module.Message')
+        ref.link(lookup)
+
+        assert ref.referenced_types == ['module.Message']
+
 
 class TestListReference(unittest.TestCase):
     def test_link(self):
@@ -74,6 +81,26 @@ class TestListReference(unittest.TestCase):
 
         assert len(errors) == 1
 
+    def test_referenced_types(self):
+        lookup = lambda name: NativeType.INT32
+        ref = references.ListReference('int32')
+        ref.link(lookup)
+
+        assert len(ref.referenced_types) == 2
+        assert ref.referenced_types[0].type == TypeEnum.LIST
+        assert ref.referenced_types[1] == NativeType.INT32
+
+    def test_referenced_types__recursive(self):
+        lookup = lambda name: NativeType.INT32
+        ref0 = references.ListReference('int32')
+        ref1 = references.ListReference(ref0)
+        ref1.link(lookup)
+
+        assert len(ref1.referenced_types) == 3
+        assert ref1.referenced_types[0].type == TypeEnum.LIST
+        assert ref1.referenced_types[1].type == TypeEnum.LIST
+        assert ref1.referenced_types[2] == NativeType.INT32
+
 
 class TestSetReference(unittest.TestCase):
     def test_link(self):
@@ -99,6 +126,17 @@ class TestSetReference(unittest.TestCase):
         errors = ref.validate()
 
         assert len(errors) == 1
+
+    def test_referenced_types__recursive(self):
+        lookup = lambda name: NativeType.INT32
+        ref0 = references.SetReference('int32')
+        ref1 = references.SetReference(ref0)
+        ref1.link(lookup)
+
+        assert len(ref1.referenced_types) == 3
+        assert ref1.referenced_types[0].type == TypeEnum.SET
+        assert ref1.referenced_types[1].type == TypeEnum.SET
+        assert ref1.referenced_types[2] == NativeType.INT32
 
 
 class TestMapReference(unittest.TestCase):
@@ -127,3 +165,17 @@ class TestMapReference(unittest.TestCase):
         errors = ref.validate()
 
         assert len(errors) == 2
+
+    def test_referenced_types__recursive(self):
+        lookup = lambda name: NativeType.INT32
+        ref0 = references.reference('int32')
+        ref1 = references.ListReference('int32')
+
+        ref2 = references.MapReference(ref0, ref1)
+        ref2.link(lookup)
+
+        assert len(ref2.referenced_types) == 4
+        assert ref2.referenced_types[0].type == TypeEnum.MAP
+        assert ref2.referenced_types[1] == NativeType.INT32
+        assert ref2.referenced_types[2].type == TypeEnum.LIST
+        assert ref2.referenced_types[3] == NativeType.INT32

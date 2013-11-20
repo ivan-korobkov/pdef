@@ -29,6 +29,18 @@ class Interface(Definition):
     def declared_methods(self):
         return self.methods
 
+    @property
+    def referenced_types(self):
+        result = []
+        result += self._exc.referenced_types
+
+        for method in self.methods:
+            result += method._result.referenced_types
+            for arg in method.args:
+                result += arg._type.referenced_types
+
+        return result
+
     def add_method(self, method):
         '''Add a method to this interface.'''
         self.methods.append(method)

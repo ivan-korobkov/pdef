@@ -33,6 +33,7 @@ class TypeEnum(object):
     DATA_TYPES = PRIMITIVE_TYPES + (LIST, SET, MAP, ENUM, MESSAGE)
     NATIVE_TYPES = PRIMITIVE_TYPES + (VOID, )
     COLLECTION_TYPES = (LIST, SET, MAP)
+    DEFINITION_TYPES = (ENUM, MESSAGE, INTERFACE)
 
     @classmethod
     def is_primitive(cls, type_enum):
@@ -53,16 +54,43 @@ class Type(Located, Validatable):
     def __init__(self, type0, location=None):
         self.type = type0
         self.location = location
-
-        self.is_primitive = self.type in TypeEnum.PRIMITIVE_TYPES
-        self.is_data_type = self.type in TypeEnum.DATA_TYPES
-        self.is_native = self.type in TypeEnum.NATIVE_TYPES
-        self.is_collection = TypeEnum.is_collection(self.type)
-
-        self.is_message = self.type == TypeEnum.MESSAGE
-        self.is_interface = self.type == TypeEnum.INTERFACE
-        self.is_enum = self.type == TypeEnum.ENUM
         self.is_exception = False
+
+    @property
+    def is_primitive(self):
+        return self.type in TypeEnum.PRIMITIVE_TYPES
+
+    @property
+    def is_data_type(self):
+        return self.type in TypeEnum.DATA_TYPES
+
+    @property
+    def is_native(self):
+        return self.type in TypeEnum.NATIVE_TYPES
+
+    @property
+    def is_collection(self):
+        return TypeEnum.is_collection(self.type)
+
+    @property
+    def is_definition(self):
+        return self.type in TypeEnum.DEFINITION_TYPES
+
+    @property
+    def is_message(self):
+        return self.type == TypeEnum.MESSAGE
+
+    @property
+    def is_interface(self):
+        return self.type == TypeEnum.INTERFACE
+
+    @property
+    def is_enum(self):
+        return self.type == TypeEnum.ENUM
+
+    @property
+    def is_enum_value(self):
+        return self.type == TypeEnum.ENUM_VALUE
 
     def __str__(self):
         return self.type
@@ -121,6 +149,11 @@ class Definition(Type):
 
     def __str__(self):
         return self.name
+
+    @property
+    def referenced_types(self):
+        '''Return a list of all types referenced in this definition (in fields, methods, etc).'''
+        return []
 
     def lookup(self, name):
         return self.module.lookup(name) if self.module else None

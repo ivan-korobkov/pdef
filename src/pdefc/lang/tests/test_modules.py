@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdefc.lang import AbsoluteImport, RelativeImport
+from pdefc.lang import AbsoluteImport, RelativeImport, Interface
 from pdefc.lang.types import Definition, TypeEnum
 from pdefc.lang.enums import Enum
 from pdefc.lang.modules import *
@@ -24,6 +24,26 @@ class TestModule(unittest.TestCase):
         module.add_definition(def0)
 
         assert module.get_definition('Test') is def0
+
+    def test_imported_definitions(self):
+        number = Enum('Number')
+        one = number.create_value('ONE')
+        base = Message('Base')
+        imported = Message('Imported')
+        module0 = Module('Module0', definitions=[number, base, imported])
+        module0.link()
+
+        message0 = Message('Message0', base=base)
+        message1 = Message('Message1', discriminator_value=one)
+        message1.create_field('field', message0)
+
+        interface = Interface('Interface')
+        interface.create_method('method', arg_tuples=[('arg', imported)])
+
+        module1 = Module('Module1', definitions=[message0, message1, interface])
+        module1.link()
+        result = module1.imported_definitions
+        assert result == {number, base, imported}
 
     # Lookup
 

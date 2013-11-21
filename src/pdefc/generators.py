@@ -1,11 +1,13 @@
 # encoding: utf-8
 import inspect
+import io
 import logging
 import os
 import pkg_resources
 from jinja2 import Environment
 
 GENERATORS_ENTRY_POINT = 'pdefc.generators'
+ENCODING = 'utf8'
 
 
 class Generator(object):
@@ -20,6 +22,20 @@ class Generator(object):
 
     def generate(self, package):
         raise NotImplementedError
+
+    def write_file(self, filename, text):
+        '''Write a text file to the output directory, filename can contain subdirectories.'''
+        # Join the filename with the destination directory.
+        filepath = os.path.join(self.out, filename)
+
+        # Create a directory with its children for a file.
+        dirpath = os.path.dirname(filepath)
+        mkdir_p(dirpath)
+
+        # Write the file contents.
+        with io.open(filepath, 'wt', encoding=ENCODING) as f:
+            f.write(text)
+        logging.info('Created %s', filepath)
 
 
 def find_generators(entry_point=GENERATORS_ENTRY_POINT):

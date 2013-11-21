@@ -155,6 +155,26 @@ class Definition(Type):
         '''Return a list of all types referenced in this definition (in fields, methods, etc).'''
         return []
 
+    @property
+    def imported_definitions(self):
+        '''Return a set of referenced definitions which are in imported modules.'''
+        result = set()
+
+        # Filter imported definitions.
+        for type0 in self.referenced_types:
+            if type0.is_enum_value:
+                type0 = type0.enum
+
+            if not type0.is_definition:
+                continue
+
+            if type0.module == self.module:
+                continue
+
+            result.add(type0)
+
+        return result
+
     def lookup(self, name):
         return self.module.lookup(name) if self.module else None
 

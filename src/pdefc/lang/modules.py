@@ -49,25 +49,11 @@ class Module(Validatable):
     @property
     def imported_definitions(self):
         '''Return a set of imported definitions.'''
-        referenced = set()
+        result = set()
         for def0 in self.definitions:
-            referenced.update(def0.referenced_types)
-
-        # Filter imported definitions.
-        imported = set()
-        for type0 in referenced:
-            if type0.is_enum_value:
-                type0 = type0.enum
-
-            if not type0.is_definition:
-                continue
-
-            if type0.module == self:
-                continue
-
-            imported.add(type0)
-
-        return imported
+            result.update(def0.imported_definitions)
+        
+        return result
 
     def _log_return_errors(self, errors):
         if not errors:

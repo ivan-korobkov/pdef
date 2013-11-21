@@ -39,7 +39,7 @@ class Interface(Definition):
             for arg in method.args:
                 result += arg._type.referenced_types
 
-        return result
+        return [t for t in result if t is not self]
 
     def add_method(self, method):
         '''Add a method to this interface.'''

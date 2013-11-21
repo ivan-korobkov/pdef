@@ -67,6 +67,7 @@ class TestMessage(unittest.TestCase):
         message0 = Message('Message0')
         message1 = Message('Message1', base=base, discriminator_value=one)
         message1.create_field('field', message0)
+        message1.create_field('self', message1)
         
         assert message1.referenced_types == [base, one, message0]
 

@@ -31,6 +31,7 @@ class TestInterface(unittest.TestCase):
         iface.create_method('method', arg_tuples=[
             ('arg0', NativeType.INT32), ('arg1', NativeType.INT64)
         ])
+        iface.create_method('self', result=iface)
 
         assert len(iface.referenced_types) == 4
         assert iface.referenced_types[0] == exc

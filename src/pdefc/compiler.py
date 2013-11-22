@@ -1,5 +1,6 @@
 # encoding: utf-8
 import logging
+import time
 
 import pdefc
 from pdefc.exc import CompilerException
@@ -33,9 +34,14 @@ class Compiler(object):
 
     def compile(self, package_path):
         '''Compile a package from a path.'''
-
+        t0 = time.time()
         source = self.sources.read_path(package_path)
-        return self._compile(source.name, compiled_map=set())
+        package = self._compile(source.name, compiled_map=set())
+
+        t1 = time.time()
+        t = (t1 - t0) * 1000
+        logging.info('Fetched and compiled %s in %dms', package.name, t)
+        return package
 
     def generate(self, package_path, generator_name, out, namespace=None):
         '''Generate a package from a path.'''
@@ -47,9 +53,13 @@ class Compiler(object):
         package = self.compile(package_path)
         namespace = namespace or {}
 
+        t0 = time.time()
         generator = factory(out, namespace=namespace)
         generator.generate(package)
-        logging.info('Generated %s code' % generator_name)
+
+        t1 = time.time()
+        t = (t1 - t0) * 1000
+        logging.info('Generated %s code in %dms', generator_name, t)
 
     def _compile(self, package_name, compiled_map):
         '''Compile and return a package with its dependencies, prevent circular dependencies.'''

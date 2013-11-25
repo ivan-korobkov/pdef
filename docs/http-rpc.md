@@ -12,15 +12,18 @@ Examples
 ========
 Interfaces and data structures used in the examples.
 ```pdef
+/** Root world interface. */
 @throws(WorldException)
 interface World {
     people() People;
 }
 
 interface People {
+    /** Login people by username/password, and return them.*/
     @post
-    login(userName string @query, password string @post);
+    login(username string @query, password string @post) Person;
 
+    /** Find people, return a list of people. */
     find(query string @query, limit int32 @query, offset int32 @query) list<Person>;
 }
 
@@ -43,13 +46,13 @@ exception InvalidDataException : WorldException(WorldExceptionCode.INVALID_DATA)
 ```
 
 <h3>Login a person</h3>
-`world.people().login("john.doe", "secret");`
+`worldClient.people().login("john.doe", "secret");`
 
 Send a POST HTTP request, because the method is marked as `@post`.
-Append the `userName` to the query string and the `password` to the post data
-because they are marked as `@post` and `@query` respectively.
+Append the `username` to the query string and the `password` to the post data
+because they are marked as `@query` and `@post` respectively.
 ```
-POST /people/login?userName=john.doe HTTP/1.0
+POST /people/login?username=john.doe HTTP/1.0
 Host: example.com
 Content-Type: application/x-www-form-urlencoded
 password=secret
@@ -69,13 +72,13 @@ Application exception response:
 HTTP/1.0 422 Unprocessable entity
 {
     "type": "auth_exception",
-    "text": "Wrong user name or password"
+    "text": "Wrong username or password"
 }
 ```
 
 
 <h3>Find people</h3>
-`world.people().find("John Doe", limit=10, offset=100)`
+`worldClient.people().find("John Doe", limit=10, offset=100)`
 
 Send a GET HTTP request, add the last method arguments to the query string because they are
 marked as `@query`.
@@ -137,7 +140,7 @@ For each method in an invocation chain:
     Append a method name to the request path;
 
     For each argument in a method:
-        Convert it into a JSON string, strip the quotes;
+        Convert it into a JSON string, strip the quotes.
         If the argument is @post:
             Url-encode it and add it ot the request post data with the argument name as a key.
         Else if the argument is @query:
@@ -149,7 +152,8 @@ For each method in an invocation chain:
 
 Send the HTTP request.
 Receive an HTTP response.
-Get the last method result type and the expected application exception type.
+Get the last method result type and the root interface exception type.
+(The root interface is the interface of the first method in an invocation chain).
 
 
 If the response status is 200 OK:
@@ -177,10 +181,8 @@ Split the request path on '/' into a list of parts.
 
 Get the root interface.
 Create an empty invocation chain.
-While parts are not empty:
-    Remove the first string from the parts as a method name.
-
-    Find a method in an interface by its name.
+For each segment in path delimited by '/':
+    Find a method in an interface by the segment.
     If the method is not found:
         Return HTTP 404, 'Method is not found'.
 
@@ -195,27 +197,26 @@ While parts are not empty:
         Else if the argument is @query:
             Get it from the request query string.
         Else:
-            If the parts are empty:
+            If the remaining path segments are empty:
                 Return HTTP 404, 'Method not found, wrong number of arguments'.
-            Remove the first string from the parts as an argument.
+            Get the next segment from the remaining segments as an argument.
 
-        Url-decode it using the UTF-8 encoding.
-        If the expected argument type is a string:
-            Add the quotes back to the argument to get a valid JSON string.
-        Parse the argument as a JSON string.
-        Add it to the arguments list;
+        Url-decode the argument. If the expected argument type is a string,
+        enclose it in quotes to get a valid JSON string.
+        Parse the argument from a JSON string and add it to the arguments lists.
 
     Create a new invocation of the method with the parsed arguments.
     Add it to the invocation chain.
 
     If the method is terminal (returns a data type or is void):
-        Assert that the parts are empty.
+        Assert that the remaining path segments are empty.
         Otherwise return HTTP 404, 'Wrong invocation chain'.
     Else:
         The method is not terminal, so it must return an interface.
         Set the interface to the method result and continue.
 
-All parts are consumed.
+
+All path segements are consumed.
 If the invocation chain is empty:
     return HTTP 404, 'Methods required'
 
@@ -229,7 +230,7 @@ Invoke the invocation chain on your objects and get the result.
 If the result is successful:
     Serialize the result into a JSON UTF-8 string.
     Send it as HTTP 200 OK response with 'application/json;charset:utf-8' content type.
-Else if the result is an exception specified by the interface:
+Else if the result is an exception specified by the root interface:
     Serialize the exception into a JSON UTF-8 string.
     Send it as HTTP 422 Unprocessable entity response with 'application/json;charset-utf-8'
     content type.

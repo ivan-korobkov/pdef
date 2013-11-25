@@ -20,6 +20,7 @@ RESERVED = (
     "default",
     "defined",
     "descriptor",
+    "descriptors",
     "do",
     "elif",
     "else",

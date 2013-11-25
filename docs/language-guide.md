@@ -209,6 +209,8 @@ for example, in JSON a field can be `null` or absent, and these ways are equival
 - `double`: a 64-bit floating point number
 - `string`: a unicode string
 - `datetime`: a date and time object without timezone.
+- `void`: used in a method without result, it is not a data type or a primitive but is included
+  here.
 
 <h3>Containers</h3>
 Containers are generic strongly typed containers.
@@ -274,7 +276,7 @@ message User {
     name        string;
     age         int32;
     profile     Profile;
-    friends     set<User>; // References a message it is declared it.
+    friends     set<User>; // References a message it is declared in.
 }
 
 /** Example exception. */
@@ -385,7 +387,7 @@ message PhotoUploaded : Event(EventType.PHOTO_UPLOADED) {
 Interfaces
 ----------
 An interface is a collection of strongly typed methods. Each method has a unique name,
-a number of or zero arguments, and a result. The result can be a data type or an
+a number of or zero arguments, and a result. The result can be a data type, `void` or an
 interface.
 
 **Terminal/interface methods.**
@@ -449,10 +451,15 @@ interface Users {
 
 /** Application posts. */
 interface Posts {
+    /** Creates a new post. */
     @post
     create(title string @post, text string @post) Post;
 
+    /** Returns a post by its id. */
     find(id int32) Post;
+
+    /** Like a post. */
+    like(postId int64) void;
 }
 
 /** Exception discriminator enum. */
@@ -479,7 +486,7 @@ These are notes for the code generator developers, others can skip.
 
 Generated code must contain static descriptors with definition meta-data which can reference
 other static descriptors. Message bases can be referenced directly because inheritance tree
-guarantees to serial module order. Fields, methods and arguments can use a simple late
+guarantees serial module order. Fields, methods and arguments can use a simple late
 referencing technique via lambdas, closures, blocks, etc.
 
 Example:
@@ -498,7 +505,7 @@ class User(object):
 
 Java anonymous class implementation:
 ```java
-class User {
+public class User {
     public static final MessageDescriptor DESCRIPTOR = MessageDescriptor.builder()
         .addField(FieldDescriptor.builder()
             .setName("bestFriend")

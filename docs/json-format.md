@@ -1,5 +1,5 @@
 Pdef JSON format
-----------------
+================
 
 Pdef to JSON type mappings, all types are nullable.
 <table>

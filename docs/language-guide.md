@@ -480,6 +480,45 @@ exception NotFoundException : ExampleException(ExampleExceptionCode.NOT_FOUND);
 exception InvalidDataException : ExampleException(ExampleExceptionCode.INVALID_DATA);
 ```
 
+
+Interface exceptions
+--------------------
+Exceptions are specified per interfaces. Each interface can have only one application exception
+which all its methods can raise. If a chained method interface specifies another exception,
+then it overrides the parent one, otherwise, the chained method inherits the parent exception.
+
+Exception inheritance:
+```pdef
+@throws(ParentException)
+interface Parent {
+    child() Child;
+}
+
+interface Child {
+    method() void;
+}
+```
+The `Child` interface does not specify an exception, so the expected application exception
+in an invocation chain `parent.child().method()` is inherited from the parent and is
+`ParentException`.
+
+
+Exception overriding:
+```pdef
+@throws(ParentException)
+interface Parent {
+    child() OverridingChild;
+}
+
+@throws(ChildException)
+interface OverridingChild {
+    method() void;
+}
+```
+The `OverridingChild` specifies its own exception, so the expected application exception
+in an invocation chain `parent.child().method()` is `ChildException`.
+
+
 Notes on circular reference implementation
 ------------------------------------------
 These are notes for the code generator developers, others can skip.

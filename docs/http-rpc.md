@@ -62,8 +62,10 @@ Successful response:
 ```
 HTTP/1.0 200 OK
 {
-    "id": 10,
-    "name": "John Doe"
+    "data: {
+        "id": 10,
+        "name": "John Doe"
+    }
 }
 ```
 
@@ -71,8 +73,10 @@ Application exception response:
 ```
 HTTP/1.0 422 Unprocessable entity
 {
-    "type": "auth_exception",
-    "text": "Wrong username or password"
+    "error": {
+        "type": "auth_exception",
+        "text": "Wrong username or password"
+    }
 }
 ```
 
@@ -89,24 +93,28 @@ GET /people/find?query=John+Doe&limit=10&offset=100 HTTP1.0
 Successful response:
 ```
 HTTP/1.0 200 OK
-[
-    {
-        "id": 10,
-        "name": "John Doe"
-    },
-    {
-        "id": 22,
-        "name": "Another John Doe"
-    }
-]
+{
+    "data": [
+        {
+            "id": 10,
+            "name": "John Doe"
+        },
+        {
+            "id": 22,
+            "name": "Another John Doe"
+        }
+    ]
+}
 ```
 
 Application exception response:
 ```
 HTTP/1.0 422 Unprocessable entity
 {
-    "type": "invalid_data",
-    "text": "The world does not like your query"
+    "error": {
+        "type": "invalid_data",
+        "text": "The world does not like your query"
+    }
 }
 ```
 
@@ -124,8 +132,15 @@ HTTP Response
 -------------
 Responses must be returned as `application/json;charset=utf-8` strings. Successful invocation
 results must be returned as `HTTP 200 OK` responses. Application exceptions (specified in
-the application interface via `@throws`) must be returned
-as `HTTP 422 Unprocessable entity` responses.
+the application interface via `@throws`) must be returned as `HTTP 422 Unprocessable entity`
+responses. The response body must be a json object with `data` and `error` fields.
+`data` is filled with successful method results, `error` is filled with application exceptions.
+```json
+{
+    "data": "Successful method result",
+    "error": "Application exception"
+}
+```
 
 Sending an invocation
 ---------------------
@@ -158,13 +173,13 @@ Get the last method result type and the application exception type.
 
 
 If the response status is 200 OK:
-    Parse the expected result from a JSON string body.
+    Parse the expected result from the `data` field of a JSON object.
     Return the result.
 Else if the response status is 422 Unprocessable entity:
     If there is no expected application type:
         Raise an exception 'Unknown application exception'
     Else:
-        Parse the expected application exception from a JSON string body.
+        Parse the expected application exception from the `error` field of a JSON object.
         Raise the application exception (or return it to the user other ways).
 Else:
     Raise an HTTP error.
@@ -228,10 +243,12 @@ If the last method in an invocation chain is not terminal:
 Invoke the invocation chain on your objects and get the result.
 
 If the result is successful:
-    Serialize the result into a JSON UTF-8 string.
+    Create a JSON object with the `data` field set to the result.
+    Serialize the JSON object into a UTF-8 string.
     Send it as HTTP 200 OK response with 'application/json;charset:utf-8' content type.
 Else if the result is an application exception specified in the application interface:
-    Serialize the exception into a JSON UTF-8 string.
+    Create a JSON object with the `error` field set to the exception.
+    Serialize the JSON object into a UTF-8 string.
     Send it as HTTP 422 Unprocessable entity response with 'application/json;charset-utf-8'
     content type.
 Else:

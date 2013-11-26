@@ -25,8 +25,8 @@ Pdef to JSON type mappings, all types are nullable.
     </tr>
     <tr>
         <td>datetime</td>
-        <td>string encoded as ISO8601 UTC datetime `yyyy-MM-ddTHH:mmZ`</td>
-        <td>`"2013-11-26T17:59Z"`</td>
+        <td>string encoded as ISO8601 UTC datetime `yyyy-MM-ddTHH:mm:ssZ`</td>
+        <td>`"2013-11-26T17:59:00Z"`</td>
     </tr>
     <tr>
         <td>list</td>

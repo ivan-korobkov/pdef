@@ -71,14 +71,6 @@ class TestInterface(unittest.TestCase):
 
 
 class TestMethod(unittest.TestCase):
-    def test_exc(self):
-        exc = Message('Exception', is_exception=True)
-        method = Method('method')
-        interface = Interface('Interface', exc=exc, methods=[method])
-        method.link(interface)
-
-        assert method.exc is exc
-
     def test_validate__required_result(self):
         method = Method('method', result=None)
         errors = method.validate()

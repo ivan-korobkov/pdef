@@ -122,10 +122,6 @@ class Method(Located, Validatable):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
     @property
-    def exc(self):
-        return self.interface.exc if self.interface else None
-
-    @property
     def result(self):
         return self._result.dereference()
 

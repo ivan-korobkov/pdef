@@ -124,13 +124,15 @@ HTTP Response
 -------------
 Responses must be returned as `application/json;charset=utf-8` strings. Successful invocation
 results must be returned as `HTTP 200 OK` responses. Application exceptions (specified in
-interfaces via `@throws`) must be returned as `HTTP 422 Unprocessable entity` responses.
+the application interface via `@throws`) must be returned
+as `HTTP 422 Unprocessable entity` responses.
 
 Sending an invocation
 ---------------------
 ```
-Assert that the last method in an invocation chain is terminal.
-It must expect a data type as a result or be void.
+Given an invocation chain and an application interface (the root interface).
+Assert that the last method in an invocation chain is terminal
+(its result is a data type or it is void).
 
 If the last method in an invocation chain is @post:
     Set the request HTTP method to POST
@@ -152,8 +154,7 @@ For each method in an invocation chain:
 
 Send the HTTP request.
 Receive an HTTP response.
-Get the last method result type and the root interface exception type.
-(The root interface is the interface of the first method in an invocation chain).
+Get the last method result type and the application exception type.
 
 
 If the response status is 200 OK:
@@ -172,14 +173,13 @@ Else:
 Handling an invocation
 ----------------------
 ```
-Receive an HTTP request.
+Given an HTTP request and an application interface (the root interface).
 
 # Parse the invocation.
 Strip '/' from the HTTP request path (here the request path is not a full URL path,
 but an application specific path, such as CGI PATH_INFO, etc).
 Split the request path on '/' into a list of parts.
 
-Get the root interface.
 Create an empty invocation chain.
 For each segment in path delimited by '/':
     Find a method in an interface by the segment.
@@ -216,7 +216,7 @@ For each segment in path delimited by '/':
         Set the interface to the method result and continue.
 
 
-All path segements are consumed.
+All path segments are consumed.
 If the invocation chain is empty:
     return HTTP 404, 'Methods required'
 
@@ -230,7 +230,7 @@ Invoke the invocation chain on your objects and get the result.
 If the result is successful:
     Serialize the result into a JSON UTF-8 string.
     Send it as HTTP 200 OK response with 'application/json;charset:utf-8' content type.
-Else if the result is an exception specified by the root interface:
+Else if the result is an application exception specified in the application interface:
     Serialize the exception into a JSON UTF-8 string.
     Send it as HTTP 422 Unprocessable entity response with 'application/json;charset-utf-8'
     content type.

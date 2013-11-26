@@ -403,12 +403,6 @@ accessors. HTTP RPC sends these methods as POST requests.
 **@post and @query args.** Terminal method arguments can be marked as `@post` or `@query`,
 so that HTTP RPC can send them as URL query args or as post form args.
 
-**Exceptions.**
-An interface can specify an exception all its methods can throw via `@throws(Exception)`.
-It is impossible to specify different exceptions for different methods in an interface.
-In an invocation chain child invocations *inherit a parent interface exception*
-if they do no declare their own.
-
 *Constraints:*
 
 - Methods must have unique names.
@@ -483,40 +477,56 @@ exception InvalidDataException : ExampleException(ExampleExceptionCode.INVALID_D
 
 Interface exceptions
 --------------------
-Exceptions are specified per interfaces. Each interface can have only one application exception
-which all its methods can raise. If a chained method interface specifies another exception,
-then it overrides the parent one, otherwise, the chained method inherits the parent exception.
+There can be only one exception per application specified at its root interface
+via `@throws(Exception)`. It is impossible to specify different exceptions for different methods
+or child interfaces. All child interface exceptions are ignored.
 
-Exception inheritance:
+One exception per application is a simple and an unambiguous way to deal with exception.
+However, applications usually use a lot of different exceptions. There are two possible
+ways to implement them.
+
+Polymorphic exceptions, when all exceptions subclass a base application exception.
 ```pdef
-@throws(ParentException)
-interface Parent {
-    child() Child;
+@throws(AppException)
+interface Application {
+    users() Users;
+    photos() Photos;
+    search() Search;
 }
 
-interface Child {
-    method() void;
+enum AppExceptionCode {
+    AUTH_EXC,
+    VALIDATION_EXC,
+    FORBIDDEN_EXC
 }
+
+exception AppException {
+    type AppExceptionCode @discriminator;
+}
+exception AuthExc : AppException(AppExceptionCode.AUTH_EXC)
+exception ValidationExc : AppException(AppExceptionCode.VALIDATION_EXC)
+exception ForbiddenExc : AppException(AppExceptionCode.FORBIDDEN_EXC)
 ```
-The `Child` interface does not specify an exception, so the expected application exception
-in an invocation chain `parent.child().method()` is inherited from the parent and is
-`ParentException`.
 
-
-Exception overriding:
+Root composite exception which wraps service exceptions, clients use the first non-null field
+(this requires custom invocation logic, not implemented in the official clients/servers).
 ```pdef
-@throws(ParentException)
-interface Parent {
-    child() OverridingChild;
+@throws(AppException)
+interface Application {
+    users() Users;
+    photos() Photos;
+    search() Search;
 }
 
-@throws(ChildException)
-interface OverridingChild {
-    method() void;
+exception AppException {
+    auth        AuthExc;
+    validation  ValidationExc;
+    forbidden   ForbiddenExc;
 }
+exception AuthExc : AppException(AppExceptionCode.AUTH_EXC)
+exception ValidationExc : AppException(AppExceptionCode.VALIDATION_EXC)
+exception ForbiddenExc : AppException(AppExceptionCode.FORBIDDEN_EXC)
 ```
-The `OverridingChild` specifies its own exception, so the expected application exception
-in an invocation chain `parent.child().method()` is `ChildException`.
 
 
 Notes on circular reference implementation

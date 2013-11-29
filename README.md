@@ -9,6 +9,17 @@ data structures once and then to generate code and RPC clients/servers for diffe
 It is suitable for public APIs, internal service-oriented APIs, configuration files,
 as a format for persistence, cache, message queues, logs, etc.
 
+Links
+-----
+- [Language guide](docs/language-guide.md)
+- [Style guide](docs/style-guide.md)
+- [Code generators](docs/code-generators.md)
+- [JSON format](docs/json-format.md)
+- [HTTP RPC](docs/http-rpc.md)
+- [Grammar BNF](docs/grammar.bnf)
+- [Generated and language specific code](docs/generated-lang-specific-code.md)
+- [How to write a code generator](docs/how-to-write-code-generator.md)
+
 Features
 --------
 - Clear separation between data structures and interfaces.
@@ -21,6 +32,67 @@ Features
   (with some limitations to support interpreted languages).
 - Loosely-coupled format and RPC implementations, with JSON and a simple HTTP RPC as the defaults.
 - Pluggable code generators.
+
+Code generators
+---------------
+- [Java](https://github.com/pdef/pdef-java)
+- [Python](https://github.com/pdef/pdef-python)
+- [Objective-C](https://github.com/pdef/pdef-objc)
+
+Installation
+------------
+Pdef consists of a compiler, pluggable code generators, and language-specific bindings.
+Install the compiler as a python package:
+```bash
+pip install pdef-compiler
+# or
+easy_install pdef-compiler
+```
+
+Or [download](https://github.com/pdef/pdef/releases) the archive, unzip it and run:
+```bash
+python setup.py install
+```
+
+Install the code generators:
+```bash
+pip install pdef-java
+pip install pdef-python
+pip install pdef-objc
+```
+
+Check the test package (no source code is generated):
+```bash
+pdefc check https://raw.github.com/pdef/pdef/master/test/test.yaml
+```
+
+List the installed generators
+```bash
+pdefc generate -h
+```
+
+Generate Python code:
+```bash
+pdefc generate https://raw.github.com/pdef/pdef/master/test/test.yaml \
+    --generator python
+    --out generated
+```
+
+Generate Java code:
+```bash
+pdefc generate https://raw.github.com/pdef/pdef/master/test/test.yaml \
+    --generator java
+    --ns pdef_test:io.pdef
+    --out target/generated-sources
+```
+
+Generate Objective-C code:
+```bash
+pdefc -v generate https://raw.github.com/pdef/pdef/master/test/test.yaml \
+    --generator objc \
+    --out GeneratedClasses
+```
+
 
 License and Copyright
 ---------------------
@@ -37,5 +109,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
-See the LICENSE.txt for a copy of the License.

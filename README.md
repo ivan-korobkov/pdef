@@ -16,6 +16,8 @@ Contents
 - [Code generators](#code-generators)
 - [Installation](#installation)
 - [Examples](#examples)
+    - [Pdef example](#pdef-example)
+    - [Curl example](#curl-example)
     - [Java example](#java-example)
     - [Python example](#python-example)
     - [Objective-C example](#objective-c-example)
@@ -90,22 +92,21 @@ pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
     --out generated
 ```
 
-Generate Objective-C code:
-```bash
-pdefc -v generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
-    --generator objc \
-    --out GeneratedClasses
-```
-
 Examples
 --------
-See the full [example package](https://github.com/pdef/pdef/tree/master/example).
-```pdef
-/**
- * Example world.
- */
-from world import continents, space;    // Import two modules from a package.
+Sources:
 
+- [world.yaml](https://github.com/pdef/pdef/tree/master/example/example.yaml) (package)
+- [world.pdef](https://github.com/pdef/pdef/tree/master/example/world.pdef)
+- [continents.pdef](https://github.com/pdef/pdef/tree/master/example/continents.yaml)
+- [space.pdef](https://github.com/pdef/pdef/tree/master/example/space.yaml)
+
+
+### Pdef example
+
+Interfaces:
+```pdef
+from world import continents, space;    // Import two modules from a package.
 
 /**
  * The world interface.
@@ -125,7 +126,6 @@ interface World {
     events(limit int32 @query, offset int64 @query) list<Event>;
 }
 
-
 interface Humans {
     /** Finds a human by id. */
     find(id int64) Human;
@@ -137,17 +137,30 @@ interface Humans {
 
     /** Creates a human. */
     @post  // A post method (a mutator).
-    create(
-        name string @post,
-        sex Sex @post) Human;
+    create(human Human @post) Human;
+}
+```
+
+Enums:
+```pdef
+enum Sex {
+    MALE, FEMALE, UNCLEAR;
 }
 
+// An discriminator.
+enum EventType {
+    HUMAN_EVENT,
+    HUMAN_CREATED,
+    HUMAN_DIED;
+}
+```
 
+Messages:
+```pdef
 message Thing {                     // A simple message definition.
     id          int64;              // an id field of the int64 type.
     location    space.Location;
 }
-
 
 /** Human is a primate of the family Hominidae, and the only extant species of the genus Homo. */
 message Human : Thing {             // A message with a base message and a docstring.
@@ -156,19 +169,10 @@ message Human : Thing {             // A message with a base message and a docst
     sex         Sex;
     continent   continents.Continent;
 }
+```
 
-enum Sex {
-    MALE, FEMALE, UNCLEAR;
-}
-
-// An enumeration.
-enum EventType {
-    HUMAN_EVENT,
-    HUMAN_CREATED,
-    HUMAN_DIED;
-}
-
-
+Polymorphic inheritance:
+```pdef
 // A polymorphic message with EventType as its discriminator.
 message Event {
     type    EventType @discriminator;
@@ -176,20 +180,53 @@ message Event {
     time    datetime;
 }
 
-
 // A polymorphic subtype.
 message HumanEvent : Event(EventType.HUMAN_EVENT) {
     human   Human;
 }
-
 
 // Multi-level polymorphic messages.
 message HumanCreated : HumanEvent(EventType.HUMAN_CREATED) {}
 message HumanDied : HumanEvent(EventType.HUMAN_DIED) {}
 ```
 
-Java example
-------------
+### Curl example
+Pdef uses an [HTTP RPC](docs/http-rpc.md) with a [JSON format](docs/json-format.md)
+which are easy to use without specially generated clients. These are examples,
+there is no real server
+
+Create a new human:
+```
+$ curl -F human="{\"id\": 1, \"name\":\"John\"}" http://example.com/world/humans/create
+{
+    "data": {
+        "id": 1,
+        "name": "John"
+    }
+}
+```
+
+Switch the light:
+```
+$ curl -X POST http://example.com/world/switchTheLight
+{
+    "data": null
+}
+```
+
+List people:
+```
+$ curl "http://example.com/world/humans/all?limit=2&offset=10"
+{
+    "data": [
+        {"id": 11, "name": "John"},
+        {"id": 12, "name": "Jane"}
+    ]
+}
+```
+
+
+### Java example
 Generate the code:
 ```bash
 pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
@@ -235,8 +272,7 @@ RpcServlet<World> servlet = new RpcServlet<World>(handler);
 // or wrap in another servlet as a delegate.
 ```
 
-Python example
---------------
+### Python example
 Generate the code:
 ```bash
 pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
@@ -252,7 +288,6 @@ human.continent = ContinentName.AFRICA
 
 # Serialize a human to a JSON string.
 json = human.to_json()
-print json
 ```
 
 Client:
@@ -277,6 +312,57 @@ wsgi_app = pdef.wsgi_app(handler)
 # Pass it to a WSGI-server.
 ```
 
+### Objective-C Example
+Generate the code:
+```bash
+pdefc -v generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
+    --generator objc \
+    --out GeneratedClasses
+```
+
+JSON:
+```objectivec
+// Create a new human.
+Human *human = [[Human alloc]init];
+human.id = 1;
+human.name = @"John";
+human.sex = Sex_MALE;
+human.continent = ContinentName_EUROPE;
+
+// Serialize a human to JSON data.
+NSError *error = nil;
+NSData *humanData = [human toJsonError:&error];
+
+// Parse a human from JSON data.
+Human *human2 = [[Human alloc] initWithJson:humanData error:&error];
+```
+
+Client:
+```objectivec
+// Create an HTTP RPC client;
+PDRpcClient *client = [[PDRpcClient alloc] initWithDescriptor:WorldDescriptor()
+                                                      baseUrl:@"http://example.com/world"];
+WorldClient *world = [[WorldClient alloc] initWithHandler:client];
+
+// Switch the light.
+[world switchDayNightCallback:^(id result, NSError *error) {
+    NSLog(@"Switched the light");
+}];
+
+// List the first ten people.
+[[world humans] allLimit:10 offset:0 callback:^(id result, NSError *error) {
+    if (error) {
+        NSLog(@"%@", error.localizedDescription);
+    } else {
+        NSArray *humans = result;
+        for (Human *h in humans) {
+            NSLog(@"%@", h.name);
+        }
+    }
+}];
+```
+
+Objective-C does not have a server implementation.
 
 License and Copyright
 ---------------------

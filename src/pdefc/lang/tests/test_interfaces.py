@@ -103,7 +103,14 @@ class TestMethod(unittest.TestCase):
         method.create_arg('arg', NativeType.INT32, is_post=True)
 
         errors = method.validate()
-        assert 'argument can be @post only when the method is @post' in errors[0]
+        assert '@post arguments can be declared only in @post methods' in errors[0]
+
+    def test_validate__prevent_query_when_method_post(self):
+        method = Method('method', is_post=True)
+        method.create_arg('arg', NativeType.INT32, is_query=True)
+
+        errors = method.validate()
+        assert '@query arguments can be declared only in terminal non-post methods' in errors[0]
 
 class TestMethodArg(unittest.TestCase):
     def test_link(self):

@@ -186,15 +186,24 @@ class Method(Located, Validatable):
                 errors.append(self._error('%s: duplicate argument "%s"', self, arg.name))
             names.add(arg.name)
 
+        # Validate post/query arguments.
+        is_post = self.is_post
+        is_nonpost_terminal = not is_post and self.is_terminal
+        for arg in self.args:
+            if arg.is_post and not is_post:
+                errors.append(self._error(
+                    '%s: @post arguments can be declared only in @post methods', self))
+                break
+
+            elif arg.is_query and not is_nonpost_terminal:
+                errors.append(
+                    self._error('%s: @query arguments can be declared only in terminal non-post '
+                                'methods', self))
+                break
+
+        # Validate arguments.
         for arg in self.args:
             errors += arg.validate()
-
-        # Prevent @post arguments when the method is not @post.
-        if not self.is_post:
-            for arg in self.args:
-                if arg.is_post:
-                    errors.append(
-                        self._error('%s: argument can be @post only when the method is @post', arg))
 
         return errors
 

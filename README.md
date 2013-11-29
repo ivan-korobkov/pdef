@@ -1,11 +1,12 @@
 Pdef - Headers for the web
 ==========================
-Pdef is an interface definition language with clear separation between data structures and
-interfaces, support for object-oriented APIs and message inheritance with JSON as the default
-format and a simple HTTP RPC. Pdef has been influenced by Google Protobuf and Apache Thrift.
+Pdef is a statically typed interface definition language with clear separation between data
+structures and interfaces, support for object-oriented APIs and message inheritance with JSON as
+the default format and a simple HTTP RPC.
 
-Pdef (pi:def) stands for "protocol definition [language]". It is suitable for public
-client/server APIs, internal service-oriented APIs, configuration files,
+Pdef (pi:def) stands for "protocol definition [language]". It allows to write interfaces and
+data structures once and then to generate code and RPC clients/servers for different languages.
+It is suitable for public APIs, internal service-oriented APIs, configuration files,
 as a format for persistence, cache, message queues, logs, etc.
 
 Features

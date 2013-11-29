@@ -1,7 +1,7 @@
 Pdef JSON format
 ================
-
-Pdef to JSON type mappings, all types are nullable.
+Pdef is not strictly JSON-compatible in a way that it requires serialization to JSON
+of all types, not only object/array types. Pdef to JSON type mappings, all types are nullable.
 <table>
     <tr>
         <th>Pdef type</th>
@@ -40,7 +40,8 @@ Pdef to JSON type mappings, all types are nullable.
     </tr>
     <tr>
         <td>map</td>
-        <td>object with map keys converted to strings</td>
+        <td>object, string keys must be used as is, all other primitives must be converted to
+        json strings</td>
         <td>`{"key": "value"}`, `{"-1": "a"}`</td>
     </tr>
     <tr>

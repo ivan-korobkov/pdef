@@ -7,20 +7,139 @@ data structures once and then to generate code and rpc clients/servers for diffe
 
 Contents
 --------
-- [Packages]
-- [Modules]
-    - [Imports]
-- [Comments]
-- [Types overview]
-- [Data types]:
-    - Primitives
-    - Containers
-    - Enums
-    - Messages and exceptions
-        - Simple inheritance
-        - Polymorphic inheritance
-- [Interfaces]
-- [Notes on circular reference implementation]
+- [Syntax](#syntax)
+    - [Comments](#comments)
+- [Packages](#packages)
+- [Modules](#modules)
+    - [Imports](#imports)
+    - [Circular imports and references](#circular-imports-and-references)
+- [Types](#types)
+    - [Void](#void)
+    - [Data types](#data-types):
+        - [Primitives](#primitives)
+        - [Containers](#containers)
+        - [Enums](#enums)
+        - [Messages and exceptions](#messages-and-exceptions)
+        - [Inheritance](#inheritance)
+        - [Polymorphic inheritance](#polymorphic-inheritance)
+    - [Interfaces](#interfaces)
+    - [Interface exceptions](#interface-exceptions)
+- [On circular reference implementation](#on-circular-reference-implementation)
+
+
+Syntax
+------
+Pdef syntax is similar to Java/C++ with the inverted type/identifier order in fields and arguments.
+The first is the identifier the second is the type. All identifiers must start with a latin
+letter and contain only latin letters, digits and underscores.
+See the [grammar](grammar.bnf).
+
+```pdef
+/**
+ * This is a multi-line module docstring.
+ * It is available to the code generators.
+ */
+from world import continents, space;    // Import two modules from a package.
+
+
+/**
+ * The world interface.
+ * A god-like person can use it to rule the world.
+ */
+interface World {
+    /** Returns the humans interface. */
+    humans() Humans;                    // Returns another interface.
+
+    /** Returns the continents interface. */
+    continents() continents.Continents; // Returns an interface from another module.
+
+    /** Switches the light. */
+    switchDayNight() void;
+
+    /** Returns the last world events, the events are polymorphic. */
+    events(limit int32 @query, offset int64 @query) list<Event>;
+}
+
+
+interface Humans {
+    /** Finds a human by id. */
+    find(id int64) Human;
+
+    /** Lists all people. */
+    list(limit int32 @query, offset int32 @query) list<Human>;  // A method with query arguments.
+
+    /** Creates a human. */
+    @post
+    create(name string @post) Human;  // A post method (a mutator).
+}
+
+
+message Thing {                     // A simple message definition.
+    id          int64;              // an id field of the int64 type.
+    location    space.Location;
+}
+
+
+/** Human is a primate of the family Hominidae, and the only extant species of the genus Homo. */
+message Human : Thing {             // A message with a base message and a docstring.
+    name        string;
+    birthday    datetime;
+    continent   continents.Continent;
+}
+
+
+// An enumeration.
+enum EventType {
+    HUMAN_EVENT,
+    HUMAN_CREATED,
+    HUMAN_DIED;
+}
+
+
+// A polymorphic message with EventType as its discriminator.
+message Event {
+    type    EventType @discriminator;
+    id      int32;
+    time    datetime;
+}
+
+
+// A polymorphic subtype.
+message HumanEvent : Event(EventType.HUMAN_EVENT) {
+    human   Human;
+}
+
+
+// Multi-level polymorphic messages.
+message HumanCreated : UserEvent(EventType.HUMAN_CREATED) {}
+message UserDied : UserEvent(EventType.HUMAN_DIED) {}
+```
+
+
+### Comments
+There are two types of comments: single-lines and multi-line docstrings.
+Docstrings can be placed at the beginning of a file, before a definition (enum, message,
+interface) or before a method.
+
+```pdef
+/**
+ * This is a multi-line module docstring.
+ * It is a available to the code generators.
+ */
+
+// This is a one line comment, it is stripped from the source code.
+
+/** Method docstring. */
+interface ExampleInterface {
+    /** Method docstring. */
+    hello(name string) string;  // Takes a single argument and returns a string.
+}
+
+/** Message docstring. */
+message ExampleMessage {
+    id  int32;
+}
+```
 
 
 Packages
@@ -34,6 +153,8 @@ Package file:
 ```yaml
 package:
   name: example
+  version: 1.0-dev
+  url: https://github.com/pdef/pdef/
   description: Example application
 
   modules:
@@ -61,9 +182,10 @@ Package file structure:
 ./users/profile.pdef
 ```
 
-*Contraints:*
+*Constraints:*
 
-- All names must start with a latin letter and contain only latin letters, digits and underscores.
+- Package and module names must start with a latin letter and contain only latin letters,
+  digits and underscores.
 - Package names must be unique.
 - Module names must be unique in a package.
 - Circular package dependencies are forbidden.
@@ -71,7 +193,7 @@ Package file structure:
 One file as a package definition with enumerated modules is convenient,
 you can pass it as a URL directly to the compiler.
 ```bash
-# Dowloads, compiles and validates the test pdef package.
+# Downloads, compiles and validates the test pdef package.
 # Does not generate any code.
 pdefc check https://raw.github.com/pdef/pdef/master/test/test.yaml
 ```
@@ -84,12 +206,12 @@ Module names are automatically mapped to file names:
 the dot is replaced with a path separator `/` plus a `.pdef` extension.
 So, `users.events` module is mapped to a `./users/events.pdef` file.
 
-A **absolute module name** is a concatenation of its package name with its relative name. So
-the absolute name of `users.events` from the previous example is `example.users.events`.
+A **absolute module name** is a concatenation of a package name with a module name.
+The absolute name of `users.events` from the previous example is `example.users.events`.
 A module can import other modules by their absolute names.
 
 When a *module name matches its package name*, the absolute module name is the package name.
-So `example` is an absolute name of the `example` module, **not** `example.example`.
+`example` is an absolute name of the `example` module, **not** `example.example`.
 
 Example module:
 ```
@@ -111,13 +233,12 @@ enum Sex {
 ```
 
 
-Imports
--------
+### Imports
 A module can import other modules to access their definitions. Imports must be specified
-at the top of a file before definitions. Modules can only be imported by their absolute name,
+at the top of a file before definitions. Modules can only be imported by their absolute names,
 even inside the same package. There are two ways to import modules.
 
-The first one is to import a module by its absolute name.
+The first one is use an absolute module name.
 ```
 import package.module.name;
 
@@ -126,7 +247,7 @@ message NeedMessageFromAnotherModule {
 }
 ```
 
-The second is to import submodules from a package or from a module.
+The second is to import submodules from a package or a module.
 ```
 from package import module;
 from package.module import submodule0, submodule1;
@@ -146,22 +267,22 @@ message MyMessage {
   access its submodules as `module.submodule`. You need to directly import the `submodule`.
 
 
-Circular imports and references
--------------------------------
+### Circular imports and references
 Circular imports are allowed. However, there are some constraints to support scripting languages.
 Interpreted languages require a serial execution order. Some things can be postponed via lazy
-referencing, but inheritance cannot. So two modules can import each other as long as
-the messages from the first one do not inherit the messages from the second one and vice versa.
-The same is with enum discriminators (see [Polymorphic inheritance]). Usually,
-this case is very rare, and this constraint almost never affects development. However,
-if you encounter it, break one module into multiple ones.
+referencing, but inheritance cannot.
 
-Circular references are allowed, even self-references are allowed. They are supported
-in almost all languages using different techniques such as forward referencing in C and
-Objective-C, absolute module names and late referencing in Python, etc.
-See [Notes on circular reference implementation].
+Two modules can import each other as long as the messages from the first one *do not inherit* the
+messages from the second one and vice versa
+(see [polymorphic inheritance](#polymorphic-inheritance)). Usually, this case is very rare,
+and it almost never affects development. However, if you encounter it,
+break one module into multiple ones.
 
-Possible circular import and reference example:
+Circular references are allowed, even self-references are allowed. They can be implemented
+in almost all languages via forward referencing, lazy loading, etc.
+See [On circular reference implementation](#on-circular-reference-implementation).
+
+Circular import and reference example:
 
 `users.pdef`
 ```
@@ -184,23 +305,20 @@ message Photo {
 ```
 
 
-
-Types overview
---------------
+Types
+-----
 Pdef has a simple, yet powerful type system. It is built on a clear separation between
-data types and interfaces. It differs from modern object-oriented languages,
-which combine data and behaviour. In Pdef data types represent serializable values,
-and interfaces provide behaviour. However, Pdef still can be used to create clean object-oriented
- APIs (see [interfaces]).
+data types and interfaces. In Pdef data types represent serializable values,
+and interfaces provide behaviour.
 
+### Void
+`void` is a special type which indicates that a method returns no result.
 
-Data types
-----------
+### Data types
 All data types are *nullable*. It is up to a format how to represent null values,
-for example, in JSON a field can be `null` or absent, and these ways are equivalent
+for example, in JSON a field can be `null` or absent.
 
-
-<h3>Primitives</h3>
+#### Primitives
 - `bool`: a boolean value (true/false)
 - `int16`: a signed 16-bit integer
 - `int32`: a signed 32-bit integer
@@ -208,35 +326,33 @@ for example, in JSON a field can be `null` or absent, and these ways are equival
 - `float`: a 32-bit floating point number
 - `double`: a 64-bit floating point number
 - `string`: a unicode string
-- `datetime`: a date and time object without timezone.
-- `void`: used in a method without result, it is not a data type or a primitive but is included
-  here.
+- `datetime`: a date and time object without a time zone.
 
-<h3>Containers</h3>
+#### Containers
 Containers are generic strongly typed containers.
 
 - `list` is an ordered list of elements. An element must be a **data type**.
 - `set` is an unordered set of unique elements. An element must be a **data type**.
 - `map` is an unordered key-value container (a dict in some languages). A key must be a
-**primitive**, a value must be a **data type**.
+**non-null primitive**, a value must be a **data type**.
 
 ```pdef
-message ContainersExample {
+message Containers {
     numbers     list<int32>;
     tweets      list<Tweet>;
 
     ids         set<int64>;
     colors      set<Color>;
 
-    user_names  map<int64, string>;
+    userNames   map<int64, string>;
     photos      map<string, Photo>;
 }
 ```
 
 
-<h3>Enums</h3>
+#### Enums
 Enum is a collection of unique predefined string values. Enums are also used as discriminator
-values in polymorphic inheritance, see [polymorphic inheritance].
+values in polymorphic inheritance, see [polymorphic inheritance](#polymorphic-inheritance).
 
 ```pdef
 enum Sex {
@@ -252,16 +368,16 @@ enum EventType {
 }
 ```
 
-Enums backwards compatibility. Sometimes an enum specifies a collection which can be
-extended in the future. For example, it can be a type of a newsfeed article. So some
-clients or services can known only previous enum values, but not the new ones. In this case,
-**unknown enum values must be deserialized as nulls**.
+**Unknown enum values are deserialized as nulls**. In some languages enums are represented as
+numbers (not as nullabe objects). In this case, a code generator must create a default
+`UNDEFINED` enum value (and set it to `0` if possible).
 
 
-<h3>Messages and exceptions</h3>
+#### Messages and exceptions
 Message (an equivalent to a struct) is collection of strongly typed fields. Each field has a
-unique name and a type. Messages support [simple] and [polymorphic inheritance].
-Exceptions are special messages which can be used in interfaces to declare raised exceptions.
+unique name and a type. Messages support [simple](#inheritance)
+and [polymorphic inheritance](#polymorphic-inheritance).
+Messages marked as `exceptions` can be used in interfaces to declare thrown exceptions.
 
 *Constraints:*
 
@@ -286,20 +402,21 @@ exception UserNotFound {
 ```
 
 
-<h4>Simple inheritance</h4>
-Simple inheritances allow one message to inherit the fields from another message. However,
-in simple inheritance there is no polymorphic serialization/deserialization. In other words,
-subtypes cannot be deserialized from a base type.
+#### Inheritance
+Inheritances allow one message/exception to inherit the fields from another message/exception.
+However, in simple inheritance there is no polymorphic serialization/deserialization:
+subtypes cannot be deserialized from a base type,
+see [polymorphic inheritance](#polymorphic-inheritance).
 
 *Constraints:*
 
-- A message can have only one base.
 - Circular inheritance is forbidden.
+- A message can have only one base.
 - A message cannot override its base fields.
 - Both a message and its base must be either exceptions or messages.
   One cannot inherit an exception from a message, or a message from an exception.
 - A base must be declared before a subtype and cannot be imported from a dependent module
-  (see [dependent modules]).
+  (see [circular imports and references](#circular-imports-and-references)).
 
 ```pdef
 message EditableUser {
@@ -323,10 +440,10 @@ message UserWithDetails : User {
 ```
 
 
-<h4>Polymorphic inheritance</h4>
-Polymorphic inheritance allow to serialize/deserialize subtypes from a base type.
- A base with all its subtypes form an *inheritance tree*. A subtype can also inherit another
- subtype to form *multi-level inheritance*. To create a polymorphic message:
+##### Polymorphic inheritance
+Polymorphic inheritance allow to polymorphic serialization/deserialization of subtypes
+from a base type. A base with all its subtypes form an *inheritance tree*. A subtype can also
+inherit another subtype to form *multi-level inheritance*. To create a polymorphic message:
 
 - Define an `enum` which will serve as a discriminator.
 - Add a field of this enum type to a base message and mark it as a `@discriminator`.
@@ -340,10 +457,8 @@ Polymorphic inheritance allow to serialize/deserialize subtypes from a base type
 - There can be only one `@discriminator` field per inheritance tree.
 - Each subtype must have a specified unique discriminator value.
 - A base must be declared before subtypes and cannot be imported from a dependent module
-  (see [dependent modules]).
-- A message cannot inherit a polymorphic message (a base or a subtype)
-  without specifying a discriminator value. In other words, simple inheritance is forbidden
-  with polymorphic messages.
+  (see [circular imports and references](#circular-imports-and-references)).
+- A non-polymorphic message cannot inherit a polymorphic message.
 - All simple inheritance constraints.
 
 ```pdef
@@ -357,11 +472,11 @@ enum EventType {
 
 /** Base event with a discriminator field. */
 message Event {
-    type   EventType @discriminator;
+    type   EventType @discriminator;    // The type field marked as @discriminator
     time   datetime;
 }
 
-/** Base user event with a specified base and a discriminator value. */
+/** Base user event. */
 message UserEvent : Event(EventType.USER_EVENT) {
     user    User;
 }
@@ -384,34 +499,31 @@ message PhotoUploaded : Event(EventType.PHOTO_UPLOADED) {
 ```
 
 
-Interfaces
-----------
+### Interfaces
 An interface is a collection of strongly typed methods. Each method has a unique name,
 a number of or zero arguments, and a result. The result can be a data type, `void` or an
 interface.
 
-**Terminal/interface methods.**
-A method is called a *terminal method* when it returns a data type or is `void`.
-A method is called an *interface method* when it returns another interface.
-Multiple chained interface methods form an *invocation chain*,
-i.e. `client.users().register("John Doe")`. The last method of an invocation chain
-must be a terminal one.
+A method is called a **terminal method** when it returns a data type or is `void`.
+A method is called an **interface method** when it returns another interface.
+Multiple chained methods form an **invocation chain**, i.e. `example.users().register("John Doe")`.
 
-**@post methods.** Terminal methods can be marked as `@post` to distinguish between mutators and
-accessors. HTTP RPC sends these methods as POST requests.
-
-**@post and @query args.** Terminal method arguments can be marked as `@post` or `@query`,
-so that HTTP RPC can send them as URL query args or as post form args.
+Terminal methods can be marked as `@post` to distinguish between mutators and
+accessors. HTTP RPC sends these methods as POST requests. Non-post terminal methods can have
+`@query` arguments sent as an HTTP URL query. `@post` methods can have `@post` arguments
+sent as an HTTP POST form.
 
 *Constraints:*
 
 - Methods must have unique names.
 - Arguments must have unique names.
 - An argument must be of a data type.
-- Only terminal methods can have `@query` arguments.
-- Only `@post` terminal methods can have `@post` arguments.
-- An argument cannot be `@post` and `@query` at the same time.
+- Only terminal methods can be `@post`.
+- Only `@post` methods can have `@post` arguments.
+- Only non-post terminal methods can have `@query` arguments
+  (i.e. `@post` and `@query` arguments can't be mixed in one method).
 - Interfaces do not support inheritance (at least now).
+- The last method of an invocation chain must be a terminal one.
 
 ```pdef
 /** Example application interface. */
@@ -475,8 +587,7 @@ exception InvalidDataException : ExampleException(ExampleExceptionCode.INVALID_D
 ```
 
 
-Interface exceptions
---------------------
+### Interface exceptions
 There can be only one exception per application specified at its root interface
 via `@throws(Exception)`. It is impossible to specify different exceptions for different methods
 or child interfaces. All child interface exceptions are ignored.
@@ -503,40 +614,42 @@ enum AppExceptionCode {
 exception AppException {
     type AppExceptionCode @discriminator;
 }
-exception AuthExc : AppException(AppExceptionCode.AUTH_EXC)
-exception ValidationExc : AppException(AppExceptionCode.VALIDATION_EXC)
-exception ForbiddenExc : AppException(AppExceptionCode.FORBIDDEN_EXC)
+exception AuthExc : AppException(AppExceptionCode.AUTH_EXC) {}
+exception ValidationExc : AppException(AppExceptionCode.VALIDATION_EXC) {}
+exception ForbiddenExc : AppException(AppExceptionCode.FORBIDDEN_EXC) {}
 ```
 
-Root composite exception which wraps service exceptions, clients use the first non-null field
+A composite exception which wraps service exceptions; clients use the first non-null field
 (this requires custom invocation logic, not implemented in the official clients/servers).
 ```pdef
 @throws(AppException)
 interface Application {
     users() Users;
     photos() Photos;
-    search() Search;
 }
 
 exception AppException {
-    auth        AuthExc;
+    auth        AuthException;
     validation  ValidationExc;
-    forbidden   ForbiddenExc;
+    user        UserException;
+    photo       PhotoException;
 }
-exception AuthExc : AppException(AppExceptionCode.AUTH_EXC)
-exception ValidationExc : AppException(AppExceptionCode.VALIDATION_EXC)
-exception ForbiddenExc : AppException(AppExceptionCode.FORBIDDEN_EXC)
+exception AuthException {}
+exception ValidationException {}
+exception UserException {}
+exception PhotoException {}
 ```
 
 
-Notes on circular reference implementation
-------------------------------------------
+On circular reference implementation
+------------------------------------
 These are notes for the code generator developers, others can skip.
 
-Generated code must contain static descriptors with definition meta-data which can reference
-other static descriptors. Message bases can be referenced directly because inheritance tree
-guarantees serial module order. Fields, methods and arguments can use a simple late
-referencing technique via lambdas, closures, blocks, etc.
+Generated code must contain static descriptors with definition meta-data which reference
+other static descriptors. Message base descriptors can be referenced directly because
+the compiler guarantees serial definition and module order in inheritance trees. Fields,
+methods and arguments can use a simple lazy referencing technique via lambdas, closures, blocks,
+etc.
 
 Example:
 ```pdef

@@ -154,7 +154,7 @@ class Module(Validatable):
         For example: a imports b, b imports c;
         a._get_import_path_with(c) => [a, b, c]
         '''
-        if another is None:
+        if another is None or another is self:
             return []
 
         # BFS

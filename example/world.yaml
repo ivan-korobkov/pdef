@@ -1,0 +1,9 @@
+package:
+  name: world
+  url: https://github.com/pdef/pdef
+  verion: 0.1
+  description: World example
+  modules:
+    - continents
+    - space
+    - world

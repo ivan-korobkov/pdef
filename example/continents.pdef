@@ -1,0 +1,27 @@
+/** World continents module. */
+import world;
+from world import space;
+
+
+enum ContinentName {
+    ASIA,
+    AFRICA,
+    NORTH_AMERICA,
+    SOUTH_AMERICA,
+    ANTARCTICA,
+    EUROPE,
+    AUSTRALIA;
+}
+
+message Continent {
+    name        ContinentName;
+    areaInKmSq  double;
+    center      space.Location;
+    humans      list<world.Human>;
+}
+
+interface Continents {
+    all() set<Continent>;
+
+    move(name ContinentName, to space.Location) void;
+}

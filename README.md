@@ -13,12 +13,11 @@ Links
 -----
 - [Language guide](docs/language-guide.md)
 - [Style guide](docs/style-guide.md)
-- [Code generators](docs/code-generators.md)
 - [JSON format](docs/json-format.md)
 - [HTTP RPC](docs/http-rpc.md)
-- [Grammar BNF](docs/grammar.bnf)
+- [Grammar in BNF](docs/grammar.bnf)
 - [Generated and language specific code](docs/generated-lang-specific-code.md)
-- [How to write a code generator](docs/how-to-write-code-generator.md)
+- [How to write a code generator](https://github.com/pdef/pdef-generator-template)
 
 Features
 --------
@@ -63,24 +62,24 @@ pip install pdef-objc
 
 Check the test package (no source code is generated):
 ```bash
-pdefc check https://raw.github.com/pdef/pdef/master/test/test.yaml
+pdefc check https://raw.github.com/pdef/pdef/master/example/world.yaml
 ```
 
-List the installed generators
+List the installed generators:
 ```bash
 pdefc generate -h
 ```
 
 Generate Python code:
 ```bash
-pdefc generate https://raw.github.com/pdef/pdef/master/test/test.yaml \
+pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
     --generator python
     --out generated
 ```
 
 Generate Java code:
 ```bash
-pdefc generate https://raw.github.com/pdef/pdef/master/test/test.yaml \
+pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
     --generator java
     --ns pdef_test:io.pdef
     --out target/generated-sources
@@ -88,11 +87,94 @@ pdefc generate https://raw.github.com/pdef/pdef/master/test/test.yaml \
 
 Generate Objective-C code:
 ```bash
-pdefc -v generate https://raw.github.com/pdef/pdef/master/test/test.yaml \
+pdefc -v generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
     --generator objc \
     --out GeneratedClasses
 ```
 
+Example
+-------
+See the full [example package](https://github.com/pdef/pdef/tree/master/example).
+```pdef
+/**
+ * This is a multi-line module docstring.
+ * It is available to the code generators.
+ */
+from world import continents, space;    // Import two modules from a package.
+
+
+/**
+ * The world interface.
+ * A god-like person can use it to rule the world.
+ */
+interface World {
+    /** Returns the humans interface. */
+    humans() Humans;                    // Returns another interface.
+
+    /** Returns the continents interface. */
+    continents() continents.Continents; // Returns an interface from another module.
+
+    /** Switches the light. */
+    switchDayNight() void;
+
+    /** Returns the last world events, the events are polymorphic. */
+    events(limit int32 @query, offset int64 @query) list<Event>;
+}
+
+
+interface Humans {
+    /** Finds a human by id. */
+    find(id int64) Human;
+
+    /** Lists all people. */
+    list(limit int32 @query, offset int32 @query) list<Human>;  // A method with query arguments.
+
+    /** Creates a human. */
+    @post
+    create(name string @post) Human;  // A post method (a mutator).
+}
+
+
+message Thing {                     // A simple message definition.
+    id          int64;              // an id field of the int64 type.
+    location    space.Location;
+}
+
+
+/** Human is a primate of the family Hominidae, and the only extant species of the genus Homo. */
+message Human : Thing {             // A message with a base message and a docstring.
+    name        string;
+    birthday    datetime;
+    continent   continents.Continent;
+}
+
+
+// An enumeration.
+enum EventType {
+    HUMAN_EVENT,
+    HUMAN_CREATED,
+    HUMAN_DIED;
+}
+
+
+// A polymorphic message with EventType as its discriminator.
+message Event {
+    type    EventType @discriminator;
+    id      int32;
+    time    datetime;
+}
+
+
+// A polymorphic subtype.
+message HumanEvent : Event(EventType.HUMAN_EVENT) {
+    human   Human;
+}
+
+
+// Multi-level polymorphic messages.
+message HumanCreated : UserEvent(EventType.HUMAN_CREATED) {}
+message UserDied : UserEvent(EventType.HUMAN_DIED) {}
+```
 
 License and Copyright
 ---------------------

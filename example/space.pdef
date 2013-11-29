@@ -1,0 +1,6 @@
+/** World space module. */
+
+message Location {
+    lat double;
+    lng double;
+}

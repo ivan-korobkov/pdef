@@ -9,6 +9,18 @@ data structures once and then to generate code and RPC clients/servers for diffe
 It is suitable for public APIs, internal service-oriented APIs, configuration files,
 as a format for persistence, cache, message queues, logs, etc.
 
+Contents
+--------
+- [Links](#links)
+- [Features](#features)
+- [Code generators](#code-generators)
+- [Installation](#installation)
+- [Examples](#examples)
+    - [Java example](#java-example)
+    - [Python example](#python-example)
+    - [Objective-C example](#objective-c-example)
+- [License-and-copyright](#license-and-copyright)
+
 Links
 -----
 - [Language guide](docs/language-guide.md)
@@ -70,19 +82,12 @@ List the installed generators:
 pdefc generate -h
 ```
 
-Generate Python code:
-```bash
-pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
-    --generator python
-    --out generated
-```
-
-Generate Java code:
+Generate some code:
 ```bash
 pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
     --generator java
-    --ns pdef_test:io.pdef
-    --out target/generated-sources
+    --ns world:com.company.world
+    --out generated
 ```
 
 Generate Objective-C code:
@@ -92,8 +97,8 @@ pdefc -v generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
     --out GeneratedClasses
 ```
 
-Example
--------
+Examples
+--------
 See the full [example package](https://github.com/pdef/pdef/tree/master/example).
 ```pdef
 /**
@@ -183,8 +188,16 @@ message HumanCreated : HumanEvent(EventType.HUMAN_CREATED) {}
 message HumanDied : HumanEvent(EventType.HUMAN_DIED) {}
 ```
 
-Java
-----
+Java example
+------------
+Generate the code:
+```bash
+pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
+    --generator java
+    --ns pdef_test:io.pdef
+    --out target/generated-sources
+```
+
 JSON:
 ```java
 // Read a human from a JSON string or stream.
@@ -204,7 +217,7 @@ World world = client.proxy();
 // Create a man.
 Human man = world.humans().create(new Human()
         .setId(1)
-        .setName("Man")
+        .setName("John")
         .setSex(Sex.MALE)
         .setContinent(ContinentName.ASIA));
 
@@ -221,6 +234,49 @@ RpcServlet<World> servlet = new RpcServlet<World>(handler);
 // Pass it to your servlet container,
 // or wrap in another servlet as a delegate.
 ```
+
+Python example
+--------------
+Generate the code:
+```bash
+pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
+    --generator python
+    --out generated
+```
+
+JSON:
+```python
+# Read a human from a JSON string.
+human = Human.from_json(s)
+human.continent = ContinentName.AFRICA
+
+# Serialize a human to a JSON string.
+json = human.to_json()
+print json
+```
+
+Client:
+```python
+# Create an HTTP RPC client.
+client = pdef.rpc_client(World, url='http://example.com/world/')
+world_client = client.proxy()
+
+# Create a man.
+man = world_client.humans().create(
+    Human(1, name='John', sex=Sex.MALE, continent=ContinentName.ASIA))
+
+# Switch day/night.
+world_client.switchDayNight()
+```
+
+Server:
+```python
+world_service = get_my_world_implementation()
+handler = pdef.rpc_handler(World, world_service)
+wsgi_app = pdef.wsgi_app(handler)
+# Pass it to a WSGI-server.
+```
+
 
 License and Copyright
 ---------------------

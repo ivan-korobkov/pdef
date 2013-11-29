@@ -1,6 +1,8 @@
 package:
   name: pdef_test
+  verion: 1.0
   description: Pdef test data types and interfaces
+  url: https://github.com/pdef/pdef/tree/master/test
   modules:
     - inheritance
     - interfaces

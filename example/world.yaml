@@ -1,8 +1,8 @@
 package:
   name: world
-  url: https://github.com/pdef/pdef
   verion: 0.1
   description: World example
+  url: https://github.com/pdef/pdef/tree/master/example
   modules:
     - continents
     - space

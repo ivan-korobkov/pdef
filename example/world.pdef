@@ -34,9 +34,7 @@ interface Humans {
 
     /** Creates a human. */
     @post  // A post method (a mutator).
-    create(
-        name string @post,
-        sex Sex @post) Human;
+    create(human Human @post) Human;
 }
 
 
@@ -51,7 +49,7 @@ message Human : Thing {             // A message with a base message and a docst
     name        string;
     birthday    datetime;
     sex         Sex;
-    continent   continents.Continent;
+    continent   continents.ContinentName;
 }
 
 enum Sex {

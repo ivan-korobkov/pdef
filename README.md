@@ -97,8 +97,7 @@ Example
 See the full [example package](https://github.com/pdef/pdef/tree/master/example).
 ```pdef
 /**
- * This is a multi-line module docstring.
- * It is available to the code generators.
+ * Example world.
  */
 from world import continents, space;    // Import two modules from a package.
 
@@ -127,11 +126,15 @@ interface Humans {
     find(id int64) Human;
 
     /** Lists all people. */
-    list(limit int32 @query, offset int32 @query) list<Human>;  // A method with query arguments.
+    all(  // A method with query arguments.
+        limit int32 @query,
+        offset int32 @query) list<Human>;
 
     /** Creates a human. */
-    @post
-    create(name string @post) Human;  // A post method (a mutator).
+    @post  // A post method (a mutator).
+    create(
+        name string @post,
+        sex Sex @post) Human;
 }
 
 
@@ -145,9 +148,13 @@ message Thing {                     // A simple message definition.
 message Human : Thing {             // A message with a base message and a docstring.
     name        string;
     birthday    datetime;
+    sex         Sex;
     continent   continents.Continent;
 }
 
+enum Sex {
+    MALE, FEMALE, UNCLEAR;
+}
 
 // An enumeration.
 enum EventType {
@@ -172,8 +179,47 @@ message HumanEvent : Event(EventType.HUMAN_EVENT) {
 
 
 // Multi-level polymorphic messages.
-message HumanCreated : UserEvent(EventType.HUMAN_CREATED) {}
-message UserDied : UserEvent(EventType.HUMAN_DIED) {}
+message HumanCreated : HumanEvent(EventType.HUMAN_CREATED) {}
+message HumanDied : HumanEvent(EventType.HUMAN_DIED) {}
+```
+
+Java
+----
+JSON:
+```java
+// Read a human from a JSON string or stream.
+Human human = Human.fromJson(jsonString);
+human.setContinent(ContinentName.NORTH_AMERICA);
+
+// Serialize a human to a JSON string.
+String json = human.toJson();
+```
+
+Client:
+```java
+// Create an HTTP RPC client.
+RpcClient<World> client = new RpcClient<World>(World.DESCRIPTOR, "http://example.com/world/");
+World world = client.proxy();
+
+// Create a man.
+Human man = world.humans().create(new Human()
+        .setId(1)
+        .setName("Man")
+        .setSex(Sex.MALE)
+        .setContinent(ContinentName.ASIA));
+
+// Switch day/night.
+world.switchDayNight();
+```
+
+Server:
+```java
+World world = getMyWorldImplementation();
+RpcHandler<World> handler = new RpcHandler<World>(World.DESCRIPTOR, world);
+RpcServlet<World> servlet = new RpcServlet<World>(handler);
+
+// Pass it to your servlet container,
+// or wrap in another servlet as a delegate.
 ```
 
 License and Copyright

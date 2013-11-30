@@ -13,11 +13,12 @@ and allows generators to change style for the generated code.
 - Align field names and types in two columns.
 - Align argument names and types in two columns when methods are longer than one line.
 - Indent fields, methods, and arguments.
-- Put the starting brace `{` on the same line with the definition name.
-- Put the ending brace `}` on the next line after the definition.
+- Put starting curly brackets `{` on the same line with definition names.
+- Put ending curly brackets `}` on the next line after definitions.
 - Separate definitions by one or two empty lines; subtypes without bodies can be grouped together.
 - Treat abbreviations as words, do not capitalize all letters. Correct: `UrlResource`,
 `RpcRequest`; not `URLResource`, `RPCRequest`.
+- Be consistent.
 
 Example:
 ```pdef

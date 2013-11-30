@@ -21,7 +21,7 @@ Contents
     - [Java example](#java-example)
     - [Python example](#python-example)
     - [Objective-C example](#objective-c-example)
-- [License-and-copyright](#license-and-copyright)
+- [License and copyright](#license-and-copyright)
 
 Links
 -----

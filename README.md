@@ -94,6 +94,8 @@ pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
 
 Examples
 --------
+
+### Pdef example
 Sources:
 
 - [world.yaml](https://github.com/pdef/pdef/tree/master/example/example.yaml) (package)
@@ -101,8 +103,6 @@ Sources:
 - [continents.pdef](https://github.com/pdef/pdef/tree/master/example/continents.yaml)
 - [space.pdef](https://github.com/pdef/pdef/tree/master/example/space.yaml)
 
-
-### Pdef example
 
 Interfaces:
 ```pdef

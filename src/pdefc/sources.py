@@ -2,8 +2,18 @@
 import io
 import logging
 import os
-import urllib2
-import urlparse
+import sys
+
+try:
+    # Python2.7
+    import urllib2
+    from urllib2 import urlopen
+    from urlparse import urlparse, urljoin
+except ImportError:
+    # Python3+
+    from urllib.request import urlopen
+    from urllib.parse import urlparse, urljoin
+
 from pdefc import CompilerException
 from pdefc.lang.packages import PackageInfo
 
@@ -25,7 +35,8 @@ class Sources(object):
         self._files = {}    # Absolute file names to sources.
 
         if paths:
-            map(self.add_path, paths)
+            for path in paths:
+                self.add_path(path)
 
     def _create_file_source(self, filename):
         return FileSource(filename)
@@ -196,7 +207,7 @@ class UrlSource(Source):
 
     def module_path(self, module_name):
         filename = self._module_filename(module_name)
-        return urlparse.urljoin(self.url, filename)
+        return urljoin(self.url, filename)
 
     def delegate(self):
         if self._delegate:
@@ -216,8 +227,11 @@ class UrlSource(Source):
     def _fetch(self, url):
         logging.warn('Downloading %s', url)
         try:
-            req = urllib2.urlopen(url)
-            return req.read()
+            req = urlopen(url)
+            data = req.read()
+            if sys.version < '3':
+                return data
+            return data.decode()
         except Exception as e:
             raise CompilerException('%s: %s' % (e, url))
 
@@ -226,5 +240,5 @@ def _is_url(s):
     if not s:
         return False
 
-    scheme = urlparse.urlparse(s).scheme
+    scheme = urlparse(s).scheme
     return scheme and scheme.lower() in ('http', 'https', 'ftp')

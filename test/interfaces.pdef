@@ -40,7 +40,7 @@ interface TestInterface {
     datetime0(dt datetime) datetime;
 
     /** Returns the same message. */
-    message0(msg messages.TestMessage) messages.TestMessage;
+    message0(msg messages.TestMessage @query) messages.TestMessage;
 
     /** Returns the total number of items. */
     collections(

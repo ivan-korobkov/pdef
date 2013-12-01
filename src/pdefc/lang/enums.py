@@ -13,10 +13,12 @@ class Enum(Definition):
             raise ValueError('values and value_names are mutually exclusive')
 
         if values:
-            map(self.add_value, values)
+            for value in values:
+                self.add_value(value)
 
         if value_names:
-            map(self.create_value, value_names)
+            for name in value_names:
+                self.create_value(name)
 
     def __str__(self):
         return self.name

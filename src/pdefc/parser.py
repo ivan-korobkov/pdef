@@ -1,4 +1,5 @@
 # encoding: utf-8
+from __future__ import unicode_literals
 import functools
 import logging
 import re
@@ -195,7 +196,7 @@ class _Tokens(object):
         return t
 
     def t_error(self, t):
-        self._error(u"Illegal character '%s', line %s" % (t.value[0], t.lexer.lineno))
+        self._error("Illegal character '%s', line %s" % (t.value[0], t.lexer.lineno))
         t.lexer.skip(1)
 
     def _error(self, msg):
@@ -534,9 +535,9 @@ class _GrammarRules(object):
 
     def p_error(self, p):
         if p is None:
-            msg = u'Unexpected end of file'
+            msg = 'Unexpected end of file'
         else:
-            msg = u'Line %s, syntax error at "%s"' % (p.lexer.lineno, p.value)
+            msg = 'Line %s, syntax error at "%s"' % (p.lexer.lineno, p.value)
 
         self._error(msg)
 

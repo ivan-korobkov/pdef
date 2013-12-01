@@ -21,7 +21,8 @@ class Message(Definition):
         self.is_exception = is_exception
 
         if declared_fields:
-            map(self.add_field, declared_fields)
+            for field in declared_fields:
+                self.add_field(field)
 
     @property
     def base(self):

@@ -16,10 +16,12 @@ class Package(object):
         self.dependencies = []
 
         if modules:
-            map(self.add_module, modules)
+            for module in modules:
+                self.add_module(module)
 
         if dependencies:
-            map(self.add_dependency, dependencies)
+            for dep in dependencies:
+                self.add_dependency(dep)
 
     def __str__(self):
         return self.name

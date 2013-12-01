@@ -5,13 +5,20 @@ import pdefc.lang.collects
 from pdefc.lang.common import Located, Validatable
 from pdefc.lang.types import Type
 
+try:
+    # Python 2.7
+    string = basestring
+except NameError:
+    # Python 3
+    string = str
+
 
 def reference(name_ref_def):
     '''Create a reference from a string name, another reference, a definition or None'''
     if name_ref_def is None:
         return EmptyReference()
 
-    elif isinstance(name_ref_def, basestring):
+    elif isinstance(name_ref_def, string):
         return NameReference(name_ref_def)
 
     elif isinstance(name_ref_def, Type):
@@ -28,6 +35,9 @@ class Reference(Located, Validatable):
     def __init__(self, type0=None, location=None):
         self._type = type0
         self.location = location
+
+    def __bool__(self):
+        return bool(self._type)
 
     def __nonzero__(self):
         return bool(self._type)

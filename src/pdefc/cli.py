@@ -36,7 +36,7 @@ class Cli(object):
 
             return func(args)
 
-        except pdefc.CompilerException, e:
+        except pdefc.CompilerException as e:
             # It's an expected exception.
             # Get rid of the traceback.
             logging.error('%s', e)

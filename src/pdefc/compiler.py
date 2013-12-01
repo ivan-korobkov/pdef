@@ -81,7 +81,8 @@ class Compiler(object):
 
         # Compile and return the package.
         logging.info('Compiling %s', package_name)
-        map(package.add_dependency, deps)
+        for dep in deps:
+            package.add_dependency(dep)
 
         errors = package.compile(allow_duplicate_definitions=self.allow_duplicate_definitions)
         if errors:
@@ -115,5 +116,6 @@ class Compiler(object):
         if errors:
             raise CompilerException('Parsing errors', errors)
 
-        map(package.add_module, modules)
+        for module in modules:
+            package.add_module(module)
         return package

@@ -15,7 +15,8 @@ class Interface(Definition):
         self.methods = []
 
         if methods:
-            map(self.add_method, methods)
+            for method in methods:
+                self.add_method(method)
 
     @property
     def exc(self):
@@ -113,7 +114,8 @@ class Method(Located, Validatable):
         self.location = location
 
         if args:
-            map(self.add_arg, args)
+            for arg in args:
+                self.add_arg(arg)
 
     def __str__(self):
         return self.name

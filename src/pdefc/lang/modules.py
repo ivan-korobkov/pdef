@@ -25,10 +25,12 @@ class Module(Validatable):
         self._definition_map = {}       # Performance optimization
 
         if imports:
-            map(self.add_import, imports)
+            for import0 in imports:
+                self.add_import(import0)
 
         if definitions:
-            map(self.add_definition, definitions)
+            for def0 in definitions:
+                self.add_definition(def0)
 
     def __str__(self):
         return self.name

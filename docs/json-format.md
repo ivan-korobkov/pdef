@@ -84,7 +84,7 @@ message UserRegistered : UserEvent(EventType.USER_REGISTERED);
 ```
 
 JSON data:
-```
+```json
 {
     "type": "user_registered",
     "userId": 10,

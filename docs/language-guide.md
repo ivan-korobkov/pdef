@@ -24,7 +24,6 @@ Contents
         - [Polymorphic inheritance](#polymorphic-inheritance)
     - [Interfaces](#interfaces)
     - [Interface exceptions](#interface-exceptions)
-- [On circular reference implementation](#on-circular-reference-implementation)
 
 
 Syntax
@@ -32,87 +31,37 @@ Syntax
 Pdef syntax is similar to Java/C++ with the inverted type/identifier order in fields and arguments.
 The first is the identifier the second is the type. All identifiers must start with a latin
 letter and contain only latin letters, digits and underscores.
-See the [grammar](grammar.bnf).
+See the [grammar](grammar.bnf) for the specification.
 
+Syntax example:
 ```pdef
-/**
- * This is a multi-line module docstring.
- * It is available to the code generators.
- */
 from world import continents, space;    // Import two modules from a package.
-
 
 /**
  * The world interface.
  * A god-like person can use it to rule the world.
  */
 interface World {
-    /** Returns the humans interface. */
-    humans() Humans;                    // Returns another interface.
-
-    /** Returns the continents interface. */
-    continents() continents.Continents; // Returns an interface from another module.
-
     /** Switches the light. */
     switchDayNight() void;
 
-    /** Returns the last world events, the events are polymorphic. */
-    events(limit int32 @query, offset int64 @query) list<Event>;
-}
-
-
-interface Humans {
-    /** Finds a human by id. */
-    find(id int64) Human;
-
-    /** Lists all people. */
-    list(limit int32 @query, offset int32 @query) list<Human>;  // A method with query arguments.
-
-    /** Creates a human. */
+    /** Creates a new human. */
     @post
-    create(name string @post) Human;  // A post method (a mutator).
+    createHuman(name string, sex Sex) Human;
 }
 
-
-message Thing {                     // A simple message definition.
-    id          int64;              // an id field of the int64 type.
-    location    space.Location;
-}
-
-
-/** Human is a primate of the family Hominidae, and the only extant species of the genus Homo. */
-message Human : Thing {             // A message with a base message and a docstring.
+/** Human is a primate of the family Hominidae. */
+message Human  {
+    id          int64;
     name        string;
     birthday    datetime;
-    continent   continents.Continent;
+    sex         Sex;
 }
 
-
-// An enumeration.
-enum EventType {
-    HUMAN_EVENT,
-    HUMAN_CREATED,
-    HUMAN_DIED;
+enum Sex {
+    MALE,
+    FEMALE;
 }
-
-
-// A polymorphic message with EventType as its discriminator.
-message Event {
-    type    EventType @discriminator;
-    id      int32;
-    time    datetime;
-}
-
-
-// A polymorphic subtype.
-message HumanEvent : Event(EventType.HUMAN_EVENT) {
-    human   Human;
-}
-
-
-// Multi-level polymorphic messages.
-message HumanCreated : UserEvent(EventType.HUMAN_CREATED) {}
-message UserDied : UserEvent(EventType.HUMAN_DIED) {}
 ```
 
 
@@ -129,10 +78,10 @@ interface) or before a method.
 
 // This is a one line comment, it is stripped from the source code.
 
-/** Method docstring. */
+/** Interface docstring. */
 interface ExampleInterface {
     /** Method docstring. */
-    hello(name string) string;  // Takes a single argument and returns a string.
+    hello(name string) string;
 }
 
 /** Message docstring. */
@@ -193,7 +142,7 @@ Package file structure:
 One file as a package definition with enumerated modules is convenient,
 you can pass it as a URL directly to the compiler.
 ```bash
-# Downloads, compiles and validates the test pdef package.
+# Downloads and validates the test pdef package.
 # Does not generate any code.
 pdefc check https://raw.github.com/pdef/pdef/master/test/test.yaml
 ```
@@ -269,18 +218,18 @@ message MyMessage {
 
 ### Circular imports and references
 Circular imports are allowed. However, there are some constraints to support scripting languages.
-Interpreted languages require a serial execution order. Some things can be postponed via lazy
-referencing, but inheritance cannot.
+Interpreted languages require a serial execution order for inheritance.
 
 Two modules can import each other as long as the messages from the first one *do not inherit* the
 messages from the second one and vice versa
 (see [polymorphic inheritance](#polymorphic-inheritance)). Usually, this case is very rare,
 and it almost never affects development. However, if you encounter it,
-break one module into multiple ones.
+break one module into multiple ones, or merge two modules into one.
 
 Circular references are allowed, even self-references are allowed. They can be implemented
-in almost all languages via forward referencing, lazy loading, etc.
-See [On circular reference implementation](#on-circular-reference-implementation).
+in almost all languages via forward/lazy referencing.
+See [circular references](./generated-lang-specific-code.md#circular-references)
+in the [generated code guide](./generated-lang-specific-code.md).
 
 Circular import and reference example:
 
@@ -290,7 +239,7 @@ from example import photos;
 
 message User {
     bestFriend  User;           // References itself.
-    photo       photos.Photo;
+    photo       photos.Photo;   // References a photo from another module.
 }
 
 ```
@@ -300,7 +249,7 @@ message User {
 from example import users;
 
 message Photo {
-    user    users.User;
+    user    users.User;         // References a user from another module.
 }
 ```
 
@@ -440,7 +389,7 @@ message UserWithDetails : User {
 ```
 
 
-##### Polymorphic inheritance
+#### Polymorphic inheritance
 Polymorphic inheritance allow to polymorphic serialization/deserialization of subtypes
 from a base type. A base with all its subtypes form an *inheritance tree*. A subtype can also
 inherit another subtype to form *multi-level inheritance*. To create a polymorphic message:
@@ -515,8 +464,8 @@ sent as an HTTP POST form.
 
 *Constraints:*
 
-- Methods must have unique names.
-- Arguments must have unique names.
+- Interface methods must have unique names.
+- Method arguments must have unique names.
 - An argument must be of a data type.
 - Only terminal methods can be `@post`.
 - Only `@post` methods can have `@post` arguments.
@@ -638,72 +587,4 @@ exception AuthException {}
 exception ValidationException {}
 exception UserException {}
 exception PhotoException {}
-```
-
-
-On circular reference implementation
-------------------------------------
-These are notes for the code generator developers, others can skip.
-
-Generated code must contain static descriptors with definition meta-data which reference
-other static descriptors. Message base descriptors can be referenced directly because
-the compiler guarantees serial definition and module order in inheritance trees. Fields,
-methods and arguments can use a simple lazy referencing technique via lambdas, closures, blocks,
-etc.
-
-Example:
-```pdef
-message User {
-    bestFriend  User;  // References itself.
-}
-```
-
-Python lambda implementation:
-```python
-class User(object):
-    bestFriend = pdef.descriptors.field('bestFriend', type=lambda: User.descriptor)
-    descriptor = pdef.descriptors.message(pyclass=lambda: User, fields=[bestFriend])
-```
-
-Java anonymous class implementation:
-```java
-public class User {
-    public static final MessageDescriptor DESCRIPTOR = MessageDescriptor.builder()
-        .addField(FieldDescriptor.builder()
-            .setName("bestFriend")
-            .setType(new Provider<MessageDescriptor> {
-                public MessageDescriptor get() {
-                    return User.DESCRIPTOR;
-                }
-            }.build())
-        .build();
-}
-```
-
-Objective-C blocks implementation:
-```objectivec
-@implementation User {
-    static PDMessageDescriptor _UserDescriptor;
-}
-
-+ (PDMessageDescriptor *)typeDescriptor {
-    return _UserDescriptor;
-}
-
-+ (void)initialize {
-    if (self != [User class]) {
-        return;
-    }
-
-    _UserDescriptor = [[PDMessageDescriptor alloc]
-            initWithClass:[User class]
-                   fields:@[
-                            [[PDFieldDescriptor alloc]
-                                initWithName:@"bestFriend"
-                                typeSupplier:^PDDataTypeDescriptor *() {
-                                    return [User typeDescriptor];
-                                }]
-                           ]];
-}
-@end
 ```

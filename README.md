@@ -14,6 +14,7 @@ Contents
 - [Links](#links)
 - [Features](#features)
 - [Code generators](#code-generators)
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Examples](#examples)
     - [Pdef example](#pdef-example)
@@ -52,9 +53,14 @@ Code generators
 - [Python](https://github.com/pdef/pdef-python)
 - [Objective-C](https://github.com/pdef/pdef-objc)
 
+Requirements
+------------
+- Python 2.7 or Python 3.3.
+
 Installation
 ------------
 Pdef consists of a compiler, pluggable code generators, and language-specific bindings.
+
 Install the compiler as a python package:
 ```bash
 pip install pdef-compiler

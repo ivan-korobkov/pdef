@@ -27,7 +27,7 @@ class TestCompiler(unittest.TestCase):
 
         module0 = 'message Message {}'
         module1 = 'interface Interface {}'
-        self._add_source(sources, 'test', {'hello.world': module0, 'goodbye.world': module1})
+        self._add_source(sources, 'test', [('hello.world', module0), ('goodbye.world', module1)])
 
         package = compiler.compile('test.package')
         assert len(package.modules) == 2
@@ -40,18 +40,18 @@ class TestCompiler(unittest.TestCase):
         compiler = Compiler(sources)
 
         module = 'here goes some garbage;'
-        self._add_source(sources, 'test', {'module': module})
+        self._add_source(sources, 'test', [('module', module)])
 
         try:
             compiler.compile('test.package')
             self.fail()
-        except CompilerException as e:
+        except CompilerException:
             pass
         sources.read_path.assert_called_with('test.package')
 
-    def _add_source(self, sources, name, modules_to_sources):
-        info = PackageInfo(name, modules=list(modules_to_sources.keys()))
-        source = InMemorySource(info, modules_to_sources)
+    def _add_source(self, sources, name, module_source_pairs):
+        info = PackageInfo(name, modules=list(module for module, _ in module_source_pairs))
+        source = InMemorySource(info, dict(module_source_pairs))
 
         sources.read_path = Mock(return_value=source)
         sources.get = Mock(return_value=source)

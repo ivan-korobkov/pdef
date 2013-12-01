@@ -18,7 +18,7 @@ setup(
     name='pdef-compiler',
     version=__version__,
     license='Apache License 2.0',
-    url='http://github.com/ivan-korobkov/pdef',
+    url='http://github.com/pdef/pdef',
     description='Pdef compiler',
     long_description=open('README.md', 'r').read(),
 

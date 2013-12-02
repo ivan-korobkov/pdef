@@ -73,9 +73,11 @@ class TestCompiler(unittest.TestCase):
         generator_factory = Mock(return_value=generator)
         compiler = Compiler()
         compiler._generators = {'test': generator_factory}
-        compiler.generate(package_yaml, 'test', out=out, namespace={'key': 'value'})
+        compiler.generate(package_yaml, 'test', out=out, module_names=[('key', 'value')],
+                          prefixes=[('key', 'K')])
 
-        generator_factory.assert_called_with(out, namespace={'key': 'value'})
+        generator_factory.assert_called_with(out, module_names=[('key', 'value')],
+                                             prefixes=[('key', 'K')])
         args = generator.generate.call_args[0]
         package = args[0]
         assert package.name == 'test'

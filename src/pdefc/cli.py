@@ -90,7 +90,7 @@ class Cli(object):
         parser = subparsers.add_parser('check', help='check a package')
         parser.add_argument('package', help='path to a package yaml file')
         parser.add_argument('--include', dest='paths', action='append', default=[],
-                            help='paths to package dependencies')
+                            help='add a path to a package dependency')
         parser.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
                             action='store_true', default=False,
                             help='allow duplicate definition names in a package')
@@ -103,11 +103,13 @@ class Cli(object):
         generator = args.generator
         paths = args.paths
         out = args.out
-        namespace = self._parse_namespace(args.namespace)
+        module_names = self._parse_pairs(args.module_names)
+        prefixes = self._parse_pairs(args.prefixes)
         allow_duplicate_definitions = args.allow_duplicate_definitions
 
         compiler = self._create_compiler(paths, allow_duplicate_definitions)
-        return compiler.generate(package, generator, out=out, namespace=namespace)
+        return compiler.generate(package, generator, out=out, module_names=module_names,
+                                 prefixes=prefixes)
 
     def _generate_args(self, subparsers):
         generators = self._find_generators()
@@ -121,11 +123,14 @@ class Cli(object):
         parser.add_argument('--generator', choices=generator_names, required=True)
         parser.add_argument('--out', dest='out', required=True,
                             help='directory for generated files')
-        parser.add_argument('--ns', dest='namespace', action='append', default=[],
-                            help='adds a namespace which maps pdef modules '
-                                 'to generated modules, i.e. "pdef.module:io.pdef.java"')
+        parser.add_argument('--module', dest='module_names', action='append', default=[],
+                            help='map a pdef module to a language module, '
+                                 'i.e. "pdef.module:io.pdef.java" (generator specific)')
+        parser.add_argument('--prefix', dest='prefixes', action='append', default=[],
+                            help='add a prefix to all definitions in a module, '
+                                 'i.e. "company.project:Pr (generator specific)')
         parser.add_argument('--include', dest='paths', action='append', default=[],
-                            help='paths to package dependencies')
+                            help='add a path to a package dependency')
         parser.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
                             action='store_true', default=False,
                             help='allow duplicate definition names in a package')
@@ -156,25 +161,25 @@ class Cli(object):
         description.append('\nmore generators: \n  see https://github.com/pdef/pdef')
         return '\n'.join(description)
 
-    def _parse_namespace(self, seq):
+    def _parse_pairs(self, seq):
         if not seq:
-            return {}
+            return []
 
-        result = {}
+        result = []
         error = False
         for item in seq:
             parts = item.split(':')
             if len(parts) != 2:
-                logging.error('Wrong namespace "%s", the namespace must be specified as '
-                              '"pdef.module:lang.module"', item)
+                logging.error('Wrong pair "%s", the pair must be specified as '
+                              '"string.one:string.two"', item)
                 error = True
                 continue
 
-            pmodule, lmodule = parts
-            result[pmodule] = lmodule
+            old_name, new_name = parts
+            result.append((old_name, new_name))
 
         if error:
             raise CompilerException('Wrong arguments')
 
-        logging.debug('Namespace %s', result)
+        logging.debug('Name mappings %s', result)
         return result

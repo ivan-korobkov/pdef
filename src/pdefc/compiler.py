@@ -43,18 +43,23 @@ class Compiler(object):
         logging.info('Fetched and compiled %s in %dms', package.name, t)
         return package
 
-    def generate(self, package_path, generator_name, out, namespace=None):
-        '''Generate a package from a path.'''
+    def generate(self, package_path, generator_name, out, module_names=None, prefixes=None):
+        '''Generate a package from a path.
+
+        @package_path       Path or url to a package yaml file.
+        @generator_name     Generator name.
+        @module_names       List of tuples, [('pdef.module', 'language.module')].
+        @prefixes           List of tuples, [('pdef.module', 'ClassPrefix')].
+        '''
 
         factory = self.generators.get(generator_name)
         if not factory:
             raise CompilerException('Source code generator not found: %s' % generator_name)
 
         package = self.compile(package_path)
-        namespace = namespace or {}
-
+        
         t0 = time.time()
-        generator = factory(out, namespace=namespace)
+        generator = factory(out, module_names=module_names, prefixes=prefixes)
         generator.generate(package)
 
         t1 = time.time()

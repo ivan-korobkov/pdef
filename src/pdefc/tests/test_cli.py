@@ -25,8 +25,10 @@ class TestCli(unittest.TestCase):
         args = ['generate', 'test.package']
         args += ['--generator', 'test']
         args += ['--out', 'destination']
-        args += ['--ns', 'test:io.test']
-        args += ['--ns', 'second:io.second']
+        args += ['--module', 'test:io.test']
+        args += ['--module', 'second:io.second']
+        args += ['--prefix', 'test:T']
+        args += ['--prefix', 'pdef:Pd']
         args += ['--include', 'second.package']
         args += ['--include', 'third.package']
 
@@ -40,13 +42,14 @@ class TestCli(unittest.TestCase):
 
         factory.assert_called_with(['second.package', 'third.package'], False)
         compiler.generate.assert_called_with('test.package', 'test', out='destination',
-                                             namespace={'test': 'io.test', 'second': 'io.second'})
+                module_names=[('test', 'io.test'), ('second', 'io.second')],
+                prefixes=[('test', 'T'), ('pdef', 'Pd')])
 
-    def test_parse_namespace(self):
+    def test_parse_pairs(self):
         cli = Cli()
-        namespace = cli._parse_namespace(['pdef:io.pdef', 'test:io.tests'])
-        assert namespace == {'pdef': 'io.pdef', 'test': 'io.tests'}
+        mappings = cli._parse_pairs(['pdef:io.pdef', 'test:io.tests'])
+        assert mappings == [('pdef', 'io.pdef'), ('test', 'io.tests')]
 
-    def test_parse_namespace__wrong_namespace(self):
+    def test_parse_pairs__wrong_pair(self):
         cli = Cli()
-        self.assertRaises(CompilerException, cli._parse_namespace, ['wrong:name:space'])
+        self.assertRaises(CompilerException, cli._parse_pairs, ['wrong:name:space'])

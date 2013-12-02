@@ -21,7 +21,7 @@ interface World {
 interface People {
     /** Login people by username/password, and return them.*/
     @post
-    login(username string @query, password string @post) Person;
+    login(username string @post, password string @post) Person;
 
     /** Find people, return a list of people. */
     find(query string @query, limit int32 @query, offset int32 @query) list<Person>;
@@ -49,13 +49,12 @@ exception InvalidDataException : WorldException(WorldExceptionCode.INVALID_DATA)
 `worldClient.people().login("john.doe", "secret");`
 
 Send a POST HTTP request, because the method is marked as `@post`.
-Append the `username` to the query string and the `password` to the post data
-because they are marked as `@query` and `@post` respectively.
+Append `username` and `password` to the post data because they are marked as `@post` arguments.
 ```
-POST /people/login?username=john.doe HTTP/1.0
+POST /people/login HTTP/1.0
 Host: example.com
 Content-Type: application/x-www-form-urlencoded
-password=secret
+username=john.doe&password=secret
 ```
 
 Successful response:

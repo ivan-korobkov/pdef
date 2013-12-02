@@ -13,12 +13,14 @@ ENCODING = 'utf8'
 class Generator(object):
     '''Abstract code generator, subclass it and implement the generate method.
 
-    @param out          generated files destination (directory).
-    @param namespace    an optional {'pdef.package.module': 'language_module'} mapping.
+    @param out          Generated files destination (directory).
+    @module_names       List of tuples, [('pdef.module', 'language.module')].
+    @prefixes           List of tuples, [('pdef.module', 'ClassPrefix')].
     '''
-    def __init__(self, out, namespace=None, **kwargs):
+    def __init__(self, out, module_names=None, prefixes=None, **kwargs):
         self.out = out
-        self.namespace = Namespace(namespace)
+        self.module_mapper = ModuleMapper(module_names)
+        self.prefix_mapper = PrefixMapper(prefixes)
 
     def generate(self, package):
         raise NotImplementedError
@@ -116,31 +118,54 @@ class Templates(object):
         return template.render(**kwargs)
 
 
-class Namespace(object):
-    '''Namespace class is a default namespace mapper, which maps pdef modules names to
-    language module names.
+class PrefixMapper(object):
+    '''Maps pdef names to class prefixes.
 
     Example::
-        >>> namespace = Namespace({'pdef.tests': 'pdef_tests'})
-        >>> namespace.map('pdef.tests.messages')
-        >>> 'pdef_tests.messages'
+        >>> mapper = PrefixMapper([('pdef', 'Pd')])
+        >>> mapper.get_prefix('pdef.tests')
+        >>> 'Pd'
+    '''
+    def __init__(self, name_prefix_pairs=None):
+        self._pairs = tuple((name, prefix) for name, prefix in name_prefix_pairs) \
+            if name_prefix_pairs else ()
+
+    def get_prefix(self, name):
+        '''Returns a prefix for a name or an empty string, correctly handles relative names.'''
+        for module_name, prefix in self._pairs:
+            if module_name == name:
+                return prefix
+
+            if name.startswith(module_name + '.'):
+                return prefix
+
+        return ''
+
+
+class ModuleMapper(object):
+    '''Maps pdef modules to language specific modules.
+
+    Example::
+        >>> mapper = ModuleMapper([('pdef.tests', 'tests')])
+        >>> mapper.get_module('pdef.tests.messages')
+        >>> 'tests.messages'
 
     '''
-    def __init__(self, namespace=None):
-        self._namespace = dict(namespace) if namespace else {}
+    def __init__(self, name_pairs=None):
+        self._pairs = tuple((old, new) for old, new in name_pairs) if name_pairs else ()
 
     def __call__(self, module_name):
-        return self.map(module_name)
+        return self.get_module(module_name)
 
-    def map(self, name):
-        '''Returns a new name.'''
-        for prefix, mapped in self._namespace.items():
-            if name == prefix:
+    def get_module(self, name):
+        '''Maps a pdef name to a language name, correctly handles relative names.'''
+        for old, new in self._pairs:
+            if name == old:
                 # Full match, service.module => service_module.
-                return mapped
+                return new
 
-            if name.startswith(prefix + '.'):
-                return mapped + name[len(prefix):]
+            if name.startswith(old + '.'):
+                return new + name[len(old):]
 
         return name
 

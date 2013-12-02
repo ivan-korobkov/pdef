@@ -1,15 +1,22 @@
 # encoding: utf-8
 import unittest
 
-from pdefc.generators import Namespace
+from pdefc.generators import ModuleMapper, PrefixMapper
 
 
-class TestNamespace(unittest.TestCase):
-    def test_map(self):
-        mapper = Namespace({'module.name': 'module_name'})
-        assert mapper.map('module.name') == 'module_name'
-        assert mapper.map('module.name.submodule') == 'module_name.submodule'
+class TestPrefixMapper(unittest.TestCase):
+    def test_get_prefix(self):
+        mapper = PrefixMapper([('module.submodule', 'Sb'), ('module', 'Md')])
+        assert mapper.get_prefix('module') == 'Md'
+        assert mapper.get_prefix('module.submodule.Message') == 'Sb'
 
-    def test_map__empty(self):
-        mapper = Namespace()
-        assert mapper.map('module') == 'module'
+
+class TestModuleMapper(unittest.TestCase):
+    def test_get_module(self):
+        mapper = ModuleMapper([('module.name', 'module_name')])
+        assert mapper('module.name') == 'module_name'
+        assert mapper('module.name.submodule') == 'module_name.submodule'
+
+    def test_get_module__empty(self):
+        mapper = ModuleMapper()
+        assert mapper('module') == 'module'

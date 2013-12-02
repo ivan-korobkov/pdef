@@ -1,5 +1,5 @@
-Pdef - Headers for the web
-==========================
+Pdef - Header files for the web
+===============================
 Pdef is a statically typed interface definition language with clear separation between data
 structures and interfaces, support for object-oriented APIs and message inheritance with JSON as
 the default format and a simple HTTP RPC.

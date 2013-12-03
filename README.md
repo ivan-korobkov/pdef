@@ -9,9 +9,18 @@ data structures once and then to generate code and RPC clients/servers for diffe
 It is suitable for public APIs, internal service-oriented APIs, configuration files,
 as a format for persistence, cache, message queues, logs, etc.
 
+Links
+-----
+- **[Language guide](docs/language-guide.md)**
+- [Style guide](docs/style-guide.md)
+- [JSON format](docs/json-format.md)
+- [HTTP RPC](docs/http-rpc.md)
+- [Grammar in BNF](docs/grammar.bnf)
+- [Generated and language specific code](docs/generated-lang-specific-code.md)
+- [How to write a code generator](https://github.com/pdef/pdef-generator-template)
+
 Contents
 --------
-- [Links](#links)
 - [Features](#features)
 - [Code generators](#code-generators)
 - [Requirements](#requirements)
@@ -24,27 +33,17 @@ Contents
     - [Objective-C example](#objective-c-example)
 - [License and copyright](#license-and-copyright)
 
-Links
------
-- [Language guide](docs/language-guide.md)
-- [Style guide](docs/style-guide.md)
-- [JSON format](docs/json-format.md)
-- [HTTP RPC](docs/http-rpc.md)
-- [Grammar in BNF](docs/grammar.bnf)
-- [Generated and language specific code](docs/generated-lang-specific-code.md)
-- [How to write a code generator](https://github.com/pdef/pdef-generator-template)
-
 Features
 --------
 - Clear separation between data structures and interfaces.
 - Interfaces, not services, to allows Object-Oriented APIs.
-- Simple data type system.
+- Simple type system.
 - Message inheritance.
 - Packages and modules with imports.
 - Circular module imports (with some limitations).
 - Circular references in message and interface definitions
   (with some limitations to support interpreted languages).
-- Loosely-coupled format and RPC implementations, with JSON and a simple HTTP RPC as the defaults.
+- Pluggable loosely-coupled formats and RPCs, with JSON and a simple HTTP RPC as the defaults.
 - Pluggable code generators.
 
 Code generators

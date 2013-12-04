@@ -1,10 +1,7 @@
 Pdef - Header files for the web
 ===============================
-Pdef is a statically typed interface definition language with clear separation between data
-structures and interfaces, support for object-oriented APIs and message inheritance with JSON as
-the default format and a simple HTTP RPC.
-
-Pdef (pi:def) stands for "protocol definition [language]". It allows to write interfaces and
+Pdef (pi:def, stands for "protocol definition [language]") is a statically typed interface
+definition language with a JSON format and a simple HTTP RPC. It allows to write interfaces and
 data structures once and then to generate code and RPC clients/servers for different languages.
 It is suitable for public APIs, internal service-oriented APIs, configuration files,
 as a format for persistence, cache, message queues, logs, etc.
@@ -22,7 +19,7 @@ Links
 Contents
 --------
 - [Features](#features)
-- [Code generators](#code-generators)
+- [Languages](#languages)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Examples](#examples)
@@ -46,8 +43,8 @@ Features
 - Pluggable loosely-coupled formats and RPCs, with JSON and a simple HTTP RPC as the defaults.
 - Pluggable code generators.
 
-Code generators
----------------
+Languages
+---------
 - [Java](https://github.com/pdef/pdef-java)
 - [Python](https://github.com/pdef/pdef-python)
 - [Objective-C](https://github.com/pdef/pdef-objc)
@@ -338,8 +335,8 @@ human.continent = ContinentName_EUROPE;
 NSError *error = nil;
 NSData *humanData = [human toJsonError:&error];
 
-// Parse a human from JSON data.
-Human *human2 = [[Human alloc] initWithJson:humanData error:&error];
+// Parse a human from JSON data (supports polymorphic messages).
+Human *human2 = [Human messageWithJson:humanData error:&error];
 ```
 
 Client:

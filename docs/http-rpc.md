@@ -198,7 +198,7 @@ Create an empty invocation chain.
 For each segment in path delimited by '/':
     Find a method in an interface by the segment.
     If the method is not found:
-        Return HTTP 404, 'Method is not found'.
+        Return HTTP 400, 'Method is not found'.
 
     If the method is @post:
         Assert that HTTP request method is POST.
@@ -212,11 +212,15 @@ For each segment in path delimited by '/':
             Get it from the request query string.
         Else:
             If the remaining path segments are empty:
-                Return HTTP 404, 'Method not found, wrong number of arguments'.
+                Return HTTP 400, 'Wrong number of method arguments'.
             Get the next segment from the remaining segments as an argument.
 
-        Url-decode the argument. If the expected argument type is a string,
-        enclose it in quotes to get a valid JSON string.
+        Url-decode the argument.
+
+        If the expected argument type is a string, an enum or a date type,
+        and the argument does not start and end with quotes ("), enclose it
+        in quotes to get a valid JSON string.
+
         Parse the argument from a JSON string and add it to the arguments lists.
 
     Create a new invocation of the method with the parsed arguments.
@@ -224,7 +228,7 @@ For each segment in path delimited by '/':
 
     If the method is terminal (returns a data type or is void):
         Assert that the remaining path segments are empty.
-        Otherwise return HTTP 404, 'Wrong invocation chain'.
+        Otherwise return HTTP 400, 'Wrong invocation chain'.
     Else:
         The method is not terminal, so it must return an interface.
         Set the interface to the method result and continue.
@@ -232,10 +236,10 @@ For each segment in path delimited by '/':
 
 All path segments are consumed.
 If the invocation chain is empty:
-    return HTTP 404, 'Methods required'
+    return HTTP 400, 'Methods required'
 
 If the last method in an invocation chain is not terminal:
-    return HTTP 404, 'The last method must be terminal. It must return a data type or be void.'
+    return HTTP 400, 'The last method must be terminal. It must return a data type or be void.'
 
 
 # Invoke the invocation and return the result.

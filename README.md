@@ -93,7 +93,7 @@ Generate some code:
 ```bash
 pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
     --generator java
-    --ns world:com.company.world
+    --module world:com.company.world
     --out generated
 ```
 
@@ -236,7 +236,7 @@ Generate the code:
 ```bash
 pdefc generate https://raw.github.com/pdef/pdef/master/example/world.yaml \
     --generator java
-    --ns pdef_test:io.pdef
+    --module pdef_test:io.pdef
     --out target/generated-sources
 ```
 

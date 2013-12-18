@@ -1,11 +1,12 @@
 # encoding: utf-8
+from __future__ import unicode_literals
 import os
 import tempfile
 import unittest
 from mock import Mock
 from pdefc import CompilerException
 from pdefc.lang.packages import PackageInfo
-from pdefc.sources import UrlSource, FileSource, InMemorySource, Sources
+from pdefc.sources import UrlSource, FileSource, InMemorySource, Sources, UTF8
 
 
 class TestSources(unittest.TestCase):
@@ -91,15 +92,15 @@ class TestFileSource(unittest.TestCase):
 
 
 class TestUrlSource(unittest.TestCase):
-    def test(self):
+    def test_module(self):
         info = PackageInfo('project_api', modules=['users', 'users.events'])
         urls = {
-            'http://localhost:8080/project/api/api.yaml': info.to_yaml(),
-            'http://localhost:8080/project/api/users.pdef': 'users module',
-            'http://localhost:8080/project/api/users/events.pdef': 'events module'
+            'http://localhost/project/api/api.yaml': info.to_yaml(),
+            'http://localhost/project/api/users.pdef': 'users module',
+            'http://localhost/project/api/users/events.pdef': 'events module'
         }
 
-        source = UrlSource('http://localhost:8080/project/api/api.yaml')
+        source = UrlSource('http://localhost/project/api/api.yaml')
         source._fetch = lambda url: urls[url]
 
         assert source.name == 'project_api'
@@ -111,3 +112,17 @@ class TestUrlSource(unittest.TestCase):
         source = UrlSource('http://localhost:8080/project/api/api.yaml')
         path = source.module_path('users.internal.events')
         assert path == 'http://localhost:8080/project/api/users/internal/events.pdef'
+
+    def test_fetch_unicode(self):
+        # Given a UTF-8 encoded URL source.
+        class File(object):
+            def read(self):
+                return 'Привет, как дела?'.encode(UTF8)
+
+        # Download the source.
+        source = UrlSource('http://localhost/test.yaml')
+        source._download = lambda url: File()
+
+        # The data should be decoded as UTF8
+        data = source._fetch('http://localhost/')
+        assert data == 'Привет, как дела?'

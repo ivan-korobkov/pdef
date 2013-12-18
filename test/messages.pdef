@@ -1,6 +1,8 @@
 /**
 Test pdef messages and enums.
 Multi-line comment.
+
+С поддержкой Юникода.
 */
 from pdef_test import inheritance;
 
@@ -12,6 +14,9 @@ Multi-line comment.
 enum TestEnum {
     ONE, TWO, THREE;
 }
+
+
+// Привет, мир!
 
 
 /**

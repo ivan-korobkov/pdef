@@ -227,13 +227,14 @@ class UrlSource(Source):
     def _fetch(self, url):
         logging.warn('Downloading %s', url)
         try:
-            req = urlopen(url)
+            req = self._download(url)
             data = req.read()
-            if sys.version < '3':
-                return data
-            return data.decode()
+            return data.decode(encoding=UTF8)
         except Exception as e:
             raise CompilerException('%s: %s' % (e, url))
+
+    def _download(self, url):
+        return urlopen(url)
 
 
 def _is_url(s):

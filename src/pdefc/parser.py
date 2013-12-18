@@ -182,13 +182,13 @@ class _Tokens(object):
     # Skip a new line and increment the lexer lineno counter.
     def t_newline(self, t):
         r'\n+'
-        t.lexer.lineno += t.value.count("\n")
+        t.lexer.lineno += t.value.count('\n')
 
     # Pdef docstring.
     def t_DOC(self, t):
         r'\/\*\*((.|\n)*?)\*\/'
         t.lexer.lineno += t.value.count('\n')
-
+        
         value = t.value.strip('/')
         value = self.doc_start_pattern.sub('', value)
         value = self.doc_end_pattern.sub('', value)

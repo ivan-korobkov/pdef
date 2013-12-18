@@ -1,10 +1,10 @@
 Pdef - Header files for the web
 ===============================
 Pdef (pi:def, stands for "protocol definition [language]") is a statically typed interface
-definition language with a JSON format and a simple HTTP RPC. It allows to write interfaces and
-data structures once and then to generate code and RPC clients/servers for different languages.
-It is suitable for public APIs, internal service-oriented APIs, configuration files,
-as a format for persistence, cache, message queues, logs, etc.
+definition language which supports JSON and a simple HTTP RPC. It allows to write
+interfaces and data structures once and then to generate code and RPC clients/servers for
+different languages. It is suitable for public APIs, internal service-oriented APIs,
+configuration files, as a format for persistence, cache, message queues, logs, etc.
 
 Links
 -----

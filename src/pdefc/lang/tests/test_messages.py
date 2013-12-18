@@ -1,6 +1,7 @@
 # encoding: utf-8
 import unittest
 from pdefc.lang import Enum
+from pdefc.lang.packages import Package
 from pdefc.lang.types import *
 from pdefc.lang.messages import *
 from pdefc.lang.modules import Module
@@ -181,23 +182,22 @@ class TestMessage(unittest.TestCase):
         errors = msg.validate()
         assert 'cannot inherit Base, it is in a dependent module "module1"' in errors[0]
 
-    # validate_discriminator.
+    # validate_simple_inheritance.
 
-    def test_validate_discriminator_value__present_no_base(self):
-        enum = Enum('Number')
-        one = enum.create_value('ONE')
-        msg = Message('Message', discriminator_value=one)
-
-        errors = msg.validate()
-        assert 'discriminator value is present, but no base' in errors[0]
-
-    def test_validate_discriminator_value__not_present_no_base(self):
+    def test_validate_simple_inheritance__no_base(self):
         msg = Message('Message')
         errors = msg.validate()
 
         assert not errors
 
-    def test_validate_discriminator_value__not_present_base_polymorphic(self):
+    def test_validate_simple_inheritance__ok(self):
+        base = Message('Base')
+        msg = Message('Message', base=base)
+
+        errors = msg.validate()
+        assert not errors
+
+    def test_validate_simple_inheritance__but_base_polymorphic(self):
         enum = Enum('Number')
         base = Message('Base')
         base.create_field('field', enum, is_discriminator=True)
@@ -206,23 +206,44 @@ class TestMessage(unittest.TestCase):
         errors = msg.validate()
         assert 'discriminator value required, base is polymorphic' in errors[0]
 
-    def test_validate_discriminator_value__not_present_base_nonpolymorphic(self):
-        base = Message('Base')
-        msg = Message('Message', base=base)
+    # validate_polymorphic_inheritance.
+
+    def test_validate_polymorphic_inheritance__no_base(self):
+        enum = Enum('Number')
+        one = enum.create_value('ONE')
+        msg = Message('Message', discriminator_value=one)
 
         errors = msg.validate()
-        assert not errors
+        assert 'discriminator value is present, but no base' in errors[0]
 
-    def test_validate_discriminator_value__present_base_nonpolymorphic(self):
+    def test_validate_polymorphic_inheritance__different_packages(self):
+        enum = Enum('Number')
+        one = enum.create_value('ONE')
+        base = Message('Base')
+        base.create_field('field', type0=enum, is_discriminator=True)
+        msg = Message('Message', base=base, discriminator_value=one)
+
+        module0 = Module('module0', definitions=[base])
+        module1 = Module('module1', definitions=[msg])
+        package0 = Package('package0', modules=[module0])
+        package1 = Package('package1', modules=[module1])
+
+        package0._link()
+        package1._link()
+
+        errors = msg.validate()
+        assert 'cannot inherit a polymorphic message from another package' in errors[0]
+
+    def test_validate_polymorphic_inheritance__present_base_nonpolymorphic(self):
         number = Enum('Number')
         one = number.create_value('ONE')
         base = Message('Base')
         msg = Message('Message', base=base, discriminator_value=one)
 
         errors = msg.validate()
-        assert 'cannot set a discriminator value, the base is not polymorphic' in errors[0]
+        assert 'base is not polymorphic, but the discriminator value is present' in errors[0]
 
-    def test_validate_discriminator_value__does_not_match_base_discriminator_type(self):
+    def test_validate_polymorphic_inheritance__does_not_match_base_discriminator_type(self):
         number = Enum('Number')
         letter = Enum('Letter')
         a = letter.create_value('A')
@@ -234,7 +255,7 @@ class TestMessage(unittest.TestCase):
         errors = msg.validate()
         assert 'discriminator value does not match the base discriminator type' in errors[0]
 
-    def test_validate_discriminator_value__message_must_be_declared_after_discriminator_type(self):
+    def test_validate_polymorphic_inheritance__message_must_be_declared_after_discriminator_type(self):
         number = Enum('Number')
         one = number.create_value('ONE')
 
@@ -246,9 +267,9 @@ class TestMessage(unittest.TestCase):
         module.link()
 
         errors = msg.validate()
-        assert 'must be declared after discriminator type' in errors[0]
+        assert 'must be declared after the discriminator type' in errors[0]
 
-    def test_validate_discriminator_value__from_dependent_module(self):
+    def test_validate_polymorphic_inheritance__from_dependent_module(self):
         number = Enum('Number')
         one = number.create_value('ONE')
 

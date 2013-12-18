@@ -400,13 +400,12 @@ inherit another subtype to form *multi-level inheritance*. To create a polymorph
 
 *Constraints:*
 
+- Base and subtypes must be declared in the same package.
 - A `@discriminator` field type must be of an `enum` type.
 - A discriminator `enum` must be declared before the base `message` and cannot be imported from
- a dependent module (see [dependent modules]).
+ a dependent module (see [circular imports and references](#circular-imports-and-references)).
 - There can be only one `@discriminator` field per inheritance tree.
 - Each subtype must have a specified unique discriminator value.
-- A base must be declared before subtypes and cannot be imported from a dependent module
-  (see [circular imports and references](#circular-imports-and-references)).
 - A non-polymorphic message cannot inherit a polymorphic message.
 - All simple inheritance constraints.
 

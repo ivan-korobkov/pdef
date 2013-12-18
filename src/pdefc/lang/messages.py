@@ -133,7 +133,11 @@ class Message(Definition):
             return errors
 
         errors = []
-        errors += self._validate_discriminator_value()
+        if self.discriminator_value:
+            errors += self._validate_polymorphic_inheritance()
+        else:
+            errors += self._validate_simple_inheritance()
+
         errors += self._validate_subtypes()
         errors += self._validate_fields()
         return errors
@@ -189,30 +193,32 @@ class Message(Definition):
 
         return errors
 
-    def _validate_discriminator_value(self):
+    def _validate_simple_inheritance(self):
+        assert not self.discriminator_value
+
+        base = self.base
+        if base and base.is_polymorphic:
+            return [self._error('%s: discriminator value required, base is polymorphic', self)]
+
+        return []
+
+    def _validate_polymorphic_inheritance(self):
+        assert self.discriminator_value
+
         base = self.base
         value = self.discriminator_value
 
         if not base:
-            if value:
-                return [self._error('%s: discriminator value is present, but no base', self)]
+            return [self._error('%s: discriminator value is present, but no base', self)]
 
-            # No discriminator value, nothing to validate.
-            return []
-
-        # The base is present.
-        if not value:
-            if base.is_polymorphic:
-                return [self._error('%s: discriminator value required, base is polymorphic', self)]
-
-            # Non-polymorphic inheritance is correct.
-            return []
-
-        # The value is present.
         if not base.is_polymorphic:
             # A present discriminator value requires a polymorphic base.
-            return [self._error('%s: cannot set a discriminator value, the base '
-                                'is not polymorphic (does not have a discriminator)', self)]
+            return [self._error('%s: base is not polymorphic, '
+                                'but the discriminator value is present', self)]
+
+        if self.package and self.package != base.package:
+            return [self._error('%s: cannot inherit a polymorphic message from another package',
+                                self)]
 
         # Both the value and the base are present, and the base is polymorphic.
         # The base has been validated before, its discriminator field must valid.
@@ -223,7 +229,7 @@ class Message(Definition):
 
         enum = value.enum
         if not self._is_defined_after(enum):
-            return [self._error('%s: must be declared after discriminator type %s', self, enum)]
+            return [self._error('%s: must be declared after the discriminator type %s', self, enum)]
 
         # enum.module can be None in tests.
         if enum.module and enum.module._depends_on(self.module):

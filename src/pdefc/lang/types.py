@@ -151,6 +151,10 @@ class Definition(Type):
         return self.name
 
     @property
+    def package(self):
+        return self.module.package if self.module else None
+
+    @property
     def referenced_types(self):
         '''Return a list of all types referenced in this definition (in fields, methods, etc).'''
         return []

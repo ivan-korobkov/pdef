@@ -149,7 +149,19 @@ class Interface(Definition):
         if not self.exc.is_exception:
             return [self._error('%s: exc must be an exception, got %s', self, self.exc)]
 
-        return self._exc.validate()
+        errors = self._exc.validate()
+        if errors:
+            return errors
+
+        if not self.base or not self.base.exc:
+            return []
+
+        # The current exception must match the base exception or be its subclass.
+        if self.exc._is_subclass_of(self.base.exc):
+            return []
+
+        return [self._error('%s: subinterface exception must be empty, or match the base exc, '
+                            'or be the base exc subclass, %s', self, self.exc)]
 
     def _validate_methods(self):
         errors = []

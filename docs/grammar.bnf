@@ -46,7 +46,7 @@ MessageBase     ::= Type ('(' Type ')')?  // Base with an optional polymorphic t
 Field           ::= id Type FieldDiscriminator? ';'
 FieldDiscriminator ::= '@discriminator'
 
-Interface       ::= InterfaceExc? 'interface' id '{' Method* '}'
+Interface       ::= InterfaceExc? 'interface' id (':' id)? '{' Method* '}'
 InterfaceExc    ::= '@throws' '(' TypeName ')'
 
 Method          ::= doc? MethodPost? id '(' Args? ')' Type ';'

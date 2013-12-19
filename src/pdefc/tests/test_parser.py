@@ -243,6 +243,30 @@ class TestParser(unittest.TestCase):
         assert message.is_exception
         assert message.location == Location(5)
 
+    def test_message_inheritance(self):
+        s = '''
+            message Message : Base {}
+        '''
+
+        module, _ = self.parser.parse(s, 'module')
+        message = module.definitions[0]
+
+        assert message.name == 'Message'
+        assert message._base.name == 'Base'
+        assert message.discriminator_value is None
+
+    def test_message_polymorphic_inheritance(self):
+        s = '''
+            message Message : Base(Type.SUBTYPE) {}
+        '''
+
+        module, _ = self.parser.parse(s, 'module')
+        message = module.definitions[0]
+
+        assert message.name == 'Message'
+        assert message._base.name == 'Base'
+        assert message._discriminator_value.name == 'Type.SUBTYPE'
+
     def test_fields(self):
         s = '''
             /** Module description. */
@@ -289,6 +313,17 @@ class TestParser(unittest.TestCase):
         assert interface.location == Location(6)
         assert interface._exc.name == 'Exception'
         assert interface._exc.location == Location(5)
+
+    def test_interface_inheritance(self):
+        s = '''
+            interface Interface : SuperInterface {}
+        '''
+
+        module, _ = self.parser.parse(s, 'module')
+        interface = module.definitions[0]
+
+        assert interface.name == 'Interface'
+        assert interface._base.name == 'SuperInterface'
 
     def test_methods(self):
         s = '''

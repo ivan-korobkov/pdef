@@ -8,15 +8,24 @@ from pdefc.lang.types import TypeEnum, NativeType, Definition
 
 class Interface(Definition):
     '''User-defined interface.'''
-    def __init__(self, name, exc=None, methods=None, doc=None, location=None):
+    def __init__(self, name, base=None, exc=None, methods=None, doc=None, location=None):
         super(Interface, self).__init__(TypeEnum.INTERFACE, name, doc=doc, location=location)
 
+        self.base = base
         self.exc = exc
         self.methods = []
 
         if methods:
             for method in methods:
                 self.add_method(method)
+
+    @property
+    def base(self):
+        return self._base.dereference()
+
+    @base.setter
+    def base(self, value):
+        self._base = references.reference(value)
 
     @property
     def exc(self):

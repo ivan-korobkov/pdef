@@ -413,13 +413,24 @@ class _GrammarRules(object):
     @_with_location(3)
     def p_interface(self, p):
         '''
-        interface : interface_exc INTERFACE IDENTIFIER LBRACE methods RBRACE
+        interface : interface_exc INTERFACE IDENTIFIER interface_base LBRACE methods RBRACE
         '''
         exc = p[1]
         name = p[3]
-        methods = p[5]
+        base = p[4]
+        methods = p[6]
 
-        p[0] = pdefc.lang.Interface(name, exc=exc, methods=methods)
+        p[0] = pdefc.lang.Interface(name, base=base, exc=exc, methods=methods)
+
+    def p_interface_base(self, p):
+        '''
+        interface_base : COLON type
+                       | empty
+        '''
+        if len(p) == 3:
+            p[0] = p[2]
+        else:
+            p[0] = None
 
     def p_interface_exc(self, p):
         '''

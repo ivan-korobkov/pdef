@@ -10,6 +10,9 @@ exception TestException {
     text    string;
 }
 
+/** Test exception for TestSubInterface. */
+exception TestSubException : TestException {}
+
 
 /** Test interface */
 @throws(TestException)
@@ -53,4 +56,11 @@ interface TestInterface {
 
     /** Returns an internal server error. */
     serverError() void;
+}
+
+
+@throws(TestSubException)
+interface TestSubInterface : TestInterface {
+    /** Sub interface method. */
+    subMethod() void;
 }

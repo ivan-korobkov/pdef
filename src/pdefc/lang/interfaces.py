@@ -49,6 +49,7 @@ class Interface(Definition):
     @property
     def referenced_types(self):
         result = []
+        result += self._base.referenced_types
         result += self._exc.referenced_types
 
         for method in self.declared_methods:
@@ -76,6 +77,7 @@ class Interface(Definition):
     def link(self, module):
         '''Link the base, the exception and the methods.'''
         errors = super(Interface, self).link(module)
+        errors += self._base.link(module.lookup)
         errors += self._exc.link(module.lookup)
 
         for method in self.declared_methods:

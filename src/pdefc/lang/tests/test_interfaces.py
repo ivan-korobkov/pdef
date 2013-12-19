@@ -38,16 +38,23 @@ class TestInterface(unittest.TestCase):
         assert iface.referenced_types[1] == NativeType.VOID
         assert iface.referenced_types[2] == NativeType.INT32
         assert iface.referenced_types[3] == NativeType.INT64
-    
+
+    def test_referenced_types__base(self):
+        base = Interface('Base')
+        interface = Interface('Interface', base=base)
+
+        assert len(interface.referenced_types) == 1
+        assert interface.referenced_types[0] == base
+
     def test_link(self):
         module = Module('test')
-        iface = Interface('Interface', exc='exc')
+        iface = Interface('Interface', base='base', exc='exc')
         iface.create_method('method', 'result', [('arg', 'arg_type')])
 
         errors = iface.link(module)
         assert iface.module is module
-        assert len(errors) == 3
-        assert iface.methods[0].interface is iface
+        assert len(errors) == 4
+        assert iface.declared_methods[0].interface is iface
 
     # validate_base
 

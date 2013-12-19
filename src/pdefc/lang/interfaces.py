@@ -13,7 +13,7 @@ class Interface(Definition):
 
         self.base = base
         self.exc = exc
-        self.methods = []
+        self.declared_methods = []
 
         if methods:
             for method in methods:
@@ -36,15 +36,22 @@ class Interface(Definition):
         self._exc = references.reference(value)
 
     @property
-    def declared_methods(self):
-        return self.methods
+    def methods(self):
+        return self.inherited_methods + self.declared_methods
+
+    @property
+    def inherited_methods(self):
+        if not self.base:
+            return []
+
+        return self.base.methods
 
     @property
     def referenced_types(self):
         result = []
         result += self._exc.referenced_types
 
-        for method in self.methods:
+        for method in self.declared_methods:
             result += method._result.referenced_types
             for arg in method.args:
                 result += arg._type.referenced_types
@@ -53,7 +60,7 @@ class Interface(Definition):
 
     def add_method(self, method):
         '''Add a method to this interface.'''
-        self.methods.append(method)
+        self.declared_methods.append(method)
         logging.debug('%s: added a method "%s"', self, method.name)
 
     def create_method(self, name, result=NativeType.VOID, arg_tuples=None, is_post=False):
@@ -71,17 +78,67 @@ class Interface(Definition):
         errors = super(Interface, self).link(module)
         errors += self._exc.link(module.lookup)
 
-        for method in self.methods:
+        for method in self.declared_methods:
             errors += method.link(self)
 
         return errors
 
     def _validate(self):
         logging.debug('Validating %s', self)
-        errors = []
+        errors = self._validate_base()
+        if errors:
+            # Cannot validate this interface when an invalid base.
+            return errors
+
         errors += self._validate_methods()
         errors += self._validate_exc()
         return errors
+
+    def _validate_base(self):
+        if not self.base:
+            return []
+
+        # Prevent circular inheritance before any validation.
+        if self._has_circular_inheritance:
+            return [self._error('%s: circular inheritance', self)]
+
+        # Validate the base, ignore the errors, they are collected
+        # when the base is validated in a module.
+        base = self.base
+        base.validate()
+        if not base.is_valid:
+            return [self._error('%s: invalid base %s', self, base)]
+
+        if not base.is_interface:
+            return [self._error('%s: base must be an interface not %s', self, base)]
+
+        errors = []
+        if not self._is_defined_after(base):
+            errors.append(self._error('%s: must be declared after its base %s', self, base))
+
+        # base.module can be None in tests.
+        if base.module and base.module._depends_on(self.module):
+            path = base.module._get_import_path(self.module)
+            errors.append(self._error('%s: cannot inherit %s, '
+                                      'it is in a dependent module "%s", import path: %s',
+                                      self, base, base.module, path))
+
+        return errors
+
+    @property
+    def _has_circular_inheritance(self):
+        base = self.base
+        while base:
+            if base is self:
+                return True
+
+            if base.is_interface:
+                base = base.base
+            else:
+                # Cannot proceed, the base is not an interface.
+                break
+
+        return False
 
     def _validate_exc(self):
         if not self.exc:
@@ -96,14 +153,14 @@ class Interface(Definition):
         errors = []
 
         # Prevent duplicate methods.
-        names = set()
-        for method in self.methods:
+        names = set([method.name for method in self.inherited_methods])
+        for method in self.declared_methods:
             if method.name in names:
                 errors.append(self._error('%s: duplicate method "%s"', self, method.name))
             names.add(method.name)
 
         # Validate methods.
-        for method in self.methods:
+        for method in self.declared_methods:
             errors += method.validate()
 
         return errors

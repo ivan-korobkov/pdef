@@ -54,10 +54,14 @@ class Message(Definition):
 
     @property
     def fields(self):
-        if not self.base:
-            return self.declared_fields
+        return self.inherited_fields + self.declared_fields
 
-        return self.base.fields + self.declared_fields
+    @property
+    def inherited_fields(self):
+        if not self.base:
+            return []
+
+        return self.base.fields
 
     @property
     def inherited_fields(self):
@@ -129,7 +133,7 @@ class Message(Definition):
 
         errors = self._validate_base()
         if errors:
-            # Cannot validate this message with an invalid base.
+            # Cannot validate this message when an invalid base.
             return errors
 
         errors = []
@@ -170,12 +174,11 @@ class Message(Definition):
         # when the base is validated in a module.
         base = self.base
         base.validate()
-
         if not base.is_valid:
             return [self._error('%s: invalid base %s', self, base)]
 
         if not base.is_message:
-            return [self._error('%s: base must be a message but %s', self, base)]
+            return [self._error('%s: base must be a message not %s', self, base)]
 
         errors = []
         if self.is_exception != base.is_exception:
@@ -184,9 +187,9 @@ class Message(Definition):
         if not self._is_defined_after(base):
             errors.append(self._error('%s: must be declared after its base %s', self, base))
 
-        # Base.module can be None in tests.
+        # base.module can be None in tests.
         if base.module and base.module._depends_on(self.module):
-            path = base.module._get_import_path(base.module)
+            path = base.module._get_import_path(self.module)
             errors.append(self._error('%s: cannot inherit %s, '
                                       'it is in a dependent module "%s", import path: %s',
                                       self, base, base.module, path))
@@ -260,8 +263,8 @@ class Message(Definition):
         errors = []
 
         # Prevent duplicate field names.
-        names = set()
-        for field in self.fields:
+        names = set([field.name for field in self.inherited_fields])
+        for field in self.declared_fields:
             if field.name in names:
                 errors.append(self._error('%s: duplicate field "%s"', self, field.name))
             names.add(field.name)
@@ -278,7 +281,7 @@ class Message(Definition):
 
             discriminator = field
 
-        for field in self.fields:
+        for field in self.declared_fields:
             errors += field.validate()
 
         return errors

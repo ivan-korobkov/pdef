@@ -49,6 +49,54 @@ class TestInterface(unittest.TestCase):
         assert len(errors) == 3
         assert iface.methods[0].interface is iface
 
+    # validate_base
+
+    def test_validate_base__ok(self):
+        base = Interface('Base')
+        interface = Interface('Interface', base=base)
+
+        errors = interface.validate()
+        assert not errors
+
+    def test_validate_base__circular_inheritance(self):
+        base = Interface('Base')
+        interface = Interface('Interface', base=base)
+        base.base = interface
+
+        errors = interface.validate()
+        assert 'circular inheritance' in errors[0]
+
+    def test_validate_base__base_not_interface(self):
+        message = Message('Message')
+        interface = Interface('Interface', base=message)
+
+        errors = interface.validate()
+        assert 'base must be an interface' in errors[0]
+
+    def test_validate_base__base_must_be_declared_before_subtype(self):
+        base = Interface('Base')
+        interface = Interface('Interface', base=base)
+
+        module = Module('module', definitions=[interface, base])
+        module.link()
+
+        errors = interface.validate()
+        assert 'must be declared after its base' in errors[0]
+
+    def test_validate_base__prevent_base_from_dependent_module(self):
+        base = Interface('Base')
+        interface = Interface('Interface', base=base)
+
+        module0 = Module('module0', definitions=[interface])
+        module0.link()
+
+        module1 = Module('module1', definitions=[base])
+        module1.add_imported_module('module0', module0)
+        module1.link()
+
+        errors = interface.validate()
+        assert 'cannot inherit Base, it is in a dependent module "module1"' in errors[0]
+
     # validate_exc
 
     def test_validate_exc__tries_to_throw_non_exception(self):
@@ -61,12 +109,22 @@ class TestInterface(unittest.TestCase):
 
     # validate_methods
 
-    def test_validate_methods__duplicates(self):
+    def test_validate_methods__duplicate(self):
         iface0 = Interface('Interface0')
         iface0.create_method('method')
         iface0.create_method('method')
 
         errors = iface0.validate()
+        assert 'duplicate method' in errors[0]
+
+    def test_validate_methods__duplicate_inherited_methods(self):
+        base = Interface('Base')
+        base.create_method('method')
+
+        interface = Interface('Interface', base=base)
+        interface.create_method('method')
+
+        errors = interface.validate()
         assert 'duplicate method' in errors[0]
 
 

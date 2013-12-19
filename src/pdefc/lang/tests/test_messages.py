@@ -158,7 +158,7 @@ class TestMessage(unittest.TestCase):
         errors = exc.validate()
         assert 'wrong base type (message/exception)' in errors[0]
 
-    def test_validate_base__must_be_declared_after_base(self):
+    def test_validate_base__base_must_be_declared_before_subtype(self):
         base = Message('Base')
         msg = Message('Message', base=base)
 

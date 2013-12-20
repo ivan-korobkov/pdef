@@ -9,10 +9,9 @@ from pdefc.lang.types import NativeType, TypeEnum
 
 class Module(Validatable):
     '''Module is a named scope for definitions. It is usually a *.pdef file.'''
-    name_pattern = re.compile(r'^[a-zA-Z]{1}[a-zA-Z0-9_]*(\.[a-zA-Z]{1}[a-zA-Z0-9_]*)*$')
 
-    def __init__(self, relative_name, imports=None, definitions=None, doc=None, path=None):
-        self.relative_name = relative_name
+    def __init__(self, name, imports=None, definitions=None, doc=None, path=None):
+        self.name = name
         self.doc = doc
         self.path = path
         self.package = None
@@ -37,16 +36,6 @@ class Module(Validatable):
 
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
-
-    @property
-    def name(self):
-        if not self.package:
-            return self.relative_name
-
-        if self.package.name == self.relative_name:
-            return self.relative_name
-
-        return '%s.%s' % (self.package.name, self.relative_name)
 
     @property
     def imported_definitions(self):
@@ -249,20 +238,12 @@ class Module(Validatable):
         '''Validate imports and definitions and return a list of errors.'''
         logging.debug('Validating %s', self)
         errors = []
-        errors += self._validate_name()
         errors += self._validate_no_duplicate_symbols()
 
         for def0 in self.definitions:
             errors += def0.validate()
 
         return self._log_return_errors(errors)
-
-    def _validate_name(self):
-        if self.name_pattern.match(self.relative_name):
-            return []
-        return ['Wrong module name "%s". A name must be one or several words separated by dots, '
-                'a word must contain only latin letters, digits and underscores, '
-                'and must start with a letter, for example, "users.accounts.events"' % self.name]
 
     def _validate_no_duplicate_symbols(self):
         errors = []

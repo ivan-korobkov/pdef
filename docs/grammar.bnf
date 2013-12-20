@@ -27,9 +27,9 @@
     ]
 }
 
-File            ::= doc? ImportBlock* Definition*
+Module          ::= doc? module ModuleName ';' ImportBlock* Definition*
 TypeName        ::= id ('.' id)*
-ModuleName      ::= id ('.' id)*
+ModuleName       ::= id ('.' id)*
 
 ImportBlock     ::= AbsoluteImport | RelativeImport
 AbsoluteImport  ::= import ModuleName ';'

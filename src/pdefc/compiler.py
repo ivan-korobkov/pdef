@@ -113,7 +113,7 @@ class Compiler(object):
             s = source.module(mname)
             path = source.module_path(mname)
 
-            module, errors0 = self.parser.parse(s, relative_name=mname, path=path)
+            module, errors0 = self.parser.parse(s, path=path)
             errors += errors0
             if module:
                 modules.append(module)

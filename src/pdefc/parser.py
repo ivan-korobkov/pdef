@@ -19,7 +19,7 @@ class Parser(object):
     '''Pdef parser. It is reusable but not thread-safe.'''
 
     def __init__(self):
-        self.grammar = _Grammar(self._name, self._error)
+        self.grammar = _Grammar(self._error)
 
         # Some docs on options:
         # - optimize=False and write_tables=False force to generate tabmodule each time
@@ -33,30 +33,26 @@ class Parser(object):
 
         # These are cleaned on each parse invocation.
         self._errors = []
-        self._module_name = None
         self._path = None
 
-    def parse(self, source, relative_name, path=None):
-        '''Parse a module from a source string, return the module and a list of errors.'''
-        name = relative_name
-        logging.info('Parsing %s', path or name)
+    def parse(self, s, path=None):
+        '''Parse a module from a string, return the module and a list of errors.'''
+        logging.info('Parsing %s', path or 'stream')
 
         # Clear the variables.
         self._errors = []
-        self._module_name = name
         self._path = path
 
         try:
             lexer = self.lexer.clone()
-            module = self.parser.parse(source, tracking=True, lexer=lexer)
+            module = self.parser.parse(s, tracking=True, lexer=lexer)
             errors = list(self._errors)
 
             if module:
-                module.relative_name = name
                 module.path = path
 
             if errors:
-                self._log_errors(errors, path or name)
+                self._log_errors(errors, path)
                 return None, errors
 
             return module, errors
@@ -64,9 +60,6 @@ class Parser(object):
         finally:
             self._errors = None
             self._path = None
-
-    def _name(self):
-        return self._module_name
 
     def _error(self, msg):
         self._errors.append(msg)
@@ -119,7 +112,7 @@ class _Tokens(object):
         'INTERFACE')
 
     # Identifier types, see t_IDENTIFIER
-    ids = types + ('FROM', 'IMPORT')
+    ids = types + ('FROM', 'IMPORT', 'MODULE')
     ids_map = {s.lower(): s for s in ids}
     reserved = set(s.lower() for s in RESERVED)
 
@@ -188,7 +181,7 @@ class _Tokens(object):
     def t_DOC(self, t):
         r'\/\*\*((.|\n)*?)\*\/'
         t.lexer.lineno += t.value.count('\n')
-        
+
         value = t.value.strip('/')
         value = self.doc_start_pattern.sub('', value)
         value = self.doc_end_pattern.sub('', value)
@@ -205,9 +198,6 @@ class _Tokens(object):
 
 class _GrammarRules(object):
     '''Parser grammar rules.'''
-    def _name(self):
-        raise NotImplementedError
-
     def _error(self, msg):
         raise NotImplementedError
 
@@ -215,15 +205,15 @@ class _GrammarRules(object):
     @_with_location(0)
     def p_module(self, p):
         '''
-        module : doc imports definitions
+        module : doc MODULE module_name SEMI imports definitions
         '''
-        name = self._name()
         doc = p[1]
-        imports = p[2]
-        definitions = p[3]
+        name = p[3]
+        imports = p[5]
+        definitions = p[6]
         p[0] = pdefc.lang.Module(name, imports=imports, definitions=definitions, doc=doc)
 
-    # Any absolute name, returns a list.
+    # Any absolute name.
     def p_absolute_name(self, p):
         '''
         absolute_name : absolute_name DOT IDENTIFIER
@@ -579,6 +569,5 @@ class _Grammar(_GrammarRules, _Tokens):
     '''Grammar combines grammar rules and lexer tokens. It can be passed to the ply.yacc
     and pla.lex functions as the module argument.'''
 
-    def __init__(self, name_func, error_func):
-        self._name = name_func
+    def __init__(self, error_func):
         self._error = error_func

@@ -47,7 +47,6 @@ RESERVED = (
     "instanceof",
     "int",
     "long",
-    "module",
     "namespace",
     "new",
     "next",

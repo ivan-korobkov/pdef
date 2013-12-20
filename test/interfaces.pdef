@@ -2,7 +2,8 @@
 Test pdef module with interfaces and exceptions.
 Multi-line comment.
 */
-from pdef_test import messages;
+module pdef.test.interfaces;
+from pdef.test import messages;
 
 
 /** Test exception. */

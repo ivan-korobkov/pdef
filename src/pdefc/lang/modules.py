@@ -10,10 +10,10 @@ from pdefc.lang.types import NativeType, TypeEnum
 class Module(Validatable):
     '''Module is a named scope for definitions. It is usually a *.pdef file.'''
 
-    def __init__(self, name, imports=None, definitions=None, doc=None, path=None):
+    def __init__(self, name, imports=None, definitions=None, doc=None, filename=None):
         self.name = name
         self.doc = doc
-        self.path = path
+        self.filename = filename
         self.package = None
 
         self.imports = []               # imports
@@ -50,7 +50,7 @@ class Module(Validatable):
         if not errors:
             return []
 
-        logging.error(self.path or self.name)
+        logging.error(self.filename or self.name)
         for error in errors:
             logging.error('  %s' % error)
 
@@ -187,7 +187,7 @@ class Module(Validatable):
 
     def link(self, package=None):
         '''Link imports and definitions and return a list of errors.'''
-        logging.debug('Linking %s as %s', self.path, self)
+        logging.debug('Linking %s as %s', self.filename, self)
 
         if self.package:
             raise ValueError('Module is already linked, module=%s' % self)

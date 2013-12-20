@@ -150,7 +150,7 @@ class TestModule(unittest.TestCase):
     # Validation.
 
     def test_validate__duplicate_imports(self):
-        module = Module('test', path='/home/ivan/test.pdef')
+        module = Module('test', filename='test.pdef')
         module.add_imported_module('submodule', Module('module0.submodule'))
         module.add_imported_module('submodule', Module('module1.submodule'))
         errors = module.validate()

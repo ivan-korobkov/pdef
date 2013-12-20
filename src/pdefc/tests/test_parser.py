@@ -20,7 +20,7 @@ class TestParser(unittest.TestCase):
 
         assert not errors
         assert module.name == 'pdef.test.inheritance'
-        assert module.path == 'inheritance.pdef'
+        assert module.filename == 'inheritance.pdef'
 
     def test_parse_fixtures__messages(self):
         source = self._load_fixture('messages.pdef')
@@ -28,7 +28,7 @@ class TestParser(unittest.TestCase):
 
         assert not errors
         assert module.name == 'pdef.test.messages'
-        assert module.path == 'messages.pdef'
+        assert module.filename == 'messages.pdef'
 
     def test_parse_fixtures__interfaces(self):
         source = self._load_fixture('interfaces.pdef')
@@ -36,7 +36,7 @@ class TestParser(unittest.TestCase):
 
         assert not errors
         assert module.name == 'pdef.test.interfaces'
-        assert module.path == 'interfaces.pdef'
+        assert module.filename == 'interfaces.pdef'
 
     def _load_fixture(self, filename=None):
         dirpath = os.path.join(os.path.dirname(__file__), 'fixtures')

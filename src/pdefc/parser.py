@@ -5,6 +5,7 @@ import logging
 import re
 import ply.lex as lex
 import ply.yacc as yacc
+from pdefc import CompilerException
 
 import pdefc.lang
 from pdefc.reserved import RESERVED
@@ -23,9 +24,9 @@ class Parser(object):
 
         # Some docs on options:
         # - optimize=False and write_tables=False force to generate tabmodule each time
-        #   parser is created. It is required for production.
+        #   the parser is created.
         # - module=self.grammar sets the grammar for a lexer and a parser.
-        # - start='file' sets the start grammar rule.
+        # - start sets the start grammar rule.
 
         self.lexer = lex.lex(module=self.grammar, optimize=False, debug=False, reflags=re.UNICODE)
         self.parser = yacc.yacc(module=self.grammar, optimize=False, write_tables=False,
@@ -33,15 +34,33 @@ class Parser(object):
 
         # These are cleaned on each parse invocation.
         self._errors = []
-        self._path = None
 
-    def parse(self, s, path=None):
+    def parse_sources(self, sources):
+        '''Parse module sources and return a list of modules or raise a CompilerException.'''
+        errors = []
+        modules = []
+
+        for source in sources:
+            filename = source.filename
+            data = source.data
+
+            module, errors0 = self.parse(data, filename=filename)
+            errors += errors0
+            if module:
+                modules.append(module)
+
+        # Raise a compiler exception on errors.
+        if errors:
+            raise CompilerException('Parsing errors', errors)
+
+        return modules
+
+    def parse(self, s, filename=None):
         '''Parse a module from a string, return the module and a list of errors.'''
-        logging.info('Parsing %s', path or 'stream')
+        logging.info('Parsing %s', filename or 'stream')
 
         # Clear the variables.
         self._errors = []
-        self._path = path
 
         try:
             lexer = self.lexer.clone()
@@ -49,17 +68,16 @@ class Parser(object):
             errors = list(self._errors)
 
             if module:
-                module.path = path
+                module.filename = filename
 
             if errors:
-                self._log_errors(errors, path)
-                return None, errors
+                module = None
+                self._log_errors(errors, filename)
 
             return module, errors
 
         finally:
             self._errors = None
-            self._path = None
 
     def _error(self, msg):
         self._errors.append(msg)
@@ -323,7 +341,7 @@ class _GrammarRules(object):
                         | enum_value
                         | empty
         '''
-        self._list(p, separated=1)
+        self._list(p, separated=True)
 
     @_with_location(1)
     def p_enum_value(self, p):

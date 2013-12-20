@@ -133,7 +133,9 @@ Package file structure:
 
 *Constraints:*
 
-- Package and module names must start with a latin letter and contain only latin letters,
+- Package =names must start with a latin letter and contain only latin letters,
+  digits, underscores and dashes.
+- Module names must start with a latin letter and contain only latin letters,
   digits and underscores.
 - Package names must be unique.
 - Module names must be unique in a package.

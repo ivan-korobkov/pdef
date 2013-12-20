@@ -16,8 +16,10 @@ def create_compiler(paths=None, allow_duplicate_definitions=False):
 class Compiler(object):
     '''Compiler parses and compiles packages. It is reusable but not thread-safe.'''
     def __init__(self, sources=None, parser=None, allow_duplicate_definitions=False):
-        self.sources = sources or pdefc.create_sources()
         self.parser = parser or pdefc.create_parser()
+        self.sources = sources or pdefc.create_sources()
+        self.packages = {}
+
         self.allow_duplicate_definitions = allow_duplicate_definitions
         self._generators = None
 
@@ -27,23 +29,63 @@ class Compiler(object):
             self._generators = dict(pdefc.find_generators())
         return self._generators
 
-    def check(self, package_path):
-        '''Compile a package from a path, and print a message if its correct.'''
-        package = self.compile(package_path)
+    def check(self, path):
+        '''Compile a package, return True if correct, else raise a CompilerException.'''
+        package = self.compile(path)
         logging.info('%s is valid', package.name)
+        return True
 
-    def compile(self, package_path):
+    def compile(self, path):
         '''Compile a package from a path.'''
         t0 = time.time()
-        source = self.sources.read_path(package_path)
-        package = self._compile(source.name, compiled_map=set())
 
-        t1 = time.time()
-        t = (t1 - t0) * 1000
+        source = self.sources.add_path(path)
+        package = self.package(source.name)
+
+        t = (time.time() - t0) * 1000
         logging.info('Fetched and compiled %s in %dms', package.name, t)
         return package
 
-    def generate(self, package_path, generator_name, out, module_names=None, prefixes=None):
+    def package(self, name, _names=None):
+        '''Return a compiled package by its name or raise a CompilerException.'''
+
+        # Prevent circular dependencies.
+        names = _names or set()
+        if name in names:
+            raise CompilerException('Circular package dependencies in %s' % name)
+        names.add(name)
+
+        # Try to get a compiled package.
+        if name in self.packages:
+            return self.packages[name]
+
+        # Find a package source.
+        source = self.sources.get(name)
+
+        # Parse the source.
+        package = self._parse(source)
+        self.packages[name] = package
+
+        # Compile the dependencies.
+        for dname in package.info.dependencies:
+            dep = self.package(dname, _names=names)
+            package.add_dependency(dep)
+
+        # Compile the package.
+        package.compile(allow_duplicate_definitions=self.allow_duplicate_definitions)
+        return package
+
+    def _parse(self, source):
+        '''Parse and return a package, but not its dependencies.'''
+        logging.info('Parsing %s', source)
+
+        # Parse module sources.
+        modules = self.parser.parse_sources(source.module_sources)
+
+        # Create the package.
+        return Package(source.name, info=source.info, modules=modules)
+
+    def generate(self, path, generator_name, out, module_names=None, prefixes=None):
         '''Generate a package from a path.
 
         @package_path       Path or url to a package yaml file.
@@ -52,75 +94,19 @@ class Compiler(object):
         @prefixes           List of tuples, [('pdef.module', 'ClassPrefix')].
         '''
 
+        # Fail fast, get a generator factory.
         factory = self.generators.get(generator_name)
         if not factory:
             raise CompilerException('Source code generator not found: %s' % generator_name)
 
-        package = self.compile(package_path)
-        
+        # Parse and compile the package.
+        package = self.compile(path)
+
+        # Create a generator and generate source code.
         t0 = time.time()
         generator = factory(out, module_names=module_names, prefixes=prefixes)
         generator.generate(package)
 
-        t1 = time.time()
-        t = (t1 - t0) * 1000
+        # Measure and long the code generation time.
+        t = (time.time() - t0) * 1000
         logging.info('Generated %s code in %dms', generator_name, t)
-
-    def _compile(self, package_name, compiled_map):
-        '''Compile and return a package with its dependencies, prevent circular dependencies.'''
-
-        # Prevent circular package dependencies
-        if package_name in compiled_map:
-            raise CompilerException('Circular dependency: package=%s' % package_name)
-        compiled_map.add(package_name)
-
-        # Parse the package before compiling its dependencies
-        # to improve responsiveness.
-        package = self._parse(package_name)
-
-        # Compile the package dependencies.
-        deps = []
-        for depname in package.info.dependencies:
-            dependency = self._compile(depname, compiled_map)
-            deps.append(dependency)
-
-        # Compile and return the package.
-        logging.info('Compiling %s', package_name)
-        for dep in deps:
-            package.add_dependency(dep)
-
-        errors = package.compile(allow_duplicate_definitions=self.allow_duplicate_definitions)
-        if errors:
-            raise CompilerException('Compilation errors', errors)
-
-        return package
-
-    def _parse(self, pname):
-        '''Parse and return a package, but not its dependencies.'''
-        # Find the package source.
-        source = self.sources.get(pname)
-        info = source.info
-
-        # Init the package.
-        logging.info('Parsing %s', source)
-        package = Package(pname, info=info)
-        assert info.name == pname, 'Package name does not match one in info'
-
-        # Parse package modules.
-        errors = []
-        modules = []
-        for mname in info.modules:
-            s = source.module(mname)
-            path = source.module_path(mname)
-
-            module, errors0 = self.parser.parse(s, path=path)
-            errors += errors0
-            if module:
-                modules.append(module)
-
-        if errors:
-            raise CompilerException('Parsing errors', errors)
-
-        for module in modules:
-            package.add_module(module)
-        return package

@@ -79,7 +79,7 @@ class TestPackage(unittest.TestCase):
         assert 'Package name required' in errors[0]
 
     def test_validate_name__wrong_name(self):
-        package0 = Package('wrong-package')
+        package0 = Package('good-package')
         package1 = Package('_wrong')
         package2 = Package('1234_wrong')
 
@@ -87,7 +87,7 @@ class TestPackage(unittest.TestCase):
         errors1 = package1._validate()
         errors2 = package2._validate()
 
-        assert 'Wrong package name' in errors0[0]
+        assert not errors0
         assert 'Wrong package name' in errors1[0]
         assert 'Wrong package name' in errors2[0]
 

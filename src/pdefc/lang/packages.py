@@ -3,11 +3,12 @@ from collections import defaultdict
 import logging
 import re
 import yaml
+from pdefc.exc import CompilerException
 
 
 class Package(object):
     '''Protocol definition.'''
-    name_pattern = re.compile(r'^[a-zA-Z]{1}[a-zA-Z0-9_]*$')
+    name_pattern = re.compile(r'^[a-zA-Z]{1}[a-zA-Z0-9_\-]*$')
 
     def __init__(self, name, info=None, modules=None, dependencies=None):
         self.name = name
@@ -71,19 +72,19 @@ class Package(object):
 
     def compile(self, allow_duplicate_definitions=False):
         '''Compile this package and return a list of errors.'''
-        logging.debug('Compiling the package')
+        logging.info('Compiling %s', self)
 
         errors = self._link()
         if errors:
-            return errors
+            raise CompilerException('Linking errors', errors)
 
         errors = self._build()
         if errors:
-            return errors
+            raise CompilerException('Building errors', errors)
 
         errors = self._validate(allow_duplicate_definitions)
         if errors:
-            return errors
+            raise CompilerException('Validation errors', errors)
 
         return []
 
@@ -187,27 +188,29 @@ class PackageInfo(object):
         name = p.get('name')
         url = p.get('url')
         description = p.get('description')
-        modules = p.get('modules')
+        sources = p.get('sources')
         dependencies = p.get('dependencies')
 
-        return PackageInfo(name, url=url, description=description, modules=modules,
+        return PackageInfo(name, url=url, description=description, sources=sources,
                            dependencies=dependencies)
 
-    def __init__(self, name, url=None, description=None, modules=None, dependencies=None):
+    def __init__(self, name, url=None, description=None, sources=None, dependencies=None):
         self.name = name or ''
         self.url = url
         self.description = description or ''
-        self.modules = list(modules) if modules else []
+        self.sources = list(sources) if sources else []
         self.dependencies = list(dependencies) if dependencies else []
 
     def to_dict(self):
-        return {'package': {
-            'name': self.name,
-            'url': self.url,
-            'description': self.description,
-            'modules': list(self.modules),
-            'dependencies': list(self.dependencies)
-        }}
+        return {
+            'package': {
+                'name': self.name,
+                'url': self.url,
+                'description': self.description,
+                'sources': list(self.sources),
+                'dependencies': list(self.dependencies)
+            }
+        }
 
     def to_yaml(self):
         return yaml.dump(self.to_dict())

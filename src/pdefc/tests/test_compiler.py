@@ -10,7 +10,7 @@ from mock import Mock
 from pdefc.compiler import Compiler
 from pdefc.exc import CompilerException
 from pdefc.lang.packages import PackageInfo
-from pdefc.sources import InMemorySource
+from pdefc.sources import InMemoryPackageSource, ModuleSource
 
 
 class TestCompiler(unittest.TestCase):
@@ -29,37 +29,38 @@ class TestCompiler(unittest.TestCase):
         module1 = 'module test.goodbye.world; interface Interface {}'
         self._add_source(sources, 'test', [('hello.world', module0), ('goodbye.world', module1)])
 
-        package = compiler.compile('test.package')
+        package = compiler.compile('test/path.yaml')
         assert len(package.modules) == 2
         assert package.modules[0].name == 'test.hello.world'
         assert package.modules[1].name == 'test.goodbye.world'
-        sources.read_path.assert_called_with('test.package')
+        sources.add_path.assert_called_with('test/path.yaml')
 
     def test_compile__errors(self):
         sources = Mock()
         compiler = Compiler(sources)
 
         module = 'here goes some garbage;'
-        self._add_source(sources, 'test', [('module', module)])
+        self._add_source(sources, 'test', [('module.pdef', module)])
 
         try:
-            compiler.compile('test.package')
+            compiler.compile('test/path.yaml')
             self.fail()
         except CompilerException:
             pass
-        sources.read_path.assert_called_with('test.package')
+        sources.add_path.assert_called_with('test/path.yaml')
 
-    def _add_source(self, sources, name, module_source_pairs):
-        info = PackageInfo(name, modules=list(module for module, _ in module_source_pairs))
-        source = InMemorySource(info, dict(module_source_pairs))
+    def _add_source(self, sources, name, files_datas):
+        info = PackageInfo(name, sources=list(filename for filename, _ in files_datas))
+        source = InMemoryPackageSource(info, list(ModuleSource(filename, data)
+                                                  for filename, data in  files_datas))
 
-        sources.read_path = Mock(return_value=source)
+        sources.add_path = Mock(return_value=source)
         sources.get = Mock(return_value=source)
 
     # Test real generation.
 
     def test_generate(self):
-        module = '''
+        module_data = '''
         module test;
 
         message TestMessage {
@@ -67,8 +68,8 @@ class TestCompiler(unittest.TestCase):
         }
         '''
 
-        info = PackageInfo('test', modules=['test'])
-        package_yaml = self._fixture_package_yaml(info, {'test': module})
+        info = PackageInfo('test', sources=['test.pdef'])
+        package_yaml = self._fixture_package_yaml(info, {'test.pdef': module_data})
         out = self._tempdir()
 
         generator = Mock()
@@ -86,15 +87,15 @@ class TestCompiler(unittest.TestCase):
         assert len(package.modules) == 1
         assert package.modules[0].name == 'test'
 
-    def _fixture_package_yaml(self, info, modules_to_sources):
+    def _fixture_package_yaml(self, info, files_to_data):
         directory = self._tempdir()
 
         package = os.path.join(directory, 'test.yaml')
         with open(package, 'wt') as f:
             f.write(info.to_yaml())
 
-        for name, source in modules_to_sources.items():
-            filename = os.path.join(directory, name + '.pdef')
+        for name, source in files_to_data.items():
+            filename = os.path.join(directory, name)
             with open(filename, 'wt') as f:
                 f.write(source)
 

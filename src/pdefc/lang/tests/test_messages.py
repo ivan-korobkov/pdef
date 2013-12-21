@@ -95,9 +95,9 @@ class TestMessage(unittest.TestCase):
 
         assert len(errors) == 3
         assert message.module is module
-        assert "Type not found 'base'" in errors[0]
-        assert "Type not found 'subtype'" in errors[1]
-        assert "Type not found 'field_type'" in errors[2]
+        assert 'Type not found "base"' in errors[0]
+        assert 'Type not found "subtype"' in errors[1]
+        assert 'Type not found "field_type"' in errors[2]
 
     # build.
 

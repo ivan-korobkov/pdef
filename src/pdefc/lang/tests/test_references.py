@@ -46,7 +46,7 @@ class TestNameReference(unittest.TestCase):
         ref = references.reference('module.Message')
         errors = ref.link(lookup)
 
-        assert "Type not found 'module.Message'" in errors[0]
+        assert 'Type not found "module.Message"' in errors[0]
 
     def test_referenced_types(self):
         lookup = lambda name: name
@@ -157,8 +157,8 @@ class TestMapReference(unittest.TestCase):
         errors = ref.link(lookup)
 
         assert not ref
-        assert "Type not found 'key'" in errors[0]
-        assert "Type not found 'value'" in errors[1]
+        assert 'Type not found "key"' in errors[0]
+        assert 'Type not found "value"' in errors[1]
 
     def test_validate(self):
         ref = references.MapReference(NativeType.VOID, NativeType.VOID)

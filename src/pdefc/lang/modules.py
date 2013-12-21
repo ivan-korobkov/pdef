@@ -53,6 +53,11 @@ class Module(Validatable):
         
         return result
 
+    def _imported_modules_with_namespace(self, namespace):
+        for module in self.imported_modules:
+            if module.namespace == namespace:
+                yield module
+
     def _log_return_errors(self, errors):
         if not errors:
             return []
@@ -124,22 +129,24 @@ class Module(Validatable):
         if def0:
             return def0
 
-        # Try to find an imported type.
+        # Try to find a type in the imported modules with the same namespaces.
+        for module in self._imported_modules_with_namespace(self.namespace):
+            def0 = module.get_definition(name)
+            if def0:
+                return def0
+
+        # Try to find a type in another namespace.
         left = []
         right = name.split('.')
         while right:
             left.append(right.pop(0))
-            lname = '.'.join(left)
-            rname = '.'.join(right)
+            namespace = '.'.join(left)
+            type_name = '.'.join(right)
 
-            module = self.get_imported_module(lname)
-            if not module:
-                continue
-
-            # Try to get a definition or an enum value from the imported module.
-            def0 = module.get_definition(rname)
-            if def0:
-                return def0
+            for module in self._imported_modules_with_namespace(namespace):
+                def0 = module.get_definition(type_name)
+                if def0:
+                    return def0
 
         return None
 

@@ -68,31 +68,47 @@ class TestModule(unittest.TestCase):
         result = module.lookup('Number.One')
         assert result is one
 
-    def test_lookup__imported_definition(self):
-        '''Should find an imported definition.'''
+    def test_lookup__same_namespace__imported_module(self):
         def0 = Definition(TypeEnum.MESSAGE, 'Test')
 
-        module0 = Module('test.module0')
-        module0.add_definition(def0)
+        module0 = Module('module0', namespace='test', definitions=[def0])
+        module1 = Module('module1', namespace='test')
+        module1.add_imported_module('module0', module0)
 
-        module1 = Module('module1')
-        module1.add_imported_module('test.module0', module0)
-
-        result = module1.lookup('test.module0.Test')
+        result = module1.lookup('Test')
         assert result is def0
 
-    def test_lookup__imported_enum_value(self):
+    def test_lookup___same_namespace__imported_module__enum_value(self):
         '''Should find an imported enum value.'''
         enum = Enum('Number')
         one = enum.create_value('One')
 
-        module0 = Module('test.module0')
-        module0.add_definition(enum)
-
-        module1 = Module('module1')
+        module0 = Module('module0', namespace='test', definitions=[enum])
+        module1 = Module('module1', namespace='test')
         module1.add_imported_module('module0', module0)
 
-        result = module1.lookup('module0.Number.One')
+        result = module1.lookup('Number.One')
+        assert result is one
+
+    def test_lookup__another_namespace(self):
+        def0 = Definition(TypeEnum.MESSAGE, 'Test')
+
+        module0 = Module('module0', namespace='another.namespace', definitions=[def0])
+        module1 = Module('module1', namespace='namespace')
+        module1.add_imported_module('module0', module0)
+
+        result = module1.lookup('another.namespace.Test')
+        assert result is def0
+
+    def test_lookup__another_namespace__enum_value(self):
+        enum = Enum('Number')
+        one = enum.create_value('One')
+
+        module0 = Module('module0', namespace='another.namespace', definitions=[enum])
+        module1 = Module('module1', namespace='namespace')
+        module1.add_imported_module('module0', module0)
+
+        result = module1.lookup('another.namespace.Number.One')
         assert result is one
 
     # get_import_path.

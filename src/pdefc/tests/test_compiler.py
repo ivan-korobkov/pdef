@@ -10,7 +10,7 @@ from mock import Mock
 from pdefc.compiler import Compiler
 from pdefc.exc import CompilerException
 from pdefc.lang.packages import PackageInfo
-from pdefc.sources import InMemoryPackageSource, ModuleSource
+from pdefc.sources import InMemoryPackageSource, ModuleSource, PackageSources
 
 
 class TestCompiler(unittest.TestCase):
@@ -22,84 +22,66 @@ class TestCompiler(unittest.TestCase):
             shutil.rmtree(d, ignore_errors=True)
 
     def test_compile(self):
-        sources = Mock()
-        compiler = Compiler(sources)
+        # Given a compiler.
+        compiler = Compiler()
 
-        module0 = 'namespace test; message Message {}'
-        module1 = 'namespace test; interface Interface {}'
-        self._add_source(sources, 'test', [('hello.world', module0), ('goodbye.world', module1)])
+        # Create a test source.
+        path = self._create_source('package', {'module0': 'namespace test; message Message{}'})
+        compiler.sources.add_path(path)
 
-        package = compiler.compile('test/path.yaml')
-        assert len(package.modules) == 2
-        assert package.modules[0].name == 'hello.world'
-        assert package.modules[1].name == 'goodbye.world'
-        sources.add_path.assert_called_with('test/path.yaml')
+        # Compile the package.
+        package = compiler.compile(path)
+
+        assert package.name == 'package'
+        assert len(package.modules) == 1
+        assert package.modules[0].name == 'module0'
+
+    def test_compile__with_dependencies(self):
+        # Given a compiler.
+        compiler = Compiler()
+
+        # Create a test dependency
+        path0 = self._create_source('dependency', {'module0': 'namespace test;'})
+        compiler.add_paths(path0)
+
+        # Create a test source.
+        path1 = self._create_source('package', {'module1': 'namespace test;'}, ['dependency'])
+
+        # Compile the package.
+        package = compiler.compile(path1)
+
+        assert package.name == 'package'
+        assert len(package.dependencies) == 1
 
     def test_compile__errors(self):
-        sources = Mock()
-        compiler = Compiler(sources)
-
-        module = 'here goes some garbage;'
-        self._add_source(sources, 'test', [('module.pdef', module)])
-
-        try:
-            compiler.compile('test/path.yaml')
-            self.fail()
-        except CompilerException:
-            pass
-        sources.add_path.assert_called_with('test/path.yaml')
-
-    def _add_source(self, sources, name, files_datas):
-        info = PackageInfo(name, sources=list(filename for filename, _ in files_datas))
-        source = InMemoryPackageSource(info, list(ModuleSource(filename, data)
-                                                  for filename, data in  files_datas))
-
-        sources.add_path = Mock(return_value=source)
-        sources.get = Mock(return_value=source)
-
-    # Test real generation.
-
-    def test_generate(self):
-        module_data = '''
-        message TestMessage {
-            field string;
-        }
-        '''
-
-        info = PackageInfo('test', sources=['test.pdef'])
-        package_yaml = self._fixture_package_yaml(info, {'test.pdef': module_data})
-        out = self._tempdir()
-
-        generator = Mock()
-        generator_factory = Mock(return_value=generator)
+        # Given a compiler.
         compiler = Compiler()
-        compiler._generators = {'test': generator_factory}
-        compiler.generate(package_yaml, 'test', out=out, module_names=[('key', 'value')],
-                          prefixes=[('key', 'K')])
 
-        generator_factory.assert_called_with(out, module_names=[('key', 'value')],
-                                             prefixes=[('key', 'K')])
-        args = generator.generate.call_args[0]
-        package = args[0]
-        assert package.name == 'test'
-        assert len(package.modules) == 1
-        assert package.modules[0].relative_name == 'test'
+        # Create a test source with errors.
+        path = self._create_source('package', {'module0': 'wrong module'})
 
-    def _fixture_package_yaml(self, info, files_to_data):
-        directory = self._tempdir()
+        # Compilation should raise a CompilerException.
+        self.assertRaises(CompilerException, compiler.compile, path)
 
-        package = os.path.join(directory, 'test.yaml')
-        with open(package, 'wt') as f:
-            f.write(info.to_yaml())
+    def _create_source(self, package_name, modules, dependencies=None):
+        # Create a temp directory.
+        dirname = tempfile.mkdtemp()
+        self.tempdirs.append(dirname)
 
-        for name, source in files_to_data.items():
-            filename = os.path.join(directory, name)
-            with open(filename, 'wt') as f:
+        # Create module files.
+        sources = []
+        for name, source in modules.items():
+            filename = name + '.pdef'
+            sources.append(filename)
+
+            path = os.path.join(dirname, filename)
+            with open(path, 'wt') as f:
                 f.write(source)
 
-        return package
+        # Create a package yaml file.
+        info = PackageInfo(package_name, sources=sources, dependencies=dependencies)
+        path = os.path.join(dirname, package_name + '.yaml')
+        with open(path, 'wt') as f:
+            f.write(info.to_yaml())
 
-    def _tempdir(self):
-        path = tempfile.mkdtemp('_pdef_test')
-        self.tempdirs.append(path)
         return path

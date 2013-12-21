@@ -5,22 +5,22 @@ import logging
 import os
 import pkg_resources
 from jinja2 import Environment
+from pdefc import CompilerException, cli
 
 GENERATORS_ENTRY_POINT = 'pdefc.generators'
 ENCODING = 'utf8'
 
 
 class Generator(object):
-    '''Abstract code generator, subclass it and implement the generate method.
+    '''Abstract code generator, subclass it and implement the generate and create_cli methods.'''
 
-    @param out          Generated files destination (directory).
-    @module_names       List of tuples, [('pdef.module', 'language.module')].
-    @prefixes           List of tuples, [('pdef.module', 'ClassPrefix')].
-    '''
-    def __init__(self, out, module_names=None, prefixes=None, **kwargs):
+    @classmethod
+    def create_cli(cls):
+        '''Create a generator command-line interface.'''
+        raise NotImplementedError
+
+    def __init__(self, out):
         self.out = out
-        self.module_mapper = ModuleMapper(module_names)
-        self.prefix_mapper = PrefixMapper(prefixes)
 
     def generate(self, package):
         raise NotImplementedError
@@ -40,16 +40,56 @@ class Generator(object):
         logging.info('Created %s', filepath)
 
 
-def find_generators(entry_point=GENERATORS_ENTRY_POINT):
-    '''Dynamically load the source code generators, return a dict {name: generator}.'''
-    result = {}
-    for entry_point in pkg_resources.iter_entry_points(group=entry_point):
-        name = entry_point.name
-        generator = entry_point.load()
-        result[name] = generator
-        logging.debug('Loaded a source code generator %r', name)
+class GeneratorCli(object):
+    '''Abstract generator command-line interface.'''
 
-    return result
+    def build_parser(self, parser):
+        '''Add command-line arguments to a parser.'''
+        raise NotImplementedError
+
+    def create_generator(self, out, args):
+        '''Create a generator from command-line args.'''
+        raise NotImplementedError
+
+    def _add_prefix_args(self, parser):
+        '''Add a prefix arg, the method can be accessed by the subclasses.'''
+        parser.add_argument('--prefix', dest='prefixes', action='append', default=[],
+                            help='add a namespace class prefix, i.e. "company:Prefix"')
+
+    def _add_module_args(self, parser):
+        '''Add a module arg, the method can be accessed by the subclasses.'''
+        parser.add_argument('--module', dest='modules', action='append', default=[],
+                            help='add a module name mapping, '
+                                 'i.e. "pdef.module:io.pdef"')
+
+    def _parse_prefix_args(self, args):
+        '''Parse prefix args, the method can be accessed by the subclasses.'''
+        result = []
+
+        for s in args.prefixes:
+            if s.count(':') != 1:
+                raise CompilerException('Wrong prefix "%s", must be specified as'
+                                        '"my.namespace:Prefix"')
+
+            namespace, prefix = s.split(':')
+            result.append((namespace, prefix))
+
+        return result
+
+    def _parse_module_args(self, args):
+        '''Parse module args, the method can be accessed by the subclasses.'''
+        result = []
+
+        for s in args.modules:
+            if s.count(':') != 1:
+                raise CompilerException('Wrong module name mapping "%s", must be specified as '
+                                        '"pdef.module:lang.module"', s)
+
+            name0, name1 = s.split(':')
+            result.append((name0, name1))
+
+        return result
+
 
 
 class Templates(object):
@@ -119,16 +159,17 @@ class Templates(object):
 
 
 class PrefixMapper(object):
-    '''Maps pdef names to class prefixes.
+    '''Maps pdef namespaces to class prefixes.
 
     Example::
         >>> mapper = PrefixMapper([('pdef', 'Pd')])
         >>> mapper.get_prefix('pdef.tests')
         >>> 'Pd'
     '''
-    def __init__(self, name_prefix_pairs=None):
-        self._pairs = tuple((name, prefix) for name, prefix in name_prefix_pairs) \
-            if name_prefix_pairs else ()
+
+    def __init__(self, ns_prefix_pairs=None):
+        self._pairs = tuple((name, prefix) for name, prefix in ns_prefix_pairs) \
+            if ns_prefix_pairs else ()
 
     def get_prefix(self, name):
         '''Returns a prefix for a name or an empty string, correctly handles relative names.'''
@@ -149,8 +190,8 @@ class ModuleMapper(object):
         >>> mapper = ModuleMapper([('pdef.tests', 'tests')])
         >>> mapper.get_module('pdef.tests.messages')
         >>> 'tests.messages'
-
     '''
+
     def __init__(self, name_pairs=None):
         self._pairs = tuple((old, new) for old, new in name_pairs) if name_pairs else ()
 
@@ -182,3 +223,15 @@ def mkdir_p(dirname):
     if os.path.exists(dirname):
         return
     os.makedirs(dirname)
+
+
+def find_generator_classes(entry_point=GENERATORS_ENTRY_POINT):
+    '''Dynamically load the source code generators, return a dict {name: generator_class}.'''
+    result = {}
+    for entry_point in pkg_resources.iter_entry_points(group=entry_point):
+        name = entry_point.name
+        generator = entry_point.load()
+        result[name] = generator
+        logging.debug('Loaded a source code generator %r', name)
+
+    return result

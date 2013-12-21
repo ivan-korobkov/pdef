@@ -20,7 +20,7 @@ from pdefc.exc import CompilerException
 from pdefc.compiler import create_compiler
 from pdefc.parser import create_parser
 from pdefc.sources import create_sources
-from pdefc.generators import find_generators
+from pdefc.generators import find_generator_classes
 
 __title__ = 'pdef-compiler'
 __author__ = 'Ivan Korobkov <ivan.korobkov@gmail.com>'

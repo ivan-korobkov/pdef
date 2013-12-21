@@ -103,8 +103,7 @@ class TestPackage(unittest.TestCase):
         errors = package._validate()
 
         assert 'Duplicate definition "test.Message"' in errors[0]
-        assert '  module0' in errors[1]
-        assert '  module1' in errors[2]
+        assert {'  module0', '  module1'} == {errors[1], errors[2]}
 
     def etst_validate_namespaces__duplicate_definitions_in_dependencies(self):
         message0 = Message('Message')

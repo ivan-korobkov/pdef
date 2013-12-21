@@ -1,7 +1,26 @@
 # encoding: utf-8
+import argparse
 import unittest
 
-from pdefc.generators import ModuleMapper, PrefixMapper
+from pdefc.generators import ModuleMapper, PrefixMapper, GeneratorCli
+
+
+class TestGeneratorCli(unittest.TestCase):
+    def test_parse_prefix_args(self):
+        args = argparse.Namespace()
+        args.prefixes = ['namespace:Ns']
+
+        cli = GeneratorCli()
+        result = cli._parse_prefix_args(args)
+        assert result == [('namespace', 'Ns')]
+
+    def test_parse_module_args(self):
+        args = argparse.Namespace()
+        args.modules = ['pdef.test:io.pdef']
+
+        cli = GeneratorCli()
+        result = cli._parse_module_args(args)
+        assert result == [('pdef.test', 'io.pdef')]
 
 
 class TestPrefixMapper(unittest.TestCase):

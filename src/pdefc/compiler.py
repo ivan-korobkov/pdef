@@ -7,10 +7,9 @@ from pdefc.exc import CompilerException
 from pdefc.lang.packages import Package
 
 
-def create_compiler(paths=None):
+def create_compiler():
     '''Creates a compiler, the compiler is reusable but not thread-safe.'''
-    sources = pdefc.create_sources(paths)
-    return Compiler(sources)
+    return Compiler()
 
 
 class Compiler(object):
@@ -20,13 +19,19 @@ class Compiler(object):
         self.sources = sources or pdefc.create_sources()
         self.packages = {}
 
-        self._generators = None
+        self._generator_classes = None
 
     @property
-    def generators(self):
-        if self._generators is None:
-            self._generators = dict(pdefc.find_generators())
-        return self._generators
+    def generator_classes(self):
+        '''Return {name: GeneratorClass}.'''
+        if self._generator_classes is None:
+            self._generator_classes = dict(pdefc.find_generator_classes())
+        return self._generator_classes
+
+    def add_paths(self, *paths):
+        '''Add source paths.'''
+        for path in paths:
+            self.sources.add_path(path)
 
     def check(self, path):
         '''Compile a package, return True if correct, else raise a CompilerException.'''
@@ -83,29 +88,3 @@ class Compiler(object):
 
         # Create the package.
         return Package(source.name, info=source.info, modules=modules)
-
-    def generate(self, path, generator_name, out, module_names=None, prefixes=None):
-        '''Generate a package from a path.
-
-        @package_path       Path or url to a package yaml file.
-        @generator_name     Generator name.
-        @module_names       List of tuples, [('pdef.module', 'language.module')].
-        @prefixes           List of tuples, [('pdef.module', 'ClassPrefix')].
-        '''
-
-        # Fail fast, get a generator factory.
-        factory = self.generators.get(generator_name)
-        if not factory:
-            raise CompilerException('Source code generator not found: %s' % generator_name)
-
-        # Parse and compile the package.
-        package = self.compile(path)
-
-        # Create a generator and generate source code.
-        t0 = time.time()
-        generator = factory(out, module_names=module_names, prefixes=prefixes)
-        generator.generate(package)
-
-        # Measure and long the code generation time.
-        t = (time.time() - t0) * 1000
-        logging.info('Generated %s code in %dms', generator_name, t)

@@ -91,26 +91,32 @@ class TestPackage(unittest.TestCase):
         assert 'Wrong package name' in errors1[0]
         assert 'Wrong package name' in errors2[0]
 
-    def test_validate__duplicate_definitions(self):
-        message0 = Message('message')
-        message1 = Message('message')
+    def test_validate_namespaces__duplicate_definitions(self):
+        message0 = Message('Message')
+        message1 = Message('Message')
 
-        module0 = Module('module0', definitions=[message0])
-        module1 = Module('module1', definitions=[message1])
+        module0 = Module('module0', namespace='test', definitions=[message0])
+        module1 = Module('module1', namespace='test', definitions=[message1])
 
         package = Package('package', modules=[module0, module1])
+        package._link()
         errors = package._validate()
 
-        assert 'Duplicate definitions in a package' in errors[0]
+        assert 'Duplicate definition "test.Message"' in errors[0]
+        assert '  module0' in errors[1]
+        assert '  module1' in errors[2]
 
-    def test_validate__allow_duplicate_definitions(self):
-        message0 = Message('message')
-        message1 = Message('message')
+    def etst_validate_namespaces__duplicate_definitions_in_dependencies(self):
+        message0 = Message('Message')
+        message1 = Message('Message')
 
-        module0 = Module('module0', definitions=[message0])
-        module1 = Module('module1', definitions=[message1])
+        module0 = Module('module0', namespace='test', definitions=[message0])
+        module1 = Module('module0', namespace='test', definitions=[message1])
 
-        package = Package('package', modules=[module0, module1])
-        errors = package._validate(allow_duplicate_definitions=True)
+        package0 = Package('package', modules=[module0])
+        package1 = Package('package', modules=[module1], dependencies=[package0])
 
-        assert not errors
+        package0.compile()
+        package1._link()
+        errors = package1._validate()
+        assert 'Duplicate definition "test.Message"' in errors[0]

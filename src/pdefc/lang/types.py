@@ -155,6 +155,14 @@ class Definition(Type):
         return self.module.package if self.module else None
 
     @property
+    def namespace(self):
+        return self.module.namespace if self.module else None
+
+    @property
+    def fullname(self):
+        return self.namespace + '.' + self.name if self.namespace else self.name
+
+    @property
     def referenced_types(self):
         '''Return a list of all types referenced in this definition (in fields, methods, etc).'''
         return []
@@ -176,7 +184,6 @@ class Definition(Type):
                 continue
 
             result.add(type0)
-
         return result
 
     def lookup(self, name):

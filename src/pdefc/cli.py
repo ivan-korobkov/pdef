@@ -15,8 +15,8 @@ def main(argv=None):
 
 class Cli(object):
     '''Pdef command-line interface.'''
-    def _create_compiler(self, paths=None, allow_duplicate_definitions=False):
-        return pdefc.create_compiler(paths, allow_duplicate_definitions=allow_duplicate_definitions)
+    def _create_compiler(self, paths=None):
+        return pdefc.create_compiler(paths)
 
     def _find_generators(self):
         return pdefc.find_generators()
@@ -81,9 +81,8 @@ class Cli(object):
     def _check(self, args):
         package = args.package
         paths = args.paths
-        allow_duplicate_definitions = args.allow_duplicate_definitions
 
-        compiler = self._create_compiler(paths, allow_duplicate_definitions)
+        compiler = self._create_compiler(paths)
         return compiler.check(package)
 
     def _check_args(self, subparsers):
@@ -91,9 +90,6 @@ class Cli(object):
         parser.add_argument('package', help='path to a package yaml file')
         parser.add_argument('--include', dest='paths', action='append', default=[],
                             help='add a path to a package dependency')
-        parser.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
-                            action='store_true', default=False,
-                            help='allow duplicate definition names in a package')
         parser.set_defaults(command_func=self._check)
 
     # Generate.
@@ -105,9 +101,8 @@ class Cli(object):
         out = args.out
         module_names = self._parse_pairs(args.module_names)
         prefixes = self._parse_pairs(args.prefixes)
-        allow_duplicate_definitions = args.allow_duplicate_definitions
 
-        compiler = self._create_compiler(paths, allow_duplicate_definitions)
+        compiler = self._create_compiler(paths)
         return compiler.generate(package, generator, out=out, module_names=module_names,
                                  prefixes=prefixes)
 
@@ -131,9 +126,6 @@ class Cli(object):
                                  'i.e. "company.project:Pr (generator specific)')
         parser.add_argument('--include', dest='paths', action='append', default=[],
                             help='add a path to a package dependency')
-        parser.add_argument('--allow-duplicate-definitions', dest='allow_duplicate_definitions',
-                            action='store_true', default=False,
-                            help='allow duplicate definition names in a package')
 
         parser.set_defaults(command_func=self._generate)
 

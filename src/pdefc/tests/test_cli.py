@@ -18,7 +18,7 @@ class TestCli(unittest.TestCase):
         cli._create_compiler = factory
         cli.run(args)
 
-        factory.assert_called_with(['second.package'], False)
+        factory.assert_called_with(['second.package'])
         compiler.check.assert_called_with('test.package')
 
     def test_generate(self):
@@ -40,7 +40,7 @@ class TestCli(unittest.TestCase):
         cli._find_generators = lambda: {'test': generator}
         cli.run(args)
 
-        factory.assert_called_with(['second.package', 'third.package'], False)
+        factory.assert_called_with(['second.package', 'third.package'])
         compiler.generate.assert_called_with('test.package', 'test', out='destination',
                 module_names=[('test', 'io.test'), ('second', 'io.second')],
                 prefixes=[('test', 'T'), ('pdef', 'Pd')])

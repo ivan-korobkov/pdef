@@ -2,6 +2,7 @@
 from collections import defaultdict
 import logging
 import re
+import itertools
 import yaml
 from pdefc.exc import CompilerException
 
@@ -70,7 +71,7 @@ class Package(object):
 
         return None
 
-    def compile(self, allow_duplicate_definitions=False):
+    def compile(self):
         '''Compile this package and return a list of errors.'''
         logging.info('Compiling %s', self)
 
@@ -82,7 +83,7 @@ class Package(object):
         if errors:
             raise CompilerException('Building errors', errors)
 
-        errors = self._validate(allow_duplicate_definitions)
+        errors = self._validate()
         if errors:
             raise CompilerException('Validation errors', errors)
 
@@ -119,7 +120,7 @@ class Package(object):
             errors += module.build()
         return errors
 
-    def _validate(self, allow_duplicate_definitions=False):
+    def _validate(self):
         '''Validate this package and return a list of errors.'''
         logging.debug('Validating the package')
 
@@ -128,10 +129,10 @@ class Package(object):
         for module in self.modules:
             errors += module.validate()
 
-        if not allow_duplicate_definitions:
-            errors += self._validate_no_duplicate_definitions()
+        if errors:
+            return errors
 
-        return errors
+        return self._validate_namespaces()
 
     def _validate_name(self):
         if not self.name:
@@ -142,31 +143,23 @@ class Package(object):
                             'digits and underscores, and must start with a letter, for example, '
                             '"mycompany_project_api"', self.name)]
 
-    def _validate_no_duplicate_definitions(self):
+    def _validate_namespaces(self):
         errors = []
-        names_to_defs = defaultdict(list)
+        names_to_modules = defaultdict(set)
 
-        for module in self.modules:
-            for def0 in module.definitions:
-                names_to_defs[def0.name].append(def0)
+        for package in itertools.chain([self], self.dependencies):
+            for module in package.modules:
+                for def0 in module.definitions:
+                    names_to_modules[def0.fullname].add(def0.module)
 
-        is_first = True
-        for name, defs in names_to_defs.items():
-            if len(defs) == 1:
+        for name, modules in names_to_modules.items():
+            if len(modules) == 1:
                 continue
 
-            if is_first:
-                msg = self._error('Duplicate definitions in a package. They are forbidden '
-                                  'in languages without namespaces (such as C and Objective C) '
-                                  'and will require manual name mapping during code generation. '
-                                  'Please, consider renaming them, or explicitly allow them with '
-                                  'the --allow-duplicate-definitions flag.')
-                errors.append(msg)
-
-            is_first = False
-            for def0 in defs:
-                path = def0.module.path if def0.module else None
-                errors.append(self._error('  %s: %s', def0.name, path))
+            msg = self._error('Duplicate definition "%s":', name)
+            errors.append(msg)
+            for module in modules:
+                errors.append(self._error('  %s', module.filename or module.name))
 
         return errors
 

@@ -36,10 +36,10 @@ interface TestInterface {
     datetime0(dt datetime) datetime;
 
     /** Enum method. */
-    enum0(enum0 messages.TestEnum) messages.TestEnum;
+    enum0(enum0 TestEnum) TestEnum;
 
     /** Message method. */
-    message0(msg messages.TestMessage @query) messages.TestMessage;
+    message0(msg TestMessage @query) TestMessage;
 
     /** Method with collections. */
     collections(

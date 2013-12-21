@@ -99,7 +99,7 @@ class Package(object):
         names = set()
         for module in self.modules:
             if module.name in names:
-                errors.append(self._error('Duplicate module %r', module.name))
+                errors.append(self._error('Duplicate module "%s"', module.name))
             names.add(module.name)
 
         if errors:

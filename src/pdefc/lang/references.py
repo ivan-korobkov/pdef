@@ -87,7 +87,7 @@ class NameReference(Reference):
         if self._type:
             return []
 
-        return [self._error('Type not found %r', self.name)]
+        return [self._error('Type not found "%s"', self.name)]
 
 
 class ListReference(Reference):

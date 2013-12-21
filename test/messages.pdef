@@ -46,6 +46,6 @@ message TestComplexMessage : TestMessage {
 
     enum0       TestEnum;
     message0    TestMessage;
-    polymorphic inheritance.Base;
+    polymorphic Base;
     datatypes   TestComplexMessage;
 }

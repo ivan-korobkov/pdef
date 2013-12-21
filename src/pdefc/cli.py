@@ -16,14 +16,14 @@ def main(argv=None):
 class Cli(object):
     '''Pdef command-line interface.'''
     def __init__(self, compiler=None):
+        # Logging must be configured before any log messages.
+        self._setup_logging()
+
         self.compiler = compiler or pdefc.create_compiler()
         self.commands = self._create_commands(self.compiler)
+        self.debug = False
 
     def run(self, argv=None):
-        # Configure logging before the commands,
-        # they requires a functional logger.
-        self._setup_logging(argv)
-
         try:
             parser = self._create_parser()
             args = parser.parse_args(argv)
@@ -37,7 +37,7 @@ class Cli(object):
             return func(args)
 
         except Exception as e:
-            if logging.root.isEnabledFor(logging.DEBUG):
+            if self.debug:
                 raise
 
             # Get rid of the traceback.
@@ -52,6 +52,7 @@ class Cli(object):
             level = logging.INFO
         elif '--debug' in argv:
             level = logging.DEBUG
+            self.debug = True
 
         logging.basicConfig(level=level, format='%(message)s')
 

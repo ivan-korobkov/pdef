@@ -1,6 +1,8 @@
 /**
  * Example world.
  */
+namespace world;
+
 from world import continents, space;    // Import two modules from a package.
 
 
@@ -13,7 +15,7 @@ interface World {
     humans() Humans;                    // Returns another interface.
 
     /** Returns the continents interface. */
-    continents() continents.Continents; // Returns an interface from another module.
+    continents() Continents; // Returns an interface from another module.
 
     /** Switches the light. */
     switchDayNight() void;
@@ -40,7 +42,7 @@ interface Humans {
 
 message Thing {                     // A simple message definition.
     id          int64;              // an id field of the int64 type.
-    location    space.Location;
+    location    Location;
 }
 
 
@@ -49,7 +51,7 @@ message Human : Thing {             // A message with a base message and a docst
     name        string;
     birthday    datetime;
     sex         Sex;
-    continent   continents.ContinentName;
+    continent   ContinentName;
 }
 
 enum Sex {

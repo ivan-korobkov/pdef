@@ -98,7 +98,7 @@ class TestInterface(unittest.TestCase):
         module0.link()
 
         module1 = Module('module1', definitions=[base])
-        module1.add_imported_module('module0', module0)
+        module1.add_imported_module(module0)
         module1.link()
 
         errors = interface.validate()

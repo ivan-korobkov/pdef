@@ -15,7 +15,7 @@ class TestAbsoluteImport(unittest.TestCase):
         errors = import0.link(package)
 
         assert not errors
-        assert import0.alias_module_pairs == [('package.module', module)]
+        assert import0.modules == [module]
 
     def test_link__error(self):
         package = Package('package')
@@ -23,7 +23,7 @@ class TestAbsoluteImport(unittest.TestCase):
         errors = import0.link(package)
 
         assert 'Module not found' in errors[0]
-        assert not import0.alias_module_pairs
+        assert not import0.modules
 
 
 class TestRelativeImport(unittest.TestCase):
@@ -38,15 +38,15 @@ class TestRelativeImport(unittest.TestCase):
         errors = import0.link(package)
 
         assert not errors
-        assert import0.alias_module_pairs == [('module0', module0), ('module1', module1)]
+        assert import0.modules == [module0, module1]
 
     def test_link__error(self):
-        package = Package('pacakge')
+        package = Package('package')
 
         import0 = RelativeImport('package.system', ['module0', 'module1'])
         errors = import0.link(package)
 
-        assert not import0.alias_module_pairs
+        assert not import0.modules
         assert 'Module not found "package.system.module0"' in errors[0]
         assert 'Module not found "package.system.module1"' in errors[1]
 

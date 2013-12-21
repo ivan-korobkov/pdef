@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdefc.lang import *
+from pdefc.lang import interfaces, List, Set, Message, Map, NativeType
 
 
 class TestList(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestSet(unittest.TestCase):
 
 class TestMap(unittest.TestCase):
     def test_validate__key_is_primitive(self):
-        msg = messages.Message('Message')
+        msg = Message('Message')
         map0 = Map(msg, msg)
         errors = map0.validate()
 

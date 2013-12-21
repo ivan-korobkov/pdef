@@ -20,7 +20,6 @@ class Module(Validatable):
         self.package = None
 
         self.imports = []               # imports
-        self.imported_aliases = []      # (alias, module) pairs
         self.imported_modules = []      # modules
 
         self.definitions = []
@@ -73,20 +72,11 @@ class Module(Validatable):
         self.imports.append(import0)
         logging.debug('%s: added an import "%s"', self, import0)
 
-    def add_imported_module(self, alias, module):
+    def add_imported_module(self, module):
         '''Add an imported module to this module.'''
-        self.imported_aliases.append((alias, module))
         self.imported_modules.append(module)
 
-        logging.debug('%s: added an imported module, alias="%s", module="%s"', self, alias, module)
-
-    def get_imported_module(self, alias):
-        '''Find a module by its import alias.'''
-        for alias1, module in self.imported_aliases:
-            if alias1 == alias:
-                return module
-
-        return None
+        logging.debug('%s: added an imported module, module="%s"', self, module)
 
     def add_definition(self, def0):
         '''Add a new definition to this module.'''
@@ -219,10 +209,12 @@ class Module(Validatable):
         errors = []
 
         for import0 in self.imports:
-            errors += import0.link(package)
+            errors0 = import0.link(package)
+            if errors0:
+                errors += errors0
+                continue
 
-            for alias, module in import0.alias_module_pairs:
-                self.add_imported_module(alias, module)
+            self.imported_modules += import0.modules
 
         return errors
 
@@ -270,14 +262,15 @@ class Module(Validatable):
     def _validate_no_duplicate_symbols(self):
         errors = []
 
-        # Prevent imports with duplicate aliases.
-        names = set()
-        for alias, _ in self.imported_aliases:
-            if alias in names:
-                errors.append('Duplicate import "%s"' % alias)
-            names.add(alias)
+        # Prevent duplicate imports.
+        modules = set()
+        for module in self.imported_modules:
+            if module in modules:
+                errors.append('Duplicate module import "%s"' % module)
+            modules.add(module)
 
         # Prevent definitions and imports with duplicate names.
+        names = set()
         for def0 in self.definitions:
             name = def0.name
             if name in names:

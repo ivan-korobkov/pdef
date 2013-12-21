@@ -188,7 +188,7 @@ class TestMessage(unittest.TestCase):
         module0.link()
 
         module1 = Module('module1', definitions=[base])
-        module1.add_imported_module('module0', module0)
+        module1.add_imported_module(module0)
         module1.link()
 
         errors = msg.validate()
@@ -291,7 +291,7 @@ class TestMessage(unittest.TestCase):
 
         module0 = Module('module0', definitions=[msg])
         module1 = Module('module1', definitions=[number])
-        module1.add_imported_module('module0', module0)
+        module1.add_imported_module(module0)
         module0.link()
         module1.link()
 

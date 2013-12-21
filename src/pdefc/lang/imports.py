@@ -7,7 +7,7 @@ class AbstractImport(Located):
     '''AbstractImport is a base class for module imports.'''
     def __init__(self, location=None):
         self.location = location
-        self.alias_module_pairs = []
+        self.modules = []
 
     def link(self, package):
         '''Link this import and return a list of errors.'''
@@ -33,7 +33,7 @@ class AbsoluteImport(AbstractImport):
         if not module:
             return [self._error('Module not found "%s"', self.name)]
 
-        self.alias_module_pairs = [(self.name, module)]
+        self.modules = [module]
         return []
 
 
@@ -61,7 +61,7 @@ class RelativeImport(AbstractImport):
 
             module = package.lookup_module(fullname)
             if module:
-                self.alias_module_pairs.append((rname, module))
+                self.modules.append(module)
             else:
                 errors.append(self._error('Module not found "%s"', fullname))
 

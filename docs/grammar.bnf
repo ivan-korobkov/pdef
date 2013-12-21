@@ -27,7 +27,8 @@
     ]
 }
 
-File            ::= doc? ImportBlock* Definition*
+File            ::= doc? Namespace ImportBlock* Definition*
+Namespace       ::= id ('.' id)* ';'
 TypeName        ::= id ('.' id)*
 ModuleName      ::= id ('.' id)*
 

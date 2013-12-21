@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import functools
 import logging
+import os.path
 import re
 import ply.lex as lex
 import ply.yacc as yacc
@@ -20,7 +21,7 @@ class Parser(object):
     '''Pdef parser. It is reusable but not thread-safe.'''
 
     def __init__(self):
-        self.grammar = _Grammar(self._error)
+        self.grammar = _Grammar(self._name, self._error)
 
         # Some docs on options:
         # - optimize=False and write_tables=False force to generate tabmodule each time
@@ -33,7 +34,8 @@ class Parser(object):
                                 start='module', debug=False)
 
         # These are cleaned on each parse invocation.
-        self._errors = []
+        self._filename = None
+        self._errors = None
 
     def parse_sources(self, sources):
         '''Parse module sources and return a list of modules or raise a CompilerException.'''
@@ -58,8 +60,9 @@ class Parser(object):
     def parse(self, s, filename=None):
         '''Parse a module from a string, return the module and a list of errors.'''
         logging.info('Parsing %s', filename or 'stream')
-        
+
         # Clear the variables.
+        self._filename = filename
         self._errors = []
 
         try:
@@ -75,7 +78,12 @@ class Parser(object):
             return module, errors
 
         finally:
+            self._filename = None
             self._errors = None
+
+    def _name(self):
+        s = self._filename.replace('\/', '.').replace('\\', '.')
+        return os.path.splitext(s)[0]
 
     def _error(self, msg):
         self._errors.append(msg)
@@ -128,7 +136,7 @@ class _Tokens(object):
         'INTERFACE')
 
     # Identifier types, see t_IDENTIFIER
-    ids = types + ('FROM', 'IMPORT')
+    ids = types + ('FROM', 'IMPORT', 'NAMESPACE')
     ids_map = {s.lower(): s for s in ids}
     reserved = set(s.lower() for s in RESERVED)
 
@@ -224,33 +232,28 @@ class _GrammarRules(object):
     @_with_location(0)
     def p_module(self, p):
         '''
-        module : doc imports definitions
+        module : doc namespace imports definitions
         '''
         name = self._name()
         doc = p[1]
-        imports = p[2]
-        definitions = p[3]
-        p[0] = pdefc.lang.Module(name, imports=imports, definitions=definitions, doc=doc)
+        namespace = p[2]
+        imports = p[3]
+        definitions = p[4]
+        p[0] = pdefc.lang.Module(name, namespace=namespace, imports=imports,
+                                 definitions=definitions, doc=doc)
 
-    # Any absolute name, returns a list.
     def p_absolute_name(self, p):
         '''
-        absolute_name : absolute_name DOT IDENTIFIER
-                      | IDENTIFIER
+        absolute_name : absolute_name_list
+        '''
+        p[0] = '.'.join(p[1])
+
+    def p_absolute_name_list(self, p):
+        '''
+        absolute_name_list : absolute_name_list DOT IDENTIFIER
+                           | IDENTIFIER
         '''
         self._list(p, separated=True)
-
-    def p_type_name(self, p):
-        '''
-        type_name : absolute_name
-        '''
-        p[0] = '.'.join(p[1])
-
-    def p_module_name(self, p):
-        '''
-        module_name : absolute_name
-        '''
-        p[0] = '.'.join(p[1])
 
     # Empty token to support optional values.
     def p_empty(self, p):
@@ -268,6 +271,12 @@ class _GrammarRules(object):
             p[0] = p[1]
         else:
             p[0] = ''
+
+    def p_namespace(self, p):
+        '''
+        namespace : NAMESPACE absolute_name SEMI
+        '''
+        p[0] = p[2]
 
     def p_imports(self, p):
         '''
@@ -287,20 +296,20 @@ class _GrammarRules(object):
 
     def p_absolute_import(self, p):
         '''
-        absolute_import : IMPORT module_name SEMI
+        absolute_import : IMPORT absolute_name SEMI
         '''
         p[0] = pdefc.lang.AbsoluteImport(p[2])
 
     def p_relative_import(self, p):
         '''
-        relative_import : FROM module_name IMPORT relative_import_names SEMI
+        relative_import : FROM absolute_name IMPORT relative_import_names SEMI
         '''
         p[0] = pdefc.lang.RelativeImport(p[2], p[4])
 
     def p_relative_import_names(self, p):
         '''
-        relative_import_names : relative_import_names COMMA module_name
-                              | module_name
+        relative_import_names : relative_import_names COMMA absolute_name
+                              | absolute_name
         '''
         self._list(p, separated=True)
 
@@ -549,7 +558,7 @@ class _GrammarRules(object):
 
     def p_def_ref(self, p):
         '''
-        def_ref : type_name
+        def_ref : absolute_name
         '''
         p[0] = pdefc.lang.reference(p[1])
 
@@ -588,5 +597,6 @@ class _Grammar(_GrammarRules, _Tokens):
     '''Grammar combines grammar rules and lexer tokens. It can be passed to the ply.yacc
     and pla.lex functions as the module argument.'''
 
-    def __init__(self, error_func):
+    def __init__(self, name_func, error_func):
+        self._name = name_func
         self._error = error_func

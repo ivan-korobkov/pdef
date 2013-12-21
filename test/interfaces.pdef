@@ -2,6 +2,8 @@
 Test pdef module with interfaces and exceptions.
 Multi-line comment.
 */
+namespace pdef.test;
+
 from pdef_test import messages;
 
 

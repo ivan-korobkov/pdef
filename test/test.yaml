@@ -3,6 +3,7 @@ package:
   verion: 1.0
   description: Pdef test data types and interfaces
   url: https://github.com/pdef/pdef/tree/master/test
+
   sources:
     - inheritance.pdef
     - interfaces.pdef

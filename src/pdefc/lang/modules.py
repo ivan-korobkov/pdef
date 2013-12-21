@@ -11,8 +11,10 @@ class Module(Validatable):
     '''Module is a named scope for definitions. It is usually a *.pdef file.'''
     name_pattern = re.compile(r'^[a-zA-Z]{1}[a-zA-Z0-9_]*(\.[a-zA-Z]{1}[a-zA-Z0-9_]*)*$')
 
-    def __init__(self, name, imports=None, definitions=None, doc=None, filename=None):
+    def __init__(self, name, namespace=None, imports=None, definitions=None, doc=None,
+                 filename=None):
         self.name = name
+        self.namespace = namespace or name # For tests.
         self.doc = doc
         self.filename = filename
         self.package = None
@@ -37,6 +39,10 @@ class Module(Validatable):
 
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
+
+    @property
+    def fullname(self):
+        return self.package.name + '.' + self.name if self.package else self.name
 
     @property
     def imported_definitions(self):

@@ -25,14 +25,14 @@ class TestCompiler(unittest.TestCase):
         sources = Mock()
         compiler = Compiler(sources)
 
-        module0 = 'message Message {}'
-        module1 = 'interface Interface {}'
+        module0 = 'namespace test; message Message {}'
+        module1 = 'namespace test; interface Interface {}'
         self._add_source(sources, 'test', [('hello.world', module0), ('goodbye.world', module1)])
 
         package = compiler.compile('test/path.yaml')
         assert len(package.modules) == 2
-        assert package.modules[0].name == 'test.hello.world'
-        assert package.modules[1].name == 'test.goodbye.world'
+        assert package.modules[0].name == 'hello.world'
+        assert package.modules[1].name == 'goodbye.world'
         sources.add_path.assert_called_with('test/path.yaml')
 
     def test_compile__errors(self):

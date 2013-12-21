@@ -4,6 +4,8 @@ Multi-line comment.
 
 С поддержкой Юникода.
 */
+namespace pdef.test;
+
 from pdef_test import inheritance;
 
 

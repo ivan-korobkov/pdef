@@ -16,26 +16,26 @@ class TestParser(unittest.TestCase):
 
     def test_parse_fixtures__polymorphic_messages(self):
         source = self._load_fixture('inheritance.pdef')
-        module, errors = self.parser.parse(source, 'inheritance', 'inheritance.pdef')
+        module, errors = self.parser.parse(source, 'inheritance.pdef')
 
         assert not errors
-        assert module.name == 'pdef.test.inheritance'
+        assert module.name == 'inheritance'
         assert module.filename == 'inheritance.pdef'
 
     def test_parse_fixtures__messages(self):
         source = self._load_fixture('messages.pdef')
-        module, errors = self.parser.parse(source, 'messages', 'messages.pdef')
+        module, errors = self.parser.parse(source, 'messages.pdef')
 
         assert not errors
-        assert module.name == 'pdef.test.messages'
+        assert module.name == 'messages'
         assert module.filename == 'messages.pdef'
 
     def test_parse_fixtures__interfaces(self):
         source = self._load_fixture('interfaces.pdef')
-        module, errors = self.parser.parse(source, 'interfaces', 'interfaces.pdef')
+        module, errors = self.parser.parse(source, 'interfaces.pdef')
 
         assert not errors
-        assert module.name == 'pdef.test.interfaces'
+        assert module.name == 'interfaces'
         assert module.filename == 'interfaces.pdef'
 
     def _load_fixture(self, filename=None):
@@ -51,12 +51,16 @@ class TestParser(unittest.TestCase):
 
     def test_parse__reuse(self):
         s0 = '''
+            namespace test;
+
             message interface enum {
                 hello();
             }
         '''
 
         s1 = '''
+            namespace test;
+
             message Message {}
         '''
 
@@ -73,6 +77,7 @@ class TestParser(unittest.TestCase):
 
     def test_syntax_error(self):
         s = '''/** Module description. */
+        namespace test;
 
         /**
          * Multi-line doc.
@@ -84,10 +89,11 @@ class TestParser(unittest.TestCase):
         '''
         module, errors = self.parser.parse(s, 'module')
         assert not module
-        assert 'Line 8, syntax error at "definition"' in errors[0]
+        assert 'Line 9, syntax error at "definition"' in errors[0]
 
     def test_syntax_error__reuse_parser(self):
         s = '''/** Description. */
+        namespace test;
 
         /** Doc. */
         message Message {
@@ -98,11 +104,12 @@ class TestParser(unittest.TestCase):
         _, errors0 = self.parser.parse(s, 'module')
         _, errors1 = self.parser.parse(s, 'module')
 
-        assert 'Line 6, syntax error at "definition"' in errors0[0]
-        assert 'Line 6, syntax error at "definition"' in errors1[0]
+        assert 'Line 7, syntax error at "definition"' in errors0[0]
+        assert 'Line 7, syntax error at "definition"' in errors1[0]
 
     def test_syntax_error__end_of_file(self):
         s = '''/** Description. */
+        namespace test;
 
         message Message {
         '''
@@ -112,19 +119,22 @@ class TestParser(unittest.TestCase):
 
     def test_syntax_error__reserved_word(self):
         s = '''
+        namespace test;
+
         message Message {
             final string;
         }
         '''
 
         _, errors = self.parser.parse(s, 'module')
-        assert 'Line 3, "final" is a reserved word' in errors[0]
+        assert 'Line 5, "final" is a reserved word' in errors[0]
 
     def test_doc(self):
         s = '''
             /** This is
             a multi-line
             doc string. */
+            namespace test;
         '''
         module, _ = self.parser.parse(s, 'module')
 
@@ -133,6 +143,7 @@ class TestParser(unittest.TestCase):
     def test_module(self):
         s = '''
             /** Module doc. */
+            namespace test;
             import another_module;
 
             enum Enum {}
@@ -147,7 +158,7 @@ class TestParser(unittest.TestCase):
         assert len(module.definitions) == 3
 
     def test_imports(self):
-        s = '''
+        s = '''namespace test;
             import module0;
             import package0.module1;
             from package1 import module2, module3;
@@ -183,7 +194,7 @@ class TestParser(unittest.TestCase):
 
     def test_enum(self):
         s = '''
-            /** Module description. */
+            namespace test;
 
             /** Doc. */
             enum Enum {
@@ -206,7 +217,7 @@ class TestParser(unittest.TestCase):
 
     def test_message(self):
         s = '''
-            /** Module description. */
+            namespace test;
 
             /** Message doc. */
             message Message :
@@ -229,7 +240,7 @@ class TestParser(unittest.TestCase):
 
     def test_message_exception(self):
         s = '''
-            /** Module description. */
+            namespace test;
 
             /** Exception doc. */
             exception Exception {}
@@ -245,6 +256,8 @@ class TestParser(unittest.TestCase):
 
     def test_message_inheritance(self):
         s = '''
+            namespace test;
+
             message Message : Base {}
         '''
 
@@ -257,6 +270,8 @@ class TestParser(unittest.TestCase):
 
     def test_message_polymorphic_inheritance(self):
         s = '''
+            namespace test;
+
             message Message : Base(Type.SUBTYPE) {}
         '''
 
@@ -269,7 +284,7 @@ class TestParser(unittest.TestCase):
 
     def test_fields(self):
         s = '''
-            /** Module description. */
+            namespace test;
 
             message Message {
                 field0 Type @discriminator;
@@ -298,7 +313,7 @@ class TestParser(unittest.TestCase):
 
     def test_interface(self):
         s = '''
-            /** Module description. */
+            namespace test;
 
             /** Interface doc. */
             @throws(Exception)
@@ -316,6 +331,8 @@ class TestParser(unittest.TestCase):
 
     def test_interface_inheritance(self):
         s = '''
+            namespace test;
+
             interface Interface : SuperInterface {}
         '''
 
@@ -327,7 +344,7 @@ class TestParser(unittest.TestCase):
 
     def test_methods(self):
         s = '''
-            /** Module description. */
+            namespace test;
 
             interface Interface {
                 /** Method zero. */
@@ -376,7 +393,7 @@ class TestParser(unittest.TestCase):
 
     def test_collections(self):
         s = '''
-            /** Module description. */
+            namespace test;
 
             message Message {
                 field0  list<

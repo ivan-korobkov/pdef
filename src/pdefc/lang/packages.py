@@ -56,20 +56,21 @@ class Package(object):
             if module.name == name:
                 return module
 
-    def lookup_module(self, absolute_name):
+    def lookup_module(self, fullname):
         '''Find a module in this package or its dependencies by an absolute name.'''
-        if '.' not in absolute_name:
-            absolute_name = '%s.%s' % (absolute_name, absolute_name)
+        if '.' not in fullname:
+            fullname = '%s.%s' % (fullname, fullname)
 
-        pname, mname = absolute_name.split('.', 1)
-        if pname == self.name:
-            return self.get_module(mname)
+        package_name, module_name = fullname.split('.', 1)
+        if package_name == self.name:
+            package = self
+        else:
+            package = self.get_dependency(package_name)
 
-        package = self.get_dependency(pname)
-        if package:
-            return package.get_module(mname)
+        if not package:
+            return
 
-        return None
+        return package.get_module(module_name)
 
     def compile(self):
         '''Compile this package and return a list of errors.'''

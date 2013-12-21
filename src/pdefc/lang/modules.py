@@ -41,7 +41,13 @@ class Module(Validatable):
 
     @property
     def fullname(self):
-        return self.package.name + '.' + self.name if self.package else self.name
+        if not self.package:
+            return self.name
+
+        if self.name == self.package.name:
+            return self.name
+
+        return self.package.name + '.' + self.name
 
     @property
     def imported_definitions(self):

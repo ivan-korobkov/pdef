@@ -9,6 +9,26 @@ from pdefc.lang.packages import Package
 
 
 class TestModule(unittest.TestCase):
+    def test_fullname(self):
+        module = Module('module')
+        assert module.name == 'module'
+
+    def test_fullname__with_package(self):
+        package = Package('package')
+        module = Module('module')
+        module.package = package
+
+        assert module.fullname == 'package.module'
+
+    def test_fullname__matches_with_package_name(self):
+        package = Package('project')
+        module = Module('project')
+        module.package = package
+        
+        assert module.fullname == 'project'
+
+    # Imports
+
     def test_add_import(self):
         '''Should add a new import to a module.'''
         import0 = AbsoluteImport('imported')

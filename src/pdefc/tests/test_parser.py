@@ -16,7 +16,7 @@ class TestParser(unittest.TestCase):
 
     def test_parse_fixtures__polymorphic_messages(self):
         source = self._load_fixture('inheritance.pdef')
-        module, errors = self.parser.parse(source, 'inheritance.pdef')
+        module, errors = self.parser.parse(source, 'inheritance', 'inheritance.pdef')
 
         assert not errors
         assert module.name == 'pdef.test.inheritance'
@@ -24,7 +24,7 @@ class TestParser(unittest.TestCase):
 
     def test_parse_fixtures__messages(self):
         source = self._load_fixture('messages.pdef')
-        module, errors = self.parser.parse(source, 'messages.pdef')
+        module, errors = self.parser.parse(source, 'messages', 'messages.pdef')
 
         assert not errors
         assert module.name == 'pdef.test.messages'
@@ -32,7 +32,7 @@ class TestParser(unittest.TestCase):
 
     def test_parse_fixtures__interfaces(self):
         source = self._load_fixture('interfaces.pdef')
-        module, errors = self.parser.parse(source, 'interfaces.pdef')
+        module, errors = self.parser.parse(source, 'interfaces', 'interfaces.pdef')
 
         assert not errors
         assert module.name == 'pdef.test.interfaces'
@@ -50,22 +50,21 @@ class TestParser(unittest.TestCase):
     # Test grammar.
 
     def test_parse__reuse(self):
-        s0 = '''module wrong;
+        s0 = '''
             message interface enum {
                 hello();
             }
         '''
 
         s1 = '''
-            module correct;
             message Message {}
         '''
 
-        module, errors = self.parser.parse(s0)
+        module, errors = self.parser.parse(s0, 'errors')
         assert module is None
         assert errors
 
-        module, errors = self.parser.parse(s1)
+        module, errors = self.parser.parse(s1, 'correct')
         assert module.name == 'correct'
         assert len(module.definitions) == 1
         assert not errors
@@ -73,7 +72,7 @@ class TestParser(unittest.TestCase):
     # Test syntax parser.
 
     def test_syntax_error(self):
-        s = '''module test;
+        s = '''/** Module description. */
 
         /**
          * Multi-line doc.
@@ -83,12 +82,12 @@ class TestParser(unittest.TestCase):
             wrong field definition;
         }
         '''
-        module, errors = self.parser.parse(s)
+        module, errors = self.parser.parse(s, 'module')
         assert not module
         assert 'Line 8, syntax error at "definition"' in errors[0]
 
     def test_syntax_error__reuse_parser(self):
-        s = '''module test;
+        s = '''/** Description. */
 
         /** Doc. */
         message Message {
@@ -96,71 +95,66 @@ class TestParser(unittest.TestCase):
             wrong field definition;
         }
         '''
-        _, errors0 = self.parser.parse(s)
-        _, errors1 = self.parser.parse(s)
+        _, errors0 = self.parser.parse(s, 'module')
+        _, errors1 = self.parser.parse(s, 'module')
 
         assert 'Line 6, syntax error at "definition"' in errors0[0]
         assert 'Line 6, syntax error at "definition"' in errors1[0]
 
     def test_syntax_error__end_of_file(self):
         s = '''/** Description. */
-        module test;
 
         message Message {
         '''
-        module, errors = self.parser.parse(s)
+        module, errors = self.parser.parse(s, 'module')
         assert not module
         assert 'Unexpected end of file' in errors[0]
 
     def test_syntax_error__reserved_word(self):
         s = '''
-        module test;
-
         message Message {
             final string;
         }
         '''
 
-        _, errors = self.parser.parse(s)
-        assert 'Line 5, "final" is a reserved word' in errors[0]
+        _, errors = self.parser.parse(s, 'module')
+        assert 'Line 3, "final" is a reserved word' in errors[0]
 
     def test_doc(self):
         s = '''
             /** This is
             a multi-line
             doc string. */
-            module test;
         '''
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
 
         assert module.doc == 'This is\na multi-line\ndoc string.'
 
     def test_module(self):
         s = '''
             /** Module doc. */
-            module test;
             import another_module;
 
             enum Enum {}
             message Message {}
             interface Interface {}
         '''
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
 
-        assert module.name == 'test'
+        assert module.name == 'module'
         assert module.doc == 'Module doc.'
         assert len(module.imports) == 1
         assert len(module.definitions) == 3
 
     def test_imports(self):
-        s = '''module test;
+        s = '''
             import module0;
             import package0.module1;
             from package1 import module2, module3;
             from package1.subpackage import module4;
         '''
 
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
         imports = module.imports
 
         assert len(imports) == 4
@@ -189,7 +183,7 @@ class TestParser(unittest.TestCase):
 
     def test_enum(self):
         s = '''
-            module test;
+            /** Module description. */
 
             /** Doc. */
             enum Enum {
@@ -199,7 +193,7 @@ class TestParser(unittest.TestCase):
             }
         '''
 
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
         enum = module.definitions[0]
         values = enum.values
 
@@ -212,7 +206,7 @@ class TestParser(unittest.TestCase):
 
     def test_message(self):
         s = '''
-            module test;
+            /** Module description. */
 
             /** Message doc. */
             message Message :
@@ -235,13 +229,13 @@ class TestParser(unittest.TestCase):
 
     def test_message_exception(self):
         s = '''
-            module test;
+            /** Module description. */
 
             /** Exception doc. */
             exception Exception {}
         '''
 
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
         message = module.definitions[0]
 
         assert message.name == 'Exception'
@@ -251,11 +245,10 @@ class TestParser(unittest.TestCase):
 
     def test_message_inheritance(self):
         s = '''
-            module test;
             message Message : Base {}
         '''
 
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
         message = module.definitions[0]
 
         assert message.name == 'Message'
@@ -264,11 +257,10 @@ class TestParser(unittest.TestCase):
 
     def test_message_polymorphic_inheritance(self):
         s = '''
-            module test;
             message Message : Base(Type.SUBTYPE) {}
         '''
 
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
         message = module.definitions[0]
 
         assert message.name == 'Message'
@@ -277,7 +269,7 @@ class TestParser(unittest.TestCase):
 
     def test_fields(self):
         s = '''
-            module test;
+            /** Module description. */
 
             message Message {
                 field0 Type @discriminator;
@@ -285,7 +277,7 @@ class TestParser(unittest.TestCase):
             }
         '''
 
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
         message = module.definitions[0]
         fields = message.declared_fields
 
@@ -306,14 +298,14 @@ class TestParser(unittest.TestCase):
 
     def test_interface(self):
         s = '''
-            module test;
+            /** Module description. */
 
             /** Interface doc. */
             @throws(Exception)
             interface Interface {}
         '''
 
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
         interface = module.definitions[0]
 
         assert interface.name == 'Interface'
@@ -324,11 +316,10 @@ class TestParser(unittest.TestCase):
 
     def test_interface_inheritance(self):
         s = '''
-            module test;
             interface Interface : SuperInterface {}
         '''
 
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
         interface = module.definitions[0]
 
         assert interface.name == 'Interface'
@@ -336,7 +327,7 @@ class TestParser(unittest.TestCase):
 
     def test_methods(self):
         s = '''
-            module test;
+            /** Module description. */
 
             interface Interface {
                 /** Method zero. */
@@ -350,7 +341,7 @@ class TestParser(unittest.TestCase):
             }
         '''
 
-        module, _ = self.parser.parse(s)
+        module, _ = self.parser.parse(s, 'module')
         interface = module.definitions[0]
         methods = interface.methods
 
@@ -385,7 +376,7 @@ class TestParser(unittest.TestCase):
 
     def test_collections(self):
         s = '''
-            module test;
+            /** Module description. */
 
             message Message {
                 field0  list<

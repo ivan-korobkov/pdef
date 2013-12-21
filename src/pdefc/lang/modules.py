@@ -4,11 +4,12 @@ from collections import deque
 import re
 
 from pdefc.lang.common import Validatable
-from pdefc.lang.types import NativeType, TypeEnum
+from pdefc.lang.types import NativeType
 
 
 class Module(Validatable):
     '''Module is a named scope for definitions. It is usually a *.pdef file.'''
+    name_pattern = re.compile(r'^[a-zA-Z]{1}[a-zA-Z0-9_]*(\.[a-zA-Z]{1}[a-zA-Z0-9_]*)*$')
 
     def __init__(self, name, imports=None, definitions=None, doc=None, filename=None):
         self.name = name
@@ -238,12 +239,20 @@ class Module(Validatable):
         '''Validate imports and definitions and return a list of errors.'''
         logging.debug('Validating %s', self)
         errors = []
+        errors += self._validate_name()
         errors += self._validate_no_duplicate_symbols()
 
         for def0 in self.definitions:
             errors += def0.validate()
 
         return self._log_return_errors(errors)
+
+    def _validate_name(self):
+        if self.name_pattern.match(self.name):
+            return []
+        return ['Wrong module name "%s". A name must be one or several words separated by dots, '
+                'a word must contain only latin letters, digits and underscores, '
+                'and must start with a letter, for example, "users.accounts.events"' % self.name]
 
     def _validate_no_duplicate_symbols(self):
         errors = []

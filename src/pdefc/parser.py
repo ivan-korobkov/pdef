@@ -58,7 +58,7 @@ class Parser(object):
     def parse(self, s, filename=None):
         '''Parse a module from a string, return the module and a list of errors.'''
         logging.info('Parsing %s', filename or 'stream')
-
+        
         # Clear the variables.
         self._errors = []
 
@@ -66,14 +66,12 @@ class Parser(object):
             lexer = self.lexer.clone()
             module = self.parser.parse(s, tracking=True, lexer=lexer)
             errors = list(self._errors)
-
             if module:
                 module.filename = filename
 
             if errors:
                 module = None
                 self._log_errors(errors, filename)
-
             return module, errors
 
         finally:
@@ -130,7 +128,7 @@ class _Tokens(object):
         'INTERFACE')
 
     # Identifier types, see t_IDENTIFIER
-    ids = types + ('FROM', 'IMPORT', 'MODULE')
+    ids = types + ('FROM', 'IMPORT')
     ids_map = {s.lower(): s for s in ids}
     reserved = set(s.lower() for s in RESERVED)
 
@@ -199,7 +197,7 @@ class _Tokens(object):
     def t_DOC(self, t):
         r'\/\*\*((.|\n)*?)\*\/'
         t.lexer.lineno += t.value.count('\n')
-
+        
         value = t.value.strip('/')
         value = self.doc_start_pattern.sub('', value)
         value = self.doc_end_pattern.sub('', value)
@@ -216,6 +214,9 @@ class _Tokens(object):
 
 class _GrammarRules(object):
     '''Parser grammar rules.'''
+    def _name(self):
+        raise NotImplementedError
+
     def _error(self, msg):
         raise NotImplementedError
 
@@ -223,15 +224,15 @@ class _GrammarRules(object):
     @_with_location(0)
     def p_module(self, p):
         '''
-        module : doc MODULE module_name SEMI imports definitions
+        module : doc imports definitions
         '''
+        name = self._name()
         doc = p[1]
-        name = p[3]
-        imports = p[5]
-        definitions = p[6]
+        imports = p[2]
+        definitions = p[3]
         p[0] = pdefc.lang.Module(name, imports=imports, definitions=definitions, doc=doc)
 
-    # Any absolute name.
+    # Any absolute name, returns a list.
     def p_absolute_name(self, p):
         '''
         absolute_name : absolute_name DOT IDENTIFIER

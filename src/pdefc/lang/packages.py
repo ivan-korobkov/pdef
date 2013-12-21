@@ -49,10 +49,10 @@ class Package(object):
         self.modules.append(module)
         logging.debug('%s: added a module "%s"', self, module.name)
 
-    def get_module(self, name):
+    def get_module(self, relative_name):
         '''Find a module in this package by a name.'''
         for module in self.modules:
-            if module.name == name:
+            if module.relative_name == relative_name:
                 return module
 
     def lookup_module(self, absolute_name):

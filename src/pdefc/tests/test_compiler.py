@@ -25,8 +25,8 @@ class TestCompiler(unittest.TestCase):
         sources = Mock()
         compiler = Compiler(sources)
 
-        module0 = 'module test.hello.world; message Message {}'
-        module1 = 'module test.goodbye.world; interface Interface {}'
+        module0 = 'message Message {}'
+        module1 = 'interface Interface {}'
         self._add_source(sources, 'test', [('hello.world', module0), ('goodbye.world', module1)])
 
         package = compiler.compile('test/path.yaml')
@@ -61,8 +61,6 @@ class TestCompiler(unittest.TestCase):
 
     def test_generate(self):
         module_data = '''
-        module test;
-
         message TestMessage {
             field string;
         }
@@ -85,7 +83,7 @@ class TestCompiler(unittest.TestCase):
         package = args[0]
         assert package.name == 'test'
         assert len(package.modules) == 1
-        assert package.modules[0].name == 'test'
+        assert package.modules[0].relative_name == 'test'
 
     def _fixture_package_yaml(self, info, files_to_data):
         directory = self._tempdir()

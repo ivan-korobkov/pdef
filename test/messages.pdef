@@ -4,8 +4,7 @@ Multi-line comment.
 
 С поддержкой Юникода.
 */
-module pdef.test.messages;
-from pdef.test import inheritance;
+from pdef_test import inheritance;
 
 
 /**

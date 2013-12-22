@@ -53,7 +53,7 @@ class TestCompiler(unittest.TestCase):
         assert package.name == 'package'
         assert len(package.dependencies) == 1
 
-    def test_compile__default_dependency_path(self):
+    def test_compile__default_dependency_paths(self):
         # Given a compiler
         compiler = Compiler()
 
@@ -86,17 +86,17 @@ class TestCompiler(unittest.TestCase):
         self.tempdirs.append(dirname)
 
         # Create module files.
-        sources = []
+        module_names = []
         for name, source in modules.items():
-            filename = name + '.pdef'
-            sources.append(filename)
+            module_names.append(name)
 
+            filename = name + '.pdef'
             path = os.path.join(dirname, filename)
             with open(path, 'wt') as f:
                 f.write(source)
 
         # Create a package yaml file.
-        info = PackageInfo(package_name, sources=sources, dependencies=dependencies)
+        info = PackageInfo(package_name, modules=module_names, dependencies=dependencies)
         path = os.path.join(dirname, package_name + '.yaml')
         with open(path, 'wt') as f:
             f.write(info.to_yaml())

@@ -56,7 +56,7 @@ class TestPackageSources(unittest.TestCase):
 class TestFilePackageSource(unittest.TestCase):
     def test(self):
         # Given a fixture package info and files.
-        info = PackageInfo('project_api', sources=['users.pdef', 'users/events.pdef'])
+        info = PackageInfo('project_api', modules=['users', 'users.events'])
         files = {
             '../../test.yaml': info.to_yaml(),
             '../../users.pdef': 'users module',
@@ -66,13 +66,14 @@ class TestFilePackageSource(unittest.TestCase):
         # Create a package source.
         source = FilePackageSource('../../test.yaml')
         source._read_file = lambda filepath: files[filepath]
+        source._read()
 
         # The source should read the info and the modules.
         assert source.package_name == 'project_api'
         assert source.package_info.to_dict() == info.to_dict()
 
-        assert source.module_sources[0].filename == 'users.pdef'
-        assert source.module_sources[1].filename == 'users/events.pdef'
+        assert source.module_sources[0].name == 'users'
+        assert source.module_sources[1].name == 'users.events'
 
         assert source.module_sources[0].data == 'users module'
         assert source.module_sources[1].data == 'events module'
@@ -81,7 +82,7 @@ class TestFilePackageSource(unittest.TestCase):
 class TestUrlPackageSource(unittest.TestCase):
     def test_module(self):
         # Given a fixture package info and urls.
-        info = PackageInfo('project_api', sources=['users.pdef', 'users/events.pdef'])
+        info = PackageInfo('project_api', modules=['users', 'users.events'])
         urls = {
             'http://localhost/project/api/api.yaml': info.to_yaml(),
             'http://localhost/project/api/users.pdef': 'users module',
@@ -96,15 +97,15 @@ class TestUrlPackageSource(unittest.TestCase):
         assert source.package_name == 'project_api'
         assert source.package_info.to_dict() == info.to_dict()
 
-        assert source.module_sources[0].filename == 'users.pdef'
-        assert source.module_sources[1].filename == 'users/events.pdef'
+        assert source.module_sources[0].name == 'users'
+        assert source.module_sources[1].name == 'users.events'
 
         assert source.module_sources[0].data == 'users module'
         assert source.module_sources[1].data == 'events module'
 
-    def test_file_url(self):
+    def test_module_url(self):
         source = UrlPackageSource('http://localhost:8080/project/api/api.yaml')
-        path = source._file_url('users/internal/events.pdef')
+        path = source._module_url('users.internal.events')
         assert path == 'http://localhost:8080/project/api/users/internal/events.pdef'
 
     def test_fetch_unicode(self):

@@ -16,27 +16,24 @@ class TestParser(unittest.TestCase):
 
     def test_parse_fixtures__polymorphic_messages(self):
         source = self._load_fixture('inheritance.pdef')
-        module, errors = self.parser.parse(source, 'inheritance.pdef')
+        module, errors = self.parser.parse(source, 'inheritance')
 
         assert not errors
         assert module.name == 'inheritance'
-        assert module.filename == 'inheritance.pdef'
 
     def test_parse_fixtures__messages(self):
         source = self._load_fixture('messages.pdef')
-        module, errors = self.parser.parse(source, 'messages.pdef')
+        module, errors = self.parser.parse(source, 'messages')
 
         assert not errors
         assert module.name == 'messages'
-        assert module.filename == 'messages.pdef'
 
     def test_parse_fixtures__interfaces(self):
         source = self._load_fixture('interfaces.pdef')
-        module, errors = self.parser.parse(source, 'interfaces.pdef')
+        module, errors = self.parser.parse(source, 'interfaces')
 
         assert not errors
         assert module.name == 'interfaces'
-        assert module.filename == 'interfaces.pdef'
 
     def _load_fixture(self, filename=None):
         dirpath = os.path.join(os.path.dirname(__file__), 'fixtures')

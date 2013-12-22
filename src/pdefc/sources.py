@@ -72,15 +72,16 @@ class PackageSources(object):
 
 
 class ModuleSource(object):
-    def __init__(self, filename, data):
-        self.filename = filename
+    def __init__(self, name, data, path=None):
+        self.name = name
         self.data = data
+        self.path = path
 
     def __str__(self):
-        return self.filename
+        return self.name
 
     def __repr__(self):
-        return '<ModuleSource %r at %s' % (self.filename, hex(id(self)))
+        return '<ModuleSource %r at %s' % (self.name, hex(id(self)))
 
 
 class PackageSource(object):
@@ -91,6 +92,9 @@ class PackageSource(object):
     @property
     def package_name(self):
         return self.package_info.name if self.package_info else None
+
+    def module_filename(self, module_name):
+        return module_name.replace('.', '/') + '.pdef'
 
 
 class InMemoryPackageSource(PackageSource):
@@ -144,11 +148,12 @@ class FilePackageSource(ForwardingPackageSource):
 
         modules = []
         dirname = os.path.dirname(self.filename)
-        for filename in info.sources:
+        for module_name in info.modules:
+            filename = self.module_filename(module_name)
             filepath = os.path.join(dirname, filename)
             data = self._read_file(filepath)
 
-            module = ModuleSource(filename, data)
+            module = ModuleSource(module_name, data, path=filepath)
             modules.append(module)
 
         return InMemoryPackageSource(info, modules)
@@ -174,16 +179,17 @@ class UrlPackageSource(ForwardingPackageSource):
         info = PackageInfo.from_yaml(data)
 
         modules = []
-        for filename in info.sources:
-            url = self._file_url(filename)
+        for module_name in info.modules:
+            url = self._module_url(module_name)
             data = self._fetch_url(url)
 
-            module = ModuleSource(filename, data)
+            module = ModuleSource(module_name, data, path=url)
             modules.append(module)
 
         return InMemoryPackageSource(info, modules)
 
-    def _file_url(self, filename):
+    def _module_url(self, module_name):
+        filename = self.module_filename(module_name)
         return urljoin(self.url, filename)
 
     def _fetch_url(self, url):

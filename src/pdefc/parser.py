@@ -34,7 +34,7 @@ class Parser(object):
                                 start='module', debug=False)
 
         # These are cleaned on each parse invocation.
-        self._filename = None
+        self._module_name = None
         self._errors = None
 
     def parse_sources(self, sources):
@@ -43,10 +43,11 @@ class Parser(object):
         modules = []
 
         for source in sources:
-            filename = source.filename
+            name = source.name
             data = source.data
+            path = source.path
 
-            module, errors0 = self.parse(data, filename=filename)
+            module, errors0 = self.parse(data, name=name, path=path)
             errors += errors0
             if module:
                 modules.append(module)
@@ -57,12 +58,12 @@ class Parser(object):
 
         return modules
 
-    def parse(self, s, filename=None):
+    def parse(self, s, name=None, path=None):
         '''Parse a module from a string, return the module and a list of errors.'''
-        logging.info('Parsing %s', filename or 'stream')
+        logging.info('Parsing %s', path or name or 'stream')
 
         # Clear the variables.
-        self._filename = filename
+        self._module_name = name
         self._errors = []
 
         try:
@@ -70,20 +71,19 @@ class Parser(object):
             module = self.parser.parse(s, tracking=True, lexer=lexer)
             errors = list(self._errors)
             if module:
-                module.filename = filename
+                module.path = path
 
             if errors:
                 module = None
-                self._log_errors(errors, filename)
+                self._log_errors(errors, name)
             return module, errors
 
         finally:
-            self._filename = None
+            self._module_name = None
             self._errors = None
 
     def _name(self):
-        s = self._filename.replace('\/', '.').replace('\\', '.')
-        return os.path.splitext(s)[0]
+        return self._module_name
 
     def _error(self, msg):
         self._errors.append(msg)

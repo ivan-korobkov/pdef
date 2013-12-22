@@ -4,7 +4,7 @@ package:
   description: World example
   url: https://github.com/pdef/pdef/tree/master/example
 
-  sources:
-    - continents.pdef
-    - space.pdef
-    - world.pdef
+  modules:
+    - continents
+    - space
+    - world

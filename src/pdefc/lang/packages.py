@@ -160,7 +160,7 @@ class Package(object):
             msg = self._error('Duplicate definition "%s":', name)
             errors.append(msg)
             for module in modules:
-                errors.append(self._error('  %s', module.filename or module.name))
+                errors.append(self._error('  %s', module.path or module.name))
 
         return errors
 
@@ -182,17 +182,17 @@ class PackageInfo(object):
         name = p.get('name')
         url = p.get('url')
         description = p.get('description')
-        sources = p.get('sources')
+        modules = p.get('modules')
         dependencies = p.get('dependencies')
 
-        return PackageInfo(name, url=url, description=description, sources=sources,
+        return PackageInfo(name, url=url, description=description, modules=modules,
                            dependencies=dependencies)
 
-    def __init__(self, name, url=None, description=None, sources=None, dependencies=None):
+    def __init__(self, name, url=None, description=None, modules=None, dependencies=None):
         self.name = name or ''
         self.url = url
         self.description = description or ''
-        self.sources = tuple(sources) if sources else ()
+        self.modules = tuple(modules) if modules else ()
         self.dependencies = tuple(DependencyInfo.from_object(d) for d in dependencies or ())
 
     def to_dict(self):
@@ -201,7 +201,7 @@ class PackageInfo(object):
                 'name': self.name,
                 'url': self.url,
                 'description': self.description,
-                'sources': list(self.sources),
+                'modules': list(self.modules),
                 'dependencies': list(d.to_string() for d in self.dependencies),
             }
         }

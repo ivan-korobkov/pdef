@@ -80,10 +80,12 @@ Packages and modules
 
 ### Packages
 Pdef files are organized into packages. A package is defined in a `.yaml` file which
-contains a package name, dependencies, source file names and additional information.
+contains a package name, dependencies, module names and additional information.
 Package names must start with a latin letter and contain only latin letters, digits
 and underscores. Circular package dependencies are forbidden. Dependencies are specified
-by package names with an optional default path separated by a space.
+by package names with an optional default path separated by a space. Modules names
+are mapped to directories and `.pdef` files, for example, `users.profile` is mapped to
+`users/profile.pdef`.
 
 Package file:
 ```yaml
@@ -97,12 +99,12 @@ package:
   author: Ivan Korobkov <ivan.korobkov@gmail.com>
   description: Example application
 
-  # Source files.
-  sources:
-    - example.pdef
-    - photos.pdef
-    - users.pdef
-    - users/profile.pdef
+  # Module files.
+  modules:
+    - example
+    - photos
+    - users
+    - users.profile
 
   # Other packages this package depends on.
   dependencies:

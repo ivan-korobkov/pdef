@@ -70,7 +70,8 @@ class Cli(object):
         return commands
 
     def _create_parser(self):
-        parser = argparse.ArgumentParser(description='Pdef compiler, see http://github.com/pdef')
+        parser = argparse.ArgumentParser(description=
+            'Pdef compiler, see code-generators at http://github.com/pdef')
         parser.add_argument('-v', '--verbose', action='store_true', help='verbose output')
         parser.add_argument('--debug', action='store_true', help='debug output')
 

@@ -62,15 +62,58 @@ $ pip install pdef-python
 $ pip install pdef-objc
 ```
 
-Check the test package (no source code is generated):
+Run the check command with test package to check that the compiler works:
 ```bash
 $ pdefc check https://raw.github.com/pdef/pdef/master/example/world.yaml
 ```
 
-Generate some code:
+
+Getting Started
+---------------
+Create a package file `myproject.yaml`
+```yaml
+package:
+    name: myproject
+    modules:
+        - posts
+        - photos
+```
+
+Create the module files:
+
+`blogs.pdef`
+```pdef
+namespace myproject;
+import myproject.photos;
+
+interface Posts {
+    get(id int64) Post;
+
+    @post
+    create(title string @post, text string @post) Post;
+}
+
+message Post {
+    id      int64;
+    title   string;
+    text    string;
+    photos  list<Photo>;
+}
+```
+
+`photos.pdef`
+```pdef
+namespace myproject;
+
+message Photo {
+    id  int64;
+    url string;
+}
+```
+
+Generate the source code:
 ```bash
-$ pdefc generate-java https://raw.github.com/pdef/pdef/1.1/example/world.yaml \
-    --out generated
+$ pdefc generate-java example.yaml --out generated/
 ```
 
 Example

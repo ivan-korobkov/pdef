@@ -69,7 +69,7 @@ $ pdefc check https://raw.github.com/pdef/pdef/master/example/world.yaml
 
 Generate some code:
 ```bash
-$ pdefc generate-java https://raw.github.com/pdef/pdef/master/example/world.yaml \
+$ pdefc generate-java https://raw.github.com/pdef/pdef/1.1/example/world.yaml \
     --out generated
 ```
 

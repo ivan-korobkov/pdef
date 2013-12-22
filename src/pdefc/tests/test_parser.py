@@ -4,7 +4,7 @@ import os.path
 import unittest
 
 from pdefc.parser import create_parser
-from pdefc.lang import AbsoluteImport, RelativeImport, Location
+from pdefc.lang import SingleImport, BatchImport, Location
 from pdefc.lang.references import ListReference, SetReference, MapReference
 
 
@@ -171,23 +171,23 @@ class TestParser(unittest.TestCase):
         assert len(imports) == 4
 
         import0 = imports[0]
-        assert isinstance(import0, AbsoluteImport)
+        assert isinstance(import0, SingleImport)
         assert import0.name == 'module0'
         assert import0.location == Location(2)
 
         import1 = imports[1]
-        assert isinstance(import1, AbsoluteImport)
+        assert isinstance(import1, SingleImport)
         assert import1.name == 'package0.module1'
         assert import1.location == Location(3)
 
         import2 = imports[2]
-        assert isinstance(import2, RelativeImport)
+        assert isinstance(import2, BatchImport)
         assert import2.prefix == 'package1'
         assert import2.relative_names == ('module2', 'module3')
         assert import2.location == Location(4)
 
         import3 = imports[3]
-        assert isinstance(import3, RelativeImport)
+        assert isinstance(import3, BatchImport)
         assert import3.prefix == 'package1.subpackage'
         assert import3.relative_names == ('module4', )
         assert import3.location == Location(5)

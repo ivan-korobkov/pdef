@@ -1,6 +1,6 @@
 # encoding: utf-8
 import unittest
-from pdefc.lang import AbsoluteImport, RelativeImport, Interface
+from pdefc.lang import SingleImport, BatchImport, Interface
 from pdefc.lang.types import Definition, TypeEnum
 from pdefc.lang.enums import Enum
 from pdefc.lang.modules import *
@@ -24,14 +24,14 @@ class TestModule(unittest.TestCase):
         package = Package('project')
         module = Module('project')
         module.package = package
-        
+
         assert module.fullname == 'project'
 
     # Imports
 
     def test_add_import(self):
         '''Should add a new import to a module.'''
-        import0 = AbsoluteImport('imported')
+        import0 = SingleImport('imported')
         module = Module('module')
         module.add_import(import0)
 
@@ -154,8 +154,8 @@ class TestModule(unittest.TestCase):
         module1 = Module('module1')
 
         module = Module('module')
-        module.add_import(AbsoluteImport('package.module0'))
-        module.add_import(RelativeImport('package', ['module1']))
+        module.add_import(SingleImport('package.module0'))
+        module.add_import(BatchImport('package', ['module1']))
 
         package = Package('package')
         package.add_module(module)

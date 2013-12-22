@@ -1,7 +1,7 @@
 Pdef Language Guide
 ===================
 Pdef is a statically typed interface definition language. It allows to write interfaces and
-data structures once and then to generate code and rpc clients/servers for different languages
+data structures once and then to generate code and RPC clients/servers for different languages
 (Java, Python, Objective-C).
 
 
@@ -33,14 +33,16 @@ Syntax
 ------
 Pdef syntax is similar to Java/C++ with the inverted type/identifier order in fields and arguments.
 All identifiers must start with a latin letter and contain only latin letters,
-digits and underscores. See the [grammar](grammar.bnf) for the specification.
+digits and underscores. See the [grammar specification](grammar.bnf).
 
 ```pdef
+namespace example;
+
 interface MyInterface {
     method(arg0 int32, arg1 string) list<string>;
 }
 
-message Human  {
+message MyMessage  {
     field0      int32;
     field1      string;
 }
@@ -79,7 +81,8 @@ Packages and modules
 Pdef files are organized into packages. A package is defined in a `.yaml` file which
 contains a package name, dependencies, source file names and additional information.
 Package names must start with a latin letter and contain only latin letters, digits
-and underscores. Circular package dependencies are forbidden.
+and underscores. Circular package dependencies are forbidden. Dependencies are specified
+by package names with an optional default path separated by a space.
 
 Package file:
 ```yaml
@@ -102,7 +105,8 @@ package:
 
   # Other packages this package depends on.
   dependencies:
-    - pdef-test https://raw.github.com/pdef/pdef/1.1/test/test.yaml
+    - common
+    - pdef_test https://raw.github.com/pdef/pdef/1.1/test/test.yaml
 ```
 
 File structure:
@@ -135,18 +139,18 @@ message Hello {
 
 ### Imports
 Imports are similar to includes in C++, they allow to access definitions from other modules.
-Imports must be specifed at the top of a file after the namespace. Modules are imported by their
+Imports must be specified at the top of a file after the namespace. Modules are imported by their
 package names and file paths without the `.pdef` extension, separated by the dots. When a module
 name matches its package name it can be imported by the package name alone.
 
-Absolute import:
+Single import:
 ```pdef
 namespace example;
 import package;           // Equivalent to "import package.package" when package/module names match.
 import package.module;
 ```
 
-Relative import:
+Batch import:
 ```pdef
 namespace example;
 from package.module import submodule0, submodule1;
@@ -154,9 +158,9 @@ from package.module import submodule0, submodule1;
 
 ### Circular imports
 Circular imports are allowed as long as the types from the first module do not inherit the
-types from the second module and vice versa. Usually, this is very rare,
-and it almost never affects the development. However, if you encounter it,
-break one module into multiple ones, or merge two modules into one.
+types from the second module and vice versa. Usually, this is very rare and almost never
+affects the development. However, if you encounter it, break one module into multiple ones,
+or merge two modules into one.
 
 Circular references are allowed, even self-references are allowed. They can be implemented
 in almost all languages via forward/lazy referencing.
@@ -215,7 +219,7 @@ message Image {
 
 Types
 -----
-Pdef has a simple, yet powerful type system. It is built on a clear separation between
+Pdef has a simple, yet powerful type system built on a clear separation between
 data types and interfaces.
 
 ### Void
@@ -295,7 +299,7 @@ message User {
     name        string;
     age         int32;
     profile     Profile;
-    friends     set<User>; // References a message it is declared in.
+    friends     set<User>;
 }
 
 /** Example exception. */

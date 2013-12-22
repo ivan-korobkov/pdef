@@ -14,10 +14,10 @@ class AbstractImport(Located):
         return []
 
 
-class AbsoluteImport(AbstractImport):
-    '''AbsoluteImport references a single module by its absolute name.'''
+class SingleImport(AbstractImport):
+    '''SingleImport references a single module by its absolute name.'''
     def __init__(self, name, location=None):
-        super(AbsoluteImport, self).__init__(location=location)
+        super(SingleImport, self).__init__(location=location)
         self.name = name
 
     def __str__(self):
@@ -37,11 +37,11 @@ class AbsoluteImport(AbstractImport):
         return []
 
 
-class RelativeImport(AbstractImport):
-    '''RelativeImport references modules with a prefix and multiple relative names,
+class BatchImport(AbstractImport):
+    '''BatchImport references modules with a prefix and multiple relative names,
     i.e, from my_package import module0, module1.'''
     def __init__(self, prefix, relative_names, location=None):
-        super(RelativeImport, self).__init__(location=location)
+        super(BatchImport, self).__init__(location=location)
 
         self.prefix = prefix
         self.relative_names = tuple(relative_names)

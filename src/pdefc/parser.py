@@ -289,27 +289,27 @@ class _GrammarRules(object):
     @_with_location(1)
     def p_import(self, p):
         '''
-        import : absolute_import
-               | relative_import
+        import : single_import
+               | batch_import
         '''
         p[0] = p[1]
 
-    def p_absolute_import(self, p):
+    def p_single_import(self, p):
         '''
-        absolute_import : IMPORT absolute_name SEMI
+        single_import : IMPORT absolute_name SEMI
         '''
-        p[0] = pdefc.lang.AbsoluteImport(p[2])
+        p[0] = pdefc.lang.SingleImport(p[2])
 
-    def p_relative_import(self, p):
+    def p_batch_import(self, p):
         '''
-        relative_import : FROM absolute_name IMPORT relative_import_names SEMI
+        batch_import : FROM absolute_name IMPORT batch_import_names SEMI
         '''
-        p[0] = pdefc.lang.RelativeImport(p[2], p[4])
+        p[0] = pdefc.lang.BatchImport(p[2], p[4])
 
-    def p_relative_import_names(self, p):
+    def p_batch_import_names(self, p):
         '''
-        relative_import_names : relative_import_names COMMA absolute_name
-                              | absolute_name
+        batch_import_names : batch_import_names COMMA absolute_name
+                           | absolute_name
         '''
         self._list(p, separated=True)
 

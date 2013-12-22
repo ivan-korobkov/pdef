@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
 from pdefc.lang import Module
-from pdefc.lang.imports import AbsoluteImport, RelativeImport
+from pdefc.lang.imports import SingleImport, BatchImport
 from pdefc.lang.packages import Package
 
 
@@ -11,7 +11,7 @@ class TestAbsoluteImport(unittest.TestCase):
         package = Package('package')
         package.add_module(module)
 
-        import0 = AbsoluteImport('package.module')
+        import0 = SingleImport('package.module')
         errors = import0.link(package)
 
         assert not errors
@@ -19,7 +19,7 @@ class TestAbsoluteImport(unittest.TestCase):
 
     def test_link__error(self):
         package = Package('package')
-        import0 = AbsoluteImport('module')
+        import0 = SingleImport('module')
         errors = import0.link(package)
 
         assert 'Module not found' in errors[0]
@@ -34,7 +34,7 @@ class TestRelativeImport(unittest.TestCase):
         package.add_module(module0)
         package.add_module(module1)
 
-        import0 = RelativeImport('package.system', ['module0', 'module1'])
+        import0 = BatchImport('package.system', ['module0', 'module1'])
         errors = import0.link(package)
 
         assert not errors
@@ -43,7 +43,7 @@ class TestRelativeImport(unittest.TestCase):
     def test_link__error(self):
         package = Package('package')
 
-        import0 = RelativeImport('package.system', ['module0', 'module1'])
+        import0 = BatchImport('package.system', ['module0', 'module1'])
         errors = import0.link(package)
 
         assert not import0.modules

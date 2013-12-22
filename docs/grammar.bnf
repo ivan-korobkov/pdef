@@ -27,14 +27,14 @@
     ]
 }
 
-File            ::= doc? Namespace ImportBlock* Definition*
-Namespace       ::= id ('.' id)* ';'
+File            ::= doc? Namespace Import* Definition*
+Namespace       ::= 'namespace' id ('.' id)* ';'
 TypeName        ::= id ('.' id)*
 ModuleName      ::= id ('.' id)*
 
-ImportBlock     ::= AbsoluteImport | RelativeImport
-AbsoluteImport  ::= import ModuleName ';'
-RelativeImport  ::= from ModuleName import ModuleName (',' ModuleName)* ';'
+Import          ::= SingleImport | BatchImport
+SingleImport    ::= 'import' ModuleName ';'
+BatchImport     ::= from ModuleName 'import' ModuleName (',' ModuleName)* ';'
 
 Definition      ::= doc? (Enum | Message | Interface)
 

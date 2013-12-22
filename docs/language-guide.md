@@ -27,6 +27,7 @@ Contents
     - [Interfaces](#interfaces)
         - [Interface inheritance](#interface-inheritance)
         - [Interface exceptions](#interface-exceptions)
+- [Nulls and defaults](#nulls-and-defaults)
 
 
 Syntax
@@ -513,4 +514,28 @@ exception AuthException {}
 exception ValidationException {}
 exception UserException {}
 exception PhotoException {}
+```
+
+Nulls and defaults
+------------------
+Non-present or null fields, arguments and collection elements are set to default values.
+
+|type       |default value     |
+|-----------|------------------|
+|bool       | `false`          |
+|numbers    | `0` or `0.0`     |
+|string     | `null`           |
+|datetime   | `null`           |
+|enums      | `null`, `UNDEFINED` (a special enum value) or `0` |
+|messages   | `null`           |
+|containers | `null`           |
+
+Messages can use bitfields to specify set fields.
+```java
+MyMessage message = new MyMessage()
+    .setField0(1)
+    .clearField1();
+
+assert message.hasField0();
+assert not message.hasField1();
 ```

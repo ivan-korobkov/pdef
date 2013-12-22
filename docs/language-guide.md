@@ -1,5 +1,5 @@
-Pdef Language Guide
-===================
+Pdef 1.1 Language Guide
+=======================
 Pdef is a statically typed interface definition language. It allows to write interfaces and
 data structures once and then to generate code and RPC clients/servers for different languages
 (Java, Python, Objective-C).

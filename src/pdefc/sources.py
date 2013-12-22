@@ -30,18 +30,18 @@ class PackageSources(object):
     '''Package sources.'''
     def __init__(self, paths=None):
         self._sources = []
-        self._files = {}    # Absolute file names to sources.
+        self._paths = {}    # Paths to sources.
 
         for path in (paths or []):
             self.add_path(path)
 
-    def get(self, name):
+    def get(self, package_name):
         '''Return a package source by a package name.'''
         for source in self._sources:
-            if source.name == name:
+            if source.package_name == package_name:
                 return source
 
-        raise CompilerException('Package not found "%s"' % name)
+        raise CompilerException('Package not found "%s"' % package_name)
 
     def add_source(self, source):
         '''Add a package source.'''
@@ -51,28 +51,17 @@ class PackageSources(object):
 
     def add_path(self, path):
         '''Read a source path and return a package source.'''
+        if path in self._paths:
+            return self._paths[path]
+
         if os.path.isfile(path):
-            return self._add_file(path)
+            source = self._create_file_source(path)
         elif _is_url(path):
-            return self._add_url(path)
+            source = self._create_url_source(path)
+        else:
+            raise CompilerException('Unsupported path: %s' % path)
 
-        raise CompilerException('Unsupported path: %s' % path)
-
-    def _add_url(self, url):
-        '''Read a package source url, add and return the source.'''
-        source = self._create_url_source(url)
-        self.add_source(source)
-        return source
-
-    def _add_file(self, filename):
-        '''Read a package source file, add and return the source.'''
-        absolute = os.path.abspath(filename)
-        if absolute in self._files:
-            logging.warn('File is already present: %s', absolute)
-            return self._files[absolute]
-
-        source = self._create_file_source(filename)
-        self._files[absolute] = source
+        self._paths[path] = source
         return self.add_source(source)
 
     def _create_url_source(self, url):
@@ -96,23 +85,22 @@ class ModuleSource(object):
 
 class PackageSource(object):
     '''Abstract package source.'''
-    info = None
+    package_info = None
     module_sources = None
 
     @property
-    def name(self):
-        return self.info.name if self.info else None
+    def package_name(self):
+        return self.package_info.name if self.package_info else None
 
 
 class InMemoryPackageSource(PackageSource):
     '''In memory package source.'''
-
     def __init__(self, info, module_sources=None):
-        self.info = info
+        self.package_info = info
         self.module_sources = module_sources or []
 
     def __str__(self):
-        return self.info.name if self.info else 'unnamed-source'
+        return self.package_info.name if self.package_info else 'unnamed-source'
 
 
 class ForwardingPackageSource(PackageSource):
@@ -120,8 +108,8 @@ class ForwardingPackageSource(PackageSource):
         self._delegate = None
 
     @property
-    def info(self):
-        return self.delegate.info
+    def package_info(self):
+        return self.delegate.package_info
 
     @property
     def module_sources(self):

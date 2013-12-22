@@ -153,7 +153,7 @@ class Module(Validatable):
         '''Returns a list of modules when this module depends on another module.
 
         For example: a imports b, b imports c;
-        a._get_import_path_with(c) => [a, b, c]
+        a._get_import_path(c) => [a, b, c]
         '''
         if another is None or another is self:
             return []

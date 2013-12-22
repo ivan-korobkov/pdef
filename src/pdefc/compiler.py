@@ -44,17 +44,36 @@ class Compiler(object):
         t0 = time.time()
 
         source = self.sources.add_path(path)
-        package = self.package(source.name)
+        package = self._compile_source(source)
 
         t = (time.time() - t0) * 1000
         logging.info('Fetched and compiled %s in %dms', package.name, t)
         return package
 
-    def package(self, name, _names=None):
-        '''Return a compiled package by its name or raise a CompilerException.'''
+    def _compile_source(self, source, names=None):
+        name = source.package_name
+        names = names or set(name)  # Prevents circular dependencies
 
-        # Prevent circular dependencies.
-        names = _names or set()
+        # Parse the source.
+        package = self._parse_source(source)
+        self.packages[name] = package
+
+        # Add the default dependency paths.
+        for dep in package.info.dependencies:
+            if dep.path:
+                self.add_paths(dep.path)
+
+        # Compile the dependencies.
+        for dep in package.info.dependencies:
+            dep_package = self._get_compiled_packaged(dep.name, names=names)
+            package.add_dependency(dep_package)
+
+        # Compile the package.
+        package.compile()
+        return package
+
+    def _get_compiled_packaged(self, name, names=None):
+        '''Return a compiled package by its name or raise a CompilerException.'''
         if name in names:
             raise CompilerException('Circular package dependencies in %s' % name)
         names.add(name)
@@ -65,21 +84,9 @@ class Compiler(object):
 
         # Find a package source.
         source = self.sources.get(name)
+        return self._compile_source(source, names=names)
 
-        # Parse the source.
-        package = self._parse(source)
-        self.packages[name] = package
-
-        # Compile the dependencies.
-        for dname in package.info.dependencies:
-            dep = self.package(dname, _names=names)
-            package.add_dependency(dep)
-
-        # Compile the package.
-        package.compile()
-        return package
-
-    def _parse(self, source):
+    def _parse_source(self, source):
         '''Parse and return a package, but not its dependencies.'''
         logging.info('Parsing %s', source)
 
@@ -87,4 +94,4 @@ class Compiler(object):
         modules = self.parser.parse_sources(source.module_sources)
 
         # Create the package.
-        return Package(source.name, info=source.info, modules=modules)
+        return Package(source.package_name, info=source.package_info, modules=modules)

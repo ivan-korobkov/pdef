@@ -40,12 +40,29 @@ class TestCompiler(unittest.TestCase):
         # Given a compiler.
         compiler = Compiler()
 
-        # Create a test dependency
+        # Create a test dependency.
         path0 = self._create_source('dependency', {'module0': 'namespace test;'})
         compiler.add_paths(path0)
 
         # Create a test source.
         path1 = self._create_source('package', {'module1': 'namespace test;'}, ['dependency'])
+
+        # Compile the package.
+        package = compiler.compile(path1)
+
+        assert package.name == 'package'
+        assert len(package.dependencies) == 1
+
+    def test_compile__default_dependency_path(self):
+        # Given a compiler
+        compiler = Compiler()
+
+        # Create a test dependency.
+        path0 = self._create_source('dependency', {'module0': 'namespace test;'})
+
+        # Create a test source with a default path.
+        path1 = self._create_source('package', {'module1': 'namespace test;'},
+                                    ['dependency %s' % path0])
 
         # Compile the package.
         package = compiler.compile(path1)

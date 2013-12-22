@@ -84,20 +84,25 @@ and underscores. Circular package dependencies are forbidden.
 Package file:
 ```yaml
 package:
+  # Package name
   name: example
+
+  # Additional information
   version: 1.1
   url: https://github.com/pdef/pdef/
+  author: Ivan Korobkov <ivan.korobkov@gmail.com>
   description: Example application
 
+  # Source files.
   sources:
     - example.pdef
     - photos.pdef
     - users.pdef
     - users/profile.pdef
 
+  # Other packages this package depends on.
   dependencies:
-    - example-common
-
+    - pdef-test https://raw.github.com/pdef/pdef/1.1/test/test.yaml
 ```
 
 File structure:

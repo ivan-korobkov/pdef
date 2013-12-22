@@ -5,7 +5,7 @@ import logging
 import os
 import pkg_resources
 from jinja2 import Environment
-from pdefc import CompilerException, cli
+from pdefc import CompilerException
 
 GENERATORS_ENTRY_POINT = 'pdefc.generators'
 ENCODING = 'utf8'
@@ -52,18 +52,18 @@ class GeneratorCli(object):
         raise NotImplementedError
 
     def _add_prefix_args(self, parser):
-        '''Add a prefix arg, the method can be accessed by the subclasses.'''
+        '''Add a prefix arg, the method can be accessed by subclasses.'''
         parser.add_argument('--prefix', dest='prefixes', action='append', default=[],
                             help='add a namespace class prefix, i.e. "company:Prefix"')
 
     def _add_module_args(self, parser):
-        '''Add a module arg, the method can be accessed by the subclasses.'''
+        '''Add a module arg, the method can be accessed by subclasses.'''
         parser.add_argument('--module', dest='modules', action='append', default=[],
                             help='add a module name mapping, '
                                  'i.e. "pdef.module:io.pdef"')
 
     def _parse_prefix_args(self, args):
-        '''Parse prefix args, the method can be accessed by the subclasses.'''
+        '''Parse prefix args, the method can be accessed by subclasses.'''
         result = []
 
         for s in args.prefixes:
@@ -77,7 +77,7 @@ class GeneratorCli(object):
         return result
 
     def _parse_module_args(self, args):
-        '''Parse module args, the method can be accessed by the subclasses.'''
+        '''Parse module args, the method can be accessed by subclasses.'''
         result = []
 
         for s in args.modules:
@@ -121,14 +121,17 @@ class Templates(object):
             self.add_filters_from_methods(filters)
 
     def add_filter(self, name, filter0):
+        '''Add a Jinja filter.'''
         self._env.filters[name] = filter0
         logging.debug('Added a template filter "%s"' % name)
 
     def add_filters(self, **name_to_filter):
+        '''Add Jinja filters.'''
         for name, filter0 in name_to_filter.items():
             self.add_filter(name, filter0)
 
     def add_filters_from_methods(self, obj):
+        '''Add all public methods as Jinja filters.'''
         for name in dir(obj):
             if name.startswith('_'):
                 continue
@@ -137,18 +140,18 @@ class Templates(object):
             if inspect.ismethod(attr):
                 self.add_filter(name, attr)
 
-    def get(self, name):
+    def get(self, filename):
         '''Read and return a Jinja template, the templates are cached.'''
-        if name in self._cache:
-            return self._cache[name]
+        if filename in self._cache:
+            return self._cache[filename]
 
         # Get the template file.
-        path = os.path.join(self._dir, name)
+        path = os.path.join(self._dir, filename)
         with open(path, 'r') as module_file:
             text = module_file.read()
 
         template = self._env.from_string(text)
-        self._cache[name] = template
+        self._cache[filename] = template
 
         return template
 

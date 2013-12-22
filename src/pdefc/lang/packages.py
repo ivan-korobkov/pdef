@@ -192,8 +192,8 @@ class PackageInfo(object):
         self.name = name or ''
         self.url = url
         self.description = description or ''
-        self.sources = list(sources) if sources else []
-        self.dependencies = list(dependencies) if dependencies else []
+        self.sources = tuple(sources) if sources else ()
+        self.dependencies = tuple(DependencyInfo.from_object(d) for d in dependencies or ())
 
     def to_dict(self):
         return {
@@ -202,9 +202,29 @@ class PackageInfo(object):
                 'url': self.url,
                 'description': self.description,
                 'sources': list(self.sources),
-                'dependencies': list(self.dependencies)
+                'dependencies': list(d.to_string() for d in self.dependencies),
             }
         }
 
     def to_yaml(self):
         return yaml.dump(self.to_dict())
+
+
+class DependencyInfo(object):
+    @classmethod
+    def from_object(cls, obj):
+        if isinstance(obj, DependencyInfo):
+            return obj
+        return DependencyInfo.from_string(obj)
+
+    @classmethod
+    def from_string(cls, s):
+        name, _, path = s.partition(' ')
+        return DependencyInfo(name, path)
+
+    def __init__(self, name, path=''):
+        self.name = name.strip()
+        self.path = path.strip()
+
+    def to_string(self):
+        return '%s %s' % (self.name, self.path)

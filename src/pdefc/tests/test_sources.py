@@ -28,7 +28,7 @@ class TestPackageSources(unittest.TestCase):
 
     def test_add_path__file(self):
         source = Mock()
-        source.name = 'test'
+        source.package_name = 'test'
         _, filename = tempfile.mkstemp('pdef-tests')
 
         sources = PackageSources()
@@ -40,7 +40,7 @@ class TestPackageSources(unittest.TestCase):
 
     def test_add_path__url(self):
         source = Mock()
-        source.name = 'test'
+        source.package_name = 'test'
 
         sources = PackageSources()
         sources._create_url_source = lambda url: source
@@ -68,8 +68,8 @@ class TestFilePackageSource(unittest.TestCase):
         source._read_file = lambda filepath: files[filepath]
 
         # The source should read the info and the modules.
-        assert source.name == 'project_api'
-        assert source.info.to_dict() == info.to_dict()
+        assert source.package_name == 'project_api'
+        assert source.package_info.to_dict() == info.to_dict()
 
         assert source.module_sources[0].filename == 'users.pdef'
         assert source.module_sources[1].filename == 'users/events.pdef'
@@ -93,8 +93,8 @@ class TestUrlPackageSource(unittest.TestCase):
         source._fetch_url = lambda url: urls[url]
 
         # The source should read the info and the modules.
-        assert source.name == 'project_api'
-        assert source.info.to_dict() == info.to_dict()
+        assert source.package_name == 'project_api'
+        assert source.package_info.to_dict() == info.to_dict()
 
         assert source.module_sources[0].filename == 'users.pdef'
         assert source.module_sources[1].filename == 'users/events.pdef'

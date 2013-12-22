@@ -81,7 +81,7 @@ package:
 
 Create the module files:
 
-`blogs.pdef`
+`posts.pdef`
 ```pdef
 namespace myproject;
 import myproject.photos;
@@ -113,7 +113,7 @@ message Photo {
 
 Generate the source code:
 ```bash
-$ pdefc generate-java example.yaml --out generated/
+$ pdefc generate-java myproject.yaml --out generated/
 ```
 
 Example

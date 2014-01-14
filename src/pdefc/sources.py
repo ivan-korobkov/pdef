@@ -54,12 +54,12 @@ class PackageSources(object):
         if path in self._paths:
             return self._paths[path]
 
-        if os.path.isfile(path):
-            source = self._create_file_source(path)
-        elif _is_url(path):
+        if _is_url(path):
             source = self._create_url_source(path)
         else:
-            raise CompilerException('Unsupported path: %s' % path)
+            if not os.path.exists(path):
+                raise CompilerException('File does not exist: %s' % path)
+            source = self._create_file_source(path)
 
         self._paths[path] = source
         return self.add_source(source)

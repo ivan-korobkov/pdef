@@ -41,6 +41,9 @@ interface TestInterface {
     /** Message method. */
     message0(msg TestMessage @query) TestMessage;
 
+    /** Polymorphic message method. */
+    polymorphic0(msg Base) Base;
+
     /** Method with collections. */
     collections(
         list0   list<int32> @query,
@@ -61,7 +64,6 @@ interface TestInterface {
 }
 
 
-@throws(TestSubException)
 interface TestSubInterface : TestInterface {
     /** Sub interface method. */
     subMethod() void;

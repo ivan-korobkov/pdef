@@ -4,7 +4,7 @@ Multi-line comment.
 */
 namespace pdef.test;
 
-from pdef_test import messages;
+from pdef_test import inheritance, messages;
 
 
 /** Test exception. */

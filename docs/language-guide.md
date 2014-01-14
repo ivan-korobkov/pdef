@@ -450,9 +450,10 @@ interface Service {
 #### Interface inheritance
 Interfaces can inherit other interfaces.
 
-- An interface can have only one base.
-- A interface can override its base interface exception with a subtype.
 - Method overriding is forbidden.
+- Method overloading is forbidden.
+- A subinterface can have only one base.
+- If a base specifies an exception then its subinterface exceptions must match it or be empty.
 
 ```pdef
 interface BaseInterface {

@@ -82,21 +82,6 @@ class Message(Definition):
 
         return [t for t in result if t is not self]
 
-    def _is_subclass_of(self, another):
-        if not another:
-            return False
-
-        if self is another:
-            return True
-
-        base = self.base
-        while base:
-            if base is another:
-                return True
-            base = base.base
-
-        return False
-
     def add_field(self, field):
         '''Add a new field to this message and return the field.'''
         self.declared_fields.append(field)

@@ -122,10 +122,9 @@ class TestInterface(unittest.TestCase):
         errors = interface.validate()
         assert not errors
 
-    def test_validate_exc__subinterface_exc_subclasses_base_exc(self):
-        base_exc = Message('BaseExc', is_exception=True)
-        base = Interface('Base', exc=base_exc)
-        exc = Message('Exc', base=base_exc, is_exception=True)
+    def test_validate_exc__subinterface_exc_no_base_exc(self):
+        exc = Message('Exc', is_exception=True)
+        base = Interface('Base')
         interface = Interface('Interface', base=base, exc=exc)
 
         errors = interface.validate()
@@ -139,8 +138,7 @@ class TestInterface(unittest.TestCase):
         interface = Interface('Interface', base=base, exc=exc)
 
         errors = interface.validate()
-        assert 'subinterface exception must be empty, or match the base exc, ' \
-               'or be the base exc subclass' in errors[0]
+        assert 'subinterface exception must be empty, or match the base exception' in errors[0]
 
     # validate_methods
 

@@ -72,18 +72,6 @@ class TestMessage(unittest.TestCase):
         
         assert message1.referenced_types == [base, one, message0]
 
-    def test_is_subclass_of(self):
-        base = Message('Base')
-        message0 = Message('Message0', base=base)
-        message1 = Message('Message1', base=message0)
-
-        assert message1._is_subclass_of(message0)
-        assert message0._is_subclass_of(base)
-        assert base._is_subclass_of(base)
-
-        assert not base._is_subclass_of(message0)
-        assert not message0._is_subclass_of(message1)
-
     # link.
 
     def test_link(self):

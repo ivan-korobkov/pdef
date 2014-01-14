@@ -156,12 +156,12 @@ class Interface(Definition):
         if not self.base or not self.base.exc:
             return []
 
-        # The current exception must match the base exception or be its subclass.
-        if self.exc._is_subclass_of(self.base.exc):
+        # The current exception must match the base exception.
+        if self.exc == self.base.exc:
             return []
 
-        return [self._error('%s: subinterface exception must be empty, or match the base exc, '
-                            'or be the base exc subclass, %s', self, self.exc)]
+        return [self._error('%s: subinterface exception must be empty, '
+                            'or match the base exception, %s', self, self.exc)]
 
     def _validate_methods(self):
         errors = []

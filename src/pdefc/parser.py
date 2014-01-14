@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 import functools
 import logging
-import os.path
 import re
 import ply.lex as lex
 import ply.yacc as yacc
@@ -179,9 +178,6 @@ class _Tokens(object):
     # Ignored characters
     t_ignore = " \t"
 
-    doc_start_pattern = re.compile('^\s*\**\s*', re.MULTILINE)
-    doc_end_pattern = re.compile('\s\*$', re.MULTILINE)
-
     def t_IDENTIFIER(self, t):
         r'[a-zA-Z_]{1}[a-zA-Z0-9_]*'
         t.type = self.ids_map.get(t.value, 'IDENTIFIER')
@@ -205,11 +201,7 @@ class _Tokens(object):
     def t_DOC(self, t):
         r'\/\*\*((.|\n)*?)\*\/'
         t.lexer.lineno += t.value.count('\n')
-        
-        value = t.value.strip('/')
-        value = self.doc_start_pattern.sub('', value)
-        value = self.doc_end_pattern.sub('', value)
-        t.value = value
+        t.value = cleanup_docstring(t.value)
         return t
 
     def t_error(self, t):
@@ -600,3 +592,39 @@ class _Grammar(_GrammarRules, _Tokens):
     def __init__(self, name_func, error_func):
         self._name = name_func
         self._error = error_func
+
+
+_docstring_start_pattern = re.compile('^\s*/\*\*\s*')   # /**
+_docstring_line_pattern = re.compile('^\s*\*\s?')       #  *
+_docstring_end_pattern = re.compile('\s*\*/\s*$')       #  */
+
+
+def cleanup_docstring(s):
+    '''Clean up docstrings from start/end and line stars (*).'''
+    lines = s.splitlines()
+    result = []
+    count = 0
+
+    for line in lines:
+        count += 1
+        first = count == 1
+        last = len(lines) == count
+
+        # Strip the docstrings start pattern /**
+        if first:
+            line = _docstring_start_pattern.sub('', line)
+
+        # String the docstrings end pattern */
+        if last:
+            line = _docstring_end_pattern.sub('', line)
+
+        # Strip ap optional line start star *.
+        if not first:
+            line = _docstring_line_pattern.sub('', line)
+
+        # Skip empty first and last lines.
+        if not line and (first or last):
+            continue
+        result.append(line)
+
+    return '\n'.join(result)

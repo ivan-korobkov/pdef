@@ -63,13 +63,19 @@ interface) or before a method.
 /**
  * This is a multi-line module docstring.
  * It is a available to the code generators.
+ *
+ * Start each line with a star because it is used
+ * as line whitespace/text delimiter when
+ * the docstring is indented (as method docstrings).
  */
 
 // This is a one line comment, it is stripped from the source code.
 
 /** Interface docstring. */
 interface ExampleInterface {
-    /** Method docstring. */
+    /**
+     * Method docstring.
+     */
     hello(name string) string;
 }
 ```

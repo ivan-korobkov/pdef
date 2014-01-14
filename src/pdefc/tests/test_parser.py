@@ -1,9 +1,10 @@
 # encoding: utf-8
+from __future__ import unicode_literals
 import io
 import os.path
 import unittest
 
-from pdefc.parser import create_parser
+from pdefc.parser import create_parser, cleanup_docstring
 from pdefc.lang import SingleImport, BatchImport, Location
 from pdefc.lang.references import ListReference, SetReference, MapReference
 
@@ -129,12 +130,11 @@ class TestParser(unittest.TestCase):
     def test_doc(self):
         s = '''
             /** This is
-            a multi-line
-            doc string. */
+             * a multi-line
+             * doc string. */
             namespace test;
         '''
         module, _ = self.parser.parse(s, 'module')
-
         assert module.doc == 'This is\na multi-line\ndoc string.'
 
     def test_module(self):
@@ -435,3 +435,31 @@ class TestParser(unittest.TestCase):
         assert map0.location == Location(9)
         assert map0.key.location == Location(9)
         assert map0.value.location == Location(9)
+
+
+class TestCleanupDocstrings(unittest.TestCase):
+    def test_oneline(self):
+        s = cleanup_docstring('hello, world')
+        assert s == 'hello, world'
+
+        s = cleanup_docstring('/** hello, world */')
+        assert s == 'hello, world'
+
+        s = cleanup_docstring(' /**   hello, world    */  ')
+        assert s == 'hello, world'
+
+    def test_multiline(self):
+        s = cleanup_docstring('''/**
+         * hello,
+         * world
+         */ ''')
+        assert s == 'hello,\nworld'
+
+    def test_multiline_indented_text(self):
+        s = cleanup_docstring('''/**
+         * yaml:
+         *   key0: value0
+         *   key1: value1
+         */''')
+
+        assert s == 'yaml:\n  key0: value0\n  key1: value1'

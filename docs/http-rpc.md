@@ -12,7 +12,7 @@ See [Implementations] for the real implementations.
 Contents
 ========
 - [Specification](#specification)
-- [Example pseudo-code](#example-pseudo-code)
+- [Pseudo-code](#Pseudo-code)
 - [Examples](#examples)
 
 
@@ -21,58 +21,73 @@ Specification
 
 HTTP Request
 ------------
-- Method invocation chain must be sent as an HTTP request with
-  the `application/x-www-form-urlencoded` content type.
-- Method names and path arguments (not `@query` or `@post`) must be appended to the request path,
-  null path arguments are forbidden.
-      ```
-      /method/arg0/nextMethod/1234
-      ```
-- `@post` and `@query` arguments must be added to the request POST params and the query string
-  respectively with argument names as keys; null values must be skipped.
-      ```
-      /method/arg0/nextMethod?queryArg0=1234&queryArg1=hello
-      ```
-- All arguments must be serialized into JSON UTF-8 strings, with quotes stripped,
-  and then url-encoded.
+Method invocation chain must be sent as an HTTP request with the `application/x-www-form-urlencoded`
+content type.
+
+Method names and path arguments (not `@query` or `@post`) must be appended to the request path,
+null path arguments are forbidden.
+```http
+GET /method/argument0/nextMethod/1234 HTTP/1.1
+```
+
+`@post` and `@query` arguments must be added to request post params and query params
+respectively with argument names as keys; null arguments must be skipped.
+```http
+GET /method/arg0/nextMethod?arg=hello+world HTTP/1.1
+```
+
+Arguments must be serialized into JSON UTF-8 strings, with quotes stripped, and then url-encoded.
+Example `{"firstName": "John", "lastName:" "Doe"}` user argument.
+```http
+GET /methodWithQueryArg?user={"firstName"%3A+"John",+"lastName%3A"+"Doe"} HTTP/1.1
+```
+
+```http
+POST /methodWithPostArgs HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+user={"firstName"%3A+"John",+"lastName%3A"+"Doe"}
+```
 
 HTTP Response
 -------------
-- RPC errors must be returned as `HTTP 400 Bad request` responses
-  with the `text/plain; charset=utf-8` content type.
-      ```http
-      HTTP/1.0 400 Bad request
-      Content-Type: text/plain;charset=utf-8
+RPC errors must be returned as `HTTP 400 Bad request` responses
+with the `text/plain; charset=utf-8` content type.
+```http
+HTTP/1.0 400 Bad request
+Content-Type: text/plain;charset=utf-8
 
-      Wrong method arguments.
-      ```
-- Successful results must be returned as `HTTP 200 OK` responses with
-  the `application/json; charset=utf-8` content type; the result must be wrapped into a JSON
-  object with the `data` field.
-    ```http
-    HTTP/1.0 200 OK
-    Content-Type: application/json;charset=utf-8
+Wrong method arguments.
+```
 
-    {
-        "data": "method result"
-    }
-    ```
-- Application exceptions (specified in the application interface via `@throws`)
-  must be returned as an `HTTP 422 Uprocessable entity` responses with
-  the `application/json; charset=utf-8` content type; the exception must be wrapped into
-  a JSON object with the `error` field.
-    ```http
-    HTTP/1.0 422 Unprocessable entity
-    Content-Type: application/json;charset=utf-8
+Successful results must be returned as `HTTP 200 OK` responses with
+the `application/json; charset=utf-8` content type; the result must be wrapped into a JSON
+object with the `data` field.
+```http
+HTTP/1.0 200 OK
+Content-Type: application/json;charset=utf-8
 
-    {
-        "error": {
-            "text": "Expected application exception"
-        }
-    }
-    ```
+{
+  "data": "method result"
+}
+```
 
-Example pseudo-code
+Application exceptions (specified in the application interface via `@throws`)
+must be returned as an `HTTP 422 Uprocessable entity` responses with
+the `application/json; charset=utf-8` content type; the exception must be wrapped into
+a JSON object with the `error` field.
+```http
+HTTP/1.0 422 Unprocessable entity
+Content-Type: application/json;charset=utf-8
+
+{
+  "error": {
+      "text": "Expected application exception"
+  }
+}
+```
+
+Pseudo-code
 ===================
 Client
 ------
@@ -244,16 +259,18 @@ exception InvalidDataException : WorldException(WorldExceptionCode.INVALID_DATA)
 
 Send a POST HTTP request, because the method is marked as `@post`.
 Append `username` and `password` to the post data because they are marked as `@post` arguments.
-```
+```http
 POST /people/login HTTP/1.0
 Host: example.com
 Content-Type: application/x-www-form-urlencoded
+
 username=john.doe&password=secret
 ```
 
 Successful response:
-```
+```http
 HTTP/1.0 200 OK
+
 {
     "data: {
         "id": 10,
@@ -263,8 +280,9 @@ HTTP/1.0 200 OK
 ```
 
 Application exception response:
-```
+```http
 HTTP/1.0 422 Unprocessable entity
+
 {
     "error": {
         "type": "auth_exception",
@@ -279,13 +297,14 @@ HTTP/1.0 422 Unprocessable entity
 
 Send a GET HTTP request, add the last method arguments to the query string because they are
 marked as `@query`.
-```
-GET /people/find?query=John+Doe&limit=10&offset=100 HTTP 1.0
+```http
+GET /people/find?query=John+Doe&limit=10&offset=100 HTTP/1.0
 ```
 
 Successful response:
-```
+```http
 HTTP/1.0 200 OK
+
 {
     "data": [
         {
@@ -301,8 +320,9 @@ HTTP/1.0 200 OK
 ```
 
 Application exception response:
-```
+```http
 HTTP/1.0 422 Unprocessable entity
+
 {
     "error": {
         "type": "invalid_data",

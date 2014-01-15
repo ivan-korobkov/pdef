@@ -9,7 +9,7 @@ Features:
 
 - Packages, modules, imports and namespaces.
 - Circular module imports and type references (with some limitations).
-- Simple type system with clear separation between data structures and interfaces.
+- Simple type system built on a clear separation between data structures and interfaces.
 - Message and interface inheritance.
 - Chained method invocations.
 - Default JSON format and HTTP RPC.
@@ -115,6 +115,8 @@ message Photo {
 Generate the source code:
 ```bash
 $ pdefc generate-java myproject.yaml --out generated/
+$ pdefc generate-objc myproject.yaml --out generated/
+$ pdefc generate-python myproject.yaml --out generated/
 ```
 
 Example

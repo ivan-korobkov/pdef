@@ -433,7 +433,6 @@ sent as an HTTP POST form.
 - Only `@post` methods can have `@post` arguments.
 - Only non-post terminal methods can have `@query` arguments
   (i.e. `@post` and `@query` arguments can't be mixed in one method).
-- Interfaces do not support inheritance (at least now).
 - The last method of an invocation chain must be a terminal one.
 
 ```pdef
@@ -474,13 +473,11 @@ interface SubInterface : BaseInterface {
 
 
 #### Interface Exceptions
-There can be only one exception per application specified at its root interface
-via `@throws(Exception)`. It is impossible to specify different exceptions for different methods
-or child interfaces. All child interface exceptions are ignored.
-
-One exception per application is a simple and an unambiguous way to deal with exception.
-However, applications usually use a lot of different exceptions. There are two possible
-ways to implement them.
+Exceptions are specified at root interfaces via `@throws(Exception)`. The root interface
+is the one which invocations start from. Exceptions from other interfaces in an invocation
+chain are ignored. Usually, there is one root application interface (i.e. `Twitter` or `Github`)
+and one application exception. Use polymorphic or composite exceptions when multiple exceptions 
+are required for an application.
 
 Polymorphic exceptions, when all exceptions subclass a base application exception.
 ```pdef

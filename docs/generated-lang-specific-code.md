@@ -8,13 +8,13 @@ Actual formats and RPC implementations are loosely coupled with the generated co
 Contents
 --------
 
-- [Descriptors](#descriptors)
+- [Generated code](#generated-code)
 - [Invocations](#invocations)
 - [Circular references](#circular-references)
 
 
-Descriptors
------------
+Generated code
+--------------
 Generated messages, enums and interfaces have static descriptors. The descriptors
 provide meta-information about types, fields, subtypes, methods, arguments, etc.
 See the implementations for more information:
@@ -23,50 +23,108 @@ See the implementations for more information:
 - [Python descriptors](https://github.com/pdef/pdef-python/blob/master/python/src/pdef/descriptors.py).
 - [Objective-C descriptors](https://github.com/pdef/pdef-objc/blob/master/Pdef/PDDescriptors.h).
 
-Example Java message descriptor:
+Generated Java message with a descriptor:
 ```java
 public class TestMessage extends io.pdef.AbstractMessage {
     private String string0;
     private Boolean bool0;
     private Integer int0;
 
-    // Constructors and getters/setters are omitted.
+    public TestMessage() {}
+
+    public TestMessage(final TestMessage another) {
+        super(another);
+        this.string0 = another.string0;
+        this.bool0 = another.bool0;
+        this.int0 = another.int0;
+    }
+
+    public static TestMessage fromMap(final java.util.Map<String, Object> map) {
+        return io.pdef.json.JsonFormat.instance().readObject(map, DESCRIPTOR);
+    }
+
+    public static TestMessage fromJson(final String s) {
+        return io.pdef.json.JsonFormat.instance().read(s, DESCRIPTOR);
+    }
+    
+    /** Getters/setters omitted */
+    
+    @Override
+    public TestMessage copy() {
+        return new TestMessage(this);
+    }
+
+    @Override
+	public void merge(final io.pdef.Message message) {
+		super.merge(message);
+		if (!(message instanceof TestMessage)) return;
+
+		TestMessage another = (TestMessage) message;
+        if (another.string0 != null) this.string0 = another.string0;
+        if (another.bool0 != null) this.bool0 = another.bool0;
+        if (another.int0 != null) this.int0 = another.int0;
+	}
+
+    @Override
+    public io.pdef.descriptors.MessageDescriptor<? extends TestMessage> descriptor() {
+        return DESCRIPTOR;
+    }
 
     public static final io.pdef.descriptors.MessageDescriptor<TestMessage> DESCRIPTOR = io.pdef.descriptors.MessageDescriptor.<TestMessage>builder()
             .setJavaClass(TestMessage.class)
             .setProvider(new io.pdef.Provider<TestMessage>() {
-                public TestMessage get() { return new TestMessage(); }
+                public TestMessage get() {
+                    return new TestMessage();
+                }
             })
             .addField(io.pdef.descriptors.FieldDescriptor.<TestMessage, String>builder()
                     .setName("string0")
                     .setType(io.pdef.descriptors.Descriptors.string)
                     .setAccessor(new io.pdef.descriptors.FieldAccessor<TestMessage, String>() {
-                        public String get(TestMessage message) { return message.string0; }
-                        public void set(TestMessage message, String value) { message.string0 = value; }
+                        public String get(TestMessage message) {
+                            return message.string0;
+                        }
+                        public void set(TestMessage message, String value) {
+                            message.string0 = value;
+                        }
                     })
                     .build())
             .addField(io.pdef.descriptors.FieldDescriptor.<TestMessage, Boolean>builder()
                     .setName("bool0")
                     .setType(io.pdef.descriptors.Descriptors.bool)
                     .setAccessor(new io.pdef.descriptors.FieldAccessor<TestMessage, Boolean>() {
-                        public Boolean get(TestMessage message) { return message.bool0; }
-                        public void set(TestMessage message, Boolean value) { message.bool0 = value; }
+                        public Boolean get(TestMessage message) {
+                            return message.bool0;
+                        }
+                        public void set(TestMessage message, Boolean value) {
+                            message.bool0 = value;
+                        }
                     })
                     .build())
             .addField(io.pdef.descriptors.FieldDescriptor.<TestMessage, Integer>builder()
                     .setName("int0")
                     .setType(io.pdef.descriptors.Descriptors.int32)
                     .setAccessor(new io.pdef.descriptors.FieldAccessor<TestMessage, Integer>() {
-                        public Integer get(TestMessage message) { return message.int0; }
-                        public void set(TestMessage message, Integer value) { message.int0 = value; }
+                        public Integer get(TestMessage message) {
+                            return message.int0;
+                        }
+                        public void set(TestMessage message, Integer value) {
+                            message.int0 = value;
+                        }
                     })
                     .build())
             .build();
+}
 ```
 
-Example Python message descriptor:
+Generated Python message with a descriptor:
 ```python
 class TestMessage(pdef.Message):
+    """
+    Simple message.
+    Multi-line comment.
+    """
+
     string0 = descriptors.field('string0', lambda: descriptors.string0)
     bool0 = descriptors.field('bool0', lambda: descriptors.bool0)
     int0 = descriptors.field('int0', lambda: descriptors.int32)
@@ -79,31 +137,106 @@ class TestMessage(pdef.Message):
     has_int0 = int0.has_property
 
     def __init__(self,
-                 string0=None,
-                 bool0=None,
-                 int0=None):
+                 string0=None, 
+                 bool0=None, 
+                 int0=None): 
         self.string0 = string0
         self.bool0 = bool0
         self.int0 = int0
 ```
 
-Example Objective-C message descriptor:
+Generated Objective-C message with a descriptor:
 ```objectivec
+// TestMessage.h
+/** Simple message.
+Multi-line comment. */
+@interface TestMessage : PDMessage
+@property (nonatomic) NSString *string0;
+@property (nonatomic) BOOL bool0;
+@property (nonatomic) int32_t int0;
+
+- (BOOL) hasString0;
+- (void) clearString0;
+
+- (BOOL) hasBool0;
+- (void) clearBool0;
+
+- (BOOL) hasInt0;
+- (void) clearInt0;
+
+
++ (PDMessageDescriptor *)typeDescriptor;
+@end
+
+
+// TestMessage.m
 @implementation TestMessage {
     BOOL _string0_isset;
     BOOL _bool0_isset;
     BOOL _int0_isset;
 }
-static PDMessageDescriptor *_TestMessageDescriptor;
+static PDMessageDescriptor *_PDTestMessageDescriptor;
 
-// Getters/setters are omitted
+// string0
+- (BOOL)hasString0 {
+    return _string0_isset;
+}
+
+- (void)setString0:(NSString *)string0 {
+    _string0 = string0;
+    _string0_isset = YES;
+}
+
+- (void)clearString0 {
+    _string0 = nil;
+    _string0_isset = NO;
+}
+
+// bool0
+- (BOOL)hasBool0 {
+    return _bool0_isset;
+}
+
+- (void)setBool0:(BOOL )bool0 {
+    _bool0 = bool0;
+    _bool0_isset = YES;
+}
+
+- (void)clearBool0 {
+    _bool0 = NO;
+    _bool0_isset = NO;
+}
+
+// int0
+- (BOOL)hasInt0 {
+    return _int0_isset;
+}
+
+- (void)setInt0:(int32_t )int0 {
+    _int0 = int0;
+    _int0_isset = YES;
+}
+
+- (void)clearInt0 {
+    _int0 = 0;
+    _int0_isset = NO;
+}
+
+
+- (PDMessageDescriptor *)descriptor {
+    return [PDTestMessage typeDescriptor];
+}
+
++ (PDMessageDescriptor *)typeDescriptor {
+    return _PDTestMessageDescriptor;
+}
 
 + (void)initialize {
     if (self != [TestMessage class]) {
         return;
     }
 
-    _TestMessageDescriptor = [[PDMessageDescriptor alloc]
+    _PDTestMessageDescriptor = [[PDMessageDescriptor alloc]
             initWithClass:[TestMessage class]
                      base:nil
        discriminatorValue:0

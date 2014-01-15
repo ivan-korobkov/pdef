@@ -68,6 +68,7 @@ interface) or before a method.
  * as line whitespace/text delimiter when
  * the docstring is indented (as method docstrings).
  */
+ namespace example;
 
 // This is a one line comment, it is stripped from the source code.
 

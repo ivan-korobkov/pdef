@@ -33,6 +33,7 @@ Links
 - [Grammar in BNF](docs/grammar.bnf)
 - [Generated and language specific code](docs/generated-lang-specific-code.md)
 - [How to write a code generator](https://github.com/pdef/pdef-generator-template)
+- [Google group](https://groups.google.com/d/forum/pdef) (pdef@googlegroups.com)
 
 
 Requirements

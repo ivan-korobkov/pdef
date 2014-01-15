@@ -48,16 +48,17 @@ class Interface(Definition):
 
     @property
     def referenced_types(self):
-        result = []
-        result += self._base.referenced_types
-        result += self._exc.referenced_types
-
+        result = set()
+        result.update(self._base.referenced_types)
+        result.update(self._exc.referenced_types)
+        
         for method in self.declared_methods:
-            result += method._result.referenced_types
+            result.update(method._result.referenced_types)
             for arg in method.args:
-                result += arg._type.referenced_types
-
-        return [t for t in result if t is not self]
+                result.update(arg._type.referenced_types)
+        
+        result.discard(self)
+        return result
 
     def add_method(self, method):
         '''Add a method to this interface.'''

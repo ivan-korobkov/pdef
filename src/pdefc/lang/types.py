@@ -164,8 +164,8 @@ class Definition(Type):
 
     @property
     def referenced_types(self):
-        '''Return a list of all types referenced in this definition (in fields, methods, etc).'''
-        return []
+        '''Return a set of all types referenced in this definition (in fields, methods, etc).'''
+        return set()
 
     @property
     def imported_definitions(self):

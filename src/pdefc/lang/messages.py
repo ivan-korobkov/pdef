@@ -72,15 +72,16 @@ class Message(Definition):
 
     @property
     def referenced_types(self):
-        result = []
-        result += self._base.referenced_types
-        result += self._discriminator_value.referenced_types
-        result += self.subtypes
+        result = set()
+        result.update(self._base.referenced_types)
+        result.update(self._discriminator_value.referenced_types)
+        result.update(self.subtypes)
 
         for field in self.fields:
-            result += field._type.referenced_types
-
-        return [t for t in result if t is not self]
+            result.update(field._type.referenced_types)
+        
+        result.discard(self)
+        return result
 
     def add_field(self, field):
         '''Add a new field to this message and return the field.'''

@@ -33,18 +33,13 @@ class TestInterface(unittest.TestCase):
         ])
         iface.create_method('self', result=iface)
 
-        assert len(iface.referenced_types) == 4
-        assert iface.referenced_types[0] == exc
-        assert iface.referenced_types[1] == NativeType.VOID
-        assert iface.referenced_types[2] == NativeType.INT32
-        assert iface.referenced_types[3] == NativeType.INT64
+        assert iface.referenced_types == {exc, NativeType.VOID, NativeType.INT32, NativeType.INT64}
 
     def test_referenced_types__base(self):
         base = Interface('Base')
         interface = Interface('Interface', base=base)
-
-        assert len(interface.referenced_types) == 1
-        assert interface.referenced_types[0] == base
+        
+        assert interface.referenced_types == {base}
 
     def test_link(self):
         module = Module('test')

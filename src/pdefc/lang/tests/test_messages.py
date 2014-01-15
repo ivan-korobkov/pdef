@@ -70,7 +70,7 @@ class TestMessage(unittest.TestCase):
         message1.create_field('field', message0)
         message1.create_field('self', message1)
         
-        assert message1.referenced_types == [base, one, message0]
+        assert message1.referenced_types == {base, one, message0}
 
     # link.
 

@@ -69,7 +69,7 @@ class TestMessage(unittest.TestCase):
         message1 = Message('Message1', base=base, discriminator_value=one)
         message1.create_field('field', message0)
         message1.create_field('self', message1)
-        
+
         assert message1.referenced_types == {base, one, message0}
 
     # link.
@@ -120,6 +120,16 @@ class TestMessage(unittest.TestCase):
         msg1.build()
         assert msg0.subtypes == [msg1]
         assert base.subtypes == [msg0, msg1]
+
+    def test_build__add_subtype_base_not_message(self):
+        enum = Enum('Type')
+        type0 = enum.create_value('TYPE0')
+
+        msg = Message('Message', base=enum, discriminator_value=type0)
+        msg.build()
+        
+        # No exception.
+        # The errors will be returned during validation.
 
     # validate_base.
 
@@ -255,7 +265,8 @@ class TestMessage(unittest.TestCase):
         errors = msg.validate()
         assert 'discriminator value does not match the base discriminator type' in errors[0]
 
-    def test_validate_polymorphic_inheritance__message_must_be_declared_after_discriminator_type(self):
+    def test_validate_polymorphic_inheritance__message_must_be_declared_after_discriminator_type(
+            self):
         number = Enum('Number')
         one = number.create_value('ONE')
 

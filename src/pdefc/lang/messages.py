@@ -107,7 +107,7 @@ class Message(Definition):
             return
 
         self.subtypes.append(subtype)
-        if self.base:
+        if self.base and self.base.is_message:
             self.base._add_subtype(subtype)
 
     def link(self, module):
@@ -124,7 +124,7 @@ class Message(Definition):
         logging.debug('Building %s', self)
 
         # Add this message to base subtypes.
-        if self._discriminator_value and self.base:
+        if self._discriminator_value and self.base and self.base.is_message:
             self.base._add_subtype(self)
 
         return []

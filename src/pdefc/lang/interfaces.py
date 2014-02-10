@@ -294,6 +294,11 @@ class Method(Located, Validatable):
 class MethodArg(Located, Validatable):
     '''Single method argument.'''
     def __init__(self, name, type0, is_query=False, is_post=False):
+        '''Create a method arg.
+        
+        @deprecated is_query
+        @deprecated is_post
+        '''
         self.name = name
         self.type = type0
         self.method = None
@@ -329,13 +334,16 @@ class MethodArg(Located, Validatable):
     def _validate(self):
         if not self.type:
             return [self._error('%s: argument type required', self)]
-
+        
         if not self.type.is_data_type:
             return [self._error('%s: argument must be a data type', self)]
 
         errors = []
         if self.is_post and self.is_query:
             errors = [self._error('%s: argument cannot be both @query and @post', self)]
-
+        
+        if self.is_post or self.is_query:
+            logging.error('@post and @query argument annotations are deprecated')
+        
         errors += self._type.validate()
         return errors

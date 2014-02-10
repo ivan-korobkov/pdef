@@ -52,6 +52,8 @@ InterfaceExc    ::= '@throws' '(' TypeName ')'
 
 Method          ::= doc? MethodPost? id '(' Args? ')' Type ';'
 MethodPost      ::= '@post'
+
+// @post and @query in args are deprecated since 1.2
 Arg             ::= doc? id Type ('@post' | '@query')?
 Args            ::= Arg (',' Arg)*
 

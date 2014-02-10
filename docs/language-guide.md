@@ -421,19 +421,11 @@ A method is called a *terminal method* when it returns a data type or is `void`.
 A method is called an *interface method* when it returns another interface.
 Multiple chained methods form an *invocation chain*, i.e. `example.users().register("John Doe")`.
 
-Terminal methods can be marked as `@post` to distinguish between mutators and
-accessors. HTTP RPC sends these methods as POST requests. Non-post terminal methods can have
-`@query` arguments sent as an HTTP URL query. `@post` methods can have `@post` arguments
-sent as an HTTP POST form.
-
-- Interface methods must have unique names.
+- Methods must have unique names.
 - Method arguments must have unique names.
 - An argument must be of a data type.
-- Only terminal methods can be `@post`.
-- Only `@post` methods can have `@post` arguments.
-- Only non-post terminal methods can have `@query` arguments
-  (i.e. `@post` and `@query` arguments can't be mixed in one method).
-- The last method of an invocation chain must be a terminal one.
+- The last method of an invocation chain must be terminal.
+- Terminal methods can be marked as `@post` to to distinguish between mutators and accessors.
 
 ```pdef
 interface Application {
@@ -445,10 +437,10 @@ interface Application {
 }
 
 interface Service {
-    query(limit int32 @query, offset int32 @query) list<string>;    // Method with @query args.
+    query(limit int32, offset int32) list<string>;
 
     @post
-    mutator(arg0 int32, postArg string @post) string;               // @post method
+    mutator(arg0 int32, arg1 string) string;
 }
 ```
 

@@ -5,52 +5,38 @@ The specification is not pdef-specific. It describes how to map any interface in
 chains to HTTP requests. It is not RESTfult, because REST is more complex and ambiguous and
 implementing will require more language features such as annotations/attributes in Pdef.
 
-Please, read the [Language Specification] and [JSON Format] before proceeding.
-See [Implementations] for the real implementations.
-
-
-Contents
-========
-- [Specification](#specification)
-- [Pseudo-code](#Pseudo-code)
-- [Examples](#examples)
-
-
-Specification
-=============
-
-HTTP Request
-------------
+Request
+-------
 Method invocation chain must be sent as an HTTP request with the `application/x-www-form-urlencoded`
 content type.
 
-Method names and path arguments (not `@query` or `@post`) must be appended to the request path,
-null path arguments are forbidden.
+Method names and interface method arguments must be appended to the request path,
+null interface method arguments are forbidden.
 ```http
-GET /method/argument0/nextMethod/1234 HTTP/1.1
+GET /interfaceMethod/arg0/arg1/terminalMethod HTTP/1.1
 ```
 
-`@post` and `@query` arguments must be added to request post params and query params
-respectively with argument names as keys; null arguments must be skipped.
+Terminal method arguments must be sent as HTTP query params, null arguments should be skipped.
 ```http
-GET /method/arg0/nextMethod?arg=hello+world HTTP/1.1
+GET /interfaceMethod/arg0/terminalMethod?arg0=hello&arg1=world HTTP/1.1
+```
+
+Terminal `@post` method arguments must be sent as HTTP POST `application/x-www-form-urlencoded` 
+params, null arguments should be skipped.
+```http
+POST /terminalMethod HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+arg0=Hello&arg1=World
 ```
 
 Arguments must be serialized into JSON UTF-8 strings, with quotes stripped, and then url-encoded.
-Example `{"firstName": "John", "lastName:" "Doe"}` user argument.
 ```http
-GET /methodWithQueryArg?user={"firstName"%3A+"John",+"lastName%3A"+"Doe"} HTTP/1.1
+GET /terminalMethod?user={"firstName"%3A+"John",+"lastName%3A"+"Doe"} HTTP/1.1
 ```
 
-```http
-POST /methodWithPostArgs HTTP/1.1
-Content-Type: application/x-www-form-urlencoded
-
-user={"firstName"%3A+"John",+"lastName%3A"+"Doe"}
-```
-
-HTTP Response
--------------
+Response
+--------
 RPC errors must be returned as `HTTP 400 Bad request` responses
 with the `text/plain; charset=utf-8` content type.
 ```http
@@ -87,10 +73,8 @@ Content-Type: application/json;charset=utf-8
 }
 ```
 
-Pseudo-code
-===================
-Client
-------
+Client pseudo-code
+------------------
 ```
 Given an invocation chain and an application interface (the root interface).
 Assert that the last method in an invocation chain is terminal
@@ -102,43 +86,39 @@ If the last method in an invocation chain is @post:
 For each method in an invocation chain:
     Append '/' to the request path;
     Append a method name to the request path;
-
-    For each method argument:
-        If the argument is null:
-            If the argument is @query or @post:
-                Continue.
-            Throw an exception, path arguments cannot be null.
-
-        Convert the argument into a JSON string, strip the quotes and url-encode it.
-        If the argument is @post:
-            Add the string to the POST params with the arg name as its key.
-        Else if the argument is @query:
-            Add the string to the query string with the arg name as its key.
-        Else:
-            Append '/' to the request path.
-            Append the string to the request path.
+    Serialize method arguments into JSON strings, strip quotes and url-encode them.
+    
+    If the method is an interface method:
+        Append the JSON strings separated by '/' to the request path.
+    
+    Else if the method is @post:
+        Add the JSON strings to POST params with the arg names as the keys.
+    
+    Else:
+        Add the JSON strings to the request query string with the arg names as the keys.
 
 
+Remember the last method result type and the application exception type.
 Send the HTTP request.
 Receive an HTTP response.
-Get the last method result type and the application exception type.
-
 
 If the response status is 200 OK:
     Parse the expected result from the `data` field of a JSON object.
     Return the result.
+    
 Else if the response status is 422 Unprocessable entity:
     If there is no expected application exception:
         Raise an exception 'Unknown application exception'
     Else:
         Parse the expected application exception from the `error` field of a JSON object.
         Raise the application exception.
+        
 Else:
     Raise an HTTP error.
 ```
 
-Server
-------
+Server pseudo-code
+------------------
 ```
 Given an HTTP request and an application interface (the root interface).
 
@@ -157,30 +137,21 @@ For each segment in path delimited by '/':
     If the method is @post:
         Assert that HTTP request method is POST.
         Otherwise return HTTP 405, 'HTTP method not allowed, POST required'.
-
-    Create an empty list for method arguments.
-    For each method argument:
-        If the argument is @post:
-            Get its value from the request post data.
-        Else if the argument is @query:
-            Get its value from the request query string.
-        Else:
-            If the remaining path segments are empty:
-                Return HTTP 400, 'Wrong number of method arguments'.
-            Pop (remove and return) the next value from the remaining segments.
-
-        If the value is not present:
-            Add null to the arguments list.
-
-        Else:
-            Url-decode the value.
-
-            If the expected argument type is a string, an enum or a date type,
-            and the value does not start and end with quotes ("), enclose it
-            in quotes to get a valid JSON string.
-
-            Parse the value as a JSON string and add it to the arguments list.
-
+    
+    If the method is an interface method:
+        If the remaining path segments count is less than the arguments count:
+            Return HTTP 400, 'Wrong number of method arguments'.
+        Pop the arguments from the request path segments.
+    Else if the method is @post:
+        Get the arguments from the request POST body, set absent arguments to null.
+    Else:
+        Get the arguments from the request query string, set absent arguments to null.
+    
+    Url-decode the arguments and parse them from JSON strings.
+    If the argument type is a string, an enum or a date type,
+    and a JSON string does not start and end with quotes ("), enclose it
+    in quotes to get a valid JSON string.
+    
     Create a new invocation of the method with the parsed argument values.
     Add it to the invocation chain.
 
@@ -214,119 +185,4 @@ Else if the result is an application exception specified in the application inte
     content type.
 Else:
     Return HTTP specific error responses or HTTP 500 Internal server error
-```
-
-
-Examples
-========
-Interfaces and data structures used in the examples.
-```pdef
-/** Root world interface. */
-@throws(WorldException)
-interface World {
-    people() People;
-}
-
-interface People {
-    /** Login people by username/password, and return them.*/
-    @post
-    login(username string @post, password string @post) Person;
-
-    /** Find people, return a list of people. */
-    find(query string @query, limit int32 @query, offset int32 @query) list<Person>;
-}
-
-message Person {
-    id      int64;
-    name    string;
-}
-
-enum WorldExceptionCode {
-    AUTH_EXCEPTION, INVALID_DATA;
-}
-
-exception WorldException {
-    type    WorldExceptionCode @discriminator;
-    text    string;
-}
-
-exception AuthException : WorldException(WorldExceptionCode.AUTH_EXCEPTION) {}
-exception InvalidDataException : WorldException(WorldExceptionCode.INVALID_DATA) {}
-```
-
-<h3>Login a person</h3>
-`worldClient.people().login("john.doe", "secret");`
-
-Send a POST HTTP request, because the method is marked as `@post`.
-Append `username` and `password` to the post data because they are marked as `@post` arguments.
-```http
-POST /people/login HTTP/1.0
-Host: example.com
-Content-Type: application/x-www-form-urlencoded
-
-username=john.doe&password=secret
-```
-
-Successful response:
-```http
-HTTP/1.0 200 OK
-
-{
-    "data: {
-        "id": 10,
-        "name": "John Doe"
-    }
-}
-```
-
-Application exception response:
-```http
-HTTP/1.0 422 Unprocessable entity
-
-{
-    "error": {
-        "type": "auth_exception",
-        "text": "Wrong username or password"
-    }
-}
-```
-
-
-<h3>Find people</h3>
-`worldClient.people().find("John Doe", limit=10, offset=100)`
-
-Send a GET HTTP request, add the last method arguments to the query string because they are
-marked as `@query`.
-```http
-GET /people/find?query=John+Doe&limit=10&offset=100 HTTP/1.0
-```
-
-Successful response:
-```http
-HTTP/1.0 200 OK
-
-{
-    "data": [
-        {
-            "id": 10,
-            "name": "John Doe"
-        },
-        {
-            "id": 22,
-            "name": "Another John Doe"
-        }
-    ]
-}
-```
-
-Application exception response:
-```http
-HTTP/1.0 422 Unprocessable entity
-
-{
-    "error": {
-        "type": "invalid_data",
-        "text": "The world does not like your query"
-    }
-}
 ```

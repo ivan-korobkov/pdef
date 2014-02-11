@@ -91,7 +91,7 @@ interface Posts {
     get(id int64) Post;
 
     @post
-    create(title string @post, text string @post) Post;
+    create(title string, text string) Post;
 }
 
 message Post {
@@ -143,7 +143,7 @@ interface World {
     switchDayNight() void;
 
     /** Returns the last world events, the events are polymorphic. */
-    events(limit int32 @query, offset int64 @query) list<Event>;
+    events(limit int32, offset int64) list<Event>;
 }
 
 interface Humans {
@@ -151,13 +151,11 @@ interface Humans {
     find(id int64) Human;
 
     /** Lists all people. */
-    all(  // A method with query arguments.
-        limit int32 @query,
-        offset int32 @query) list<Human>;
+    all(limit int32, offset int32) list<Human>;
 
     /** Creates a human. */
     @post  // A post method (a mutator).
-    create(human Human @post) Human;
+    create(human Human) Human;
 }
 ```
 

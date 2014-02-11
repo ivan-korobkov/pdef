@@ -1,6 +1,9 @@
 Pdef releases
 =============
 
+### 1.2.0 (2014-02-11)
+- Simpler RPC, #395.
+
 ### 1.1.2 (2014-01-15)
 - Return definition referenced types as a set, #393.
 - Assert base is a message when adding subtypes, #388.

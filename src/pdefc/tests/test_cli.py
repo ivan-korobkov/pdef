@@ -4,7 +4,7 @@ import unittest
 from mock import Mock
 from pdefc import CompilerException
 
-from pdefc.cli import Cli, GenerateCommand, CheckCommand
+from pdefc.cli import Cli, GenerateCommand, CheckCommand, VersionCommand
 
 
 class TestCli(unittest.TestCase):
@@ -31,9 +31,10 @@ class TestCli(unittest.TestCase):
         commands = cli._create_commands(compiler)
 
         # Check the commands.
-        assert len(commands) == 2
+        assert len(commands) == 3
         assert isinstance(commands[0], CheckCommand)
         assert isinstance(commands[1], GenerateCommand)
+        assert isinstance(commands[2], VersionCommand)
         assert commands[1].generator_name == 'test'
 
     def _create_compiler(self):

@@ -20,6 +20,10 @@ class Compiler(object):
         self.packages = {}
 
         self._generator_classes = None
+    
+    @property
+    def version(self):
+        return 'Pdef Compiler %s' % pdefc.__version__
 
     @property
     def generator_classes(self):

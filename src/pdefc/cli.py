@@ -66,7 +66,8 @@ class Cli(object):
             except Exception as e:
                 raise pdefc.CompilerException('Failed to create a generator, name=%s, e=%s'
                                               % (name, e.__class__.__name__))
-
+        
+        commands.append(VersionCommand(compiler))
         return commands
 
     def _create_parser(self):
@@ -93,6 +94,15 @@ class Command(object):
 
     def execute(self, args):
         pass
+
+
+class VersionCommand(Command):
+    def build(self, subparsers):
+        p = subparsers.add_parser('version', help='display the compiler version')
+        p.set_defaults(command_func=self.execute)
+    
+    def execute(self, args):
+        print self.compiler.version
 
 
 class CheckCommand(Command):

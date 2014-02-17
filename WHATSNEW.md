@@ -1,6 +1,13 @@
 Pdef releases
 =============
 
+### 1.2.2 (2014-02-17)
+- Fixed Python 3 syntax bug.
+
+### 1.2.1 (2014-02-17)
+- Version command, #397.
+- Case-sensitive reserved words, #398.
+
 ### 1.2.0 (2014-02-11)
 - Simpler RPC, #395.
 

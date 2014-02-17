@@ -102,7 +102,7 @@ class VersionCommand(Command):
         p.set_defaults(command_func=self.execute)
     
     def execute(self, args):
-        print self.compiler.version
+        print(self.compiler.version)
 
 
 class CheckCommand(Command):

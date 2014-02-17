@@ -126,7 +126,19 @@ class TestParser(unittest.TestCase):
 
         _, errors = self.parser.parse(s, 'module')
         assert 'Line 5, "final" is a reserved word' in errors[0]
-
+    
+    def test_no_syntax_error__reserved_words_should_be_case_sensitive(self):
+        s = '''
+        namespace test;
+        
+        message Message {
+            FINAL string;
+        }
+        '''
+        
+        _, errors = self.parser.parse(s, 'module')
+        assert not errors
+    
     def test_doc(self):
         s = '''
             /** This is

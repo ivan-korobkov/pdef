@@ -137,7 +137,7 @@ class _Tokens(object):
     # Identifier types, see t_IDENTIFIER
     ids = types + ('FROM', 'IMPORT', 'NAMESPACE')
     ids_map = {s.lower(): s for s in ids}
-    reserved = set(s.lower() for s in RESERVED)
+    reserved = set(RESERVED)
 
     tokens = ids + (
         'DOT',
@@ -181,8 +181,8 @@ class _Tokens(object):
     def t_IDENTIFIER(self, t):
         r'[a-zA-Z_]{1}[a-zA-Z0-9_]*'
         t.type = self.ids_map.get(t.value, 'IDENTIFIER')
-
-        if t.value.lower() in self.reserved:
+        
+        if t.value in self.reserved:
             self._error('Line %s, "%s" is a reserved word' % (t.lineno, t.value))
 
         return t

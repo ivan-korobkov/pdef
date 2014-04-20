@@ -1,252 +1,269 @@
-Pdef - Interface definition language for the web
-================================================
-Pdef (pi:def, stands for "protocol definition [language]") is a statically typed interface
-definition language which supports JSON and a simple HTTP RPC. It allows to write
-interfaces and data structures once and then to generate code and RPC clients/servers for
-different languages. It is suitable for public APIs, internal service-oriented APIs,
-configuration files, as a format for persistence, cache, message queues, logs, etc.
-Features:
-
-- Packages, modules, imports and namespaces.
-- Circular module imports and type references (with some limitations).
-- Simple type system built on a clear separation between data structures and interfaces.
-- Message and interface inheritance.
-- Chained method invocations.
-- Default JSON format and HTTP RPC.
-- Pluggable loosely-coupled formats and RPCs.
-- Pluggable code generators.
+Pdef - API language with code-generation
+========================================
+Pdef (pi:def, stands for "protocol definition [language]") is an interface definition language
+with optional code-generation for HTTP clients/servers and JSON data structures.
+It is suitable for public APIs, internal service-oriented APIs, configuration files, 
+as a format for persistence, cache, message queues, logs, etc.
 
 
-Languages
----------
-- [Java](https://github.com/pdef/pdef-java)
-- [Python](https://github.com/pdef/pdef-python)
-- [Objective-C](https://github.com/pdef/pdef-objc)
+Contents
+--------
+- [Syntax](#syntax)
+- [JSON encoding](#json-encoding)
+- [HTTP RPC](#http-rpc)
+- [License and Copyright](#license)
 
 
-Links
------
-- **[Language guide](docs/language-guide.md)**
-- [Style guide](docs/style-guide.md)
-- [JSON format](docs/json-format.md)
-- [HTTP RPC](docs/http-rpc.md)
-- [Grammar in BNF](docs/grammar.bnf)
-- [Generated and language specific code](docs/generated-lang-specific-code.md)
-- [How to write a code generator](https://github.com/pdef/pdef-generator-template)
-- [Google group](https://groups.google.com/d/forum/pdef) (pdef@googlegroups.com)
+Syntax
+------
+Pdef syntax is similar to C/C++/Java with the inverted type/identifier order in fields and 
+arguments. All identifiers must start with a latin letter and contain only latin letters,
+digits and underscores. See the [grammar specification](grammar.bnf).
 
+There are two types of comments: single-line comments and multi-line docstrings.
+Docstrings can be placed at the beginning of a file, before a definition (enum, struct,
+interface) or before a method.
 
-Requirements
-------------
-- The compiler requires Python 2.7 or Python 3.3.
-- Bindings requirements are language specific.
-
-
-Installation
-------------
-Pdef consists of a compiler, pluggable code generators, and language-specific bindings.
-
-Install the compiler as a python package:
-```bash
-$ pip install pdef-compiler
-```
-
-Or [download](https://github.com/pdef/pdef/releases) the archive, unzip it and run:
-```bash
-$ python setup.py install
-```
-
-Install the code generators:
-```bash
-$ pip install pdef-java
-$ pip install pdef-python
-$ pip install pdef-objc
-```
-
-Run the check command with test package to check that the compiler works:
-```bash
-$ pdefc check https://raw.github.com/pdef/pdef/master/example/world.yaml
-```
-
-
-Getting Started
----------------
-Create a package file `myproject.yaml`
-```yaml
-package:
-    name: myproject
-    modules:
-        - posts
-        - photos
-```
-
-Create the module files:
-
-`posts.pdef`
 ```pdef
-namespace myproject;
-import myproject.photos;
-
-interface Posts {
-    get(id int64) Post;
-
-    @post
-    create(title string, text string) Post;
-}
-
-message Post {
-    id      int64;
-    title   string;
-    text    string;
-    photos  list<Photo>;
-}
-```
-
-`photos.pdef`
-```pdef
-namespace myproject;
-
-message Photo {
-    id  int64;
-    url string;
-}
-```
-
-Generate the source code:
-```bash
-$ pdefc generate-java myproject.yaml --out generated/
-$ pdefc generate-objc myproject.yaml --out generated/
-$ pdefc generate-python myproject.yaml --out generated/
-```
-
-Example
--------
-Example package [sources](https://github.com/pdef/pdef/tree/master/example/).
-
-Interfaces:
-```pdef
-namespace world;
-from world import continents, space;    // Import two modules from a package.
-
 /**
- * The world interface.
- * A god-like person can use it to rule the world.
+ * This is a multi-line file docstring.
+ *
+ * Start each line with a star because 
+ * it is used as an indentation margin.
  */
-interface World {
-    /** Returns the humans interface. */
-    humans() Humans;                    // Returns another interface.
+package example;
 
-    /** Returns the continents interface. */
-    continents() Continents; // Returns an interface from another module.
+// This is a one line comment, it is stripped from the source code.
 
-    /** Switches the light. */
-    switchDayNight() void;
-
-    /** Returns the last world events, the events are polymorphic. */
-    events(limit int32, offset int64) list<Event>;
+/** Example interface. */
+interface Blog {
+    /** Returns an article by its id. */
+    GET getArticle(id int64) Article;
+    
+    /** Adds a new comment to the blog. */
+    POST comment(text string) string;
 }
 
-interface Humans {
-    /** Finds a human by id. */
-    find(id int64) Human;
 
-    /** Lists all people. */
-    all(limit int32, offset int32) list<Human>;
-
-    /** Creates a human. */
-    @post  // A post method (a mutator).
-    create(human Human) Human;
+/** Example struct. */
+struct Article {
+    id          int64;
+    title       string;
+    createdAt   datetime;
 }
 ```
 
-Enums:
+
+### Packages
+Pdef uses packages to organize files. Each package must be put into a distinct directory
+named after the package. Each file must declare its package. Example package structure:
+```
+company.blog/
+    blog.pdef
+    articles.pdef
+    comments.pdef
+    users.pdef
+    users/profile.pdef
+```
+
+
+### Primitive types
+- `bool`: a boolean value (true/false),
+- `int16`: a signed 16-bit integer,
+- `int32`: a signed 32-bit integer,
+- `int64`: a signed 64-bit integer,
+- `float`: a 32-bit floating point number,
+- `double`: a 64-bit floating point number,
+- `string`: a unicode string,
+- `datetime`: a date and time object without a time zone,
+- `void` is a special type which indicates that a method returns no result.
+
+
+### Containers
+- `list` is an ordered list of elements. An element must be a data type.
+- `set` is an unordered set of unique elements. An element must be a data type.
+- `map` is an unordered key-value container (a dict in some languages). A key must be a
+non-null primitive, a value must be a data type.
+
+```pdef
+struct User {
+    id          int64;
+    name        string;
+    
+    // Example containers
+    emails      set<string>;
+    friends     list<User>;
+    aliases     map<string, string>;
+}
+```
+
+
+### Enums
+Enum is a collection of unique predefined string values. Code generators can add
+`UNDEFINED` enum values if not-present and required.
+
 ```pdef
 enum Sex {
-    MALE, FEMALE, UNCLEAR;
-}
-
-// An discriminator.
-enum EventType {
-    HUMAN_EVENT,
-    HUMAN_CREATED,
-    HUMAN_DIED;
+    MALE, FEMALE;
 }
 ```
 
-Messages:
-```pdef
-message Thing {                     // A simple message definition.
-    id          int64;              // an id field of the int64 type.
-    location    Location;
-}
 
-/** Human is a primate of the family Hominidae, and the only extant species of the genus Homo. */
-message Human : Thing {             // A message with a base message and a docstring.
+### Structs and exceptions
+Struct is collection of strongly typed fields. Each field has a unique name and a type.
+Inheritance is not supported. Structs can be declared as `exceptions`
+so that code-generators can use native language exceptions.
+
+```pdef
+/** Example struct. */
+struct User {
+    id          int64;
     name        string;
-    birthday    datetime;
-    sex         Sex;
-    continent   Continent;
+    age         int32;
+    profile     Profile;
+    friends     set<User>;
+}
+
+/** Example exception. */
+exception ApplicationException {
+    code        int32;
+    message     string;
 }
 ```
 
-Polymorphic inheritance:
+
+### Interfaces
+Interface is a collection of strongly typed methods. Each method has a unique name,
+a number of or zero data type arguments, and a result. The result can be of any type.
+Methods are declared as getters or mutators, using `GET` and `POST` keywords respectively.
+
+If a method returns an interface then it must be declared as a `GET` method.
+Interface methods are used in *invocation chains*, i.e. `blog(17).articles().comment("Hello")`. 
+The last method in an invocation chain must return a data type.
+
+Arguments can be declared either 
+as name-type pairs (`query(limit int32, offset int32) list<string>`),
+or as requests (`create(CreateArticleRequest) CreateArticleResponse`).
+
 ```pdef
-// A polymorphic message with EventType as its discriminator.
-message Event {
-    type    EventType @discriminator;
-    id      int32;
-    time    datetime;
+interface Blog {
+    /** Returns a blog title. */
+    GET title() string;
+    
+    /** Returns a blog articles interface. */
+    GET articles() Articles;
 }
 
-// A polymorphic subtype.
-message HumanEvent : Event(EventType.HUMAN_EVENT) {
-    human   Human;
-}
+interface Articles {
+    /** Queries blog articles. */
+    GET query(limit int32, offset int32) list<Article>;
 
-// Multi-level polymorphic messages.
-message HumanCreated : HumanEvent(EventType.HUMAN_CREATED) {}
-message HumanDied : HumanEvent(EventType.HUMAN_DIED) {}
-```
-
-### Curl
-Pdef uses an [HTTP RPC](docs/http-rpc.md) with a [JSON format](docs/json-format.md)
-which are easy to use without specially generated clients. These are examples,
-there is no real server.
-
-Create a new human:
-```bash
-$ curl -d human="{\"id\": 1, \"name\":\"John\"}" http://example.com/world/humans/create
-{
-    "data": {
-        "id": 1,
-        "name": "John"
-    }
+    /** Creates a new article and returns it. */
+    POST create(Article) Article;
+    
+    /** Updates an article and returns it. */
+    POST update(Article) Article;
+    
+    /** Deletes an article by its id. */
+    POST delete(id int64) void;
 }
 ```
 
-Switch the light:
-```bash
-$ curl -X POST http://example.com/world/switchTheLight
-{
-    "data": null
+
+JSON encoding
+-------------
+Pdef data types transparently map to JSON data types. Dates are encoded as
+as ISO8601 UTC `yyyy-MM-ddTHH:mm:ssZ` strings, enums are encoded as lowercase strings.
+
+Pdef:
+```
+struct User {
+    id          int64;
+    sex         Sex;
+    name        string;
+    signedUpAt  datetime;
+    friends     list<User>;
 }
 ```
 
-List people:
-```bash
-$ curl "http://example.com/world/humans/all?limit=2&offset=10"
+JSON:
+```json
 {
-    "data": [
-        {"id": 11, "name": "John"},
-        {"id": 12, "name": "Jane"}
+    "id": 1234,
+    "sex": "male",
+    "name": "John Doe",
+    "signedUpAt": "2014-04-20T23:59:59Z"
+    "friends": [
+        {"id": 1235, "name": "Jane"},
+        {"id": 10, "name": "Albert"}
     ]
 }
 ```
 
 
+HTTP RPC
+--------
+### Request
+Pdef invocation chains are sent as HTTP `application/x-www-form-urlencoded` requests.
+Method names are appended to request paths. Arguments are appended to paths when a method returns
+an interface, otherwise, they and are sent as HTTP query or post data. Primitive arguments are 
+converted to strings, containers and structs are converted to JSON. Unnamed request arguments as 
+in `POST create(CreateArticleRequest) CreateArticleResponse` are expanded into fields, 
+i.e. their fields are sent as normal arguments.
+
+GET `blog(10).articles().query(limit=10, offset=20) // pseudo-code`
+```http
+GET /blog/10/articles/query?limit=10&offset=20 HTTP/1.1
+```
+
+POST `blog(10).articles().create(CreateArticleRequest(title="Hello world", date=now)) //pseudo-code`
+```http
+POST /blog/10/articles/create HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+title=Hello+world&date=2014-04-14T23:59:59Z
+```
+
+### Response
+Successful result are sent as `{"data": "method result"}` JSON responses:
+```http
+HTTP/1.0 200 OK
+Content-Type: application/json;charset=utf-8
+
+{
+  "data": {
+    "id": 1234,
+    "title": "Hello, world",
+    "createdAt": "2014-04-20T23:59:59Z"
+  }
+}
+```
+
+Application exceptions are sent as `{"error": "exception struct"}` JSON responses
+with HTTP error codes:
+```http
+HTTP/1.0 422 Unprocessable entity
+Content-Type: application/json;charset=utf-8
+
+{
+  "error": {
+      "text": "Expected application exception"
+  }
+}
+```
+
+RPC errors are sent as plain text `400 Bad request` responses:
+```http
+HTTP/1.0 400 Bad request
+Content-Type: text/plain;charset=utf-8
+
+Wrong method arguments.
+```
+
+
 License and Copyright
 ---------------------
-Copyright: 2013 Ivan Korobkov <ivan.korobkov@gmail.com>
+Copyright: 2013-2014 Ivan Korobkov <ivan.korobkov@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

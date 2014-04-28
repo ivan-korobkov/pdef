@@ -1,209 +1,138 @@
 # encoding: utf-8
 from __future__ import unicode_literals
-import io
-import os.path
 import unittest
 
-from pdefc.parser import create_parser, cleanup_docstring
-from pdefc.lang import SingleImport, BatchImport, Location
-from pdefc.lang.references import ListReference, SetReference, MapReference
+from pdefc import lang
+from pdefc.parser import Parser, cleanup_docstring
 
 
 class TestParser(unittest.TestCase):
     def setUp(self):
-        self.parser = create_parser()
-
-    # Test fixtures.
-
-    def test_parse_fixtures__polymorphic_messages(self):
-        source = self._load_fixture('inheritance.pdef')
-        module, errors = self.parser.parse(source, 'inheritance')
-
-        assert not errors
-        assert module.name == 'inheritance'
-
-    def test_parse_fixtures__messages(self):
-        source = self._load_fixture('messages.pdef')
-        module, errors = self.parser.parse(source, 'messages')
-
-        assert not errors
-        assert module.name == 'messages'
-
-    def test_parse_fixtures__interfaces(self):
-        source = self._load_fixture('interfaces.pdef')
-        module, errors = self.parser.parse(source, 'interfaces')
-
-        assert not errors
-        assert module.name == 'interfaces'
-
-    def _load_fixture(self, filename=None):
-        dirpath = os.path.join(os.path.dirname(__file__), 'fixtures')
-        if not filename:
-            return dirpath
-
-        path = os.path.join(dirpath, filename)
-        with io.open(path, 'r', encoding='utf-8') as f:
-            return f.read()
+        self.parser = Parser()
 
     # Test grammar.
 
     def test_parse__reuse(self):
         s0 = '''
-            namespace test;
+            package test;
 
-            message interface enum {
+            struct interface enum {
                 hello();
             }
         '''
 
         s1 = '''
-            namespace test;
+            package test;
 
-            message Message {}
+            struct Struct {}
         '''
 
-        module, errors = self.parser.parse(s0, 'errors')
-        assert module is None
+        file, errors = self.parser.parse(s0, 'errors')
+        assert file is None
         assert errors
 
-        module, errors = self.parser.parse(s1, 'correct')
-        assert module.name == 'correct'
-        assert len(module.definitions) == 1
+        file, errors = self.parser.parse(s1, 'correct')
+        assert file.path == 'correct'
+        assert len(file.types) == 1
         assert not errors
 
     # Test syntax parser.
 
     def test_syntax_error(self):
-        s = '''/** Module description. */
-        namespace test;
+        s = '''/** File description. */
+        package test;
 
         /**
          * Multi-line doc.
          */
-        message Message {
+        struct Struct {
             // Comment
             wrong field definition;
         }
         '''
-        module, errors = self.parser.parse(s, 'module')
-        assert not module
-        assert 'Line 9, syntax error at "definition"' in errors[0]
+        file, errors = self.parser.parse(s)
+        assert not file
+        assert 'Line 9: Syntax error at "definition"' in errors[0]
 
     def test_syntax_error__reuse_parser(self):
         s = '''/** Description. */
-        namespace test;
+        package test;
 
         /** Doc. */
-        message Message {
+        struct Struct {
             // Comment
             wrong field definition;
         }
         '''
-        _, errors0 = self.parser.parse(s, 'module')
-        _, errors1 = self.parser.parse(s, 'module')
+        _, errors0 = self.parser.parse(s, 'file')
+        _, errors1 = self.parser.parse(s, 'file')
 
-        assert 'Line 7, syntax error at "definition"' in errors0[0]
-        assert 'Line 7, syntax error at "definition"' in errors1[0]
+        assert 'file, line 7: Syntax error at "definition"' in errors0[0]
+        assert 'file, line 7: Syntax error at "definition"' in errors1[0]
 
     def test_syntax_error__end_of_file(self):
         s = '''/** Description. */
-        namespace test;
+        package test;
 
-        message Message {
+        struct Struct {
         '''
-        module, errors = self.parser.parse(s, 'module')
-        assert not module
-        assert 'Unexpected end of file' in errors[0]
+        file, errors = self.parser.parse(s, 'file')
+        assert not file
+        assert 'file: Unexpected end of file' in errors[0]
 
     def test_syntax_error__reserved_word(self):
         s = '''
-        namespace test;
+        package test;
 
-        message Message {
+        struct Struct {
             final string;
         }
         '''
 
-        _, errors = self.parser.parse(s, 'module')
-        assert 'Line 5, "final" is a reserved word' in errors[0]
-    
+        _, errors = self.parser.parse(s, 'file')
+        assert 'file, line 5: "final" is a reserved word' in errors[0]
+
     def test_no_syntax_error__reserved_words_should_be_case_sensitive(self):
         s = '''
-        namespace test;
+        package test;
         
-        message Message {
+        struct Struct {
             FINAL string;
         }
         '''
-        
-        _, errors = self.parser.parse(s, 'module')
+
+        _, errors = self.parser.parse(s, 'file')
         assert not errors
-    
+
     def test_doc(self):
         s = '''
             /** This is
              * a multi-line
              * doc string. */
-            namespace test;
+            package test;
         '''
-        module, _ = self.parser.parse(s, 'module')
-        assert module.doc == 'This is\na multi-line\ndoc string.'
+        file, _ = self.parser.parse(s, 'file')
+        assert file.doc == 'This is\na multi-line\ndoc string.'
 
-    def test_module(self):
+    def test_file(self):
         s = '''
-            /** Module doc. */
-            namespace test;
-            import another_module;
+            /** File doc. */
+            package test;
 
             enum Enum {}
-            message Message {}
+            struct Struct {}
             interface Interface {}
         '''
-        module, _ = self.parser.parse(s, 'module')
+        path = 'file.pdef'
+        file, _ = self.parser.parse(s, path)
 
-        assert module.name == 'module'
-        assert module.doc == 'Module doc.'
-        assert len(module.imports) == 1
-        assert len(module.definitions) == 3
-
-    def test_imports(self):
-        s = '''namespace test;
-            import module0;
-            import package0.module1;
-            from package1 import module2, module3;
-            from package1.subpackage import module4;
-        '''
-
-        module, _ = self.parser.parse(s, 'module')
-        imports = module.imports
-
-        assert len(imports) == 4
-
-        import0 = imports[0]
-        assert isinstance(import0, SingleImport)
-        assert import0.name == 'module0'
-        assert import0.location == Location(2)
-
-        import1 = imports[1]
-        assert isinstance(import1, SingleImport)
-        assert import1.name == 'package0.module1'
-        assert import1.location == Location(3)
-
-        import2 = imports[2]
-        assert isinstance(import2, BatchImport)
-        assert import2.prefix == 'package1'
-        assert import2.relative_names == ('module2', 'module3')
-        assert import2.location == Location(4)
-
-        import3 = imports[3]
-        assert isinstance(import3, BatchImport)
-        assert import3.prefix == 'package1.subpackage'
-        assert import3.relative_names == ('module4', )
-        assert import3.location == Location(5)
+        assert file.path == path
+        assert file.doc == 'File doc.'
+        assert len(file.types) == 3
 
     def test_enum(self):
         s = '''
-            namespace test;
+            package test;
 
             /** Doc. */
             enum Enum {
@@ -213,162 +142,107 @@ class TestParser(unittest.TestCase):
             }
         '''
 
-        module, _ = self.parser.parse(s, 'module')
-        enum = module.definitions[0]
+        file, _ = self.parser.parse(s, 'file')
+        enum = file.types[0]
         values = enum.values
 
         assert enum.name == 'Enum'
         assert enum.doc == 'Doc.'
-        assert enum.location == Location(5)
+        assert enum.location.lineno == 5
         assert len(values) == 3
         assert [v.name for v in values] == ['ONE', 'TWO', 'THREE']
         assert [v.location.lineno for v in values] == [6, 7, 8]
 
-    def test_message(self):
+    def test_struct(self):
         s = '''
-            namespace test;
+            package test;
 
-            /** Message doc. */
-            message Message :
-                Base(
-                    Type.MESSAGE) {}
+            /** Struct doc. */
+            struct Struct {}
         '''
 
-        module, _ = self.parser.parse(s, 'module')
-        message = module.definitions[0]
+        file, _ = self.parser.parse(s, 'file')
+        struct = file.types[0]
 
-        assert message.name == 'Message'
-        assert message.doc == 'Message doc.'
-        assert len(message.declared_fields) == 0
-        assert message.location == Location(5)
+        assert struct.name == 'Struct'
+        assert struct.doc == 'Struct doc.'
+        assert len(struct.fields) == 0
+        assert struct.location.lineno == 5
 
-        assert message._base.location == Location(6)
-        assert message._base.name == 'Base'
-        assert message._discriminator_value.name == 'Type.MESSAGE'
-        assert message._discriminator_value.location == Location(7)
-
-    def test_message_exception(self):
+    def test_struct_exception(self):
         s = '''
-            namespace test;
+            package test;
 
             /** Exception doc. */
             exception Exception {}
         '''
 
-        module, _ = self.parser.parse(s, 'module')
-        message = module.definitions[0]
+        file, _ = self.parser.parse(s, 'file')
+        struct = file.types[0]
 
-        assert message.name == 'Exception'
-        assert message.doc == 'Exception doc.'
-        assert message.is_exception
-        assert message.location == Location(5)
-
-    def test_message_inheritance(self):
-        s = '''
-            namespace test;
-
-            message Message : Base {}
-        '''
-
-        module, _ = self.parser.parse(s, 'module')
-        message = module.definitions[0]
-
-        assert message.name == 'Message'
-        assert message._base.name == 'Base'
-        assert message.discriminator_value is None
-
-    def test_message_polymorphic_inheritance(self):
-        s = '''
-            namespace test;
-
-            message Message : Base(Type.SUBTYPE) {}
-        '''
-
-        module, _ = self.parser.parse(s, 'module')
-        message = module.definitions[0]
-
-        assert message.name == 'Message'
-        assert message._base.name == 'Base'
-        assert message._discriminator_value.name == 'Type.SUBTYPE'
+        assert struct.name == 'Exception'
+        assert struct.doc == 'Exception doc.'
+        assert struct.is_exception
+        assert struct.location.lineno == 5
 
     def test_fields(self):
         s = '''
-            namespace test;
+            package test;
 
-            message Message {
-                field0 Type @discriminator;
-                field1 AnotherMessage;
+            struct Struct {
+                field0 Type;
+                field1 AnotherStruct;
             }
         '''
 
-        module, _ = self.parser.parse(s, 'module')
-        message = module.definitions[0]
-        fields = message.declared_fields
+        file, _ = self.parser.parse(s, 'file')
+        struct = file.types[0]
+        fields = struct.fields
 
         assert len(fields) == 2
-        assert message.discriminator is fields[0]
 
         field0 = fields[0]
         assert field0.name == 'field0'
         assert field0._type.name == 'Type'
-        assert field0.is_discriminator
-        assert field0.location == Location(5)
+        assert field0.location.lineno == 5
 
         field1 = fields[1]
         assert field1.name == 'field1'
-        assert field1._type.name == 'AnotherMessage'
-        assert field1.is_discriminator is False
-        assert field1.location == Location(6)
+        assert field1._type.name == 'AnotherStruct'
+        assert field1.location.lineno == 6
 
     def test_interface(self):
         s = '''
-            namespace test;
+            package test;
 
             /** Interface doc. */
-            @throws(Exception)
             interface Interface {}
         '''
 
-        module, _ = self.parser.parse(s, 'module')
-        interface = module.definitions[0]
+        file, _ = self.parser.parse(s, 'file')
+        interface = file.types[0]
 
         assert interface.name == 'Interface'
         assert interface.doc == 'Interface doc.'
-        assert interface.location == Location(6)
-        assert interface._exc.name == 'Exception'
-        assert interface._exc.location == Location(5)
-
-    def test_interface_inheritance(self):
-        s = '''
-            namespace test;
-
-            interface Interface : SuperInterface {}
-        '''
-
-        module, _ = self.parser.parse(s, 'module')
-        interface = module.definitions[0]
-
-        assert interface.name == 'Interface'
-        assert interface._base.name == 'SuperInterface'
+        assert interface.location.lineno == 5
 
     def test_methods(self):
         s = '''
-            namespace test;
+            package test;
 
             interface Interface {
                 /** Method zero. */
-                method0() void;
+                GET method0() void;
 
                 /** Method one. */
-                @post
-                method1(
-                    arg0 type0 @query,
-                    arg1 type1 @post) result;
+                POST method1(
+                    arg0 type0,
+                    arg1 type1) result;
             }
         '''
 
-        module, _ = self.parser.parse(s, 'module')
-        interface = module.definitions[0]
+        file, _ = self.parser.parse(s, 'file.pdef')
+        interface = file.types[0]
         methods = interface.methods
 
         assert len(methods) == 2
@@ -376,35 +250,32 @@ class TestParser(unittest.TestCase):
         method0 = methods[0]
         assert method0.name == 'method0'
         assert method0.doc == 'Method zero.'
-        assert method0.is_post is False
-        assert method0.location == Location(6)
-        assert method0._result.name == 'void'
-        assert method0._result.location == Location(6)
+        assert method0.is_get
+        assert method0.location.lineno == 6
+        assert method0.result is lang.VOID
         assert method0.args == []
 
         method1 = methods[1]
         assert method1.name == 'method1'
         assert method1.doc == 'Method one.'
         assert method1.is_post
-        assert method1.location == Location(10)
+        assert method1.location.lineno == 9
         assert method1._result.name == 'result'
-        assert method1._result.location == Location(12)
+        assert method1._result.location.lineno == 11
 
         assert len(method1.args) == 2
         assert method1.args[0].name == 'arg0'
         assert method1.args[0]._type.name == 'type0'
-        assert method1.args[0]._type.location == Location(11)
-        assert method1.args[0].is_query
+        assert method1.args[0]._type.location.lineno == 10
         assert method1.args[1].name == 'arg1'
         assert method1.args[1]._type.name == 'type1'
-        assert method1.args[1]._type.location == Location(12)
-        assert method1.args[1].is_post
+        assert method1.args[1]._type.location.lineno == 11
 
     def test_collections(self):
         s = '''
-            namespace test;
+            package test;
 
-            message Message {
+            struct Struct {
                 field0  list<
                     list<
                         Element>>;
@@ -413,40 +284,39 @@ class TestParser(unittest.TestCase):
             }
         '''
 
-        module, _ = self.parser.parse(s, 'module')
-        fields = module.definitions[0].fields
+        file, _ = self.parser.parse(s, 'file')
+        fields = file.types[0].fields
 
         # List.
-        list0 = fields[0]._type
-        assert isinstance(list0, ListReference)
-        assert isinstance(list0.element, ListReference)
-        assert list0.element.element.name == 'Element'
-
-        assert list0.location == Location(5)
-        assert list0.element.location == Location(6)
-        assert list0.element.element.location == Location(7)
+        list0 = fields[0].type
+        assert isinstance(list0, lang.List)
+        assert isinstance(list0.element, lang.List)
+        assert list0.element._element.name == 'Element'
+        assert list0.location.lineno == 5
+        assert list0.element.location.lineno == 6
+        assert list0.element._element.location.lineno == 7
 
         # Set.
-        set0 = fields[1]._type
-        assert isinstance(set0, SetReference)
-        assert isinstance(set0.element, SetReference)
-        assert set0.element.element.name == 'Element'
+        set0 = fields[1].type
+        assert isinstance(set0, lang.Set)
+        assert isinstance(set0.element, lang.Set)
+        assert set0.element._element.name == 'Element'
 
-        assert set0.location == Location(8)
-        assert set0.element.location == Location(8)
-        assert set0.element.element.location == Location(8)
+        assert set0.location.lineno == 8
+        assert set0.element.location.lineno == 8
+        assert set0.element._element.location.lineno == 8
 
         # Map.
-        map0 = fields[2]._type
-        assert isinstance(map0, MapReference)
-        assert isinstance(map0.key, ListReference)
-        assert isinstance(map0.value, SetReference)
-        assert map0.key.element.name == 'Key'
-        assert map0.value.element.name == 'Value'
+        map0 = fields[2].type
+        assert isinstance(map0, lang.Map)
+        assert isinstance(map0.key, lang.List)
+        assert isinstance(map0.value, lang.Set)
+        assert map0.key._element.name == 'Key'
+        assert map0.value._element.name == 'Value'
 
-        assert map0.location == Location(9)
-        assert map0.key.location == Location(9)
-        assert map0.value.location == Location(9)
+        assert map0.location.lineno == 9
+        assert map0.key.location.lineno == 9
+        assert map0.value.location.lineno == 9
 
 
 class TestCleanupDocstrings(unittest.TestCase):

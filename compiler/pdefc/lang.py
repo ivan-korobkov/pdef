@@ -14,7 +14,7 @@ class Node(object):
         return child
 
     def create_reference(self, type_or_name):
-        return self.add_child(Reference(type_or_name))
+        return self.add_child(Reference.create(type_or_name))
 
     def walk(self):
         yield self
@@ -91,10 +91,9 @@ class Package(Node):
 class File(Node):
     name_pattern = re.compile(r'^[a-zA-Z]{1}[a-zA-Z0-9_]*(\.[a-zA-Z]{1}[a-zA-Z0-9_]*)*$')
 
-    def __init__(self, name, types=None, path=None):
+    def __init__(self, path, types=None):
         super(File, self).__init__()
 
-        self.name = name
         self.path = path
         self.package = None
 
@@ -103,10 +102,10 @@ class File(Node):
             self.add_type(def0)
 
     def __str__(self):
-        return self.name
+        return self.path
 
     def __repr__(self):
-        return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
+        return '<%s %s at %s>' % (self.__class__.__name__, self.path, hex(id(self)))
 
     def add_type(self, type0):
         '''Add a new type to this file.'''
@@ -122,9 +121,64 @@ class File(Node):
 
     def validate(self, errors):
         errors.assert_that(
-            self.name_pattern.match(self.name), self.location,
+            self.name_pattern.match(self.path), self.location,
             'Wrong file name "%s". File names must contain only latin letters, digits and '
-            'underscores, and must start with a letter."' % self.name)
+            'underscores, and must start with a letter."' % self.path)
+
+
+class Reference(Node):
+    '''Type reference.'''
+    @classmethod
+    def create(cls, type_ref_name):
+        if isinstance(type_ref_name, Reference):
+            return type_ref_name
+        return Reference(type_ref_name)
+
+    def __init__(self, type_or_name=None):
+        super(Reference, self).__init__()
+
+        self.name = None
+        self.type = None
+        self.set(type_or_name)
+
+    def __bool__(self):
+        return bool(self.type)
+
+    def __nonzero__(self):
+        return bool(self.type)
+
+    def set(self, type_or_name):
+        is_type = isinstance(type_or_name, Type)
+        self.name = None if is_type else type_or_name
+        self.type = type_or_name if is_type else None
+
+    def dereference(self):
+        '''Return a type this references points to or raise ValueError when not linked.'''
+        if not self.type:
+            raise ValueError('Reference is not linked: %s' % self)
+        return self.type
+
+    def link(self, errors, scope):
+        '''Link this reference in a scope.'''
+        if self.type:
+            return
+
+        self.type = scope.find(self.name)
+        errors.assert_that(self.type is not None, self.location,
+                           'Symbol not found "%s"', self.name)
+
+
+class ReferenceProperty(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __get__(self, instance, owner):
+        ref = getattr(instance, self.name)
+        return ref.dereference()
+
+    def __set__(self, instance, value):
+        ref = getattr(instance, self.name)
+        ref.set(value)
 
 
 class Type(Node):
@@ -341,9 +395,9 @@ class Interface(Type):
 
         return method
 
-    def create_method(self, name, result=None, args=None, is_post=False):
+    def create_method(self, name, type='GET', result=None, args=None):
         '''Add a new method to this interface and return the method.'''
-        method = Method(name, result=result, args=args, is_post=is_post)
+        method = Method(name, type=type, result=result, args=args)
         return self.add_method(method)
 
     def validate(self, errors):
@@ -359,13 +413,12 @@ class Interface(Type):
 class Method(Node):
     result = ReferenceProperty('_result')
 
-    def __init__(self, name, result=None, args=None, is_post=False):
+    def __init__(self, name, type='GET', result=None, args=None):
         super(Method, self).__init__()
         self.name = name
+        self.type = type
         self.args = []
-        self._result = self.create_reference(result or VOID)
-        self.is_post = is_post
-
+        self._result = self.create_reference(result if result is not None else VOID)
         self.interface = None
 
         for arg in args or ():
@@ -376,6 +429,14 @@ class Method(Node):
 
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
+
+    @property
+    def is_get(self):
+        return self.type == 'GET'
+
+    @property
+    def is_post(self):
+        return self.type == 'POST'
 
     def add_arg(self, arg):
         '''Append an argument to this method.'''
@@ -424,63 +485,17 @@ class Argument(Node):
         errors.assert_that(self.type.is_data_type, 'argument must be a data type')
 
 
-class Reference(Node):
-    '''Type reference.'''
-
-    def __init__(self, type_or_name=None):
-        super(Reference, self).__init__()
-
-        self.name = None
-        self.type = None
-        self.set(type_or_name)
-
-    def __bool__(self):
-        return bool(self.type)
-
-    def __nonzero__(self):
-        return bool(self.type)
-
-    def set(self, type_or_name):
-        is_type = isinstance(type_or_name, Type)
-        self.name = None if is_type else type_or_name
-        self.type = type_or_name if is_type else None
-
-    def dereference(self):
-        '''Return a type this references points to or raise ValueError when not linked.'''
-        if not self.type:
-            raise ValueError('Reference is not linked: %s' % self)
-        return self.type
-
-    def link(self, errors, scope):
-        '''Link this reference in a scope.'''
-        if self.type:
-            return
-
-        self.type = scope.find(self.name)
-        errors.assert_that(self.type is not None, self.location,
-                           'Symbol not found "%s"', self.name)
-
-
-class ReferenceProperty(object):
-    def __init__(self, name):
-        self.name = name
-
-    def __get__(self, instance, owner):
-        ref = getattr(instance, self.name)
-        return ref.dereference()
-
-    def __set__(self, instance, value):
-        ref = getattr(instance, self.name)
-        ref.set(value)
-
-
 class Location(object):
-    def __init__(self, path, lineno):
+    def __init__(self, path=None, lineno=0):
         self.path = path
         self.lineno = lineno
 
     def __str__(self):
-        return '%s: line %s' % (self.path, self.lineno)
+        if not self.path:
+            return 'Line %s' % (self.lineno)
+        if not self.lineno:
+            return self.path
+        return '%s, line %s' % (self.path, self.lineno)
 
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.lineno, hex(id(self)))
@@ -498,6 +513,9 @@ class Errors(object):
 
     def __iter__(self):
         return iter(self.errors)
+    
+    def __getitem__(self, item):
+        return self.errors[item]
 
     def __str__(self):
         return '\n'.join(self.errors)
@@ -509,8 +527,9 @@ class Errors(object):
         self.add_error(location, message, args)
 
     def add_error(self, location, message, *args):
-        msg = message % args
-        error = '%s: %s' % (location, msg)
+        error = message % args
+        if location:
+            error = '%s: %s' % (location, error)
         self.errors.append(error)
 
 

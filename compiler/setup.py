@@ -1,18 +1,19 @@
 # encoding: utf-8
 import os.path
+
 try:
     from setuptools import setup
 except ImportError:
     import ez_setup
+
     ez_setup.use_setuptools()
     from setuptools import setup
 
 
 # Load the version.
 __version__ = None
-with open(os.path.join('src', 'pdefc', 'version.py')) as f:
-    exec(f.read())
-
+with open(os.path.join('pdefc', 'version.py')) as f:
+    exec (f.read())
 
 setup(
     name='pdef-compiler',
@@ -25,9 +26,7 @@ setup(
     author='Ivan Korobkov',
     author_email='ivan.korobkov@gmail.com',
 
-    packages=['pdefc',
-              'pdefc.lang'],
-    package_dir={'': 'src'},
+    packages=['pdefc'],
     package_data={
         '': ['*.jinja2']
     },

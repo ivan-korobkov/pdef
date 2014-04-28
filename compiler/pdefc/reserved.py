@@ -68,7 +68,6 @@ RESERVED = (
     'self',
     'short',
     'static',
-    'struct',
     'super',
     'switch',
     'then',

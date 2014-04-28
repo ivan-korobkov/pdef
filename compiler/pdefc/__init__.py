@@ -1,12 +1,12 @@
 # encoding: utf-8
 
-# Copyright: 2013 Ivan Korobkov <ivan.korobkov@gmail.com>
+# Copyright: 2013-2014 Ivan Korobkov <ivan.korobkov@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at:
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,13 +16,12 @@
 from pdefc.cli import main
 from pdefc.version import __version__
 
-from pdefc.exc import CompilerException
-from pdefc.compiler import create_compiler
-from pdefc.parser import create_parser
-from pdefc.sources import create_sources
-from pdefc.generators import find_generator_classes
+# from pdefc.exc import CompilerException
+# from pdefc.compiler import create_compiler
+# from pdefc.sources import create_sources
+# from pdefc.generators import find_generator_classes
 
 __title__ = 'pdef-compiler'
 __author__ = 'Ivan Korobkov <ivan.korobkov@gmail.com>'
 __license__ = 'Apache License 2.0'
-__copyright__ = 'Copyright 2013 Ivan Korobkov'
+__copyright__ = 'Copyright 2013-2014 Ivan Korobkov'

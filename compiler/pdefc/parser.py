@@ -2,116 +2,80 @@
 from __future__ import unicode_literals
 import functools
 import logging
+
 import re
 import ply.lex as lex
 import ply.yacc as yacc
-from pdefc import CompilerException
-
-import pdefc.lang
+from pdefc import lang
 from pdefc.reserved import RESERVED
-
-
-def create_parser():
-    '''Create a new parser, the parser is reusable but not thread-safe.'''
-    return Parser()
 
 
 class Parser(object):
     '''Pdef parser. It is reusable but not thread-safe.'''
 
     def __init__(self):
-        self.grammar = _Grammar(self._name, self._error)
+        self.grammar = _Grammar()
 
         # Some docs on options:
-        # - optimize=False and write_tables=False force to generate tabmodule each time
-        #   the parser is created.
-        # - module=self.grammar sets the grammar for a lexer and a parser.
+        # - optimize=False and write_tables=False force a parser to generate tabfile each time
+        # the parser is created.
+        # - file=self.grammar sets the grammar for a lexer and a parser.
         # - start sets the start grammar rule.
 
         self.lexer = lex.lex(module=self.grammar, optimize=False, debug=False, reflags=re.UNICODE)
         self.parser = yacc.yacc(module=self.grammar, optimize=False, write_tables=False,
-                                start='module', debug=False)
+                                start='file', debug=False)
 
-        # These are cleaned on each parse invocation.
-        self._module_name = None
-        self._errors = None
+    def parse_file(self, path):
+        '''Read a file and parse it.'''
+        with open(path, 'rt') as f:
+            text = f.read()
 
-    def parse_sources(self, sources):
-        '''Parse module sources and return a list of modules or raise a CompilerException.'''
-        errors = []
-        modules = []
+        return self.parse(text, path)
 
-        for source in sources:
-            name = source.name
-            data = source.data
-            path = source.path
+    def parse(self, s, path=None):
+        '''Parse a file from a string and return it and errors.'''
+        logging.info('Parsing %s', path or 'stream')
 
-            module, errors0 = self.parse(data, name=name, path=path)
-            errors += errors0
-            if module:
-                modules.append(module)
-
-        # Raise a compiler exception on errors.
-        if errors:
-            raise CompilerException('Parsing errors', errors)
-
-        return modules
-
-    def parse(self, s, name=None, path=None):
-        '''Parse a module from a string, return the module and a list of errors.'''
-        logging.info('Parsing %s', path or name or 'stream')
-
-        # Clear the variables.
-        self._module_name = name
-        self._errors = []
+        self.grammar.path = path
+        self.grammar.errors = lang.Errors()
 
         try:
             lexer = self.lexer.clone()
-            module = self.parser.parse(s, tracking=True, lexer=lexer)
-            errors = list(self._errors)
-            if module:
-                module.path = path
-
+            file = self.parser.parse(s, tracking=True, lexer=lexer)
+            errors = self.grammar.errors
             if errors:
-                module = None
-                self._log_errors(errors, name)
-            return module, errors
+                return None, errors
 
+            file.path = path
+            return file, errors
         finally:
-            self._module_name = None
-            self._errors = None
-
-    def _name(self):
-        return self._module_name
-
-    def _error(self, msg):
-        self._errors.append(msg)
-
-    def _log_errors(self, errors, path):
-        logging.error(path)
-        for error in errors:
-            logging.error('  %s' % error)
-
-
-def _location(t, token_position):
-    lineno = t.lineno(token_position)
-    return pdefc.lang.Location(lineno)
+            self.grammar.path = None
+            self.grammar.errors = None
 
 
 def _with_location(token_position):
     def decorator(func):
-        def set_location(self, t):
+        def with_location(self, t):
             func(self, t)
-            t[0].location = _location(t, token_position)
+            t[0].location = _location(self, t, token_position)
 
-        functools.update_wrapper(set_location, func)
-        return set_location
+        functools.update_wrapper(with_location, func)
+        return with_location
 
     return decorator
 
 
+def _location(self, t, token_position):
+    path = self.path
+    lineno = t.lineno(token_position)
+    return lang.Location(path, lineno)
+
+
 class _Tokens(object):
     '''Lexer tokens.'''
+    path = None
+    errors = None
 
     # Simple reserved words.
     types = (
@@ -130,18 +94,20 @@ class _Tokens(object):
         'MAP',
 
         'ENUM',
-        'MESSAGE',
+        'STRUCT',
         'EXCEPTION',
         'INTERFACE')
 
     # Identifier types, see t_IDENTIFIER
-    ids = types + ('FROM', 'IMPORT', 'NAMESPACE')
-    ids_map = {s.lower(): s for s in ids}
-    reserved = set(RESERVED)
+    identifiers = types + ('PACKAGE', )
+    identifiers_case_sensitive = ('POST', 'GET')
+    identifier_map = {key: value for key, value in
+                      [(s.lower(), s) for s in identifiers] +
+                      [(s, s) for s in identifiers_case_sensitive]}
 
-    tokens = ids + (
+    reserved = set(RESERVED)
+    tokens = identifiers + identifiers_case_sensitive + (
         'DOT',
-        'COLON',
         'COMMA',
         'SEMI',
         'LESS',
@@ -151,15 +117,10 @@ class _Tokens(object):
         'LPAREN',
         'RPAREN',
         'IDENTIFIER',
-        'DOC',
-        'DISCRIMINATOR',
-        'POST',
-        'QUERY',
-        'THROWS')
+        'DOC')
 
     # Regexp for simple rules.
     t_DOT = r'.'
-    t_COLON = r'\:'
     t_COMMA = r'\,'
     t_SEMI = r'\;'
     t_LESS = r'\<'
@@ -169,21 +130,17 @@ class _Tokens(object):
     t_LPAREN = r'\('
     t_RPAREN = r'\)'
 
-    # Regexp for options.
-    t_DISCRIMINATOR = r'@discriminator'
-    t_POST = r'@post'
-    t_QUERY = r'@query'
-    t_THROWS = r'@throws'
-
     # Ignored characters
-    t_ignore = " \t"
+    t_ignore = ' \t'
 
     def t_IDENTIFIER(self, t):
         r'[a-zA-Z_]{1}[a-zA-Z0-9_]*'
-        t.type = self.ids_map.get(t.value, 'IDENTIFIER')
-        
+        t.type = self.identifier_map.get(t.value, 'IDENTIFIER')
+
         if t.value in self.reserved:
-            self._error('Line %s, "%s" is a reserved word' % (t.lineno, t.value))
+            lineno = t.lineno
+            location = lang.Location(self.path, lineno)
+            self.errors.add_error(location, '"%s" is a reserved word', t.value)
 
         return t
 
@@ -205,34 +162,31 @@ class _Tokens(object):
         return t
 
     def t_error(self, t):
-        self._error("Illegal character '%s', line %s" % (t.value[0], t.lexer.lineno))
+        lineno = t.lexer.lineno
+        location = lang.Location(self.path, lineno)
+        self.errors.add_error(location, 'Illegal character "%s"', t.value[0])
         t.lexer.skip(1)
-
-    def _error(self, msg):
-        raise NotImplementedError()
 
 
 class _GrammarRules(object):
     '''Parser grammar rules.'''
-    def _name(self):
-        raise NotImplementedError
-
-    def _error(self, msg):
-        raise NotImplementedError
+    path = None
+    errors = None
 
     # Starting point.
     @_with_location(0)
-    def p_module(self, p):
+    def p_file(self, p):
         '''
-        module : doc namespace imports definitions
+        file : doc package definitions
         '''
-        name = self._name()
+        path = self.path
         doc = p[1]
-        namespace = p[2]
-        imports = p[3]
-        definitions = p[4]
-        p[0] = pdefc.lang.Module(name, namespace=namespace, imports=imports,
-                                 definitions=definitions, doc=doc)
+        package = p[2]
+        types = p[3]
+
+        file = lang.File(path, types=types)
+        file.doc = doc
+        p[0] = file
 
     def p_absolute_name(self, p):
         '''
@@ -264,46 +218,11 @@ class _GrammarRules(object):
         else:
             p[0] = ''
 
-    def p_namespace(self, p):
+    def p_package(self, p):
         '''
-        namespace : NAMESPACE absolute_name SEMI
+        package : PACKAGE absolute_name SEMI
         '''
         p[0] = p[2]
-
-    def p_imports(self, p):
-        '''
-        imports : imports import
-                | import
-                | empty
-        '''
-        self._list(p)
-
-    @_with_location(1)
-    def p_import(self, p):
-        '''
-        import : single_import
-               | batch_import
-        '''
-        p[0] = p[1]
-
-    def p_single_import(self, p):
-        '''
-        single_import : IMPORT absolute_name SEMI
-        '''
-        p[0] = pdefc.lang.SingleImport(p[2])
-
-    def p_batch_import(self, p):
-        '''
-        batch_import : FROM absolute_name IMPORT batch_import_names SEMI
-        '''
-        p[0] = pdefc.lang.BatchImport(p[2], p[4])
-
-    def p_batch_import_names(self, p):
-        '''
-        batch_import_names : batch_import_names COMMA absolute_name
-                           | absolute_name
-        '''
-        self._list(p, separated=True)
 
     def p_definitions(self, p):
         '''
@@ -316,7 +235,7 @@ class _GrammarRules(object):
     def p_definition(self, p):
         '''
         definition : doc enum
-                   | doc message
+                   | doc struct
                    | doc interface
         '''
         d = p[2]
@@ -328,7 +247,7 @@ class _GrammarRules(object):
         '''
         enum : ENUM IDENTIFIER LBRACE enum_values RBRACE
         '''
-        p[0] = pdefc.lang.Enum(p[2], values=p[4])
+        p[0] = lang.Enum(p[2], values=p[4])
 
     def p_enum_values(self, p):
         '''
@@ -350,49 +269,28 @@ class _GrammarRules(object):
         '''
         enum_value : IDENTIFIER
         '''
-        p[0] = pdefc.lang.EnumValue(p[1])
+        p[0] = lang.EnumValue(p[1])
 
-    # Message definition
-    @_with_location(3)
-    def p_message(self, p):
+    # Struct definition
+    @_with_location(2)
+    def p_struct(self, p):
         '''
-        message : message_or_exc IDENTIFIER message_base LBRACE fields RBRACE
+        struct : struct_or_exc IDENTIFIER LBRACE fields RBRACE
         '''
         is_exception = p[1].lower() == 'exception'
         name = p[2]
-        base, discriminator_value = p[3]
-        fields = p[5]
+        fields = p[4]
 
-        p[0] = pdefc.lang.Message(name, base=base, discriminator_value=discriminator_value,
-                                 declared_fields=fields, is_exception=is_exception)
+        p[0] = lang.Struct(name, fields=fields, is_exception=is_exception)
 
-    def p_message_or_exception(self, p):
+    def p_struct_or_exception(self, p):
         '''
-        message_or_exc : MESSAGE
+        struct_or_exc : STRUCT
                        | EXCEPTION
         '''
         p[0] = p[1]
 
-    def p_message_base(self, p):
-        '''
-        message_base : COLON type LPAREN type RPAREN
-                     | COLON type
-                     | empty
-        '''
-        base, discriminator = None, None
-
-        if len(p) == 3:
-            base = p[2]
-        elif len(p) == 6:
-            base = p[2]
-            discriminator = p[4]
-
-        if base:
-            base.location = _location(p, 2)
-
-        p[0] = base, discriminator
-
-    # List of message fields
+    # List of struct fields
     def p_fields(self, p):
         '''
         fields : fields field
@@ -401,56 +299,26 @@ class _GrammarRules(object):
         '''
         self._list(p)
 
-    # Single message field
+    # Single struct field
     @_with_location(1)
     def p_field(self, p):
         '''
-        field : IDENTIFIER type field_discriminator SEMI
+        field : IDENTIFIER type SEMI
         '''
         name = p[1]
         type0 = p[2]
-        is_discriminator = p[3]
-        p[0] = pdefc.lang.Field(name, type0, is_discriminator=is_discriminator)
-
-    def p_field_discriminator(self, p):
-        '''
-        field_discriminator : DISCRIMINATOR
-                            | empty
-        '''
-        p[0] = bool(p[1])
+        p[0] = lang.Field(name, type0)
 
     # Interface definition
-    @_with_location(3)
+    @_with_location(2)
     def p_interface(self, p):
         '''
-        interface : interface_exc INTERFACE IDENTIFIER interface_base LBRACE methods RBRACE
+        interface : INTERFACE IDENTIFIER LBRACE methods RBRACE
         '''
-        exc = p[1]
-        name = p[3]
-        base = p[4]
-        methods = p[6]
+        name = p[2]
+        methods = p[4]
 
-        p[0] = pdefc.lang.Interface(name, base=base, exc=exc, methods=methods)
-
-    def p_interface_base(self, p):
-        '''
-        interface_base : COLON type
-                       | empty
-        '''
-        if len(p) == 3:
-            p[0] = p[2]
-        else:
-            p[0] = None
-
-    def p_interface_exc(self, p):
-        '''
-        interface_exc : THROWS LPAREN type RPAREN
-                      | empty
-        '''
-        if len(p) == 5:
-            p[0] = p[3]
-        else:
-            p[0] = None
+        p[0] = lang.Interface(name, methods=methods)
 
     def p_methods(self, p):
         '''
@@ -463,21 +331,24 @@ class _GrammarRules(object):
     @_with_location(3)
     def p_method(self, p):
         '''
-        method : doc method_post IDENTIFIER LPAREN method_args RPAREN type SEMI
+        method : doc method_type IDENTIFIER LPAREN method_args RPAREN type SEMI
         '''
         doc = p[1]
-        is_post = p[2]
+        type = p[2]
         name = p[3]
         args = p[5]
         result = p[7]
-        p[0] = pdefc.lang.Method(name, result=result, args=args, is_post=is_post, doc=doc)
 
-    def p_method_post(self, p):
+        method = lang.Method(name, type=type, result=result, args=args)
+        method.doc = doc
+        p[0] = method
+
+    def p_method_type(self, p):
         '''
-        method_post : POST
-                    | empty
+        method_type : GET
+                    | POST
         '''
-        p[0] = p[1] == '@post'
+        p[0] = p[1]
 
     def p_method_args(self, p):
         '''
@@ -490,77 +361,81 @@ class _GrammarRules(object):
     @_with_location(2)
     def p_method_arg(self, p):
         '''
-        method_arg : doc IDENTIFIER type method_arg_attr
+        method_arg : doc IDENTIFIER type
         '''
-        attr = p[4]
-        is_query = attr == '@query'
-        is_post = attr == '@post'
-        p[0] = pdefc.lang.Argument(p[2], p[3], is_query=is_query, is_post=is_post)
-
-    def p_method_arg_attr(self, p):
-        '''
-        method_arg_attr : POST
-                        | QUERY
-                        | empty
-        '''
-        p[0] = p[1]
+        p[0] = lang.Argument(p[2], p[3])
 
     @_with_location(1)
     def p_type(self, p):
         '''
-        type : value_ref
-             | list_ref
-             | set_ref
-             | map_ref
-             | def_ref
+        type : value
+             | list
+             | set
+             | map
+             | ref
         '''
         p[0] = p[1]
 
-    def p_value_ref(self, p):
+    def p_value(self, p):
         '''
-        value_ref : BOOL
-                  | INT16
-                  | INT32
-                  | INT64
-                  | FLOAT
-                  | DOUBLE
-                  | STRING
-                  | DATETIME
-                  | VOID
+        value : BOOL
+              | INT16
+              | INT32
+              | INT64
+              | FLOAT
+              | DOUBLE
+              | STRING
+              | DATETIME
+              | VOID
         '''
-        p[0] = pdefc.lang.reference(p[1].lower())
+        d = {
+            'bool': lang.BOOL,
+            'int16': lang.INT16,
+            'int32': lang.INT32,
+            'int64': lang.INT64,
+            'float': lang.FLOAT,
+            'double': lang.DOUBLE,
+            'string': lang.STRING,
+            'datetime': lang.DATETIME,
+            'void': lang.VOID
+        }
 
-    def p_list_ref(self, p):
-        '''
-        list_ref : LIST LESS type GREATER
-        '''
-        p[0] = pdefc.lang.ListReference(p[3])
+        name = p[1].lower()
+        p[0] = d[name]
 
-    def p_set_ref(self, p):
+    def p_list(self, p):
         '''
-        set_ref : SET LESS type GREATER
+        list : LIST LESS type GREATER
         '''
-        p[0] = pdefc.lang.SetReference(p[3])
+        p[0] = lang.List(p[3])
 
-    def p_map_ref(self, p):
+    def p_set(self, p):
         '''
-        map_ref : MAP LESS type COMMA type GREATER
+        set : SET LESS type GREATER
         '''
-        p[0] = pdefc.lang.MapReference(p[3], p[5])
+        p[0] = lang.Set(p[3])
 
-    def p_def_ref(self, p):
+    def p_map(self, p):
         '''
-        def_ref : absolute_name
+        map : MAP LESS type COMMA type GREATER
         '''
-        p[0] = pdefc.lang.reference(p[1])
+        p[0] = lang.Map(p[3], p[5])
+
+    def p_ref(self, p):
+        '''
+        ref : absolute_name
+        '''
+        p[0] = lang.Reference(p[1])
 
     def p_error(self, p):
         if p is None:
             msg = 'Unexpected end of file'
         else:
-            msg = 'Line %s, syntax error at "%s"' % (p.lexer.lineno, p.value)
+            msg = 'Syntax error at "%s"' % p.value
 
-        self._error(msg)
+        lineno = p.lexer.lineno if p else 0
+        location = lang.Location(self.path, lineno)
+        self.errors.add_error(location, msg)
 
     def _list(self, p, separated=False):
         '''List builder, supports separated and empty lists.
@@ -589,14 +464,14 @@ class _Grammar(_GrammarRules, _Tokens):
     '''Grammar combines grammar rules and lexer tokens. It can be passed to the ply.yacc
     and pla.lex functions as the module argument.'''
 
-    def __init__(self, name_func, error_func):
-        self._name = name_func
-        self._error = error_func
+    def __init__(self, path=None, errors=None):
+        self.path = path
+        self.errors = errors
 
 
-_docstring_start_pattern = re.compile('^\s*/\*\*\s*')   # /**
-_docstring_line_pattern = re.compile('^\s*\*\s?')       #  *
-_docstring_end_pattern = re.compile('\s*\*/\s*$')       #  */
+_docstring_start_pattern = re.compile('^\s*/\*\*\s*')  # /**
+_docstring_line_pattern = re.compile('^\s*\*\s?')  # *
+_docstring_end_pattern = re.compile('\s*\*/\s*$')  # */
 
 
 def cleanup_docstring(s):

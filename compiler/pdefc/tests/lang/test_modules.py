@@ -41,7 +41,7 @@ class TestModule(unittest.TestCase):
         '''Should add a new definition to a module.'''
         def0 = Definition(TypeEnum.MESSAGE, 'Test')
         module = Module('test')
-        module.add_definition(def0)
+        module.add_type(def0)
 
         assert module.get_definition('Test') is def0
 
@@ -72,7 +72,7 @@ class TestModule(unittest.TestCase):
         def0 = Definition(TypeEnum.MESSAGE, 'Test')
 
         module = Module('test')
-        module.add_definition(def0)
+        module.add_type(def0)
 
         result = module.lookup('Test')
         assert result is def0
@@ -83,7 +83,7 @@ class TestModule(unittest.TestCase):
         one = enum.create_value('One')
 
         module = Module('test')
-        module.add_definition(enum)
+        module.add_type(enum)
 
         result = module.lookup('Number.One')
         assert result is one
@@ -175,8 +175,8 @@ class TestModule(unittest.TestCase):
         msg1.create_field('field1', 'Message0')
 
         module = Module('module')
-        module.add_definition(msg0)
-        module.add_definition(msg1)
+        module.add_type(msg0)
+        module.add_type(msg1)
         module._link_definitions()
 
         assert msg0.fields[0].type is msg1
@@ -213,8 +213,8 @@ class TestModule(unittest.TestCase):
         def1 = Definition(TypeEnum.MESSAGE, 'Test')
 
         module = Module('test')
-        module.add_definition(def0)
-        module.add_definition(def1)
+        module.add_type(def0)
+        module.add_type(def1)
         errors = module.validate()
 
         assert len(errors) == 1

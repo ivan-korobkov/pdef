@@ -495,7 +495,7 @@ class _GrammarRules(object):
         attr = p[4]
         is_query = attr == '@query'
         is_post = attr == '@post'
-        p[0] = pdefc.lang.MethodArg(p[2], p[3], is_query=is_query, is_post=is_post)
+        p[0] = pdefc.lang.Argument(p[2], p[3], is_query=is_query, is_post=is_post)
 
     def p_method_arg_attr(self, p):
         '''

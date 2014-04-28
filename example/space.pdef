@@ -1,7 +1,0 @@
-/** World space module. */
-namespace world;
-
-message Location {
-    lat double;
-    lng double;
-}

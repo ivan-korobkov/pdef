@@ -48,8 +48,8 @@ class TestPackage(unittest.TestCase):
         one = Message('One', base=zero, discriminator_value=one_type)
 
         module = Module('module')
-        module.add_definition(zero)
-        module.add_definition(one)
+        module.add_type(zero)
+        module.add_type(one)
 
         package = Package('package')
         package.add_module(module)
@@ -64,7 +64,7 @@ class TestPackage(unittest.TestCase):
         msg.create_field('field', NativeType.VOID)  # It's an error, not a data type.
 
         module = Module('module')
-        module.add_definition(msg)
+        module.add_type(msg)
 
         package = Package('package')
         package.add_module(module)

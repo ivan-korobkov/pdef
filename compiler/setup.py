@@ -10,10 +10,11 @@ except ImportError:
     from setuptools import setup
 
 
-# Load the version.
+# Read the version.
 __version__ = None
 with open(os.path.join('pdefc', 'version.py')) as f:
     exec (f.read())
+
 
 setup(
     name='pdef-compiler',
@@ -25,8 +26,8 @@ setup(
 
     author='Ivan Korobkov',
     author_email='ivan.korobkov@gmail.com',
-
-    packages=['pdefc'],
+    
+    packages=['pdefc', 'pdefc.java', 'pdefc.objc'],
     package_data={
         '': ['*.jinja2']
     },
@@ -44,7 +45,6 @@ setup(
 
     entry_points={
         'console_scripts': ['pdefc = pdefc:main'],
-        'pdefc.generators': []
     },
 
     classifiers=[

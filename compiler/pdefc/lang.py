@@ -33,22 +33,13 @@ class Node(object):
 
 class Package(Node):
     '''Protocol definition.'''
-    name_pattern = re.compile(r'^[a-zA-Z]{1}[a-zA-Z0-9_\-]*$')
-
-    def __init__(self, name, files=None):
+    def __init__(self, files=None):
         super(Package, self).__init__()
-
-        self.name = name
+        
         self.files = []
         for file in files or ():
             self.add_file(file)
-
-    def __str__(self):
-        return self.name
-
-    def __repr__(self):
-        return '<Package %r at %s>' % (self.name, hex(id(self)))
-
+    
     def add_file(self, file):
         if file.package:
             raise ValueError('Cannot add a file to %s, the file is already in a package, %s',
@@ -58,9 +49,9 @@ class Package(Node):
         self.add_child(file)
         file.package = self
 
-    def compile(self):
+    def compile(self, errors=None):
         '''Compile this package and return errors.'''
-        errors = Errors()
+        errors = errors or Errors()
 
         # Prevent duplicate types.
         if self._has_duplicate_types(errors):
@@ -531,6 +522,9 @@ class Errors(object):
         if location:
             error = '%s: %s' % (location, error)
         self.errors.append(error)
+    
+    def add_errors(self, iterable):
+        self.errors.extend(iterable)
 
 
 BOOL = Type('bool')

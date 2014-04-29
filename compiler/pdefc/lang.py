@@ -81,7 +81,7 @@ class Package(Node):
         for file in self.files:
             for type0 in file.types:
                 errors.assert_that(type0.name not in names, type0.location,
-                                   'duplicate type "%s"', type0.name)
+                                   'Duplicate type "%s"', type0.name)
                 names.add(type0.name)
         return errors
 
@@ -111,8 +111,8 @@ class File(Node):
     def dotname(self):
         '''Returns a pdef file name without an extension with dots instead of separators.'''
         path = os.path.normpath(self.path)
-        name = os.path.splitext(path)[0]
-        return name.replace(os.path.sep, '.')
+        path = os.path.splitext(path)[0]
+        return path.replace(os.path.sep, '.')
 
     def add_type(self, type0):
         '''Add a new type to this file.'''
@@ -234,15 +234,18 @@ class Type(Node):
         return self in (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING, DATETIME)
 
     @property
-    def is_data_type(self):
-        return not self.is_interface
-
+    def is_datatype(self):
+        return not self.is_interface and not self.is_void
+    
     @property
     def referenced_types(self):
         '''Return a set of all types referenced in this type (in fields, methods, etc).'''
         types = set()
         for node in self.walk():
-            if isinstance(node, Type):
+            if isinstance(node, Reference):
+                types.add(node.dereference())
+            
+            elif isinstance(node, Type):
                 types.add(node)
 
         types.discard(self)
@@ -263,7 +266,7 @@ class List(Type):
         return 'list<%s>' % self.element
 
     def validate(self, errors):
-        errors.assert_that(self.element.is_data_type, self.location,
+        errors.assert_that(self.element.is_datatype, self.location,
                            'List element must be a data type')
 
 
@@ -281,7 +284,7 @@ class Set(Type):
         return 'set<%s>' % self.element
 
     def validate(self, errors):
-        errors.assert_that(self.element.is_data_type, self.location,
+        errors.assert_that(self.element.is_datatype, self.location,
                            'Set element must be a data type')
 
 
@@ -302,7 +305,7 @@ class Map(Type):
 
     def validate(self, errors):
         errors.assert_that(self.key.is_primitive, self.location, 'Map key must be a primitive')
-        errors.assert_that(self.value.is_data_type, self.location, 'Map value must be a data type')
+        errors.assert_that(self.value.is_datatype, self.location, 'Map value must be a data type')
 
 
 class Enum(Type):
@@ -367,7 +370,7 @@ class Struct(Type):
 
         self.fields.append(field)
         self.add_child(field)
-        field.struct = field
+        field.struct = self
 
         return field
 
@@ -403,7 +406,7 @@ class Field(Node):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
     def validate(self, errors):
-        errors.assert_that(self.type.is_data_type, self.location, 'Field type must be a data type')
+        errors.assert_that(self.type.is_datatype, self.location, 'Field type must be a data type')
 
 
 class Interface(Type):
@@ -444,10 +447,10 @@ class Interface(Type):
 class Method(Node):
     result = ReferenceProperty('_result')
 
-    def __init__(self, name, type='GET', result=None, args=None):
+    def __init__(self, name, type=None, result=None, args=None):
         super(Method, self).__init__()
         self.name = name
-        self.type = type
+        self.type = type or MethodType.GET
         self.args = []
         self._result = self.create_reference(result if result is not None else VOID)
         self.interface = None
@@ -463,11 +466,11 @@ class Method(Node):
 
     @property
     def is_get(self):
-        return self.type == 'GET'
+        return self.type == MethodType.GET
 
     @property
     def is_post(self):
-        return self.type == 'POST'
+        return self.type == MethodType.POST
 
     def add_arg(self, arg):
         '''Append an argument to this method.'''
@@ -487,8 +490,11 @@ class Method(Node):
 
     def validate(self, errors):
         # Assert post methods have data type results.
+        errors.assert_that(self.type in (MethodType.GET, MethodType.POST), self.location,
+                           'Unknown method type "%s"', self.type)
+        
         if self.is_post:
-            errors.assert_that(self.result.is_data_type, self.location,
+            errors.assert_that(self.result.is_datatype or self.result.is_void, self.location,
                                'POST method must have a data type result or be void')
 
         # Prevent duplicate arguments.
@@ -497,6 +503,11 @@ class Method(Node):
             if arg.name in names:
                 errors.add_error(arg.location, 'Duplicate method argument "%s"', arg.name)
             names.add(arg.name)
+
+
+class MethodType(object):
+    GET = 'GET'
+    POST = 'POST'
 
 
 class Argument(Node):
@@ -516,7 +527,7 @@ class Argument(Node):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
     def validate(self, errors):
-        errors.assert_that(self.type.is_data_type, self.location, 
+        errors.assert_that(self.type.is_datatype, self.location, 
                            '"%s" argument must be a data type', self.name)
 
 
@@ -545,12 +556,15 @@ class Errors(object):
 
     def __nonzero__(self):
         return bool(self.errors)
-
-    def __iter__(self):
-        return iter(self.errors)
-
+    
     def __getitem__(self, item):
         return self.errors[item]
+    
+    def __iter__(self):
+        return iter(self.errors)
+    
+    def __len__(self):
+        return len(self.errors)
 
     def __str__(self):
         return '\n'.join(self.errors)
@@ -559,7 +573,7 @@ class Errors(object):
         if expression:
             return
 
-        self.add_error(location, message, args)
+        self.add_error(location, message, *args)
 
     def add_error(self, location, message, *args):
         error = message % args

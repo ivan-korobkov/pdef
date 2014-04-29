@@ -1,0 +1,91 @@
+/**
+ * Test types.
+ * Multi-line comment.
+ * 
+ * С поддержкой Юникода.
+ */
+package pdef.test;
+
+
+/**
+ * Enum.
+ * Multi-line comment.
+ */
+enum TestNumber {
+    ONE, TWO, THREE;
+}
+
+
+// Привет, мир!
+
+
+/** 
+ * Test struct. 
+ */
+struct TestStruct {
+    bool0       bool;
+    short0      int16;
+    int0        int32;
+    long0       int64;
+    float0      float;
+    double0     double;
+    string0     string;
+    datetime0   datetime;
+    
+    list0       list<int32>;
+    set0        set<int32>;
+    map0        map<int32, string>;
+
+    enum0       TestNumber;
+    struct0    TestStruct;
+}
+
+
+interface TestInterface {
+    GET void0() void;
+    
+    GET interface0() TestInterface2;
+    
+    GET get(
+        bool0       bool, 
+        short0      int16, 
+        int0        int32,
+        long0       int64,
+        float0      float,
+        double0     double,
+        string0     string,
+        datetime0   datetime,
+        
+        list0       list<int32>,
+        set0        set<int32>,
+        map0        map<int32, string>,
+        
+        enum0       TestNumber,
+        struct0     TestStruct
+    ) TestStruct;
+    
+    POST post(
+        bool0       bool, 
+        short0      int16, 
+        int0        int32,
+        long0       int64,
+        float0      float,
+        double0     double,
+        string0     string,
+        datetime0   datetime,
+        
+        list0       list<int32>,
+        set0        set<int32>,
+        map0        map<int32, string>,
+        
+        enum0       TestNumber,
+        struct0     TestStruct
+    ) TestStruct;
+}
+
+
+interface TestInterface2 {
+    GET get(int0 int32, string0 string) int32;
+    
+    POST post(int0 int32, string0 string) int32;
+}

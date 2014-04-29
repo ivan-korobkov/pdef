@@ -1,0 +1,32 @@
+// {{ generated_by }}
+package {{ interface|jpackage }};
+
+import io.pdef.GET;
+import io.pdef.POST;
+import io.pdef.REQUEST;
+
+
+{% if interface.doc %}
+/** {{ interface.doc }} */
+{% endif %}
+public interface {{ name }} {
+
+{% for method in interface.methods %}
+    {% if method.doc %}
+    /** {{ method.doc|indent(4) }} */
+    {% endif %}
+    {% if method.is_get %}
+    @GET
+    {% elif method.is_post %}
+    @POST
+    {% endif %}
+    {{ method.result|jtype }} {{ method.name }}(
+        {% for arg in method.args %}
+                {{ arg.type|jtype }} {{ arg.name }}
+                {%- if loop.length > 1 and not loop.last %}, {% else %}); {% endif %}
+        
+        {% endfor %}
+
+{% endfor %}
+}
+

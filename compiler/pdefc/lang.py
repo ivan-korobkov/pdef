@@ -1,4 +1,5 @@
 # encoding: utf-8
+import os
 import re
 
 
@@ -32,14 +33,13 @@ class Node(object):
 
 
 class Package(Node):
-    '''Protocol definition.'''
     def __init__(self, files=None):
         super(Package, self).__init__()
-        
+
         self.files = []
         for file in files or ():
             self.add_file(file)
-    
+
     def add_file(self, file):
         if file.package:
             raise ValueError('Cannot add a file to %s, the file is already in a package, %s',
@@ -69,13 +69,20 @@ class Package(Node):
 
         return errors
 
+    def find(self, name):
+        for file in self.files:
+            if name in file.type_map:
+                return file.type_map[name]
+
+        return None
+
     def _has_duplicate_types(self, errors):
         names = set()
         for file in self.files:
-            for def0 in file.definitions:
-                errors.assert_that(def0.name not in names, def0.location,
-                                   'duplicate package type "%s"', def0.name)
-                names.add(file.name)
+            for type0 in file.types:
+                errors.assert_that(type0.name not in names, type0.location,
+                                   'duplicate type "%s"', type0.name)
+                names.add(type0.name)
         return errors
 
 
@@ -89,6 +96,8 @@ class File(Node):
         self.package = None
 
         self.types = []
+        self.type_map = {}
+
         for def0 in types or ():
             self.add_type(def0)
 
@@ -98,13 +107,21 @@ class File(Node):
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.path, hex(id(self)))
 
+    @property
+    def dotname(self):
+        '''Returns a pdef file name without an extension with dots instead of separators.'''
+        path = os.path.normpath(self.path)
+        name = os.path.splitext(path)[0]
+        return name.replace(os.path.sep, '.')
+
     def add_type(self, type0):
         '''Add a new type to this file.'''
         if type0.file:
-            raise ValueError('Cannot add a definition to %s, the definition is already in an '
-                             'file, %s', self, type0)
+            raise ValueError('Cannot add a type to %s, the type is already in an file, %s',
+                             self, type0)
 
         self.types.append(type0)
+        self.type_map[type0.name] = type0
         self.add_child(type0)
         type0.file = self
 
@@ -112,13 +129,14 @@ class File(Node):
 
     def validate(self, errors):
         errors.assert_that(
-            self.name_pattern.match(self.path), self.location,
-            'Wrong file name "%s". File names must contain only latin letters, digits and '
-            'underscores, and must start with a letter."' % self.path)
+            self.name_pattern.match(self.dotname), self.location,
+            'Wrong file name "%s". File and directory names must contain only latin letters, '
+            'digits and underscores, and must start with a letter."' % self.path)
 
 
 class Reference(Node):
     '''Type reference.'''
+
     @classmethod
     def create(cls, type_ref_name):
         if isinstance(type_ref_name, Reference):
@@ -131,6 +149,17 @@ class Reference(Node):
         self.name = None
         self.type = None
         self.set(type_or_name)
+    
+    def __str__(self):
+        if self.name:
+            return self.name
+        if self.type:
+            return str(self.type)
+        return repr(self)
+    
+    def __repr__(self):
+        name = self.name if self.name else self.type
+        return '<Reference %s at %s>' % (name, hex(id(self)))
 
     def __bool__(self):
         return bool(self.type)
@@ -146,7 +175,7 @@ class Reference(Node):
     def dereference(self):
         '''Return a type this references points to or raise ValueError when not linked.'''
         if not self.type:
-            raise ValueError('Reference is not linked: %s' % self)
+            raise ValueError('Reference is not linked: %r' % self)
         return self.type
 
     def link(self, errors, scope):
@@ -179,6 +208,21 @@ class Type(Node):
         self.file = None
         self.is_exception = False
 
+        self.is_bool = name == 'bool'
+        self.is_int16 = name == 'int16'
+        self.is_int32 = name == 'int32'
+        self.is_int64 = name == 'int64'
+        self.is_float = name == 'float'
+        self.is_double = name == 'double'
+        self.is_string = name == 'string'
+        self.is_datetime = name == 'datetime'
+        self.is_void = name == 'void'
+
+        self.is_enum = isinstance(self, Enum)
+        self.is_struct = isinstance(self, Struct)
+        self.is_interface = isinstance(self, Interface)
+        self.is_collection = isinstance(self, (List, Set, Map))
+
     def __str__(self):
         return self.name
 
@@ -186,20 +230,16 @@ class Type(Node):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
     @property
-    def fullname(self):
-        return self.file.fullname + '.' + self.name if self.file.name else self.name
-
-    @property
     def is_primitive(self):
         return self in (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING, DATETIME)
 
     @property
     def is_data_type(self):
-        return not isinstance(self, Interface)
+        return not self.is_interface
 
     @property
     def referenced_types(self):
-        '''Return a set of all types referenced in this definition (in fields, methods, etc).'''
+        '''Return a set of all types referenced in this type (in fields, methods, etc).'''
         types = set()
         for node in self.walk():
             if isinstance(node, Type):
@@ -435,6 +475,9 @@ class Method(Node):
             raise ValueError('Argument is already in a method, %s' % arg)
 
         self.args.append(arg)
+        self.add_child(arg)
+        arg.method = self
+        
         return arg
 
     def create_arg(self, name, type):
@@ -473,7 +516,8 @@ class Argument(Node):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
     def validate(self, errors):
-        errors.assert_that(self.type.is_data_type, 'argument must be a data type')
+        errors.assert_that(self.type.is_data_type, self.location, 
+                           '"%s" argument must be a data type', self.name)
 
 
 class Location(object):
@@ -504,7 +548,7 @@ class Errors(object):
 
     def __iter__(self):
         return iter(self.errors)
-    
+
     def __getitem__(self, item):
         return self.errors[item]
 
@@ -522,7 +566,7 @@ class Errors(object):
         if location:
             error = '%s: %s' % (location, error)
         self.errors.append(error)
-    
+
     def add_errors(self, iterable):
         self.errors.extend(iterable)
 

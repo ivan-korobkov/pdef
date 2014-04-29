@@ -1,0 +1,102 @@
+// {{ generated_by }}
+package {{ struct|jpackage }};
+
+
+{% if struct.doc %}
+/** {{ struct.doc }} */
+{% endif %}
+public class {{ name }} {% if struct.is_exception %} extends RuntimeException {% endif -%}
+    implements io.pdef.Struct {
+    {% for field in struct.fields %}
+    private {{ field.type|jtype }} {{ field.name }};
+    {% endfor %}
+
+    public {{ name }}() {}
+
+    public {{ name }}(final {{ name }} another) {
+    {% for field in struct.fields %}
+        {% if field.type.is_collection or field.type.is_struct %}
+        this.{{ field.name }} = io.pdef.Copy.copy(another.{{ field.name }});
+        {% else %}
+        this.{{ field.name }} = another.{{ field.name }};
+        {% endif %}
+    {% endfor %}
+    }
+
+    public static {{ name }} parseJson(final String s) {
+        return io.pdef.Json.parse(s, {{ name }}.class);
+    }
+    
+    public static {{ name }} parseJson(final java.io.InputStream stream) {
+        return io.pdef.Json.parse(stream, {{ name }}.class);
+    }
+
+{% for field in struct.fields %}
+    // {{ field.name }}
+    public {{ field.type|jtype }} get{{ field.name|upper_first }}() {
+        return this.{{ field.name }};
+    }
+
+    public {{ name }} set{{ field.name|upper_first }}({{ field.type|jtype }} value) {
+        this.{{ field.name }} = value;
+        return this;
+    }
+
+{% endfor %}
+    @Override
+    public {{ name }} copy() {
+        return new {{ name }}(this);
+    }
+
+    @Override
+    public String toJson() {
+        return io.pdef.Json.serialize(this);
+    }
+
+    @Override
+    public void toJson(final java.io.OutputStream stream) {
+        io.pdef.Json.serialize(this, stream);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final {{ name }} that = ({{ name }}) o;
+{% for field in struct.fields %}
+    {% if field.type.is_float %}
+        if (Float.compare(this.{{ field.name }}, that.{{ field.name }}) != 0) return false;
+    {% elif field.type.is_double %}
+        if (Double.compare(this.{{ field.name }}, that.{{ field.name }}) != 0) return false;
+    {% elif field.type|is_jobject %}
+        if (this.{{ field.name }} == null ? that.{{ field.name }} != null : !this.{{ field.name }} .equals(that.{{ field.name }})) return false;
+    {% else %}
+        if (this.{{ field.name }} != that.{{ field.name }}) return false;
+    {% endif %}
+{% endfor %}
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 31;
+{% for field in struct.fields %}
+    {% if field.type.is_bool %}
+        result = 31 * result + (this.{{ field.name }} ? 1 : 0);
+    {% elif field.type.is_int16 or field.type.is_int32 %}
+        result = 31 * result + this.{{ field.name }};
+    {% elif field.type.is_int64 %}
+        result = 31 * result + (int) (this.{{ field.name }} ^ (this.{{ field.name }} >>> 32));
+    {% elif field.type.is_float %}
+        result = 31 * result + (this.{{ field.name }} != +0.0f ? Float.floatToIntBits(this.{{ field.name }}) : 0);
+    {% elif field.type.is_double %}
+        result = 31 * result + (int) (Double.doubleToLongBits(this.{{ field.name }}) ^ (Double.doubleToLongBits(this.{{ field.name }}) >>> 32));
+    {% elif field.type|is_jobject %}
+        result = 31 * result + (this.{{ field.name }} != null ? this.{{ field.name }}.hashCode() : 0);
+    {% endif %}
+{% endfor %}
+        return result;
+    }
+}
+

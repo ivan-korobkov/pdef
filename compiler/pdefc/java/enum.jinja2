@@ -1,0 +1,13 @@
+// {{ generated_by }}
+package {{ enum|jpackage}};
+
+{% if enum.doc %}
+/** {{ enum.doc }} */
+{% endif %}
+public enum {{ name }} {
+    {% for value in enum.values %}
+    {{ value.name }}{% if not loop.last and loop.length > 1 %}, {% endif %}
+    {% endfor %};
+
+}
+

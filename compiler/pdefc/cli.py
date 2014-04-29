@@ -9,7 +9,7 @@ import pdefc
 def main(argv=None):
     '''Run the compiler command-line interface.'''
 
-    argv = argv or sys.argv
+    argv = argv or sys.argv[1:]
     _logging(argv)
 
     try:
@@ -23,13 +23,11 @@ def main(argv=None):
             raise ValueError('No "command_func" in args %s' % args)
 
         return func(args)
-
-    except Exception as e:
-        # Print traceback only in debug mode.
-        if logging.root.level == logging.DEBUG:
-            raise
-
+    
+    except pdefc.CompilerException as e:
         logging.error('%s', e)
+        if e.errors:
+            logging.error('%s', '\n'.join(e.errors))
         sys.exit(1)
 
 
@@ -78,10 +76,10 @@ def check_command(commands):
 
 
 def generate_java(args):
-    path = args.path
+    src = args.src
     dst = args.dst
     package = args.package
-    pdefc.generate_java(path, dst, jpackage_name=package)
+    pdefc.generate_java(src, dst, jpackage_name=package)
 
 
 def gen_java_command(p):
@@ -93,10 +91,10 @@ def gen_java_command(p):
 
 
 def generate_objc(args):
-    path = args.path
+    src = args.src
     dst = args.dst
     prefix = args.prefix
-    pdefc.generate_objc(path, dst, prefix=prefix)
+    pdefc.generate_objc(src, dst, prefix=prefix)
 
 
 def gen_objc_command(p):

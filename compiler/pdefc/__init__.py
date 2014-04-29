@@ -13,7 +13,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import io
 import os
+
 from pdefc.cli import main
 from pdefc.version import __version__
 from pdefc import lang, parser, java, objc
@@ -41,15 +43,15 @@ def compile(path):
     return package
 
 
-def generate_java(path, out, jpackage_name=None):
+def generate_java(src, out, jpackage_name=None):
     '''Generates java files.'''
-    package = compile(path)
+    package = compile(src)
     java.generate(package, out, jpackage_name=jpackage_name)
 
 
-def generate_objc(path, out, prefix=None):
+def generate_objc(src, out, prefix=None):
     '''Generates objective-c files.'''
-    package = compile(path)
+    package = compile(src)
     objc.generate(package, out, prefix=prefix)
 
 
@@ -60,7 +62,8 @@ def _parse(path):
     package = lang.Package()
 
     for fullpath, relpath in _walk(path):
-        file, file_errors = parse.parse_file(fullpath)
+        source = _read(fullpath)
+        file, file_errors = parse.parse(source, relpath)
 
         if file_errors:
             errors.add_errors(file_errors)
@@ -90,3 +93,9 @@ def _walk(rootpath):
 
     else:
         raise CompilerException('File or directory does not exist "%s"' % rootpath)
+
+
+def _read(path):
+    '''Read a file, parse it and return (file, errors).'''
+    with io.open(path, 'rt', encoding='utf-8') as f:
+        return f.read()

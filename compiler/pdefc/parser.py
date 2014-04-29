@@ -28,13 +28,6 @@ class Parser(object):
         self.parser = yacc.yacc(module=self.grammar, optimize=False, write_tables=False,
                                 start='file', debug=False)
 
-    def parse_file(self, path):
-        '''Read a file, parse it and return (file, errors).'''
-        with io.open(path, 'rt', encoding='utf-8') as f:
-            text = f.read()
-
-        return self.parse(text, path)
-
     def parse(self, s, path=None):
         '''Parse a file from a string and return (file, errors).'''
         logging.info('Parsing %s', path or 'stream')

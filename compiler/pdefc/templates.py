@@ -40,7 +40,6 @@ class Templates(object):
     def add_filter(self, name, filter0):
         '''Add a Jinja filter.'''
         self._env.filters[name] = filter0
-        logging.debug('Added a template filter "%s"' % name)
 
     def add_filters(self, **name_to_filter):
         '''Add Jinja filters.'''
@@ -92,12 +91,12 @@ def mkdir_p(dirname):
     os.makedirs(dirname)
 
 
-def write_file(self, filename, text):
+def write_file(dst, filename, text):
     '''Write a text file to the output directory, filename can contain subdirectories.'''
     
     # Join the filename with the destination directory.
-    filepath = os.path.join(self.out, filename)
-
+    filepath = os.path.join(dst, filename)
+    
     # Create a directory with its children for a file.
     dirpath = os.path.dirname(filepath)
     mkdir_p(dirpath)

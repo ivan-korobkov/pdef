@@ -43,6 +43,8 @@ struct TestStruct {
 
 interface TestInterface {
     GET void0() void;
+
+    GET request(TestStruct) TestStruct;
     
     GET interface0() TestInterface2;
     

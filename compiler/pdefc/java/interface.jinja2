@@ -12,20 +12,27 @@ import io.pdef.REQUEST;
 public interface {{ name }} {
 
 {% for method in interface.methods %}
-    {% if method.doc %}
+{% if method.doc %}
     /** {{ method.doc|indent(4) }} */
-    {% endif %}
-    {% if method.is_get %}
+{% endif %}
+{% if method.is_get %}
     @GET
-    {% elif method.is_post %}
+{% elif method.is_post %}
     @POST
-    {% endif %}
+{% endif %}
+{% if method.request %}
+    @REQUEST
+    {{ method.result|jtype }} {{ method.name }}({{ method.request|jtype }} request);
+{% elif method.args %}
     {{ method.result|jtype }} {{ method.name }}(
-        {% for arg in method.args %}
-                {{ arg.type|jtype }} {{ arg.name }}
-                {%- if loop.length > 1 and not loop.last %}, {% else %}); {% endif %}
-        
-        {% endfor %}
+    {% for arg in method.args %}
+        {{ arg.type|jtype }} {{ arg.name }}
+        {%- if loop.length > 1 and not loop.last %}, {% else %}); {% endif %}
+
+    {% endfor %}
+{% else %}
+    {{ method.result|jtype }} {{ method.name }}();
+{% endif %}
 
 {% endfor %}
 }

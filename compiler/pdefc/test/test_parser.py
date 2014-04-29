@@ -1,6 +1,5 @@
 # encoding: utf-8
 from __future__ import unicode_literals
-import os.path
 import unittest
 
 from pdefc import lang
@@ -239,6 +238,9 @@ class TestParser(unittest.TestCase):
                 POST method1(
                     arg0 type0,
                     arg1 type1) result;
+                
+                /** Request method. */
+                POST method2(Request) Response;
             }
         '''
 
@@ -246,7 +248,7 @@ class TestParser(unittest.TestCase):
         interface = file.types[0]
         methods = interface.methods
 
-        assert len(methods) == 2
+        assert len(methods) == 3
 
         method0 = methods[0]
         assert method0.name == 'method0'
@@ -271,6 +273,13 @@ class TestParser(unittest.TestCase):
         assert method1.args[1].name == 'arg1'
         assert method1.args[1]._type.name == 'type1'
         assert method1.args[1]._type.location.lineno == 11
+        
+        method2 = methods[2]
+        assert method2.name == 'method2'
+        assert method2.is_post
+        assert method2.args == []
+        assert method2._request.name == 'Request'
+        assert method2._result.name == 'Response'
 
     def test_collections(self):
         s = '''

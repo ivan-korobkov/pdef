@@ -142,7 +142,11 @@ class Reference(Node):
         if isinstance(type_ref_name, Reference):
             return type_ref_name
         return Reference(type_ref_name)
-
+    
+    @classmethod
+    def empty(cls):
+        return Reference()
+    
     def __init__(self, type_or_name=None):
         super(Reference, self).__init__()
 
@@ -150,39 +154,44 @@ class Reference(Node):
         self.type = None
         self.set(type_or_name)
     
+    @property
+    def is_empty(self):
+        return self.name is None and self.type is None
+    
     def __str__(self):
-        if self.name:
-            return self.name
-        if self.type:
-            return str(self.type)
-        return repr(self)
+        if self.is_empty:
+            return '<empty>'
+        
+        return self.name or str(self.type)
     
     def __repr__(self):
+        if self.is_empty:
+            return '<EmptyReference at %s>' % hex(id(self))
+        
         name = self.name if self.name else self.type
         return '<Reference %s at %s>' % (name, hex(id(self)))
 
-    def __bool__(self):
-        return bool(self.type)
-
-    def __nonzero__(self):
-        return bool(self.type)
-
     def set(self, type_or_name):
-        is_type = isinstance(type_or_name, Type)
-        self.name = None if is_type else type_or_name
-        self.type = type_or_name if is_type else None
+        if isinstance(type_or_name, Type):
+            self.name, self.type = None, type_or_name
+        else:
+            self.name, self.type = type_or_name, None
 
     def dereference(self):
         '''Return a type this references points to or raise ValueError when not linked.'''
-        if not self.type:
-            raise ValueError('Reference is not linked: %r' % self)
-        return self.type
+        if self.is_empty:
+            return None
+        
+        if self.type:
+            return self.type
+        
+        raise ValueError('Reference is not linked: %r' % self)
 
     def link(self, errors, scope):
         '''Link this reference in a scope.'''
-        if self.type:
+        if self.is_empty or self.type:
             return
-
+        
         self.type = scope.find(self.name)
         errors.assert_that(self.type is not None, self.location,
                            'Symbol not found "%s"', self.name)
@@ -217,7 +226,7 @@ class Type(Node):
         self.is_string = name == 'string'
         self.is_datetime = name == 'datetime'
         self.is_void = name == 'void'
-
+        
         self.is_enum = isinstance(self, Enum)
         self.is_struct = isinstance(self, Struct)
         self.is_interface = isinstance(self, Interface)
@@ -446,18 +455,23 @@ class Interface(Type):
 
 class Method(Node):
     result = ReferenceProperty('_result')
-
-    def __init__(self, name, type=None, result=None, args=None):
+    request = ReferenceProperty('_request')
+    
+    def __init__(self, name, type=None, result=None, request=None, args=None):
         super(Method, self).__init__()
         self.name = name
         self.type = type or MethodType.GET
-        self.args = []
         self._result = self.create_reference(result if result is not None else VOID)
+        self._request = self.create_reference(request)
+        self.args = []
         self.interface = None
 
         for arg in args or ():
             self.add_arg(arg)
-
+        
+        if args and request:
+            raise ValueError('Method args and request are mutually exclusive')
+        
     def __str__(self):
         return self.name
 

@@ -102,7 +102,6 @@ class _Tokens(object):
 
     reserved = set(RESERVED)
     tokens = identifiers + identifiers_case_sensitive + (
-        'DOT',
         'COMMA',
         'SEMI',
         'LESS',
@@ -115,7 +114,6 @@ class _Tokens(object):
         'DOC')
 
     # Regexp for simple rules.
-    t_DOT = r'.'
     t_COMMA = r'\,'
     t_SEMI = r'\;'
     t_LESS = r'\<'
@@ -172,7 +170,7 @@ class _GrammarRules(object):
     @_with_location(0)
     def p_file(self, p):
         '''
-        file : doc package definitions
+        file : doc package definitions_or_empty
         '''
         path = self.path
         doc = p[1]
@@ -182,31 +180,11 @@ class _GrammarRules(object):
         file = lang.File(path, types=types)
         file.doc = doc
         p[0] = file
-
-    def p_absolute_name(self, p):
-        '''
-        absolute_name : absolute_name_list
-        '''
-        p[0] = '.'.join(p[1])
-
-    def p_absolute_name_list(self, p):
-        '''
-        absolute_name_list : absolute_name_list DOT IDENTIFIER
-                           | IDENTIFIER
-        '''
-        self._list(p, separated=True)
-
-    # Empty token to support optional values.
-    def p_empty(self, p):
-        '''
-        empty :
-        '''
-        pass
-
+    
     def p_doc(self, p):
         '''
-        doc : DOC
-            | empty
+        doc : 
+            | DOC
         '''
         if len(p) == 2:
             p[0] = p[1]
@@ -215,15 +193,24 @@ class _GrammarRules(object):
 
     def p_package(self, p):
         '''
-        package : PACKAGE absolute_name SEMI
+        package : PACKAGE IDENTIFIER SEMI
         '''
         p[0] = p[2]
+    
+    def p_definitions_or_empty(self, p):
+        '''
+        definitions_or_empty : 
+                             | definitions
+        '''
+        if len(p) == 1:
+            p[0] = []
+        else:
+            p[0] = p[1]
 
     def p_definitions(self, p):
         '''
         definitions : definitions definition
                     | definition
-                    | empty
         '''
         self._list(p)
 
@@ -253,9 +240,9 @@ class _GrammarRules(object):
 
     def p_enum_value_list(self, p):
         '''
-        enum_value_list : enum_value_list COMMA enum_value
+        enum_value_list : 
+                        | enum_value_list COMMA enum_value
                         | enum_value
-                        | empty
         '''
         self._list(p, separated=True)
 
@@ -270,7 +257,7 @@ class _GrammarRules(object):
     @_with_location(2)
     def p_struct(self, p):
         '''
-        struct : struct_or_exc IDENTIFIER LBRACE fields RBRACE
+        struct : struct_or_exc IDENTIFIER LBRACE fields_or_empty RBRACE
         '''
         is_exception = p[1].lower() == 'exception'
         name = p[2]
@@ -281,8 +268,17 @@ class _GrammarRules(object):
     def p_struct_or_exception(self, p):
         '''
         struct_or_exc : STRUCT
-                       | EXCEPTION
+                      | EXCEPTION
         '''
+        p[0] = p[1]
+    
+    def p_fields_or_empty(self, p):
+        '''
+        fields_or_empty : 
+                    | fields
+        '''
+        if len(p) == 1:
+            return
         p[0] = p[1]
 
     # List of struct fields
@@ -290,7 +286,6 @@ class _GrammarRules(object):
         '''
         fields : fields field
                | field
-               | empty
         '''
         self._list(p)
 
@@ -308,33 +303,49 @@ class _GrammarRules(object):
     @_with_location(2)
     def p_interface(self, p):
         '''
-        interface : INTERFACE IDENTIFIER LBRACE methods RBRACE
+        interface : INTERFACE IDENTIFIER LBRACE methods_or_empty RBRACE
         '''
         name = p[2]
         methods = p[4]
 
         p[0] = lang.Interface(name, methods=methods)
+    
+    def p_methods_or_empty(self, p):
+        '''
+        methods_or_empty : 
+                         | methods
+        '''
+        if len(p) == 1:
+            p[0] = []
+        else:
+            p[0] = p[1]
 
     def p_methods(self, p):
         '''
         methods : methods method
                 | method
-                | empty
         '''
         self._list(p)
 
     @_with_location(3)
     def p_method(self, p):
         '''
-        method : doc method_type IDENTIFIER LPAREN method_args RPAREN type SEMI
+        method : doc method_type IDENTIFIER LPAREN method_body RPAREN type SEMI
         '''
         doc = p[1]
         type = p[2]
         name = p[3]
-        args = p[5]
+        body = p[5]
         result = p[7]
-
-        method = lang.Method(name, type=type, result=result, args=args)
+        
+        args = None
+        request = None
+        if isinstance(body, list):
+            args = body
+        else:
+            request = body
+        
+        method = lang.Method(name, type=type, result=result, request=request, args=args)
         method.doc = doc
         p[0] = method
 
@@ -344,21 +355,31 @@ class _GrammarRules(object):
                     | POST
         '''
         p[0] = p[1]
+    
+    def p_method_body(self, p):
+        '''
+        method_body : 
+                    | type
+                    | method_args
+        '''
+        if len(p) == 1:
+            return
+        
+        p[0] = p[1]
 
     def p_method_args(self, p):
         '''
         method_args : method_args COMMA method_arg
                     | method_arg
-                    | empty
         '''
         self._list(p, separated=True)
 
     @_with_location(2)
     def p_method_arg(self, p):
         '''
-        method_arg : doc IDENTIFIER type
+        method_arg : IDENTIFIER type
         '''
-        p[0] = lang.Argument(p[2], p[3])
+        p[0] = lang.Argument(p[1], p[2])
 
     @_with_location(1)
     def p_type(self, p):
@@ -418,7 +439,7 @@ class _GrammarRules(object):
 
     def p_ref(self, p):
         '''
-        ref : absolute_name
+        ref : IDENTIFIER
         '''
         p[0] = lang.Reference(p[1])
 
@@ -436,9 +457,9 @@ class _GrammarRules(object):
         '''List builder, supports separated and empty lists.
 
         Supported grammar:
-        list : list [optional separator] item
+        list : 
+             | list [optional separator] item
              | item
-             | empty
         '''
         if len(p) == 1:
             p[0] = []

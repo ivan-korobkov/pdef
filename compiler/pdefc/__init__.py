@@ -33,6 +33,10 @@ class CompilerException(Exception):
         self.errors = errors
 
 
+def version():
+    return __version__
+
+
 def compile(path):
     '''Compile a package from a path.'''
     package = _parse(path)

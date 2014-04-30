@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
@@ -55,6 +56,15 @@ public class PdefJson {
 
 	public static Module module() {
 		return new InternalModule();
+	}
+
+	public static Object parse(final String s, final Type type) {
+		try {
+			JavaType javaType = mapper.constructType(type);
+			return mapper.readValue(s, javaType);
+		} catch (IOException e) {
+			throw new PdefException("JSON deserialization error", e);
+		}
 	}
 
 	public static <T> T parse(final String s, final Class<T> cls) {

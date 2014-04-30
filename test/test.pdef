@@ -46,7 +46,7 @@ interface TestInterface {
 
     GET request(TestStruct) TestStruct;
     
-    GET interface0() TestSubInterface;
+    GET interface0(bool0 bool, int0 int32, string0 string) TestSubInterface;
     
     GET get(
         bool0       bool, 

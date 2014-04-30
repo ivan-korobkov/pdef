@@ -3,7 +3,6 @@ package {{ interface|jpackage }};
 
 import io.pdef.GET;
 import io.pdef.POST;
-import io.pdef.REQUEST;
 
 
 {% if interface.doc %}
@@ -21,13 +20,13 @@ public interface {{ name }} {
     @POST
 {% endif %}
 {% if method.request %}
-    @REQUEST
+    @io.pdef.Request
     {{ method.result|jtype }} {{ method.name }}({{ method.request|jtype }} request);
 {% elif method.args %}
     {{ method.result|jtype }} {{ method.name }}(
     {% for arg in method.args %}
-        {{ arg.type|jtype }} {{ arg.name }}
-        {%- if loop.length > 1 and not loop.last %}, {% else %}); {% endif %}
+            @io.pdef.Name("{{ arg.name }}") {{ arg.type|jtype }} {{ arg.name }}
+            {%- if loop.length > 1 and not loop.last %}, {% else %}); {% endif %}
 
     {% endfor %}
 {% else %}

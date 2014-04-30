@@ -16,7 +16,7 @@ public class {{ name }} {% if struct.is_exception %} extends RuntimeException {%
     public {{ name }}(final {{ name }} another) {
     {% for field in struct.fields %}
         {% if field.type.is_collection or field.type.is_struct %}
-        this.{{ field.name }} = io.pdef.Copy.copy(another.{{ field.name }});
+        this.{{ field.name }} = io.pdef.PdefCopy.copy(another.{{ field.name }});
         {% else %}
         this.{{ field.name }} = another.{{ field.name }};
         {% endif %}
@@ -32,7 +32,6 @@ public class {{ name }} {% if struct.is_exception %} extends RuntimeException {%
     }
 
 {% for field in struct.fields %}
-    // {{ field.name }}
     public {{ field.type|jtype }} get{{ field.name|upper_first }}() {
         return this.{{ field.name }};
     }
@@ -48,17 +47,14 @@ public class {{ name }} {% if struct.is_exception %} extends RuntimeException {%
         return new {{ name }}(this);
     }
 
-    @Override
     public String toJson() {
         return io.pdef.PdefJson.serialize(this);
     }
 
-    @Override
     public void toJson(final java.io.OutputStream stream) {
         io.pdef.PdefJson.serialize(this, stream);
     }
 
-    @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

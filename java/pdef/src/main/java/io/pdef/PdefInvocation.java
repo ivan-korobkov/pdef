@@ -58,7 +58,7 @@ public class PdefInvocation {
 		try {
 			return method.invoke(o, args);
 		} catch (IllegalAccessException e) {
-			throw new PdefException("Invocation illegal access", e);
+			throw new PdefException("Illegal access", e);
 		} catch (InvocationTargetException e) {
 			throw new PdefException("Invocation target exception", e.getCause());
 		}

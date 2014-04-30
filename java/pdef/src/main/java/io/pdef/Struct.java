@@ -16,6 +16,17 @@
 
 package io.pdef;
 
+import java.io.OutputStream;
+import java.io.Writer;
+
 public interface Struct {
 	Struct copy();
+	
+	String toJson();
+	
+	String toJson(boolean indent);
+
+	void toJson(Writer writer, boolean indent);
+
+	void toJson(OutputStream stream, boolean indent);	
 }

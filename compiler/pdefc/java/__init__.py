@@ -66,16 +66,14 @@ class Generator(object):
         return '%s.%s' % (self.package_name, name)
 
     def jname(self, type0):
-        suffix = None
-        if type0.is_struct:
+        if type0.is_struct and not type0.is_exception:
             suffix = self.struct_suffix
         elif type0.is_interface:
             suffix = self.iface_suffix
+        else:
+            return type0.name
         
         name = type0.name
-        if not suffix:
-            return name
-        
         if name.lower().endswith(suffix.lower()):
             return name
         

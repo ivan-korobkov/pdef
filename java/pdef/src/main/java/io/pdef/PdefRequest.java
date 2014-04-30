@@ -3,7 +3,7 @@ package io.pdef;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class PdefRequest implements Struct {
+public class PdefRequest extends AbstractStruct {
 	private String method;
 	private String relativePath;
 	private Map<String, String> query = new LinkedHashMap<String, String>();

@@ -25,9 +25,7 @@ import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 import com.fasterxml.jackson.databind.ser.Serializers;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.text.DateFormat;
@@ -63,7 +61,7 @@ public class PdefJson {
 			JavaType javaType = mapper.constructType(type);
 			return mapper.readValue(s, javaType);
 		} catch (IOException e) {
-			throw new PdefException("JSON deserialization error", e);
+			throw parseExc(e);
 		}
 	}
 
@@ -71,7 +69,15 @@ public class PdefJson {
 		try {
 			return mapper.readValue(s, cls);
 		} catch (IOException e) {
-			throw new PdefException("JSON deserialization error", e);
+			throw parseExc(e);
+		}
+	}
+
+	public static <T> T parse(final Reader reader, final Class<T> cls) {
+		try {
+			return mapper.readValue(reader, cls);
+		} catch (IOException e) {
+			throw parseExc(e);
 		}
 	}
 
@@ -79,24 +85,56 @@ public class PdefJson {
 		try {
 			return mapper.readValue(stream, cls);
 		} catch (IOException e) {
-			throw new PdefException("JSON deserialization error", e);
+			throw parseExc(e);
 		}
 	}
 
 	public static String serialize(final Object o) {
+		return serialize(o, false);
+	}
+
+	public static String serialize(final Object o, final boolean indent) {
 		try {
-			return mapper.writeValueAsString(o);
+			if (indent) {
+				return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
+			} else {
+				return mapper.writeValueAsString(o);
+			}
 		} catch (IOException e) {
-			throw new PdefException("JSON serialization error", e);
+			throw serializeExc(e);
 		}
 	}
 
-	public static void serialize(final Object o, final OutputStream stream) {
+	public static void serialize(final Object o, final Writer writer, final boolean indent) {
 		try {
-			mapper.writeValue(stream, o);
+			if (indent) {
+				mapper.writerWithDefaultPrettyPrinter().writeValue(writer, o);
+			} else {
+				mapper.writeValue(writer, o);
+			}
 		} catch (IOException e) {
-			throw new PdefException("JSON serialization error", e);
+			throw serializeExc(e);
 		}
+	}
+
+	public static void serialize(final Object o, final OutputStream out, final boolean indent) {
+		try {
+			if (indent) {
+				mapper.writerWithDefaultPrettyPrinter().writeValue(out, o);
+			} else {
+				mapper.writeValue(out, o);
+			}
+		} catch (IOException e) {
+			throw serializeExc(e);
+		}
+	}
+
+	private static PdefException parseExc(final IOException e) {
+		return new PdefException("JSON deserialization error", e);
+	}
+
+	private static PdefException serializeExc(final IOException e) {
+		return new PdefException("JSON serialization error", e);
 	}
 
 	private static class InternalModule extends Module {

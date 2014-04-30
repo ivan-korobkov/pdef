@@ -37,7 +37,12 @@ struct TestStruct {
     map0        map<int32, string>;
 
     enum0       TestNumber;
-    struct0    TestStruct;
+    struct0     TestStruct;
+}
+
+
+exception TestException {
+    message     string;
 }
 
 

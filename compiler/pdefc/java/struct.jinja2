@@ -5,8 +5,11 @@ package {{ struct|jpackage }};
 {% if struct.doc %}
 /** {{ struct.doc }} */
 {% endif %}
-public class {{ name }} {% if struct.is_exception %} extends RuntimeException {% endif -%}
-    implements io.pdef.Struct {
+public class {{ name }} {% if struct.is_exception -%} 
+        extends io.pdef.AbstractException 
+    {%- else -%}
+        extends io.pdef.AbstractStruct
+    {%- endif %} {
     {% for field in struct.fields %}
     private {{ field.type|jtype }} {{ field.name }};
     {% endfor %}
@@ -25,6 +28,10 @@ public class {{ name }} {% if struct.is_exception %} extends RuntimeException {%
 
     public static {{ name }} parseJson(final String s) {
         return io.pdef.PdefJson.parse(s, {{ name }}.class);
+    }
+
+    public static {{ name }} parseJson(final java.io.Reader reader) {
+        return io.pdef.PdefJson.parse(reader, {{ name }}.class);
     }
     
     public static {{ name }} parseJson(final java.io.InputStream stream) {
@@ -47,14 +54,7 @@ public class {{ name }} {% if struct.is_exception %} extends RuntimeException {%
         return new {{ name }}(this);
     }
 
-    public String toJson() {
-        return io.pdef.PdefJson.serialize(this);
-    }
-
-    public void toJson(final java.io.OutputStream stream) {
-        io.pdef.PdefJson.serialize(this, stream);
-    }
-
+    @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

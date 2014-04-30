@@ -51,12 +51,11 @@ class Generator(object):
 
         raise ValueError('Unsupported definition %r' % type0)
 
-
     def _filepath(self, type0):
         package = self.jpackage(type0)
         dirs = package.split('.')
         dirpath = os.path.join(*dirs)
-        filename = '%s.java' % type0.name
+        filename = '%s.java' % self.jname(type0)
         return os.path.join(dirpath, filename)
 
     def jpackage(self, type0):
@@ -67,15 +66,20 @@ class Generator(object):
         return '%s.%s' % (self.package_name, name)
 
     def jname(self, type0):
-        name = type0.name
-        
+        suffix = None
         if type0.is_struct:
-            return name if name.endswith(self.struct_suffix) else name + self.struct_suffix
+            suffix = self.struct_suffix
+        elif type0.is_interface:
+            suffix = self.iface_suffix
         
-        if type0.is_interface:
-            return name if name.endswith(self.iface_suffix) else name + self.iface_suffix
+        name = type0.name
+        if not suffix:
+            return name
         
-        return type0.name
+        if name.lower().endswith(suffix.lower()):
+            return name
+        
+        return name + suffix
 
     def jtype(self, type0):
         if type0 in _TYPES:

@@ -46,7 +46,7 @@ interface TestInterface {
 
     GET request(TestStruct) TestStruct;
     
-    GET interface0() TestInterface2;
+    GET interface0() TestSubInterface;
     
     GET get(
         bool0       bool, 
@@ -86,7 +86,7 @@ interface TestInterface {
 }
 
 
-interface TestInterface2 {
+interface TestSubInterface {
     GET get(int0 int32, string0 string) int32;
     
     POST post(int0 int32, string0 string) int32;

@@ -24,11 +24,11 @@ public class {{ name }} {% if struct.is_exception %} extends RuntimeException {%
     }
 
     public static {{ name }} parseJson(final String s) {
-        return io.pdef.Json.parse(s, {{ name }}.class);
+        return io.pdef.PdefJson.parse(s, {{ name }}.class);
     }
     
     public static {{ name }} parseJson(final java.io.InputStream stream) {
-        return io.pdef.Json.parse(stream, {{ name }}.class);
+        return io.pdef.PdefJson.parse(stream, {{ name }}.class);
     }
 
 {% for field in struct.fields %}
@@ -50,12 +50,12 @@ public class {{ name }} {% if struct.is_exception %} extends RuntimeException {%
 
     @Override
     public String toJson() {
-        return io.pdef.Json.serialize(this);
+        return io.pdef.PdefJson.serialize(this);
     }
 
     @Override
     public void toJson(final java.io.OutputStream stream) {
-        io.pdef.Json.serialize(this, stream);
+        io.pdef.PdefJson.serialize(this, stream);
     }
 
     @Override

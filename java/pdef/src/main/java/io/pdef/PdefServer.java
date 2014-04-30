@@ -35,7 +35,7 @@ public class PdefServer<T> {
 		this.server = server;
 	}
 
-	public PdefResponse<?> handle(final PdefRequest request) {
+	public PdefResponse<Object> handle(final PdefRequest request) {
 		PdefInvocation invocation = parseRequest(request, iface);
 		List<PdefInvocation> chain = invocation.toChain();
 

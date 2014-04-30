@@ -29,13 +29,13 @@ public final class PdefServlet<T> extends HttpServlet {
 	static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 
 	private boolean indentJson;
-	private final transient PdefServer<T> server;
+	private final transient PdefHandler<T> server;
 
 	public PdefServlet(final Class<T> iface, final T server) {
-		this(new PdefServer<T>(iface, server));
+		this(new PdefHandler<T>(iface, server));
 	}
 
-	public PdefServlet(final PdefServer<T> server) {
+	public PdefServlet(final PdefHandler<T> server) {
 		if (server == null) throw new NullPointerException("server");
 		this.server = server;
 	}

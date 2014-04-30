@@ -17,12 +17,12 @@ import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Map;
 
-public class PdefServerTest {
+public class PdefHandlerTest {
 	@Test
 	public void testHandle() throws Exception {
 		TestInterface iface = mock(TestInterface.class);
 		TestSubInterface subface = mock(TestSubInterface.class);
-		PdefServer<TestInterface> server = new PdefServer<TestInterface>(
+		PdefHandler<TestInterface> server = new PdefHandler<TestInterface>(
 				TestInterface.class, iface);
 		when(iface.interface0(true, -32, "привет")).thenReturn(subface);
 
@@ -38,7 +38,7 @@ public class PdefServerTest {
 		PdefRequest request = new PdefRequest()
 				.setRelativePath("/interface0/false/-32/hello/get")
 				.setQuery(ImmutableMap.of("int0", "-1", "string0", "hello"));
-		PdefInvocation invocation = PdefServer.parseRequest(request, TestInterface.class);
+		PdefInvocation invocation = PdefHandler.parseRequest(request, TestInterface.class);
 
 		assertThat(invocation.getMethod(), equalToMethod(TestSubInterface.class, "get"));
 		assertThat(invocation.getArgs(), equalTo(new Object[]{-1, "hello"}));
@@ -70,7 +70,7 @@ public class PdefServerTest {
 				.setRelativePath("/request")
 				.setQuery(query);
 
-		PdefInvocation invocation = PdefServer.parseRequest(request, TestInterface.class);
+		PdefInvocation invocation = PdefHandler.parseRequest(request, TestInterface.class);
 		TestStruct struct = (TestStruct) invocation.getArgs()[0];
 		TestStruct expected = new TestStruct()
 				.setBool0(true)
@@ -97,7 +97,7 @@ public class PdefServerTest {
 				.setRelativePath("/post")
 				.setPost(ImmutableMap.of("bool0", "1", "short0", "-16", "int0", "-32"));
 
-		PdefInvocation invocation = PdefServer.parseRequest(request, TestInterface.class);
+		PdefInvocation invocation = PdefHandler.parseRequest(request, TestInterface.class);
 		Object[] args = new Object[13];
 		args[0] = true;
 		args[1] = (short) -16;
@@ -108,7 +108,7 @@ public class PdefServerTest {
 	}
 
 	public static Matcher<Method> equalToMethod(final Class<?> cls, final String name) {
-		Method method = PdefServer.getMethod(cls, name);
+		Method method = PdefHandler.getMethod(cls, name);
 		assert method != null;
 		return equalTo(method);
 	}

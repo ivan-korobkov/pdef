@@ -13,7 +13,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class PdefServer<T> {
+public class PdefHandler<T> {
 	private static final String CHARSET_NAME = "UTF-8";
 	private static final ThreadLocal<DateFormat> DATE_FORMAT = new ThreadLocal<DateFormat>() {
 		@Override
@@ -27,7 +27,7 @@ public class PdefServer<T> {
 	private final T server;
 	private final Class<T> iface;
 
-	public PdefServer(final Class<T> iface, final T server) {
+	public PdefHandler(final Class<T> iface, final T server) {
 		if (iface == null) throw new NullPointerException("iface");
 		if (server == null) throw new NullPointerException("object");
 

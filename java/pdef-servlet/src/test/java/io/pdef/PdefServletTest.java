@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class PdefServletTest {
 	@Mock
-	PdefServer<TestInterface> handler;
+	PdefHandler<TestInterface> handler;
 	PdefServlet<TestInterface> servlet;
 
 	@Before

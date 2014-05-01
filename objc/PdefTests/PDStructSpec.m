@@ -14,6 +14,22 @@
 
 
 SpecBegin(PDStruct)
+        describe(@"initWithJson/toJson", ^() {
+            it(@"should parse/serialize a struct to/from json", ^() {
+                NSError *error = nil;
+                PDTestStruct *s0 = [PDTestStruct createFixture];
+                NSData *data = [s0 toJsonWithOptions:NSJSONWritingPrettyPrinted error:&error];
+                expect(data).notTo.beNil;
+                expect(error).to.beNil;
+
+                PDTestStruct *s1 = [[PDTestStruct alloc] initWithJson:data error:&error];
+                expect(s1).notTo.beNil;
+                expect(error).to.beNil;
+
+                expect(s1).to.equal(s0);
+            });
+        });
+
         describe(@"NSCoding", ^{
             it(@"should encode and decode the structs", ^() {
                 PDTestStruct *s0 = [PDTestStruct createFixture];

@@ -49,6 +49,11 @@ static NSDateFormatter *formatter;
     return [result dataUsingEncoding:NSUTF8StringEncoding];
 }
 
++ (NSData *)serializeStruct:(PDStruct *)aStruct options:(NSJSONWritingOptions)options
+                      error:(NSError **)error {
+    return [self serialize:aStruct type:aStruct.class options:options error:error];
+}
+
 + (id)_serializeObject:(id)object type:(id)type error:(NSError **)error {
     NSParameterAssert(type != nil);
     if (!object || [object isEqual:[NSNull null]]) {
@@ -295,6 +300,16 @@ static NSDateFormatter *formatter;
     return [self _parseObject:object type:type error:error];
 }
 
++ (void)parseStruct:(PDStruct *)aStruct fromData:(NSData *)data error:(NSError **)error {
+    id object = [NSJSONSerialization JSONObjectWithData:data
+        options:NSJSONReadingAllowFragments error:error];
+    if (*error) {
+        return;
+    }
+
+    return [self _parseStructInto:aStruct object:object error:error];
+}
+
 + (id)_parseObject:(id)object type:(id)type error:(NSError **)error {
     NSParameterAssert(type != nil);
     if (!object || object == [NSNull null]) {
@@ -502,16 +517,21 @@ static NSDateFormatter *formatter;
 
 + (id)_parseStruct:(id)object type:(Class)type error:(NSError **)error {
     NSParameterAssert([type isSubclassOfClass:PDStruct.class]);
+    PDStruct *result = [[type alloc] init];
+    [self _parseStructInto:result object:object error:error];
+    return result;
+}
 
++ (void)_parseStructInto:(PDStruct *)aStruct object:(id)object error:(NSError **)error {
     if (![object isKindOfClass:NSDictionary.class]) {
         NSString *msg = [NSString stringWithFormat:@"Cannot parse a struct from '%@'", object];
         *error = [self error:msg];
-        return nil;
+        return;
     }
 
-    PDStruct *result = [[type alloc] init];
+    Class cls = aStruct.class;
     NSDictionary *dict = object;
-    NSDictionary *properties = [type properties];
+    NSDictionary *properties = [cls properties];
 
     for (NSString *key in [properties allKeys]) {
         id value = dict[key];
@@ -522,13 +542,11 @@ static NSDateFormatter *formatter;
         id propType = properties[key];
         id parsed = [self _parseObject:value type:propType error:error];
         if (*error) {
-            return nil;
+            return;
         }
 
-        [result setValue:parsed forKey:key];
+        [aStruct setValue:parsed forKey:key];
     }
-
-    return result;
 }
 
 + (BOOL)isClass:(id)type {

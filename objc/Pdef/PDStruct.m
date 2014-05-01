@@ -6,11 +6,33 @@
 #import "PDStruct.h"
 #import "PDEnum.h"
 #import "PDTypes.h"
+#import "PDJson.h"
 
 
 @implementation PDStruct
+
+// Implement in a subclass.
 + (NSDictionary *)properties {
     return nil;
+}
+
+- (instancetype)initWithJson:(NSData *)data error:(NSError **)error {
+    if (self = [super init]) {
+        [PDJson parseStruct:self fromData:data error:error];
+        if (*error) {
+            return nil;
+        }
+    }
+
+    return self;
+}
+
+- (NSData *)toJson:(NSError **)error {
+    return [PDJson serializeStruct:self options:NULL error:error];
+}
+
+- (NSData *)toJsonWithOptions:(NSJSONWritingOptions)options error:(NSError **)error {
+    return [PDJson serializeStruct:self options:options error:error];
 }
 
 - (id)initWithCoder:(NSCoder *)coder {

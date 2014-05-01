@@ -7,4 +7,10 @@
 /** Enum type. */
 @interface PDEnum : NSObject
 + (NSDictionary *)valuesToNames;    // NSDictionary<NSInteger, NSString>
+
++ (NSDictionary *)namesToValues;    // NSDictionary<NSString, NSInteger>
+
++ (NSInteger)enumValueForName:(NSString *)caseInsensitiveName;
+
++ (NSString *)nameForEnumValue:(NSInteger)value;
 @end

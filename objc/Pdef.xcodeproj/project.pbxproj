@@ -13,9 +13,12 @@
 		2CC5E45919117956002C6B1B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CC5E44919117956002C6B1B /* Foundation.framework */; };
 		2CC5E45E19117956002C6B1B /* libPdef.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CC5E44619117956002C6B1B /* libPdef.a */; };
 		2CC5E46419117956002C6B1B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2CC5E46219117956002C6B1B /* InfoPlist.strings */; };
+		3182100EAD89FB94A7E0AA81 /* PDJson.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182117496E0B33774A95F4D /* PDJson.m */; };
 		31821385BF18E7E8939C72BD /* PDTestStruct.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821D79AB1527F9115E10BC /* PDTestStruct.m */; };
+		31821568882745AC0B12EF23 /* PDTestStruct+Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = 318219371C898EF8302F68E4 /* PDTestStruct+Tests.m */; };
 		318215C8F5836724EBC948AA /* PDEnum.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821BDB751CC633E716CFC4 /* PDEnum.m */; };
 		318215EBC1058204BEA99A31 /* PDTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821F7DC2C63153A0D0B46C /* PDTypes.m */; };
+		31821617EC81831E9C0A263C /* PDJsonSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821AAD60299B1CD8E0DBC9 /* PDJsonSpec.m */; };
 		318216365D05B0FFB2ABE5E1 /* PDInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821CBD815FDB836A25C738 /* PDInterface.m */; };
 		318216C67C998E44E1669350 /* PDTestExceptionStruct.m in Sources */ = {isa = PBXBuildFile; fileRef = 318213179BCA0592550C36BF /* PDTestExceptionStruct.m */; };
 		3182176A813BC74F8DFC298F /* PDStructSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821FF96AE57D84E82E8418 /* PDStructSpec.m */; };
@@ -61,6 +64,7 @@
 		2CC5E46119117956002C6B1B /* PdefTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PdefTests-Info.plist"; sourceTree = "<group>"; };
 		2CC5E46319117956002C6B1B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		318210F3E477501ED6DAE662 /* PDStruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDStruct.h; sourceTree = "<group>"; };
+		3182117496E0B33774A95F4D /* PDJson.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDJson.m; sourceTree = "<group>"; };
 		31821251CB0D43CADB6FB597 /* PDProxySpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDProxySpec.m; sourceTree = "<group>"; };
 		318212CB3FF9B51286175A9A /* PDTestInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestInterface.m; sourceTree = "<group>"; };
 		318213179BCA0592550C36BF /* PDTestExceptionStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestExceptionStruct.m; sourceTree = "<group>"; };
@@ -68,15 +72,20 @@
 		318214900542A4DB9B1687B7 /* PDTestInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestInterface.h; sourceTree = "<group>"; };
 		3182150A260C81C57913344D /* PDProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDProxy.m; sourceTree = "<group>"; };
 		3182154C9E3F5E69AA138FC6 /* PDTestSubInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestSubInterface.m; sourceTree = "<group>"; };
+		31821687A4B4C97DF7EF2F9E /* PDJson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDJson.h; sourceTree = "<group>"; };
+		31821887E6564419C82EC1AC /* PDTestStruct+Tests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PDTestStruct+Tests.h"; sourceTree = "<group>"; };
 		318218DA79CD88608DDD4AA6 /* PDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDef.h; sourceTree = "<group>"; };
 		318218DD296BEB804509F36E /* PDTestSubInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestSubInterface.h; sourceTree = "<group>"; };
+		318219371C898EF8302F68E4 /* PDTestStruct+Tests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PDTestStruct+Tests.m"; sourceTree = "<group>"; };
 		318219BED15338A6B041D7AD /* PDEnum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEnum.h; sourceTree = "<group>"; };
+		31821AAD60299B1CD8E0DBC9 /* PDJsonSpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDJsonSpec.m; sourceTree = "<group>"; };
 		31821B0F437BB20709FB3208 /* PDTestNumber.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestNumber.m; sourceTree = "<group>"; };
 		31821BA8A230701ECDBEE027 /* PDInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDInterface.h; sourceTree = "<group>"; };
 		31821BD31D1664B62AEA1814 /* PDTestNumber.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestNumber.h; sourceTree = "<group>"; };
 		31821BDB751CC633E716CFC4 /* PDEnum.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEnum.m; sourceTree = "<group>"; };
 		31821CBD815FDB836A25C738 /* PDInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDInterface.m; sourceTree = "<group>"; };
 		31821D79AB1527F9115E10BC /* PDTestStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestStruct.m; sourceTree = "<group>"; };
+		31821D849BABDF50E6794413 /* PDError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDError.h; sourceTree = "<group>"; };
 		31821DB27016048C7466A829 /* PDTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTypes.h; sourceTree = "<group>"; };
 		31821ECC56BF01901E14765A /* PDProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDProxy.h; sourceTree = "<group>"; };
 		31821EE524D95B2CADABC4ED /* PDStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDStruct.m; sourceTree = "<group>"; };
@@ -158,6 +167,9 @@
 				318218DA79CD88608DDD4AA6 /* PDef.h */,
 				3182150A260C81C57913344D /* PDProxy.m */,
 				31821ECC56BF01901E14765A /* PDProxy.h */,
+				3182117496E0B33774A95F4D /* PDJson.m */,
+				31821687A4B4C97DF7EF2F9E /* PDJson.h */,
+				31821D849BABDF50E6794413 /* PDError.h */,
 			);
 			path = Pdef;
 			sourceTree = "<group>";
@@ -177,6 +189,9 @@
 				31821970668A4D4411BBDD5D /* Generated */,
 				31821FF96AE57D84E82E8418 /* PDStructSpec.m */,
 				31821251CB0D43CADB6FB597 /* PDProxySpec.m */,
+				31821AAD60299B1CD8E0DBC9 /* PDJsonSpec.m */,
+				318219371C898EF8302F68E4 /* PDTestStruct+Tests.m */,
+				31821887E6564419C82EC1AC /* PDTestStruct+Tests.h */,
 			);
 			path = PdefTests;
 			sourceTree = "<group>";
@@ -362,6 +377,7 @@
 				31821CDEC0F3462FFA3807CB /* PDStruct.m in Sources */,
 				318216365D05B0FFB2ABE5E1 /* PDInterface.m in Sources */,
 				318218680B410ABDC75109C9 /* PDProxy.m in Sources */,
+				3182100EAD89FB94A7E0AA81 /* PDJson.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,6 +392,8 @@
 				318216C67C998E44E1669350 /* PDTestExceptionStruct.m in Sources */,
 				3182176A813BC74F8DFC298F /* PDStructSpec.m in Sources */,
 				31821E3AF9246FF51EEA2680 /* PDProxySpec.m in Sources */,
+				31821617EC81831E9C0A263C /* PDJsonSpec.m in Sources */,
+				31821568882745AC0B12EF23 /* PDTestStruct+Tests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

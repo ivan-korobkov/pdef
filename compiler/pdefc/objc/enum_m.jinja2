@@ -4,6 +4,7 @@
 
 @implementation {{ name }}Enum
 static NSDictionary *valuesToNames;
+static NSDictionary *namesToValues;
 
 + (void)initialize {
     if (self != {{ name }}Enum.class) {
@@ -15,9 +16,19 @@ static NSDictionary *valuesToNames;
         @({{ loop.index }}) : @"{{ value.name }}",
     {% endfor %}
     };
+
+    namesToValues = @{
+    {% for value in definition.values %}
+        @"{{ value.name }}" : @({{ loop.index }}),
+    {% endfor %}
+    };
 }
 
 + (NSDictionary *)valuesToNames {
     return valuesToNames;
+}
+
++ (NSDictionary *)namesToValues {
+    return namesToValues;
 }
 @end

@@ -1,0 +1,23 @@
+// {{ generated_by }}
+#import "{{ name }}.h"
+
+
+@implementation {{ name }}
+static NSDictionary *properties;
+
++ (void)initialize {
+    if (self != {{ name }}.class) {
+        return;
+    }
+    
+    properties = @{
+    {% for field in definition.fields %}
+        @"{{ field.name }}" : {{ field.type|objc_reflex }},
+    {% endfor %}
+    };
+}
+
++ (NSDictionary *)properties {
+    return properties;
+}
+@end

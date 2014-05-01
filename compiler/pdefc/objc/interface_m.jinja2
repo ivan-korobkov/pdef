@@ -1,0 +1,36 @@
+// {{ generated_by }}
+#import "{{ name }}.h"
+{% for type0 in definition.referenced_types %}
+    {% if type0.is_struct or type0.is_interface %}
+#import "{{ type0|objc_name }}.h"
+    {% endif %}
+{% endfor %}
+
+
+@implementation {{ name }}
+static NSArray *methods;
+
+{% for method in definition.methods %}
+{{ method|objc_signature }} {
+    return nil;
+}
+
+{% endfor %}
++ (void)initialize {
+    if (self != {{ name }}.class) {
+        return;
+    }
+
+    methods = @[
+    {% for method in definition.methods %}
+        [PDMethod methodWithSelector:@selector({{ method|objc_selector }}) 
+                  name:@"{{ method.name }}" options:{{ method|objc_method_options }} 
+                result:{{ method.result|objc_reflex }}
+            paramNames:@[{% for arg in method.args %}@"{{ arg.name }}", {% endfor %}]
+            paramTypes:@[{% for arg in method.args %}{{ arg.type|objc_reflex }}, {% endfor %}]],
+
+    {% endfor %}
+    ];
+}
+@end
+

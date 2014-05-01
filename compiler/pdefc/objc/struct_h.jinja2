@@ -1,0 +1,21 @@
+// {{ generated_by }}
+#import <Foundation/Foundation.h>
+#import "PDTypes.h"
+{% for type0 in definition.referenced_types %}
+    {% if type0.is_enum %}
+#import "{{ type0|objc_name }}.h"
+    {% endif %}
+{% endfor %}
+
+{% for type0 in definition.referenced_types %}
+    {% if type0.is_struct %}
+@class {{ type0|objc_name }};
+    {% endif %}
+{% endfor %}
+
+
+@interface {{ name }} : PDStruct
+{% for field in definition.fields %}
+    @property(nonatomic) {{ field.type|objc_type }}{{ field.name }};
+{% endfor %}
+@end

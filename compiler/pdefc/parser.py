@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 import functools
 import logging
-import io
 
 import re
 import ply.lex as lex
@@ -335,17 +334,10 @@ class _GrammarRules(object):
         doc = p[1]
         type = p[2]
         name = p[3]
-        body = p[5]
+        args, is_request = p[5]
         result = p[7]
         
-        args = None
-        request = None
-        if isinstance(body, list):
-            args = body
-        else:
-            request = body
-        
-        method = lang.Method(name, type=type, result=result, request=request, args=args)
+        method = lang.Method(name, type=type, result=result, args=args, is_request=is_request)
         method.doc = doc
         p[0] = method
 
@@ -356,6 +348,7 @@ class _GrammarRules(object):
         '''
         p[0] = p[1]
     
+    # Returns (args, is_request)
     def p_method_body(self, p):
         '''
         method_body : 
@@ -363,9 +356,20 @@ class _GrammarRules(object):
                     | method_args
         '''
         if len(p) == 1:
+            p[0] = [], False
             return
         
-        p[0] = p[1]
+        # List of arguments.
+        if isinstance(p[1], list):
+            p[0] = p[1], False
+            return
+        
+        # Request.
+        type0 = p[1]
+        name = type0.name
+        name = name[0].lower() + name[1:]
+        arg = lang.Argument(name, type0)
+        p[0] = [arg], True
 
     def p_method_args(self, p):
         '''

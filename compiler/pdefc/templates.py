@@ -84,6 +84,13 @@ def upper_first(s):
     return s[0].upper() + s[1:]
 
 
+def lower_first(s):
+    '''Lowercase the first letter in a string.'''
+    if not s:
+        return s
+    return s[0].lower() + s[1:]
+
+
 def mkdir_p(dirname):
     '''Make directories, ignore errors'''
     if os.path.exists(dirname):

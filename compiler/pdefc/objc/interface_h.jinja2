@@ -1,0 +1,26 @@
+// {{ generated_by }}
+#import <Foundation/Foundation.h>
+#import "PDTypes.h"
+{% for type0 in definition.referenced_types %}
+    {% if type0.is_enum %}
+#import "{{ type0|objc_name }}.h"
+    {% endif %}
+{% endfor %}
+
+@class RACSignal;
+{% for type0 in definition.referenced_types %}
+    {% if type0.is_struct or type0.is_interface %}
+@class {{ type0|objc_name }};
+    {% endif %}
+{% endfor %}
+
+
+@interface {{ name }} : PDInterface
+{% for method in definition.methods %}
+{% if method.doc %}
+/** {{ method.doc }} */
+{% endif %}
+{{ method|objc_signature }};
+
+{% endfor %}
+@end

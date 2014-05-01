@@ -1,0 +1,14 @@
+xcodeproj 'Pdef'
+inhibit_all_warnings!
+platform :ios, '7.0'
+
+target :Pdef do
+  podspec :path => "../Pdef.podspec"
+end
+
+target :PdefTests, :exclusive => true do
+  pod 'Specta'
+  pod 'Expecta'
+  pod 'OCMockito'
+end
+

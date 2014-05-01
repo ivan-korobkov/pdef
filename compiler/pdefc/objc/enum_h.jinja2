@@ -1,0 +1,15 @@
+// {{ generated_by }}
+#import <Foundation/Foundation.h>
+#import "PDTypes.h"
+
+
+typedef NS_ENUM(NSInteger, {{ name }}) {
+    {{ name }}_UNDEFINED = 0,
+{% for value in definition.values if value.name != "UNDEFINED" %}
+    {{ name }}_{{ value.name }} = {{ loop.index }},
+{% endfor %}
+};
+
+
+@interface {{ name }}Enum : PDEnum
+@end

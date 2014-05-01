@@ -21,4 +21,4 @@ class TestCompiler(unittest.TestCase):
         file = package.files[0]
         assert file.dotname == 'test'
         assert file.path == 'test.pdef'
-        assert len(file.types) == 4
+        assert len(file.types) == 5

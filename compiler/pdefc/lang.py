@@ -230,6 +230,10 @@ class Type(Node):
         self.is_enum = isinstance(self, Enum)
         self.is_struct = isinstance(self, Struct)
         self.is_interface = isinstance(self, Interface)
+        
+        self.is_list = isinstance(self, List)
+        self.is_set = isinstance(self, Set)
+        self.is_map = isinstance(self, Map)
         self.is_collection = isinstance(self, (List, Set, Map))
 
     def __str__(self):
@@ -455,22 +459,21 @@ class Interface(Type):
 
 class Method(Node):
     result = ReferenceProperty('_result')
-    request = ReferenceProperty('_request')
     
-    def __init__(self, name, type=None, result=None, request=None, args=None):
+    def __init__(self, name, type=None, result=None, args=None, is_request=None):
         super(Method, self).__init__()
         self.name = name
         self.type = type or MethodType.GET
         self._result = self.create_reference(result if result is not None else VOID)
-        self._request = self.create_reference(request)
         self.args = []
+        self.is_request = is_request
         self.interface = None
-
+        
         for arg in args or ():
             self.add_arg(arg)
         
-        if args and request:
-            raise ValueError('Method args and request are mutually exclusive')
+        if is_request and len(args) != 1:
+            raise ValueError('Method must have only one request argument')
         
     def __str__(self):
         return self.name
@@ -485,7 +488,11 @@ class Method(Node):
     @property
     def is_post(self):
         return self.type == MethodType.POST
-
+    
+    @property
+    def is_last(self):
+        return self.result.is_datatype or self.result.is_void
+    
     def add_arg(self, arg):
         '''Append an argument to this method.'''
         if arg.method:
@@ -508,7 +515,7 @@ class Method(Node):
                            'Unknown method type "%s"', self.type)
         
         if self.is_post:
-            errors.assert_that(self.result.is_datatype or self.result.is_void, self.location,
+            errors.assert_that(self.is_last, self.location,
                                'POST method must have a data type result or be void')
 
         # Prevent duplicate arguments.

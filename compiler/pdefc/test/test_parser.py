@@ -263,6 +263,7 @@ class TestParser(unittest.TestCase):
         assert method1.doc == 'Method one.'
         assert method1.is_post
         assert method1.location.lineno == 9
+        assert method1.is_request is False
         assert method1._result.name == 'result'
         assert method1._result.location.lineno == 11
 
@@ -276,9 +277,12 @@ class TestParser(unittest.TestCase):
         
         method2 = methods[2]
         assert method2.name == 'method2'
-        assert method2.is_post
-        assert method2.args == []
-        assert method2._request.name == 'Request'
+        assert method2.is_post is True
+        assert method2.is_request is True
+        
+        assert len(method2.args) == 1
+        assert method2.args[0].name == 'request'
+        assert method2.args[0]._type.name == 'Request'
         assert method2._result.name == 'Response'
 
     def test_collections(self):

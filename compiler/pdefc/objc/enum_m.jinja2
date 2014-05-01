@@ -1,0 +1,23 @@
+// {{ generated_by }}
+#import "{{ name }}.h"
+
+
+@implementation {{ name }}Enum
+static NSDictionary *valuesToNames;
+
++ (void)initialize {
+    if (self != {{ name }}Enum.class) {
+        return;
+    }
+
+    valuesToNames = @{
+    {% for value in definition.values %}
+        @({{ loop.index }}) : @"{{ value.name }}",
+    {% endfor %}
+    };
+}
+
++ (NSDictionary *)valuesToNames {
+    return valuesToNames;
+}
+@end

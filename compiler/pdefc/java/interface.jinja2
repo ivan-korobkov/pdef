@@ -21,8 +21,8 @@ public interface {{ name }} {
 {% endif %}
 {% if method.request %}
     @io.pdef.Request
-    {{ method.result|jtype }} {{ method.name }}({{ method.request|jtype }} request);
-{% elif method.args %}
+{% endif %}
+{% if method.args %}
     {{ method.result|jtype }} {{ method.name }}(
     {% for arg in method.args %}
             @io.pdef.Name("{{ arg.name }}") {{ arg.type|jtype }} {{ arg.name }}

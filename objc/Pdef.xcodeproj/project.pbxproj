@@ -19,9 +19,11 @@
 		318216365D05B0FFB2ABE5E1 /* PDInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821CBD815FDB836A25C738 /* PDInterface.m */; };
 		318216C67C998E44E1669350 /* PDTestExceptionStruct.m in Sources */ = {isa = PBXBuildFile; fileRef = 318213179BCA0592550C36BF /* PDTestExceptionStruct.m */; };
 		3182176A813BC74F8DFC298F /* PDStructSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821FF96AE57D84E82E8418 /* PDStructSpec.m */; };
+		318218680B410ABDC75109C9 /* PDProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182150A260C81C57913344D /* PDProxy.m */; };
 		31821BCD88D0FD8AA53CF583 /* PDTestInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 318212CB3FF9B51286175A9A /* PDTestInterface.m */; };
 		31821C0E04F73B39211F0693 /* PDTestSubInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182154C9E3F5E69AA138FC6 /* PDTestSubInterface.m */; };
 		31821CDEC0F3462FFA3807CB /* PDStruct.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821EE524D95B2CADABC4ED /* PDStruct.m */; };
+		31821E3AF9246FF51EEA2680 /* PDProxySpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821251CB0D43CADB6FB597 /* PDProxySpec.m */; };
 		31821E98FD7E0690E45A6A14 /* PDTestNumber.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821B0F437BB20709FB3208 /* PDTestNumber.m */; };
 		D0F725D35D1B432F85C8FC6A /* libPods-PdefTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 239E06D87CE5404F85DB37B5 /* libPods-PdefTests.a */; };
 /* End PBXBuildFile section */
@@ -59,10 +61,12 @@
 		2CC5E46119117956002C6B1B /* PdefTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PdefTests-Info.plist"; sourceTree = "<group>"; };
 		2CC5E46319117956002C6B1B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		318210F3E477501ED6DAE662 /* PDStruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDStruct.h; sourceTree = "<group>"; };
+		31821251CB0D43CADB6FB597 /* PDProxySpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDProxySpec.m; sourceTree = "<group>"; };
 		318212CB3FF9B51286175A9A /* PDTestInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestInterface.m; sourceTree = "<group>"; };
 		318213179BCA0592550C36BF /* PDTestExceptionStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestExceptionStruct.m; sourceTree = "<group>"; };
 		3182144436D2556DCEF169A1 /* PDTestExceptionStruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestExceptionStruct.h; sourceTree = "<group>"; };
 		318214900542A4DB9B1687B7 /* PDTestInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestInterface.h; sourceTree = "<group>"; };
+		3182150A260C81C57913344D /* PDProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDProxy.m; sourceTree = "<group>"; };
 		3182154C9E3F5E69AA138FC6 /* PDTestSubInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestSubInterface.m; sourceTree = "<group>"; };
 		318218DA79CD88608DDD4AA6 /* PDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDef.h; sourceTree = "<group>"; };
 		318218DD296BEB804509F36E /* PDTestSubInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestSubInterface.h; sourceTree = "<group>"; };
@@ -74,6 +78,7 @@
 		31821CBD815FDB836A25C738 /* PDInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDInterface.m; sourceTree = "<group>"; };
 		31821D79AB1527F9115E10BC /* PDTestStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestStruct.m; sourceTree = "<group>"; };
 		31821DB27016048C7466A829 /* PDTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTypes.h; sourceTree = "<group>"; };
+		31821ECC56BF01901E14765A /* PDProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDProxy.h; sourceTree = "<group>"; };
 		31821EE524D95B2CADABC4ED /* PDStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDStruct.m; sourceTree = "<group>"; };
 		31821F3E896DC9D6405CC394 /* PDTestStruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestStruct.h; sourceTree = "<group>"; };
 		31821F7DC2C63153A0D0B46C /* PDTypes.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTypes.m; sourceTree = "<group>"; };
@@ -151,6 +156,8 @@
 				31821BA8A230701ECDBEE027 /* PDInterface.h */,
 				31821CBD815FDB836A25C738 /* PDInterface.m */,
 				318218DA79CD88608DDD4AA6 /* PDef.h */,
+				3182150A260C81C57913344D /* PDProxy.m */,
+				31821ECC56BF01901E14765A /* PDProxy.h */,
 			);
 			path = Pdef;
 			sourceTree = "<group>";
@@ -169,6 +176,7 @@
 				2CC5E46019117956002C6B1B /* Supporting Files */,
 				31821970668A4D4411BBDD5D /* Generated */,
 				31821FF96AE57D84E82E8418 /* PDStructSpec.m */,
+				31821251CB0D43CADB6FB597 /* PDProxySpec.m */,
 			);
 			path = PdefTests;
 			sourceTree = "<group>";
@@ -353,6 +361,7 @@
 				318215C8F5836724EBC948AA /* PDEnum.m in Sources */,
 				31821CDEC0F3462FFA3807CB /* PDStruct.m in Sources */,
 				318216365D05B0FFB2ABE5E1 /* PDInterface.m in Sources */,
+				318218680B410ABDC75109C9 /* PDProxy.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -366,6 +375,7 @@
 				31821C0E04F73B39211F0693 /* PDTestSubInterface.m in Sources */,
 				318216C67C998E44E1669350 /* PDTestExceptionStruct.m in Sources */,
 				3182176A813BC74F8DFC298F /* PDStructSpec.m in Sources */,
+				31821E3AF9246FF51EEA2680 /* PDProxySpec.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -504,6 +514,7 @@
 				);
 				INFOPLIST_FILE = "PdefTests/PdefTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "\"${PROJECT_DIR}/Pods\"/**";
 				WRAPPER_EXTENSION = xctest;
 			};
 			name = Debug;
@@ -521,6 +532,7 @@
 				GCC_PREFIX_HEADER = "Pdef/Pdef-Prefix.pch";
 				INFOPLIST_FILE = "PdefTests/PdefTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "\"${PROJECT_DIR}/Pods\"/**";
 				WRAPPER_EXTENSION = xctest;
 			};
 			name = Release;

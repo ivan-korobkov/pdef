@@ -11,15 +11,17 @@
 		2CC5E44A19117956002C6B1B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CC5E44919117956002C6B1B /* Foundation.framework */; };
 		2CC5E45819117956002C6B1B /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CC5E45719117956002C6B1B /* XCTest.framework */; };
 		2CC5E45919117956002C6B1B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CC5E44919117956002C6B1B /* Foundation.framework */; };
-		2CC5E45B19117956002C6B1B /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CC5E45A19117956002C6B1B /* UIKit.framework */; };
 		2CC5E45E19117956002C6B1B /* libPdef.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CC5E44619117956002C6B1B /* libPdef.a */; };
 		2CC5E46419117956002C6B1B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2CC5E46219117956002C6B1B /* InfoPlist.strings */; };
-		2CC5E46619117956002C6B1B /* PdefTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2CC5E46519117956002C6B1B /* PdefTests.m */; };
 		31821385BF18E7E8939C72BD /* PDTestStruct.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821D79AB1527F9115E10BC /* PDTestStruct.m */; };
+		318215C8F5836724EBC948AA /* PDEnum.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821BDB751CC633E716CFC4 /* PDEnum.m */; };
 		318215EBC1058204BEA99A31 /* PDTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821F7DC2C63153A0D0B46C /* PDTypes.m */; };
+		318216365D05B0FFB2ABE5E1 /* PDInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821CBD815FDB836A25C738 /* PDInterface.m */; };
 		318216C67C998E44E1669350 /* PDTestExceptionStruct.m in Sources */ = {isa = PBXBuildFile; fileRef = 318213179BCA0592550C36BF /* PDTestExceptionStruct.m */; };
+		3182176A813BC74F8DFC298F /* PDStructSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821FF96AE57D84E82E8418 /* PDStructSpec.m */; };
 		31821BCD88D0FD8AA53CF583 /* PDTestInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 318212CB3FF9B51286175A9A /* PDTestInterface.m */; };
 		31821C0E04F73B39211F0693 /* PDTestSubInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182154C9E3F5E69AA138FC6 /* PDTestSubInterface.m */; };
+		31821CDEC0F3462FFA3807CB /* PDStruct.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821EE524D95B2CADABC4ED /* PDStruct.m */; };
 		31821E98FD7E0690E45A6A14 /* PDTestNumber.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821B0F437BB20709FB3208 /* PDTestNumber.m */; };
 		D0F725D35D1B432F85C8FC6A /* libPods-PdefTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 239E06D87CE5404F85DB37B5 /* libPods-PdefTests.a */; };
 /* End PBXBuildFile section */
@@ -54,22 +56,28 @@
 		2CC5E44D19117956002C6B1B /* Pdef-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Pdef-Prefix.pch"; sourceTree = "<group>"; };
 		2CC5E45619117956002C6B1B /* PdefTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PdefTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CC5E45719117956002C6B1B /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
-		2CC5E45A19117956002C6B1B /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		2CC5E46119117956002C6B1B /* PdefTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PdefTests-Info.plist"; sourceTree = "<group>"; };
 		2CC5E46319117956002C6B1B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		2CC5E46519117956002C6B1B /* PdefTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PdefTests.m; sourceTree = "<group>"; };
+		318210F3E477501ED6DAE662 /* PDStruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDStruct.h; sourceTree = "<group>"; };
 		318212CB3FF9B51286175A9A /* PDTestInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestInterface.m; sourceTree = "<group>"; };
 		318213179BCA0592550C36BF /* PDTestExceptionStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestExceptionStruct.m; sourceTree = "<group>"; };
 		3182144436D2556DCEF169A1 /* PDTestExceptionStruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestExceptionStruct.h; sourceTree = "<group>"; };
 		318214900542A4DB9B1687B7 /* PDTestInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestInterface.h; sourceTree = "<group>"; };
 		3182154C9E3F5E69AA138FC6 /* PDTestSubInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestSubInterface.m; sourceTree = "<group>"; };
+		318218DA79CD88608DDD4AA6 /* PDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDef.h; sourceTree = "<group>"; };
 		318218DD296BEB804509F36E /* PDTestSubInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestSubInterface.h; sourceTree = "<group>"; };
+		318219BED15338A6B041D7AD /* PDEnum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEnum.h; sourceTree = "<group>"; };
 		31821B0F437BB20709FB3208 /* PDTestNumber.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestNumber.m; sourceTree = "<group>"; };
+		31821BA8A230701ECDBEE027 /* PDInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDInterface.h; sourceTree = "<group>"; };
 		31821BD31D1664B62AEA1814 /* PDTestNumber.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestNumber.h; sourceTree = "<group>"; };
+		31821BDB751CC633E716CFC4 /* PDEnum.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEnum.m; sourceTree = "<group>"; };
+		31821CBD815FDB836A25C738 /* PDInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDInterface.m; sourceTree = "<group>"; };
 		31821D79AB1527F9115E10BC /* PDTestStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestStruct.m; sourceTree = "<group>"; };
 		31821DB27016048C7466A829 /* PDTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTypes.h; sourceTree = "<group>"; };
+		31821EE524D95B2CADABC4ED /* PDStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDStruct.m; sourceTree = "<group>"; };
 		31821F3E896DC9D6405CC394 /* PDTestStruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestStruct.h; sourceTree = "<group>"; };
 		31821F7DC2C63153A0D0B46C /* PDTypes.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTypes.m; sourceTree = "<group>"; };
+		31821FF96AE57D84E82E8418 /* PDStructSpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDStructSpec.m; sourceTree = "<group>"; };
 		4A6F4E552E284E9DB5629290 /* Pods-PdefTests.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PdefTests.xcconfig"; path = "Pods/Pods-PdefTests.xcconfig"; sourceTree = "<group>"; };
 		E3EF8DE149FF4BB889F4A270 /* Pods-Pdef.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Pdef.xcconfig"; path = "Pods/Pods-Pdef.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -89,7 +97,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				2CC5E45819117956002C6B1B /* XCTest.framework in Frameworks */,
-				2CC5E45B19117956002C6B1B /* UIKit.framework in Frameworks */,
 				2CC5E45E19117956002C6B1B /* libPdef.a in Frameworks */,
 				2CC5E45919117956002C6B1B /* Foundation.framework in Frameworks */,
 				D0F725D35D1B432F85C8FC6A /* libPods-PdefTests.a in Frameworks */,
@@ -125,7 +132,6 @@
 			children = (
 				2CC5E44919117956002C6B1B /* Foundation.framework */,
 				2CC5E45719117956002C6B1B /* XCTest.framework */,
-				2CC5E45A19117956002C6B1B /* UIKit.framework */,
 				0687DBDB43224276AD009F76 /* libPods-Pdef.a */,
 				239E06D87CE5404F85DB37B5 /* libPods-PdefTests.a */,
 			);
@@ -138,6 +144,13 @@
 				2CC5E44C19117956002C6B1B /* Supporting Files */,
 				31821F7DC2C63153A0D0B46C /* PDTypes.m */,
 				31821DB27016048C7466A829 /* PDTypes.h */,
+				318219BED15338A6B041D7AD /* PDEnum.h */,
+				31821BDB751CC633E716CFC4 /* PDEnum.m */,
+				318210F3E477501ED6DAE662 /* PDStruct.h */,
+				31821EE524D95B2CADABC4ED /* PDStruct.m */,
+				31821BA8A230701ECDBEE027 /* PDInterface.h */,
+				31821CBD815FDB836A25C738 /* PDInterface.m */,
+				318218DA79CD88608DDD4AA6 /* PDef.h */,
 			);
 			path = Pdef;
 			sourceTree = "<group>";
@@ -153,9 +166,9 @@
 		2CC5E45F19117956002C6B1B /* PdefTests */ = {
 			isa = PBXGroup;
 			children = (
-				2CC5E46519117956002C6B1B /* PdefTests.m */,
 				2CC5E46019117956002C6B1B /* Supporting Files */,
 				31821970668A4D4411BBDD5D /* Generated */,
+				31821FF96AE57D84E82E8418 /* PDStructSpec.m */,
 			);
 			path = PdefTests;
 			sourceTree = "<group>";
@@ -337,6 +350,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				318215EBC1058204BEA99A31 /* PDTypes.m in Sources */,
+				318215C8F5836724EBC948AA /* PDEnum.m in Sources */,
+				31821CDEC0F3462FFA3807CB /* PDStruct.m in Sources */,
+				318216365D05B0FFB2ABE5E1 /* PDInterface.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -344,12 +360,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2CC5E46619117956002C6B1B /* PdefTests.m in Sources */,
 				31821385BF18E7E8939C72BD /* PDTestStruct.m in Sources */,
 				31821E98FD7E0690E45A6A14 /* PDTestNumber.m in Sources */,
 				31821BCD88D0FD8AA53CF583 /* PDTestInterface.m in Sources */,
 				31821C0E04F73B39211F0693 /* PDTestSubInterface.m in Sources */,
 				318216C67C998E44E1669350 /* PDTestExceptionStruct.m in Sources */,
+				3182176A813BC74F8DFC298F /* PDStructSpec.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

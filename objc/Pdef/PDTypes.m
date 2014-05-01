@@ -6,7 +6,6 @@
 #import "PDTypes.h"
 
 
-
 @implementation PDList
 + (id)listWithItem:(id)item {
     return [[self alloc] initWithItem:item];
@@ -41,7 +40,7 @@
 
 @implementation PDMap
 + (id)mapWithKey:(id)key value:(id)value {
-    return nil;
+    return [[self alloc] initWithKey:key value:value];
 }
 
 - (instancetype)initWithKey:(id)key value:(id)value {
@@ -50,61 +49,6 @@
     if (self = [super init]) {
         _key = key;
         _value = value;
-    }
-
-    return self;
-}
-@end
-
-
-@implementation PDEnum
-+ (NSDictionary *)valuesToNames {
-    return nil;
-}
-@end
-
-
-@implementation PDStruct
-+ (NSDictionary *)properties {
-    return nil;
-}
-@end
-
-
-@implementation PDInterface
-+ (NSArray *)methods {
-    return nil;
-}
-@end
-
-
-@implementation PDMethod
-+ (PDMethod *)methodWithSelector:(SEL)selector name:(NSString *)name
-                         options:(PDMethodOptions)options
-                          result:(id)result paramNames:(NSArray *)names
-                      paramTypes:(NSArray *)types {
-    return [[PDMethod alloc] initWithSelector:selector name:name options:options
-        result:result paramNames:names paramTypes:types];
-}
-
-- (instancetype)initWithSelector:(SEL)selector name:(NSString *)name
-                         options:(PDMethodOptions)options result:(id)result
-                      paramNames:(NSArray *)names paramTypes:(NSArray *)types {
-    NSParameterAssert(selector);
-    NSParameterAssert((options & PDMethodGet) || (options & PDMethodPost));
-    NSParameterAssert((options & PDMethodGet) && (options & PDMethodPost) == NO);
-
-    if (self = [super init]) {
-        _selector = selector;
-        _name = name;
-
-        _get = options & PDMethodGet;
-        _post = options & PDMethodPost;
-        _request = options & PDMethodRequest;
-
-        _result = result ? result : @(PDTypeVoid);
-        _paramTypes = [names copy];
-        _paramNames = [types copy];
     }
 
     return self;

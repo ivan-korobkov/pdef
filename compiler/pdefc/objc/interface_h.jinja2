@@ -1,6 +1,6 @@
 // {{ generated_by }}
 #import <Foundation/Foundation.h>
-#import "PDTypes.h"
+#import "PDef.h"
 {% for type0 in definition.referenced_types %}
     {% if type0.is_enum %}
 #import "{{ type0|objc_name }}.h"

@@ -1,6 +1,6 @@
 // {{ generated_by }}
 #import <Foundation/Foundation.h>
-#import "PDTypes.h"
+#import "PDef.h"
 {% for type0 in definition.referenced_types %}
     {% if type0.is_enum %}
 #import "{{ type0|objc_name }}.h"
@@ -16,6 +16,6 @@
 
 @interface {{ name }} : PDStruct
 {% for field in definition.fields %}
-    @property(nonatomic) {{ field.type|objc_type }}{{ field.name }};
+@property(nonatomic) {{ field.type|objc_type }}{{ field.name }};
 {% endfor %}
 @end

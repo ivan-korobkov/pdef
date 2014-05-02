@@ -48,7 +48,7 @@ public class PdefHandler<T> {
 	}
 
 	@Nonnull
-	public static PdefInvocation parseRequest(final PdefRequest request, final Class<?> iface) {
+	static PdefInvocation parseRequest(final PdefRequest request, final Class<?> iface) {
 		try {
 			return doParseRequest(request, iface);
 		} catch (RuntimeException e) {
@@ -58,6 +58,7 @@ public class PdefHandler<T> {
 		}
 	}
 
+	@Nonnull
 	private static PdefInvocation doParseRequest(final PdefRequest request, Class<?> iface)
 			throws Exception {
 		if (request == null) throw new NullPointerException("request");

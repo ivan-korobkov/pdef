@@ -19,7 +19,7 @@ public interface {{ name }} {
 {% elif method.is_post %}
     @POST
 {% endif %}
-{% if method.request %}
+{% if method.is_request %}
     @io.pdef.Request
 {% endif %}
 {% if method.args %}

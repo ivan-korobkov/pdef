@@ -92,7 +92,7 @@ def gen_java_command(commands, compiler):
     
     p = commands.add_parser('gen-java', help='Generate Java files')
     p.add_argument('src', help='pdef package path')
-    p.add_argument('dst', help='destination directory')
+    p.add_argument('--dst', dest='dst', required=True, help='destination directory')
     p.add_argument('--package', dest='package', help='java package, i.e. "io.pdef"')
     p.set_defaults(command_func=func)
 
@@ -109,6 +109,6 @@ def gen_objc_command(commands, compiler):
     
     p = commands.add_parser('gen-objc', help='Generate Objective-C files')
     p.add_argument('src', help='pdef package path')
-    p.add_argument('dst', help='destination directory')
+    p.add_argument('--dst', dest='dst', required=True, help='destination directory')
     p.add_argument('--prefix', help='objective-c class prefix, i.e. "NS"')
     p.set_defaults(command_func=func)

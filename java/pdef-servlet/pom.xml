@@ -87,7 +87,7 @@
 								<exec executable="pdefc" failonerror="true">
 									<arg value="gen-java" />
 									<arg value="src/test/pdef/test.pdef" />
-									<arg value="target/generated-test-sources/pdef" />
+									<arg value="--dst=target/generated-test-sources/pdef" />
 									<arg value="--package=io.pdef" />
 								</exec>
 							</tasks>

@@ -49,7 +49,7 @@
 
 - (void)forwardInvocation:(NSInvocation *)invocation {
     SEL selector = invocation.selector;
-    NSArray *methods = [_cls methods];
+    NSArray *methods = [_cls pdef_methods];
 
     // Find a method by the invocation selector.
     NSUInteger index = [methods indexOfObjectPassingTest:

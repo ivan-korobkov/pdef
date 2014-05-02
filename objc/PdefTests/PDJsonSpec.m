@@ -19,13 +19,13 @@ SpecBegin(PDJson)
         describe(@"fragment", ^{
             it(@"should parse/serialize a boolean", ^() {
                 NSError *error = nil;
-                NSData *data = [PDJson serialize:@YES type:@(PDPrimitiveBool)
+                NSData *data = [PDJson serialize:@YES type:@(PDTypeBool)
                     options:NSJSONWritingPrettyPrinted error:&error];
 
                 expect(data).notTo.beNil;
                 expect(error).to.beNil;
 
-                NSNumber *result = [PDJson parseJson:data type:@(PDPrimitiveBool) error:&error];
+                NSNumber *result = [PDJson parseJson:data type:@(PDTypeBool) error:&error];
                 expect(result).notTo.beNil;
                 expect(error).to.beNil;
 

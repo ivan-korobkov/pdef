@@ -12,9 +12,27 @@
 
 PDType PDTypeForType(id type) {
     if ([type isKindOfClass:NSNumber.class]) {
-        return PDTypePrimitive;
+        PDType type0 = (PDType) ((NSNumber *) type).intValue;
+        switch (type0) {
+            case PDTypeBool:
+            case PDTypeInt16:
+            case PDTypeInt32:
+            case PDTypeInt64:
+            case PDTypeFloat:
+            case PDTypeDouble:
+            case PDTypeString:
+            case PDTypeDate:
+            case PDTypeVoid:
+                // Primitives.
+                return type0;
 
-    } else if ([type isKindOfClass:PDList.class]) {
+            default:
+                // Other types require generic objects/classes.
+                return PDTypeUndefined;
+        }
+    }
+
+    if ([type isKindOfClass:PDList.class]) {
         return PDTypeList;
 
     } else if ([type isKindOfClass:PDMap.class]) {

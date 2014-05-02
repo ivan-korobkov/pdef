@@ -17,10 +17,9 @@
 
 - (NSUInteger)hash;
 
-// Internal pdef methods.
-
 // Implement in a subclass, return NSDictionary<NSString, type>.
-+ (NSDictionary *)properties;
++ (NSDictionary *)pdef_properties;
 
+// Returns NSDictionary<NSString, type>.
 - (NSDictionary *)pdef_properties;
 @end

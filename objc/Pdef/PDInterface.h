@@ -7,7 +7,7 @@
 @class PDMethod;
 
 @interface PDInterface : NSObject
-+ (NSArray *)methods;
++ (NSArray *)pdef_methods;
 
 + (PDMethod *)pdef_methodForSelector:(SEL)selector;
 @end

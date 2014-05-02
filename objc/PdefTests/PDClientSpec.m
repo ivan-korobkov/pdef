@@ -68,7 +68,7 @@ SpecBegin(PDClient)
                     iface:PDTestInterface.class resultType:&resultType error:&error];
 
                 expect(error).to.beNil;
-                expect(resultType).to.equal(@(PDPrimitiveInt32));
+                expect(resultType).to.equal(@(PDTypeInt32));
 
                 NSDictionary *q = parsePathQuery(request.path);
                 expect([request.path hasPrefix:@"interface0/1/-32/hello%2Fworld/get?"]).to.beTruthy;
@@ -121,7 +121,7 @@ SpecBegin(PDClient)
                     iface:PDTestInterface.class resultType:&resultType error:&error];
 
                 expect(error).to.beNil;
-                expect(resultType).to.equal(@(PDPrimitiveInt32));
+                expect(resultType).to.equal(@(PDTypeInt32));
 
                 NSDictionary *query = parsePathQuery(request.post);
                 expect(request.path).to.equal(@"interface0/0/-32/world/post");

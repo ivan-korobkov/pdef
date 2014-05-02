@@ -284,53 +284,39 @@ static NSDateFormatter *dateFormatter;
     PDType type0 = PDTypeForType(type);
 
     switch (type0) {
-        case PDTypePrimitive: {
-            AssertTrue([type isKindOfClass:NSNumber.class], error,
-            @"Cannot serialize a primitive from type '%@'", type)
+        case PDTypeBool:{
+            AssertTrue([value isKindOfClass:NSNumber.class], error,
+            @"Cannot serialize an enum to string from value '%@'", value)
 
-            PDPrimitive primitive = (PDPrimitive) ((NSNumber *) type).intValue;
-            switch (primitive) {
-                case PDPrimitiveBool: {
-                    AssertTrue([value isKindOfClass:NSNumber.class], error,
-                    @"Cannot serialize an enum to string from value '%@'", value)
+            BOOL b = ((NSNumber *) value).boolValue;
+            return b ? @"1" : @"0";
+        }
 
-                    BOOL b = ((NSNumber *) value).boolValue;
-                    return b ? @"1" : @"0";
-                }
+        case PDTypeInt16:
+        case PDTypeInt32:
+        case PDTypeInt64:
+        case PDTypeFloat:
+        case PDTypeDouble:{
+            AssertTrue([value isKindOfClass:NSNumber.class], error,
+            @"Cannot serialize a number to string from value '%@'", value)
 
-                case PDPrimitiveInt16:
-                case PDPrimitiveInt32:
-                case PDPrimitiveInt64:
-                case PDPrimitiveFloat:
-                case PDPrimitiveDouble: {
-                    AssertTrue([value isKindOfClass:NSNumber.class], error,
-                    @"Cannot serialize a number to string from value '%@'", value)
+            NSNumber *number = value;
+            return [number stringValue];
+        }
 
-                    NSNumber *number = value;
-                    return [number stringValue];
-                }
+        case PDTypeString: {
+            AssertTrue([value isKindOfClass:NSString.class], error,
+            @"Cannot serialize a string from value '%@'", value)
 
-                case PDPrimitiveString: {
-                    AssertTrue([value isKindOfClass:NSString.class], error,
-                    @"Cannot serialize a string from value '%@'", value)
+            return value;
+        }
 
-                    return value;
-                }
+        case PDTypeDate: {
+            AssertTrue([value isKindOfClass:NSDate.class], error,
+            @"Cannot serialize a date from value '%@'", value)
 
-                case PDPrimitiveDate: {
-                    AssertTrue([value isKindOfClass:NSDate.class], error,
-                    @"Cannot serialize a date from value '%@'", value)
-
-                    @synchronized (self) {
-                        return [dateFormatter stringFromDate:value];
-                    }
-                };
-
-                default: {
-                    *error = [self errorWithDescription:[NSString stringWithFormat:
-                        @"Cannot serialize a primitive for type '%@'", type]];
-                    return nil;
-                }
+            @synchronized (self) {
+                return [dateFormatter stringFromDate:value];
             }
         }
 
@@ -343,9 +329,8 @@ static NSDateFormatter *dateFormatter;
 
             NSString *name = [enum0 nameForEnumValue:number.integerValue];
             AssertTrue(name, error, @"Cannot serialize an enum '%@' as type '%@'", value, type)
-
             return [name lowercaseString];
-        };
+        }
 
         case PDTypeList:
         case PDTypeSet:
@@ -358,6 +343,7 @@ static NSDateFormatter *dateFormatter;
 
             return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         }
+
         default: {
             *error = [self errorWithDescription:@"Cannot serialize to string '%@'"];
             return nil;

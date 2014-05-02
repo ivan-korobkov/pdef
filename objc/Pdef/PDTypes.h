@@ -8,27 +8,21 @@
 
 typedef NS_ENUM(int, PDType) {
     PDTypeUndefined = 0,
-    PDTypePrimitive = 1,
-    PDTypeList = 2,
-    PDTypeSet = 3,
-    PDTypeMap = 4,
-    PDTypeEnum = 5,
-    PDTypeStruct = 6,
-    PDTypeInterface =7
-};
-
-
-/** Primitive pdef types. */
-typedef NS_ENUM(int, PDPrimitive) {
-    PDPrimitiveBool = 1,
-    PDPrimitiveInt16 = 2,
-    PDPrimitiveInt32 = 3,
-    PDPrimitiveInt64 = 4,
-    PDPrimitiveFloat = 5,
-    PDPrimitiveDouble = 6,
-    PDPrimitiveString = 7,
-    PDPrimitiveDate = 8,
-    PDPrimitiveVoid = 9
+    PDTypeBool = 1,
+    PDTypeInt16 = 2,
+    PDTypeInt32 = 3,
+    PDTypeInt64 = 4,
+    PDTypeFloat = 5,
+    PDTypeDouble = 6,
+    PDTypeString = 7,
+    PDTypeDate = 8,
+    PDTypeEnum = 9,
+    PDTypeList = 10,
+    PDTypeSet = 11,
+    PDTypeMap = 12,
+    PDTypeStruct = 13,
+    PDTypeVoid = 14,
+    PDTypeInterface = 15
 };
 
 

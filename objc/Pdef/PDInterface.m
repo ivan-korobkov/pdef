@@ -9,12 +9,12 @@
 
 
 @implementation PDInterface
-+ (NSArray *)methods {
++ (NSArray *)pdef_methods {
     return nil;
 }
 
 + (PDMethod *)pdef_methodForSelector:(SEL)selector {
-    NSArray *methods = [self methods];
+    NSArray *methods = [self pdef_methods];
     for (PDMethod *method in methods) {
         if (method.selector == selector) {
             return method;
@@ -50,7 +50,7 @@
         _post = options & PDMethodPost;
         _request = options & PDMethodRequest;
 
-        _result = result ? result : @(PDPrimitiveVoid);
+        _result = result ? result : @(PDTypeVoid);
         _paramNames = [names copy];
         _paramTypes = [types copy];
     }

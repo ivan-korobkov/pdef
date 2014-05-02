@@ -156,13 +156,13 @@ _TYPES = {
 }
 
 _REFLEX_TYPES = {
-    lang.BOOL: '@(PDPrimitiveBool)',
-    lang.INT16: '@(PDPrimitiveInt16)',
-    lang.INT32: '@(PDPrimitiveInt32)',
-    lang.INT64: '@(PDPrimitiveInt64)',
-    lang.FLOAT: '@(PDPrimitiveFloat)',
-    lang.DOUBLE: '@(PDPrimitiveDouble)',
-    lang.STRING: '@(PDPrimitiveString)',
-    lang.DATETIME: '@(PDPrimitiveDate)',
-    lang.VOID: '@(PDPrimitiveVoid)',
+    lang.BOOL: '@(PDTypeBool)',
+    lang.INT16: '@(PDTypeInt16)',
+    lang.INT32: '@(PDTypeInt32)',
+    lang.INT64: '@(PDTypeInt64)',
+    lang.FLOAT: '@(PDTypeFloat)',
+    lang.DOUBLE: '@(PDTypeDouble)',
+    lang.STRING: '@(PDTypeString)',
+    lang.DATETIME: '@(PDTypeDate)',
+    lang.VOID: '@(PDTypeVoid)',
 }

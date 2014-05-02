@@ -12,6 +12,7 @@
 #import "PDTestStruct.h"
 #import "PDJson.h"
 #import "PDTestStruct+Tests.h"
+#import "PDError.h"
 
 
 SpecBegin(PDJson)
@@ -47,6 +48,20 @@ SpecBegin(PDJson)
                 expect(error).to.beNil;
 
                 expect(s1).to.equal(s0);
+            });
+        });
+
+        describe(@"parse error", ^() {
+            it(@"should return an error", ^() {
+                NSString *s = @"{\"bool0\": [], \"int0\": {}}";
+                NSData *data = [s dataUsingEncoding:NSUTF8StringEncoding];
+
+                NSError *error;
+                PDTestStruct *result = [PDJson parseJson:data type:PDTestStruct.class error:&error];
+
+                expect(result).to.beNil;
+                expect(error.domain).to.equal(PDErrorDomain);
+                expect(error.code).to.equal(PDErrorJsonError);
             });
         });
         SpecEnd

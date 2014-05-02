@@ -11,6 +11,16 @@
 #import "PDError.h"
 
 
+#define AssertTrue(expr, error, msg, ...) \
+    if(!expr) { \
+        NSString *msg0 = msg ? msg : @"JSON serialization/deserialization error"; \
+        NSString *message = [NSString stringWithFormat:msg0, ## __VA_ARGS__]; \
+        *error = [NSError errorWithDomain:PDErrorDomain code:PDErrorJsonError \
+            userInfo:@{NSLocalizedDescriptionKey : message}]; \
+        return nil; \
+    }
+
+
 @implementation PDJson
 static NSDateFormatter *formatter;
 
@@ -60,61 +70,47 @@ static NSDateFormatter *formatter;
         return [NSNull null];
     }
 
-    if ([type isKindOfClass:NSNumber.class]) {
-        PDPrimitive type0 = (PDPrimitive) ((NSNumber *) type).intValue;
-        switch (type0) {
-            case PDPrimitiveString:return [self _serializeString:object error:error];
-            case PDPrimitiveDate:return [self _serializeDate:object error:error];
-            default: return [self _serializeNumber:object type:type0 error:error];
+    PDType type0 = PDTypeForType(type);
+    switch (type0) {
+        case PDTypePrimitive: {
+            PDPrimitive primitive = (PDPrimitive) ((NSNumber *) type).intValue;
+            switch (primitive) {
+                case PDPrimitiveString:return [self _serializeString:object error:error];
+                case PDPrimitiveDate:return [self _serializeDate:object error:error];
+                default: return [self _serializeNumber:object error:error];
+            }
         }
+        case PDTypeList: return [self _serializeList:object type:type error:error];
+        case PDTypeSet:return [self _serializeSet:object type:type error:error];
+        case PDTypeMap: return [self _serializeMap:object type:type error:error];
+        case PDTypeEnum: return [self _serializeEnum:object type:type error:error];
+        case PDTypeStruct: return [self _serializeStruct:object type:type error:error];
 
-    } else if ([type isKindOfClass:PDList.class]) {
-        return [self _serializeList:object type:type error:error];
-
-    } else if ([type isKindOfClass:PDSet.class]) {
-        return [self _serializeSet:object type:type error:error];
-
-    } else if ([type isKindOfClass:PDMap.class]) {
-        return [self _serializeMap:object type:type error:error];
-
-    } else if ([self isClass:type] && [type isSubclassOfClass:PDEnum.class]) {
-        return [self _serializeEnum:object type:type error:error];
-
-    } else if ([self isClass:type] && [type isSubclassOfClass:PDStruct.class]) {
-        return [self _serializeStruct:object type:type error:error];
+        default: {
+            NSString *msg = [NSString stringWithFormat:@"Cannot serialize a type '%@'", type];
+            *error = [self error:msg];
+            return nil;
+        }
     }
-
-    NSString *msg = [NSString stringWithFormat:@"Cannot serialize an object of type '%@'", type];
-    *error = [self error:msg];
-    return nil;
 }
 
 + (id)_serializeString:(id)object error:(NSError **)error {
-    if (![object isKindOfClass:[NSString class]]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot serialize a string from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:[NSString class]], error,
+    @"Cannot serialize a string from '%@'", [object class])
 
     return object;
 }
 
-+ (id)_serializeNumber:(id)object type:(PDPrimitive)type error:(NSError **)error {
-    if (![object isKindOfClass:[NSNumber class]]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot serialize a number from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
++ (id)_serializeNumber:(id)object error:(NSError **)error {
+    AssertTrue([object isKindOfClass:[NSNumber class]], error,
+    @"Cannot serialize a number from '%@'", [object class])
 
     return object;
 }
 
 + (NSString *)_serializeDate:(id)object error:(NSError **)error {
-    if (![object isKindOfClass:NSDate.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot serialize a date from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:NSDate.class], error,
+    @"Cannot serialize a date from '%@'", [object class])
 
     @synchronized (self) {
         return [formatter stringFromDate:object];
@@ -122,11 +118,8 @@ static NSDateFormatter *formatter;
 }
 
 + (id)_serializeList:(id)object type:(PDList *)type error:(NSError **)error {
-    if (![object isKindOfClass:NSArray.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot serialize a list from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:NSArray.class], error,
+    @"Cannot serialize a list from '%@'", [object class])
 
     NSArray *list = object;
     NSMutableArray *result = [[NSMutableArray alloc] init];
@@ -146,11 +139,8 @@ static NSDateFormatter *formatter;
 }
 
 + (id)_serializeSet:(id)object type:(PDSet *)type error:(NSError **)error {
-    if (![object isKindOfClass:NSSet.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot serialize a set from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:NSSet.class], error,
+    @"Cannot serialize a set from '%@'", [object class])
 
     NSSet *set = object;
     NSMutableArray *result = [[NSMutableArray alloc] init];
@@ -170,11 +160,8 @@ static NSDateFormatter *formatter;
 }
 
 + (id)_serializeMap:(id)object type:(PDMap *)type error:(NSError **)error {
-    if (![object isKindOfClass:NSDictionary.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot serialize a map from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:NSDictionary.class], error,
+    @"Cannot serialize a map from '%@'", [object class])
 
     id keyType = type.key;
     id valueType = type.value;
@@ -208,23 +195,15 @@ static NSDateFormatter *formatter;
             case PDPrimitiveString:return key;
             case PDPrimitiveDate:return [self _serializeDate:key error:error];
             case PDPrimitiveBool: {
-                if (![key isKindOfClass:NSNumber.class]) {
-                    NSString *msg = [NSString
-                        stringWithFormat:@"Cannot serialize a bool from '%@'", key];
-                    *error = [self error:msg];
-                    return nil;
-                }
+                AssertTrue([key isKindOfClass:NSNumber.class], error,
+                @"Cannot serialize a bool from '%@'", [key class])
 
                 BOOL bool0 = ((NSNumber *) key).boolValue;
                 return bool0 ? @"true" : @"false";
             }
             default: {
-                if (![key isKindOfClass:NSNumber.class]) {
-                    NSString *msg = [NSString
-                        stringWithFormat:@"Cannot serialize a number from '%@'", key];
-                    *error = [self error:msg];
-                    return nil;
-                }
+                AssertTrue([key isKindOfClass:NSNumber.class], error,
+                @"Cannot serialize a number from '%@'", [key class])
 
                 NSNumber *number = key;
                 return [number stringValue];
@@ -235,32 +214,22 @@ static NSDateFormatter *formatter;
         return [self _serializeEnum:key type:type error:error];
     }
 
-    NSString *msg = [NSString stringWithFormat:@"Cannot parse a map key from '%@'", key];
+    NSString *msg = [NSString stringWithFormat:@"Cannot parse a map key from '%@'", [key class]];
     *error = [self error:msg];
     return nil;
 }
 
 + (NSString *)_serializeEnum:(id)object type:(Class)type error:(NSError **)error {
-    NSParameterAssert(type != nil);
-    NSParameterAssert([type isSubclassOfClass:PDEnum.class]);
-
-    if (![object isKindOfClass:NSNumber.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot serialize an enum from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:NSNumber.class], error,
+    @"Cannot serialize an enum from '%@'", [object class])
 
     NSInteger value = ((NSNumber *) object).integerValue;
     return [type nameForEnumValue:value];
 }
 
 + (id)_serializeStruct:(id)object type:(Class)type error:(NSError **)error {
-    if (![object isKindOfClass:type]) {
-        NSString *msg = [NSString
-            stringWithFormat:@"Cannot serialize a struct as '%@' from '%@'", type, object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:type], error,
+    @"Cannot serialize a struct as '%@' from '%@'", type, [object class])
 
     NSDictionary *properties = [type properties];
     NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
@@ -307,7 +276,7 @@ static NSDateFormatter *formatter;
         return;
     }
 
-    return [self _parseStructInto:aStruct object:object error:error];
+    [self _parseStructInto:aStruct object:object error:error];
 }
 
 + (id)parseJsonObject:(id)object type:(id)type error:(NSError **)error {
@@ -320,51 +289,41 @@ static NSDateFormatter *formatter;
         return nil;
     }
 
-    if ([type isKindOfClass:NSNumber.class]) {
-        PDPrimitive type0 = (PDPrimitive) ((NSNumber *) type).intValue;
-        switch (type0) {
-            case PDPrimitiveString:return [self _parseString:object error:error];
-            case PDPrimitiveDate:return [self _parseDate:object error:error];
-            default: return [self _parseNumber:object type:type0 error:error];
+    PDType type0 = PDTypeForType(type);
+    switch (type0) {
+        case PDTypePrimitive: {
+            PDPrimitive primitive = (PDPrimitive) ((NSNumber *) type).intValue;
+            switch (primitive) {
+                case PDPrimitiveString:return [self _parseString:object error:error];
+                case PDPrimitiveDate:return [self _parseDate:object error:error];
+                default: return [self _parseNumber:object type:primitive error:error];
+            }
         }
+        case PDTypeList: return [self _parseList:object type:type error:error];
+        case PDTypeSet: return [self _parseSet:object type:type error:error];
+        case PDTypeMap: return [self _parseMap:object type:type error:error];
+        case PDTypeEnum: return [self _parseEnum:object type:type error:error];
+        case PDTypeStruct: return [self _parseStruct:object type:type error:error];
 
-    } else if ([type isKindOfClass:PDList.class]) {
-        return [self _parseList:object type:type error:error];
-
-    } else if ([type isKindOfClass:PDSet.class]) {
-        return [self _parseSet:object type:type error:error];
-
-    } else if ([type isKindOfClass:PDMap.class]) {
-        return [self _parseMap:object type:type error:error];
-
-    } else if ([self isClass:type] && [type isSubclassOfClass:PDEnum.class]) {
-        return [self _parseEnum:object type:type error:error];
-
-    } else if ([self isClass:type] && [type isSubclassOfClass:PDStruct.class]) {
-        return [self _parseStruct:object type:type error:error];
+        default: {
+            NSString *msg = [NSString
+                stringWithFormat:@"Cannot parse a type '%@' from '%@'", type, [object class]];
+            *error = [self error:msg];
+            return nil;
+        }
     }
-
-    NSString *msg = [NSString stringWithFormat:@"Cannot parse a type '%@' from '%@'", type, object];
-    *error = [self error:msg];
-    return nil;
 }
 
 + (id)_parseString:(id)object error:(NSError **)error {
-    if (![object isKindOfClass:[NSString class]]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot parse a string from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:[NSString class]], error,
+    @"Cannot parse a string from '%@'", [object class])
 
     return object;
 }
 
 + (id)_parseNumber:(id)object type:(PDPrimitive)type error:(NSError **)error {
-    if (![object isKindOfClass:[NSNumber class]]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot parse a number from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:[NSNumber class]], error,
+    @"Cannot parse a number from '%@'", [object class])
 
     NSNumber *number = object;
     switch (type) {
@@ -379,32 +338,21 @@ static NSDateFormatter *formatter;
 }
 
 + (id)_parseDate:(id)object error:(NSError **)error {
-    if (![object isKindOfClass:NSString.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot parse a date from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:NSString.class], error,
+    @"Cannot parse a date from '%@'", [object class])
 
     NSDate *date;
     @synchronized (self) {
         date = [formatter dateFromString:object];
     }
 
-    if (!date) {
-        NSString *msg = [NSString stringWithFormat:@"Failed to parse a date from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
-
+    AssertTrue(date, error, @"Failed to parse a date from '%@'", [object class])
     return date;
 }
 
 + (id)_parseList:(id)object type:(PDList *)type error:(NSError **)error {
-    if (![object isKindOfClass:NSArray.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot parse a list from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:NSArray.class], error,
+    @"Cannot parse a list from '%@'", [object class])
 
     NSArray *list = object;
     NSMutableArray *result = [[NSMutableArray alloc] init];
@@ -424,11 +372,8 @@ static NSDateFormatter *formatter;
 }
 
 + (id)_parseSet:(id)object type:(PDSet *)type error:(NSError **)error {
-    if (![object isKindOfClass:NSArray.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot parse a set from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:NSArray.class], error,
+    @"Cannot parse a set from '%@'", [object class])
 
     NSArray *list = object;
     NSMutableSet *result = [[NSMutableSet alloc] init];
@@ -448,11 +393,8 @@ static NSDateFormatter *formatter;
 }
 
 + (id)_parseMap:(id)object type:(PDMap *)type error:(NSError **)error {
-    if (![object isKindOfClass:NSDictionary.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot parse a map from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:NSDictionary.class], error,
+    @"Cannot parse a map from '%@'", [object class])
 
     id keyType = type.key;
     id valueType = type.value;
@@ -480,39 +422,39 @@ static NSDateFormatter *formatter;
 }
 
 + (id)_parseKey:(NSString *)key type:(id)type error:(NSError **)error {
-    if ([type isKindOfClass:NSNumber.class]) {
-        PDPrimitive type0 = (PDPrimitive) ((NSNumber *) type).intValue;
-        switch (type0) {
-            case PDPrimitiveBool: {
-                if ([@"true" isEqualToString:key]) return @YES;
-                if ([@"false" isEqualToString:key]) return @NO;
-                return @([key boolValue]);
+    PDType type0 = PDTypeForType(type);
+    switch (type0) {
+        case PDTypePrimitive: {
+            PDPrimitive primitive = (PDPrimitive) ((NSNumber *) type).intValue;
+            switch (primitive) {
+                case PDPrimitiveBool: {
+                    if ([@"true" isEqualToString:key]) return @YES;
+                    if ([@"false" isEqualToString:key]) return @NO;
+                    return @([key boolValue]);
+                }
+                case PDPrimitiveInt16:return @([key intValue]);
+                case PDPrimitiveInt32:return @([key intValue]);
+                case PDPrimitiveInt64:return @([key longLongValue]);
+                case PDPrimitiveFloat:return @([key floatValue]);
+                case PDPrimitiveDouble:return @([key doubleValue]);
+                case PDPrimitiveString:return key;
+                case PDPrimitiveDate:return [self _parseDate:key error:error];
+                default: break;
             }
-            case PDPrimitiveInt16:return @([key intValue]);
-            case PDPrimitiveInt32:return @([key intValue]);
-            case PDPrimitiveInt64:return @([key longLongValue]);
-            case PDPrimitiveFloat:return @([key floatValue]);
-            case PDPrimitiveDouble:return @([key doubleValue]);
-            case PDPrimitiveString:return key;
-            case PDPrimitiveDate:return [self _parseDate:key error:error];
-            default: break;
         }
-
-    } else if ([type isKindOfClass:PDEnum.class]) {
-        return [self _parseEnum:key type:type error:error];
+        case PDTypeEnum: return [self _parseEnum:key type:type error:error];
+        default: break;
     }
 
-    NSString *msg = [NSString stringWithFormat:@"Cannot parse a map key from '%@'", key];
+    NSString *msg = [NSString
+        stringWithFormat:@"Cannot parse a map key from '%@'", [key class]];
     *error = [self error:msg];
     return nil;
 }
 
 + (id)_parseEnum:(id)object type:(Class)type error:(NSError **)error {
-    if (![object isKindOfClass:NSString.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot parse an enum from '%@'", object];
-        *error = [self error:msg];
-        return nil;
-    }
+    AssertTrue([object isKindOfClass:NSString.class], error,
+    @"Cannot parse an enum from '%@'", [object class])
 
     NSString *name = object;
     NSInteger value = [type enumValueForName:name];
@@ -521,17 +463,17 @@ static NSDateFormatter *formatter;
 
 + (id)_parseStruct:(id)object type:(Class)type error:(NSError **)error {
     NSParameterAssert([type isSubclassOfClass:PDStruct.class]);
+
     PDStruct *result = [[type alloc] init];
     [self _parseStructInto:result object:object error:error];
-    return result;
+    return *error ? nil : result;
+
 }
 
-+ (void)_parseStructInto:(PDStruct *)aStruct object:(id)object error:(NSError **)error {
-    if (![object isKindOfClass:NSDictionary.class]) {
-        NSString *msg = [NSString stringWithFormat:@"Cannot parse a struct from '%@'", object];
-        *error = [self error:msg];
-        return;
-    }
+// Modifies and returns the same struct.
++ (id)_parseStructInto:(PDStruct *)aStruct object:(id)object error:(NSError **)error {
+    AssertTrue([object isKindOfClass:NSDictionary.class], error,
+    @"Cannot parse a struct from '%@'", [object class])
 
     Class cls = aStruct.class;
     NSDictionary *dict = object;
@@ -546,15 +488,13 @@ static NSDateFormatter *formatter;
         id propType = properties[key];
         id parsed = [self _parseObject:value type:propType error:error];
         if (*error) {
-            return;
+            return nil;
         }
 
         [aStruct setValue:parsed forKey:key];
     }
-}
 
-+ (BOOL)isClass:(id)type {
-    return class_isMetaClass(object_getClass(type));
+    return aStruct;
 }
 
 + (NSError *)error:(NSString *)msg {

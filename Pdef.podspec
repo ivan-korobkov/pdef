@@ -6,16 +6,15 @@ Pod::Spec.new do |s|
   s.license      = 'Apache License 2.0'
 
   s.author       = { "Ivan Korobkov" => "ivan.korobkov@gmail.com" }
-  s.source       = { :git => "https://github.com/pdef/pdef.git", :tag => "v2.0.0" }
+  s.source       = { :git => "https://github.com/pdef/pdef.git", :branch => "2.0" }
   s.requires_arc = true
 
   s.ios.deployment_target = '6.0'
   s.osx.deployment_target = '10.8'
 
-  s.source_files  = 'Pdef', 'Pdef/*.{h,m}'
-  s.public_header_files = 'Pdef/*.h'
+  s.source_files  = 'Pdef', 'objc/Pdef/*.{h,m}'
+  s.public_header_files = 'objc/Pdef/*.h'
 
-  s.dependency 'AFNetworking', '~> 2.0'
   s.dependency 'ReactiveCocoa', '~> 2.3'
 end
 

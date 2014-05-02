@@ -166,27 +166,27 @@
 		2CC5E44B19117956002C6B1B /* Pdef */ = {
 			isa = PBXGroup;
 			children = (
-				2CC5E44C19117956002C6B1B /* Supporting Files */,
-				31821F7DC2C63153A0D0B46C /* PDTypes.m */,
-				31821DB27016048C7466A829 /* PDTypes.h */,
+				31821627655D18E30CA2E35C /* NSInvocation+PDef.h */,
+				318219C5A6D495816431FD02 /* NSInvocation+PDef.m */,
+				31821D68CDACB090413565E3 /* PDClient.h */,
+				318217DBCCD57629945E907A /* PDClient.m */,
+				318218DA79CD88608DDD4AA6 /* PDef.h */,
 				318219BED15338A6B041D7AD /* PDEnum.h */,
 				31821BDB751CC633E716CFC4 /* PDEnum.m */,
-				318210F3E477501ED6DAE662 /* PDStruct.h */,
-				31821EE524D95B2CADABC4ED /* PDStruct.m */,
+				31821D849BABDF50E6794413 /* PDError.h */,
+				3182123D545E6E2D7CCA20D8 /* PDInterface+PDClient.h */,
+				3182174C6DB998939F14F158 /* PDInterface+PDClient.m */,
 				31821BA8A230701ECDBEE027 /* PDInterface.h */,
 				31821CBD815FDB836A25C738 /* PDInterface.m */,
-				318218DA79CD88608DDD4AA6 /* PDef.h */,
-				3182150A260C81C57913344D /* PDProxy.m */,
-				31821ECC56BF01901E14765A /* PDProxy.h */,
-				3182117496E0B33774A95F4D /* PDJson.m */,
 				31821687A4B4C97DF7EF2F9E /* PDJson.h */,
-				31821D849BABDF50E6794413 /* PDError.h */,
-				318217DBCCD57629945E907A /* PDClient.m */,
-				31821D68CDACB090413565E3 /* PDClient.h */,
-				318219C5A6D495816431FD02 /* NSInvocation+PDef.m */,
-				31821627655D18E30CA2E35C /* NSInvocation+PDef.h */,
-				3182174C6DB998939F14F158 /* PDInterface+PDClient.m */,
-				3182123D545E6E2D7CCA20D8 /* PDInterface+PDClient.h */,
+				3182117496E0B33774A95F4D /* PDJson.m */,
+				31821ECC56BF01901E14765A /* PDProxy.h */,
+				3182150A260C81C57913344D /* PDProxy.m */,
+				318210F3E477501ED6DAE662 /* PDStruct.h */,
+				31821EE524D95B2CADABC4ED /* PDStruct.m */,
+				31821DB27016048C7466A829 /* PDTypes.h */,
+				31821F7DC2C63153A0D0B46C /* PDTypes.m */,
+				2CC5E44C19117956002C6B1B /* Supporting Files */,
 			);
 			path = Pdef;
 			sourceTree = "<group>";
@@ -202,14 +202,14 @@
 		2CC5E45F19117956002C6B1B /* PdefTests */ = {
 			isa = PBXGroup;
 			children = (
-				2CC5E46019117956002C6B1B /* Supporting Files */,
 				31821970668A4D4411BBDD5D /* Generated */,
-				31821FF96AE57D84E82E8418 /* PDStructSpec.m */,
-				31821251CB0D43CADB6FB597 /* PDProxySpec.m */,
-				31821AAD60299B1CD8E0DBC9 /* PDJsonSpec.m */,
-				318219371C898EF8302F68E4 /* PDTestStruct+Tests.m */,
-				31821887E6564419C82EC1AC /* PDTestStruct+Tests.h */,
 				3182122B86ECF2991778147C /* PDClientSpec.m */,
+				31821AAD60299B1CD8E0DBC9 /* PDJsonSpec.m */,
+				31821251CB0D43CADB6FB597 /* PDProxySpec.m */,
+				31821FF96AE57D84E82E8418 /* PDStructSpec.m */,
+				31821887E6564419C82EC1AC /* PDTestStruct+Tests.h */,
+				318219371C898EF8302F68E4 /* PDTestStruct+Tests.m */,
+				2CC5E46019117956002C6B1B /* Supporting Files */,
 			);
 			path = PdefTests;
 			sourceTree = "<group>";
@@ -301,8 +301,6 @@
 			mainGroup = 2CC5E43D19117956002C6B1B;
 			productRefGroup = 2CC5E44719117956002C6B1B /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-			);
 			projectRoot = "";
 			targets = (
 				2CC5E44519117956002C6B1B /* Pdef */,
@@ -596,6 +594,7 @@
 				2CC5E46B19117956002C6B1B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		2CC5E46C19117956002C6B1B /* Build configuration list for PBXNativeTarget "PdefTests" */ = {
 			isa = XCConfigurationList;
@@ -604,6 +603,7 @@
 				2CC5E46E19117956002C6B1B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -33,7 +33,7 @@
 }
 
 - (NSData *)toJson:(NSError **)error {
-    return [PDJson serializeStruct:self options:NULL error:error];
+    return [PDJson serializeStruct:self options:0 error:error];
 }
 
 - (NSData *)toJsonWithOptions:(NSJSONWritingOptions)options error:(NSError **)error {

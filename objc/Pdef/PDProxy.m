@@ -72,8 +72,8 @@
     // If the result is a pdef interface, return another proxy,
     // Otherwise, invoke the handler.
     id result = resultIsInterface
-        ? [[PDProxy alloc] initWithClass:method.result handler:_handler invocations:invocations]
-        : _handler(invocations);
+        ? (id) [[PDProxy alloc] initWithClass:method.result handler:_handler invocations:invocations]
+        : (id) _handler(invocations);
 
     __unsafe_unretained id value = result;
     [invocation setReturnValue:&value];

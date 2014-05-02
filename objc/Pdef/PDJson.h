@@ -10,14 +10,15 @@
 
 /**
  * Parses/serializes pdef types.
- * Type is a PDType, a pdef collection, an pdef enum class, or a pdef struct class
+ * Type is a PDPrimitive, a pdef collection, an pdef enum class, or a pdef struct class
  */
 @interface PDJson : NSObject
 
-+ (id)parse:(NSData *)data type:(id)type error:(NSError **)error;
++ (id)parseJson:(NSData *)data type:(id)type error:(NSError **)error;
 
-/** Parses json data and merges it into a struct. */
-+ (void)parseStruct:(PDStruct *)aStruct fromData:(NSData *)data error:(NSError **)error;
++ (void)parseJson:(NSData *)data intoStruct:(PDStruct *)aStruct error:(NSError **)error;
+
++ (id)parseJsonObject:(id)object type:(id)type error:(NSError **)error;
 
 + (NSData *)serialize:(id)object type:(id)type options:(NSJSONWritingOptions)options
                 error:(NSError **)error;

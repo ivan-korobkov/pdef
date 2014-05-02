@@ -61,10 +61,10 @@ static NSDateFormatter *formatter;
     }
 
     if ([type isKindOfClass:NSNumber.class]) {
-        PDType type0 = (PDType) ((NSNumber *) type).intValue;
+        PDPrimitive type0 = (PDPrimitive) ((NSNumber *) type).intValue;
         switch (type0) {
-            case PDTypeString:return [self _serializeString:object error:error];
-            case PDTypeDate:return [self _serializeDate:object error:error];
+            case PDPrimitiveString:return [self _serializeString:object error:error];
+            case PDPrimitiveDate:return [self _serializeDate:object error:error];
             default: return [self _serializeNumber:object type:type0 error:error];
         }
 
@@ -99,7 +99,7 @@ static NSDateFormatter *formatter;
     return object;
 }
 
-+ (id)_serializeNumber:(id)object type:(PDType)type error:(NSError **)error {
++ (id)_serializeNumber:(id)object type:(PDPrimitive)type error:(NSError **)error {
     if (![object isKindOfClass:[NSNumber class]]) {
         NSString *msg = [NSString stringWithFormat:@"Cannot serialize a number from '%@'", object];
         *error = [self error:msg];
@@ -203,11 +203,11 @@ static NSDateFormatter *formatter;
 
 + (NSString *)_serializeKey:(id)key type:(id)type error:(NSError **)error {
     if ([type isKindOfClass:NSNumber.class]) {
-        PDType type0 = (PDType) ((NSNumber *) type).intValue;
+        PDPrimitive type0 = (PDPrimitive) ((NSNumber *) type).intValue;
         switch (type0) {
-            case PDTypeString:return key;
-            case PDTypeDate:return [self _serializeDate:key error:error];
-            case PDTypeBool: {
+            case PDPrimitiveString:return key;
+            case PDPrimitiveDate:return [self _serializeDate:key error:error];
+            case PDPrimitiveBool: {
                 if (![key isKindOfClass:NSNumber.class]) {
                     NSString *msg = [NSString
                         stringWithFormat:@"Cannot serialize a bool from '%@'", key];
@@ -265,7 +265,7 @@ static NSDateFormatter *formatter;
     NSDictionary *properties = [type properties];
     NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
 
-    for (NSString *key in [properties allKeys]) {
+    for (NSString *key in properties) {
         id value = [object valueForKey:key];
         if (!value) {
             continue;
@@ -290,7 +290,7 @@ static NSDateFormatter *formatter;
 
 #pragma mark - Parse
 
-+ (id)parse:(NSData *)data type:(id)type error:(NSError **)error {
++ (id)parseJson:(NSData *)data type:(id)type error:(NSError **)error {
     id object = [NSJSONSerialization JSONObjectWithData:data
         options:NSJSONReadingAllowFragments error:error];
     if (*error) {
@@ -300,7 +300,7 @@ static NSDateFormatter *formatter;
     return [self _parseObject:object type:type error:error];
 }
 
-+ (void)parseStruct:(PDStruct *)aStruct fromData:(NSData *)data error:(NSError **)error {
++ (void)parseJson:(NSData *)data intoStruct:(PDStruct *)aStruct error:(NSError **)error {
     id object = [NSJSONSerialization JSONObjectWithData:data
         options:NSJSONReadingAllowFragments error:error];
     if (*error) {
@@ -310,6 +310,10 @@ static NSDateFormatter *formatter;
     return [self _parseStructInto:aStruct object:object error:error];
 }
 
++ (id)parseJsonObject:(id)object type:(id)type error:(NSError **)error {
+    return [self _parseObject:object type:type error:error];
+}
+
 + (id)_parseObject:(id)object type:(id)type error:(NSError **)error {
     NSParameterAssert(type != nil);
     if (!object || object == [NSNull null]) {
@@ -317,10 +321,10 @@ static NSDateFormatter *formatter;
     }
 
     if ([type isKindOfClass:NSNumber.class]) {
-        PDType type0 = (PDType) ((NSNumber *) type).intValue;
+        PDPrimitive type0 = (PDPrimitive) ((NSNumber *) type).intValue;
         switch (type0) {
-            case PDTypeString:return [self _parseString:object error:error];
-            case PDTypeDate:return [self _parseDate:object error:error];
+            case PDPrimitiveString:return [self _parseString:object error:error];
+            case PDPrimitiveDate:return [self _parseDate:object error:error];
             default: return [self _parseNumber:object type:type0 error:error];
         }
 
@@ -355,7 +359,7 @@ static NSDateFormatter *formatter;
     return object;
 }
 
-+ (id)_parseNumber:(id)object type:(PDType)type error:(NSError **)error {
++ (id)_parseNumber:(id)object type:(PDPrimitive)type error:(NSError **)error {
     if (![object isKindOfClass:[NSNumber class]]) {
         NSString *msg = [NSString stringWithFormat:@"Cannot parse a number from '%@'", object];
         *error = [self error:msg];
@@ -364,12 +368,12 @@ static NSDateFormatter *formatter;
 
     NSNumber *number = object;
     switch (type) {
-        case PDTypeBool:return @([number boolValue]);
-        case PDTypeInt16:return @([number shortValue]);
-        case PDTypeInt32:return @([number intValue]);
-        case PDTypeInt64:return @([number longLongValue]);
-        case PDTypeFloat:return @([number floatValue]);
-        case PDTypeDouble:return @([number doubleValue]);
+        case PDPrimitiveBool:return @([number boolValue]);
+        case PDPrimitiveInt16:return @([number shortValue]);
+        case PDPrimitiveInt32:return @([number intValue]);
+        case PDPrimitiveInt64:return @([number longLongValue]);
+        case PDPrimitiveFloat:return @([number floatValue]);
+        case PDPrimitiveDouble:return @([number doubleValue]);
         default: return nil;
     }
 }
@@ -477,20 +481,20 @@ static NSDateFormatter *formatter;
 
 + (id)_parseKey:(NSString *)key type:(id)type error:(NSError **)error {
     if ([type isKindOfClass:NSNumber.class]) {
-        PDType type0 = (PDType) ((NSNumber *) type).intValue;
+        PDPrimitive type0 = (PDPrimitive) ((NSNumber *) type).intValue;
         switch (type0) {
-            case PDTypeBool: {
+            case PDPrimitiveBool: {
                 if ([@"true" isEqualToString:key]) return @YES;
                 if ([@"false" isEqualToString:key]) return @NO;
                 return @([key boolValue]);
             }
-            case PDTypeInt16:return @([key intValue]);
-            case PDTypeInt32:return @([key intValue]);
-            case PDTypeInt64:return @([key longLongValue]);
-            case PDTypeFloat:return @([key floatValue]);
-            case PDTypeDouble:return @([key doubleValue]);
-            case PDTypeString:return key;
-            case PDTypeDate:return [self _parseDate:key error:error];
+            case PDPrimitiveInt16:return @([key intValue]);
+            case PDPrimitiveInt32:return @([key intValue]);
+            case PDPrimitiveInt64:return @([key longLongValue]);
+            case PDPrimitiveFloat:return @([key floatValue]);
+            case PDPrimitiveDouble:return @([key doubleValue]);
+            case PDPrimitiveString:return key;
+            case PDPrimitiveDate:return [self _parseDate:key error:error];
             default: break;
         }
 
@@ -533,7 +537,7 @@ static NSDateFormatter *formatter;
     NSDictionary *dict = object;
     NSDictionary *properties = [cls properties];
 
-    for (NSString *key in [properties allKeys]) {
+    for (NSString *key in properties) {
         id value = dict[key];
         if (!value) {
             continue;

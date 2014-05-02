@@ -5,8 +5,6 @@
 
 
 @interface PDStruct : NSObject <NSCopying, NSCoding>
-+ (NSDictionary *)properties;
-
 - (instancetype)initWithJson:(NSData *)data error:(NSError **)error;
 
 - (NSData *)toJson:(NSError **)error;
@@ -18,4 +16,11 @@
 - (BOOL)isEqualToStruct:(PDStruct *)other;
 
 - (NSUInteger)hash;
+
+// Internal pdef methods.
+
+// Implement in a subclass, return NSDictionary<NSString, type>.
++ (NSDictionary *)properties;
+
+- (NSDictionary *)pdef_properties;
 @end

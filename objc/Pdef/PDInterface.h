@@ -4,8 +4,12 @@
 //
 
 
+@class PDMethod;
+
 @interface PDInterface : NSObject
 + (NSArray *)methods;
+
++ (PDMethod *)pdef_methodForSelector:(SEL)selector;
 @end
 
 
@@ -32,4 +36,7 @@ typedef NS_ENUM(NSInteger, PDMethodOptions) {
 + (PDMethod *)methodWithSelector:(SEL)selector name:(NSString *)name
                          options:(PDMethodOptions)options result:(id)result
                       paramNames:(NSArray *)names paramTypes:(NSArray *)types;
+
+/** Returns true if this method is void or returns a data type. */
+- (BOOL)isLast;
 @end

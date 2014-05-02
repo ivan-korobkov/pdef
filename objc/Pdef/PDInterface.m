@@ -3,12 +3,24 @@
 // Copyright (c) 2014 io.pdef. All rights reserved.
 //
 
+#import <objc/runtime.h>
 #import "PDTypes.h"
 #import "PDInterface.h"
 
 
 @implementation PDInterface
 + (NSArray *)methods {
+    return nil;
+}
+
++ (PDMethod *)pdef_methodForSelector:(SEL)selector {
+    NSArray *methods = [self methods];
+    for (PDMethod *method in methods) {
+        if (method.selector == selector) {
+            return method;
+        }
+    }
+
     return nil;
 }
 @end
@@ -38,11 +50,15 @@
         _post = options & PDMethodPost;
         _request = options & PDMethodRequest;
 
-        _result = result ? result : @(PDTypeVoid);
-        _paramTypes = [names copy];
-        _paramNames = [types copy];
+        _result = result ? result : @(PDPrimitiveVoid);
+        _paramNames = [names copy];
+        _paramTypes = [types copy];
     }
 
     return self;
+}
+
+- (BOOL)isLast {
+    return PDTypeForType(_result) != PDTypeInterface;
 }
 @end

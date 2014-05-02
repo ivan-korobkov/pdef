@@ -3,6 +3,7 @@
 // Copyright (c) 2014 io.pdef. All rights reserved.
 //
 
+#import <objc/runtime.h>
 #import "PDStruct.h"
 #import "PDEnum.h"
 #import "PDTypes.h"
@@ -16,9 +17,13 @@
     return nil;
 }
 
+- (NSDictionary *)pdef_properties {
+    return [self.class properties];
+}
+
 - (instancetype)initWithJson:(NSData *)data error:(NSError **)error {
     if (self = [super init]) {
-        [PDJson parseStruct:self fromData:data error:error];
+        [PDJson parseJson:data intoStruct:self error:error];
         if (*error) {
             return nil;
         }
@@ -45,17 +50,17 @@
             id value;
 
             if ([type isKindOfClass:NSNumber.class]) {
-                PDType primitive = (PDType) [type intValue];
+                PDPrimitive primitive = (PDPrimitive) [type intValue];
                 switch (primitive) {
-                    case PDTypeBool: value = @([coder decodeBoolForKey:key]); break;
-                    case PDTypeInt16: value = @([coder decodeInt32ForKey:key]); break;
-                    case PDTypeInt32: value = @([coder decodeInt32ForKey:key]); break;
-                    case PDTypeInt64: value = @([coder decodeInt64ForKey:key]); break;
-                    case PDTypeFloat: value = @([coder decodeFloatForKey:key]); break;
-                    case PDTypeDouble: value = @([coder decodeDoubleForKey:key]); break;
-                    case PDTypeString:
-                    case PDTypeDate: value = [coder decodeObjectForKey:key]; break;
-                    case PDTypeVoid:
+                    case PDPrimitiveBool: value = @([coder decodeBoolForKey:key]); break;
+                    case PDPrimitiveInt16: value = @([coder decodeInt32ForKey:key]); break;
+                    case PDPrimitiveInt32: value = @([coder decodeInt32ForKey:key]); break;
+                    case PDPrimitiveInt64: value = @([coder decodeInt64ForKey:key]); break;
+                    case PDPrimitiveFloat: value = @([coder decodeFloatForKey:key]); break;
+                    case PDPrimitiveDouble: value = @([coder decodeDoubleForKey:key]); break;
+                    case PDPrimitiveString:
+                    case PDPrimitiveDate: value = [coder decodeObjectForKey:key]; break;
+                    case PDPrimitiveVoid:
                     default: continue;
                 }
 
@@ -87,19 +92,19 @@
         }
 
         if ([type isKindOfClass:NSNumber.class]) {
-            PDType primitive = (PDType) [type intValue];
+            PDPrimitive primitive = (PDPrimitive) [type intValue];
             NSNumber *number = value;
 
             switch (primitive) {
-                case PDTypeBool: [coder encodeBool:number.boolValue forKey:key]; break;
-                case PDTypeInt16: [coder encodeInt32:number.shortValue forKey:key]; break;
-                case PDTypeInt32: [coder encodeInt:number.intValue forKey:key]; break;
-                case PDTypeInt64: [coder encodeInt64:number.longLongValue forKey:key]; break;
-                case PDTypeFloat: [coder encodeFloat:number.floatValue forKey:key]; break;
-                case PDTypeDouble: [coder encodeDouble:number.doubleValue forKey:key]; break;
-                case PDTypeString:
-                case PDTypeDate: [coder encodeObject:value forKey:key]; break;
-                case PDTypeVoid:
+                case PDPrimitiveBool: [coder encodeBool:number.boolValue forKey:key]; break;
+                case PDPrimitiveInt16: [coder encodeInt32:number.shortValue forKey:key]; break;
+                case PDPrimitiveInt32: [coder encodeInt:number.intValue forKey:key]; break;
+                case PDPrimitiveInt64: [coder encodeInt64:number.longLongValue forKey:key]; break;
+                case PDPrimitiveFloat: [coder encodeFloat:number.floatValue forKey:key]; break;
+                case PDPrimitiveDouble: [coder encodeDouble:number.doubleValue forKey:key]; break;
+                case PDPrimitiveString:
+                case PDPrimitiveDate: [coder encodeObject:value forKey:key]; break;
+                case PDPrimitiveVoid:
                 default: continue;
             }
 

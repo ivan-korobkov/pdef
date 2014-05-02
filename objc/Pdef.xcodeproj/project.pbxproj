@@ -24,6 +24,7 @@
 		318216C67C998E44E1669350 /* PDTestExceptionStruct.m in Sources */ = {isa = PBXBuildFile; fileRef = 318213179BCA0592550C36BF /* PDTestExceptionStruct.m */; };
 		3182176A813BC74F8DFC298F /* PDStructSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821FF96AE57D84E82E8418 /* PDStructSpec.m */; };
 		318218680B410ABDC75109C9 /* PDProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182150A260C81C57913344D /* PDProxy.m */; };
+		31821A59C84C4730A36DCF4F /* PDInterface+PDClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182174C6DB998939F14F158 /* PDInterface+PDClient.m */; };
 		31821BCD88D0FD8AA53CF583 /* PDTestInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 318212CB3FF9B51286175A9A /* PDTestInterface.m */; };
 		31821C0E04F73B39211F0693 /* PDTestSubInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182154C9E3F5E69AA138FC6 /* PDTestSubInterface.m */; };
 		31821CDEC0F3462FFA3807CB /* PDStruct.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821EE524D95B2CADABC4ED /* PDStruct.m */; };
@@ -69,6 +70,7 @@
 		318210F3E477501ED6DAE662 /* PDStruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDStruct.h; sourceTree = "<group>"; };
 		3182117496E0B33774A95F4D /* PDJson.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDJson.m; sourceTree = "<group>"; };
 		3182122B86ECF2991778147C /* PDClientSpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDClientSpec.m; sourceTree = "<group>"; };
+		3182123D545E6E2D7CCA20D8 /* PDInterface+PDClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PDInterface+PDClient.h"; sourceTree = "<group>"; };
 		31821251CB0D43CADB6FB597 /* PDProxySpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDProxySpec.m; sourceTree = "<group>"; };
 		318212CB3FF9B51286175A9A /* PDTestInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestInterface.m; sourceTree = "<group>"; };
 		318213179BCA0592550C36BF /* PDTestExceptionStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestExceptionStruct.m; sourceTree = "<group>"; };
@@ -78,6 +80,7 @@
 		3182154C9E3F5E69AA138FC6 /* PDTestSubInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestSubInterface.m; sourceTree = "<group>"; };
 		31821627655D18E30CA2E35C /* NSInvocation+PDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSInvocation+PDef.h"; sourceTree = "<group>"; };
 		31821687A4B4C97DF7EF2F9E /* PDJson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDJson.h; sourceTree = "<group>"; };
+		3182174C6DB998939F14F158 /* PDInterface+PDClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PDInterface+PDClient.m"; sourceTree = "<group>"; };
 		318217DBCCD57629945E907A /* PDClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDClient.m; sourceTree = "<group>"; };
 		31821887E6564419C82EC1AC /* PDTestStruct+Tests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PDTestStruct+Tests.h"; sourceTree = "<group>"; };
 		318218DA79CD88608DDD4AA6 /* PDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDef.h; sourceTree = "<group>"; };
@@ -182,6 +185,8 @@
 				31821D68CDACB090413565E3 /* PDClient.h */,
 				318219C5A6D495816431FD02 /* NSInvocation+PDef.m */,
 				31821627655D18E30CA2E35C /* NSInvocation+PDef.h */,
+				3182174C6DB998939F14F158 /* PDInterface+PDClient.m */,
+				3182123D545E6E2D7CCA20D8 /* PDInterface+PDClient.h */,
 			);
 			path = Pdef;
 			sourceTree = "<group>";
@@ -393,6 +398,7 @@
 				3182100EAD89FB94A7E0AA81 /* PDJson.m in Sources */,
 				31821F85325D334876C17AAE /* PDClient.m in Sources */,
 				31821FDF4EED5826874B33D7 /* NSInvocation+PDef.m in Sources */,
+				31821A59C84C4730A36DCF4F /* PDInterface+PDClient.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

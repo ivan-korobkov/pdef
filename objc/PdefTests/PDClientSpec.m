@@ -8,6 +8,7 @@
 
 #import <OCMockito/OCMockito.h>
 #import <Expecta/Expecta.h>
+#import <ReactiveCocoa/ReactiveCocoa/RACSignal.h>
 #import "Specta.h"
 #import "PDClient.h"
 #import "PDProxy.h"
@@ -35,7 +36,7 @@ NSDictionary *parsePathQuery(NSString *path) {
 
     NSRange range = [path rangeOfString:@"?"];
     if (range.location != NSNotFound) {
-        query =[path substringFromIndex:range.location + 1]; // Mind "?"
+        query = [path substringFromIndex:range.location + 1]; // Mind "?"
     }
 
     NSMutableDictionary *d = [NSMutableDictionary dictionary];
@@ -72,8 +73,8 @@ SpecBegin(PDClient)
                 NSDictionary *q = parsePathQuery(request.path);
                 expect([request.path hasPrefix:@"interface0/1/-32/hello%2Fworld/get?"]).to.beTruthy;
                 expect(q).to.equal(@{
-                    @"int0": @"32",
-                    @"string0": @"good-bye"
+                    @"int0" : @"32",
+                    @"string0" : @"good-bye"
                 });
                 expect(request.method).to.equal(@"GET");
                 expect(request.post).to.beNil;
@@ -126,8 +127,8 @@ SpecBegin(PDClient)
                 expect(request.path).to.equal(@"interface0/0/-32/world/post");
                 expect(request.method).to.equal(@"POST");
                 expect(query).to.equal(@{
-                    @"int0": @"32",
-                    @"string0": @"%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82"
+                    @"int0" : @"32",
+                    @"string0" : @"%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82"
                 });
             });
         });

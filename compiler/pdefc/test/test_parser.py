@@ -14,16 +14,12 @@ class TestParser(unittest.TestCase):
 
     def test_parse__reuse(self):
         s0 = '''
-            package test;
-
             struct interface enum {
                 hello();
             }
         '''
 
         s1 = '''
-            package test;
-
             struct Struct {}
         '''
 
@@ -40,8 +36,6 @@ class TestParser(unittest.TestCase):
 
     def test_syntax_error(self):
         s = '''/** File description. */
-        package test;
-
         /**
          * Multi-line doc.
          */
@@ -52,12 +46,10 @@ class TestParser(unittest.TestCase):
         '''
         file, errors = self.parser.parse(s)
         assert not file
-        assert 'Line 9: Syntax error at "definition"' in errors[0]
+        assert 'Line 7: Syntax error at "definition"' in errors[0]
 
     def test_syntax_error__reuse_parser(self):
         s = '''/** Description. */
-        package test;
-
         /** Doc. */
         struct Struct {
             // Comment
@@ -67,13 +59,11 @@ class TestParser(unittest.TestCase):
         _, errors0 = self.parser.parse(s, 'file')
         _, errors1 = self.parser.parse(s, 'file')
 
-        assert 'file, line 7: Syntax error at "definition"' in errors0[0]
-        assert 'file, line 7: Syntax error at "definition"' in errors1[0]
+        assert 'file, line 5: Syntax error at "definition"' in errors0[0]
+        assert 'file, line 5: Syntax error at "definition"' in errors1[0]
 
     def test_syntax_error__end_of_file(self):
         s = '''/** Description. */
-        package test;
-
         struct Struct {
         '''
         file, errors = self.parser.parse(s, 'file')
@@ -82,20 +72,16 @@ class TestParser(unittest.TestCase):
 
     def test_syntax_error__reserved_word(self):
         s = '''
-        package test;
-
         struct Struct {
             final string;
         }
         '''
 
         _, errors = self.parser.parse(s, 'file')
-        assert 'file, line 5: "final" is a reserved word' in errors[0]
+        assert 'file, line 3: "final" is a reserved word' in errors[0]
 
     def test_no_syntax_error__reserved_words_should_be_case_sensitive(self):
         s = '''
-        package test;
-        
         struct Struct {
             FINAL string;
         }
@@ -109,7 +95,6 @@ class TestParser(unittest.TestCase):
             /** This is
              * a multi-line
              * doc string. */
-            package test;
         '''
         file, _ = self.parser.parse(s, 'file')
         assert file.doc == 'This is\na multi-line\ndoc string.'
@@ -117,8 +102,6 @@ class TestParser(unittest.TestCase):
     def test_file(self):
         s = '''
             /** File doc. */
-            package test;
-
             enum Enum {}
             struct Struct {}
             interface Interface {}
@@ -132,8 +115,8 @@ class TestParser(unittest.TestCase):
 
     def test_enum(self):
         s = '''
-            package test;
-
+            /** Package doc. */
+            
             /** Doc. */
             enum Enum {
                 ONE,
@@ -155,8 +138,8 @@ class TestParser(unittest.TestCase):
 
     def test_struct(self):
         s = '''
-            package test;
-
+            /** Package doc. */
+            
             /** Struct doc. */
             struct Struct {}
         '''
@@ -171,8 +154,8 @@ class TestParser(unittest.TestCase):
 
     def test_struct_exception(self):
         s = '''
-            package test;
-
+            /** Package doc. */
+            
             /** Exception doc. */
             exception Exception {}
         '''
@@ -187,8 +170,6 @@ class TestParser(unittest.TestCase):
 
     def test_fields(self):
         s = '''
-            package test;
-
             struct Struct {
                 field0 Type;
                 field1 AnotherStruct;
@@ -204,17 +185,17 @@ class TestParser(unittest.TestCase):
         field0 = fields[0]
         assert field0.name == 'field0'
         assert field0._type.name == 'Type'
-        assert field0.location.lineno == 5
+        assert field0.location.lineno == 3
 
         field1 = fields[1]
         assert field1.name == 'field1'
         assert field1._type.name == 'AnotherStruct'
-        assert field1.location.lineno == 6
+        assert field1.location.lineno == 4
 
     def test_interface(self):
         s = '''
-            package test;
-
+            /** Package doc. */
+            
             /** Interface doc. */
             interface Interface {}
         '''
@@ -228,8 +209,6 @@ class TestParser(unittest.TestCase):
 
     def test_methods(self):
         s = '''
-            package test;
-
             interface Interface {
                 /** Method zero. */
                 GET method0() void;
@@ -254,7 +233,7 @@ class TestParser(unittest.TestCase):
         assert method0.name == 'method0'
         assert method0.doc == 'Method zero.'
         assert method0.is_get
-        assert method0.location.lineno == 6
+        assert method0.location.lineno == 4
         assert method0.result is lang.VOID
         assert method0.args == []
 
@@ -262,18 +241,18 @@ class TestParser(unittest.TestCase):
         assert method1.name == 'method1'
         assert method1.doc == 'Method one.'
         assert method1.is_post
-        assert method1.location.lineno == 9
+        assert method1.location.lineno == 7
         assert method1.is_request is False
         assert method1._result.name == 'result'
-        assert method1._result.location.lineno == 11
+        assert method1._result.location.lineno == 9
 
         assert len(method1.args) == 2
         assert method1.args[0].name == 'arg0'
         assert method1.args[0]._type.name == 'type0'
-        assert method1.args[0]._type.location.lineno == 10
+        assert method1.args[0]._type.location.lineno == 8
         assert method1.args[1].name == 'arg1'
         assert method1.args[1]._type.name == 'type1'
-        assert method1.args[1]._type.location.lineno == 11
+        assert method1.args[1]._type.location.lineno == 9
         
         method2 = methods[2]
         assert method2.name == 'method2'
@@ -287,8 +266,6 @@ class TestParser(unittest.TestCase):
 
     def test_collections(self):
         s = '''
-            package test;
-
             struct Struct {
                 field0  list<
                     list<
@@ -306,9 +283,9 @@ class TestParser(unittest.TestCase):
         assert isinstance(list0, lang.List)
         assert isinstance(list0.element, lang.List)
         assert list0.element._element.name == 'Element'
-        assert list0.location.lineno == 5
-        assert list0.element.location.lineno == 6
-        assert list0.element._element.location.lineno == 7
+        assert list0.location.lineno == 3
+        assert list0.element.location.lineno == 4
+        assert list0.element._element.location.lineno == 5
 
         # Set.
         set0 = fields[1].type
@@ -316,9 +293,9 @@ class TestParser(unittest.TestCase):
         assert isinstance(set0.element, lang.Set)
         assert set0.element._element.name == 'Element'
 
-        assert set0.location.lineno == 8
-        assert set0.element.location.lineno == 8
-        assert set0.element._element.location.lineno == 8
+        assert set0.location.lineno == 6
+        assert set0.element.location.lineno == 6
+        assert set0.element._element.location.lineno == 6
 
         # Map.
         map0 = fields[2].type
@@ -328,9 +305,9 @@ class TestParser(unittest.TestCase):
         assert map0.key._element.name == 'Key'
         assert map0.value._element.name == 'Value'
 
-        assert map0.location.lineno == 9
-        assert map0.key.location.lineno == 9
-        assert map0.value.location.lineno == 9
+        assert map0.location.lineno == 7
+        assert map0.key.location.lineno == 7
+        assert map0.value.location.lineno == 7
 
 
 class TestCleanupDocstrings(unittest.TestCase):

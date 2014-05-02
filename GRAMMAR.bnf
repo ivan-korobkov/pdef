@@ -21,8 +21,7 @@
     ]
 }
 
-File            ::= doc? Package Definition*
-Package         ::= 'package' id ('.' id)* ';'
+File            ::= doc? Definition*
 TypeName        ::= id ('.' id)*
 
 Definition      ::= doc? (Enum | Struct | Interface)

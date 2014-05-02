@@ -93,7 +93,7 @@ class _Tokens(object):
         'INTERFACE')
 
     # Identifier types, see t_IDENTIFIER
-    identifiers = types + ('PACKAGE', )
+    identifiers = types
     identifiers_case_sensitive = ('POST', 'GET')
     identifier_map = {key: value for key, value in
                       [(s.lower(), s) for s in identifiers] +
@@ -169,12 +169,11 @@ class _GrammarRules(object):
     @_with_location(0)
     def p_file(self, p):
         '''
-        file : doc package definitions_or_empty
+        file : doc definitions_or_empty
         '''
         path = self.path
         doc = p[1]
-        package = p[2]
-        types = p[3]
+        types = p[2]
 
         file = lang.File(path, types=types)
         file.doc = doc
@@ -189,12 +188,6 @@ class _GrammarRules(object):
             p[0] = p[1]
         else:
             p[0] = ''
-
-    def p_package(self, p):
-        '''
-        package : PACKAGE IDENTIFIER SEMI
-        '''
-        p[0] = p[2]
     
     def p_definitions_or_empty(self, p):
         '''

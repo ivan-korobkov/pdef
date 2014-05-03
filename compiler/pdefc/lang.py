@@ -1,6 +1,8 @@
 # encoding: utf-8
+import logging
 import os
 import re
+import collections
 
 
 class Node(object):
@@ -14,14 +16,19 @@ class Node(object):
         self.children.append(child)
         return child
 
-    def create_reference(self, type_or_name):
-        return self.add_child(Reference.create(type_or_name))
-
     def walk(self):
-        yield self
-        for child in self.children:
-            for x in child.walk():
-                yield x
+        q = collections.deque()
+        q.append(self)
+        
+        while q:
+            node = q.popleft()
+            if node.children:
+                children = list(node.children)
+                children.reverse()
+                q.extendleft(children)
+            
+            yield node
+            
 
     def link(self, errors, scope):
         '''Link this node.'''
@@ -138,76 +145,73 @@ class Reference(Node):
     '''Type reference.'''
 
     @classmethod
-    def create(cls, type_ref_name):
-        if isinstance(type_ref_name, Reference):
-            return type_ref_name
-        return Reference(type_ref_name)
-    
-    @classmethod
     def empty(cls):
         return Reference()
-    
-    def __init__(self, type_or_name=None):
+
+    def __init__(self, name=None):
         super(Reference, self).__init__()
 
-        self.name = None
+        self.name = name
         self.type = None
-        self.set(type_or_name)
-    
+
     @property
     def is_empty(self):
-        return self.name is None and self.type is None
-    
+        return self.name is None
+
     def __str__(self):
         if self.is_empty:
             return '<empty>'
-        
+
         return self.name or str(self.type)
-    
+
     def __repr__(self):
         if self.is_empty:
             return '<EmptyReference at %s>' % hex(id(self))
-        
-        name = self.name if self.name else self.type
-        return '<Reference %s at %s>' % (name, hex(id(self)))
 
-    def set(self, type_or_name):
-        if isinstance(type_or_name, Type):
-            self.name, self.type = None, type_or_name
-        else:
-            self.name, self.type = type_or_name, None
+        name = self.name
+        type = self.type
+        return '<Reference name=%s, type=%s at %s>' % (name, type, hex(id(self)))
 
     def dereference(self):
         '''Return a type this references points to or raise ValueError when not linked.'''
         if self.is_empty:
             return None
-        
+
         if self.type:
             return self.type
-        
-        raise ValueError('Reference is not linked: %r' % self)
+
+        logging.warn('Accessing a not linked reference %r at %s', self, self.location)
+        return self
 
     def link(self, errors, scope):
         '''Link this reference in a scope.'''
         if self.is_empty or self.type:
             return
-        
+
+        logging.debug('Linking %s: %s', self.location, self)
         self.type = scope.find(self.name)
-        errors.assert_that(self.type is not None, self.location,
-                           'Symbol not found "%s"', self.name)
+        errors.assert_that(self.type is not None, self.location, 'Symbol not found "%s"', self.name)
 
 
 class ReferenceProperty(object):
+    '''Stores a reference or a type as a property, breaks cycles in AST via references to types.'''
     def __init__(self, name):
         self.name = name
 
     def __get__(self, instance, owner):
         ref = getattr(instance, self.name)
-        return ref.dereference()
+        return ref.dereference() if isinstance(ref, Reference) else ref
 
     def __set__(self, instance, value):
-        ref = getattr(instance, self.name)
-        ref.set(value)
+        if isinstance(value, Reference) or isinstance(value, (List, Set, Map)):
+            child = value
+        else:
+            # Break cycles in AST.
+            child = Reference(value.name)
+            child.type = value
+        
+        setattr(instance, self.name, child)
+        instance.add_child(child)
 
 
 class Type(Node):
@@ -226,11 +230,11 @@ class Type(Node):
         self.is_string = name == 'string'
         self.is_datetime = name == 'datetime'
         self.is_void = name == 'void'
-        
+
         self.is_enum = isinstance(self, Enum)
         self.is_struct = isinstance(self, Struct)
         self.is_interface = isinstance(self, Interface)
-        
+
         self.is_list = isinstance(self, List)
         self.is_set = isinstance(self, Set)
         self.is_map = isinstance(self, Map)
@@ -241,15 +245,15 @@ class Type(Node):
 
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
-    
+
     @property
     def is_number(self):
         return self in (INT16, INT32, INT64, FLOAT, DOUBLE)
-    
+
     @property
     def is_datatype(self):
         return not self.is_interface and not self.is_void
-    
+
     @property
     def referenced_types(self):
         '''Return a set of all types referenced in this type (in fields, methods, etc).'''
@@ -257,7 +261,7 @@ class Type(Node):
         for node in self.walk():
             if isinstance(node, Reference):
                 types.add(node.dereference())
-            
+
             elif isinstance(node, Type):
                 types.add(node)
 
@@ -267,13 +271,13 @@ class Type(Node):
 
 class List(Type):
     element = ReferenceProperty('_element')
-
+    
     def __init__(self, element):
         super(List, self).__init__('list')
-        self._element = self.create_reference(element)
+        self.element = element
 
     def __repr__(self):
-        return '<List %s>' % self.element
+        return '<List %r>' % self.element
 
     def __str__(self):
         return 'list<%s>' % self.element
@@ -285,13 +289,13 @@ class List(Type):
 
 class Set(Type):
     element = ReferenceProperty('_element')
-
+    
     def __init__(self, element):
         super(Set, self).__init__('set')
-        self._element = self.create_reference(element)
+        self.element = element
 
     def __repr__(self):
-        return '<Set %s>' % self.element
+        return '<Set %r>' % self.element
 
     def __str__(self):
         return 'set<%s>' % self.element
@@ -304,20 +308,20 @@ class Set(Type):
 class Map(Type):
     key = ReferenceProperty('_key')
     value = ReferenceProperty('_value')
-
+    
     def __init__(self, key, value):
         super(Map, self).__init__('map')
-        self._key = self.create_reference(key)
-        self._value = self.create_reference(value)
+        self.key = key
+        self.value = value
 
     def __repr__(self):
-        return '<Map %s, %s>' % (self.key, self.value)
+        return '<Map %r, %r>' % (self.key, self.value)
 
     def __str__(self):
         return 'map<%s, %s>' % (self.key, self.value)
 
     def validate(self, errors):
-        errors.assert_that(self.key.is_number or self.key.is_string, 
+        errors.assert_that(self.key.is_number or self.key.is_string,
                            self.location, 'Map key must be a number or a string')
         errors.assert_that(self.value.is_datatype, self.location, 'Map value must be a data type')
 
@@ -405,12 +409,12 @@ class Struct(Type):
 
 class Field(Node):
     type = ReferenceProperty('_type')
-
-    def __init__(self, name, type0, struct=None, location=None):
+    
+    def __init__(self, name, type0, location=None):
         super(Field, self).__init__()
         self.name = name
-        self._type = self.create_reference(type0)
-        self.struct = struct
+        self.type = type0
+        self.struct = None
         self.location = location
 
     def __str__(self):
@@ -465,17 +469,18 @@ class Method(Node):
         super(Method, self).__init__()
         self.name = name
         self.type = type or MethodType.GET
-        self._result = self.create_reference(result if result is not None else VOID)
-        self.args = []
+        self.result = result or VOID
+        
         self.is_request = is_request
         self.interface = None
-        
+
+        self.args = []
         for arg in args or ():
             self.add_arg(arg)
-        
+
         if is_request and len(args) != 1:
             raise ValueError('Method must have only one request argument')
-        
+
     def __str__(self):
         return self.name
 
@@ -489,11 +494,11 @@ class Method(Node):
     @property
     def is_post(self):
         return self.type == MethodType.POST
-    
+
     @property
     def is_last(self):
         return self.result.is_datatype or self.result.is_void
-    
+
     def add_arg(self, arg):
         '''Append an argument to this method.'''
         if arg.method:
@@ -502,7 +507,7 @@ class Method(Node):
         self.args.append(arg)
         self.add_child(arg)
         arg.method = self
-        
+
         return arg
 
     def create_arg(self, name, type):
@@ -514,7 +519,7 @@ class Method(Node):
         # Assert post methods have data type results.
         errors.assert_that(self.type in (MethodType.GET, MethodType.POST), self.location,
                            'Unknown method type "%s"', self.type)
-        
+
         if self.is_post:
             errors.assert_that(self.is_last, self.location,
                                'POST method must have a data type result or be void')
@@ -534,12 +539,11 @@ class MethodType(object):
 
 class Argument(Node):
     type = ReferenceProperty('_type')
-
+    
     def __init__(self, name, type0):
         super(Argument, self).__init__()
-
         self.name = name
-        self._type = self.create_reference(type0)
+        self.type = type0
         self.method = None
 
     def __str__(self):
@@ -549,7 +553,7 @@ class Argument(Node):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
 
     def validate(self, errors):
-        errors.assert_that(self.type.is_datatype, self.location, 
+        errors.assert_that(self.type.is_datatype, self.location,
                            '"%s" argument must be a data type', self.name)
 
 
@@ -578,13 +582,13 @@ class Errors(object):
 
     def __nonzero__(self):
         return bool(self.errors)
-    
+
     def __getitem__(self, item):
         return self.errors[item]
-    
+
     def __iter__(self):
         return iter(self.errors)
-    
+
     def __len__(self):
         return len(self.errors)
 

@@ -4,13 +4,6 @@ from pdefc.lang import *
 
 
 class TestNode(unittest.TestCase):
-    def test_create_reference__should_add_child_reference(self):
-        node = Node()
-        ref = node.create_reference('Type')
-        
-        assert ref.name == 'Type'
-        assert ref in node.children
-    
     def test_walk__should_walk_this_node_tree(self):
         node0 = Node()
         node1 = Node()

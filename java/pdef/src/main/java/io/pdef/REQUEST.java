@@ -1,3 +1,5 @@
+package io.pdef;
+
 /*
  * Copyright: 2013 Pdef <http://pdef.io/>
  *
@@ -14,9 +16,8 @@
  * limitations under the License.
  */
 
-package io.pdef;
-
 import java.lang.annotation.*;
+
 
 @Documented
 @Target(ElementType.METHOD)

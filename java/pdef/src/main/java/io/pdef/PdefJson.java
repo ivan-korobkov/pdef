@@ -209,9 +209,9 @@ public class PdefJson {
 				throws IOException {
 			String text = jp.getText();
 			text = (text != null ? text : "").toUpperCase();
-
+			
 			@SuppressWarnings("unchecked")
-			Class<? extends Enum<?>> cls = (Class<? extends Enum<?>>) handledType();
+			Class cls = (Class) handledType();
 			try {
 				return Enum.valueOf(cls, text);
 			} catch (IllegalArgumentException e) {

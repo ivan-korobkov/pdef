@@ -16,9 +16,8 @@ Contents
 
 Getting Started
 ---------------
-Pdef consists of a compiler and language-specific bindings.
-
-Install the compiler as a python package:
+Pdef consists of a compiler and language-specific bindings. Install the compiler as a python 
+package:
 ```bash
 $ pip install pdef-compiler
 ```
@@ -55,8 +54,10 @@ struct Photo {
 ```
 
 Generate the source code:
+```bash
 $ pdefc gen-java blog.pdef --package com.myblog --dst gen-java/
 $ pdefc gen-objc blog.pdef --prefix BLG --dst generated/
+```
 
 
 Syntax
@@ -130,14 +131,14 @@ Pdef has data types (primitives, containers, enums and structs), interfaces, and
 - `float`: a 32-bit floating point number,
 - `double`: a 64-bit floating point number,
 - `string`: a unicode string,
-- `datetime`: a date and time object without a time zone,
-- `void` is a special type which indicates that a method returns no result.
+- `datetime`: a datetime object without a time zone,
+- `void` a special type which indicates that a method returns no result.
 
 
 ### Containers
 - `list<datatype>` is an ordered list of elements.
 - `set<datatype>` is an unordered set of unique elements.
-- `map<number or string, datatype>` is an unordered key-value container. 
+- `map<number_or_string, datatype>` is an unordered key-value container. 
 
 ```pdef
 struct User {
@@ -153,9 +154,7 @@ struct User {
 
 
 ### Enums
-Enum is a collection of unique predefined string values. Code generators can add
-`UNDEFINED` enum values if not-present and required.
-
+Enum is a collection of unique predefined string values.
 ```pdef
 enum Sex {
     MALE, FEMALE;
@@ -164,9 +163,8 @@ enum Sex {
 
 
 ### Structs and exceptions
-Struct is collection of strongly typed fields. Each field has a unique name and a type.
-Inheritance is not supported. Structs can be declared as `exceptions`
-so that code-generators can use native language exceptions.
+Struct is collection of strongly typed fields. Structs can be declared as `exceptions`
+so that code-generators can use native language exceptions. Inheritance is not supported.
 
 ```pdef
 /** Example struct. */
@@ -232,17 +230,18 @@ Pdef provides HTTP client/servers and JSON serialization out of the box.
 ### HTTP Requests
 Invocation chains are sent as HTTP `application/x-www-form-urlencoded` requests.
 Method names are appended to request paths. Intermediate method arguments are appended
-to the request paths too, last method arguments are sent as query params or post params.
+to request paths too, last method arguments are sent as query params or post params.
 
 Primitive arguments are converted to strings, containers and structs are converted to JSON.
 Arguments grouped into requests are expanded into fields.
 
-GET `blog(10).articles().query(limit=10, offset=20) // pseudo-code`
+`GET blog(10).articles().query(limit=10, offset=20) // pseudo-code`
 ```http
 GET /blog/10/articles/query?limit=10&offset=20 HTTP/1.1
 ```
 
-POST `blog(10).articles().create(CreateArticleRequest(title="Hello world", date=now)) //pseudo-code`
+
+`POST blog(10).articles().create(CreateArticleRequest(title="Hello world", date=now)) //pseudo-code`
 ```http
 POST /blog/10/articles/create HTTP/1.1
 Content-Type: application/x-www-form-urlencoded

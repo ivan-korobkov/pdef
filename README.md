@@ -1,17 +1,63 @@
 Pdef - API language with code-generation
 ========================================
-Pdef (pi:def, stands for "protocol definition [language]") is an interface definition language
-with optional code-generation for HTTP clients/servers and JSON data structures.
-It is suitable for public APIs, internal service-oriented APIs, configuration files, 
-as a format for persistence, cache, message queues, logs, etc.
+Pdef (pi:def, stands for "protocol definition [language]") is a web API language 
+with optional code-generation. It is suitable for public APIs, internal service-oriented APIs, 
+configuration files, as a format for persistence, cache, message queues, logs, etc.
 
 
 Contents
 --------
+- [Getting Started](#getting-started)
 - [Syntax](#syntax)
+- [Types](#types)
 - [JSON encoding](#json-encoding)
 - [HTTP RPC](#http-rpc)
 - [License and Copyright](#license)
+
+
+Getting Started
+---------------
+Pdef consists of a compiler and language-specific bindings.
+
+Install the compiler as a python package:
+```bash
+$ pip install pdef-compiler
+```
+
+Or download the archive, unzip it and run:
+```bash
+$ python setup.py install
+```
+
+Install the language bindings:
+- [Java](java/README.md)
+- [Objective-C](objc/README.md)
+
+
+Create a `*.pdef` file or a directory with multiple files with interfaces and data types.
+```pdef
+interface Blog {
+    GET get(id int64) Post;
+    
+    POST create(Post) Post;
+}
+
+struct Post {
+    id      int64;
+    title   string;
+    text    string;
+    photos  list<Photo>;
+}
+
+struct Photo {
+    id      int64;
+    url     string;
+}
+```
+
+Generate the source code:
+$ pdefc gen-java blog.pdef --package com.myblog --dst gen-java/
+$ pdefc gen-objc blog.pdef --prefix BLG --dst generated/
 
 
 Syntax
@@ -31,7 +77,6 @@ interface) or before a method.
  * Start each line with a star because 
  * it is used as an indentation margin.
  */
-package example;
 
 // This is a one line comment, it is stripped from the source code.
 
@@ -55,10 +100,12 @@ struct Article {
 
 
 ### Packages
-Pdef uses packages to organize files. Each package must be put into a distinct directory
-named after the package. Each file must declare its package. Example package structure:
+Files and directories passed to the compiler are compiled as a package. Types can references each
+other in the same package. Importing other packages is not supported yet.
+
+Example package:
 ```
-company.blog/
+project/
     blog.pdef
     articles.pdef
     comments.pdef
@@ -66,8 +113,17 @@ company.blog/
     users/profile.pdef
 ```
 
+Pass the package directory to the compiler:
+```bash
+$ pdefc check project/ 
+```
 
-### Primitive types
+
+Types
+-----
+Pdef has data types (primitives, containers, enums and structs), interfaces, and `void`.
+
+### Primitives
 - `bool`: a boolean value (true/false),
 - `int16`: a signed 16-bit integer,
 - `int32`: a signed 32-bit integer,
@@ -80,10 +136,9 @@ company.blog/
 
 
 ### Containers
-- `list` is an ordered list of elements. Elements must be data types.
-- `set` is an unordered set of unique elements. Elements must be data types.
-- `map` is an unordered key-value container (a dict in some languages). 
-  Keys must be numbers or strings, value must be data types. 
+- `list<datatype>` is an ordered list of elements.
+- `set<datatype>` is an unordered set of unique elements.
+- `map<number or string, datatype>` is an unordered key-value container. 
 
 ```pdef
 struct User {
@@ -133,24 +188,25 @@ exception ApplicationException {
 
 
 ### Interfaces
-Interface is a collection of strongly typed methods. Each method has a unique name,
-a number of or zero data type arguments, and a result. The result can be of any type.
-Methods are declared as getters or mutators, using `GET` and `POST` keywords respectively.
+Interface is a collection of strongly typed methods. Method arguments must be data types, 
+results can be of any type. Methods are declared as getters or mutators, 
+using `GET` and `POST` keywords respectively.
 
-If a method returns an interface then it must be declared as a `GET` method.
-Interface methods are used in *invocation chains*, i.e. `blog(17).articles().comment("Hello")`. 
+If a method returns an `interface` then it must be declared as a `GET` method.
+Interface methods are used in *invocation chains*, 
+i.e. `application().comments().add(articleId=10, text="Hello")`. 
 The last method in an invocation chain must return a data type.
 
 Arguments can be declared either 
 as name-type pairs (`query(limit int32, offset int32) list<string>`),
-or as requests (`create(CreateArticleRequest) CreateArticleResponse`).
+or grouped into requests (`create(CreateArticleRequest) CreateArticleResponse`).
 
 ```pdef
-interface Blog {
-    /** Returns a blog title. */
-    GET title() string;
+interface Application {
+    /** Echoes the text. */
+    GET echo(text string) string;
     
-    /** Returns a blog articles interface. */
+    /** Returns the application articles subinterface. */
     GET articles() Articles;
 }
 
@@ -225,7 +281,10 @@ title=Hello+world&date=2014-04-14T23:59:59Z
 ```
 
 ### Response
-Successful result are sent as `{"data": "method result"}` JSON responses:
+Successful result are sent as `{"data": "method result"}` JSON responses.
+Exceptions are specific to each application and should be parsed/serialized manually.
+
+Example response:
 ```http
 HTTP/1.0 200 OK
 Content-Type: application/json;charset=utf-8
@@ -235,19 +294,6 @@ Content-Type: application/json;charset=utf-8
     "id": 1234,
     "title": "Hello, world",
     "createdAt": "2014-04-20T23:59:59Z"
-  }
-}
-```
-
-Application exceptions are sent as `{"error": "exception struct"}` JSON responses
-with HTTP error codes:
-```http
-HTTP/1.0 422 Unprocessable entity
-Content-Type: application/json;charset=utf-8
-
-{
-  "error": {
-      "text": "Expected application exception"
   }
 }
 ```

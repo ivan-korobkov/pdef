@@ -22,7 +22,7 @@ setup(
     license='Apache License 2.0',
     url='http://github.com/pdef/pdef',
     description='Pdef compiler',
-    long_description=open('README.md', 'r').read(),
+    long_description=open('../README.md', 'r').read(),
 
     author='Ivan Korobkov',
     author_email='ivan.korobkov@gmail.com',

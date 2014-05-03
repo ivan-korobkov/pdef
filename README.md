@@ -10,8 +10,7 @@ Contents
 - [Getting Started](#getting-started)
 - [Syntax](#syntax)
 - [Types](#types)
-- [JSON encoding](#json-encoding)
-- [HTTP RPC](#http-rpc)
+- [HTTP and JSON](#http-and-json)
 - [License and Copyright](#license)
 
 
@@ -226,8 +225,58 @@ interface Articles {
 ```
 
 
-JSON encoding
+HTTP and JSON
 -------------
+Pdef provides HTTP client/servers and JSON serialization out of the box.
+
+### HTTP Requests
+Invocation chains are sent as HTTP `application/x-www-form-urlencoded` requests.
+Method names are appended to request paths. Intermediate method arguments are appended
+to the request paths too, last method arguments are sent as query params or post params.
+
+Primitive arguments are converted to strings, containers and structs are converted to JSON.
+Arguments grouped into requests are expanded into fields.
+
+GET `blog(10).articles().query(limit=10, offset=20) // pseudo-code`
+```http
+GET /blog/10/articles/query?limit=10&offset=20 HTTP/1.1
+```
+
+POST `blog(10).articles().create(CreateArticleRequest(title="Hello world", date=now)) //pseudo-code`
+```http
+POST /blog/10/articles/create HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+title=Hello+world&date=2014-04-14T23:59:59Z
+```
+
+### HTTP Responses
+Successful result are sent as `{"data": "method result"}` JSON responses.
+Exceptions should be manually mapped to HTTP error status codes.
+
+Example response:
+```http
+HTTP/1.0 200 OK
+Content-Type: application/json;charset=utf-8
+
+{
+  "data": {
+    "id": 1234,
+    "title": "Hello, world",
+    "createdAt": "2014-04-20T23:59:59Z"
+  }
+}
+```
+
+RPC errors are sent as plain text `400 Bad request` responses:
+```http
+HTTP/1.0 400 Bad request
+Content-Type: text/plain;charset=utf-8
+
+Wrong method arguments.
+```
+
+### JSON encoding
 Pdef data types transparently map to JSON data types. Dates are encoded as
 as ISO8601 UTC `yyyy-MM-ddTHH:mm:ssZ` strings, enums are encoded as lowercase strings.
 
@@ -254,56 +303,6 @@ JSON:
         {"id": 10, "name": "Albert"}
     ]
 }
-```
-
-
-HTTP RPC
---------
-### Request
-Pdef invocation chains are sent as HTTP `application/x-www-form-urlencoded` requests.
-Method names are appended to request paths. Arguments are appended to paths when a method returns
-an interface, otherwise, they and are sent as HTTP query or post data. Primitive arguments are 
-converted to strings, containers and structs are converted to JSON. Unnamed request arguments as 
-in `POST create(CreateArticleRequest) CreateArticleResponse` are expanded into fields, 
-i.e. their fields are sent as normal arguments.
-
-GET `blog(10).articles().query(limit=10, offset=20) // pseudo-code`
-```http
-GET /blog/10/articles/query?limit=10&offset=20 HTTP/1.1
-```
-
-POST `blog(10).articles().create(CreateArticleRequest(title="Hello world", date=now)) //pseudo-code`
-```http
-POST /blog/10/articles/create HTTP/1.1
-Content-Type: application/x-www-form-urlencoded
-
-title=Hello+world&date=2014-04-14T23:59:59Z
-```
-
-### Response
-Successful result are sent as `{"data": "method result"}` JSON responses.
-Exceptions are specific to each application and should be parsed/serialized manually.
-
-Example response:
-```http
-HTTP/1.0 200 OK
-Content-Type: application/json;charset=utf-8
-
-{
-  "data": {
-    "id": 1234,
-    "title": "Hello, world",
-    "createdAt": "2014-04-20T23:59:59Z"
-  }
-}
-```
-
-RPC errors are sent as plain text `400 Bad request` responses:
-```http
-HTTP/1.0 400 Bad request
-Content-Type: text/plain;charset=utf-8
-
-Wrong method arguments.
 ```
 
 

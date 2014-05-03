@@ -106,6 +106,20 @@ class Generator(object):
 
         return self.jtype(type0)
     
+    def jdefault(self, type0):
+        if type0.is_list:
+            return 'new java.util.ArrayList<%s>()' % (self.jtype_boxed(type0.element))
+        elif type0.is_set:
+            return 'new java.util.HashSet<%s>()' % (self.jtype_boxed(type0.element))
+        elif type0.is_map:
+            return 'new java.util.HashMap<%s, %s>()' % (self.jtype_boxed(type0.key),
+                                                        self.jtype_boxed(type0.value))
+        elif type0.is_struct:
+            return 'new %s()' % self.jtype(type0)
+        
+        raise ValueError('Type does not have a java default value %s' % type0)
+        
+    
     def is_jobject(self, type0):
         return type0.is_string \
                or type0.is_datetime \

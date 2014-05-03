@@ -40,7 +40,11 @@ public class {{ name }} {% if struct.is_exception -%}
 
 {% for field in struct.fields %}
     public {{ field.type|jtype }} get{{ field.name|upper_first }}() {
-        return this.{{ field.name }};
+        {% if field.type.is_collection or field.type.is_struct %}
+        return {{ field.name }} != null ? {{ field.name }} : ({{ field.name }} = {{ field.type|jdefault }});
+        {% else %}
+        return {{ field.name }};
+        {% endif %}
     }
 
     public {{ name }} set{{ field.name|upper_first }}({{ field.type|jtype }} value) {

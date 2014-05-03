@@ -7,14 +7,13 @@ import io.pdef.test.TestInterface;
 import io.pdef.test.TestNumber;
 import io.pdef.test.TestStruct;
 import io.pdef.test.TestSubInterface;
-import org.hamcrest.Matcher;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsEqual.equalTo;
+import static org.fest.assertions.api.Assertions.assertThat;
 import org.junit.Test;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 public class PdefHandlerTest {
@@ -38,14 +37,17 @@ public class PdefHandlerTest {
 		PdefRequest request = new PdefRequest()
 				.setRelativePath("/interface0/false/-32/hello/get")
 				.setQuery(ImmutableMap.of("int0", "-1", "string0", "hello"));
-		PdefInvocation invocation = PdefHandler.parseRequest(request, TestInterface.class);
+		List<PdefInvocation> invocations = PdefHandler.parseRequest(request, TestInterface.class);
+		assertThat(invocations).hasSize(2);
 
-		assertThat(invocation.getMethod(), equalToMethod(TestSubInterface.class, "get"));
-		assertThat(invocation.getArgs(), equalTo(new Object[]{-1, "hello"}));
+		PdefInvocation invocation0 = invocations.get(0);
+		assertThat(invocation0.getMethod()).isEqualTo(getMethod(TestInterface.class, 
+				"interface0"));
+		assertThat(invocation0.getArgs()).isEqualTo(new Object[]{false, -32, "hello"});
 
-		PdefInvocation parent = invocation.getParent();
-		assertThat(parent.getMethod(), equalToMethod(TestInterface.class, "interface0"));
-		assertThat(parent.getArgs(), equalTo(new Object[]{false, -32, "hello"}));
+		PdefInvocation invocation = invocations.get(1);
+		assertThat(invocation.getMethod()).isEqualTo(getMethod(TestSubInterface.class, "get"));
+		assertThat(invocation.getArgs()).isEqualTo(new Object[]{-1, "hello"});
 	}
 
 	@Test
@@ -70,7 +72,8 @@ public class PdefHandlerTest {
 				.setRelativePath("/request")
 				.setQuery(query);
 
-		PdefInvocation invocation = PdefHandler.parseRequest(request, TestInterface.class);
+		List<PdefInvocation> invocations = PdefHandler.parseRequest(request, TestInterface.class);
+		PdefInvocation invocation = invocations.get(0);
 		TestStruct struct = (TestStruct) invocation.getArgs()[0];
 		TestStruct expected = new TestStruct()
 				.setBool0(true)
@@ -87,7 +90,7 @@ public class PdefHandlerTest {
 				.setEnum0(TestNumber.ONE)
 				.setStruct0(new TestStruct().setInt0(32));
 
-		assertThat(struct, equalTo(expected));
+		assertThat(struct).isEqualTo(expected);
 	}
 
 	@Test
@@ -97,19 +100,22 @@ public class PdefHandlerTest {
 				.setRelativePath("/post")
 				.setPost(ImmutableMap.of("bool0", "1", "short0", "-16", "int0", "-32"));
 
-		PdefInvocation invocation = PdefHandler.parseRequest(request, TestInterface.class);
+		List<PdefInvocation> invocations = PdefHandler.parseRequest(request, TestInterface.class);
+		assertThat(invocations).hasSize(1);
+
+		PdefInvocation invocation = invocations.get(0);
 		Object[] args = new Object[13];
 		args[0] = true;
 		args[1] = (short) -16;
 		args[2] = -32;
 
-		assertThat(invocation.getMethod(), equalToMethod(TestInterface.class, "post"));
-		assertThat(invocation.getArgs(), equalTo(args));
+		assertThat(invocation.getMethod()).isEqualTo(getMethod(TestInterface.class, "post"));
+		assertThat(invocation.getArgs()).isEqualTo(args);
 	}
 
-	public static Matcher<Method> equalToMethod(final Class<?> cls, final String name) {
+	public static Method getMethod(final Class<?> cls, final String name) {
 		Method method = PdefHandler.getMethod(cls, name);
 		assert method != null;
-		return equalTo(method);
+		return method;
 	}
 }

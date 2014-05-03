@@ -21,8 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.pdef.test.TestNumber;
 import io.pdef.test.TestStruct;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.fest.assertions.api.Assertions.assertThat;
 import org.junit.Test;
 
 import java.util.Date;
@@ -33,7 +32,7 @@ public class PdefJsonTest {
 		TestStruct struct0 = fixtureStruct();
 		String json = struct0.toJson();
 		TestStruct struct1 = TestStruct.parseJson(json);
-		assertThat(struct1, equalTo(struct0));
+		assertThat(struct1).isEqualTo(struct0);
 	}
 	
 	private TestStruct fixtureStruct() {

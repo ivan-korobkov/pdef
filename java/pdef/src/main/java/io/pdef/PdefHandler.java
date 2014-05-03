@@ -36,11 +36,10 @@ public class PdefHandler<T> {
 	}
 
 	public PdefResponse<Object> handle(final PdefRequest request) {
-		PdefInvocation invocation = parseRequest(request, iface);
-		List<PdefInvocation> chain = invocation.toChain();
-
+		List<PdefInvocation> invocations = parseRequest(request, iface);
+		
 		Object result = server;
-		for (PdefInvocation inv : chain) {
+		for (PdefInvocation inv : invocations) {
 			result = inv.invoke(result);
 		}
 		
@@ -48,7 +47,7 @@ public class PdefHandler<T> {
 	}
 
 	@Nonnull
-	static PdefInvocation parseRequest(final PdefRequest request, final Class<?> iface) {
+	static List<PdefInvocation> parseRequest(final PdefRequest request, final Class<?> iface) {
 		try {
 			return doParseRequest(request, iface);
 		} catch (RuntimeException e) {
@@ -59,12 +58,12 @@ public class PdefHandler<T> {
 	}
 
 	@Nonnull
-	private static PdefInvocation doParseRequest(final PdefRequest request, Class<?> iface)
+	private static List<PdefInvocation> doParseRequest(final PdefRequest request, Class<?> iface)
 			throws Exception {
 		if (request == null) throw new NullPointerException("request");
 		if (iface == null) throw new NullPointerException("iface");
 
-		PdefInvocation invocation = null;
+		List<PdefInvocation> invocations = new ArrayList<PdefInvocation>();
 		LinkedList<String> path = splitPath(request.getRelativePath());
 		Map<String, String> params = request.isPost() ? request.getPost() : request.getQuery();
 
@@ -83,9 +82,9 @@ public class PdefHandler<T> {
 			// Parse arguments and create a next invocation.
 			Object[] args = hasRequestArg(method) ? parseArgRequest(method, params)
 			                                      : parseArgs(method, path, params);
-			invocation = invocation == null ? new PdefInvocation(method, args)
-			                                : invocation.next(method, args);
-
+			PdefInvocation invocation = new PdefInvocation(method, args);
+			invocations.add(invocation);
+			
 			// Stop on a terminal method, otherwise, proceed parsing the request.
 			if (hasDataTypeResult(method)) {
 				break;
@@ -96,12 +95,11 @@ public class PdefHandler<T> {
 		}
 
 		assertThat(path.isEmpty(), "Failed to parse an invocation chain");
-		assertThat(invocation != null, "Method invocation required");
-		assert invocation != null;
-		assertThat(hasDataTypeResult(invocation.getMethod()),
-				"The last method must be void or return a data type.");
-
-		return invocation;
+		assertThat(!invocations.isEmpty(), "Method invocation required");
+		assertThat(hasDataTypeResult(invocations.get(invocations.size() - 1).getMethod()),
+				"The last method must be void or return a data type." );
+		
+		return invocations;
 	}
 
 	private static Object[] parseArgRequest(final Method method, final Map<String, String> params)

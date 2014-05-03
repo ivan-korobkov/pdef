@@ -2,27 +2,17 @@ package io.pdef;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Arrays;
 
 public class PdefInvocation {
 	private final Method method;
 	private final Object[] args;
-	private final PdefInvocation parent;
 
 	public PdefInvocation(final Method method, final Object[] args) {
-		this(method, args, null);
-	}
-
-	public PdefInvocation(final Method method, final Object[] args, final PdefInvocation parent) {
+		if (method == null) throw new NullPointerException("method");
+		
 		this.method = method;
 		this.args = args == null ? null : args.clone();
-		this.parent = parent;
-
-		if (method == null) {
-			throw new NullPointerException("method == null");
-		}
 	}
 
 	public Method getMethod() {
@@ -33,27 +23,6 @@ public class PdefInvocation {
 		return args;
 	}
 
-	public PdefInvocation getParent() {
-		return parent;
-	}
-
-	public PdefInvocation next(final Method method, final Object[] args) {
-		return new PdefInvocation(method, args, this);
-	}
-
-	public List<PdefInvocation> toChain() {
-		List<PdefInvocation> chain = new ArrayList<PdefInvocation>();
-
-		PdefInvocation invocation = this;
-		while (invocation != null) {
-			chain.add(invocation);
-			invocation = invocation.parent;
-		}
-
-		Collections.reverse(chain);
-		return chain;
-	}
-
 	public Object invoke(final Object o) {
 		try {
 			return method.invoke(o, args);
@@ -62,5 +31,26 @@ public class PdefInvocation {
 		} catch (InvocationTargetException e) {
 			throw new PdefException("Invocation target exception", e.getCause());
 		}
+	}
+	
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		final PdefInvocation that = (PdefInvocation) o;
+
+		// Probably incorrect - comparing Object[] arrays with Arrays.equals
+		if (!Arrays.equals(args, that.args)) return false;
+		if (!method.equals(that.method)) return false;
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = method.hashCode();
+		result = 31 * result + Arrays.hashCode(args);
+		return result;
 	}
 }

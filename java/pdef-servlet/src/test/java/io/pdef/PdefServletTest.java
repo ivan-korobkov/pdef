@@ -18,7 +18,7 @@ package io.pdef;
 
 import com.google.common.collect.ImmutableMap;
 import io.pdef.test.TestInterface;
-import static org.junit.Assert.assertEquals;
+import static org.fest.assertions.api.Assertions.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -67,10 +67,10 @@ public class PdefServletTest {
 				"key1", new String[]{"value1", "value11"}));
 
 		PdefRequest req = servlet.readRequest(request);
-		assertEquals("GET", req.getMethod());
-		assertEquals("/method1/method2", req.getRelativePath());
-		assertEquals(ImmutableMap.of("key0", "value0", "key1", "value1"), req.getQuery());
-		assertEquals(ImmutableMap.of("key0", "value0", "key1", "value1"), req.getPost());
+		assertThat(req.getMethod()).isEqualTo("GET");
+		assertThat(req.getRelativePath()).isEqualTo("/method1/method2");
+		assertThat(req.getQuery()).isEqualTo(ImmutableMap.of("key0", "value0", "key1", "value1"));
+		assertThat(req.getPost()).isEqualTo(ImmutableMap.of("key0", "value0", "key1", "value1"));
 	}
 
 	@Test
@@ -82,7 +82,7 @@ public class PdefServletTest {
 		when(request.getRequestURI()).thenReturn("/context/app/method/1/2");
 
 		String relativePath = servlet.getRelativePath(request);
-		assertEquals("/method/1/2", relativePath);
+		assertThat(relativePath).isEqualTo("/method/1/2");
 	}
 
 	@Test
@@ -94,6 +94,6 @@ public class PdefServletTest {
 		when(request.getRequestURI()).thenReturn("/context/method/1/2");
 
 		String relativePath = servlet.getRelativePath(request);
-		assertEquals("/method/1/2", relativePath);
+		assertThat(relativePath).isEqualTo("/method/1/2");
 	}
 }

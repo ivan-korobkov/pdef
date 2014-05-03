@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.ser.Serializers;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -159,54 +158,6 @@ public class PdefJson {
 		}
 	}
 
-	private static class EnumSerializer extends StdScalarSerializer<Enum<?>> {
-		EnumSerializer(final Class<Enum<?>> t) {
-			super(t);
-		}
-
-		@Override
-		public void serialize(final Enum<?> value, final JsonGenerator jgen,
-				final SerializerProvider provider) throws IOException {
-			if (value == null) {
-				jgen.writeNull();
-				return;
-			}
-
-			String s = value.name().toLowerCase();
-			jgen.writeString(s);
-		}
-	}
-
-	private static class EnumDeserializer extends StdScalarDeserializer<Enum<?>> {
-		private final Method valueOf;
-
-		EnumDeserializer(final Class<?> vc) {
-			super(vc);
-
-			try {
-				valueOf = handledType().getDeclaredMethod("valueOf", String.class);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		@Override
-		public Enum<?> deserialize(final JsonParser jp, final DeserializationContext ctxt)
-				throws IOException {
-			String text = jp.getText().toUpperCase();
-			boolean unknownAsNull = ctxt.getConfig()
-					.isEnabled(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL);
-			try {
-				return (Enum<?>) valueOf.invoke(null, text);
-			} catch (Exception e) {
-				if (unknownAsNull) return null;
-
-				throw new IOException(
-						"Cannot deserialize enum " + handledType().getName() + " from " + text, e);
-			}
-		}
-	}
-
 	private static class InternalSerializers extends Serializers.Base {
 		@SuppressWarnings("unchecked")
 		@Override
@@ -227,6 +178,45 @@ public class PdefJson {
 				final DeserializationConfig config, final BeanDescription beanDesc)
 				throws JsonMappingException {
 			return new EnumDeserializer(type);
+		}
+	}
+
+	private static class EnumSerializer extends StdScalarSerializer<Enum<?>> {
+		EnumSerializer(final Class<Enum<?>> t) {
+			super(t);
+		}
+
+		@Override
+		public void serialize(final Enum<?> value, final JsonGenerator jgen,
+				final SerializerProvider provider) throws IOException {
+			if (value == null) {
+				jgen.writeNull();
+				return;
+			}
+
+			String s = value.name().toLowerCase();
+			jgen.writeString(s);
+		}
+	}
+
+	private static class EnumDeserializer extends StdScalarDeserializer<Enum<?>> {
+		EnumDeserializer(final Class<?> vc) {
+			super(vc);
+		}
+
+		@Override
+		public Enum<?> deserialize(final JsonParser jp, final DeserializationContext ctxt)
+				throws IOException {
+			String text = jp.getText();
+			text = (text != null ? text : "").toUpperCase();
+
+			@SuppressWarnings("unchecked")
+			Class<? extends Enum<?>> cls = (Class<? extends Enum<?>>) handledType();
+			try {
+				return Enum.valueOf(cls, text);
+			} catch (IllegalArgumentException e) {
+				return null;
+			}
 		}
 	}
 }

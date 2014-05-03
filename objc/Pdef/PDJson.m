@@ -193,14 +193,6 @@ static NSDateFormatter *formatter;
 + (NSString *)_serializeKey:(id)key type:(id)type error:(NSError **)error {
     PDType type0 = PDTypeForType(type);
     switch (type0) {
-        case PDTypeBool: {
-            AssertTrue([key isKindOfClass:NSNumber.class], error,
-            @"Cannot serialize a bool from '%@'", [key class])
-
-            BOOL bool0 = ((NSNumber *) key).boolValue;
-            return bool0 ? @"true" : @"false";
-        }
-
         case PDTypeInt16:
         case PDTypeInt32:
         case PDTypeInt64:
@@ -212,14 +204,10 @@ static NSDateFormatter *formatter;
             NSNumber *number = key;
             return [number stringValue];
         }
-
         case PDTypeString:return key;
-        case PDTypeDate:return [self _serializeDate:key error:error];
-        case PDTypeEnum: return [self _serializeEnum:key type:type error:error];
-
         default: {
             NSString *msg = [NSString
-                stringWithFormat:@"Cannot parse a map key from '%@'", [key class]];
+                stringWithFormat:@"Cannot serialize a map key from '%@'", [key class]];
             *error = [self error:msg];
             return nil;
         }
@@ -431,21 +419,12 @@ static NSDateFormatter *formatter;
 + (id)_parseKey:(NSString *)key type:(id)type error:(NSError **)error {
     PDType type0 = PDTypeForType(type);
     switch (type0) {
-        case PDTypeBool: {
-            if ([@"true" isEqualToString:key]) return @YES;
-            if ([@"false" isEqualToString:key]) return @NO;
-            return @([key boolValue]);
-        }
         case PDTypeInt16:return @([key intValue]);
         case PDTypeInt32:return @([key intValue]);
         case PDTypeInt64:return @([key longLongValue]);
         case PDTypeFloat:return @([key floatValue]);
         case PDTypeDouble:return @([key doubleValue]);
-
         case PDTypeString:return key;
-        case PDTypeDate:return [self _parseDate:key error:error];
-        case PDTypeEnum: return [self _parseEnum:key type:type error:error];
-
         default: {
             NSString *msg = [NSString
                 stringWithFormat:@"Cannot parse a map key from '%@'", [key class]];

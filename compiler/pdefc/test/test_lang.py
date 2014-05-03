@@ -145,14 +145,23 @@ class TestSet(unittest.TestCase):
 
 
 class TestMap(unittest.TestCase):
-    def test_validate__key_should_be_primitive(self):
+    def test_validate__key_should_be_number_or_string(self):
         errors = Errors()
         struct = Struct('Test')
         map0 = Map(struct, INT32)
         map0.validate(errors)
         
         assert len(errors) == 1
-        assert 'Map key must be a primitive' in errors[0]
+        assert 'Map key must be a number or a string' in errors[0]
+
+    def test_validate__key_should_be_number_or_string_not_enum(self):
+        errors = Errors()
+        enum = Enum('Test')
+        map0 = Map(enum, INT32)
+        map0.validate(errors)
+
+        assert len(errors) == 1
+        assert 'Map key must be a number or a string' in errors[0]
     
     def test_validate__value_should_be_data_type(self):
         errors = Errors()

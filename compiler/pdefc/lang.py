@@ -241,11 +241,11 @@ class Type(Node):
 
     def __repr__(self):
         return '<%s %s at %s>' % (self.__class__.__name__, self.name, hex(id(self)))
-
+    
     @property
-    def is_primitive(self):
-        return self in (BOOL, INT16, INT32, INT64, FLOAT, DOUBLE, STRING, DATETIME)
-
+    def is_number(self):
+        return self in (INT16, INT32, INT64, FLOAT, DOUBLE)
+    
     @property
     def is_datatype(self):
         return not self.is_interface and not self.is_void
@@ -317,7 +317,8 @@ class Map(Type):
         return 'map<%s, %s>' % (self.key, self.value)
 
     def validate(self, errors):
-        errors.assert_that(self.key.is_primitive, self.location, 'Map key must be a primitive')
+        errors.assert_that(self.key.is_number or self.key.is_string, 
+                           self.location, 'Map key must be a number or a string')
         errors.assert_that(self.value.is_datatype, self.location, 'Map value must be a data type')
 
 

@@ -80,10 +80,10 @@ company.blog/
 
 
 ### Containers
-- `list` is an ordered list of elements. An element must be a data type.
-- `set` is an unordered set of unique elements. An element must be a data type.
-- `map` is an unordered key-value container (a dict in some languages). A key must be a
-non-null primitive, a value must be a data type.
+- `list` is an ordered list of elements. Elements must be data types.
+- `set` is an unordered set of unique elements. Elements must be data types.
+- `map` is an unordered key-value container (a dict in some languages). 
+  Keys must be numbers or strings, value must be data types. 
 
 ```pdef
 struct User {

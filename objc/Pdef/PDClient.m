@@ -114,26 +114,6 @@ static NSDateFormatter *dateFormatter;
     }];
 }
 
-- (NSURLRequest *)requestForInvocations:(NSArray *)invocations resultType:(id *)resultType
-                                  error:(NSError **)error {
-    PDClientRequest *req = [PDClient serializeInvocations:invocations iface:_iface
-        resultType:resultType error:error];
-    if (!req) {
-        return nil;
-    }
-
-    NSURL *url = [NSURL URLWithString:[_url stringByAppendingString:req.path]];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-    request.HTTPMethod = req.method;
-    [request addValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
-
-    if (req.post) {
-        request.HTTPBody = [req.post dataUsingEncoding:NSUTF8StringEncoding];
-    }
-
-    return request;
-}
-
 - (BOOL)isValidResponse:(NSHTTPURLResponse *)response {
     if (response.statusCode != 200) {
         return NO;
@@ -158,15 +138,34 @@ static NSDateFormatter *dateFormatter;
 - (id)handleError:(NSData *)data response:(NSHTTPURLResponse *)response
             error:(NSError **)error {
     if (_errorHandler) {
-        return _errorHandler(data, response, error);
+        _errorHandler(data, response, error);
     }
 
-    if (*error) {
+    if (*error == nil) {
+        *error = [PDClient errorWithDescription:@"Failed to handle a server response"];
+    }
+
+    return nil;
+}
+
+- (NSURLRequest *)requestForInvocations:(NSArray *)invocations resultType:(id *)resultType
+                                  error:(NSError **)error {
+    PDClientRequest *req = [PDClient serializeInvocations:invocations iface:_iface
+        resultType:resultType error:error];
+    if (!req) {
         return nil;
     }
 
-    *error = [PDClient errorWithDescription:@"Failed to handle a server response"];
-    return nil;
+    NSURL *url = [NSURL URLWithString:[_url stringByAppendingString:req.path]];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    request.HTTPMethod = req.method;
+    [request addValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
+
+    if (req.post) {
+        request.HTTPBody = [req.post dataUsingEncoding:NSUTF8StringEncoding];
+    }
+
+    return request;
 }
 
 #pragma mark - Serialization

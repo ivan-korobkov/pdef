@@ -5,11 +5,10 @@
 
 #import <Foundation/Foundation.h>
 
-@class AFHTTPSessionManager;
 @class RACSignal;
 
 
-typedef id (^PDClientErrorHandler)(NSData *data, NSHTTPURLResponse *response, NSError **error);
+typedef void (^PDClientErrorHandler)(NSData *data, NSHTTPURLResponse *response, NSError **error);
 
 
 @interface PDClient : NSObject

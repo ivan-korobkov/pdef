@@ -7,6 +7,7 @@
 #import "PDProxy.h"
 #import "RACSignal.h"
 #import "PDInterface.h"
+#import "NSInvocation+OCMockito.h"
 
 
 @implementation PDProxy {
@@ -61,6 +62,7 @@
     }
 
     // Create a new chain with this invocation.
+    // Retain arguments because the proxy can live forever.
     [invocation retainArguments];
     NSArray *invocations = [_invocations arrayByAddingObject:invocation];
 

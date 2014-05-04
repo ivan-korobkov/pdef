@@ -63,11 +63,15 @@
                 break;
             }
             case PDTypeString: {
-                [self getArgument:&value atIndex:j];
+                __unsafe_unretained id v;
+                [self getArgument:&v atIndex:j];
+                value = v;
                 break;
             }
             case PDTypeDate: {
-                [self getArgument:&value atIndex:j];
+                __unsafe_unretained id v;
+                [self getArgument:&v atIndex:j];
+                value = v;
                 break;
             }
             case PDTypeEnum: {
@@ -81,7 +85,9 @@
             case PDTypeSet:
             case PDTypeMap:
             case PDTypeStruct: {
-                [self getArgument:&value atIndex:j];
+                __unsafe_unretained id v;
+                [self getArgument:&v atIndex:j];
+                value = v;
                 break;
             }
 

@@ -10,7 +10,7 @@ public class PdefInvocation {
 
 	public PdefInvocation(final Method method, final Object[] args) {
 		if (method == null) throw new NullPointerException("method");
-		
+
 		this.method = method;
 		this.args = args == null ? null : args.clone();
 	}
@@ -26,13 +26,21 @@ public class PdefInvocation {
 	public Object invoke(final Object o) {
 		try {
 			return method.invoke(o, args);
-		} catch (IllegalAccessException e) {
-			throw new PdefException("Illegal access", e);
 		} catch (InvocationTargetException e) {
-			throw new PdefException("Invocation target exception", e.getCause());
+			Throwable cause = e.getCause();
+
+			if (cause instanceof Error) {
+				throw (Error) cause;
+			} else if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			} else {
+				throw new RuntimeException(cause);
+			}
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
 		}
 	}
-	
+
 	@Override
 	public boolean equals(final Object o) {
 		if (this == o) return true;

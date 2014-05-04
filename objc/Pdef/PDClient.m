@@ -142,7 +142,9 @@ static NSDateFormatter *dateFormatter;
     }
 
     if (*error == nil) {
-        *error = [PDClient errorWithDescription:@"Failed to handle a server response"];
+        NSString *msg = NSLocalizedStringFromTable(@"Failed to handle a server response, status code %d", @"PDef", @"");
+        msg = [NSString stringWithFormat:msg, response.statusCode];
+        *error = [PDClient errorWithDescription:msg];
     }
 
     return nil;

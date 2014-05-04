@@ -7,7 +7,6 @@
 #import "PDProxy.h"
 #import "RACSignal.h"
 #import "PDInterface.h"
-#import "NSInvocation+OCMockito.h"
 
 
 @implementation PDProxy {
@@ -74,7 +73,8 @@
     // If the result is a pdef interface, return another proxy,
     // Otherwise, invoke the handler.
     id result = resultIsInterface
-        ? (id) [[PDProxy alloc] initWithClass:method.result handler:_handler invocations:invocations]
+        ? (id) [[PDProxy alloc]
+            initWithClass:method.result handler:_handler invocations:invocations]
         : (id) _handler(invocations);
 
     __unsafe_unretained id value = result;

@@ -1,5 +1,11 @@
 // {{ generated_by }}
+
 #import "{{ name }}.h"
+{% for type0 in definition.referenced_types %}
+    {% if type0.is_struct %}
+#import "{{ type0|objc_name }}.h"
+    {% endif %}
+{% endfor %}
 
 
 @implementation {{ name }}

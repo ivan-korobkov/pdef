@@ -46,8 +46,12 @@ class Generator(object):
 
     def objc_name(self, type0):
         name = self.prefix + type0.name
-        suffix = STRUCT_SUFFIX if type0.is_struct \
-            else INTERFACE_SUFFIX if type0.is_interface else None
+        if type0.is_struct and not type0.is_exception:
+            suffix = STRUCT_SUFFIX
+        elif type0.is_interface:
+            suffix = INTERFACE_SUFFIX
+        else:
+            suffix = None
         
         if not suffix or name.lower().endswith(suffix.lower()):
             return name
@@ -101,10 +105,11 @@ class Generator(object):
         colon_index = 0
         for arg in method.args:
             if is_first:
+                s.append('With')
                 s.append(upper_first(arg.name))
                 s.append(':')
-                is_first = False
                 colon_index = ''.join(s).index(':')
+                is_first = False
             else:
                 s.append('\n')
                 spaces = max(colon_index - len(arg.name), 0)
@@ -123,6 +128,7 @@ class Generator(object):
         is_first = True
         for arg in method.args:
             if is_first:
+                s.append('With')
                 s.append(upper_first(arg.name))
                 is_first = False
             else:

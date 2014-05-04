@@ -47,8 +47,10 @@ static NSDateFormatter *dateFormatter;
 }
 
 - (instancetype)initWithInterface:(Class)iface url:(NSString *)url {
+    NSOperationQueue *queue = [NSOperationQueue mainQueue];
     NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:config];
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:config delegate:nil
+        delegateQueue:queue];
     return [self initWithInterface:iface url:url session:session];
 }
 
@@ -102,9 +104,12 @@ static NSDateFormatter *dateFormatter;
                 }
             };
 
-        NSURLSessionDataTask *t = [_session dataTaskWithRequest:request completionHandler:handler];
+        NSURLSessionDataTask *task = [_session dataTaskWithRequest:request
+            completionHandler:handler];
+        [task resume];
+
         return [RACDisposable disposableWithBlock:^{
-            [t cancel];
+            [task cancel];
         }];
     }];
 }
@@ -284,7 +289,7 @@ static NSDateFormatter *dateFormatter;
     PDType type0 = PDTypeForType(type);
 
     switch (type0) {
-        case PDTypeBool:{
+        case PDTypeBool: {
             AssertTrue([value isKindOfClass:NSNumber.class], error,
             @"Cannot serialize an enum to string from value '%@'", value)
 
@@ -296,7 +301,7 @@ static NSDateFormatter *dateFormatter;
         case PDTypeInt32:
         case PDTypeInt64:
         case PDTypeFloat:
-        case PDTypeDouble:{
+        case PDTypeDouble: {
             AssertTrue([value isKindOfClass:NSNumber.class], error,
             @"Cannot serialize a number to string from value '%@'", value)
 
@@ -405,7 +410,7 @@ static NSDateFormatter *dateFormatter;
         NULL,
         (__bridge CFStringRef) value,
         (CFStringRef) @"-{}[]\"",
-        (CFStringRef)@"!*'():;@&=+$/?%#",
+        (CFStringRef) @"!*'():;@&=+$/?%#",
         kCFStringEncodingUTF8);
 }
 

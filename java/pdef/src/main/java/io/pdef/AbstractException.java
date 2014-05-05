@@ -11,17 +11,12 @@ public abstract class AbstractException extends RuntimeException implements Stru
 	}
 
 	@Override
-	public String toJson(final boolean indent) {
-		return PdefJson.serialize(this, indent);
+	public void toJson(final Writer writer) {
+		PdefJson.serialize(this, writer);
 	}
-
+	
 	@Override
-	public void toJson(final Writer writer, final boolean indent) {
-		PdefJson.serialize(this, writer, indent);
-	}
-
-	@Override
-	public void toJson(final OutputStream stream, final boolean indent) {
-		PdefJson.serialize(this, stream, indent);
+	public void toJson(final OutputStream stream) {
+		PdefJson.serialize(this, stream);
 	}
 }

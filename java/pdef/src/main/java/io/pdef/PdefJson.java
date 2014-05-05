@@ -1,222 +1,120 @@
-/*
- * Copyright: 2013 Pdef <http://pdef.io/>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at:
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.pdef;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.Deserializers;
-import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
-import com.fasterxml.jackson.databind.ser.Serializers;
-import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.TimeZone;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
-/** JSON serialization for pdef types. */
 public class PdefJson {
-	private static final ObjectMapper mapper;
+	private static final Gson gson;
 
 	static {
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-		mapper = new ObjectMapper();
-		mapper.setDateFormat(dateFormat);
-		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-		mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
-		mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-	}
-
-	private PdefJson() {}
-
-	public static ObjectMapper mapper() {
-		return mapper;
-	}
-
-	public static Module module() {
-		return new InternalModule();
+		gson = new GsonBuilder()
+				.setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+				.setExclusionStrategies(new ExceptionExclusionStrategy())
+				.registerTypeAdapterFactory(new LowercaseEnumTypeAdapterFactory())
+				.create();
 	}
 
 	public static Object parse(final String s, final Type type) {
-		try {
-			JavaType javaType = mapper.constructType(type);
-			return mapper.readValue(s, javaType);
-		} catch (IOException e) {
-			throw parseExc(e);
-		}
+		return gson.fromJson(s, type);
 	}
 
 	public static <T> T parse(final String s, final Class<T> cls) {
-		try {
-			return mapper.readValue(s, cls);
-		} catch (IOException e) {
-			throw parseExc(e);
-		}
+		return gson.fromJson(s, cls);
 	}
 
 	public static <T> T parse(final Reader reader, final Class<T> cls) {
-		try {
-			return mapper.readValue(reader, cls);
-		} catch (IOException e) {
-			throw parseExc(e);
-		}
+		return gson.fromJson(reader, cls);
 	}
 
 	public static <T> T parse(final InputStream stream, final Class<T> cls) {
-		try {
-			return mapper.readValue(stream, cls);
-		} catch (IOException e) {
-			throw parseExc(e);
-		}
+		return gson.fromJson(new InputStreamReader(stream), cls);
 	}
 
 	public static String serialize(final Object o) {
-		return serialize(o, false);
+		return gson.toJson(o);
 	}
 
-	public static String serialize(final Object o, final boolean indent) {
+	public static void serialize(final Object o, final Writer writer) {
+		gson.toJson(o, writer);
+	}
+
+	public static void serialize(final Object o, final OutputStream out) {
+		OutputStreamWriter writer = new OutputStreamWriter(out);
+		gson.toJson(o, writer);
+		
 		try {
-			if (indent) {
-				return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
-			} else {
-				return mapper.writeValueAsString(o);
-			}
+			writer.flush();
 		} catch (IOException e) {
-			throw serializeExc(e);
+			throw new JsonIOException(e);
 		}
 	}
 
-	public static void serialize(final Object o, final Writer writer, final boolean indent) {
-		try {
-			if (indent) {
-				mapper.writerWithDefaultPrettyPrinter().writeValue(writer, o);
-			} else {
-				mapper.writeValue(writer, o);
-			}
-		} catch (IOException e) {
-			throw serializeExc(e);
-		}
-	}
-
-	public static void serialize(final Object o, final OutputStream out, final boolean indent) {
-		try {
-			if (indent) {
-				mapper.writerWithDefaultPrettyPrinter().writeValue(out, o);
-			} else {
-				mapper.writeValue(out, o);
-			}
-		} catch (IOException e) {
-			throw serializeExc(e);
-		}
-	}
-
-	private static PdefException parseExc(final IOException e) {
-		return new PdefException("JSON deserialization error", e);
-	}
-
-	private static PdefException serializeExc(final IOException e) {
-		return new PdefException("JSON serialization error", e);
-	}
-
-	private static class InternalModule extends Module {
+	/** Excludes fields from java exception classes. */
+	private static class ExceptionExclusionStrategy implements ExclusionStrategy {
 		@Override
-		public String getModuleName() {
-			return "pdef-json";
+		public boolean shouldSkipField(final FieldAttributes f) {
+			Class<?> cls = f.getDeclaringClass();
+			return cls == RuntimeException.class || cls == Exception.class
+					|| cls == Throwable.class || cls == Error.class;
 		}
 
 		@Override
-		public Version version() {
-			return Version.unknownVersion();
-		}
-
-		@Override
-		public void setupModule(final SetupContext context) {
-			context.addSerializers(new InternalSerializers());
-			context.addDeserializers(new InternalDeserializers());
+		public boolean shouldSkipClass(final Class<?> clazz) {
+			return false;
 		}
 	}
 
-	private static class InternalSerializers extends Serializers.Base {
-		@SuppressWarnings("unchecked")
-		@Override
-		public JsonSerializer<?> findSerializer(final SerializationConfig config,
-				final JavaType type, final BeanDescription beanDesc) {
-			Class<?> cls = type.getRawClass();
-			if (cls.isEnum()) {
-				return new EnumSerializer((Class<Enum<?>>) cls);
-			}
-
-			return super.findSerializer(config, type, beanDesc);
-		}
-	}
-
-	private static class InternalDeserializers extends Deserializers.Base {
-		@Override
-		public JsonDeserializer<?> findEnumDeserializer(final Class<?> type,
-				final DeserializationConfig config, final BeanDescription beanDesc)
-				throws JsonMappingException {
-			return new EnumDeserializer(type);
-		}
-	}
-
-	private static class EnumSerializer extends StdScalarSerializer<Enum<?>> {
-		EnumSerializer(final Class<Enum<?>> t) {
-			super(t);
-		}
-
-		@Override
-		public void serialize(final Enum<?> value, final JsonGenerator jgen,
-				final SerializerProvider provider) throws IOException {
-			if (value == null) {
-				jgen.writeNull();
-				return;
-			}
-
-			String s = value.name().toLowerCase();
-			jgen.writeString(s);
-		}
-	}
-
-	private static class EnumDeserializer extends StdScalarDeserializer<Enum<?>> {
-		EnumDeserializer(final Class<?> vc) {
-			super(vc);
-		}
-
-		@Override
-		public Enum<?> deserialize(final JsonParser jp, final DeserializationContext ctxt)
-				throws IOException {
-			String text = jp.getText();
-			text = (text != null ? text : "").toUpperCase();
-			
+	private static class LowercaseEnumTypeAdapterFactory implements TypeAdapterFactory {
+		public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
 			@SuppressWarnings("unchecked")
-			Class cls = (Class) handledType();
-			try {
-				return Enum.valueOf(cls, text);
-			} catch (IllegalArgumentException e) {
+			Class<T> rawType = (Class<T>) type.getRawType();
+			if (!rawType.isEnum()) {
 				return null;
 			}
+
+			return new EnumTypeAdapter<T>(rawType);
+		}
+	}
+
+	private static class EnumTypeAdapter<T> extends TypeAdapter<T> {
+		private final Map<String, T> lowercaseToConstant;
+
+		private EnumTypeAdapter(final Class<T> enumType) {
+			lowercaseToConstant = new HashMap<String, T>();
+
+			for (T constant : enumType.getEnumConstants()) {
+				lowercaseToConstant.put(toLowercase(constant), constant);
+			}
+		}
+
+		public void write(JsonWriter out, T value) throws IOException {
+			if (value == null) {
+				out.nullValue();
+			} else {
+				out.value(toLowercase(value));
+			}
+		}
+
+		public T read(JsonReader reader) throws IOException {
+			if (reader.peek() == JsonToken.NULL) {
+				reader.nextNull();
+				return null;
+			} else {
+				return lowercaseToConstant.get(reader.nextString());
+			}
+		}
+
+		private String toLowercase(Object o) {
+			return o.toString().toLowerCase(Locale.US);
 		}
 	}
 }

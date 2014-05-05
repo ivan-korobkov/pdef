@@ -42,6 +42,7 @@ struct TestStruct {
 
 exception TestException {
     message     string;
+    struct0     TestStruct;
 }
 
 

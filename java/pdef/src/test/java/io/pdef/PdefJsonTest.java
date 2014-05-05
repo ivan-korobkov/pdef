@@ -19,6 +19,7 @@ package io.pdef;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.pdef.test.TestException;
 import io.pdef.test.TestNumber;
 import io.pdef.test.TestStruct;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -34,7 +35,17 @@ public class PdefJsonTest {
 		TestStruct struct1 = TestStruct.parseJson(json);
 		assertThat(struct1).isEqualTo(struct0);
 	}
-	
+
+	@Test
+	public void testException() throws Exception {
+		TestException e = new TestException()
+				.setStruct0(fixtureStruct())
+				.setMessage("Hello, world");
+		String json = e.toJson();
+		TestException e1 = TestException.parseJson(json);
+		assertThat(e1).isEqualTo(e);
+	}
+
 	private TestStruct fixtureStruct() {
 		return new TestStruct()
 				.setBool0(true)

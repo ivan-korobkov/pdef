@@ -20,4 +20,6 @@ typedef RACSignal *(^PDProxyInvocationHandler)(NSArray *invocations);
  */
 @interface PDProxy : NSProxy
 + (id)proxyForClass:(Class)cls withHandler:(PDProxyInvocationHandler)handler;
+
+- (instancetype)initWithClass:(Class)cls handler:(PDProxyInvocationHandler)handler;
 @end

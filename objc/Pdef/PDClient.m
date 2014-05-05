@@ -25,13 +25,6 @@
     }
 
 
-@interface PDClientRequest ()
-@property(nonatomic) NSString *method;
-@property(nonatomic) NSString *path;
-@property(nonatomic) NSString *post;
-@end
-
-
 @implementation PDClientRequest
 @end
 
@@ -55,11 +48,12 @@ static NSDateFormatter *dateFormatter;
 }
 
 - (instancetype)initWithInterface:(Class)iface url:(NSString *)url session:(NSURLSession *)session {
-    return [self initWithInterface:iface url:url session:session errorHandler:nil];
+    return [self initWithInterface:iface url:url session:session interceptor:nil errorHandler:nil];
 }
 
 - (instancetype)initWithInterface:(Class)iface url:(NSString *)url session:(NSURLSession *)session
-                     errorHandler:(PDClientErrorHandler)errorHandler {
+                      interceptor:(PDClientRequestInterceptor)interceptor
+                     errorHandler:(PDClientResponseErrorHandler)errorHandler {
     NSParameterAssert(iface != nil);
     NSParameterAssert(url != nil);
     NSParameterAssert(session != nil);
@@ -68,6 +62,7 @@ static NSDateFormatter *dateFormatter;
     if (self = [super init]) {
         _iface = iface;
         _session = session;
+        _interceptor = [interceptor copy];
         _errorHandler = [errorHandler copy];
         _url = [url hasSuffix:@"/"] ? url : [url stringByAppendingString:@"/"];
     }
@@ -77,13 +72,23 @@ static NSDateFormatter *dateFormatter;
 
 - (RACSignal *)handle:(NSArray *)invocations {
     id resultType;
-    NSError *reqError;
-    NSURLRequest *request = [self requestForInvocations:invocations resultType:&resultType
-        error:&reqError];
-    if (reqError) {
-        return [RACSignal error:reqError];
+    NSError *err;
+    NSURLRequest *req = [self requestForInvocations:invocations resultType:&resultType error:&err];
+    if (err) {
+        return [RACSignal error:err];
     }
 
+    if (!_interceptor) {
+        return [self handleRequest:req resultType:resultType];
+    }
+
+    __weak PDClient *weak = self;
+    return _interceptor(req, ^RACSignal *(NSURLRequest *request) {
+        return [weak handleRequest:request resultType:resultType];
+    });
+}
+
+- (RACSignal *)handleRequest:(NSURLRequest *)request resultType:(id)resultType {
     return [RACSignal createSignal:^RACDisposable *(id <RACSubscriber> subscriber) {
         void (^handler)(NSData *, NSURLResponse *, NSError *) =
             ^(NSData *data, NSURLResponse *response, NSError *error) {
@@ -93,7 +98,8 @@ static NSDateFormatter *dateFormatter;
                 if (!error && [self isValidResponse:http]) {
                     result = [self handleResponse:data resultType:resultType error:&error];
                 } else {
-                    result = [self handleError:data response:http error:&error];
+                    result = nil;
+                    [self handleError:data response:http error:&error];
                 }
 
                 if (error) {
@@ -122,8 +128,13 @@ static NSDateFormatter *dateFormatter;
     NSString *ctype = response.allHeaderFields[@"Content-Type"];
     ctype = [ctype lowercaseString];
 
-    NSArray *types = @[@"application/json", @"text/json", @"text/javascript"];
-    return [types containsObject:ctype];
+    for (NSString *jsonType in @[@"application/json", @"text/json", @"text/javascript"]) {
+        if ([ctype hasPrefix:jsonType]) {
+            return YES;
+        }
+    }
+
+    return NO;
 }
 
 - (id)handleResponse:(NSData *)data resultType:(id)resultType error:(NSError **)error {
@@ -135,7 +146,7 @@ static NSDateFormatter *dateFormatter;
     return [PDJson parseJsonObject:resultData type:resultType error:error];
 }
 
-- (id)handleError:(NSData *)data response:(NSHTTPURLResponse *)response
+- (void)handleError:(NSData *)data response:(NSHTTPURLResponse *)response
             error:(NSError **)error {
     if (_errorHandler) {
         _errorHandler(data, response, error);
@@ -146,8 +157,6 @@ static NSDateFormatter *dateFormatter;
         msg = [NSString stringWithFormat:msg, response.statusCode];
         *error = [PDClient errorWithDescription:msg];
     }
-
-    return nil;
 }
 
 - (NSURLRequest *)requestForInvocations:(NSArray *)invocations resultType:(id *)resultType

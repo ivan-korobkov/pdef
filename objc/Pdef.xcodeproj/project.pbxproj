@@ -22,6 +22,7 @@
 		31821617EC81831E9C0A263C /* PDJsonSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821AAD60299B1CD8E0DBC9 /* PDJsonSpec.m */; };
 		318216365D05B0FFB2ABE5E1 /* PDInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821CBD815FDB836A25C738 /* PDInterface.m */; };
 		318216C67C998E44E1669350 /* PDTestExceptionStruct.m in Sources */ = {isa = PBXBuildFile; fileRef = 318213179BCA0592550C36BF /* PDTestExceptionStruct.m */; };
+		31821716EEBA3363A2EC4D6D /* PDInterface+PDProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182157D6421B97D42D9B9CF /* PDInterface+PDProxy.m */; };
 		3182176A813BC74F8DFC298F /* PDStructSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821FF96AE57D84E82E8418 /* PDStructSpec.m */; };
 		318218680B410ABDC75109C9 /* PDProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182150A260C81C57913344D /* PDProxy.m */; };
 		31821A59C84C4730A36DCF4F /* PDInterface+PDClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182174C6DB998939F14F158 /* PDInterface+PDClient.m */; };
@@ -78,6 +79,7 @@
 		318214900542A4DB9B1687B7 /* PDTestInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestInterface.h; sourceTree = "<group>"; };
 		3182150A260C81C57913344D /* PDProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDProxy.m; sourceTree = "<group>"; };
 		3182154C9E3F5E69AA138FC6 /* PDTestSubInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestSubInterface.m; sourceTree = "<group>"; };
+		3182157D6421B97D42D9B9CF /* PDInterface+PDProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PDInterface+PDProxy.m"; sourceTree = "<group>"; };
 		31821627655D18E30CA2E35C /* NSInvocation+PDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSInvocation+PDef.h"; sourceTree = "<group>"; };
 		31821687A4B4C97DF7EF2F9E /* PDJson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDJson.h; sourceTree = "<group>"; };
 		3182174C6DB998939F14F158 /* PDInterface+PDClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PDInterface+PDClient.m"; sourceTree = "<group>"; };
@@ -93,6 +95,7 @@
 		31821BA8A230701ECDBEE027 /* PDInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDInterface.h; sourceTree = "<group>"; };
 		31821BD31D1664B62AEA1814 /* PDTestNumber.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestNumber.h; sourceTree = "<group>"; };
 		31821BDB751CC633E716CFC4 /* PDEnum.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEnum.m; sourceTree = "<group>"; };
+		31821BFC543D7063B33EFB6C /* PDInterface+PDProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PDInterface+PDProxy.h"; sourceTree = "<group>"; };
 		31821CBD815FDB836A25C738 /* PDInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDInterface.m; sourceTree = "<group>"; };
 		31821D68CDACB090413565E3 /* PDClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDClient.h; sourceTree = "<group>"; };
 		31821D79AB1527F9115E10BC /* PDTestStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestStruct.m; sourceTree = "<group>"; };
@@ -187,6 +190,8 @@
 				31821DB27016048C7466A829 /* PDTypes.h */,
 				31821F7DC2C63153A0D0B46C /* PDTypes.m */,
 				2CC5E44C19117956002C6B1B /* Supporting Files */,
+				3182157D6421B97D42D9B9CF /* PDInterface+PDProxy.m */,
+				31821BFC543D7063B33EFB6C /* PDInterface+PDProxy.h */,
 			);
 			path = Pdef;
 			sourceTree = "<group>";
@@ -397,6 +402,7 @@
 				31821F85325D334876C17AAE /* PDClient.m in Sources */,
 				31821FDF4EED5826874B33D7 /* NSInvocation+PDef.m in Sources */,
 				31821A59C84C4730A36DCF4F /* PDInterface+PDClient.m in Sources */,
+				31821716EEBA3363A2EC4D6D /* PDInterface+PDProxy.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -8,18 +8,19 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class PdefJson {
 	private static final Gson gson;
 
 	static {
 		gson = new GsonBuilder()
-				.setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
 				.setExclusionStrategies(new ExceptionExclusionStrategy())
 				.registerTypeAdapterFactory(new LowercaseEnumTypeAdapterFactory())
+				.registerTypeAdapter(Date.class, new DateAdapter())
 				.create();
 	}
 
@@ -50,7 +51,7 @@ public class PdefJson {
 	public static void serialize(final Object o, final OutputStream out) {
 		OutputStreamWriter writer = new OutputStreamWriter(out);
 		gson.toJson(o, writer);
-		
+
 		try {
 			writer.flush();
 		} catch (IOException e) {
@@ -115,6 +116,44 @@ public class PdefJson {
 
 		private String toLowercase(Object o) {
 			return o.toString().toLowerCase(Locale.US);
+		}
+	}
+
+	private static class DateAdapter extends TypeAdapter<Date> {
+		private static final ThreadLocal<DateFormat> DATE_FORMAT = new ThreadLocal<DateFormat>() {
+			@Override
+			protected DateFormat initialValue() {
+				DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+				dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+				return dateFormat;
+			}
+		};
+
+		@Override
+		public void write(final JsonWriter out, final Date value) throws IOException {
+			if (value == null) {
+				out.nullValue();
+			} else {
+				DateFormat dateFormat = DATE_FORMAT.get();
+				String s = dateFormat.format(value);
+				out.value(s);
+			}
+		}
+
+		@Override
+		public Date read(final JsonReader reader) throws IOException {
+			if (reader.peek() == JsonToken.NULL) {
+				reader.nextNull();
+				return null;
+			} else {
+				String s = reader.nextString();
+				DateFormat dateFormat = DATE_FORMAT.get();
+				try {
+					return dateFormat.parse(s);
+				} catch (ParseException e) {
+					throw new JsonParseException(e);
+				}
+			}
 		}
 	}
 }

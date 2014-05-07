@@ -19,10 +19,9 @@
 }
 
 + (instancetype)clientWithUrl:(NSString *)url session:(NSURLSession *)session
-                  interceptor:(PDClientRequestInterceptor)interceptor
-                 errorHandler:(PDClientResponseErrorHandler)errorHandler {
-    PDClient *client = [[PDClient alloc] initWithInterface:self url:url session:session
-        interceptor:interceptor errorHandler:errorHandler];
+                     delegate:(id <PDClientDelegate>)delegate {
+    PDClient *client = [[PDClient alloc]
+        initWithInterface:self url:url session:session delegate:delegate];
     return [self proxyWithClient:client];
 }
 

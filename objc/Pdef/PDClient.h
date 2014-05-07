@@ -7,37 +7,35 @@
 
 @class RACSignal;
 @class PDClientRequest;
-
-
-typedef RACSignal *(^PDClientRequestHandler)(NSURLRequest *request);
-
-typedef RACSignal *(^PDClientRequestInterceptor)(NSURLRequest *request, PDClientRequestHandler handler);
-
-typedef void (^PDClientResponseErrorHandler)(NSData *data, NSHTTPURLResponse *response, NSError **error);
+@protocol PDClientDelegate;
 
 
 @interface PDClient : NSObject
 @property(nonatomic, readonly) Class iface;
 @property(nonatomic, readonly) NSString *url;
 @property(nonatomic, readonly) NSURLSession *session;
-@property(nonatomic, readonly, copy) PDClientResponseErrorHandler errorHandler;
-@property(nonatomic, readonly, copy) PDClientRequestInterceptor interceptor;
+@property(nonatomic, readonly, weak) id <PDClientDelegate> delegate;
 
 - (instancetype)initWithInterface:(Class)iface url:(NSString *)url;
 
 - (instancetype)initWithInterface:(Class)iface url:(NSString *)url session:(NSURLSession *)session;
 
 - (instancetype)initWithInterface:(Class)iface url:(NSString *)url session:(NSURLSession *)session
-                      interceptor:(PDClientRequestInterceptor)interceptor
-                     errorHandler:(PDClientResponseErrorHandler)errorHandler;
+                         delegate:(id <PDClientDelegate>)delegate;
 
 - (RACSignal *)handle:(NSArray *)invocations;
 @end
 
 
-/** Internal client request, visible for testing. */
-@interface PDClientRequest : NSObject
-@property(nonatomic) NSString *method;
-@property(nonatomic) NSString *path;
-@property(nonatomic) NSString *post;
+typedef RACSignal *(^PDClientRequestHandler)(NSURLRequest *request);
+
+typedef id (^PDClientResponseHandler)(NSHTTPURLResponse *response, NSData *data, NSError **error);
+
+
+@protocol PDClientDelegate <NSObject>
+@optional
+- (RACSignal *)handleRequest:(NSURLRequest *)request nextHandler:(PDClientRequestHandler)handler;
+
+- (id)handleResponse:(NSHTTPURLResponse *)response data:(NSData *)data error:(NSError **)error
+         nextHandler:(PDClientResponseHandler)handler;
 @end

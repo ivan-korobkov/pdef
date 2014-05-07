@@ -25,8 +25,11 @@
 static NSDateFormatter *formatter;
 
 + (void)initialize {
+    NSTimeZone *tz = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];
+    NSParameterAssert(tz != nil);
+
     formatter = [[NSDateFormatter alloc] init];
-    formatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
+    formatter.timeZone = tz;
     formatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
     formatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss'Z'";
 }

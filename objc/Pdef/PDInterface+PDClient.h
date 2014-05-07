@@ -13,6 +13,5 @@
 + (instancetype)clientWithUrl:(NSString *)url session:(NSURLSession *)session;
 
 + (instancetype)clientWithUrl:(NSString *)url session:(NSURLSession *)session
-                  interceptor:(PDClientRequestInterceptor)interceptor
-                 errorHandler:(PDClientResponseErrorHandler)errorHandler;
+                     delegate:(id <PDClientDelegate>)delegate;
 @end

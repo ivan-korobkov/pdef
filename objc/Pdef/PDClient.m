@@ -25,6 +25,13 @@
     }
 
 
+@interface PDClientRequest : NSObject
+@property(nonatomic) NSString *method;
+@property(nonatomic) NSString *path;
+@property(nonatomic) NSString *post;
+@end
+
+
 @implementation PDClientRequest
 @end
 
@@ -33,8 +40,11 @@
 static NSDateFormatter *dateFormatter;
 
 + (void)initialize {
+    NSTimeZone *tz = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];
+    NSParameterAssert(tz != nil);
+
     dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
+    dateFormatter.timeZone = tz;
     dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
     dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss'Z'";
 }
@@ -48,12 +58,11 @@ static NSDateFormatter *dateFormatter;
 }
 
 - (instancetype)initWithInterface:(Class)iface url:(NSString *)url session:(NSURLSession *)session {
-    return [self initWithInterface:iface url:url session:session interceptor:nil errorHandler:nil];
+    return [self initWithInterface:iface url:url session:session delegate:nil];
 }
 
 - (instancetype)initWithInterface:(Class)iface url:(NSString *)url session:(NSURLSession *)session
-                      interceptor:(PDClientRequestInterceptor)interceptor
-                     errorHandler:(PDClientResponseErrorHandler)errorHandler {
+                         delegate:(id <PDClientDelegate>)delegate {
     NSParameterAssert(iface != nil);
     NSParameterAssert(url != nil);
     NSParameterAssert(session != nil);
@@ -62,8 +71,7 @@ static NSDateFormatter *dateFormatter;
     if (self = [super init]) {
         _iface = iface;
         _session = session;
-        _interceptor = [interceptor copy];
-        _errorHandler = [errorHandler copy];
+        _delegate = delegate;
         _url = [url hasSuffix:@"/"] ? url : [url stringByAppendingString:@"/"];
     }
 
@@ -78,46 +86,76 @@ static NSDateFormatter *dateFormatter;
         return [RACSignal error:err];
     }
 
-    if (!_interceptor) {
-        return [self handleRequest:req resultType:resultType];
+    if ([_delegate respondsToSelector:@selector(handleRequest:nextHandler:)]) {
+        __weak PDClient *weak = self;
+        PDClientRequestHandler handler = ^RACSignal *(NSURLRequest *request) {
+            return [weak handleRequest:request resultType:resultType];
+        };
+
+        return [_delegate handleRequest:req nextHandler:handler];
     }
 
-    __weak PDClient *weak = self;
-    return _interceptor(req, ^RACSignal *(NSURLRequest *request) {
-        return [weak handleRequest:request resultType:resultType];
-    });
+    return [self handleRequest:req resultType:resultType];
 }
 
 - (RACSignal *)handleRequest:(NSURLRequest *)request resultType:(id)resultType {
-    return [RACSignal createSignal:^RACDisposable *(id <RACSubscriber> subscriber) {
-        void (^handler)(NSData *, NSURLResponse *, NSError *) =
-            ^(NSData *data, NSURLResponse *response, NSError *error) {
-                NSHTTPURLResponse *http = (NSHTTPURLResponse *) response;
+    __weak PDClient *weak = self;
 
-                id result;
-                if (!error && [self isValidResponse:http]) {
-                    result = [self handleResponse:data resultType:resultType error:&error];
-                } else {
-                    result = nil;
-                    [self handleError:data response:http error:&error];
-                }
+    return [RACSignal createSignal:^RACDisposable *(id <RACSubscriber> subscriber) {
+        NSURLSessionDataTask *task = [_session dataTaskWithRequest:request completionHandler:
+            ^(NSData *data, NSURLResponse *response, NSError *error) {
+                NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
+                id result = [weak handleResponse:httpResponse data:data resultType:resultType
+                    error:&error];
 
                 if (error) {
                     [subscriber sendError:error];
-                } else {
-                    [subscriber sendNext:result];
-                    [subscriber sendCompleted];
+                    return;
                 }
-            };
 
-        NSURLSessionDataTask *task = [_session dataTaskWithRequest:request
-            completionHandler:handler];
+                [subscriber sendNext:result];
+                [subscriber sendCompleted];
+            }];
+
         [task resume];
-
         return [RACDisposable disposableWithBlock:^{
             [task cancel];
         }];
     }];
+}
+
+- (id)handleResponse:(NSHTTPURLResponse *)response data:(NSData *)data resultType:(id)resultType
+               error:(NSError **)error {
+    if ([_delegate respondsToSelector:@selector(handleResponse:data:error:nextHandler:)]) {
+        __weak PDClient *weak = self;
+        PDClientResponseHandler handler = ^id(NSHTTPURLResponse *response1, NSData *data1, NSError **error1) {
+            return [weak doHandleResponse:response1 data:data1 resultType:resultType error:error1];
+        };
+
+        return [_delegate handleResponse:response data:data error:error nextHandler:handler];
+    }
+
+    return [self doHandleResponse:response data:data resultType:resultType error:error];
+}
+
+- (id)doHandleResponse:(NSHTTPURLResponse *)response data:(NSData *)data resultType:(id)resultType
+                 error:(NSError **)error {
+    if (!*error && [self isValidResponse:response]) {
+        id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:error];
+        AssertTrue([object isKindOfClass:NSDictionary.class], error,
+        @"Cannot parse an invocation result from '%@'", [object class])
+
+        id resultData = object[@"data"];
+        return [PDJson parseJsonObject:resultData type:resultType error:error];
+    }
+
+    if (*error == nil) {
+        NSString *msg = NSLocalizedStringFromTable(@"Failed to handle a server response, status code %d", @"PDef", @"");
+        msg = [NSString stringWithFormat:msg, response.statusCode];
+        *error = [PDClient errorWithDescription:msg];
+    }
+
+    return nil;
 }
 
 - (BOOL)isValidResponse:(NSHTTPURLResponse *)response {
@@ -129,34 +167,10 @@ static NSDateFormatter *dateFormatter;
     ctype = [ctype lowercaseString];
 
     for (NSString *jsonType in @[@"application/json", @"text/json", @"text/javascript"]) {
-        if ([ctype hasPrefix:jsonType]) {
-            return YES;
-        }
+        if ([ctype hasPrefix:jsonType]) return YES;
     }
 
     return NO;
-}
-
-- (id)handleResponse:(NSData *)data resultType:(id)resultType error:(NSError **)error {
-    id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:error];
-    AssertTrue([object isKindOfClass:NSDictionary.class], error,
-    @"Cannot parse an invocation result from '%@'", [object class])
-
-    id resultData = object[@"data"];
-    return [PDJson parseJsonObject:resultData type:resultType error:error];
-}
-
-- (void)handleError:(NSData *)data response:(NSHTTPURLResponse *)response
-            error:(NSError **)error {
-    if (_errorHandler) {
-        _errorHandler(data, response, error);
-    }
-
-    if (*error == nil) {
-        NSString *msg = NSLocalizedStringFromTable(@"Failed to handle a server response, status code %d", @"PDef", @"");
-        msg = [NSString stringWithFormat:msg, response.statusCode];
-        *error = [PDClient errorWithDescription:msg];
-    }
 }
 
 - (NSURLRequest *)requestForInvocations:(NSArray *)invocations resultType:(id *)resultType

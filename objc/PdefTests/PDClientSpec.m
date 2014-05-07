@@ -18,7 +18,7 @@
 #import "PDTestStruct+Tests.h"
 
 
-@interface PDClientRequest (Tests)
+@interface PDClientRequest
 @property(nonatomic) NSString *method;
 @property(nonatomic) NSString *path;
 @property(nonatomic) NSString *post;

@@ -23,6 +23,17 @@
 
     return nil;
 }
+
++ (PDMethod *)pdef_methodForName:(NSString *)name {
+    NSArray *methods = [self pdef_methods];
+    for (PDMethod *method in methods) {
+        if ([method.name isEqualToString:name]) {
+            return method;
+        }
+    }
+
+    return nil;
+}
 @end
 
 

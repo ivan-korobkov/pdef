@@ -10,6 +10,8 @@
 + (NSArray *)pdef_methods;
 
 + (PDMethod *)pdef_methodForSelector:(SEL)selector;
+
++ (PDMethod *)pdef_methodForName:(NSString *)name;
 @end
 
 

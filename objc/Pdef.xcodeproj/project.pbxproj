@@ -32,6 +32,7 @@
 		31821E3AF9246FF51EEA2680 /* PDProxySpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821251CB0D43CADB6FB597 /* PDProxySpec.m */; };
 		31821E98FD7E0690E45A6A14 /* PDTestNumber.m in Sources */ = {isa = PBXBuildFile; fileRef = 31821B0F437BB20709FB3208 /* PDTestNumber.m */; };
 		31821F85325D334876C17AAE /* PDClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 318217DBCCD57629945E907A /* PDClient.m */; };
+		31821FD681FF4BD94C65D2F5 /* PDServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3182183359D35F253ABA73A5 /* PDServer.m */; };
 		31821FDF4EED5826874B33D7 /* NSInvocation+PDef.m in Sources */ = {isa = PBXBuildFile; fileRef = 318219C5A6D495816431FD02 /* NSInvocation+PDef.m */; };
 		D0F725D35D1B432F85C8FC6A /* libPods-PdefTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 239E06D87CE5404F85DB37B5 /* libPods-PdefTests.a */; };
 /* End PBXBuildFile section */
@@ -75,6 +76,7 @@
 		31821251CB0D43CADB6FB597 /* PDProxySpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDProxySpec.m; sourceTree = "<group>"; };
 		318212CB3FF9B51286175A9A /* PDTestInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestInterface.m; sourceTree = "<group>"; };
 		318213179BCA0592550C36BF /* PDTestExceptionStruct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDTestExceptionStruct.m; sourceTree = "<group>"; };
+		31821346E02ACA4F94065B0F /* PDServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDServer.h; sourceTree = "<group>"; };
 		3182144436D2556DCEF169A1 /* PDTestExceptionStruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestExceptionStruct.h; sourceTree = "<group>"; };
 		318214900542A4DB9B1687B7 /* PDTestInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestInterface.h; sourceTree = "<group>"; };
 		3182150A260C81C57913344D /* PDProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDProxy.m; sourceTree = "<group>"; };
@@ -84,6 +86,7 @@
 		31821687A4B4C97DF7EF2F9E /* PDJson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDJson.h; sourceTree = "<group>"; };
 		3182174C6DB998939F14F158 /* PDInterface+PDClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PDInterface+PDClient.m"; sourceTree = "<group>"; };
 		318217DBCCD57629945E907A /* PDClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDClient.m; sourceTree = "<group>"; };
+		3182183359D35F253ABA73A5 /* PDServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDServer.m; sourceTree = "<group>"; };
 		31821887E6564419C82EC1AC /* PDTestStruct+Tests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PDTestStruct+Tests.h"; sourceTree = "<group>"; };
 		318218DA79CD88608DDD4AA6 /* PDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDef.h; sourceTree = "<group>"; };
 		318218DD296BEB804509F36E /* PDTestSubInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDTestSubInterface.h; sourceTree = "<group>"; };
@@ -192,6 +195,8 @@
 				2CC5E44C19117956002C6B1B /* Supporting Files */,
 				3182157D6421B97D42D9B9CF /* PDInterface+PDProxy.m */,
 				31821BFC543D7063B33EFB6C /* PDInterface+PDProxy.h */,
+				3182183359D35F253ABA73A5 /* PDServer.m */,
+				31821346E02ACA4F94065B0F /* PDServer.h */,
 			);
 			path = Pdef;
 			sourceTree = "<group>";
@@ -403,6 +408,7 @@
 				31821FDF4EED5826874B33D7 /* NSInvocation+PDef.m in Sources */,
 				31821A59C84C4730A36DCF4F /* PDInterface+PDClient.m in Sources */,
 				31821716EEBA3363A2EC4D6D /* PDInterface+PDProxy.m in Sources */,
+				31821FD681FF4BD94C65D2F5 /* PDServer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

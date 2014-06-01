@@ -11,5 +11,7 @@ static NSString *const PDErrorDomain = @"PdefError";
 
 typedef NS_ENUM(int, PDErrorCode) {
     PDErrorJsonError = 1,
-    PDErrorClientError = 2
+    PDErrorClientError = 2,
+    PDErrorServerInternalError = 3,
+    PDErrorServerBadRequest = 4,
 };

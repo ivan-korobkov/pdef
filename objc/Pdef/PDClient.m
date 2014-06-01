@@ -37,7 +37,7 @@
 
 
 @implementation PDClient
-static NSDateFormatter *dateFormatter;
+static NSDateFormatter *dateFormatter; // Always access as @synchronized(PDClient.class).
 
 + (void)initialize {
     NSTimeZone *tz = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];

@@ -242,15 +242,15 @@ public class PdefHandler<T> {
 		return true;
 	}
 
-	private static boolean hasDataTypeResult(final Method method) {
+	static boolean hasDataTypeResult(final Method method) {
 		return isDataType(method.getReturnType());
 	}
 
-	private static boolean hasInterfaceResult(final Method method) {
+	static boolean hasInterfaceResult(final Method method) {
 		return !hasDataTypeResult(method);
 	}
 
-	private static boolean isDataType(final Class<?> cls) {
+	static boolean isDataType(final Class<?> cls) {
 		return !cls.isInterface() || cls == List.class || cls == Set.class || cls == Map.class;
 	}
 

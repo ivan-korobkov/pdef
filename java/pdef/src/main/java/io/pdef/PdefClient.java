@@ -62,7 +62,7 @@ public class PdefClient<T> {
 	}
 
 	public T proxy() {
-		return null;
+		return PdefProxy.create(iface, this);
 	}
 
 	public Object handle(final List<PdefInvocation> invocations) {
@@ -121,16 +121,24 @@ public class PdefClient<T> {
 
 	private URL buildUrl(final String url, final PdefRequest request)
 			throws MalformedURLException, UnsupportedEncodingException {
-		StringBuilder builder = new StringBuilder(url);
-		builder.append(request.getRelativePath());
+		StringBuilder sb = new StringBuilder(url);
+		if (!url.endsWith("/")) {
+			sb.append("/");
+		}
+
+		String relPath = request.getRelativePath();
+		if (relPath.startsWith("/")) {
+			relPath = relPath.substring(1);
+		}
+		sb.append(relPath);
 
 		Map<String, String> query = request.getQuery();
 		if (!query.isEmpty()) {
-			builder.append("?");
-			builder.append(buildParamsQuery(query));
+			sb.append("?");
+			sb.append(buildParamsQuery(query));
 		}
 
-		return new URL(builder.toString());
+		return new URL(sb.toString());
 	}
 
 	/** Builds a urlencoded query string from a param map. */

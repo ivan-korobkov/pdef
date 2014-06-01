@@ -12,7 +12,7 @@ public class PdefInvocation {
 		if (method == null) throw new NullPointerException("method");
 
 		this.method = method;
-		this.args = args == null ? null : args.clone();
+		this.args = args == null ? new Object[0] : args.clone();
 	}
 
 	public Method getMethod() {
@@ -20,7 +20,7 @@ public class PdefInvocation {
 	}
 
 	public Object[] getArgs() {
-		return args;
+		return args.clone();
 	}
 
 	public Object invoke(final Object o) {

@@ -37,15 +37,15 @@ public class PdefHandler<T> {
 
 	public PdefResponse<Object> handle(final PdefRequest request) {
 		List<PdefInvocation> invocations = parseRequest(request, iface);
-		
+
 		Object result = server;
 		for (PdefInvocation inv : invocations) {
 			result = inv.invoke(result);
 		}
-		
+
 		return new PdefResponse<Object>().setData(result);
 	}
-
+	
 	@Nonnull
 	static List<PdefInvocation> parseRequest(final PdefRequest request, final Class<?> iface) {
 		try {
@@ -84,7 +84,7 @@ public class PdefHandler<T> {
 			                                      : parseArgs(method, path, params);
 			PdefInvocation invocation = new PdefInvocation(method, args);
 			invocations.add(invocation);
-			
+
 			// Stop on a terminal method, otherwise, proceed parsing the request.
 			if (hasDataTypeResult(method)) {
 				break;
@@ -97,8 +97,8 @@ public class PdefHandler<T> {
 		assertThat(path.isEmpty(), "Failed to parse an invocation chain");
 		assertThat(!invocations.isEmpty(), "Method invocation required");
 		assertThat(hasDataTypeResult(invocations.get(invocations.size() - 1).getMethod()),
-				"The last method must be void or return a data type." );
-		
+				"The last method must be void or return a data type.");
+
 		return invocations;
 	}
 
@@ -159,13 +159,15 @@ public class PdefHandler<T> {
 			if (type == String.class) return value;
 
 			if (type == boolean.class || type == Boolean.class) return parseBoolean(value);
-			if (type == short.class || type == Short.class) return Short.parseShort(value);
-			if (type == int.class || type == Integer.class) return Integer.parseInt(value);
-			if (type == long.class || type == Long.class) return Long.parseLong(value);
-			if (type == float.class || type == Float.class) return Float.parseFloat(value);
-			if (type == double.class || type == Double.class) return Double.parseDouble(value);
-			if (type == Date.class) return parseDate(value);
-			if (type instanceof Class<?> && ((Class) type).isEnum()) return parseEnum(type, value);
+			else if (type == short.class || type == Short.class) return Short.parseShort(value);
+			else if (type == int.class || type == Integer.class) return Integer.parseInt(value);
+			else if (type == long.class || type == Long.class) return Long.parseLong(value);
+			else if (type == float.class || type == Float.class) return Float.parseFloat(value);
+			else if (type == double.class || type == Double.class) return Double.parseDouble(value);
+			else if (type == Date.class) return parseDate(value);
+			else if (type instanceof Class<?> && ((Class) type).isEnum()) {
+				return parseEnum(type, value);
+			}
 
 			return PdefJson.parse(value, type);
 		} catch (Exception e) {

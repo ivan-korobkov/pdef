@@ -27,6 +27,14 @@ public class PdefJson {
 	public static Object parse(final String s, final Type type) {
 		return gson.fromJson(s, type);
 	}
+	
+	public static Object parse(final Reader reader, final Type type) {
+		return gson.fromJson(reader, type);
+	}
+	
+	public static Object parse(final InputStream stream, final Type type) {
+		return gson.fromJson(new InputStreamReader(stream), type);
+	}
 
 	public static <T> T parse(final String s, final Class<T> cls) {
 		return gson.fromJson(s, cls);

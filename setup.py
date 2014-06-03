@@ -12,7 +12,7 @@ except ImportError:
 
 # Read the version.
 __version__ = None
-with open(os.path.join('pdefc', 'version.py')) as f:
+with open(os.path.join('compiler/pdefc', 'version.py')) as f:
     exec (f.read())
 
 
@@ -22,12 +22,13 @@ setup(
     license='Apache License 2.0',
     url='http://github.com/pdef/pdef',
     description='Pdef compiler',
-    long_description=open('../README.md', 'r').read(),
+    long_description=open('README.md', 'r').read(),
 
     author='Ivan Korobkov',
     author_email='ivan.korobkov@gmail.com',
     
     packages=['pdefc', 'pdefc.java', 'pdefc.objc'],
+    package_dir={'': 'compiler'},
     package_data={
         '': ['*.jinja2']
     },
@@ -58,3 +59,4 @@ setup(
         'Topic :: Software Development :: Compilers'
     ]
 )
+

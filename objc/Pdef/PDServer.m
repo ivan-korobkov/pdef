@@ -42,11 +42,11 @@ static NSDateFormatter *dateFormatter; // Always access as @synchronized(PDServe
     return self;
 }
 
-- (RACSignal *)handleRequest:(NSURLRequest *)request {
+- (RACSignal *)resultForRequest:(NSURLRequest *)request resultType:(id *)resultType {
     NSParameterAssert(request != nil);
 
     NSError *error = nil;
-    NSArray *invocations = [self parseRequest:request cls:_cls error:&error];
+    NSArray *invocations = [self parseRequest:request cls:_cls error:&error resultType:resultType];
     if (error) {
         return [RACSignal error:error];
     }
@@ -72,7 +72,8 @@ static NSDateFormatter *dateFormatter; // Always access as @synchronized(PDServe
     return target;
 }
 
-- (NSArray *)parseRequest:(NSURLRequest *)request cls:(Class)cls error:(NSError **)error {
+- (NSArray *)parseRequest:(NSURLRequest *)request cls:(Class)cls
+                    error:(NSError **)error resultType:(id *)resultType {
     NSMutableArray *invocations = [[NSMutableArray alloc] init];
     NSURL *url = request.URL;
 
@@ -126,6 +127,7 @@ static NSDateFormatter *dateFormatter; // Always access as @synchronized(PDServe
         return [self badRequest:error msg:@"The last method must be void or return a data type."];
     }
 
+    *resultType = method.result;
     return invocations;
 }
 

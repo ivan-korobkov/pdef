@@ -10,9 +10,9 @@
 
 
 @interface PDServer : NSObject
-@property (nonatomic, readonly) PDInterface *iface;
+@property(nonatomic, readonly) PDInterface *iface;
 - (instancetype)initWithInterface:(PDInterface *)iface;
 
-- (RACSignal *)handleRequest:(NSURLRequest *)request;
-- (id)parseEnum:(Class)type string:(NSString *)string error:(NSError **)error;
+// Returns RACSignal<Method result> or RACSignal<NSError>.
+- (RACSignal *)resultForRequest:(NSURLRequest *)request resultType:(id *)resultType;
 @end

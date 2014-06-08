@@ -269,6 +269,9 @@ static NSDateFormatter *dateFormatter; // Always access as @synchronized(PDServe
     for (uint j = 0; j < args.count; ++j) {
         id arg = args[j];
         id type = types[j];
+        if (arg == [NSNull null]) {
+            arg = nil;
+        }
 
         PDType type0 = PDTypeForType(type);
         switch (type0) {
@@ -311,9 +314,9 @@ static NSDateFormatter *dateFormatter; // Always access as @synchronized(PDServe
                 __unsafe_unretained id arg0 = arg;
                 [invocation setArgument:&arg0 atIndex:invocationArg];
             }
-
-            invocationArg++;
         }
+
+        invocationArg++;
     }
 
     return invocation;

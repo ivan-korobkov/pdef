@@ -107,18 +107,18 @@ static NSDateFormatter *dateFormatter; // Always access as @synchronized(PDServe
         if (!invocation) return nil;
         [invocations addObject:invocation];
 
-        // Stop on a terminal method, otherwise, proceed parsing the request.
+        // Continue parsing invocation when the result is an interface, stop otherwise.
         if (PDTypeForType(method.result) == PDTypeInterface) {
-            break;
-        } else {
             cls = method.result;
+        } else {
+            break;
         }
     }
 
     if (path.count) {
-        return [self badRequest:error msg:@"Failed to parse an invocation chain"];
+        return [self badRequest:error msg:@"Invocation chain did not consume all path segments."];
     }
-
+    
     if (!invocations.count) {
         return [self badRequest:error msg:@"Method invocation required"];
     }

@@ -118,7 +118,7 @@ static NSDateFormatter *dateFormatter; // Always access as @synchronized(PDServe
     if (path.count) {
         return [self badRequest:error msg:@"Invocation chain did not consume all path segments."];
     }
-    
+
     if (!invocations.count) {
         return [self badRequest:error msg:@"Method invocation required"];
     }
@@ -261,10 +261,11 @@ static NSDateFormatter *dateFormatter; // Always access as @synchronized(PDServe
     [invocation setSelector:sel];
     [invocation retainArguments];
 
-    NSUInteger i = 2;
     NSArray *types = method.paramTypes;
     NSParameterAssert(types.count == args.count);
 
+    // Indices 0 and 1 indicate the hidden arguments self and _cmd, respectively.
+    NSUInteger invocationArg = 2;
     for (uint j = 0; j < args.count; ++j) {
         id arg = args[j];
         id type = types[j];
@@ -273,43 +274,45 @@ static NSDateFormatter *dateFormatter; // Always access as @synchronized(PDServe
         switch (type0) {
             case PDTypeBool: {
                 BOOL v = arg ? ((NSNumber *) arg).boolValue : NO;
-                [invocation setArgument:&v atIndex:i];
+                [invocation setArgument:&v atIndex:invocationArg];
                 break;
             }
             case PDTypeInt16: {
                 uint16_t v = (uint16_t) (arg ? ((NSNumber *) arg).intValue : 0);
-                [invocation setArgument:&v atIndex:i];
+                [invocation setArgument:&v atIndex:invocationArg];
                 break;
             }
             case PDTypeInt32: {
                 uint32_t v = (uint32_t) (arg ? ((NSNumber *) arg).intValue : 0);
-                [invocation setArgument:&v atIndex:i];
+                [invocation setArgument:&v atIndex:invocationArg];
                 break;
             }
             case PDTypeInt64: {
                 uint64_t v = (uint64_t) (arg ? ((NSNumber *) arg).longLongValue : 0);
-                [invocation setArgument:&v atIndex:i];
+                [invocation setArgument:&v atIndex:invocationArg];
                 break;
             }
             case PDTypeFloat: {
                 float v = arg ? ((NSNumber *) arg).floatValue : 0;
-                [invocation setArgument:&v atIndex:i];
+                [invocation setArgument:&v atIndex:invocationArg];
                 break;
             }
             case PDTypeDouble: {
                 double v = arg ? ((NSNumber *) arg).doubleValue : 0;
-                [invocation setArgument:&v atIndex:i];
+                [invocation setArgument:&v atIndex:invocationArg];
                 break;
             }
             case PDTypeEnum: {
                 NSInteger v = arg ? ((NSNumber *) arg).intValue : 0;
-                [invocation setArgument:&v atIndex:i];
+                [invocation setArgument:&v atIndex:invocationArg];
                 break;
             }
             default: {
                 __unsafe_unretained id arg0 = arg;
-                [invocation setArgument:&arg0 atIndex:i];
+                [invocation setArgument:&arg0 atIndex:invocationArg];
             }
+
+            invocationArg++;
         }
     }
 

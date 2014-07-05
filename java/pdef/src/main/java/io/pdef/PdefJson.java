@@ -118,7 +118,9 @@ public class PdefJson {
 				reader.nextNull();
 				return null;
 			} else {
-				return lowercaseToConstant.get(reader.nextString());
+				String s = reader.nextString();
+				s = s.toLowerCase();
+				return lowercaseToConstant.get(s);
 			}
 		}
 
